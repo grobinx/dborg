@@ -1,0 +1,160 @@
+{
+	"dborg-title": "DBORG - Database Organizer",
+	"data-grid": "Data Grid",
+	"data-and-time-pickers": "Date and Time Pickers",
+	"minimize": "Minimize",
+	"maximize": "Maximize",
+	"restore": "Restore",
+	"close": "Close",
+	"new-connection": "New connection",
+	"connections": "Connections",
+	"settings": "Settings",
+	"schema-assistant": "Connection schema creation assistant",
+	"select-db-driver": "Select driver",
+	"schema-properties": "Connection properties",
+	"summary": "Summary",
+	"back": "Back",
+	"next": "Next",
+	"hide-password": "Hide password",
+	"show-password": "Show password",
+	"select-file-name": "Select file name",
+	"schema-group": "Schema group",
+	"schema-fields": "Schema properties",
+	"search": "Search...",
+	"schema-name": "Schema name",
+	"visible-schema-name": "Visible name",
+	"add-property-as-pattern": "Add property as pattern",
+	"pick-a-color-or-clear-shift": "Pick a color or clear with [Shift]",
+	"select-property": "Select property",
+	"cancel": "Cancel",
+	"text-connection": "Test connection",
+	"save": "Save",
+	"password": "Password",
+	"enter-password": "Enter password",
+	"schema-use-password": "Use password",
+	"ask-password-when-connecting": "Ask for password when connecting",
+	"use-empty-password": "Use empty password",
+	"save-password-as-plain-text": "Save password as plain text",
+	"predefined-patterns": "Predefined patterns",
+	"select-schema-group": "Select schema group from the list",
+	"schema-name-required": "Schema name is required.",
+	"schema-name-exists": "Schema name \"{{name}}\" already exists",
+	"connect": "Connect",
+	"finish": "Finish",
+	"connection-list": "Connection list",
+	"plugins": "Plugins",
+	"driver-unique-id-required": "Driver unique ID is required.",
+	"schema-properties-required": "Schema properties are required.",
+	"group-schema-list": "Group schema list",
+	"group": "Group: {{group}}",
+	"schema-last-selected": "Last Selected: {{lastSelected}}",
+	"edit-schema": "Edit Schema",
+	"delete-schema": "Delete schema",
+	"ungrouped": "Ungrouped",
+	"never": "Never",
+	"delete": "Delete",
+	"sqlite3": {
+		"driver": {
+			"connection": {
+				"title": "Connection",
+				"description": "General connection",
+				"properties": {
+					"driver-database_location-title": "Database location"
+				}
+			},
+			"open-mode": {
+				"title": "Open mode",
+				"properties": {
+					"SQLITE_OPEN_READONLY-title": "Read only",
+					"SQLITE_OPEN_READONLY-description": "The database is opened in read-only mode. If the database does not already exist, an error is returned.",
+					"SQLITE_OPEN_READWRITE-title": "Read write",
+					"SQLITE_OPEN_READWRITE-description": "The database is opened for reading and writing if possible, or reading only if the file is write protected by the operating system. In either case the database must already exist, otherwise an error is returned. For historical reasons, if opening in read-write mode fails due to OS-level permissions, an attempt is made to open it in read-only mode.",
+					"SQLITE_OPEN_CREATE-title": "Create",
+					"SQLITE_OPEN_CREATE-description": "The database is opened for reading and writing, and is created if it does not already exist.",
+					"SQLITE_OPEN_FULLMUTEX-title": "Full mutex",
+					"SQLITE_OPEN_FULLMUTEX-description": "The new database connection will use the „serialized” threading mode. This means the multiple threads can safely attempt to use the same database connection at the same time. (Mutexes will block any actual concurrency, but in this mode there is no harm in trying.)",
+					"SQLITE_OPEN_URI-title": "File name interpreted as URI",
+					"SQLITE_OPEN_URI-description": "The filename can be interpreted as a URI if this flag is set.",
+					"SQLITE_OPEN_SHAREDCACHE-title": "Shared cache",
+					"SQLITE_OPEN_SHAREDCACHE-description": "The database is opened shared cache enabled, overriding the default shared cache setting provided by sqlite3_enable_shared_cache(). The use of shared cache mode is discouraged and hence shared cache capabilities may be omitted from many builds of SQLite. In such cases, this option is a no-op.",
+					"SQLITE_OPEN_PRIVATECACHE-title": "Private cache",
+					"SQLITE_OPEN_PRIVATECACHE-description": "The database is opened shared cache disabled, overriding the default shared cache setting provided by sqlite3_enable_shared_cache()."
+				}
+			},
+			"driver-settings": {
+				"title": "Driver settings",
+				"properties": {
+					"driver-fetch_record_count-title": "Fetch record count",
+					"driver-fetch_record_count-description": "Set the number of records fetched by the cursor, default 100"
+				}
+			}
+		}
+	},
+	"pg": {
+		"driver": {
+			"connection": {
+				"title": "Connection",
+				"description": "General connection parameters",
+				"properties": {
+					"host-title": "Host",
+					"port-title": "Port",
+					"database-title": "Database",
+					"user-title": "User",
+					"password-title": "Password",
+					"connectionString-title": "Connection string",
+					"connectionString-description": "e.g., postgresql://dbuser:secretpassword@database.server.com:3211/mydb"
+				}
+			},
+			"pool": {
+				"title": "Pool",
+				"description": "Enable connection pooling. Set specific properties.",
+				"properties": {
+					"driver-pool-title": "Connection pool",
+					"driver-pool-description": "Enable connection pooling",
+					"connectionTimeoutMillis-title": "Connection timeout (ms)",
+					"connectionTimeoutMillis-description": "Number of milliseconds to wait before timing out when connecting a new client, default is 0, meaning no timeout",
+					"idleTimeoutMillis-title": "Idle timeout (ms)",
+					"idleTimeoutMillis-description": "Number of milliseconds a client must sit idle in the pool before being disconnected from the backend and discarded, default is 10000 (10 seconds) - set to 0 to disable automatic disconnection of idle clients",
+					"max-title": "Maximum connections",
+					"max-description": "Maximum number of clients the pool should contain, default is 10.",
+					"allowExitOnIdle-title": "Allow exit on idle",
+					"allowExitOnIdle-description": "Setting 'allowExitOnIdle: true' in the configuration will allow the Node event loop to exit as soon as all clients in the pool are idle, even if their socket is still open to the Postgres server. This can be useful in scripts and tests where you don't want to wait for clients to become idle before ending the process."
+				}
+			},
+			"timeouts": {
+				"title": "Timeouts",
+				"properties": {
+					"connectionTimeoutMillis-title": "Connection timeout (ms)",
+					"connectionTimeoutMillis-description": "Number of milliseconds to wait for a connection, default is no timeout",
+					"lock_timeout-title": "Lock timeout",
+					"lock_timeout-description": "Number of milliseconds a query can be in a lock state before being canceled due to lock timeout",
+					"query_timeout-title": "Query timeout",
+					"query_timeout-description": "Number of milliseconds before a query call times out, default is no timeout",
+					"statement_timeout-title": "Statement timeout",
+					"statement_timeout-description": "Number of milliseconds before a statement in a query times out, default is no timeout",
+					"idle_in_transaction_session_timeout-title": "Idle in transaction timeout",
+					"idle_in_transaction_session_timeout-description": "Number of milliseconds before any session with an open idle transaction is terminated, default is no timeout"
+				}
+			},
+			"other": {
+				"title": "Other settings",
+				"properties": {
+					"application_name-title": "Application name",
+					"keepAlive-title": "Keep connection alive",
+					"keepAliveInitialDelayMillis-title": "Initial keep-alive delay (ms)"
+				}
+			},
+			"driver-settings": {
+				"title": "Driver settings",
+				"properties": {
+					"driver-extend_info-title": "Fetch extended information",
+					"driver-extend_info-description": "Fetch extended information about executed queries, e.g., field information",
+					"driver-fetch_record_count-title": "Fetch record count",
+					"driver-fetch_record_count-description": "Set the number of records fetched by the cursor, default is 100",
+					"driver-max_statement_rows-title": "Maximum statement rows",
+					"driver-max_statement_rows-description": "Set the number of records fetched by a query, default is 10000"
+				}
+			}
+		}
+	}
+}

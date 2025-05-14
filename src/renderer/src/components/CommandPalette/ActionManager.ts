@@ -1,0 +1,394 @@
+import { KeyboardEvent, keyboardEventToKeybinding, normalizeKeybinding } from "./KeyBinding"; // Import funkcji normalizującej
+
+export type ActionGroupMode =
+    'actions' |
+    'filter';
+
+export interface ActionGroupOptionDescription<T> {
+    /**
+     * Unikalny identyfikator akcji.
+     */
+    id: string;
+    /**
+     * Ikona akcji, która będzie prezentowana użytkownikowi.
+     */
+    icon: React.ReactNode;
+    /**
+     * Etykieta akcji, która będzie prezentowana użytkownikowi.
+     * DLa przycisku jest to tylko tooltip.
+     */
+    label?: string;
+    /**
+     * Kod do wykonania akcji.
+     * @param context Obiekt, na którym akcja ma być wykon
+     * @param args 
+     * @returns 
+     */
+    run: (context: T, ...args: any[]) => void | Promise<void>;
+    /**
+     * Funkcja powinna zwrócić true/false, czy akcja jest aktualnie wybrana.
+     * Używane do oznaczania akcji jako wybranej w interfejsie użytkownika.
+     * @param context Obiekt, na którym akcja ma być wykon
+     * @returns 
+     */
+    selected?: (context: T) => boolean;
+}
+
+export interface ActionGroupDescriptor<T = any> {
+    /**
+     * Unikalny identyfikator grupy akcji.
+     */
+    id: string;
+
+    /**
+     * Etykieta grupy akcji, która będzie prezentowana użytkownikowi.
+     * np. @ - obiekty
+     * # - schematy
+     */
+    label: string;
+
+    /**
+     * Prefix grupy akcji
+     * Używane do grupowania akcji i wybierania ich poprzez wpisanie prefixu w polu tekstowym
+     */
+    prefix: string;
+
+    /**
+     * Dostawca akcji, który zwraca tablicę akcji związanych z tą grupą.
+     * Używane do dynamicznego ładowania akcji w zależności od kontekstu.
+     * Te akcje nie są rejestrowane w menedżerze akcji. W związku z tym nie będzie możliwa ich konfiguacja.
+     * To mogą być akcje np. do wyboru schematów bazy danych, parsowane obiekty, itp.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param query Opcjonalny parametr zapytania, który może być użyty do filtrowania akcji.
+     * @returns Tablica akcji, które są częścią tej grupy.
+     */
+    actions: (context: T, query?: string) => ActionDescriptor<T>[];
+
+    /**
+     * Tryb grupy akcji.
+     * Określa, czy akcje w tej grupie mają być wyświetlane jako akcje (actions) czy jako filtry (filter).
+     * w trybie 'actions' akcje są wyświetlane jako przyciski akcji i fitrowane wg labeli.
+     * w trybie 'filter' do funkcji actions przekazywany jest query, który można wykorzystać do filtrowania danych.
+     * W tym trybie actions wywołane będzie z opóźnieniem.
+     * i wyświetlania ich jako listy rozwijanej.
+     * Domyślnie jest to 'actions'.
+     * @default 'actions'
+     */
+    mode?: ActionGroupMode;
+
+    /**
+     * Dodatkowe przyciski widoczne w polu poleceń.
+     * Używane do dodawania dodatkowych akcji związanych z tą grupą akcji.
+     */
+    options?: ActionGroupOptionDescription<T>[];
+}
+
+export interface ActionDescriptor<T> {
+    /**
+     * Unikalny identyfikator akcji.
+     */
+    id: string;
+
+    /**
+     * Grupa akcji, do której należy ta akcja.
+     * Używane do grupowania akcji i wybierania ich poprzez wpisanie prefixu w polu tekstowym
+     * Akcje bez przypisania grupy będą się pokazywać zawsze.
+     */
+    groupId?: string;
+
+    /**
+     * Etykieta akcji, która będzie prezentowana użytkownikowi.
+     */
+    label: string;
+
+    /**
+     * Etykieta dodatkowa akcji, która może być prezentowana użytkownikowi.
+     */
+    secondaryLabel?: string;
+
+    /**
+     * Ikona akcji, która będzie prezentowana użytkownikowi.
+     * Może być to komponent React lub inny element reprezentujący ikonę.
+     */
+    icon?: React.ReactNode;
+
+    /**
+     * Warunek wstępny (precondition), który musi być spełniony, aby akcja mogła zostać wykonana.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @return true, jeśli akcja może zostać wykonana; w przeciwnym razie false.
+     */
+    precondition?: (context: T) => boolean;
+
+    /**
+     * Tablica skrótów klawiszowych przypisanych do akcji.
+     * Jest to sekwencja klawiszowych.
+     */
+    keybindings?: string[];
+
+    /**
+     * Grupa menu kontekstowego, w której akcja powinna się pojawić.
+     */
+    contextMenuGroupId?: "commandPalette" | string;
+
+    /**
+     * Kolejność w grupie menu kontekstowego.
+     */
+    contextMenuOrder?: number;
+
+    /**
+     * Funkcja, która zostanie wykonana, gdy akcja zostanie wywołana.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args Dodatkowe argumenty przekazywane do funkcji.
+     */
+    run: (context: T, ...args: any[]) => void | Promise<void>;
+
+    /**
+     * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.
+     * Używane do zarządzania porządkiem listy akcji.
+     */
+    internalLastSelected?: number;
+
+    /**
+     * Czy akcja jest aktualnie wybrana.
+     * Używane do oznaczania akcji jako wybranej w interfejsie użytkownika.
+     */
+    selected?: boolean | ((context: T) => boolean);
+}
+
+export class ActionManager<T> {
+    private actions: Map<string, ActionDescriptor<T>> = new Map();
+    private actionGroups: Map<string, ActionGroupDescriptor<T>> = new Map();
+    private currentSequence: string[] = [];
+    private sequenceTimeout: NodeJS.Timeout | null = null;
+    private sequenceResetTime = 2000;
+
+    constructor() {
+        this.registerActionGroup({
+            id: 'default',
+            label: '> Search and run actions',
+            prefix: '>',
+            actions: () => Array.from(this.actions.values()),
+        });
+    }
+
+    /**
+     * Rejestruje nową grupę akcji.
+     * @param group Opis grupy akcji.
+     */
+    registerActionGroup(group: ActionGroupDescriptor<T>): void {
+        if (this.actionGroups.has(group.id)) {
+            return;
+        }
+        this.actionGroups.set(group.id, group);
+    }
+
+    /**
+     * Pobiera zarejestrowaną grupę akcji na podstawie jej identyfikatora.
+     * @param groupId Identyfikator grupy akcji.
+     * @returns Zarejestrowana grupa akcji lub undefined, jeśli nie istnieje.
+     */
+    getActionGroup(groupId: string): ActionGroupDescriptor<T> | undefined {
+        return this.actionGroups.get(groupId);
+    }
+
+    /**
+     * Pobiera wszystkie zarejestrowane grupy akcji.
+     * @returns Tablica zarejestrowanych grup akcji.
+     */
+    getRegisteredActionGroups(): ActionGroupDescriptor<T>[] {
+        return Array.from(this.actionGroups.values());
+    }
+
+    /**
+     * Rejestruje nową akcję.
+     * @param action Opis akcji
+     */
+    registerAction(action: ActionDescriptor<T>): void {
+        const normalizedKeybindings = action.keybindings?.map(normalizeKeybinding); // Normalizacja keybindings
+        const normalizedAction = { ...action, keybindings: normalizedKeybindings };
+
+        if (this.actions.has(action.id)) {
+            return;
+        }
+        this.actions.set(action.id, normalizedAction);
+    }
+
+    /**
+     * Wykonuje akcję na podstawie jej identyfikatora lub obiektu akcji.
+     * @param actionId Identyfikator akcji do wykonania.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args Dodatkowe argumenty przekazywane do funkcji.
+     */
+    executeAction(actionId: string, context: T, ...args: any[]): void | Promise<void>;
+
+    /**
+     * Wykonuje akcję przekazaną jako parametr.
+     * @param action Obiekt akcji.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args Dodatkowe argumenty przekazywane do funkcji.
+     */
+    executeAction(action: ActionDescriptor<T>, context: T, ...args: any[]): void | Promise<void>;
+
+    executeAction(actionOrId: string | ActionDescriptor<T>, context: T, ...args: any[]): void | Promise<void> {
+        let action: ActionDescriptor<T> | undefined;
+
+        // Jeśli przekazano identyfikator, znajdź akcję w zarejestrowanych akcjach
+        if (typeof actionOrId === 'string') {
+            action = this.actions.get(actionOrId);
+            if (!action) {
+                console.error(`Action with id "${actionOrId}" is not registered.`);
+                return;
+            }
+        } else {
+            // Jeśli przekazano obiekt akcji, użyj go bezpośrednio
+            action = actionOrId;
+        }
+
+        // Sprawdź warunek wstępny (precondition), jeśli istnieje
+        if (action.precondition && !action.precondition(context)) {
+            return;
+        }
+
+        if (action.contextMenuGroupId !== "commandPalette") {
+            action.internalLastSelected = Date.now();
+        }
+        // Wykonaj akcję
+        return action.run(context, ...args);
+    }
+
+    /**
+     * Obsługuje wciśnięcie klawisza i sprawdza sekwencję skrótów.
+     * @param event Obiekt KeyboardEvent lub string reprezentujący klawisz.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args Argumenty przekazywane do funkcji `run`.
+     */
+    executeActionByKeybinding(event: KeyboardEvent | string, context: T, ...args: any[]): boolean {
+        const keybinding = (typeof event === 'string' ? event : keyboardEventToKeybinding(event)).toLocaleLowerCase();
+
+        // Dodaj klawisz do bieżącej sekwencji
+        this.currentSequence.push(keybinding);
+
+        // Zresetuj timeout sekwencji
+        if (this.sequenceTimeout) {
+            clearTimeout(this.sequenceTimeout);
+        }
+        this.sequenceTimeout = setTimeout(() => this.resetSequence(), this.sequenceResetTime);
+
+        // Sprawdź, czy istnieje akcja pasująca do bieżącej sekwencji
+        const action = Array.from(this.actions.values()).find(a =>
+            a.keybindings && this.isSequenceMatch(a.keybindings, this.currentSequence)
+        );
+
+        if (action) {
+            if (action.precondition && !action.precondition(context)) {
+                this.resetSequence();
+                return true; // Sekwencja jest poprawna, ale akcja nie została wykonana
+            }
+
+            if (action.contextMenuGroupId !== "commandPalette") {
+                action.internalLastSelected = Date.now();
+            }
+            action.run(context, ...args);
+            this.resetSequence(); // Zresetuj sekwencję po wykonaniu akcji
+            return true; // Akcja została wykonana
+        }
+
+        // Jeśli nie znaleziono pasującej akcji, sprawdź, czy sekwencja poprawnie się zaczyna
+        const isValidSequence = Array.from(this.actions.values()).some(a =>
+            a.keybindings &&
+            this.currentSequence.every((key, index) =>
+                a.keybindings![index] !== undefined && key.toLowerCase() === a.keybindings![index].toLowerCase()
+            )
+        );
+
+        if (isValidSequence) {
+            return true; // Fragment sekwencji jest poprawny
+        }
+
+        this.resetSequence(); // Zresetuj sekwencję, jeśli jest niepoprawna
+        return false; // Nie znaleziono akcji ani poprawnego fragmentu sekwencji
+    }
+
+    /**
+     * Sprawdza, czy bieżąca sekwencja pasuje do pełnej sekwencji skrótu.
+     * @param fullSequence Tablica reprezentująca pełną sekwencję skrótu.
+     * @param currentSequence Bieżąca sekwencja klawiszy.
+     * @returns True, jeśli bieżąca sekwencja pasuje do pełnej sekwencji.
+     */
+    private isSequenceMatch(fullSequence: string[], currentSequence: string[]): boolean {
+        if (currentSequence.length !== fullSequence.length) {
+            return false;
+        }
+        return currentSequence.every((key, index) => key.toLowerCase() === fullSequence[index].toLowerCase());
+    }
+
+    /**
+     * Resetuje bieżącą sekwencję klawiszy.
+     */
+    private resetSequence(): void {
+        this.currentSequence = [];
+        if (this.sequenceTimeout) {
+            clearTimeout(this.sequenceTimeout);
+            this.sequenceTimeout = null;
+        }
+    }
+
+    /**
+     * Pobiera listę zarejestrowanych akcji.
+     * Jeśli podano prefix, zwraca akcje z grupy o podanym prefixie.
+     * Jeśli prefix jest null, zwraca wszystkie zarejestrowane akcji.
+     * @param prefix Prefix grupy akcji lub null.
+     * @param context Obiekt, na którym akcje mają być wykonane (wymagany dla dynamicznych akcji).
+     * @returns Tablica akcji.
+     */
+    getRegisteredActions(prefix: string | null = '>', context?: T, query?: string): ActionDescriptor<T>[] {
+        if (prefix === null) {
+            return [];
+        }
+
+        const actionGroup = Array.from(this.actionGroups.values()).find(group => group.prefix === prefix);
+
+        if (!actionGroup) {
+            return [];
+        }
+
+        let actions: ActionDescriptor<T>[] = actionGroup.actions(context!, query);
+
+        if ((actionGroup.mode ?? 'actions') === 'actions' && query && query !== '') {
+            // Rozdziel query na fragmenty oddzielone spacją
+            const queryParts = query.toLocaleLowerCase().split(' ').filter(Boolean);
+
+            actions = actions.filter((command) => {
+                // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
+                return queryParts.every((part) =>
+                    command.label.toLocaleLowerCase().includes(part) ||
+                    (command.secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
+                );
+            });
+        }
+
+        if ((actionGroup.mode ?? 'actions') === 'actions' && actionGroup.id === 'default') {
+            actions = actions.sort((a, b) => {
+                // Najpierw sortuj według internalLastSelected (najnowsze na górze), potem alfabetycznie
+                const lastSelectedA = a.internalLastSelected || 0;
+                const lastSelectedB = b.internalLastSelected || 0;
+                if (lastSelectedA !== lastSelectedB) {
+                    return lastSelectedB - lastSelectedA; // Najnowsze wybory na górze
+                }
+                return a.label.localeCompare(b.label); // Sortowanie alfabetyczne
+            });
+        }
+
+        return actions;
+    }
+
+    /**
+     * Usuwa akcję na podstawie jej identyfikatora.
+     * @param actionId Identyfikator akcji do usunięcia.
+     */
+    unregisterAction(actionId: string): void {
+        if (!this.actions.delete(actionId)) {
+            throw new Error(`Action with id "${actionId}" is not registered.`);
+        }
+    }
+}

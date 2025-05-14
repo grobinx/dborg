@@ -1,0 +1,160 @@
+{
+	"dborg-title": "DBORG - Organizer Bazy Danych",
+	"data-grid": "Siatka danych",
+	"data-and-time-pickers": "Wybór daty i godziny",
+	"minimize": "Minimalizuj",
+	"maximize": "Maksymalizuj",
+	"restore": "Przywróć",
+	"close": "Zamknij",
+	"new-connection": "Nowe połączenie",
+	"connections": "Połączenia",
+	"settings": "Ustawienia",
+	"schema-assistant": "Asystent tworzenia schematu połączenia",
+	"select-db-driver": "Wybierz sterownik",
+	"schema-properties": "Właściwości połączenia",
+	"summary": "Podsumowanie",
+	"back": "Cofnij",
+	"next": "Następny",
+	"hide-password": "Ukryj hasło",
+	"show-password": "Pokaż hasło",
+	"select-file-name": "Wskaż nazwę pliku",
+	"schema-group": "Grupa schematów",
+	"schema-fields": "Właściwości schematu",
+	"search": "Wyszukaj...",
+	"schema-name": "Nazwa schematu",
+	"visible-schema-name": "Widoczna nazwa",
+	"add-property-as-pattern": "Dodaj właściwość jako wzorzec",
+	"pick-a-color-or-clear-shift": "Wybierz kolor lub wyczyść za pomocą [Shift]",
+	"select-property": "Wybierz właściwość",
+	"cancel": "Anuluj",
+	"text-connection": "Testuj połączenie",
+	"save": "Zapisz",
+	"password": "Hasło",
+	"enter-password": "Wprowadź hasło",
+	"schema-use-password": "Użyj hasła",
+	"ask-password-when-connecting": "Pytaj o hasło podczas łączenia",
+	"use-empty-password": "Użyj pustego hasła",
+	"save-password-as-plain-text": "Zapisz hasło jako zwykły tekst",
+	"predefined-patterns": "Wzorce predefiniowane",
+	"select-schema-group": "Wybierz grupę schematów z listy",
+	"schema-name-required": "Nazwa schematu jest wymagana.",
+	"schema-name-exists": "Nazwa schematu \"{{name}}\" już istnieje",
+	"connect": "Połącz",
+	"finish": "Zakończ",
+	"connection-list": "Lista połączeń",
+	"plugins": "Wtyczki",
+	"driver-unique-id-required": "Unikalny identyfikator sterownika jest wymagany.",
+	"schema-properties-required": "Właściwości schematu są wymagane.",
+	"group-schema-list": "Grupuj listę schematów",
+	"group": "Grupa: {{group}}",
+	"schema-last-selected": "Ostatnio wybrany: {{lastSelected}}",
+	"edit-schema": "Edytuj schemat",
+	"delete-schema": "Usuń schemat",
+	"ungrouped": "Niepogrupowane",
+	"never": "Nigdy",
+	"delete": "Usuń",
+	"sqlite3": {
+		"driver": {
+			"connection": {
+				"title": "Połączenie",
+				"description": "Parametry podstawowe",
+				"properties": {
+					"driver-database_location-title": "Lokalizacja pliku"
+				}
+			},
+			"open-mode": {
+				"title": "Tryb otwierania",
+				"properties": {
+					"SQLITE_OPEN_READONLY-title": "Tylko do odczytu",
+					"SQLITE_OPEN_READONLY-description": "Baza danych jest otwierana w trybie tylko do odczytu. Jeśli baza danych jeszcze nie istnieje, zwracany jest błąd.",
+					"SQLITE_OPEN_READWRITE-title": "Odczyt i zapis",
+					"SQLITE_OPEN_READWRITE-description": "Baza danych jest otwierana do odczytu i zapisu, jeśli to możliwe, lub tylko do odczytu, jeśli plik jest chroniony przed zapisem przez system operacyjny. W obu przypadkach baza danych musi już istnieć, w przeciwnym razie zwracany jest błąd. Ze względów historycznych, jeśli otwarcie w trybie odczytu i zapisu nie powiedzie się z powodu uprawnień na poziomie systemu operacyjnego, podejmowana jest próba otwarcia jej w trybie tylko do odczytu.",
+					"SQLITE_OPEN_CREATE-title": "Twórz",
+					"SQLITE_OPEN_CREATE-description": "Baza danych jest otwierana do odczytu i zapisu i zostaje utworzona, jeśli jeszcze nie istnieje.",
+					"SQLITE_OPEN_FULLMUTEX-title": "Pełny mutex",
+					"SQLITE_OPEN_FULLMUTEX-description": "Nowe połączenie z bazą danych będzie używać trybu wątków „serialized”. Oznacza to, że wiele wątków może bezpiecznie próbować używać tego samego połączenia z bazą danych w tym samym czasie. (Mutexy zablokują wszelką rzeczywistą współbieżność, ale w tym trybie nie ma nic złego w próbowaniu.)",
+					"SQLITE_OPEN_URI-title": "Nazwa pliku interpretowana jako URI",
+					"SQLITE_OPEN_URI-description": "Nazwę pliku można interpretować jako URI, jeśli ta flaga jest ustawiona.",
+					"SQLITE_OPEN_SHAREDCACHE-title": "Współdzielona pamięć podręczna",
+					"SQLITE_OPEN_SHAREDCACHE-description": "Baza danych jest otwarta z włączoną współdzieloną pamięcią podręczną, nadpisując domyślne ustawienie współdzielonej pamięci podręcznej dostarczone przez sqlite3_enable_shared_cache(). Nie zaleca się używania trybu współdzielonej pamięci podręcznej, dlatego też możliwości współdzielonej pamięci podręcznej mogą zostać pominięte w wielu kompilacjach SQLite. W takich przypadkach ta opcja jest opcją no-op.",
+					"SQLITE_OPEN_PRIVATECACHE-title": "Prywatna pamięć podręczna",
+					"SQLITE_OPEN_PRIVATECACHE-description": "Baza danych jest otwierana z wyłączoną współdzieloną pamięcią podręczną, zastępując domyślne ustawienie współdzielonej pamięci podręcznej określone przez sqlite3_enable_shared_cache()."
+				}
+			},
+			"driver-settings": {
+				"title": "Ustawienia sterownika",
+				"properties": {
+					"driver-fetch_record_count-title": "Liczba pobieranych rekordów",
+					"driver-fetch_record_count-description": "Ustaw liczbę rekordów pobieranych przez kursor, domyślnie 100"
+				}
+			}
+		}
+	},
+	"pg": {
+		"driver": {
+			"connection": {
+				"title": "Połączenie",
+				"description": "Parametry ogólne połączenia",
+				"properties": {
+					"host-title": "Host",
+					"port-title": "Port",
+					"database-title": "Baza danych",
+					"user-title": "Użytkownik",
+					"password-title": "Hasło",
+					"connectionString-title": "Ciąg połączenia",
+					"connectionString-description": "np. postgresql://dbuser:secretpassword@database.server.com:3211/mydb"
+				}
+			},
+			"pool": {
+				"title": "Pula",
+				"description": "Włącz pulę połączeń. Ustaw określone właściwości.",
+				"properties": {
+					"driver-pool-title": "Pula połączeń",
+					"driver-pool-description": "Włącz pulę połączeń",
+					"connectionTimeoutMillis-title": "Limit czasu połączenia (ms)",
+					"connectionTimeoutMillis-description": "Liczba milisekund oczekiwania przed upływem limitu czasu podczas łączenia nowego klienta, domyślnie 0, co oznacza brak limitu czasu",
+					"idleTimeoutMillis-title": "Limit czasu bezczynności (ms)",
+					"idleTimeoutMillis-description": "Liczba milisekund, przez które klient musi być bezczynny w puli, zanim zostanie odłączony od backendu i odrzucony, domyślnie 10000 (10 sekund) - ustaw na 0, aby wyłączyć automatyczne rozłączanie bezczynnych klientów",
+					"max-title": "Maksymalna liczba połączeń",
+					"max-description": "Maksymalna liczba klientów, które powinna zawierać pula, domyślnie ustawiona na 10.",
+					"allowExitOnIdle-title": "Zezwól na zakończenie w stanie bezczynności",
+					"allowExitOnIdle-description": "Ustawienie 'allowExitOnIdle: true' w konfiguracji pozwoli pętli zdarzeń Node zakończyć się, gdy tylko wszyscy klienci w puli będą bezczynni, nawet jeśli ich gniazdo jest nadal otwarte na serwerze Postgres. Może to być przydatne w skryptach i testach, w których nie chcesz czekać, aż klienci przejdą w stan bezczynności przed zakończeniem procesu."
+				}
+			},
+			"timeouts": {
+				"title": "Limity czasu",
+				"properties": {
+					"connectionTimeoutMillis-title": "Limit czasu połączenia (ms)",
+					"connectionTimeoutMillis-description": "Liczba milisekund oczekiwania na połączenie, domyślnie brak limitu czasu",
+					"lock_timeout-title": "Limit czasu blokady",
+					"lock_timeout-description": "Liczba milisekund, przez które zapytanie może być w stanie blokady, zanim zostanie anulowane z powodu limitu czasu blokady",
+					"query_timeout-title": "Limit czasu zapytania",
+					"query_timeout-description": "Liczba milisekund przed upływem limitu czasu wywołania zapytania, domyślnie brak limitu czasu",
+					"statement_timeout-title": "Limit czasu instrukcji",
+					"statement_timeout-description": "Liczba milisekund przed upływem limitu czasu instrukcji w zapytaniu, domyślnie brak limitu czasu",
+					"idle_in_transaction_session_timeout-title": "Limit czasu bezczynności w trans.",
+					"idle_in_transaction_session_timeout-description": "Liczba milisekund przed zakończeniem dowolnej sesji z otwartą bezczynną transakcją, domyślnie brak limitu czasu"
+				}
+			},
+			"other": {
+				"title": "Inne ustawienia",
+				"properties": {
+					"application_name-title": "Nazwa aplikacji",
+					"keepAlive-title": "Podtrzymywanie połączenia",
+					"keepAliveInitialDelayMillis-title": "Początkowe opóźnienie podtrzymywania połączenia (ms)"
+				}
+			},
+			"driver-settings": {
+				"title": "Ustawienia sterownika",
+				"properties": {
+					"driver-extend_info-title": "Pobierz rozszerzone informacje",
+					"driver-extend_info-description": "Pobierz rozszerzone informacje o wykonanych zapytaniach, np. informacje o polach",
+					"driver-fetch_record_count-title": "Liczba pobieranych rekordów",
+					"driver-fetch_record_count-description": "Ustaw liczbę rekordów pobieranych przez kursor, domyślnie 100",
+					"driver-max_statement_rows-title": "Maksymalna liczba wierszy",
+					"driver-max_statement_rows-description": "Ustaw liczbę rekordów pobieranych przez zapytanie, domyślnie 10000"
+				}
+			}
+		}
+	}
+}
