@@ -1,4 +1,4 @@
-# dborg
+# dborg (ipa: dˈɛbɔrk)
 
 ![dborg logo](resources/dborg.png)
 
