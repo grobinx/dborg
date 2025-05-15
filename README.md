@@ -1,6 +1,4 @@
-# dborg (ipa: dˈɛbɔrk)
-
-![dborg logo](resources/dborg.png)
+# <img src="resources/dborg.png" alt="Alt text" width="48" height="48"> dborg (ipa: dˈɛbɔrk)
 
 > **Note:** This application is under development and is not intended for production use. It may contain bugs and incomplete features.
 
