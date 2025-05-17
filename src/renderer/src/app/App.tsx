@@ -159,7 +159,7 @@ const App: React.FC = () => {
                             <Container key={container.type} hidden={container !== selectedContainer}>
                                 {container.container !== undefined &&
                                     <container.container>
-                                        {selectedView?.type === "rendered" && selectedView?.render && <selectedView.render />}
+                                        {selectedView?.type === "rendered" && selectedView?.render && <selectedView.render key={selectedView.id} />}
                                     </container.container>
                                 }
                             </Container>

@@ -7,6 +7,7 @@ import ViewButton from "./ViewButton";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import * as Messages from "../Messages";
 import { useContainers, View } from "@renderer/contexts/ApplicationContext";
+import { resolveIcon } from "@renderer/themes/icons";
 
 const Store_siedBarExpanded = 'siedBarExpanded';
 
@@ -71,7 +72,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         };
     }, [handleToogleExpand, subscribe, unsubscribe]);
 
-    const renderViews = (views: View[]) => {
+    const renderViewButtons = (views: View[]) => {
         return ([
             ...views.map(({ id, button: { icon, title, tKey } }) => (
                 <ViewButton
@@ -79,7 +80,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                     itemID={id}
                     selected={selectedView?.id === id}
                     onClick={() => sendMessage(Messages.SWITCH_VIEW, id)}
-                    icon={typeof icon === 'string' ? theme.icons[icon]() : icon}
+                    icon={resolveIcon(theme, icon)}
                     title={tKey ? t(tKey, title) : title}
                     expanded={expanded}
                     placement={placement}
@@ -122,7 +123,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
-                        icon={typeof container.button.icon === 'string' ? theme.icons[container.button.icon]() : container.button.icon}
+                        icon={resolveIcon(theme, container.button.icon)}
                         title={container.button.tKey ? t(container.button.tKey, container.button.title) : container.button.title}
                     />
                 );
@@ -132,10 +133,10 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 {children}
             </Stack>
             <Stack direction={horizontal ? "column" : "row"} flexGrow={1}>
-                {(selectedContainer?.button.section === "first" && views) && renderViews(views)}
+                {(selectedContainer?.button.section === "first" && views) && renderViewButtons(views)}
             </Stack>
             <Stack direction={horizontal ? "column-reverse" : "row-reverse"} flexGrow={1}>
-                {(selectedContainer?.button.section === "last" && views) && renderViews(views)}
+                {(selectedContainer?.button.section === "last" && views) && renderViewButtons(views)}
             </Stack>
             <Divider orientation={horizontal ? "horizontal" : "vertical"} flexItem />
             {containers?.filter(container => container.button.section === "last").map((container) => {
@@ -147,7 +148,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
-                        icon={typeof container.button.icon === 'string' ? theme.icons[container.button.icon]() : container.button.icon}
+                        icon={resolveIcon(theme, container.button.icon)}
                         title={container.button.tKey ? t(container.button.tKey, container.button.title) : container.button.title}
                     />
                 );

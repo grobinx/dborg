@@ -9,7 +9,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             if (position) {
                 const { row, column } = position;
                 if (row > 0) {
-                    context.setPosition(row - 1, column);
+                    context.setPosition({ row: row - 1, column });
                 }
             }
         },
@@ -21,7 +21,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             if (position) {
                 const { row, column } = position;
                 if (row < context.getRowCount() - 1) {
-                    context.setPosition(row + 1, column);
+                    context.setPosition({ row: row + 1, column });
                 }
             }
         },
@@ -33,7 +33,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             if (position) {
                 const { row, column } = position;
                 if (column > 0) {
-                    context.setPosition(row, column - 1);
+                    context.setPosition({ row, column: column - 1 });
                 }
             }
         },
@@ -45,7 +45,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             if (position) {
                 const { row, column } = position;
                 if (column < context.getColumnCount() - 1) {
-                    context.setPosition(row, column + 1);
+                    context.setPosition({ row, column: column + 1 });
                 }
             }
         },
@@ -58,7 +58,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
                 const { row, column } = position;
                 const { start, end } = context.getVisibleRows();
                 if (row > 0) {
-                    context.setPosition(Math.max(row - (end - start - 1), 0), column);
+                    context.setPosition({ row: Math.max(row - (end - start - 1), 0), column });
                 }
             }
         },
@@ -71,7 +71,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
                 const { row, column } = position;
                 const { start, end } = context.getVisibleRows();
                 if (row < context.getRowCount() - 1) {
-                    context.setPosition(Math.min(row + (end - start - 1), context.getRowCount() - 1), column);
+                    context.setPosition({ row: Math.min(row + (end - start - 1), context.getRowCount() - 1), column });
                 }
             }
         },
@@ -82,7 +82,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             const position = context.getPosition();
             if (position) {
                 const { row } = position;
-                context.setPosition(row, 0); // Przewiń do początku wiersza
+                context.setPosition({ row, column: 0 }); // Przewiń do początku wiersza
             }
         },
     },
@@ -92,7 +92,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             const position = context.getPosition();
             if (position) {
                 const { row } = position;
-                context.setPosition(row, context.getColumnCount() - 1); // Przewiń do końca wiersza
+                context.setPosition({ row, column: context.getColumnCount() - 1 }); // Przewiń do końca wiersza
             }
         },
     },
@@ -102,7 +102,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             const position = context.getPosition();
             if (position) {
                 const { column } = position;
-                context.setPosition(0, column); // Przewiń do początku kolumny
+                context.setPosition({ row: 0, column }); // Przewiń do początku kolumny
             }
         },
     },
@@ -112,7 +112,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             const position = context.getPosition();
             if (position) {
                 const { column } = position;
-                context.setPosition(context.getRowCount() - 1, column); // Przewiń do końca kolumny
+                context.setPosition({ row: context.getRowCount() - 1, column }); // Przewiń do końca kolumny
             }
         },
     },

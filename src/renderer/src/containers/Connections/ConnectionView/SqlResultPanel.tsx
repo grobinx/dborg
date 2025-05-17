@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ColumnDefinition, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import { useTranslation } from "react-i18next";
 import { Box, Stack, Tooltip, useTheme } from "@mui/material";
@@ -35,16 +35,16 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [rows, setRows] = React.useState<object[] | null>(null);
     const [active, setActive] = React.useState(false);
     const [query, setQuery] = React.useState<string | null>(null);
+    const lastQuery = useRef<string | null>(null);
     const [executing, setExecuting] = React.useState<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
     const { addNotification } = useNotification();
     const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
-    const [cellPositionRefresh, setCellPositionRefresh] = React.useState<TableCellPosition | null>(null);
     const statusBarRef = useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = useState<string>("100%");
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
     const [queryDuration, setQueryDuration] = useState<number | null>(null); // Dodano queryDuration
-    const dataGridRef = useRef<HTMLDivElement>(null);
+    const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
     const cancelLoading = useRef(false);
     const cancelExecution = useRef<() => void>(null);
 
@@ -54,9 +54,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             label: "Refresh query",
             icon: <theme.icons.Refresh />,
             keybindings: ["F5"],
-            run: (context) => {
+            run: (_context) => {
                 setForceQueryExecution((prev) => !prev);
-                setCellPositionRefresh(context.getPosition());
             },
         });
     };
@@ -84,6 +83,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     React.useEffect(() => {
         const fetchData = async () => {
             if (query) {
+                let cellPosition: TableCellPosition | null = null;
+                if (query === lastQuery.current && dataGridRef.current) {
+                    cellPosition = dataGridRef.current.getPosition();
+                }
                 let time = Date.now();
                 cancelLoading.current = false;
                 setExecuting(true);
@@ -112,13 +115,18 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                             time = Date.now();
                         }
                     }
+                    lastQuery.current = query;
                     setQueryDuration(info.duration ?? null);
                     setColumns(queryToDataGridColumns(info.columns ?? [], fetchedRows))
                     setRows(rows);
-                    // const result = await session.query(query);
-                    // setQueryDuration(result.duration ?? null); // Ustawienie czasu wykonania zapytania
-                    // setColumns(queryToDataGridColumns(result, result.rows));
-                    // setRows(result.rows);
+                    if (cellPosition) {
+                        setTimeout(() => {
+                            if (dataGridRef.current) {
+                                dataGridRef.current.setPosition(cellPosition);
+                                dataGridRef.current.focus();
+                            }
+                        }, 10);
+                    }
                 } catch (error) {
                     addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
                     setColumns([]);

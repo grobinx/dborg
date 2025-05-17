@@ -80,7 +80,7 @@ interface DataGridProps<T extends object> {
 
     active?: boolean;
 
-    ref?: React.RefObject<HTMLDivElement | null>;
+    ref?: React.RefObject<DataGridActionContext<T> | null>;
 }
 
 const StyledTable = styled('div')({
@@ -348,7 +348,7 @@ export const DataGrid = <T extends object>({
     const [fontFamily, setFontFamily] = useState<string>("inherit");
     const [fontSize, setFontSize] = useState<number>(16);
 
-    useImperativeHandle(ref, () => containerRef.current!);
+    useImperativeHandle(ref, () => dataGridActionContext);
 
     
     useEffect(() => {
@@ -528,6 +528,11 @@ export const DataGrid = <T extends object>({
     }, [filteredDataState.length, fontSize, fontFamily]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
+        focus: () => {
+            if (containerRef.current) {
+                containerRef.current.focus();
+            }
+        },
         getValue: () => {
             if (selectedCell) {
                 const column = columnsState.current[selectedCell.column];
@@ -536,7 +541,7 @@ export const DataGrid = <T extends object>({
             return null;
         },
         getPosition: () => selectedCell,
-        setPosition: (row, column) => {
+        setPosition: ({row, column}) => {
             updateSelectedCell({ row, column });
             if (containerRef.current) {
                 scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), rowHeight, columnsState.current, footerVisible);

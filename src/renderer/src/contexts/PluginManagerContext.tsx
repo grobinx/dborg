@@ -1,9 +1,9 @@
-import PluginManager, { PluginManagerBase } from '../../../../plugins/manager/renderer/PluginManager';
+import PluginManager, { IPluginManager } from '../../../../plugins/manager/renderer/PluginManager';
 import React, { createContext, useContext, useRef } from 'react';
 import { useDatabase } from './DatabaseContext';
 import PostgresPlugin from '../../../../plugins/pg/renderer/PostgresPlugin'
 
-const PluginManagerContext = createContext<PluginManagerBase | null>(null);
+const PluginManagerContext = createContext<IPluginManager | null>(null);
 
 export const PluginManagerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const pluginManagerRef = useRef(new PluginManager());
@@ -20,7 +20,7 @@ export const PluginManagerProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 };
 
-export const usePluginManager = (): PluginManagerBase => {
+export const usePluginManager = (): IPluginManager => {
     const context = useContext(PluginManagerContext);
     if (!context) {
         throw new Error('usePluginManager must be used within a PluginManagerProvider');

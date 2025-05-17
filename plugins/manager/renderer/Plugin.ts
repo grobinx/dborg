@@ -1,4 +1,4 @@
-import { PluginContext } from "./PluginContext";
+import { IPluginContext } from "./PluginContext";
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -79,5 +79,5 @@ export interface Plugin {
      * 
      * @param context The plugin manager context to initialize with.
      */
-    initialize(context: PluginContext): void; 
+    initialize(context: IPluginContext): void; 
 }

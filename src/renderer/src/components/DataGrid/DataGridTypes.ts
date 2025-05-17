@@ -163,8 +163,9 @@ export const typeToOperationMap: Record<SummaryOperation, ColumnDataType[]> = {
 };
 
 export interface DataGridActionContext<T extends object> {
+    focus: () => void;
     getPosition: () => { row: number; column: number } | null;
-    setPosition: (row: number, column: number) => void;
+    setPosition: (position: { row: number; column: number }) => void;
     getValue: () => any | null;
     getRowHeight: () => number;
     setRowHeight: (height: number) => void;

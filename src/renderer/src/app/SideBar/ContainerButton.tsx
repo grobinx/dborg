@@ -1,5 +1,5 @@
 import { Button, ButtonProps, Collapse, styled, Tooltip, Typography, useThemeProps } from "@mui/material";
-import React, { ReactElement } from "react";
+import React, { ReactElement, ReactNode } from "react";
 
 export type Placement = "top" | "bottom" | "left" | "right";
 
@@ -11,7 +11,7 @@ interface ContainerButtonOwnProps extends ContainerButtonProps {
     expanded: boolean,
     selected: boolean,
     placement?: Placement,
-    icon?: ReactElement,
+    icon?: ReactNode,
     title?: string,
 }
 

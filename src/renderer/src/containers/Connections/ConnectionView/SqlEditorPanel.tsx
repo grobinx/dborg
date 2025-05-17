@@ -23,6 +23,7 @@ import { MenuReopenSqlEditorTab } from "./editor/actions/MenuReopenSqlEditorTab"
 import { DatabaseMetadata, DatabasesMetadata } from "src/api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { analyzeQueryFragment, getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
+import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
@@ -49,6 +50,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const databaseMetadataRef = React.useRef<DatabaseMetadata | null>(null);
     const hoverProviderRef = useRef<monaco.IDisposable | null>(null);
     const editorFocusedRef = useRef(false);
+    const currentFragmentRef = useRef<string | null>(null);
+    const currentSqlAstRef = useRef<AstComponent | null>(null);
 
     useEffect(() => {
         const handleTabPanelClick = (message: TabPanelClickMessage) => {
@@ -72,7 +75,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             provideHover: (model, position) => {
                 const word = model.getWordAtPosition(position);
                 if (word) {
-                    const { fragment, startLine, endLine } = getFragmentAroundCursor(editorInstance!, position)!;
+                    const { fragment, startLine, endLine, relativeOffset } = getFragmentAroundCursor(editorInstance!, position)!;
                     const stringType = getStringTypeAroundCursor(model, position, startLine, endLine);
                     const previousWord = getPrevNeighbor(model, position);
                     const nextWord = getNextNeighbor(model, position);
@@ -80,6 +83,28 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                     // const parser = new SqlParser();
                     // const result = parser.parse(fragment);
                     // console.log(result.map((token) => ({ value: token.value, type: token.type })));
+
+                    if (fragment !== currentFragmentRef.current) {
+                        // @todo: tutaj trzeba dodać obsługę ewentualnych dodatkowych znaków identyfikatorów
+                        // zależnie od sterownika. W sterowniku powinny znaleźć się informacje o takich znakach
+                        currentFragmentRef.current = fragment;
+                        const tokenizer = new SqlTokenizer();
+                        const tokens: Token[] = tokenizer.parse(fragment);
+                        const astBuilder = new SqlAstBuilder();
+                        const ast = astBuilder.build(tokens);
+                        currentSqlAstRef.current = ast;
+                    }
+                    if (currentSqlAstRef.current) {
+                        const analyzer = new SqlAnalyzer(currentSqlAstRef.current);
+                        const identifier = analyzer.findIdentifierAt(relativeOffset);
+                        if (identifier) {
+                            return {
+                                contents: [
+                                    { value: `${identifier.parts.join(".")}` },
+                                ]
+                            }
+                        }
+                    }
 
                     return {
                         range: new monaco.Range(

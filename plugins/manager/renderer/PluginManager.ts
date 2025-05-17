@@ -1,10 +1,10 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { Plugin } from "./Plugin";
-import { PluginSessionViews } from "./PluginContext";
+import { PluginSessionViewsFunction } from "./PluginContext";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { View } from "@renderer/contexts/ApplicationContext";
 
-export interface PluginManagerBase {
+export interface IPluginManager {
     /**
      * Get session views for a given database session
      * @param session database session
@@ -14,12 +14,12 @@ export interface PluginManagerBase {
      * Get all registered plugins
      * @returns array of registered plugins
      */
-    getPlugin(): Plugin[];
+    getPlugins(): Plugin[];
 }
 
-class PluginManager implements PluginManagerBase {
+class PluginManager implements IPluginManager {
     private plugins: Map<string, Plugin> = new Map();
-    pluginSessionViewsFactories: PluginSessionViews[] = []; // Array to hold session view factories
+    pluginSessionViewsFactories: PluginSessionViewsFunction[] = []; // Array to hold session view factories
 
     constructor() {
     }
@@ -31,7 +31,7 @@ class PluginManager implements PluginManagerBase {
 
         plugin.initialize({
             internal: internal,
-            registerSessionViewsFactory: (factory: PluginSessionViews) => {
+            registerSessionViewsFactory: (factory: PluginSessionViewsFunction) => {
                 this.registerSessionViewFactory(factory);
             },
         });
@@ -39,7 +39,7 @@ class PluginManager implements PluginManagerBase {
         this.plugins.set(plugin.id, plugin);
     }
 
-    registerSessionViewFactory(factory: PluginSessionViews): void {
+    registerSessionViewFactory(factory: PluginSessionViewsFunction): void {
         this.pluginSessionViewsFactories.push(factory);
     }
 
@@ -48,7 +48,7 @@ class PluginManager implements PluginManagerBase {
         return views;
     }
 
-    getPlugin(): Plugin[] {
+    getPlugins(): Plugin[] {
         return Array.from(this.plugins.values());
     }
 }

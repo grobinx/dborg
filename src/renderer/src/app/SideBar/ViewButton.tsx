@@ -1,5 +1,5 @@
 import { Button, ButtonProps, Collapse, styled, Tooltip, Typography, useThemeProps, Zoom } from "@mui/material";
-import React, { ReactElement } from "react";
+import React, { ReactElement, ReactNode } from "react";
 import { Placement } from "./ContainerButton";
 
 export interface ViewButtonProps extends ButtonProps {
@@ -10,7 +10,7 @@ interface ViewButtonOwnProps extends ViewButtonProps {
     expanded: boolean,
     selected: boolean,
     placement?: Placement,
-    icon?: ReactElement,
+    icon?: ReactNode,
     title?: string,
     index?: number,
 }

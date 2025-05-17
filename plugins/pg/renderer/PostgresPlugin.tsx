@@ -1,6 +1,6 @@
 import { Plugin } from "plugins/manager/renderer/Plugin";
 import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL logo
-import { PluginContext } from "plugins/manager/renderer/PluginContext";
+import { IPluginContext } from "plugins/manager/renderer/PluginContext";
 import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 
@@ -17,7 +17,7 @@ const PostgresPlugin: Plugin = {
     licenseType: "MIT", // License type of the plugin
     keywords: ["postgresql", "database"], // Keywords associated with the plugin
 
-    initialize(context: PluginContext): void {
+    initialize(context: IPluginContext): void {
         context.registerSessionViewsFactory((session) => {
             if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
                 return null;
@@ -41,6 +41,24 @@ const PostgresPlugin: Plugin = {
                         tKey: "database-views",
                     },
                 },
+                {
+                    type: "rendered",
+                    id: "postgresql-rendered-" + session.info.uniqueId,
+                    button: {
+                        icon: "GroupList",
+                        title: "PostgreSQL",
+                        tKey: "postgresql-rendered",
+                    },
+                    render() {
+                        return (
+                            <div>
+                                <h1>PostgreSQL Plugin</h1>
+                                <p>This is a PostgreSQL plugin for DBorg.</p>
+                                <p>{session.schema.sch_name}</p>
+                            </div>
+                        );
+                    },
+                }
             ];
         });
     }

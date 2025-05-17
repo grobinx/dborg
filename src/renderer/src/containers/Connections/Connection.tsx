@@ -31,20 +31,31 @@ interface ConnectionsOwnProps extends ConnectionProps {
 }
 
 export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
-    const { session, ...other } = useThemeProps({ name: "Connection", props });
+    const { session, children, ...other } = useThemeProps({ name: "Connection", props });
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
 
     return (
         <StyledConnection className="Connection-root" {...other}>
-            <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.schema.sch_id}`}>
-                <SplitPanel>
-                    <EditorsTabs session={session} editorContentManager={editorContentManager} />
+            <SplitPanelGroup
+                direction="horizontal"
+                autoSaveId={`connection-panel-left-${session.schema.sch_id}`}
+            >
+                <SplitPanel defaultSize={20} hidden={!children}>
+                    {children}
                 </SplitPanel>
-                <Splitter />
-                <SplitPanel defaultSize={20}>
-                    <ResultsTabs session={session} />
+                <Splitter hidden={!children} />
+                <SplitPanel>
+                    <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.schema.sch_id}`}>
+                        <SplitPanel>
+                            <EditorsTabs session={session} editorContentManager={editorContentManager} />
+                        </SplitPanel>
+                        <Splitter />
+                        <SplitPanel defaultSize={20}>
+                            <ResultsTabs session={session} />
+                        </SplitPanel>
+                    </SplitPanelGroup>
                 </SplitPanel>
             </SplitPanelGroup>
         </StyledConnection>

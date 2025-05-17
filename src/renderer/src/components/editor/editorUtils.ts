@@ -139,7 +139,12 @@ export const getFragmentAroundCursor = (editor: monaco.editor.IStandaloneCodeEdi
     const range = new monaco.Range(startLine, 1, endLine, model.getLineMaxColumn(endLine));
     const fragment = model.getValueInRange(range);
 
-    return { fragment, startLine, endLine };
+    return { 
+        fragment, 
+        startLine,
+        endLine,
+        relativeOffset: model.getOffsetAt(position) - model.getOffsetAt({ lineNumber: startLine, column: 1 })
+    };
 };
 
 /**

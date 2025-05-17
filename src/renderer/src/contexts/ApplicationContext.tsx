@@ -18,7 +18,7 @@ type SidebarSection = "first" | "last"; // Define the sections for the container
 export type ContainerType = "new-connection" | "connections" | "connection-list" | "settings" | "plugins";
 
 export interface ContainerButton {
-    icon: string | React.ReactNode; // Icon for the button, can be a string or a React node
+    icon: React.ReactNode; // Icon for the button, can be a string or a React node
     title: string; // Title of the button
     tKey?: string; // Optional translation key for internationalization
     section: SidebarSection;
@@ -53,8 +53,8 @@ export interface SessionView extends BaseView {
 
 // Union type for all view types
 export type View =
-    RenderedView |
-    SessionView;
+    RenderedView
+    | SessionView;
 
 // Define specific container structures for each ContainerType
 interface NewConnectionContainer extends BaseContainer {
@@ -132,7 +132,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 title: t("connections", "Connections"),
                 section: "first",
             },
-            container: () => <Connections />,
+            container: ({ children }) => <Connections>{children}</Connections>,
         },
         {
             type: "plugins",
@@ -182,6 +182,21 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [selectedSession, setSelectedSession] = React.useState<IDatabaseSession | null>(null);
     const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
     const plugins = usePluginManager();
+
+    // Initialize the containers and set the default selected container
+    // this call is after application init or reset webcontent, so we restore connections from main process
+    React.useEffect(() => {
+        databaseConnections.list().then(async (list) => {
+            const connectionsList = await Promise.all(list.map(async (conn) => {
+                const newSession = new DatabaseSession(conn);
+                await newSession.closeCursors();
+                initMetadata(newSession);
+                return newSession;
+            }));
+            setSessions(connectionsList);
+            setSelectedSession(connectionsList[connectionsList.length - 1] || null);
+        });
+    }, [databaseConnections]);
 
     const updateViewsForSession = React.useCallback((session: IDatabaseSession | null) => {
         if (session) {
@@ -246,21 +261,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             });
         }, 10000);
     };
-
-    // Initialize the containers and set the default selected container
-    // this call is after application init or reset webcontent, so we restore connections from main process
-    React.useEffect(() => {
-        databaseConnections.list().then(async (list) => {
-            const connectionsList = await Promise.all(list.map(async (conn) => {
-                const newSession = new DatabaseSession(conn);
-                await newSession.closeCursors();
-                initMetadata(newSession);
-                return newSession;
-            }));
-            setSessions(connectionsList);
-            setSelectedSession(connectionsList[0] || null);
-        });
-    }, [databaseConnections]);
 
     useEffect(() => {
         setContainers(initialContainersRef.current);

@@ -24,10 +24,11 @@ export interface ConnectionsProps extends StackProps {
 
 interface ConnectionsOwnProps extends ConnectionsProps {
     // Add any additional props you need here
+    children?: React.ReactNode;
 }
 
 const Connections: React.FC<ConnectionsOwnProps> = (props) => {
-    const { className, ...other } = useThemeProps({ name: 'Connections', props });
+    const { className, children, ...other } = useThemeProps({ name: 'Connections', props });
     const { sessions } = useSessions();
 
     return (
@@ -42,7 +43,7 @@ const Connections: React.FC<ConnectionsOwnProps> = (props) => {
                             key={session.info.uniqueId}
                             itemID={session.info.uniqueId}
                             label={<ConnectionLabel session={session} />} // Przekazanie listeners do ConnectionLabel
-                            content={<ConnectionContent session={session} />} // Przekazanie listeners do ConnectionContent
+                            content={<ConnectionContent session={session}>{children}</ConnectionContent>} // Przekazanie listeners do ConnectionContent
                             buttons={<ConnectionButtons session={session} />} // Przekazanie listeners do ConnectionButtons
                         />
                     );
