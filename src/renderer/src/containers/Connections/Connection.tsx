@@ -1,5 +1,5 @@
-import React from "react";
-import { Stack, styled, Tooltip, useTheme, useThemeProps, Badge } from "@mui/material"; // Importuj Badge z Material-UI
+import React, { useEffect } from "react";
+import { Stack, styled, Tooltip, useTheme, useThemeProps, Badge, Box } from "@mui/material"; // Importuj Badge z Material-UI
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import ToolButton from "@renderer/components/ToolButton";
@@ -14,6 +14,8 @@ import ResultsTabs from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
+import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
+import ConnectionView from "./ConnectionView/ViewSlots/ConnectionView";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -32,9 +34,38 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, ...other } = useThemeProps({ name: "Connection", props });
+    const { selectedContainer, selectedView } = useContainers();
+    const { selectedSession } = useSessions();
+    const [selectedThis, setSelectedThis] = React.useState(false);
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
+
+    // Przechowuj utworzone widoki w stanie
+    const [viewsMap, setViewsMap] = React.useState<Record<string, React.ReactNode>>({});
+
+    useEffect(() => {
+        setSelectedThis(
+            selectedContainer?.type === "connections" && 
+            selectedSession?.getUniqueId() === session.info.uniqueId && 
+            selectedView !== null
+        );
+    }, [selectedContainer, selectedView, selectedSession]);
+
+    // Twórz i zapamiętuj widok tylko gdy zmienia się selectedView
+    useEffect(() => {
+        if (selectedView && selectedView.id && !viewsMap[selectedView.id] && selectedThis) {
+            let node: React.ReactNode = null;
+            if (selectedView.type === "connection" && selectedView.slots !== null) {
+                node = <ConnectionView slots={selectedView.slots} key={selectedView.id} session={session} />;
+            } else if (selectedView.type === "rendered" && selectedView.render !== null) {
+                node = <selectedView.render key={selectedView.id} />;
+            }
+            if (node) {
+                setViewsMap(prev => ({ ...prev, [selectedView.id]: node }));
+            }
+        }
+    }, [selectedView, session, viewsMap, selectedThis]);
 
     return (
         <StyledConnection className="Connection-root" {...other}>
@@ -42,10 +73,21 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
                 direction="horizontal"
                 autoSaveId={`connection-panel-left-${session.schema.sch_id}`}
             >
-                <SplitPanel defaultSize={20} hidden={!children}>
-                    {children}
+                <SplitPanel defaultSize={20} hidden={!selectedThis}>
+                    {Object.entries(viewsMap).map(([id, node]) => (
+                        <Box
+                            key={id}
+                            hidden={selectedView?.id !== id}
+                            sx={{
+                                height: "100%",
+                                width: "100%",
+                            }}
+                        >
+                            {node}
+                        </Box>
+                    ))}
                 </SplitPanel>
-                <Splitter hidden={!children} />
+                <Splitter hidden={!selectedThis} />
                 <SplitPanel>
                     <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.schema.sch_id}`}>
                         <SplitPanel>

@@ -6,6 +6,11 @@
   "author": "Andrzej Kałuża",
   "homepage": "https://electron-vite.org",
   "license": "MIT",
+  "productName": "DBORG Database Organizer",
+  "build": {
+    "productName": "DBORG Database Organizer",
+    "appId": "dborg-2"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

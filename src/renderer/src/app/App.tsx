@@ -17,6 +17,9 @@ import { useContainers } from '@renderer/contexts/ApplicationContext';
 import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
 import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
+import ConnectionTitleViewSlot from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionTitleViewSlot';
+import { TitleConnectionViewSlot } from 'plugins/manager/renderer/Plugin';
+import ConnectionView from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionView';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -43,7 +46,7 @@ function useWindowDimensions(): Size {
     return windowDimensions;
 }
 
-export const appStatusBarButtons : Map<string, React.FC> = new Map();
+export const appStatusBarButtons: Map<string, React.FC> = new Map();
 
 const App: React.FC = () => {
     const theme = useTheme();
@@ -158,8 +161,13 @@ const App: React.FC = () => {
                         {containers?.map((container) => (
                             <Container key={container.type} hidden={container !== selectedContainer}>
                                 {container.container !== undefined &&
-                                    <container.container>
-                                        {selectedView?.type === "rendered" && selectedView?.render && <selectedView.render key={selectedView.id} />}
+                                    <container.container key={container.id}>
+                                        {
+                                            selectedContainer?.type !== "connections" &&
+                                            selectedView?.type === "rendered" &&
+                                            selectedView?.render &&
+                                            <selectedView.render key={selectedView.id} />
+                                        }
                                     </container.container>
                                 }
                             </Container>

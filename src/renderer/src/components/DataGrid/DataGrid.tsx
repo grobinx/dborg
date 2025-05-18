@@ -61,6 +61,11 @@ interface DataGridProps<T extends object> {
      */
     onChange?: (context: DataGridStatus) => void;
     /**
+     * Wywoływane jest po kliknięciu w wiersz
+     * @param row 
+     */
+    onRowClick?: (row: T) => void;
+    /**
      * Padding w poziomie dla komórek
      */
     cellPaddingX?: number;
@@ -311,6 +316,7 @@ export const DataGrid = <T extends object>({
     onMount,
     onDismount,
     onChange,
+    onRowClick,
     cellPaddingX = 3,
     cellPaddingY = 1,
     loading,
@@ -350,7 +356,7 @@ export const DataGrid = <T extends object>({
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
-    
+
     useEffect(() => {
         setDataState(data);
         columnsState.resetColumns();
@@ -514,6 +520,12 @@ export const DataGrid = <T extends object>({
         }
     }, [rowHeight, dataTable]);
 
+    useEffect(() => {
+        if (onRowClick && selectedCell?.row !== undefined) {
+            onRowClick(filteredDataState[selectedCell.row]);
+        }
+    }, [filteredDataState, selectedCell?.row]);
+
     const updateSelectedCell = (cell: TableCellPosition | null) => {
         setSelectedCell((prev) => (prev?.row === cell?.row && prev?.column === cell?.column ? prev : cell));
     };
@@ -533,6 +545,7 @@ export const DataGrid = <T extends object>({
                 containerRef.current.focus();
             }
         },
+        isFocused: () => isFocused,
         getValue: () => {
             if (selectedCell) {
                 const column = columnsState.current[selectedCell.column];
@@ -541,7 +554,7 @@ export const DataGrid = <T extends object>({
             return null;
         },
         getPosition: () => selectedCell,
-        setPosition: ({row, column}) => {
+        setPosition: ({ row, column }) => {
             updateSelectedCell({ row, column });
             if (containerRef.current) {
                 scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), rowHeight, columnsState.current, footerVisible);
@@ -590,7 +603,7 @@ export const DataGrid = <T extends object>({
         isSearchCaseSensitive: () => searchState.current.caseSensitive, // Zwrócenie wartości caseSensitiveQuery
         setSearchExclude: (exclude) => searchState.setExclude(exclude), // Ustawienie excludeQuery
         isSearchExclude: () => searchState.current.exclude, // Zwrócenie wartości excludeQuery
-        sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex), 
+        sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex),
         resetSorting: () => columnsState.resetSorting(),
         getSummaryFooterOperation: () => {
             if (summaryOperation) {
@@ -850,7 +863,7 @@ export const DataGrid = <T extends object>({
             )}
 
             {loading && (
-                <LoadingOverlay 
+                <LoadingOverlay
                     label={loading.trim() === "" ? "Loading..." : loading}
                     onCancelLoading={onCancelLoading}
                 />

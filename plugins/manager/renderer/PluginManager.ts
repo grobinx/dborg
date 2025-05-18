@@ -1,6 +1,5 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin } from "./Plugin";
-import { PluginSessionViewsFunction } from "./PluginContext";
+import { Plugin, PluginConnectionViewsFunction } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { View } from "@renderer/contexts/ApplicationContext";
 
@@ -9,7 +8,7 @@ export interface IPluginManager {
      * Get session views for a given database session
      * @param session database session
      */
-    getSessionViews(session: IDatabaseSession): View[] | null;
+    getConnectionViews(session: IDatabaseSession): View[] | null;
     /**
      * Get all registered plugins
      * @returns array of registered plugins
@@ -19,7 +18,7 @@ export interface IPluginManager {
 
 class PluginManager implements IPluginManager {
     private plugins: Map<string, Plugin> = new Map();
-    pluginSessionViewsFactories: PluginSessionViewsFunction[] = []; // Array to hold session view factories
+    pluginConnectionViewsFactories: PluginConnectionViewsFunction[] = []; // Array to hold connection view factories
 
     constructor() {
     }
@@ -31,20 +30,20 @@ class PluginManager implements IPluginManager {
 
         plugin.initialize({
             internal: internal,
-            registerSessionViewsFactory: (factory: PluginSessionViewsFunction) => {
-                this.registerSessionViewFactory(factory);
+            registerConnectionViewsFactory: (factory: PluginConnectionViewsFunction) => {
+                this.registerConnectionViewFactory(factory);
             },
         });
 
         this.plugins.set(plugin.id, plugin);
     }
 
-    registerSessionViewFactory(factory: PluginSessionViewsFunction): void {
-        this.pluginSessionViewsFactories.push(factory);
+    registerConnectionViewFactory(factory: PluginConnectionViewsFunction): void {
+        this.pluginConnectionViewsFactories.push(factory);
     }
 
-    getSessionViews(session: IDatabaseSession): View[] | null {
-        const views = this.pluginSessionViewsFactories.map((factory) => factory(session)).flat().filter((view) => view !== null);
+    getConnectionViews(session: IDatabaseSession): View[] | null {
+        const views = this.pluginConnectionViewsFactories.map((factory) => factory(session)).flat().filter((view) => view !== null);
         return views;
     }
 

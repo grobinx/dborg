@@ -335,16 +335,21 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     useEffect(() => {
         if (open && parentRef?.current) {
             const parentRect = parentRef.current.getBoundingClientRect();
+            const containerWidth = containerRef.current?.offsetWidth || 0;
             const containerHeight = containerRef.current?.offsetHeight || 0;
+            const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
             let top = parentRect.top;
-            let left = (parentRect.left + parentRect.width) / 2 - (containerRef.current?.offsetWidth || 0) / 2;
+            let left = (parentRect.left + parentRect.width) / 2 - containerWidth / 2;
 
-            // Sprawdzenie, czy dolna krawędź okna wychodzi poza widoczny obszar
-            if (top + containerHeight > viewportHeight) {
-                top = viewportHeight - containerHeight - 10; // Korekta z marginesem 10px
-            }
+            // Korekta, by nie wychodziło poza ekran poziomo
+            if (left < 8) left = 8;
+            if (left + containerWidth > viewportWidth - 8) left = viewportWidth - containerWidth - 8;
+
+            // Korekta, by nie wychodziło poza ekran pionowo
+            if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
+            if (top < 8) top = 8;
 
             setPosition({ top, left });
         }

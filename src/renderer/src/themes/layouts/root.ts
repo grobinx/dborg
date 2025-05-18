@@ -20,6 +20,9 @@ const root: ThemeOptions = {
                 "*::-webkit-scrollbar-thumb": {
                     backgroundColor: "rgba(128, 128, 128, 0.3)",
                     borderRadius: 3
+                },
+                "*::-webkit-scrollbar-corner": {
+                    backgroundColor: "transparent" // lub np. "rgba(128,128,128,0.1)"
                 }
             }
         }

@@ -13,9 +13,16 @@ import { uuidv7 } from 'uuidv7';
 import { TabPanelChangedMessage } from '@renderer/app/Messages';
 import { useNotification } from './NotificationContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
+import { CustomContainer, RenderedView, ConnectionView } from 'plugins/manager/renderer/Plugin';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
-export type ContainerType = "new-connection" | "connections" | "connection-list" | "settings" | "plugins";
+export type ContainerType = 
+    "new-connection" 
+    | "connections" 
+    | "connection-list" 
+    | "settings" 
+    | "plugins" 
+    | "custom";
 
 export interface ContainerButton {
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
@@ -25,36 +32,30 @@ export interface ContainerButton {
 }
 
 export interface BaseContainer {
-    type: ContainerType; // Unique identifier for the container
+    id: string; // Unique identifier for the container
+    type: ContainerType; // Type of container
     button: ContainerButton;
     container?: ({ children }: { children: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
 }
 
 export interface ViewButton {
-    icon: string | React.ReactNode; // Icon for the button, can be a string or a React node
+    icon: React.ReactNode; // Icon for the button, can be a string or a React node
     title: string; // Title of the button
     tKey?: string; // Optional translation key for internationalization
 }
 
+export type ViewType = "rendered" | "connection"; // Define the types of views
+
 export interface BaseView {
-    type: "rendered" | "session"; // Type of the view
+    type: ViewType; // Type of the view
     id: string; // Unique identifier for the view
     button: ViewButton; // Button properties for the view
-}
-
-export interface RenderedView extends BaseView {
-    type: "rendered"; // Type of the view
-    render: () => React.ReactNode; // Panel component to be rendered for the view
-}
-
-export interface SessionView extends BaseView {
-    type: "session"; // Type of the view
 }
 
 // Union type for all view types
 export type View =
     RenderedView
-    | SessionView;
+    | ConnectionView;
 
 // Define specific container structures for each ContainerType
 interface NewConnectionContainer extends BaseContainer {
@@ -84,7 +85,8 @@ type SpecificContainer =
     | ConnectionsContainer
     | ConnectionListContainer
     | SettingsContainer
-    | PluginsContainer;
+    | PluginsContainer
+    | CustomContainer;
 
 // Define the structure of the application state
 interface ApplicationState {
@@ -108,6 +110,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const initialContainersRef = React.useRef<SpecificContainer[]>([
         {
+            id: uuidv7(),
             type: "new-connection",
             button: {
                 icon: <theme.icons.NewConnection />,
@@ -117,6 +120,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             container: () => <SchemaAssistant />,
         },
         {
+            id: uuidv7(),
             type: "connection-list",
             button: {
                 icon: <theme.icons.ConnectionList />,
@@ -126,6 +130,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             container: () => <SchemaBook />,
         },
         {
+            id: uuidv7(),
             type: "connections",
             button: {
                 icon: <theme.icons.Connections />,
@@ -135,6 +140,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             container: ({ children }) => <Connections>{children}</Connections>,
         },
         {
+            id: uuidv7(),
             type: "plugins",
             button: {
                 icon: <theme.icons.Plugins />,
@@ -164,6 +170,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             ],
         },
         {
+            id: uuidv7(),
             type: "settings",
             button: {
                 icon: <theme.icons.Settings />,
@@ -209,7 +216,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     sessionState.views.find(v => v.id === sessionState.selectedViewId) || null
                 );
             } else {
-                const views = plugins.getSessionViews(session);
+                const views = plugins.getConnectionViews(session);
                 if (views) {
                     setSessionViewState(prev => ({
                         ...prev,

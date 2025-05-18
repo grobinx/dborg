@@ -17,6 +17,7 @@ import { TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPane
 import { SQL_RESULT_CLOSE } from "./ResultsTabs";
 import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
 import { QueryResultRow } from "src/api/db";
+import { useFocus } from "@renderer/hooks/useFocus";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -84,7 +85,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         const fetchData = async () => {
             if (query) {
                 let cellPosition: TableCellPosition | null = null;
-                if (query === lastQuery.current && dataGridRef.current) {
+                if (query === lastQuery.current && dataGridRef.current && dataGridRef.current.isFocused()) {
                     cellPosition = dataGridRef.current.getPosition();
                 }
                 let time = Date.now();
