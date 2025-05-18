@@ -24,7 +24,7 @@ export const QueryDataGroup = (t: TFunction<"translation", undefined>): ActionGr
 
             // Ustaw nowy timeout z opóźnieniem 300ms
             queryTimeout = setTimeout(() => {
-                context.setQuery(query);
+                context.setSearchText(query);
             }, 300);
 
             const actions: ActionDescriptor<any>[] = [
@@ -44,27 +44,27 @@ export const QueryDataGroup = (t: TFunction<"translation", undefined>): ActionGr
                 icon: "CaseSensitive",
                 label: t(caseSensitiveId, "Match case sensitive"),
                 run: (context) => {
-                    context.setQueryCaseSensitive(!context.isQueryCaseSensitive());
+                    context.setSearchCaseSensitive(!context.isSearchCaseSensitive());
                 },
-                selected: (context) => context.isQueryCaseSensitive(),
+                selected: (context) => context.isSearchCaseSensitive(),
             },
             {
                 id: wholeWordId,
                 icon: "WholeWord",
                 label: t(wholeWordId, "Match whole word"),
                 run: (context) => {
-                    context.setQueryWholeWord(!context.isQueryWholeWord());
+                    context.setSearchWholeWord(!context.isSearchWholeWord());
                 },
-                selected: (context) => context.isQueryWholeWord(),
+                selected: (context) => context.isSearchWholeWord(),
             },
             {
                 id: excludeTextId,
                 icon: "ExcludeText",
                 label: t(excludeTextId, "Exclude text"),
                 run: (context) => {
-                    context.setQueryExclude(!context.isQueryExclude());
+                    context.setSearchExclude(!context.isSearchExclude());
                 },
-                selected: (context) => context.isQueryExclude(),
+                selected: (context) => context.isSearchExclude(),
             },
         ],
     };

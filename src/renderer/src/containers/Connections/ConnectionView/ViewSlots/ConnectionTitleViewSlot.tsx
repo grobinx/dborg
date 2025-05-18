@@ -13,7 +13,7 @@ interface ConnectionTitleViewSlotProps {
     ref?: React.Ref<HTMLDivElement>;
 }
 
-export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = ({ slot, session, ref }) => {
+export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = ({ slot, ref }) => {
     const theme = useTheme();
     const { t } = useTranslation();
 

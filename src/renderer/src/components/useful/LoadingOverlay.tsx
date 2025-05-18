@@ -87,7 +87,7 @@ const OverlayContentBox = styled(Box)(({ theme }) => ({
     maxWidth: "90vw",
 }));
 
-const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(({ labelPosition }) => ({
+const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(() => ({
     position: "absolute",
     top: 0,
     left: 0,

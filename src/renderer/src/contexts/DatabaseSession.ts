@@ -130,10 +130,10 @@ class DatabaseSession implements IDatabaseSession {
         return this.metadata ?? {};
     }
 
-    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
-        if (this.info.driver.implements.includes("metadata")) {
-            return window.dborg.database.connection.updateObject(this.info.uniqueId, progress, schemaName, objectName);
-        }
+    updateObject(_progress?: (current: string) => void, _schemaName?: string, _objectName?: string): Promise<void> {
+        // if (this.info.driver.implements.includes("metadata")) {
+        //     return window.dborg.database.connection.updateObject(this.info.uniqueId, progress, schemaName, objectName);
+        // }
         return Promise.resolve();
     }
 
