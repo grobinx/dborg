@@ -87,7 +87,7 @@ const OverlayContentBox = styled(Box)(({ theme }) => ({
     maxWidth: "90vw",
 }));
 
-const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(() => ({
+const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(({ theme }) => ({
     position: "absolute",
     top: 0,
     left: 0,
@@ -98,6 +98,11 @@ const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(
     justifyContent: "center",
     zIndex: 10,
     backdropFilter: "blur(5px)",
+    flexDirection: "column",
+    backgroundColor:
+        theme.palette.mode === "dark"
+            ? "rgba(38, 50, 56, 0.6)" // ciemny paper z przezroczystością
+            : "rgba(255, 255, 255, 0.6)", // jasny paper z przezroczystością
 }));
 
 interface LoadingOverlayProps {
@@ -175,29 +180,27 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     return (
         <Zoom in={true}>
             <StyledLoadingOverlay labelPosition={labelPosition}>
-                <OverlayContentBox>
-                    <LoadingSpinner speed={speed}>
-                        <div />
-                        <div />
-                        <div />
-                        <div />
-                    </LoadingSpinner>
-                    {label && [
-                        <LoadingLabel color={color} key="label">
-                            <span>{label}</span>
-                            {onCancelLoading !== undefined && (
-                                <Tooltip title={t("cancel", "Cancel")}>
-                                    <ToolButton onClick={onCancelLoading}>
-                                        <theme.icons.Close />
-                                    </ToolButton>
-                                </Tooltip>
-                            )}
-                        </LoadingLabel>,
-                        <LoadingLabel color={color} key="elapsed">
-                            {elapsedTime !== null && " " + Duration.fromObject({ seconds: elapsedTime }).toFormat("hh:mm:ss")}
-                        </LoadingLabel>
-                    ]}
-                </OverlayContentBox>
+                <LoadingSpinner speed={speed}>
+                    <div />
+                    <div />
+                    <div />
+                    <div />
+                </LoadingSpinner>
+                {label && [
+                    <LoadingLabel color={color} key="label">
+                        <span>{label}</span>
+                        {onCancelLoading !== undefined && (
+                            <Tooltip title={t("cancel", "Cancel")}>
+                                <ToolButton onClick={onCancelLoading}>
+                                    <theme.icons.Close />
+                                </ToolButton>
+                            </Tooltip>
+                        )}
+                    </LoadingLabel>,
+                    <LoadingLabel color={color} key="elapsed">
+                        {elapsedTime !== null && " " + Duration.fromObject({ seconds: elapsedTime }).toFormat("hh:mm:ss")}
+                    </LoadingLabel>
+                ]}
             </StyledLoadingOverlay>
         </Zoom>
     );

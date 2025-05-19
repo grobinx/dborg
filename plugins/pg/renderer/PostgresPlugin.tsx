@@ -84,7 +84,12 @@ const PostgresPlugin: Plugin = {
                                 },
                             ] as ColumnDefinition[],
                             onRowClick: (row: TableRecord) => {
-                                description = row.description;
+                                if (row) {
+                                    description = row.description;
+                                }
+                                else {
+                                    description = null;
+                                }
                             },
                         },
                         {

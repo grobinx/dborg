@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useImperativeHandle } from "react"; // Dodaj import useMemo
-import { darken, lighten, styled, useTheme } from "@mui/material";
+import { Box, darken, lighten, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
