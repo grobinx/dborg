@@ -291,6 +291,7 @@ const StyledRowNumberColumn = styled('div')(({ theme }) => ({
     textAlign: "center",
     userSelect: "none",
     backgroundColor: theme.palette.background.table.container,
+    overflow: "hidden",
 }));
 
 const StyledRowNumberCell = styled('div')<{ rowHeight: number }>(({ theme, rowHeight }) => ({
@@ -338,7 +339,7 @@ export const DataGrid = <T extends object>({
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
-    const columnsState = useColumnsState(columns);
+    const columnsState = useColumnsState(columns, dataTable);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
@@ -355,7 +356,6 @@ export const DataGrid = <T extends object>({
     const [fontSize, setFontSize] = useState<number>(16);
 
     useImperativeHandle(ref, () => dataGridActionContext);
-
 
     useEffect(() => {
         setDataState(data);
@@ -641,6 +641,9 @@ export const DataGrid = <T extends object>({
         clearSummary: () => {
             setSummaryOperation(null); // Wyczyść operacje
             setFooterVisible(false); // Ukryj stopkę
+        },
+        resetColumnsLayout: () => {
+            columnsState.resetColumns();
         }
     }
 
@@ -837,28 +840,39 @@ export const DataGrid = <T extends object>({
                 <StyledRowNumberColumn
                     style={{
                         width: rowNumberColumnWidth,
-                        transform: `translateY(-${scrollTop}px)`,
-                        height: totalHeight + rowHeight,
+                        height: containerHeight + (
+                            containerRef.current?.offsetHeight !== undefined && containerRef.current?.clientHeight !== undefined
+                                ? containerRef.current.offsetHeight - containerRef.current.clientHeight
+                                : 0
+                        ), // wysokość kontenera, nie całej tabeli!
                         fontFamily: fontFamily,
+                        // usuń transform: translateY(-${scrollTop}px)
                     }}
-                    onWheel={handleRowNumberColumnScroll} // Obsługa przewijania
+                    onWheel={handleRowNumberColumnScroll}
                 >
-                    {Array.from({ length: Math.min(endRow + 2, filteredDataState.length) - Math.max(startRow - 1, 0) }, (_, rowIndex) => {
-                        const absoluteRowIndex = Math.max(startRow - 1, 0) + rowIndex;
-                        return (
-                            <StyledRowNumberCell
-                                key={absoluteRowIndex}
-                                className={selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}
-                                rowHeight={rowHeight}
-                                style={{
-                                    top: absoluteRowIndex * rowHeight + rowHeight,
-                                }}
-                                onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
-                            >
-                                {absoluteRowIndex + 1}
-                            </StyledRowNumberCell>
-                        );
-                    })}
+                    <div
+                        style={{
+                            position: "relative",
+                            top: rowHeight + -scrollTop, // przesuwaj numery wierszy
+                        }}
+                    >
+                        {Array.from({ length: Math.min(endRow + 2, filteredDataState.length) - Math.max(startRow - 1, 0) }, (_, rowIndex) => {
+                            const absoluteRowIndex = Math.max(startRow - 1, 0) + rowIndex;
+                            return (
+                                <StyledRowNumberCell
+                                    key={absoluteRowIndex}
+                                    className={selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}
+                                    rowHeight={rowHeight}
+                                    style={{
+                                        top: absoluteRowIndex * rowHeight,
+                                    }}
+                                    onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
+                                >
+                                    {absoluteRowIndex + 1}
+                                </StyledRowNumberCell>
+                            );
+                        })}
+                    </div>
                 </StyledRowNumberColumn>
             )}
 

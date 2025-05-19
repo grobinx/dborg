@@ -14,14 +14,154 @@ interface UseColumnsState {
     columnLeft: (columnIndex: number) => number;
 }
 
+// Funkcja do haszowania łańcuchów
+function hashString(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash * 33) ^ str.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(36);
+}
 
-export const useColumnsState = (initialColumns: ColumnDefinition[]): UseColumnsState => {
-    const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(initialColumns);
-    const [totalWidth, setTotalWidth] = useState(() =>
-        initialColumns.reduce((sum, col) => sum + (col.width || 150), 0) // Domyślna szerokość kolumny to 150
+// Pomocnicza funkcja do generowania klucza układu
+function getColumnsLayoutKey(columns: ColumnDefinition[]): string {
+    const keyString = columns
+        .slice()
+        .sort((a, b) =>
+            a.key === b.key
+                ? (a.dataType || "").localeCompare(b.dataType || "")
+                : (a.key || "").localeCompare(b.key || "")
+        )
+        .map((col) => `${col.key}:${col.dataType}`)
+        .join("|");
+    return "datagrid-layout-" + hashString(keyString);
+}
+
+// Zapisz tylko szerokość, kolejność i datę modyfikacji
+function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession: boolean) {
+    const layout = columns.map((col) => ({
+        key: col.key,
+        dataType: col.dataType,
+        width: col.width,
+    }));
+    const toStore = {
+        layout,
+        modified: new Date().toISOString(),
+    };
+    const storage = useSession ? sessionStorage : localStorage;
+    storage.setItem(key, JSON.stringify(toStore));
+}
+
+// Odtwórz szerokość i kolejność, jeśli zestaw kolumn się zgadza
+function restoreColumnsLayout(
+    initialColumns: ColumnDefinition[],
+    key: string,
+    useSession: boolean
+): ColumnDefinition[] {
+    const storage = useSession ? sessionStorage : localStorage;
+    const saved = storage.getItem(key);
+    if (!saved) return initialColumns;
+    try {
+        const parsed = JSON.parse(saved);
+        const layout = parsed.layout ?? parsed; // dla kompatybilności wstecznej
+        // Sprawdź zgodność zestawu kolumn (po posortowaniu)
+        const initialSorted = initialColumns
+            .slice()
+            .sort((a, b) =>
+                a.key === b.key
+                    ? (a.dataType || "").localeCompare(b.dataType || "")
+                    : (a.key || "").localeCompare(b.key || "")
+            );
+        const layoutSorted = layout
+            .slice()
+            .sort((a, b) =>
+                a.key === b.key
+                    ? (a.dataType || "").localeCompare(b.dataType || "")
+                    : (a.key || "").localeCompare(b.key || "")
+            );
+        const same =
+            initialSorted.length === layoutSorted.length &&
+            initialSorted.every(
+                (col, i) =>
+                    col.key === layoutSorted[i].key &&
+                    col.dataType === layoutSorted[i].dataType
+            );
+        if (!same) return initialColumns;
+
+        // Odtwórz kolejność i szerokość
+        return layout.map((savedCol: any) => {
+            const orig = initialColumns.find(
+                (col) =>
+                    col.key === savedCol.key && col.dataType === savedCol.dataType
+            );
+            return orig
+                ? { ...orig, width: savedCol.width ?? orig.width }
+                : orig!;
+        });
+    } catch {
+        return initialColumns;
+    }
+}
+
+function isSameColumnsSet(
+    a: { key: string; dataType: string | undefined }[],
+    b: { key: string; dataType: string | undefined }[]
+): boolean {
+    if (a.length !== b.length) return false;
+    const aSet = new Set(a.map(col => `${col.key}:${col.dataType}`));
+    const bSet = new Set(b.map(col => `${col.key}:${col.dataType}`));
+    if (aSet.size !== bSet.size) return false;
+    for (const item of aSet) {
+        if (!bSet.has(item)) return false;
+    }
+    return true;
+}
+
+function cleanupOldColumnLayouts() {
+    const now = Date.now();
+    const monthMs = 30 * 24 * 60 * 60 * 1000; // 30 dni w ms
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("datagrid-layout-")) {
+            try {
+                const value = localStorage.getItem(key);
+                if (!value) continue;
+                const parsed = JSON.parse(value);
+                const modified = parsed.modified ? Date.parse(parsed.modified) : NaN;
+                if (isNaN(modified) || now - modified > monthMs) {
+                    localStorage.removeItem(key);
+                }
+            } catch {
+                // Jeśli nie da się sparsować, usuń (np. stary format)
+                localStorage.removeItem(key);
+            }
+        }
+    }
+}
+
+export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: boolean): UseColumnsState => {
+    const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns), [initialColumns]);
+    const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
+        restoreColumnsLayout(initialColumns, layoutKey, dataTable)
     );
-    const prevColumnsStateRef = useRef<ColumnDefinition[]>(initialColumns);
+    const [totalWidth, setTotalWidth] = useState(() =>
+        columnsState.reduce((sum, col) => sum + (col.width || 150), 0)
+    );
+    const prevColumnsStateRef = useRef<ColumnDefinition[]>(columnsState);
     const [stateChanged, setstateChanged] = useState(false);
+
+    // Zapisuj układ przy każdej zmianie columnsState
+    useEffect(() => {
+        if (
+            isSameColumnsSet(
+                columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
+                initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
+            )
+        ) {
+            saveColumnsLayout(columnsState, layoutKey, dataTable);
+        }
+    }, [columnsState, layoutKey, initialColumns, dataTable]);
 
     // Aktualizacja stanu kolumn i detekcja zmian
     useEffect(() => {
@@ -86,7 +226,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[]): UseColumnsS
 
     // Funkcja do resetowania stanu kolumn
     const resetColumns = () => {
-        setColumnsState(initialColumns);
+        setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, dataTable));
     };
 
     // Funkcja do przenoszenia kolumn
@@ -151,3 +291,5 @@ export const useColumnsState = (initialColumns: ColumnDefinition[]): UseColumnsS
         columnLeft,
     };
 };
+
+cleanupOldColumnLayouts();

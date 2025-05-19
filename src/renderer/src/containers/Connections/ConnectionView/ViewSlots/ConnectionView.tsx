@@ -80,15 +80,16 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
                                     flex: 1,
                                     minHeight: 0,
                                     height: `calc(100% - ${otherSlotsHeight}px)`,
-                                    transition: "height 0.2s"
                                 }}
                             >
                                 <ConnectionDataGridViewSlot
                                     slot={slot as DataGridConnectionViewSlot}
                                     session={session}
                                     onRowClick={(row) => {
-                                        (slot as DataGridConnectionViewSlot).onRowClick?.(row);
-                                        forceRerenderSlots();
+                                        if ((slot as DataGridConnectionViewSlot).onRowClick) {
+                                            (slot as DataGridConnectionViewSlot).onRowClick?.(row);
+                                            forceRerenderSlots();
+                                        }
                                     }}
                                 />
                             </Box>

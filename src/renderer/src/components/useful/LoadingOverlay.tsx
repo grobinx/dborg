@@ -22,7 +22,13 @@ const spinnerColorsDark = [
     "#ef9a9a", // jasnoczerwony
 ];
 
-const LoadingSpinner = styled("div")<{ speed: number }>(({ speed, theme }) => {
+// Dodaj funkcję pomocniczą do generowania losowych opóźnień
+const getRandomDelays = (count: number, min = -0.5, max = 0.0) =>
+    Array.from({ length: count }, () =>
+        (Math.random() * (max - min) + min).toFixed(2) + "s"
+    );
+
+const LoadingSpinner = styled("div")<{ speed: number; delays?: string[] }>(({ speed, theme, delays }) => {
     const colors = theme.palette.mode === "dark" ? spinnerColorsDark : spinnerColorsLight;
     return {
         width: "54px",
@@ -43,19 +49,19 @@ const LoadingSpinner = styled("div")<{ speed: number }>(({ speed, theme }) => {
         },
         "& div:nth-of-type(1)": {
             borderColor: `${colors[0]} transparent transparent transparent`,
-            animationDelay: "-0.45s",
+            animationDelay: delays?.[0] ?? "-0.45s",
         },
         "& div:nth-of-type(2)": {
             borderColor: `${colors[1]} transparent transparent transparent`,
-            animationDelay: "-0.3s",
+            animationDelay: delays?.[1] ?? "-0.3s",
         },
         "& div:nth-of-type(3)": {
             borderColor: `${colors[2]} transparent transparent transparent`,
-            animationDelay: "-0.15s",
+            animationDelay: delays?.[2] ?? "-0.15s",
         },
         "& div:nth-of-type(4)": {
             borderColor: `${colors[3]} transparent transparent transparent`,
-            animationDelay: "0s",
+            animationDelay: delays?.[3] ?? "0s",
         },
         "@keyframes lds-ring-spin": {
             "0%": { transform: "rotate(0deg)" },
@@ -175,12 +181,15 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     color = color ?? theme.palette.action.active;
 
+    // Generuj losowe opóźnienia tylko raz na montowanie
+    const [delays] = useState(() => getRandomDelays(4, -0.5, 0));
+
     if (!show) return null;
 
     return (
         <Zoom in={true}>
             <StyledLoadingOverlay labelPosition={labelPosition}>
-                <LoadingSpinner speed={speed}>
+                <LoadingSpinner speed={speed} delays={delays}>
                     <div />
                     <div />
                     <div />

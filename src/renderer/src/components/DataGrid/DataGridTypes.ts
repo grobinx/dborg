@@ -203,6 +203,7 @@ export interface DataGridActionContext<T extends object> {
     setShowRowNumberColumn: (show: boolean) => void;
     isShowRowNumberColumn: () => boolean;
     clearSummary: () => void;
+    resetColumnsLayout: () => void;
 }
 
 export interface DataGridContext<T extends object> {

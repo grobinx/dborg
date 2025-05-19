@@ -15,14 +15,15 @@ const root: ThemeOptions = {
                     backgroundColor: "transparent",
                 },
                 "*::-webkit-scrollbar-track": {
-                    WebkitBoxShadow: "inset 0 0 6px rgba(128, 128, 128, 0.3)"
+                    backgroundColor: "rgba(128,128,128,0.08)", // lekko widoczny tor
+                    WebkitBoxShadow: "inset 0 0 6px rgba(128, 128, 128, 0.08)"
                 },
                 "*::-webkit-scrollbar-thumb": {
-                    backgroundColor: "rgba(128, 128, 128, 0.3)",
+                    backgroundColor: "rgba(128, 128, 128, 0.25)", // półprzezroczysty kciuk
                     borderRadius: 3
                 },
                 "*::-webkit-scrollbar-corner": {
-                    backgroundColor: "transparent" // lub np. "rgba(128,128,128,0.1)"
+                    backgroundColor: "rgba(128,128,128,0.08)"
                 }
             }
         }
