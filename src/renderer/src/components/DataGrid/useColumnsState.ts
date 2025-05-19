@@ -64,29 +64,15 @@ function restoreColumnsLayout(
     try {
         const parsed = JSON.parse(saved);
         const layout = parsed.layout ?? parsed; // dla kompatybilności wstecznej
-        // Sprawdź zgodność zestawu kolumn (po posortowaniu)
-        const initialSorted = initialColumns
-            .slice()
-            .sort((a, b) =>
-                a.key === b.key
-                    ? (a.dataType || "").localeCompare(b.dataType || "")
-                    : (a.key || "").localeCompare(b.key || "")
-            );
-        const layoutSorted = layout
-            .slice()
-            .sort((a, b) =>
-                a.key === b.key
-                    ? (a.dataType || "").localeCompare(b.dataType || "")
-                    : (a.key || "").localeCompare(b.key || "")
-            );
-        const same =
-            initialSorted.length === layoutSorted.length &&
-            initialSorted.every(
-                (col, i) =>
-                    col.key === layoutSorted[i].key &&
-                    col.dataType === layoutSorted[i].dataType
-            );
-        if (!same) return initialColumns;
+
+        if (
+            !isSameColumnsSet(
+                initialColumns.map(col => ({ key: col.key, dataType: col.dataType })),
+                layout.map((col: any) => ({ key: col.key, dataType: col.dataType }))
+            )
+        ) {
+            return initialColumns;
+        }
 
         // Odtwórz kolejność i szerokość
         return layout.map((savedCol: any) => {
@@ -226,7 +212,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: b
 
     // Funkcja do resetowania stanu kolumn
     const resetColumns = () => {
-        setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, dataTable));
+        setColumnsState(initialColumns);
     };
 
     // Funkcja do przenoszenia kolumn

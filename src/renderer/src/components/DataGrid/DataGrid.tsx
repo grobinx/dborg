@@ -644,7 +644,8 @@ export const DataGrid = <T extends object>({
         },
         resetColumnsLayout: () => {
             columnsState.resetColumns();
-        }
+        },
+        actionManager: () => actionManager.current,
     }
 
     useEffect(() => {
@@ -701,10 +702,11 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.AdjustWidthToData(t));
             actionManager.current.registerAction(actions.SwitchColumnSort(t));
             actionManager.current.registerAction(actions.ToggleShowRowNumberColumn(t));
+            actionManager.current.registerAction(actions.ResetColumnsLayout(t));
 
             actionManager.current.registerAction(actions.OpenCommandPalette(t));
             actionManager.current.registerAction(actions.GotoColumn(t));
-            actionManager.current.registerAction(actions.QueryData(t));
+            actionManager.current.registerAction(actions.SearchData(t));
             actionManager.current.registerAction(actions.SummaryFooter(t));
         }
 

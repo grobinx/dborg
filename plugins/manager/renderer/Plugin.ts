@@ -104,30 +104,89 @@ export interface RenderedView extends BaseView {
 
 export type ConnectionViewSlotType = "title" | "datagrid" | "text";
 
+/**
+ * Interface representing a connection view slot
+ */
 export interface IConnectionViewSlot {
-    id: string; // Unique identifier for the slot
-    type: ConnectionViewSlotType; // Type of the slot
+    /**
+     * Unique identifier for the slot.
+     */
+    id: string;
+    /**
+     * Type of the slot
+     */
+    type: ConnectionViewSlotType;
 }
 
+/**
+ * Interface representing a title connection view slot
+ */
 export interface TitleConnectionViewSlot extends IConnectionViewSlot {
-    type: "title"; // Type of the slot
-    icon?: ReactNode; // Optional icon for the title
-    title: string; // Title of the slot
-    tKey?: string; // Translation key for the title
-    actions?: ActionDescriptor<any>[]; // Array of actions to be performed on the slot
+    /**
+     * Type of the slot.
+     * This slot is used to display a title in the connection view.
+     */
+    type: "title";
+    /**
+     * Optional icon for the title.
+     */
+    icon?: ReactNode;
+    /**
+     * Title of the slot
+     */
+    title: string;
+    /**
+     * Translation key for the title
+     */
+    tKey?: string;
+    /**
+     * Array of action IDs to be performed on the title, defined in DataGrid and/or DataGridConnectionViewSlot
+     * These actions will be displayed as buttons in the title bar.
+     */
+    actions?: string[];
 }
 
+/**
+ * Interface representing a connection view slot for a data grid
+ */
 export interface DataGridConnectionViewSlot extends IConnectionViewSlot {
-    type: "datagrid"; // Type of the slot
-    sql: string; // SQL query to be executed
-    columns: ColumnDefinition[]; // Array of column definitions for the data grid
-    actions?: ActionDescriptor<any>[]; // Array of actions to be performed on the data grid
-    onRowClick?: (row: any) => void; // Callback function for row click events
+    /**
+     * Type of the slot
+     */
+    type: "datagrid";
+    /**
+     * SQL query to be executed to fetch data for the data grid
+     * This query will be executed in the context of the current database session.
+     */
+    sql: string;
+    /**
+     * Array of column definitions for the data grid
+     */
+    columns: ColumnDefinition[];
+    /**
+     * Array of actions to be performed on the data grid
+     */
+    actions?: ActionDescriptor<any>[];
+    /**
+     * Callback function for row click events
+     * @param row The clicked row data
+     */
+    onRowClick?: (row: any) => void;
 }
 
+/**
+ * Interface representing a connection view slot for displaying text, eg a description of object on clicked row
+ * This slot is used to display static or dynamic text content in the connection view.
+ */
 export interface TextConnectionViewSlot extends IConnectionViewSlot {
-    type: "text"; // Type of the slot
-    content: string | (() => string); // Content of the text slot
+    /**
+     * Type of the slot
+     */
+    type: "text";
+    /**
+     * Content of the text slot
+     */
+    content: string | (() => string);
 }
 
 /**

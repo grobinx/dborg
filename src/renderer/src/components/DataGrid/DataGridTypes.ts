@@ -1,6 +1,7 @@
 import React from "react";
-import { ActionDescriptor, ActionGroupDescriptor } from "../CommandPalette/ActionManager";
+import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
 import { ColumnInfo } from "src/api/db";
+import { CommandManager } from "../CommandPalette/CommandManager";
 
 export interface DataGridInfoMessage {
     /**
@@ -204,6 +205,7 @@ export interface DataGridActionContext<T extends object> {
     isShowRowNumberColumn: () => boolean;
     clearSummary: () => void;
     resetColumnsLayout: () => void;
+    actionManager: () => ActionManager<DataGridActionContext<T>> | null;
 }
 
 export interface DataGridContext<T extends object> {

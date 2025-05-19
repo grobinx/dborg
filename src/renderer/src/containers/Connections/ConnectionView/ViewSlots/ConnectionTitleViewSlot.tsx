@@ -6,14 +6,19 @@ import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { resolve } from "path";
 import { resolveIcon } from "@renderer/themes/icons";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 
 interface ConnectionTitleViewSlotProps {
     slot: TitleConnectionViewSlot;
     session: IDatabaseSession;
     ref?: React.Ref<HTMLDivElement>;
+    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
 }
 
-export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = ({ slot, ref }) => {
+export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = ({
+    slot, session, ref, dataGridRef
+}) => {
     const theme = useTheme();
     const { t } = useTranslation();
 
@@ -23,23 +28,24 @@ export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = (
             <Typography variant="h6">
                 {slot.tKey ? t(slot.tKey, slot.title) : slot.title}
             </Typography>
-            {/* {slot.actions && slot.actions.length > 0 && (
-                <Stack direction="row" spacing={1}>
-                    {slot.actions.map((btn) => (
-                        <ActionButton
-                            key={btn.id}
-                            actionId={btn.id}
-                            variant="text"
-                            size="small"
-                            color="inherit"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                btn.action();
-                            }}
-                        />
-                    ))}
-                </Stack>
-            )} */}
+            <div style={{ flexGrow: 1 }} />
+            {slot.actions && slot.actions.length > 0 && (
+                <TabPanelButtons>
+                    {slot.actions.map((action) => {
+                        const context = dataGridRef?.current;
+                        const actionManager = context?.actionManager();
+                        if (!actionManager || !context) return null;
+                        return (
+                            <ActionButton
+                                key={action}
+                                actionId={action}
+                                getContext={() => context}
+                                actionManager={actionManager}
+                            />
+                        );
+                    })}
+                </TabPanelButtons>
+            )}
         </Stack>
     );
 };

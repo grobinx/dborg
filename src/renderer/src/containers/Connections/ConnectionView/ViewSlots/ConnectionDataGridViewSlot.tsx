@@ -4,18 +4,18 @@ import { Box, Typography, IconButton, Stack } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { use } from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-// Załóżmy, że masz komponent DataGrid, np. z MUI X lub własny
-// import { DataGrid } from "@mui/x-data-grid";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 
 interface ConnectionDataGridViewSlotProps {
     slot: DataGridConnectionViewSlot;
     session: IDatabaseSession;
     ref?: React.Ref<HTMLDivElement>;
+    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
     onRowClick?: (row: any) => void;
 }
 
 export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProps> = ({
-    slot, session, ref, onRowClick
+    slot, session, ref, dataGridRef, onRowClick
 }) => {
     const [rows, setRows] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -51,6 +51,7 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
                 data={rows}
                 loading={loading ? "Loading..." : undefined}
                 onRowClick={onRowClick}
+                ref={dataGridRef}
             />
         </Box>
     );

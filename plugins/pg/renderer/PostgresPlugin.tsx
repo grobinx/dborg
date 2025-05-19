@@ -4,6 +4,7 @@ import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { SearchData, SearchData_ID } from "@renderer/components/DataGrid/actions";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -41,6 +42,9 @@ const PostgresPlugin: Plugin = {
                             icon: "DatabaseTables",
                             title: "Tables",
                             tKey: "database-tables",
+                            actions: [
+                                SearchData_ID,
+                            ],
                         },
                         {
                             id: "tables-datagrid-" + session.info.uniqueId,

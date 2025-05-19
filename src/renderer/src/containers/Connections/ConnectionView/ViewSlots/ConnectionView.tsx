@@ -1,10 +1,11 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import { TitleConnectionViewSlot, DataGridConnectionViewSlot, IConnectionViewSlot, TextConnectionViewSlot } from "plugins/manager/renderer/Plugin";
 import { ConnectionTitleViewSlot } from "./ConnectionTitleViewSlot";
 import { Box } from "@mui/material";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import ConnectionDataGridViewSlot from "./ConnectionDataGridViewSlot";
 import ConnectionTextViewSlot from "./CpnnectionTextViewSlot";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 
 interface ConnectionViewProps {
     slots: IConnectionViewSlot[];
@@ -17,6 +18,7 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
         () => slots.map(() => React.createRef<HTMLDivElement>()),
         [slots]
     );
+    const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
 
     // Stan na wysokości każdego slotu
     const [heights, setHeights] = useState<number[]>(() => slots.map(() => 0));
@@ -68,6 +70,7 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
                                 slot={slot as TitleConnectionViewSlot}
                                 session={session}
                                 ref={slotRefs[idx]}
+                                dataGridRef={dataGridRef}
                             />
                         );
                     case "datagrid":
@@ -91,6 +94,7 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
                                             forceRerenderSlots();
                                         }
                                     }}
+                                    dataGridRef={dataGridRef}
                                 />
                             </Box>
                         );

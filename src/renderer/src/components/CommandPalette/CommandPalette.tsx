@@ -45,7 +45,7 @@ const Key = styled('span')(({ theme }) => ({
     textAlign: 'center',
 }));
 
-const KeybindingContainer = styled('div')({
+const KeybindingContainer = styled('span')({
     display: 'flex',
     alignItems: 'center',
     marginLeft: 16,
@@ -79,6 +79,24 @@ export const highlightText = (text: string, query: string, theme: Theme) => {
         )
     );
 };
+
+export function renderKeybindings(keybindings: string[]) {
+    return (
+        <KeybindingContainer>
+            {keybindings.map((keybinding, bindingIdx, bindingArray) => (
+                <React.Fragment key={bindingIdx}>
+                    {splitKeybinding(keybinding).map((key, idx, array) => (
+                        <React.Fragment key={idx}>
+                            <Key>{key}</Key>
+                            {idx < array.length - 1 && <span>+</span>}
+                        </React.Fragment>
+                    ))}
+                    {bindingIdx < bindingArray.length - 1 && <span>&nbsp;→&nbsp;</span>}
+                </React.Fragment>
+            ))}
+        </KeybindingContainer>
+    );
+}
 
 const CommandPalette: React.FC<CommandPaletteProps> = ({
     manager,
@@ -354,22 +372,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setPosition({ top, left });
         }
     }, [open, listMaxHeight, filteredCommands]);
-
-    const renderKeybindings = (keybindings: string[]) => (
-        <KeybindingContainer>
-            {keybindings.map((keybinding, bindingIdx, bindingArray) => (
-                <React.Fragment key={bindingIdx}>
-                    {splitKeybinding(keybinding).map((key, idx, array) => (
-                        <React.Fragment key={idx}>
-                            <Key>{key}</Key>
-                            {idx < array.length - 1 && <span>+</span>}
-                        </React.Fragment>
-                    ))}
-                    {bindingIdx < bindingArray.length - 1 && <span>&nbsp;→&nbsp;</span>}
-                </React.Fragment>
-            ))}
-        </KeybindingContainer>
-    );
 
     return (
         <>

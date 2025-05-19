@@ -69,6 +69,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             CaseSensitive: (props) => <IconWrapper {...props} className="case-sensitive"><CaseSensitive fontSize="inherit" /></IconWrapper>,
             AddTab: (props) => <IconWrapper {...props} className="add-tab"><AddTabRight fontSize="inherit" /></IconWrapper>,
             ExcludeText: (props) => <IconWrapper {...props} className="exclude-text"><NotEqual fontSize="inherit" /></IconWrapper>,
+            Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

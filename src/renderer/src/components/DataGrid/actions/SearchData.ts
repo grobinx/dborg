@@ -2,13 +2,14 @@ import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionMana
 import { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const QueryData = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
-    const id = "dataGrid.actions.queryData";
+export const SearchData_ID = "dataGrid.actions.searchData";
 
+export const SearchData = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
     return {
-        id: id,
+        id: SearchData_ID,
         keybindings: ["Ctrl+F"],
-        label: t(id, "Search data"),
+        label: t(SearchData_ID, "Search data"),
+        icon: "Search",
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 999,
         run: (context) => {

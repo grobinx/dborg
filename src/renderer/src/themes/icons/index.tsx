@@ -113,6 +113,7 @@ export interface ThemeIcons {
     CaseSensitive: IconWrapperFC;
     AddTab: IconWrapperFC;
     ExcludeText: IconWrapperFC;
+    Search: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode) => {

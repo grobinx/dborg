@@ -1,6 +1,8 @@
-import { Tooltip } from "@mui/material";
+import { Tooltip, useTheme } from "@mui/material";
 import ToolButton, { ToolButtonProps } from "../ToolButton"; // Zakładam, że ToolButton jest w katalogu nadrzędnym
 import { ActionManager } from "./ActionManager";
+import { resolveIcon } from "@renderer/themes/icons";
+import { renderKeybindings } from "./CommandPalette";
 
 interface ActionButtonProps<T> extends ToolButtonProps {
     actionManager: ActionManager<T>; // Menedżer akcji
@@ -9,7 +11,8 @@ interface ActionButtonProps<T> extends ToolButtonProps {
 }
 
 const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: ActionButtonProps<T>) => {
-    const action = actionManager.getRegisteredActions(null).find((a) => a.id === actionId);
+    const theme = useTheme();
+    const action = actionManager.getRegisteredActions().find((a) => a.id === actionId);
 
     if (!action) {
         console.error(`Action with id "${actionId}" not found.`);
@@ -19,7 +22,7 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: Act
     const handleClick = () => {
         const context = getContext(); // Pobierz kontekst za pomocą funkcji
         if (action.precondition && !action.precondition(context)) {
-            console.warn(`Action "${action.id}" cannot be executed due to unmet precondition.`);
+            // console.warn(`Action "${action.id}" cannot be executed due to unmet precondition.`);
             return;
         }
 
@@ -27,7 +30,15 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: Act
     };
 
     return (
-        <Tooltip title={action.label}>
+        <Tooltip title={
+            action.keybindings
+                ? (
+                    <span style={{ display: "inline", whiteSpace: "nowrap" }}>
+                        <span>{action.label}</span>{renderKeybindings(action.keybindings)}
+                    </span>
+                )
+                : action.label
+        }>
             <span>
                 <ToolButton
                     {...other}
@@ -36,7 +47,7 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: Act
                     disabled={action.precondition ? !action.precondition(getContext()) : false}
                     selected={typeof action.selected === "function" ? action.selected(getContext()) : action.selected}
                 >
-                    {action.icon}
+                    {resolveIcon(theme, action.icon)}
                 </ToolButton>
             </span>
         </Tooltip>
