@@ -4,11 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Duration } from "luxon";
 import ToolButton from "../ToolButton";
 
-const generateRandomColor = () => {
-    const randomColor = () => Math.floor(Math.random() * 256);
-    return `rgb(${randomColor()}, ${randomColor()}, ${randomColor()})`;
-};
-
 const spinnerColorsLight = [
     "#1976d2", // niebieski
     "#43a047", // zielony
@@ -28,8 +23,17 @@ const getRandomDelays = (count: number, min = -0.5, max = 0.0) =>
         (Math.random() * (max - min) + min).toFixed(2) + "s"
     );
 
-const LoadingSpinner = styled("div")<{ speed: number; delays?: string[] }>(({ speed, theme, delays }) => {
-    const colors = theme.palette.mode === "dark" ? spinnerColorsDark : spinnerColorsLight;
+// Funkcja do losowego tasowania tablicy (Fisher-Yates)
+function shuffleArray<T>(array: T[]): T[] {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+const LoadingSpinner = styled("div")<{ speed: number; delays?: string[]; colors: string[] }>(({ speed, theme, delays, colors }) => {
     return {
         width: "54px",
         height: "54px",
@@ -76,21 +80,6 @@ const LoadingLabel = styled("div")<{ color: string }>(({ color }) => ({
     gap: "6px",
     fontSize: "1.2rem",
     color: color, // Kolor tekstu
-}));
-
-const OverlayContentBox = styled(Box)(({ theme }) => ({
-    backgroundColor:
-        theme.palette.mode === "dark"
-            ? "rgba(38, 50, 56, 0.6)" // ciemny paper z przezroczystością
-            : "rgba(255, 255, 255, 0.6)", // jasny paper z przezroczystością
-    borderRadius: 12,
-    boxShadow: theme.shadows[8],
-    padding: "16px 40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    minWidth: 220,
-    maxWidth: "90vw",
 }));
 
 const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(({ theme }) => ({
@@ -160,7 +149,23 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     const theme = useTheme();
     const [show, setShow] = useState(false);
     const [elapsedTime, setElapsedTime] = useState<number | null>(null);
+    const [startTime] = useState(Date.now());
     const { t } = useTranslation();
+
+    // Losuj kolory spinnera przy każdym montowaniu
+    const [spinnerColors, setSpinnerColors] = useState(() => {
+        return theme.palette.mode === "dark"
+            ? shuffleArray(spinnerColorsDark)
+            : shuffleArray(spinnerColorsLight);
+    });
+
+    useEffect(() => {
+        setSpinnerColors(
+            theme.palette.mode === "dark"
+                ? shuffleArray(spinnerColorsDark)
+                : shuffleArray(spinnerColorsLight)
+        );
+    }, [theme.palette.mode]);
 
     useEffect(() => {
         const timer = setTimeout(() => setShow(true), delay);
@@ -169,7 +174,6 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     useEffect(() => {
         if (!show || !timeDelaySec) return;
-        const startTime = Date.now();
         const interval = setInterval(() => {
             const secondsElapsed = Math.floor((Date.now() - startTime) / 1000);
             if (secondsElapsed >= timeDelaySec) {
@@ -177,7 +181,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             }
         }, 1000);
         return () => clearInterval(interval);
-    }, [show, timeDelaySec]);
+    }, [show, timeDelaySec, startTime]);
 
     color = color ?? theme.palette.action.active;
 
@@ -189,7 +193,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     return (
         <Zoom in={true}>
             <StyledLoadingOverlay labelPosition={labelPosition}>
-                <LoadingSpinner speed={speed} delays={delays}>
+                <LoadingSpinner speed={speed} delays={delays} colors={spinnerColors}>
                     <div />
                     <div />
                     <div />
