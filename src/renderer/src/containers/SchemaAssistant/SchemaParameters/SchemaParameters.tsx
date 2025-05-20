@@ -100,7 +100,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
     }), [properties, schemaPattern, schemaName, schemaColor, schemaGroup, schemaUsePassword]);
 
     React.useEffect(() => {
-        if (!schema.uniqueId) {
+        if (!schema.uniqueId && !schema.properties) {
             const defaultProperites: Properties = {};
             driver!.properties.flatMap(group => group.properties).forEach(property => {
                 if ((property.default ?? '') !== '') {
@@ -114,7 +114,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                 setProperties(defaultProperites);
             }
         }
-    }, [schema.driverUniqueId]);
+    }, [schema.driverUniqueId, schema.properties]);
 
     const handlePropertyChange = (property: PropertyInfo, value: string): void => {
         setProperties((prev) => {

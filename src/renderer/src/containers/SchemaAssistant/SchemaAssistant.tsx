@@ -106,32 +106,52 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         if (container === selectedContainer?.type && container === "new-connection") {
             sendMessage(Messages.SET_SCHEMA_ID, undefined);
         }
-    }, [sendMessage, selectedContainer]);
+    }, [selectedContainer]);
 
     const handleSetSchemaIdMessage = React.useCallback((schemaId: string) => {
         setSchemaParams({ uniqueId: schemaId });
         setActiveStep(schemaId ? 1 : 0);
         setForceReload((prev) => !prev); // Wymuszenie odświeżenia
-    }, [setActiveStep, setSchemaParams]);
+    }, []);
+
+    const handleSetCloneSchemaIdMessage = React.useCallback(async (schemaId: string) => {
+        try {
+            const schema = await sendMessage(Messages.FETCH_SCHEMA, schemaId) as SchemaRecord;
+            setSchemaParams({
+                driverUniqueId: schema.sch_drv_unique_id,
+                schemaGroup: schema.sch_group,
+                schemaPattern: schema.sch_pattern,
+                schemaName: schema.sch_name,
+                schemaColor: schema.sch_color,
+                usePassword: schema.sch_use_password,
+                properties: schema.sch_properties,
+                driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
+            });
+            setActiveStep(1);
+        }
+        catch (error) {
+            addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
+        }
+    }, []);
 
     const handleEndEditSchemaMessage = React.useCallback(() => {
         sendMessage(Messages.SWITCH_CONTAINER, "connection-list");
-    }, [sendMessage]);
+    }, []);
 
     // Register and unregister message handlers
     React.useEffect(() => {
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
         subscribe(Messages.SET_SCHEMA_ID, handleSetSchemaIdMessage);
+        subscribe(Messages.STE_CLONE_SCHEMA_ID, handleSetCloneSchemaIdMessage);
         subscribe(Messages.END_EDIT_SCHEMA, handleEndEditSchemaMessage);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
             unsubscribe(Messages.SET_SCHEMA_ID, handleSetSchemaIdMessage);
+            unsubscribe(Messages.STE_CLONE_SCHEMA_ID, handleSetCloneSchemaIdMessage);
             unsubscribe(Messages.END_EDIT_SCHEMA, handleEndEditSchemaMessage);
         };
     }, [
-        subscribe,
-        unsubscribe,
         handleSwitchContainerMessage,
         handleSetSchemaIdMessage,
         handleEndEditSchemaMessage,
@@ -237,11 +257,11 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
             }
         };
-        if (!schemaParams.uniqueId) {
+        if (!schemaParams.uniqueId || activeStep >= 1) {
             return;
         }
         load();
-    }, [schemaParams.uniqueId, forceReload, sendMessage, addNotification, t]);
+    }, [schemaParams.uniqueId, activeStep, forceReload]);
 
     return (
         <SchemaAssistantRoot
@@ -259,6 +279,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                         label={t("search", "Search...")}
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
+                        autoFocus
                     />
                 }
             </SchemaAssistantTitle>

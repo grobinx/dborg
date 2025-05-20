@@ -330,6 +330,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         });
     }, []);
 
+    const handleCloneEditSchema = React.useCallback((schemaId: string) => {
+        sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
+            sendMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
+        });
+    }, []);
+
     const handleTabConnectionsChanged = React.useCallback((message: TabPanelChangedMessage) => {
         if (message.tabsItemID !== "connections-tabs-panel") {
             return;
@@ -385,6 +391,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
         subscribe(Messages.EDIT_SCHEMA, handleEditSchema);
+        subscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
         subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
         subscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
         subscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
@@ -393,6 +400,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
             unsubscribe(Messages.SWITCH_VIEW, handleSwitchView);
             unsubscribe(Messages.EDIT_SCHEMA, handleEditSchema);
+            unsubscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
             unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
             unsubscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);

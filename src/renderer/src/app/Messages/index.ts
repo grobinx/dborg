@@ -74,10 +74,22 @@ export const SWITCH_VIEW = "switch-view";
 export const EDIT_SCHEMA = "edit-schema";
 
 /**
+ * Clone the db schema and edit as new one.
+ * @param schemaId The db schema to clone.
+ */
+export const CLONE_EDIT_SCHEMA = "clone-edit-schema";
+
+/**
  * Set the schema ID for the current operation.
  * @param schemaId The ID of the schema to set.
  */
 export const SET_SCHEMA_ID = "set-schema-id";
+
+/**
+ * Set the schema ID for clone schema to edit as new one.
+ * @param schemaId The ID of the schema to set.
+ */
+export const STE_CLONE_SCHEMA_ID = "set-clone-schema-id";
 
 /**
  * End the edit of the db schema

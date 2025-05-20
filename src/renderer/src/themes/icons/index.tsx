@@ -80,7 +80,8 @@ export interface ThemeIcons {
     NewConnection: IconWrapperFC;
     ConnectionList: IconWrapperFC;
     Connections: IconWrapperFC;
-    EditConnection: IconWrapperFC;
+    EditConnectionSchema: IconWrapperFC;
+    CloneConnectionSchema: IconWrapperFC;
     Settings: IconWrapperFC;
     OpenFile: IconWrapperFC;
     Visibility: IconWrapperFC;

@@ -470,7 +470,20 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         }}
                                                         color="primary"
                                                     >
-                                                        <theme.icons.EditConnection {...slotProps?.icon} />
+                                                        <theme.icons.EditConnectionSchema {...slotProps?.icon} />
+                                                    </ToolButton>
+                                                </Tooltip>
+                                                <Tooltip title={t("clone-edit-schema", "Clone and edit as new schema")}>
+                                                    <ToolButton
+                                                        size="large"
+                                                        className="clone"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            sendMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
+                                                        }}
+                                                        color="primary"
+                                                    >
+                                                        <theme.icons.CloneConnectionSchema {...slotProps?.icon} />
                                                     </ToolButton>
                                                 </Tooltip>
                                             </ButtonGroup>
