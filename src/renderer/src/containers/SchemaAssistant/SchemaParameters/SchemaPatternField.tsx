@@ -6,6 +6,7 @@ import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { textFieldWidth } from './Utils';
 import { useNotification } from '@renderer/contexts/NotificationContext';
 import ToolButton from '@renderer/components/ToolButton';
+import ColorPicker from '@renderer/components/useful/ColorPicker';
 
 interface SchemaPatternFieldProps {
     properties: PropertiesInfo,
@@ -33,16 +34,29 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
     const { addNotification } = useNotification();
     const { internal } = useDatabase();
     const [loadedPatterns, setLoadedPatterns] = React.useState<string[]>();
+    const [colorPickerAnchoreEl, setColorPickerAnchoreEl] = React.useState<null | HTMLElement>(null);
 
     const i18n_SchemaName = t("schema-name", "Schema name");
     const i18n_VisibleName = t("visible-schema-name", "Visible name");
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>): void => {
         setAnchorEl(event.currentTarget);
-    }
+    };
 
     const handleMenuClose = () => {
         setAnchorEl(null);
+    };
+
+    const handleColorPickerOpen = (event: React.MouseEvent<HTMLElement>) => {
+        if (event.shiftKey) {
+            onChangeColor(undefined);
+            return;
+        }
+        setColorPickerAnchoreEl(event.currentTarget);
+    };
+
+    const handleColorPickerClose = () => {
+        setColorPickerAnchoreEl(null);
     };
 
     const handleAddPropertyToPattern = (value?: string, pattern?: boolean): void => {
@@ -50,17 +64,16 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
         if (value) {
             if (pattern) {
                 onChangePattern(value);
-            }
-            else {
+            } else {
                 onChangePattern(schemaPattern + value);
             }
             Promise.resolve().then(() => {
                 if (inputRef.current) {
                     inputRef.current.focus();
                 }
-            })
+            });
         }
-    }
+    };
 
     React.useEffect(() => {
         const load = async () => {
@@ -70,14 +83,13 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                 for (const row of qResult.rows) {
                     result.push(row.sch_pattern as string);
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 addNotification("error", (error as Error).message, { source: "SchemaAssistant", reason: error });
             }
             setLoadedPatterns(result);
-        }
+        };
         load();
-    }, [schemaDriverId])
+    }, [schemaDriverId]);
 
     const patterns = React.useMemo<string[]>(() => {
         const patterns: string[] = [];
@@ -134,7 +146,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                 label={i18n_SchemaName}
                 required={true}
                 value={schemaPattern}
-                onChange={event => { onChangePattern(event.target.value) }}
+                onChange={event => { onChangePattern(event.target.value); }}
                 inputRef={inputRef}
                 autoFocus
                 slotProps={{
@@ -151,18 +163,24 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                                     </ToolButton>
                                 </Tooltip>
                                 <Tooltip title={t("pick-a-color-or-clear-shift", "Pick a color or clear with [Shift]")}>
-                                    <input
-                                        type="color"
-                                        value={schemaColor ?? '#000000'}
-                                        onChange={event => onChangeColor(event.target.value)}
-                                        onClick={event => {
-                                            if (event.shiftKey) {
-                                                onChangeColor();
-                                                event.preventDefault();
-                                            }
-                                        }}
-                                    />
+                                    <ToolButton onClick={handleColorPickerOpen}>
+                                        <div
+                                            style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                backgroundColor: schemaColor ?? '#000000', // Ustawienie koloru
+                                                border: '1px solid #ccc', // Opcjonalna ramka
+                                                borderRadius: '4px', // Opcjonalne zaokrąglenie
+                                            }}
+                                        />
+                                    </ToolButton>
                                 </Tooltip>
+                                <ColorPicker
+                                    value={schemaColor ?? "#000000"}
+                                    onChange={onChangeColor}
+                                    anchorEl={colorPickerAnchoreEl}
+                                    onClose={handleColorPickerClose}
+                                />
                             </InputAdornment>
                         ),
                         ...textFieldSlotPropsInput,
@@ -240,8 +258,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                                 </ListItemButton>
                             </ListItem>
                         ))
-                    ]
-
+                    ];
                 })}
             </Menu>
         </Box>
