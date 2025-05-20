@@ -359,7 +359,6 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         setDataState(data);
-        columnsState.resetColumns();
         setSummaryRow({});
         setSummaryOperation(null);
         setFooterVisible(false);

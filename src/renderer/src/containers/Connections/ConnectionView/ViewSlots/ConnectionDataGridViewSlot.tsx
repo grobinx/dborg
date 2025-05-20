@@ -19,6 +19,7 @@ interface ConnectionDataGridViewSlotProps {
 export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProps> = ({
     slot, session, ref, dataGridRef, onRowClick
 }) => {
+    const [columns, setColumns] = React.useState(slot.columns);
     const [rows, setRows] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [refresh, setRefresh] = React.useState(false);
@@ -70,7 +71,7 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
             ref={ref}
         >
             <DataGrid
-                columns={slot.columns}
+                columns={columns}
                 data={rows}
                 loading={loading ? "Loading..." : undefined}
                 onRowClick={onRowClick}
