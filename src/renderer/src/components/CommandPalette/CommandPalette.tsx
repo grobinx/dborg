@@ -55,7 +55,7 @@ const KeybindingContainer = styled('span')({
 
 // Helper function to highlight matching text
 export const highlightText = (text: string, query: string, theme: Theme) => {
-    if (!query) return text;
+    if (!query || query.trim() === '') return text;
 
     // Rozdziel query na części oddzielone spacją
     const queryParts = query.split(' ').filter(Boolean); // Usuń puste elementy

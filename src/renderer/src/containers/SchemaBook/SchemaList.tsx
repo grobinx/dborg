@@ -20,6 +20,7 @@ import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
 import ToolButton from "@renderer/components/ToolButton";
+import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -461,7 +462,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                     {(groupList && (displayData.findIndex(r => r.sch_group === record.sch_group) === displayData.indexOf(record))) && (
                                         <ListSubheader>
                                             <Typography variant="h6" style={{ width: "100%" }}>
-                                                {group}
+                                                {highlightText(group, search, theme)}
                                             </Typography>
                                         </ListSubheader>
                                     )}
@@ -474,14 +475,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                         >
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
                                                 {record.driverIcon && <img src={record.driverIcon} />}
-                                                <Typography variant="caption" className="name">{record.driverName}</Typography>
+                                                <Typography variant="caption" className="name">{highlightText(record.driverName!, search, theme)}</Typography>
                                             </ListItemIcon>
                                             <ListItemIcon className="status" {...slotProps?.itemIcon}>
                                                 {renderStatusIcon(record)}
                                             </ListItemIcon>
                                             <ListItemText
                                                 {...slotProps?.itemText}
-                                                primary={<span style={{ color: record.sch_color }}>{record.sch_name}</span>}
+                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, search, theme)}</span>}
                                                 secondary={renderSecondaryText(record)}
                                             />
                                             <ButtonGroup>
