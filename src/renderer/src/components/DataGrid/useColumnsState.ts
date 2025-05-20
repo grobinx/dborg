@@ -174,6 +174,17 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: b
         setTotalWidth(newTotalWidth);
     }, [columnsState]);
 
+    // Synchronizuj columnsState z initialColumns, jeśli zestaw kolumn się zmienił
+    useEffect(() => {
+        // Jeśli zestaw kolumn się zmienił (nie tylko kolejność/szerokość), zresetuj columnsState
+        if (!isSameColumnsSet(
+            columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
+            initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
+        )) {
+            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, dataTable));
+        }
+    }, [initialColumns, layoutKey, dataTable]);
+
     // Funkcja do sortowania kolumn
     const sortColumn = (columnIndex: number) => {
         setColumnsState((prevColumns) =>
