@@ -1,9 +1,10 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { DataGridActionContext, SummaryOperation, typeToOperationMap } from "../DataGridTypes";
 import { resolveDataType } from "../DataGridUtils";
 
-export const SummaryFooterGroup = (t: TFunction<"translation", undefined>): ActionGroupDescriptor<DataGridActionContext<any>> => {
+export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     const id = "dataGrid.groups.summaryFooterGroup";
 
     return {

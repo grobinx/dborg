@@ -1,8 +1,9 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const GotoColumnGroup = (t: TFunction<"translation", undefined>): ActionGroupDescriptor<DataGridActionContext<any>> => {
+export const GotoColumnGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     const id = "dataGrid.groups.gotoColumn";
 
     return {

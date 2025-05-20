@@ -206,12 +206,14 @@ export interface DataGridActionContext<T extends object> {
     clearSummary: () => void;
     resetColumnsLayout: () => void;
     actionManager: () => ActionManager<DataGridActionContext<T>> | null;
+    setUserData: (key: string, value: any) => void;
+    getUserData: (key: string) => any;
 }
 
 export interface DataGridContext<T extends object> {
     addCommand: (keybinding: string, execute: (context: DataGridActionContext<T>) => void) => void
-    addAction: (action: ActionDescriptor<DataGridActionContext<T>>) => void
-    addActionGroup(group: ActionGroupDescriptor<DataGridActionContext<T>>): void
+    addAction: (...action: ActionDescriptor<DataGridActionContext<T>>[]) => void
+    addActionGroup(...group: ActionGroupDescriptor<DataGridActionContext<T>>[]): void
 }
 
 export interface DataGridStatus {

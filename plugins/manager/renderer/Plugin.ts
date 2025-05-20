@@ -1,8 +1,8 @@
 import { BaseContainer, BaseView, View } from "@renderer/contexts/ApplicationContext";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { ReactNode } from "react";
 
 /**
@@ -134,11 +134,7 @@ export interface TitleConnectionViewSlot extends IConnectionViewSlot {
     /**
      * Title of the slot
      */
-    title: string;
-    /**
-     * Translation key for the title
-     */
-    tKey?: string;
+    title: string | (() => string);
     /**
      * Array of action IDs to be performed on the title, defined in DataGrid and/or DataGridConnectionViewSlot
      * These actions will be displayed as buttons in the title bar.
@@ -160,6 +156,11 @@ export interface DataGridConnectionViewSlot extends IConnectionViewSlot {
      */
     sql: string;
     /**
+     * Optional parameters for the SQL query
+     * This can be an array of parameters or a function that returns an array of parameters.
+     */
+    parameters?: any[] | ((context: DataGridActionContext<any> | undefined) => any[]);
+    /**
      * Array of column definitions for the data grid
      */
     columns: ColumnDefinition[];
@@ -167,6 +168,10 @@ export interface DataGridConnectionViewSlot extends IConnectionViewSlot {
      * Array of actions to be performed on the data grid
      */
     actions?: ActionDescriptor<any>[];
+    /**
+     * Array of action groups to be performed on the data grid
+     */
+    actionGroups?: ActionGroupDescriptor<any>[];
     /**
      * Callback function for row click events
      * @param row The clicked row data

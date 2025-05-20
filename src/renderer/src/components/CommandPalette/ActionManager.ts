@@ -59,10 +59,10 @@ export interface ActionGroupDescriptor<T = any> {
      * Te akcje nie są rejestrowane w menedżerze akcji. W związku z tym nie będzie możliwa ich konfiguacja.
      * To mogą być akcje np. do wyboru schematów bazy danych, parsowane obiekty, itp.
      * @param context Obiekt, na którym akcja ma być wykonana.
-     * @param query Opcjonalny parametr zapytania, który może być użyty do filtrowania akcji.
+     * @param searchText Opcjonalny parametr zapytania, który może być użyty do filtrowania akcji.
      * @returns Tablica akcji, które są częścią tej grupy.
      */
-    actions: (context: T, query?: string) => ActionDescriptor<T>[];
+    actions: (context: T, searchText?: string) => ActionDescriptor<T>[] | Promise<ActionDescriptor<T>[]>;
 
     /**
      * Tryb grupy akcji.
@@ -175,11 +175,13 @@ export class ActionManager<T> {
      * Rejestruje nową grupę akcji.
      * @param group Opis grupy akcji.
      */
-    registerActionGroup(group: ActionGroupDescriptor<T>): void {
-        if (this.actionGroups.has(group.id)) {
-            return;
+    registerActionGroup(...groups: ActionGroupDescriptor<T>[]): void {
+        for (const group of groups) {
+            if (this.actionGroups.has(group.id)) {
+                continue;
+            }
+            this.actionGroups.set(group.id, group);
         }
-        this.actionGroups.set(group.id, group);
     }
 
     /**
@@ -203,14 +205,16 @@ export class ActionManager<T> {
      * Rejestruje nową akcję.
      * @param action Opis akcji
      */
-    registerAction(action: ActionDescriptor<T>): void {
-        const normalizedKeybindings = action.keybindings?.map(normalizeKeybinding); // Normalizacja keybindings
-        const normalizedAction = { ...action, keybindings: normalizedKeybindings };
+    registerAction(...actions: ActionDescriptor<T>[]): void {
+        for (const action of actions) {
+            const normalizedKeybindings = action.keybindings?.map(normalizeKeybinding); // Normalizacja keybindings
+            const normalizedAction = { ...action, keybindings: normalizedKeybindings };
 
-        if (this.actions.has(action.id)) {
-            return;
+            if (this.actions.has(action.id)) {
+                continue;
+            }
+            this.actions.set(action.id, normalizedAction);
         }
-        this.actions.set(action.id, normalizedAction);
     }
 
     /**
@@ -341,7 +345,7 @@ export class ActionManager<T> {
      * @param context Obiekt, na którym akcje mają być wykonane (wymagany dla dynamicznych akcji).
      * @returns Tablica akcji.
      */
-    getRegisteredActions(prefix: string | null = '>', context?: T, query?: string): ActionDescriptor<T>[] {
+    async getRegisteredActions(prefix: string | null = '>', context?: T, query?: string): Promise<ActionDescriptor<T>[]> {
         if (prefix === null) {
             return [];
         }
@@ -352,7 +356,7 @@ export class ActionManager<T> {
             return [];
         }
 
-        let actions: ActionDescriptor<T>[] = actionGroup.actions(context!, query);
+        let actions: ActionDescriptor<T>[] = await actionGroup.actions(context!, query);
 
         if ((actionGroup.mode ?? 'actions') === 'actions' && query && query !== '') {
             // Rozdziel query na fragmenty oddzielone spacją

@@ -1,8 +1,9 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const GeneralReset = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
+export const GeneralReset = (): ActionDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     const id = "dataGrid.actions.generalReset";
 
     return {
@@ -10,8 +11,6 @@ export const GeneralReset = (t: TFunction<"translation", undefined>): ActionDesc
         keybindings: ["Escape"],
         label: t(id, "Reset filter, sorting and summary"),
         icon: "Reset",
-        contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
         run: (context) => {
             context.setSearchText();
             context.resetSorting();

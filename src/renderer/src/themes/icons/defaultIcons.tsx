@@ -71,6 +71,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             AddTab: (props) => <IconWrapper {...props} className="add-tab"><AddTabRight fontSize="inherit" /></IconWrapper>,
             ExcludeText: (props) => <IconWrapper {...props} className="exclude-text"><NotEqual fontSize="inherit" /></IconWrapper>,
             Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
+            SelectDatabaseSchema: (props) => <IconWrapper {...props} className="select-database-schema"><MuiIcons.FactCheckOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

@@ -330,7 +330,6 @@ export const DataGrid = <T extends object>({
     const commandManager = useRef<CommandManager<DataGridActionContext<T>> | null>(null);
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
-    const { t } = useTranslation();
     const [settings] = useSettings<DborgSettings>("dborg");
     const [rowHeight, setRowHeight] = useState(initialRowHeight);
     const [dataState, setDataState] = useState<T[] | null>(null);
@@ -354,6 +353,7 @@ export const DataGrid = <T extends object>({
     const { selectedRows, toggleRowSelection, setSelectedRows } = useRowSelection();
     const [fontFamily, setFontFamily] = useState<string>("inherit");
     const [fontSize, setFontSize] = useState<number>(16);
+    const [userData, setUserData] = useState<Record<string, any>>({});
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
@@ -646,6 +646,12 @@ export const DataGrid = <T extends object>({
             columnsState.resetColumns();
         },
         actionManager: () => actionManager.current,
+        setUserData(key, value) {
+            setUserData((prev) => ({ ...prev, [key]: value }));
+        },
+        getUserData(key) {
+            return userData[key];
+        },
     }
 
     useEffect(() => {
@@ -686,28 +692,28 @@ export const DataGrid = <T extends object>({
 
             actionManager.current = new ActionManager<DataGridActionContext<T>>();
 
-            actionManager.current.registerActionGroup(actions.GotoColumnGroup(t));
-            actionManager.current.registerActionGroup(actions.SearchDataGroup(t));
-            actionManager.current.registerActionGroup(actions.SummaryFooterGroup(t));
+            actionManager.current.registerActionGroup(actions.GotoColumnGroup());
+            actionManager.current.registerActionGroup(actions.SearchDataGroup());
+            actionManager.current.registerActionGroup(actions.SummaryFooterGroup());
 
-            actionManager.current.registerAction(actions.IncreaseFontSize(t));
-            actionManager.current.registerAction(actions.DecreaseFontSize(t));
-            actionManager.current.registerAction(actions.IncreaseColumnWidth(t));
-            actionManager.current.registerAction(actions.DecreaseColumnWidth(t));
-            actionManager.current.registerAction(actions.MoveColumnToEnd(t));
-            actionManager.current.registerAction(actions.MoveColumnFromEnd(t));
-            actionManager.current.registerAction(actions.ResetFontSize(t, initialRowHeight));
-            actionManager.current.registerAction(actions.CopyValueToClipboard(t));
-            actionManager.current.registerAction(actions.GeneralReset(t));
-            actionManager.current.registerAction(actions.AdjustWidthToData(t));
-            actionManager.current.registerAction(actions.SwitchColumnSort(t));
-            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn(t));
-            actionManager.current.registerAction(actions.ResetColumnsLayout(t));
+            actionManager.current.registerAction(actions.IncreaseFontSize());
+            actionManager.current.registerAction(actions.DecreaseFontSize());
+            actionManager.current.registerAction(actions.IncreaseColumnWidth());
+            actionManager.current.registerAction(actions.DecreaseColumnWidth());
+            actionManager.current.registerAction(actions.MoveColumnToEnd());
+            actionManager.current.registerAction(actions.MoveColumnFromEnd());
+            actionManager.current.registerAction(actions.ResetFontSize(initialRowHeight));
+            actionManager.current.registerAction(actions.CopyValueToClipboard());
+            actionManager.current.registerAction(actions.GeneralReset());
+            actionManager.current.registerAction(actions.AdjustWidthToData());
+            actionManager.current.registerAction(actions.SwitchColumnSort());
+            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());
+            actionManager.current.registerAction(actions.ResetColumnsLayout());
 
-            actionManager.current.registerAction(actions.OpenCommandPalette(t));
-            actionManager.current.registerAction(actions.GotoColumn(t));
-            actionManager.current.registerAction(actions.SearchData(t));
-            actionManager.current.registerAction(actions.SummaryFooter(t));
+            actionManager.current.registerAction(actions.OpenCommandPalette());
+            actionManager.current.registerAction(actions.GotoColumn());
+            actionManager.current.registerAction(actions.SearchData());
+            actionManager.current.registerAction(actions.SummaryFooter());
         }
 
         if (onMount) {
@@ -715,11 +721,11 @@ export const DataGrid = <T extends object>({
                 addCommand: (keybinding, execute) => {
                     commandManager.current?.registerCommand(keybinding, execute);
                 },
-                addAction: (action) => {
-                    actionManager.current?.registerAction(action);
+                addAction: (...action) => {
+                    actionManager.current?.registerAction(...action);
                 },
-                addActionGroup: (group) => {
-                    actionManager.current?.registerActionGroup(group);
+                addActionGroup: (...group) => {
+                    actionManager.current?.registerActionGroup(...group);
                 },
             });
         }

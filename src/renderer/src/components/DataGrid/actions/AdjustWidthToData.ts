@@ -1,11 +1,12 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { ColumnDefinition, DataGridActionContext } from "../DataGridTypes";
 import { valueToString } from "../DataGridUtils";
 
 export const AdjustWidthToData_ID = "dataGrid.actions.adjustWidthToData";
 
-export const AdjustWidthToData = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
+export const AdjustWidthToData = (): ActionDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     return {
         id: AdjustWidthToData_ID,
         keybindings: ["Ctrl+I"],

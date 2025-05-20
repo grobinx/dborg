@@ -190,15 +190,27 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [open, searchText, manager]);
 
     // Always calculate filteredCommands, even if the component is not open
-    const filteredCommands = useMemo(() => {
-        if (!open || !manager) return []; // Nie wykonuj obliczeń, jeśli okno jest zamknięte
+    const [filteredCommands, setFilteredCommands] = useState<ActionDescriptor<any>[]>([]);
 
-        // Usuń prefix z searchQuery, jeśli istnieje
-        const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
-            ? searchText.slice((selectedGroup?.prefix || '').length).trim()
-            : searchText;
+    useEffect(() => {
+        let isMounted = true;
+        const fetchCommands = async () => {
+            if (!open || !manager) {
+                if (isMounted) setFilteredCommands([]);
+                return;
+            }
+            // Usuń prefix z searchQuery, jeśli istnieje
+            const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
+                ? searchText.slice((selectedGroup?.prefix || '').length).trim()
+                : searchText;
 
-        return manager.getRegisteredActions(selectedGroup?.prefix, getContext?.(), queryWithoutPrefix);
+            const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContext?.(), queryWithoutPrefix);
+            if (isMounted) setFilteredCommands(actions);
+        };
+        fetchCommands();
+        return () => {
+            isMounted = false;
+        };
     }, [open, manager, searchText, selectedGroup, getContext]);
 
     useEffect(() => {
@@ -316,30 +328,42 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
 
     // Helper function to group and sort context menu actions
-    const groupedContextMenuActions = useMemo(() => {
-        if (!manager) return [];
+    const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: ActionDescriptor<any>[]; }[]>([]);
 
-        const actionsWithGroup = manager.getRegisteredActions('>').filter(action => action.contextMenuGroupId);
-
-        const grouped = actionsWithGroup.reduce((acc, action) => {
-            const groupId = action.contextMenuGroupId!;
-            if (!acc[groupId]) {
-                acc[groupId] = [];
+    useEffect(() => {
+        let isMounted = true;
+        const fetchContextMenuActions = async () => {
+            if (!manager) {
+                if (isMounted) setGroupedContextMenuActions([]);
+                return;
             }
-            acc[groupId].push(action);
-            return acc;
-        }, {} as Record<string, ActionDescriptor<any>[]>);
 
-        return Object.entries(grouped)
-            .sort(([_groupA, actionsA], [_groupB, actionsB]) => {
-                const orderA = actionsA[0]?.contextMenuOrder || 0; // Pobierz contextMenuOrder z pierwszej akcji w grupie
-                const orderB = actionsB[0]?.contextMenuOrder || 0;
-                return orderA - orderB;
-            })
-            .map(([groupId, actions]) => ({
-                groupId,
-                actions: actions.sort((a, b) => a.label.localeCompare(b.label)), // Sortowanie akcji w grupie alfabetycznie
-            }));
+            const actionsWithGroup = (await manager.getRegisteredActions('>')).filter(action => action.contextMenuGroupId);
+
+            const grouped = actionsWithGroup.reduce((acc, action) => {
+                const groupId = action.contextMenuGroupId!;
+                if (!acc[groupId]) {
+                    acc[groupId] = [];
+                }
+                acc[groupId].push(action);
+                return acc;
+            }, {} as Record<string, ActionDescriptor<any>[]>);
+
+            const sortedGroups = Object.entries(grouped)
+                .sort(([_groupA, actionsA], [_groupB, actionsB]) => {
+                    const orderA = actionsA[0]?.contextMenuOrder || 0; // Pobierz contextMenuOrder z pierwszej akcji w grupie
+                    const orderB = actionsB[0]?.contextMenuOrder || 0;
+                    return orderA - orderB;
+                })
+                .map(([groupId, actions]) => ({
+                    groupId,
+                    actions: actions.sort((a, b) => a.label.localeCompare(b.label)), // Sortowanie akcji w grupie alfabetycznie
+                }));
+
+            if (isMounted) setGroupedContextMenuActions(sortedGroups);
+        };
+        fetchContextMenuActions();
+        return () => { isMounted = false; };
     }, [manager]);
 
     useEffect(() => {

@@ -25,8 +25,8 @@ export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = (
     return (
         <Stack ref={ref} direction="row" alignItems="center">
             {slot.icon && resolveIcon(theme, slot.icon)}
-            <Typography variant="h6">
-                {slot.tKey ? t(slot.tKey, slot.title) : slot.title}
+            <Typography variant="h6" noWrap sx={{ maxWidth: 320, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {typeof slot.title === "function" ? slot.title() : slot.title}
             </Typography>
             <div style={{ flexGrow: 1 }} />
             {slot.actions && slot.actions.length > 0 && (

@@ -1,10 +1,11 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
 export const SearchData_ID = "dataGrid.actions.searchData";
 
-export const SearchData = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
+export const SearchData = (): ActionDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     return {
         id: SearchData_ID,
         keybindings: ["Ctrl+F"],

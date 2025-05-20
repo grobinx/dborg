@@ -1,8 +1,9 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { TFunction } from "i18next";
+import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const MoveColumnToEnd = (t: TFunction<"translation", undefined>): ActionDescriptor<DataGridActionContext<any>> => {
+export const MoveColumnToEnd = (): ActionDescriptor<DataGridActionContext<any>> => {
+    const t = i18next.t.bind(i18next);
     const id = "dataGrid.actions.moveColumnToEnd";
 
     return {

@@ -4,7 +4,9 @@ import { Box, Typography, IconButton, Stack } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { use } from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { RefreshConnectionDataGrid } from "./actions/RefreshConnectionDataGrid";
+import { useTranslation } from "react-i18next";
 
 interface ConnectionDataGridViewSlotProps {
     slot: DataGridConnectionViewSlot;
@@ -19,13 +21,22 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
 }) => {
     const [rows, setRows] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
+    const [refresh, setRefresh] = React.useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const { rows } = await session.query(slot.sql);
+                const parameters = typeof slot.parameters === "function" ? slot.parameters(dataGridRef?.current ?? undefined) : slot.parameters;
+                const { rows } = await session.query(slot.sql, parameters);
                 setRows(rows);
+                setTimeout(() => {
+                    if (dataGridRef?.current) {
+                        dataGridRef.current.setPosition({ column: 0, row: 0 });
+                        dataGridRef.current.focus();
+                    }
+                }, 10);
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
@@ -36,7 +47,19 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
         if (session && slot.sql) {
             fetchData();
         }
-    }, [session, slot.sql]);
+    }, [session, slot.sql, refresh]);
+
+    function dataGridMountHandler(context: DataGridContext<any>): void {
+        if (slot.actionGroups?.length) {
+            context.addActionGroup(...slot.actionGroups);
+        }
+        if (slot.actions?.length) {
+            context.addAction(...slot.actions);
+        }
+        context.addAction(RefreshConnectionDataGrid((_context) => {
+            setRefresh(r => !r);
+        }));
+    }
 
     return (
         <Box
@@ -52,6 +75,7 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
                 loading={loading ? "Loading..." : undefined}
                 onRowClick={onRowClick}
                 ref={dataGridRef}
+                onMount={dataGridMountHandler}
             />
         </Box>
     );

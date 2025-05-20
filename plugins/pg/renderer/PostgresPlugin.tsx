@@ -3,8 +3,13 @@ import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
-import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { SearchData, SearchData_ID } from "@renderer/components/DataGrid/actions";
+import { SelectSchemaAction, SelectSchemaAction_ID } from "./actions/SelectSchemaAction";
+import { useTranslation } from "react-i18next";
+import { SelectSchemaGroup } from "./actions/SelectSchemaGroup";
+import i18next from "i18next";
+import { RefreshConnectionDataGrid_ID } from "@renderer/containers/Connections/ConnectionView/ViewSlots/actions/RefreshConnectionDataGrid";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -22,6 +27,8 @@ const PostgresPlugin: Plugin = {
     initialize(context: IPluginContext): void {
         context.registerConnectionViewsFactory((session) => {
             let description: string | null = null;
+            let selectedSchemaName: string | null = null;
+            const t = i18next.t.bind(i18next);
 
             if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
                 return null;
@@ -32,18 +39,18 @@ const PostgresPlugin: Plugin = {
                     id: "tables-" + session.info.uniqueId,
                     button: {
                         icon: "DatabaseTables",
-                        title: "Tables",
-                        tKey: "database-tables",
+                        title: t("database-tables", "Tables"),
                     },
                     slots: [
                         {
                             id: "tables-title-" + session.info.uniqueId,
                             type: "title",
                             icon: "DatabaseTables",
-                            title: "Tables",
-                            tKey: "database-tables",
+                            title: () => t("pg-tables-with-schema", "Tables {{schemaName}}", { schemaName: selectedSchemaName }),
                             actions: [
+                                RefreshConnectionDataGrid_ID,
                                 SearchData_ID,
+                                SelectSchemaAction_ID,
                             ],
                         },
                         {
@@ -59,8 +66,10 @@ const PostgresPlugin: Plugin = {
                                     left join pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
                                 where 
                                     c.relkind in ('r'::"char", 'f'::"char", 'p'::"char")
+                                    and (n.nspname = $1 or (n.nspname = any (current_schemas(false)) and coalesce($1, current_schema()) = current_schema() and n.nspname <> 'public'))
                                 order by 
                                     schema_name, table_name`,
+                            parameters: (_context: DataGridActionContext<any> | undefined) => [selectedSchemaName],
                             columns: [
                                 {
                                     label: "Table Name",
@@ -95,6 +104,14 @@ const PostgresPlugin: Plugin = {
                                     description = null;
                                 }
                             },
+                            actions: [
+                                SelectSchemaAction(),
+                            ],
+                            actionGroups: [
+                                SelectSchemaGroup(session, (schemaName: string) => {
+                                    selectedSchemaName = schemaName;
+                                }),
+                            ],
                         },
                         {
                             id: "tables-text-" + session.info.uniqueId,
@@ -110,8 +127,7 @@ const PostgresPlugin: Plugin = {
                     id: "views-" + session.info.uniqueId,
                     button: {
                         icon: "DatabaseViews",
-                        title: "Views",
-                        tKey: "database-views",
+                        title: t("database-views", "Views"),
                     },
                     render() {
                         return (
@@ -129,7 +145,6 @@ const PostgresPlugin: Plugin = {
                     button: {
                         icon: "GroupList",
                         title: "PostgreSQL",
-                        tKey: "postgresql-rendered",
                     },
                     render() {
                         return (

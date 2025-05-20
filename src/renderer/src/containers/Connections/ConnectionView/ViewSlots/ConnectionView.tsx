@@ -19,11 +19,7 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
         [slots]
     );
     const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
-
-    // Stan na wysokości każdego slotu
     const [heights, setHeights] = useState<number[]>(() => slots.map(() => 0));
-
-    // Stan do wymuszenia renderowania tekstowych i tytułowych slotów
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
 
     useEffect(() => {

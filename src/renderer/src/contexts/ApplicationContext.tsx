@@ -27,7 +27,6 @@ export type ContainerType =
 export interface ContainerButton {
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
     title: string; // Title of the button
-    tKey?: string; // Optional translation key for internationalization
     section: SidebarSection;
 }
 
@@ -41,7 +40,6 @@ export interface BaseContainer {
 export interface ViewButton {
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
     title: string; // Title of the button
-    tKey?: string; // Optional translation key for internationalization
 }
 
 export type ViewType = "rendered" | "connection"; // Define the types of views

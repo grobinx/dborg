@@ -10,12 +10,24 @@ interface ActionButtonProps<T> extends ToolButtonProps {
     getContext: () => T; // Funkcja zwracająca kontekst
 }
 
+import React, { useEffect, useState } from "react";
+
 const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: ActionButtonProps<T>) => {
     const theme = useTheme();
-    const action = actionManager.getRegisteredActions().find((a) => a.id === actionId);
+    const [action, setAction] = useState<ReturnType<ActionManager<T>["getRegisteredActions"]> extends Promise<(infer U)[]> ? U | undefined : undefined>(undefined);
+
+    useEffect(() => {
+        let isMounted = true;
+        actionManager.getRegisteredActions().then(actions => {
+            if (isMounted) {
+                setAction(actions.find((a) => a.id === actionId));
+            }
+        });
+        return () => { isMounted = false; };
+    }, [actionManager, actionId]);
 
     if (!action) {
-        console.error(`Action with id "${actionId}" not found.`);
+        // Optionally, you can render a loading indicator here
         return null; // Nie renderuj przycisku, jeśli akcja nie istnieje
     }
 
