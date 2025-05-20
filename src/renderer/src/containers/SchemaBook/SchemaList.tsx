@@ -167,22 +167,67 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             if (!data) {
                 return null;
             }
+
+            if (groupList) {
+                // Grupowanie danych według `sch_group`
+                const groupedData = data.reduce<Record<string, Schema[]>>((groups, schema) => {
+                    const groupKey = schema.sch_group ?? "ungrouped";
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = [];
+                    }
+                    groups[groupKey].push(schema);
+                    return groups;
+                }, {});
+
+                // Sortowanie grup na podstawie najnowszego `sch_last_selected` w każdej grupie
+                const sortedGroups = Object.entries(groupedData)
+                    .sort(([, groupA], [, groupB]) => {
+                        const latestA = Math.max(
+                            ...groupA.map(schema => DateTime.fromSQL(schema.sch_last_selected ?? '').toMillis() || 0)
+                        );
+                        const latestB = Math.max(
+                            ...groupB.map(schema => DateTime.fromSQL(schema.sch_last_selected ?? '').toMillis() || 0)
+                        );
+                        return latestB - latestA; // Najnowsze grupy na górze
+                    });
+
+                // Spłaszczenie posortowanych grup do jednej listy
+                return sortedGroups.flatMap(([, group]) =>
+                    group.sort((a, b) => {
+                        if (a.sch_last_selected !== b.sch_last_selected) {
+                            return (
+                                (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
+                                (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
+                            );
+                        }
+                        if (a.sch_updated !== b.sch_updated) {
+                            return (
+                                (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
+                                (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
+                            );
+                        }
+                        return a.sch_name.localeCompare(b.sch_name);
+                    })
+                );
+            }
+
+            // Sortowanie bez grupowania
             return [...data].sort((a, b) => {
-                if (groupList) {
-                    if (!a.sch_group) return 1;
-                    if (!b.sch_group) return -1;
-                    const groupComparison = a.sch_group.localeCompare(b.sch_group);
-                    if (groupComparison !== 0) return groupComparison;
-                }
                 if (a.sch_last_selected !== b.sch_last_selected) {
-                    return ((DateTime.fromSQL(b.sch_last_selected ?? '')?.toMillis() ?? 0) - (DateTime.fromSQL(a.sch_last_selected ?? '')?.toMillis() ?? 0));
+                    return (
+                        (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
+                        (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
+                    );
                 }
                 if (a.sch_updated !== b.sch_updated) {
-                    return (DateTime.fromSQL(b.sch_updated ?? '')?.toMillis() ?? 0) - (DateTime.fromSQL(a.sch_updated ?? '')?.toMillis() ?? 0);
+                    return (
+                        (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
+                        (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
+                    );
                 }
                 return a.sch_name.localeCompare(b.sch_name);
             });
-        }
+        };
 
         if (!search.trim()) {
             setDisplayData(sort(data));
