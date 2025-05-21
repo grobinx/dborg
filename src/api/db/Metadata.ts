@@ -217,6 +217,32 @@ export interface RelationPermissions {
     delete: boolean;
 }
 
+export interface RelationStatsMetadata {
+    /** Number of rows in the relation */
+    rows: number;
+
+    /** Size of the relation (bytes) */
+    size: string;
+
+    /** Bytes reads from the relation */
+    reads: number;
+
+    /** Bytes writes to the relation */
+    writes: number;
+
+    /** Number of scans on the relation, e.g., sequential scans */
+    scans: number;
+
+    /** Number of inserts on the relation */
+    inserts: number;
+    
+    /** Number of updates on the relation */
+    updates: number;
+    
+    /** Number of deletes on the relation */
+    deletes: number;
+}
+
 /** Structure describing a table */
 export interface RelationMetadata {
     /** Unique identifier of the object */
@@ -251,6 +277,9 @@ export interface RelationMetadata {
 
     /** List of indexes */
     indexes?: IndexMetadata[];
+
+    /** Stats of the relation */
+    stats?: Partial<RelationStatsMetadata>;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -356,6 +385,23 @@ export interface IndexColumnMetadata {
     nulls?: NullsPosition;
 }
 
+export interface IndexStatsMetadata {
+    /** Number of rows in the index */
+    rows: number;
+
+    /** Size of the index (bytes) */
+    size: string;
+
+    /** Bytes reads from the index */
+    reads: number;
+
+    /** Bytes writes to the index */
+    writes: number;
+
+    /** Number of scans on the index, e.g., sequential scans */
+    scans: number;
+}
+
 /** Structure describing an index */
 export interface IndexMetadata {
     /** Unique identifier of the object */
@@ -375,6 +421,9 @@ export interface IndexMetadata {
 
     /** Whether the index is a primary key */
     primary?: boolean;
+
+    /** Stats of the index */
+    stats?: Partial<IndexStatsMetadata>;
 
     /** Custom data */
     data?: Record<string, any>;

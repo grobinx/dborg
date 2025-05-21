@@ -8,6 +8,16 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
+import { styled } from "@mui/material/styles";
+
+const StyledConnectionTitleViewSlot = styled("div")(({ theme }) => ({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    gap: 4,
+    paddingLeft: 4,
+}));
 
 interface ConnectionTitleViewSlotProps {
     slot: TitleConnectionViewSlot;
@@ -23,9 +33,18 @@ export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = (
     const { t } = useTranslation();
 
     return (
-        <Stack ref={ref} direction="row" alignItems="center">
+        <StyledConnectionTitleViewSlot ref={ref}>
             {slot.icon && resolveIcon(theme, slot.icon)}
-            <Typography variant="h6" noWrap sx={{ maxWidth: 320, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <Typography
+                variant="subtitle2"
+                noWrap
+                sx={{
+                    maxWidth: 320,
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                }}
+            >
                 {typeof slot.title === "function" ? slot.title() : slot.title}
             </Typography>
             <div style={{ flexGrow: 1 }} />
@@ -46,7 +65,7 @@ export const ConnectionTitleViewSlot: React.FC<ConnectionTitleViewSlotProps> = (
                     })}
                 </TabPanelButtons>
             )}
-        </Stack>
+        </StyledConnectionTitleViewSlot>
     );
 };
 

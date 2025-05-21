@@ -2,7 +2,8 @@ import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/Co
 import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshConnectionDataGrid_ID } from "@renderer/containers/Connections/ConnectionView/ViewSlots/actions/RefreshConnectionDataGrid";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import i18next, { TFunction } from "i18next";
+import i18next from "i18next";
+import { DatabasesMetadata, SchemaMetadata } from "src/api/db";
 
 const sql =
     `select nspname schema_name
@@ -28,31 +29,29 @@ export const SelectSchemaGroup = (
         label: t(id, "# Select schema"),
         actions: async () => {
             const actions: ActionDescriptor<any>[] = [];
-            try {
-                const { rows } = await session.query(sql);
-                for (let row of rows) {
-                    actions.push({
-                        id: `dataGrid.pg.schema.${row.schema_name}`,
-                        label: row.schema_name as string,
-                        run: (context: DataGridActionContext<any>) => {
-                            context.setUserData('schema_name', row.schema_name as string);
-                            onSelectSchema(row.schema_name as string);
-                            context.actionManager()?.executeAction(RefreshConnectionDataGrid_ID, context);
-                        },
-                        selected: context => context.getUserData('schema_name') === row.schema_name,
-                    });
-                }
-            } catch (error) {
-                // TODO: Lepiej obsłużyć błąd
-                console.error("Error fetching schemas:", error);
+            const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
+
+            // Sortowanie schematów według nazwy
+            const sortedSchemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
+                (a.name as string).localeCompare(b.name as string)
+            );
+
+            sortedSchemas.forEach((schema: SchemaMetadata) => {
                 actions.push({
-                    id: "dataGrid.pg.schema.error",
-                    label: t("dataGrid.pg.schema.error", "Error fetching schemas"),
-                    run: () => {
-                        console.error("Error fetching schemas:", error);
+                    id: `dataGrid.pg.schema.${schema.name}`,
+                    label: schema.name as string,
+                    run: (context: DataGridActionContext<any>) => {
+                        const schemaName = context.getUserData('schema_name');
+                        if (schemaName !== schema.name) {
+                            context.setUserData('schema_name', schema.name as string);
+                            onSelectSchema(schema.name as string);
+                            context.actionManager()?.executeAction(RefreshConnectionDataGrid_ID, context);
+                        }
                     },
+                    selected: context => context.getUserData('schema_name') === schema.name,
                 });
-            }
+            });
+
             return actions;
         },
     };

@@ -217,7 +217,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
 
         // Znajdź indeks akcji, która ma właściwość selected ustawioną na true
-        const selectedActionIndex = filteredCommands.findIndex((action) => action.selected);
+        const selectedActionIndex = filteredCommands.findIndex(
+            (action) => typeof action.selected === 'function' ? (
+                getContext ? action.selected(getContext()) : false
+            ) : false
+        );
 
         if (selectedActionIndex !== -1) {
             setSelectedIndex(selectedActionIndex); // Ustaw selectedIndex na indeks wybranej akcji
@@ -233,7 +237,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         const listItem = document.querySelectorAll<HTMLLIElement>(
             selectedGroup ? '.command-list-item' : '.command-list-group-item'
         )[index];
-        listItem?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        listItem?.scrollIntoView({ block: 'nearest' });
     };
 
     const handleClickOutside = (event: MouseEvent) => {

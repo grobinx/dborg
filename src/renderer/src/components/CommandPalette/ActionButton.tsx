@@ -1,6 +1,6 @@
 import { Tooltip, useTheme } from "@mui/material";
 import ToolButton, { ToolButtonProps } from "../ToolButton"; // Zakładam, że ToolButton jest w katalogu nadrzędnym
-import { ActionManager } from "./ActionManager";
+import { ActionDescriptor, ActionManager } from "./ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
 import { renderKeybindings } from "./CommandPalette";
 
@@ -10,25 +10,16 @@ interface ActionButtonProps<T> extends ToolButtonProps {
     getContext: () => T; // Funkcja zwracająca kontekst
 }
 
-import React, { useEffect, useState } from "react";
-
+/**
+ * Komponent do wyświetlania przycisku akcji z palety poleceń.
+ * Działa dla zarejestrowanych akcji w menedżerze akcji. Nie działa dla akcji z grup.
+ */
 const ActionButton = <T,>({ actionManager, actionId, getContext, ...other }: ActionButtonProps<T>) => {
     const theme = useTheme();
-    const [action, setAction] = useState<ReturnType<ActionManager<T>["getRegisteredActions"]> extends Promise<(infer U)[]> ? U | undefined : undefined>(undefined);
-
-    useEffect(() => {
-        let isMounted = true;
-        actionManager.getRegisteredActions().then(actions => {
-            if (isMounted) {
-                setAction(actions.find((a) => a.id === actionId));
-            }
-        });
-        return () => { isMounted = false; };
-    }, [actionManager, actionId]);
+    const action = actionManager.getAction(actionId);
 
     if (!action) {
-        // Optionally, you can render a loading indicator here
-        return null; // Nie renderuj przycisku, jeśli akcja nie istnieje
+        return null;
     }
 
     const handleClick = () => {

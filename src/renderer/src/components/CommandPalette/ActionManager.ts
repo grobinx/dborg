@@ -338,6 +338,17 @@ export class ActionManager<T> {
     }
 
     /**
+     * Pobuera akcję na podstawie jej identyfikatora.
+     * Jeśli akcja nie istnieje, zwraca undefined.
+     * Funkcja działa wyłąznie na akacjach zarejestrowanych w menedżerze akcji. Nie działa na akcjach z grupy.
+     * @param actionId Identyfikator akcji do pobrania.
+     * @returns 
+     */
+    getAction(actionId: string): ActionDescriptor<T> | undefined {
+        return this.actions.get(actionId);
+    }
+
+    /**
      * Pobiera listę zarejestrowanych akcji.
      * Jeśli podano prefix, zwraca akcje z grupy o podanym prefixie.
      * Jeśli prefix jest null, zwraca wszystkie zarejestrowane akcji.

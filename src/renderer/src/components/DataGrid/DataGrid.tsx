@@ -306,6 +306,16 @@ const StyledRowNumberCell = styled('div')<{ rowHeight: number }>(({ theme, rowHe
     },
 }));
 
+const StyledNoRowsInfo = styled('div')(({ theme }) => ({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "70%",
+    width: "100%",
+    color: theme.palette.text.disabled, // Użycie koloru z motywu
+    fontSize: "1.3em",
+}));
+
 export const DataGrid = <T extends object>({
     columns,
     data,
@@ -948,6 +958,11 @@ export const DataGrid = <T extends object>({
                         </StyledHeaderCell>
                     ))}
                 </StyledHeader>
+                {filteredDataState.length === 0 && (
+                    <StyledNoRowsInfo>
+                        No rows to display
+                    </StyledNoRowsInfo>
+                )}
                 <StyledRowsContainer style={{ height: totalHeight, width: columnsState.totalWidth }}>
                     {filteredDataState.slice(Math.max(startRow - overscanRowCount, 0), Math.min(endRow + overscanRowCount, filteredDataState.length)).map((row, rowIndex) => {
                         const absoluteRowIndex = Math.max(startRow - overscanRowCount, 0) + rowIndex;
