@@ -74,14 +74,14 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
 
     const renderViewButtons = (views: View[]) => {
         return ([
-            ...views.map(({ id, button: { icon, title } }) => (
+            ...views.map(({ id, icon, label }) => (
                 <ViewButton
                     key={id}
                     itemID={id}
                     selected={selectedView?.id === id}
                     onClick={() => sendMessage(Messages.SWITCH_VIEW, id)}
                     icon={resolveIcon(theme, icon)}
-                    title={title}
+                    label={label}
                     expanded={expanded}
                     placement={placement}
                 />
@@ -114,7 +114,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
             onFocus={handleFocus}
             onBlur={handleBlur}
         >
-            {containers?.filter(container => container.button.section === "first").map((container) => {
+            {containers?.filter(container => container.section === "first").map((container) => {
                 return (
                     <ContainerButton
                         key={container.type}
@@ -123,8 +123,8 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
-                        icon={resolveIcon(theme, container.button.icon)}
-                        title={container.button.title}
+                        icon={resolveIcon(theme, container.icon)}
+                        label={container.label}
                     />
                 );
             })}
@@ -133,13 +133,13 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 {children}
             </Stack>
             <Stack direction={horizontal ? "column" : "row"} flexGrow={1}>
-                {(selectedContainer?.button.section === "first" && views) && renderViewButtons(views)}
+                {(selectedContainer?.section === "first" && views) && renderViewButtons(views)}
             </Stack>
             <Stack direction={horizontal ? "column-reverse" : "row-reverse"} flexGrow={1}>
-                {(selectedContainer?.button.section === "last" && views) && renderViewButtons(views)}
+                {(selectedContainer?.section === "last" && views) && renderViewButtons(views)}
             </Stack>
             <Divider orientation={horizontal ? "horizontal" : "vertical"} flexItem />
-            {containers?.filter(container => container.button.section === "last").map((container) => {
+            {containers?.filter(container => container.section === "last").map((container) => {
                 return (
                     <ContainerButton
                         key={container.type}
@@ -148,8 +148,8 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
-                        icon={resolveIcon(theme, container.button.icon)}
-                        title={container.button.title}
+                        icon={resolveIcon(theme, container.icon)}
+                        label={container.label}
                     />
                 );
             })}

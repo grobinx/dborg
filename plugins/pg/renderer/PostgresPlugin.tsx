@@ -4,9 +4,8 @@ import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { SearchData, SearchData_ID } from "@renderer/components/DataGrid/actions";
+import { SearchData_ID } from "@renderer/components/DataGrid/actions";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "./actions/SelectSchemaAction";
-import { useTranslation } from "react-i18next";
 import { SelectSchemaGroup } from "./actions/SelectSchemaGroup";
 import i18next from "i18next";
 import { RefreshConnectionDataGrid_ID } from "@renderer/containers/Connections/ConnectionView/ViewSlots/actions/RefreshConnectionDataGrid";
@@ -37,10 +36,8 @@ const PostgresPlugin: Plugin = {
                 {
                     type: "connection",
                     id: "tables-" + session.info.uniqueId,
-                    button: {
-                        icon: "DatabaseTables",
-                        title: t("database-tables", "Tables"),
-                    },
+                    icon: "DatabaseTables",
+                    label: t("database-tables", "Tables"),
                     slots: [
                         {
                             id: "tables-title-" + session.info.uniqueId,
@@ -125,10 +122,8 @@ const PostgresPlugin: Plugin = {
                 {
                     type: "rendered",
                     id: "views-" + session.info.uniqueId,
-                    button: {
-                        icon: "DatabaseViews",
-                        title: t("database-views", "Views"),
-                    },
+                    icon: "DatabaseViews",
+                    label: t("database-views", "Views"),
                     render() {
                         return (
                             <div>
@@ -142,10 +137,8 @@ const PostgresPlugin: Plugin = {
                 {
                     type: "rendered",
                     id: "postgresql-rendered-" + session.info.uniqueId,
-                    button: {
-                        icon: "GroupList",
-                        title: "PostgreSQL",
-                    },
+                    icon: "GroupList",
+                    label: "PostgreSQL",
                     render() {
                         return (
                             <div>

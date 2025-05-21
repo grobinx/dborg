@@ -16,30 +16,21 @@ import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView } from 'plugins/manager/renderer/Plugin';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
-export type ContainerType = 
-    "new-connection" 
-    | "connections" 
-    | "connection-list" 
-    | "settings" 
-    | "plugins" 
+export type ContainerType =
+    "new-connection"
+    | "connections"
+    | "connection-list"
+    | "settings"
+    | "plugins"
     | "custom";
-
-export interface ContainerButton {
-    icon: React.ReactNode; // Icon for the button, can be a string or a React node
-    title: string; // Title of the button
-    section: SidebarSection;
-}
 
 export interface BaseContainer {
     id: string; // Unique identifier for the container
     type: ContainerType; // Type of container
-    button: ContainerButton;
-    container?: ({ children }: { children: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
-}
-
-export interface ViewButton {
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
-    title: string; // Title of the button
+    label: string; // Title of the button
+    section: SidebarSection;
+    container?: ({ children }: { children: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
 }
 
 export type ViewType = "rendered" | "connection"; // Define the types of views
@@ -47,7 +38,8 @@ export type ViewType = "rendered" | "connection"; // Define the types of views
 export interface BaseView {
     type: ViewType; // Type of the view
     id: string; // Unique identifier for the view
-    button: ViewButton; // Button properties for the view
+    icon: React.ReactNode; // Icon for the button, can be a string or a React node
+    label: string; // Title of the button
 }
 
 // Union type for all view types
@@ -110,59 +102,47 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         {
             id: uuidv7(),
             type: "new-connection",
-            button: {
-                icon: <theme.icons.NewConnection />,
-                title: t("new-connection", "New Connection"),
-                section: "first",
-            },
+            icon: <theme.icons.NewConnection />,
+            label: t("new-connection", "New Connection"),
+            section: "first",
             container: () => <SchemaAssistant />,
         },
         {
             id: uuidv7(),
             type: "connection-list",
-            button: {
-                icon: <theme.icons.ConnectionList />,
-                title: t("connection-list", "Connection List"),
-                section: "first",
-            },
+            icon: <theme.icons.ConnectionList />,
+            label: t("connection-list", "Connection List"),
+            section: "first",
             container: () => <SchemaBook />,
         },
         {
             id: uuidv7(),
             type: "connections",
-            button: {
-                icon: <theme.icons.Connections />,
-                title: t("connections", "Connections"),
-                section: "first",
-            },
+            icon: <theme.icons.Connections />,
+            label: t("connections", "Connections"),
+            section: "first",
             container: ({ children }) => <Connections>{children}</Connections>,
         },
         {
             id: uuidv7(),
             type: "plugins",
-            button: {
-                icon: <theme.icons.Plugins />,
-                title: t("plugins", "Plugins"),
-                section: "last",
-            },
+            icon: <theme.icons.Plugins />,
+            label: t("plugins", "Plugins"),
+            section: "last",
             container: ({ children }) => <Box>{children}</Box>,
             views: [
                 {
                     type: "rendered",
                     id: "bake-cupcake",
-                    button: {
-                        icon: <theme.icons.Cupcake />,
-                        title: t("bake-cupcake", "Bake a cupcake"),
-                    },
+                    icon: <theme.icons.Cupcake />,
+                    label: t("bake-cupcake", "Bake a cupcake"),
                     render: () => <div>Bake a cupcake</div>,
                 },
                 {
                     type: "rendered",
                     id: "make-drink",
-                    button: {
-                        icon: <theme.icons.Drink />,
-                        title: t("make-drink", "Make a drink"),
-                    },
+                    icon: <theme.icons.Drink />,
+                    label: t("make-drink", "Make a drink"),
                     render: () => <div>Make a drink</div>,
                 },
             ],
@@ -170,11 +150,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         {
             id: uuidv7(),
             type: "settings",
-            button: {
-                icon: <theme.icons.Settings />,
-                title: t("settings", "Settings"),
-                section: "last",
-            },
+            icon: <theme.icons.Settings />,
+            label: t("settings", "Settings"),
+            section: "last",
         },
     ]);
 

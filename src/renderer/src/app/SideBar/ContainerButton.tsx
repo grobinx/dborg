@@ -12,7 +12,7 @@ interface ContainerButtonOwnProps extends ContainerButtonProps {
     selected: boolean,
     placement?: Placement,
     icon?: ReactNode,
-    title?: string,
+    label?: string,
 }
 
 const ContainerButtonRoot = styled(Button, {
@@ -29,7 +29,7 @@ const ContainerButtonRoot = styled(Button, {
 }));
 
 const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
-    const { toolTip, expanded, selected, className, itemID, placement, icon, title, ...other } = useThemeProps({ name: 'ContainerButton', props });
+    const { toolTip, expanded, selected, className, itemID, placement, icon, label, ...other } = useThemeProps({ name: 'ContainerButton', props });
     const [position, setPosition] = React.useState<{
         horizontal: boolean,
         toolTipPlacement: Placement,
@@ -51,7 +51,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
 
     return (
         <Tooltip
-            title={toolTip ?? title}
+            title={toolTip ?? label}
             disableHoverListener={expanded}
             placement={position.toolTipPlacement}
             arrow={true}
@@ -75,7 +75,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                             fontSize="inherit"
                             maxWidth="inherit"
                         >
-                            {title}
+                            {label}
                         </Typography> :
                         <Collapse in={expanded} orientation="vertical" timeout={100}>
                             <Typography
@@ -86,7 +86,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                                 minWidth="5.6rem"
                                 maxWidth="5.6rem"
                             >
-                                {title}
+                                {label}
                             </Typography>
                         </Collapse>
                     }

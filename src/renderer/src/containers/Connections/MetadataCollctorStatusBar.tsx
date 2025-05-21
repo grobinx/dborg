@@ -201,7 +201,7 @@ const MetadataCollctorStatusBar: React.FC = () => {
                         />
                         <ToolButton
                             onClick={() => handleCancel(connectionId)}
-                            title={t("cancel", "Cancel")}
+                            label={t("cancel", "Cancel")}
                         >
                             <theme.icons.Close />
                         </ToolButton>

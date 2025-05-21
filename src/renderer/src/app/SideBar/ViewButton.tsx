@@ -11,7 +11,7 @@ interface ViewButtonOwnProps extends ViewButtonProps {
     selected: boolean,
     placement?: Placement,
     icon?: ReactNode,
-    title?: string,
+    label?: string,
     index?: number,
 }
 
@@ -29,7 +29,7 @@ const ViewButtonRoot = styled(Button, {
 }));
 
 const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
-    const { toolTip, expanded, selected, className, itemID, placement, icon, title, index, ...other } = useThemeProps({ name: 'ViewButton', props });
+    const { toolTip, expanded, selected, className, itemID, placement, icon, label, index, ...other } = useThemeProps({ name: 'ViewButton', props });
     const [position, setPosition] = React.useState<{
         horizontal: boolean,
         toolTipPlacement: Placement,
@@ -52,7 +52,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
     return (
         <Zoom in={true} style={{ transitionDelay: index ? `${50 * index}ms` : undefined }}>
             <Tooltip
-                title={toolTip ?? title}
+                title={toolTip ?? label}
                 disableHoverListener={expanded}
                 placement={position.toolTipPlacement}
                 arrow={true}
@@ -76,7 +76,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                                 fontSize="inherit"
                                 maxWidth="inherit"
                             >
-                                {title}
+                                {label}
                             </Typography> :
                             <Collapse in={expanded} orientation="vertical" timeout={100}>
                                 <Typography
@@ -87,7 +87,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                                     minWidth="5.6rem"
                                     maxWidth="5.6rem"
                                 >
-                                    {title}
+                                    {label}
                                 </Typography>
                             </Collapse>
                         }
