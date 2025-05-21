@@ -85,6 +85,16 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
     const [searchProperties, setSearchProperties] = React.useState<string[]>([]);
     const passwordRef = React.useRef<HTMLInputElement | null>(null);
 
+    React.useEffect(() => {
+        setSchemaPattern(schema.schemaPattern ?? '');
+        setSchemaName(schema.schemaName ?? '');
+        setSchemaColor(schema.schemaColor);
+        setSchemaGroup(schema.schemaGroup);
+        setSchemaUsePassword(schema.usePassword);
+        setProperties(schema.properties ?? {});
+        setSearchProperties([]);
+    }, [schema]);
+
     React.useImperativeHandle(schemaRef, () => ({
         getSchema: () => ({
             uniqueId: schema.uniqueId,

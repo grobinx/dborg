@@ -40,13 +40,14 @@ export interface NotificationAdminListProps extends React.ComponentProps<typeof 
         itemText?: React.ComponentProps<typeof ListItemText>;
         itemButton?: React.ComponentProps<typeof Button>;
     };
+    tabsItemID?: string;
 }
 
 interface NotificationAdminListOwnProps extends NotificationAdminListProps { }
 
 const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) => {
     const { notifications, removeNotification } = useNotificationAdmin();
-    const { slotProps, ...other } = useThemeProps({ name: "NotificationAdminList", props: props });
+    const { slotProps, tabsItemID, ...other } = useThemeProps({ name: "NotificationAdminList", props: props });
     const theme = useTheme();
     const [selectedNotificationId, setSelectedNotificationId] = React.useState<string | null>(null);
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});

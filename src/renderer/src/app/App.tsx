@@ -20,6 +20,7 @@ import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
 import ConnectionTitleViewSlot from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionTitleViewSlot';
 import { TitleConnectionViewSlot } from 'plugins/manager/renderer/Plugin';
 import ConnectionView from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionView';
+import TabPanelLabel from '@renderer/components/TabsPanel/TabPanelLabel';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -186,10 +187,10 @@ const App: React.FC = () => {
                                 itemID="logs"
                                 label="Logs"
                                 content={
-                                    <Box p={2}>
+                                    <TabPanelLabel p={2}>
                                         <Typography variant="h6">Logs</Typography>
                                         <Typography variant="body2">Here you can see application logs.</Typography>
-                                    </Box>
+                                    </TabPanelLabel>
                                 }
                                 buttons={
                                     <TabPanelButtons>

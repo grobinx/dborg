@@ -30,10 +30,11 @@ export interface ConnectionProps extends React.ComponentProps<typeof StyledConne
 
 interface ConnectionsOwnProps extends ConnectionProps {
     session: IDatabaseSession;
+    tabsItemID?: string;
 }
 
 export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
-    const { session, children, ...other } = useThemeProps({ name: "Connection", props });
+    const { session, children, tabsItemID, ...other } = useThemeProps({ name: "Connection", props });
     const { selectedContainer, selectedView } = useContainers();
     const { selectedSession } = useSessions();
     const [selectedThis, setSelectedThis] = React.useState(false);

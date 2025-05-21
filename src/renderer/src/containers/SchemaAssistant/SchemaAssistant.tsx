@@ -89,7 +89,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const [search, setSearch] = React.useState('');
     const { sendMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
-    const [forceReload, setForceReload] = React.useState(false);
+    const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -108,10 +108,33 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         }
     }, [selectedContainer]);
 
-    const handleSetSchemaIdMessage = React.useCallback((schemaId: string) => {
-        setSchemaParams({ uniqueId: schemaId });
-        setActiveStep(schemaId ? 1 : 0);
-        setForceReload((prev) => !prev); // Wymuszenie odświeżenia
+    const handleSetSchemaIdMessage = React.useCallback(async (schemaId: string) => {
+        if (!schemaId) {
+            setSchemaParams({ uniqueId: undefined });
+            setActiveStep(0);
+            setAssistantMode("new");
+            return;
+        }
+
+        try {
+            const schema = await sendMessage(Messages.FETCH_SCHEMA, schemaId) as SchemaRecord;
+            setSchemaParams({
+                uniqueId: schemaId,
+                driverUniqueId: schema.sch_drv_unique_id,
+                schemaGroup: schema.sch_group,
+                schemaPattern: schema.sch_pattern,
+                schemaName: schema.sch_name,
+                schemaColor: schema.sch_color,
+                usePassword: schema.sch_use_password,
+                properties: schema.sch_properties,
+                driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
+            });
+            setActiveStep(1);
+            setAssistantMode("edit");
+        }
+        catch (error) {
+            addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
+        }
     }, []);
 
     const handleSetCloneSchemaIdMessage = React.useCallback(async (schemaId: string) => {
@@ -128,6 +151,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
             });
             setActiveStep(1);
+            setAssistantMode("clone");
         }
         catch (error) {
             addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
@@ -236,33 +260,6 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         })
     };
 
-    React.useEffect(() => {
-        const load = async () => {
-            try {
-                const schema = await sendMessage(Messages.FETCH_SCHEMA, schemaParams.uniqueId) as SchemaRecord;
-                setSchemaParams({
-                    uniqueId: schema.sch_id,
-                    driverUniqueId: schema.sch_drv_unique_id,
-                    schemaGroup: schema.sch_group,
-                    schemaPattern: schema.sch_pattern,
-                    schemaName: schema.sch_name,
-                    schemaColor: schema.sch_color,
-                    usePassword: schema.sch_use_password,
-                    properties: schema.sch_properties,
-                    driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
-                });
-                setActiveStep(1);
-            }
-            catch (error) {
-                addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
-            }
-        };
-        if (!schemaParams.uniqueId || activeStep >= 1) {
-            return;
-        }
-        load();
-    }, [schemaParams.uniqueId, activeStep, forceReload]);
-
     return (
         <SchemaAssistantRoot
             {...other}
@@ -271,7 +268,9 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         >
             <SchemaAssistantTitle className="SchemaAssistant-title" {...slotProps?.assistantTitle}>
                 <Typography variant="h4" {...slotProps?.title}>
-                    {t("schema-assistant", "Schema assistant")}
+                    {(assistantMode === "new") && t("schema-assistant", "Schema assistant")}
+                    {(assistantMode === "edit") && t("schema-assistant-edit", "Schema edit assistant")}
+                    {(assistantMode === "clone") && t("schema-assistant-clone", "Schema clone assistant")}
                 </Typography>
                 <Stack flexGrow={1} />
                 {activeStep === 1 &&
@@ -297,7 +296,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 {activeStep === 2 && schemaParams.uniqueId && <SchemaSummary schema={schemaParams} />}
             </SchemaAssistantContent>
             <SchemaAssistantButtons className="SchemaAssistant-buttons" {...slotProps?.assistantButtons}>
-                <Button disabled={activeStep === 0} onClick={handleBack} {...slotProps?.button} key="back">
+                <Button disabled={activeStep === 0 || assistantMode !== "new"} onClick={handleBack} key="back">
                     {t("back", "Back")}
                 </Button>
                 <Box flexGrow={1} />

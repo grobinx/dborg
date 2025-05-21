@@ -13,11 +13,13 @@ export interface TabPanelLabelProps extends React.ComponentProps<typeof StyledTa
 }
 
 interface TabPanelLabelOwnProps extends TabPanelLabelProps {
+    tabsItemID?: string;
+    children?: React.ReactNode;
 }
 
 const TabPanelLabel: React.FC<TabPanelLabelOwnProps> = (props) => {
-    const { children, ...other } = useThemeProps({ name: "TabPanelLabel", props: props, });
-    
+    const { children, tabsItemID, ...other } = useThemeProps({ name: "TabPanelLabel", props: props, });
+
     return <StyledTabPanelLabel className='TabPanel-label' {...other}>
         {children}
     </StyledTabPanelLabel>;

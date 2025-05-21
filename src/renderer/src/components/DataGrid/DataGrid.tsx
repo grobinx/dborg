@@ -535,8 +535,25 @@ export const DataGrid = <T extends object>({
         }
     }, [filteredDataState, selectedCell?.row]);
 
-    const updateSelectedCell = (cell: TableCellPosition | null) => {
-        setSelectedCell((prev) => (prev?.row === cell?.row && prev?.column === cell?.column ? prev : cell));
+    const updateSelectedCell = (cell: TableCellPosition | null): TableCellPosition | null => {
+        if (!cell) {
+            setSelectedCell(null);
+            return null;
+        }
+        // Skoryguj indeksy, jeśli wykraczają poza zakres
+        const maxRow = filteredDataState.length - 1;
+        const maxCol = columnsState.current.length - 1;
+        const row = Math.max(0, Math.min(cell.row, maxRow));
+        const column = Math.max(0, Math.min(cell.column, maxCol));
+        // Jeśli nie ma żadnych wierszy lub kolumn, resetuj zaznaczenie
+        if (maxRow < 0 || maxCol < 0) {
+            setSelectedCell(null);
+            return null;
+        }
+        setSelectedCell((prev) =>
+            prev?.row === row && prev?.column === column ? prev : { row, column }
+        );
+        return { row, column };
     };
 
     useEffect(() => {
@@ -564,9 +581,9 @@ export const DataGrid = <T extends object>({
         },
         getPosition: () => selectedCell,
         setPosition: ({ row, column }) => {
-            updateSelectedCell({ row, column });
-            if (containerRef.current) {
-                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), rowHeight, columnsState.current, footerVisible);
+            const position = updateSelectedCell({ row, column });
+            if (containerRef.current && position) {
+                scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, footerVisible);
             }
         },
         getRowHeight: () => rowHeight,
@@ -772,10 +789,10 @@ export const DataGrid = <T extends object>({
     };
 
     const handleCellClick = (rowIndex: number, columnIndex: number) => {
-        updateSelectedCell({ row: rowIndex, column: columnIndex });
+        const position = updateSelectedCell({ row: rowIndex, column: columnIndex });
 
-        if (containerRef.current) {
-            scrollToCell(containerRef.current, rowIndex, columnIndex, columnsState.columnLeft(columnIndex), rowHeight, columnsState.current, footerVisible);
+        if (containerRef.current && position) {
+            scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, footerVisible);
         }
     };
 

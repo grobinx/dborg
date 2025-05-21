@@ -4,7 +4,7 @@ import { Box, Typography, IconButton, Stack } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { use } from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { DataGridActionContext, DataGridContext, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshConnectionDataGrid } from "./actions/RefreshConnectionDataGrid";
 import { useTranslation } from "react-i18next";
 
@@ -26,14 +26,18 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
 
     useEffect(() => {
         const fetchData = async () => {
+            let position: TableCellPosition | null = null;
             try {
+                if (dataGridRef?.current) {
+                    position = dataGridRef.current.getPosition();
+                }
                 setLoading(true);
                 const parameters = typeof slot.parameters === "function" ? slot.parameters(dataGridRef?.current ?? undefined) : slot.parameters;
                 const { rows } = await session.query(slot.sql, parameters);
                 setRows(rows);
                 setTimeout(() => {
                     if (dataGridRef?.current) {
-                        dataGridRef.current.setPosition({ column: 0, row: 0 });
+                        dataGridRef.current.setPosition(position ?? { column: 0, row: 0 });
                         dataGridRef.current.focus();
                     }
                 }, 10);

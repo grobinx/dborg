@@ -13,10 +13,11 @@ export interface TabPanelButtonsProps extends React.ComponentProps<typeof Styled
 }
 
 interface TabPanelButtonsOwnProps extends TabPanelButtonsProps {
+    tabsItemID?: string;
 }
 
 const TabPanelButtons: React.FC<TabPanelButtonsOwnProps> = (props) => {
-    const { children, ...other } = useThemeProps({ name: "TabPanelButtons", props: props, });
+    const { children, tabsItemID, ...other } = useThemeProps({ name: "TabPanelButtons", props: props, });
     return (
         <StyledTabPanelButtons className='TabPanel-buttons' {...other}>
             {children}

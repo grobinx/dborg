@@ -21,6 +21,7 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
     const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
     const [heights, setHeights] = useState<number[]>(() => slots.map(() => 0));
     const [forceUpdateKey, setForceUpdateKey] = useState(0);
+    const rerenderTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const observers: ResizeObserver[] = [];
@@ -52,8 +53,16 @@ export const ConnectionView: React.FC<ConnectionViewProps> = ({ slots, session }
         return sum;
     }, 0);
 
-    // Funkcja do wymuszenia renderowania
-    const forceRerenderSlots = () => setForceUpdateKey(k => k + 1);
+    // Funkcja do wymuszenia renderowania z opóźnieniem 250ms, resetowanym przy kolejnych wywołaniach
+    const forceRerenderSlots = () => {
+        if (rerenderTimeout.current) {
+            clearTimeout(rerenderTimeout.current);
+        }
+        rerenderTimeout.current = setTimeout(() => {
+            setForceUpdateKey(k => k + 1);
+            rerenderTimeout.current = null;
+        }, 250);
+    };
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>

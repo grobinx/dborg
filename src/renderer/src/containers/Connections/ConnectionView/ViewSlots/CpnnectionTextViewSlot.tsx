@@ -16,6 +16,7 @@ interface ConnectionTextViewSlotOwnProps extends ConnectionTextViewSlotProps {
 const StyledTextViewBox = styled(Box)({
     maxHeight: "calc(3 * 1.5em)",
     overflow: "auto",
+    padding: 4,
 });
 
 const ConnectionTextViewSlot: React.FC<ConnectionTextViewSlotOwnProps> = (props) => {

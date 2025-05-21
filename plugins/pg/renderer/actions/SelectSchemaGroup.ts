@@ -12,10 +12,6 @@ const sql =
     and nspname not ilike 'pg_temp%'
   order by nspname`;
 
-interface SchemaRecord {
-    schema_name: string;
-}
-
 export const SelectSchemaGroup = (
     session: IDatabaseSession,
     onSelectSchema: (schemaName: string) => void
@@ -29,26 +25,40 @@ export const SelectSchemaGroup = (
         label: t(id, "# Select schema"),
         actions: async () => {
             const actions: ActionDescriptor<any>[] = [];
-            const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
+            let schemas: string[] = [];
 
-            // Sortowanie schematów według nazwy
-            const sortedSchemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
-                (a.name as string).localeCompare(b.name as string)
-            );
+            if (session.metadata) {
+                const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
 
-            sortedSchemas.forEach((schema: SchemaMetadata) => {
+                // Sortowanie schematów według nazwy
+                schemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
+                    (a.name as string).localeCompare(b.name as string)
+                ).map((schema) => schema.name as string);
+            }
+            else {
+                try {
+                    const { rows } = await session.query(sql);
+                    if (rows.length !== 0) {
+                        schemas = rows.map(row => (row as any).schema_name as string);
+                    }
+                } catch (error) {
+                    console.error("Error fetching schemas:", error);
+                }
+            }
+
+            schemas.forEach((schemaName) => {
                 actions.push({
-                    id: `dataGrid.pg.schema.${schema.name}`,
-                    label: schema.name as string,
+                    id: `dataGrid.pg.schema.${schemaName}`,
+                    label: schemaName,
                     run: (context: DataGridActionContext<any>) => {
-                        const schemaName = context.getUserData('schema_name');
-                        if (schemaName !== schema.name) {
-                            context.setUserData('schema_name', schema.name as string);
-                            onSelectSchema(schema.name as string);
+                        const currentSchemaName = context.getUserData('schema_name');
+                        if (currentSchemaName !== schemaName) {
+                            context.setUserData('schema_name', schemaName);
+                            onSelectSchema(schemaName);
                             context.actionManager()?.executeAction(RefreshConnectionDataGrid_ID, context);
                         }
                     },
-                    selected: context => context.getUserData('schema_name') === schema.name,
+                    selected: context => context.getUserData('schema_name') === schemaName,
                 });
             });
 
