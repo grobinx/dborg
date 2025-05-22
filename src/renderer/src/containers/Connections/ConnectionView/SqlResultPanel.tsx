@@ -227,7 +227,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 <DataGrid
                     columns={columns ?? []}
                     data={rows ?? []}
-                    dataTable={true}
+                    mode="data"
                     columnsResizable={true}
                     loading={rowsFetched ?? 0 > 0 ? `Fetching data... ${rowsFetched} rows` : executing ? "Executing..." : undefined}
                     onCancelLoading={
@@ -244,6 +244,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     onChange={(status) => setDataGridStatus(status)}
                     onMount={onMountHandle}
                     ref={dataGridRef}
+                    uniqueId={session.schema.sch_id}
                 />
             </Box>
             <DataGridStatusBar

@@ -17,9 +17,6 @@ import { useContainers } from '@renderer/contexts/ApplicationContext';
 import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
 import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
-import ConnectionTitleViewSlot from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionTitleViewSlot';
-import { TitleConnectionViewSlot } from 'plugins/manager/renderer/Plugin';
-import ConnectionView from '@renderer/containers/Connections/ConnectionView/ViewSlots/ConnectionView';
 import TabPanelLabel from '@renderer/components/TabsPanel/TabPanelLabel';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition } from "./DataGridTypes";
+import { DataGridMode } from "./DataGrid";
 
 interface UseColumnsState {
     current: ColumnDefinition[];
@@ -24,7 +25,7 @@ function hashString(str: string): string {
 }
 
 // Pomocnicza funkcja do generowania klucza układu
-function getColumnsLayoutKey(columns: ColumnDefinition[]): string {
+function getColumnsLayoutKey(columns: ColumnDefinition[], uniqueId?: string): string {
     const keyString = columns
         .slice()
         .sort((a, b) =>
@@ -34,7 +35,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[]): string {
         )
         .map((col) => `${col.key}:${col.dataType}`)
         .join("|");
-    return "datagrid-layout-" + hashString(keyString);
+    return "datagrid-layout-" + hashString(keyString + (uniqueId ? "|" + uniqueId : ""));
 }
 
 // Zapisz tylko szerokość, kolejność i datę modyfikacji
@@ -126,10 +127,10 @@ function cleanupOldColumnLayouts() {
     }
 }
 
-export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: boolean): UseColumnsState => {
-    const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns), [initialColumns]);
+export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGridMode, uniqueId?: string): UseColumnsState => {
+    const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, uniqueId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
-        restoreColumnsLayout(initialColumns, layoutKey, dataTable)
+        restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
     );
     const [totalWidth, setTotalWidth] = useState(() =>
         columnsState.reduce((sum, col) => sum + (col.width || 150), 0)
@@ -145,9 +146,9 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: b
                 initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
             )
         ) {
-            saveColumnsLayout(columnsState, layoutKey, dataTable);
+            saveColumnsLayout(columnsState, layoutKey, mode === "data");
         }
-    }, [columnsState, layoutKey, initialColumns, dataTable]);
+    }, [columnsState, layoutKey, initialColumns, mode]);
 
     // Aktualizacja stanu kolumn i detekcja zmian
     useEffect(() => {
@@ -181,9 +182,9 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], dataTable: b
             columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
             initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, dataTable));
+            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data"));
         }
-    }, [initialColumns, layoutKey, dataTable]);
+    }, [initialColumns, layoutKey, mode]);
 
     // Funkcja do sortowania kolumn
     const sortColumn = (columnIndex: number) => {

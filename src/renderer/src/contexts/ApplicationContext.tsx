@@ -33,12 +33,12 @@ export interface BaseContainer {
     container?: ({ children }: { children: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
 }
 
-export type ViewType = "rendered" | "connection"; // Define the types of views
+export type ViewType = "rendered" | "connection" | "custom"; // Define the types of views
 
 export interface BaseView {
     type: ViewType; // Type of the view
     id: string; // Unique identifier for the view
-    icon: React.ReactNode; // Icon for the button, can be a string or a React node
+    icon: React.ReactNode; // Icon for the button, can be a string (theme.icon) or a React node
     label: string; // Title of the button
 }
 

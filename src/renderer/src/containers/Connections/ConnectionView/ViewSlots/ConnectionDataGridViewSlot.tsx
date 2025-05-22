@@ -80,6 +80,7 @@ export const ConnectionDataGridViewSlot: React.FC<ConnectionDataGridViewSlotProp
                 onRowClick={onRowClick}
                 ref={dataGridRef}
                 onMount={dataGridMountHandler}
+                uniqueId={session.schema.sch_id}
             />
         </Box>
     );

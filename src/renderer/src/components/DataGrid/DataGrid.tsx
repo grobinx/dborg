@@ -19,6 +19,8 @@ import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 
+export type DataGridMode = "defined" | "data";
+
 interface DataGridProps<T extends object> {
     columns: ColumnDefinition[];
     data: T[];
@@ -26,9 +28,9 @@ interface DataGridProps<T extends object> {
     /**
      * Czy tabela ma być wyświetlana jako tabela danych
      * Tabela danych jest wyświetlana w stylu monospace
-     * @default false
+     * @default "defined"
      */
-    dataTable?: boolean;
+    mode?: DataGridMode;
     /**
      * Czy kolumny są resizowalne
      * @default false
@@ -86,6 +88,11 @@ interface DataGridProps<T extends object> {
     active?: boolean;
 
     ref?: React.RefObject<DataGridActionContext<T> | null>;
+
+    /**
+     * Extra unique ID for the DataGrid to save column layout, eg for connection schema
+     */
+    uniqueId?: string;
 }
 
 const StyledTable = styled('div')({
@@ -320,7 +327,7 @@ export const DataGrid = <T extends object>({
     columns,
     data,
     rowHeight: initialRowHeight = 20,
-    dataTable = false,
+    mode = "defined",
     columnsResizable = true,
     overscanRowCount = 3,
     columnRowNumber = false,
@@ -334,6 +341,7 @@ export const DataGrid = <T extends object>({
     onCancelLoading,
     active,
     ref,
+    uniqueId,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -348,7 +356,7 @@ export const DataGrid = <T extends object>({
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
-    const columnsState = useColumnsState(columns, dataTable);
+    const columnsState = useColumnsState(columns, mode, uniqueId);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
@@ -527,7 +535,7 @@ export const DataGrid = <T extends object>({
             setFontFamily(style.fontFamily || "inherit");
             setFontSize(parseFloat(style.fontSize) || 16);
         }
-    }, [rowHeight, dataTable]);
+    }, [rowHeight, mode]);
 
     useEffect(() => {
         if (onRowClick && selectedCell?.row !== undefined) {
@@ -681,7 +689,7 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
-        if (dataTable && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
+        if (mode && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
             actionManager.current.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
             setAdjustWidthExecuted(true); // Oznacz akcję jako wykonaną
         }
@@ -689,7 +697,7 @@ export const DataGrid = <T extends object>({
 
     // Resetuj stan przy zmianie dataState
     useEffect(() => {
-        if (dataTable) {
+        if (mode === "data") {
             setAdjustWidthExecuted(false);
         }
     }, [dataState]);
@@ -926,7 +934,7 @@ export const DataGrid = <T extends object>({
                 paddingY={cellPaddingY}
                 onFocus={handleFocus}
                 style={{
-                    fontFamily: dataTable ? "monospace" : "inherit",
+                    fontFamily: (mode === "data" ? "monospace" : "inherit"),
                     marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
                 }}
@@ -1020,7 +1028,7 @@ export const DataGrid = <T extends object>({
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                             dataType={dataType}
-                                            colorsEnabled={dataTable ? settings.data_grid.colors_enabled : true}
+                                            colorsEnabled={mode === "data" ? settings.data_grid.colors_enabled : true}
                                         >
                                             {(() => {
                                                 const formattedValue = columnDataFormatter(row[col.key], col, settings.data_grid.null_value);

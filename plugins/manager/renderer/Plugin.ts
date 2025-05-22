@@ -4,6 +4,7 @@ import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { ReactNode } from "react";
+import { ContentSlot, TabsSlot } from "./CustomSlots";
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -102,7 +103,15 @@ export interface RenderedView extends BaseView {
     render: () => React.ReactNode; // Panel component to be rendered for the view
 }
 
-export type ConnectionViewSlotType = "title" | "datagrid" | "text";
+export type ConnectionViewSlotType = 
+"title" 
+| "datagrid" 
+| "text" 
+| "rendered" 
+| "integrated" 
+| "tabs"
+| "tab" 
+| "root";
 
 /**
  * Interface representing a connection view slot
@@ -200,6 +209,23 @@ export interface TextConnectionViewSlot extends IConnectionViewSlot {
 export interface ConnectionView extends BaseView {
     type: "connection"; // Type of the view
     slots: IConnectionViewSlot[]; // Array of slots in the view
+}
+
+export interface CustomConnectionView extends BaseView {
+    type: "custom"; // Type of the view
+    slot: CustomIntegratedSlot | CustomRootSlot;
+}
+
+export interface CustomRootSlot extends IConnectionViewSlot {
+    type: "root";
+    root: ContentSlot;
+}
+
+export interface CustomIntegratedSlot extends IConnectionViewSlot {
+    type: "integrated";
+    side?: ContentSlot;
+    editor?: TabsSlot;
+    result?: TabsSlot;
 }
 
 /**
