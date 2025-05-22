@@ -1,7 +1,7 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
-import { ColumnDataType, ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { ReactNode } from "react";
+import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import * as monaco from "monaco-editor";
 
 export type CustomSlotType =
     "split"
@@ -176,7 +176,7 @@ export interface GridSlot extends CustomSlot {
     /**
      * Zapytanie SQL do pobrania danych.
      */
-    sql: string;
+    rows: Record<string, any>[] | (() => Record<string, any>[]);
     /**
      * Definicje kolumn (opcjonalnie).
      */
@@ -192,7 +192,7 @@ export interface GridSlot extends CustomSlot {
     /**
      * Callback po kliknięciu w wiersz (opcjonalnie).
      */
-    onRowClick?: (row: any, refreshSlot: RefreshSlotCallback) => void;
+    onRowClick?: (row: any) => void;
 }
 
 /**
@@ -204,9 +204,9 @@ export interface EditorSlot extends CustomSlot {
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: ActionDescriptor<any>[] | (() => ActionDescriptor<any>[]);
+    actions?: monaco.editor.IActionDescriptor[] | (() => monaco.editor.IActionDescriptor[]);
     /**
-     * Zawartość edytora (tekst lub funkcja zwracająca tekst).
+     * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
     content: string | (() => string);
 }
@@ -222,7 +222,7 @@ export interface TextSlot extends CustomSlot {
      */
     text: React.ReactNode | (() => React.ReactNode);
     /**
-     * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie).
+     * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie, domyślnie 3).
      */
     maxLines?: number;
 }
