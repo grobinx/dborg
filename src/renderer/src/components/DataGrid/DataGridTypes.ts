@@ -30,9 +30,10 @@ export interface DataGridInfoMessage {
     active: boolean;
 }
 
-export type ColumnDataType = 'string' | 'number' | 'boolean' | 'datetime' | 'custom' | 'object' | 'array' | 'null';
+export type ColumnDataType = 'string' | 'bigint' | 'number' | 'boolean' | 'datetime' | 'custom' | 'object' | 'array' | 'null';
 export const columnDataTypeClassMap = {
     string: 'data-type-string',
+    bigint: 'data-type-bigint',
     number: 'data-type-number',
     boolean: 'data-type-boolean',
     datetime: 'data-type-datetime',
@@ -41,7 +42,7 @@ export const columnDataTypeClassMap = {
     array: 'data-type-array',
     null: 'data-type-null',
 };
-export type ColumnDataValueType = string | number | boolean | any[] | Date | object | null;
+export type ColumnDataValueType = string | bigint | number | boolean | any[] | Date | object | null;
 
 export interface TableCellPosition {
     row: number;

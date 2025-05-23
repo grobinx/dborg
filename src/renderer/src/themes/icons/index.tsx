@@ -116,6 +116,7 @@ export interface ThemeIcons {
     ExcludeText: IconWrapperFC;
     Search: IconWrapperFC;
     SelectDatabaseSchema: IconWrapperFC;
+    RefreshMetadata: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode) => {

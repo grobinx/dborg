@@ -237,3 +237,7 @@ export type SessionGetMetadataSuccess = {
     connectionId: string; // Unique identifier for the connection
     metadata: DatabasesMetadata; // Metadata retrieved from the database
 }
+export const REFRESH_METADATA = "refresh-metadata";
+export type RefreshMetadata = {
+    connectionId: string; // Unique identifier for the connection
+}

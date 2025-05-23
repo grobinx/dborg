@@ -15,6 +15,8 @@ export const resolveDataType = (value: any, dataType?: ColumnDataType): ColumnDa
         return 'string';
     } else if (typeof value === 'number') {
         return 'number';
+    } else if (typeof value === 'bigint') {
+        return 'bigint';
     } else if (typeof value === 'boolean') {
         return 'boolean';
     } else if (value instanceof Date || !isNaN(Date.parse(value))) {
@@ -44,13 +46,15 @@ export const valueToString = (value: any, dataType?: ColumnDataType): string | n
         return String(value); // Zwróć jako string
     } else if (dataType === 'number') {
         return String(value); // Zwróć jako string
+    } else if (dataType === 'bigint') {
+        return String(value); // Zwróć jako string
     } else if (dataType === 'boolean') {
         return value ? 'true' : 'false'; // Zwróć jako string
     } else if (dataType === 'datetime') {
         if (value instanceof Date) {
             return DateTime.fromJSDate(value).toSQL(); 
-        } else if (typeof value === "number") {
-            return DateTime.fromMillis(value).toSQL(); 
+        } else if (typeof value === 'number' || typeof value === 'bigint') {
+            return DateTime.fromMillis(Number(value)).toSQL(); 
         }
         else {
             return value.toString();
@@ -205,8 +209,8 @@ export const calculateSummary = (
             return;
         }
 
-        if (col.dataType === "number") {
-            const numericValues = values.filter((value) => typeof value === "number") as number[];
+        if (col.dataType === 'number' || col.dataType === 'bigint') {
+            const numericValues = values.map((value) => Number(value));
             switch (columnOperation) {
                 case "sum":
                     summary[col.key] = numericValues.reduce((acc, val) => acc + val, 0);

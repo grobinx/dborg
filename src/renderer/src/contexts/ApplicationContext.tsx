@@ -10,7 +10,7 @@ import * as api from "../../../api/db";
 import DatabaseSession, { IDatabaseSession } from './DatabaseSession';
 import { usePluginManager } from './PluginManagerContext';
 import { uuidv7 } from 'uuidv7';
-import { TabPanelChangedMessage } from '@renderer/app/Messages';
+import { RefreshMetadata, TabPanelChangedMessage } from '@renderer/app/Messages';
 import { useNotification } from './NotificationContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView } from 'plugins/manager/renderer/Plugin';
@@ -211,7 +211,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [sessionViewState, plugins]);
 
-    const initMetadata = (session: DatabaseSession) => {
+    const initMetadata = (session: IDatabaseSession, force?: boolean) => {
         setTimeout(() => {
             sendMessage(Messages.SESSION_GET_METADATA_START, {
                 connectionId: session.info.uniqueId,
@@ -222,7 +222,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.uniqueId,
                     progress: current,
                 } as Messages.SessionGetMetadataProgress);
-            }).then((metadata: api.DatabasesMetadata) => {
+            }, force).then((metadata: api.DatabasesMetadata) => {
                 session.metadata = metadata;
                 sendMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
                     connectionId: session.info.uniqueId,
@@ -242,7 +242,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.uniqueId,
                 } as Messages.SessionGetMetadataEnd);
             });
-        }, 10000);
+        }, force ? 1000 : 10000);
     };
 
     useEffect(() => {
@@ -363,6 +363,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         });
     }, [selectedSession, updateViewsForSession]);
 
+    const handleRefreshMetadata = React.useCallback((message: RefreshMetadata) => {
+        if (selectedSession && selectedSession.info.uniqueId === message.connectionId) {
+            initMetadata(selectedSession, true);
+        }
+    }, [selectedSession]);
+
     React.useEffect(() => {
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
@@ -371,6 +377,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
         subscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
         subscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
+        subscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
@@ -380,6 +387,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
             unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
             unsubscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
+            unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
         };
     }, [
         subscribe,
@@ -390,6 +398,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         handleTabConnectionsChanged,
         handleSchemaConnectSuccess,
         handleSchemaDisconnectSuccess,
+        handleRefreshMetadata,
     ]);
 
     return (

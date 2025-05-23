@@ -18,6 +18,7 @@ import { WholeWord } from "./svg/WholeWord";
 import { CaseSensitive } from "./svg/CaseSensitive";
 import { AddTabRight } from "./svg/AddTabRight";
 import { NotEqual } from "./svg/NotEqual";
+import { RefreshMetadata } from "./svg/RefreshMetadata";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -72,6 +73,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             ExcludeText: (props) => <IconWrapper {...props} className="exclude-text"><NotEqual fontSize="inherit" /></IconWrapper>,
             Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
             SelectDatabaseSchema: (props) => <IconWrapper {...props} className="select-database-schema"><MuiIcons.FactCheckOutlined fontSize="inherit" /></IconWrapper>,
+            RefreshMetadata: (props) => <IconWrapper {...props} className="refresh-metadata"><RefreshMetadata fontSize="inherit" /></IconWrapper>,
         }
     }
 }

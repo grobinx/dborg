@@ -45,6 +45,7 @@ const palette = createPalette({
         boolean: colors.purple[200],
         datetime: colors.green[200],
         number: colors.red[200],
+        bigint: colors.red[200],
         string: colors.grey[100],
         custom: colors.grey[100],
         object: colors.grey[100],

@@ -225,7 +225,7 @@ const StyledCell = styled("div")<{
             lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
             alignItems: "center",
             color: colorsEnabled ? theme.palette?.dataType?.[dataType ?? "string"] : "inherit",
-            textAlign: dataType === 'number' ? 'right' : dataType === 'boolean' ? 'center' : 'left',
+            textAlign: (dataType === 'number' || dataType === 'bigint') ? 'right' : dataType === 'boolean' ? 'center' : 'left',
             zIndex: 1,
             "&.Mui-selected": {
                 backgroundColor: theme.palette.action.selected,
