@@ -51,7 +51,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const hoverProviderRef = useRef<monaco.IDisposable | null>(null);
     const editorFocusedRef = useRef(false);
     const currentFragmentRef = useRef<string | null>(null);
-    const currentSqlAstRef = useRef<AstComponent | null>(null);
+    const currentSqlAstRef = useRef<AstComponent[] | null>(null);
 
     useEffect(() => {
         const handleTabPanelClick = (message: TabPanelClickMessage) => {
@@ -95,8 +95,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                         currentSqlAstRef.current = ast;
                     }
                     if (currentSqlAstRef.current) {
-                        const analyzer = new SqlAnalyzer(currentSqlAstRef.current);
-                        const identifier = analyzer.findIdentifierAt(relativeOffset);
+                        const analyzer = new SqlAnalyzer();
+                        const identifier = analyzer.findIdentifierAt(currentSqlAstRef.current[0], relativeOffset);
                         if (identifier) {
                             return {
                                 contents: [

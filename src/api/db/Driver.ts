@@ -85,6 +85,14 @@ export interface CommandResult extends StatementResult {
      * Count of Updated, deleted, etc command
      */
     updateCount?: number | null | undefined,
+    /**
+     * Result rows if command returns
+     */
+    rows?: object[];
+    /**
+     * Result column info if command returns
+     */
+    columns?: ColumnInfo[] | undefined
 }
 
 /**

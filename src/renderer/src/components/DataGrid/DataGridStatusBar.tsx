@@ -24,13 +24,13 @@ const DataGridStatusBar = forwardRef<HTMLDivElement, DataGridStatusBarProps>(({ 
             buttons={{
                 first: [
                     ...React.Children.toArray(buttons?.first),
-                    <StatusBarButton key="position">
+                    (status?.columnCount ?? 0) > 0 && <StatusBarButton key="position">
                         {t("dataGrid-status-position", "Col {{column}}, Row {{row}}", {
                             column: status?.position?.column !== undefined ? status.position.column + 1 : "-",
                             row: status?.position?.row !== undefined ? status.position.row + 1 : "-",
                         })}
                     </StatusBarButton>,
-                    <StatusBarButton key="dataRange">
+                    (status?.columnCount ?? 0) > 0 && <StatusBarButton key="dataRange">
                         {t("dataGrid-status-dataRange", "Cols {{columns}}, Rows {{rows}} of {{allRows}}", {
                             columns: status?.columnCount,
                             rows: status?.rowCount,

@@ -381,8 +381,9 @@ export class Connection extends driver.Connection {
         };
 
         // if query result retunrs rows put it into result on command result
-        if (qResult.rows.length > 0) {
-            result["rows"] = qResult.rows;
+        if (qResult.rows && qResult.rows.length > 0) {
+            result.rows = qResult.rows;
+            result.columns = this._fieldsToColumns(qResult.fields);
         }
 
         return result;

@@ -18,6 +18,7 @@ import { SQL_RESULT_CLOSE } from "./ResultsTabs";
 import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
 import { QueryResultRow } from "src/api/db";
 import { useFocus } from "@renderer/hooks/useFocus";
+import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -44,7 +45,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const statusBarRef = useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = useState<string>("100%");
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
-    const [queryDuration, setQueryDuration] = useState<number | null>(null); // Dodano queryDuration
+    const [queryDuration, setQueryDuration] = useState<number | null>(null);
+    const [updatedCount, setUpdatedCount] = useState<number | null>(null);
     const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
     const cancelLoading = useRef(false);
     const cancelExecution = useRef<() => void>(null);
@@ -83,70 +85,115 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
     React.useEffect(() => {
         const fetchData = async () => {
-            if (query) {
-                let cellPosition: TableCellPosition | null = null;
-                if (query === lastQuery.current && dataGridRef.current && dataGridRef.current.isFocused()) {
-                    cellPosition = dataGridRef.current.getPosition();
+            let cellPosition: TableCellPosition | null = null;
+            if (query === lastQuery.current && dataGridRef.current && dataGridRef.current.isFocused()) {
+                cellPosition = dataGridRef.current.getPosition();
+            }
+            let time = Date.now();
+            cancelLoading.current = false;
+            setUpdatedCount(null);
+            setExecuting(true);
+            setRowsFetched(null);
+            setQueryDuration(null);
+            const rows: QueryResultRow[] = [];
+            let cursor: IDatabaseSessionCursor | undefined;
+            try {
+                cursor = await session.open(query!);
+                if (session.info.driver.implements.includes("cancel")) {
+                    cancelExecution.current = () => {
+                        if (cursor) {
+                            cursor.cancel();
+                        }
+                    }
                 }
-                let time = Date.now();
-                cancelLoading.current = false;
-                setExecuting(true);
+                const fetchedRows = await cursor.fetch();
+                cancelExecution.current = null;
+                const info = await cursor.getCursorInfo();
+                rows.push(...fetchedRows);
+                while (!cursor.isEnd() && !cancelLoading.current) {
+                    const nextRows = await cursor.fetch();
+                    rows.push(...nextRows);
+                    if (Date.now() - time > 1000) {
+                        setRowsFetched(rows.length);
+                        time = Date.now();
+                    }
+                }
+                lastQuery.current = query;
+                setQueryDuration(info.duration ?? null);
+                setColumns(queryToDataGridColumns(info.columns ?? [], fetchedRows))
+                setRows(rows);
+                if (cellPosition) {
+                    setTimeout(() => {
+                        if (dataGridRef.current) {
+                            dataGridRef.current.setPosition(cellPosition);
+                            dataGridRef.current.focus();
+                        }
+                    }, 10);
+                }
+            } catch (error) {
+                addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
+                setColumns([]);
+                setRows([]);
+            } finally {
+                setExecuting(false);
                 setRowsFetched(null);
-                setQueryDuration(null);
-                const rows: QueryResultRow[] = [];
-                let cursor: IDatabaseSessionCursor | undefined;
-                try {
-                    cursor = await session.open(query);
-                    if (session.info.driver.implements.includes("cancel")) {
-                        cancelExecution.current = () => {
-                            if (cursor) {
-                                cursor.cancel();
-                            }
-                        }
-                    }
-                    const fetchedRows = await cursor.fetch();
-                    cancelExecution.current = null;
-                    const info = await cursor.getCursorInfo();
-                    rows.push(...fetchedRows);
-                    while (!cursor.isEnd() && !cancelLoading.current) {
-                        const nextRows = await cursor.fetch();
-                        rows.push(...nextRows);
-                        if (Date.now() - time > 1000) {
-                            setRowsFetched(rows.length);
-                            time = Date.now();
-                        }
-                    }
-                    lastQuery.current = query;
-                    setQueryDuration(info.duration ?? null);
-                    setColumns(queryToDataGridColumns(info.columns ?? [], fetchedRows))
-                    setRows(rows);
-                    if (cellPosition) {
-                        setTimeout(() => {
-                            if (dataGridRef.current) {
-                                dataGridRef.current.setPosition(cellPosition);
-                                dataGridRef.current.focus();
-                            }
-                        }, 10);
-                    }
-                } catch (error) {
-                    addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
-                    setColumns([]);
-                    setRows([]);
-                } finally {
-                    setExecuting(false);
-                    setRowsFetched(null);
-                    if (cursor) {
-                        try {
-                            await cursor.close();
-                        } catch (error) {
-                            addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
-                        }
+                if (cursor) {
+                    try {
+                        await cursor.close();
+                    } catch (error) {
+                        addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
                     }
                 }
             }
         };
 
-        fetchData();
+        const executeCommand = async () => {
+            try {
+                cancelLoading.current = false;
+                setUpdatedCount(null);
+                setExecuting(true);
+                setRowsFetched(null);
+                setQueryDuration(null);
+                const result = await session.execute(query!);
+                if (result.rows) {
+                    setRows(result.rows);
+                    setColumns(queryToDataGridColumns(result.columns ?? [], result.rows));
+                }
+                else {
+                    setRows([]);
+                    setColumns([]);
+                }
+                lastQuery.current = query;
+                setQueryDuration(result.duration ?? null);
+                setUpdatedCount(result.updateCount ?? null);
+            } catch (error) {
+                addNotification("error", "Error executing command", { reason: error, source: session.schema.sch_name });
+            }
+            finally {
+                setExecuting(false);
+            }
+        };
+
+        const isSelect = () => {
+            const tokens = new SqlTokenizer().parse(query!);
+            const ast = new SqlAstBuilder().build(tokens);
+            if (ast) {
+                const detected = new SqlAnalyzer().detect(ast);
+                if (detected && !detected.batch && detected.type === "SELECT") {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (query) {
+            if (isSelect()) {
+                fetchData();
+            }
+            else {
+                executeCommand();
+            }
+        }
     }, [session, query, forceQueryExecution]); // Dodano forceQueryExecution jako zależność
 
     React.useEffect(() => {
@@ -269,6 +316,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         dataGridStatus?.valueLength && (
                             <StatusBarButton key="value-length">
                                 {`Len ${dataGridStatus.valueLength}`}
+                            </StatusBarButton>),
+                        updatedCount !== null && (
+                            <StatusBarButton key="command-updated">
+                                {`Updated ${updatedCount} row(s)`}
                             </StatusBarButton>),
                     ],
                 }}
