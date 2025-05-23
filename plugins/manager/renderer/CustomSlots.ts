@@ -16,6 +16,10 @@ export type CustomSlotType =
 
 export type RefreshSlotCallback = (slotId: string) => void;
 
+export type ReactNodeTypeResult = React.ReactNode | (() => React.ReactNode);
+export type TextTypeResult = string | (() => string);
+export type ActionIdsTypeResult = string[] | (() => string[]);
+
 /**
  * Interface representing a connection view slot
  */
@@ -33,7 +37,10 @@ export interface CustomSlot {
 export type SplitSlotType =
     SplitSlot
     | TabsSlot
-    | ContentSlot;
+    | ContentSlot
+    | RenderedSlot;
+
+export type SplitSlotTypeResult = SplitSlotType | (() => SplitSlotType);
 
 /**
  * Slot typu split.
@@ -49,12 +56,14 @@ export interface SplitSlot extends CustomSlot {
     /**
      * Zawartość pierwszej części (slot lub funkcja zwracająca slot).
      */
-    first: SplitSlotType | (() => SplitSlotType);
+    first: SplitSlotTypeResult;
     /**
      * Zawartość drugiej części (slot lub funkcja zwracająca slot).
      */
-    second: SplitSlotType | (() => SplitSlotType);
+    second: SplitSlotTypeResult;
 }
+
+export type TabSlotsTypeResult = TabSlot[] | (() => TabSlot[]);
 
 /**
  * Slot typu tabs.
@@ -65,7 +74,7 @@ export interface TabsSlot extends CustomSlot {
     /**
      * Tablica zakładek lub funkcja zwracająca tablicę zakładek.
      */
-    tabs: TabSlot[] | (() => TabSlot[]);
+    tabs: TabSlotsTypeResult;
 }
 
 /**
@@ -75,11 +84,11 @@ export interface TabLabel {
     /**
      * Ikona zakładki (opcjonalnie).
      */
-    icon?: React.ReactNode | (() => React.ReactNode);
+    icon?: ReactNodeTypeResult;
     /**
      * Tekst lub element etykiety zakładki.
      */
-    label: React.ReactNode | (() => React.ReactNode);
+    label: ReactNodeTypeResult;
 }
 
 /**
@@ -99,7 +108,7 @@ export interface TabSlot extends CustomSlot {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    actions?: string[] | (() => string[]);
+    actions?: ActionIdsTypeResult;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      */
@@ -126,17 +135,31 @@ export type ContentSlotType =
     SplitSlot
     | TabsSlot
     | RenderedSlot
-    | (TitleSlot
-        | GridSlot
-        | EditorSlot
-        | TextSlot)[];
+    | GridSlot
+    | EditorSlot;
+
+export type TitleSlotType =
+    TitleSlot
+    | RenderedSlot;
+
+export type TextSlotType =
+    TextSlot
+    | RenderedSlot;
 
 export interface ContentSlot extends CustomSlot {
     type: "content";
     /**
-     * Tablica slotów lub funkcja zwracająca tablicę slotów.
+     * Tytuł (slot lub funkcja zwracająca slot).
+     */
+    title?: TitleSlotType | (() => TitleSlotType);
+    /**
+     * Slot lub funkcja zwracająca zawartość główną.
      */
     content: ContentSlotType | (() => ContentSlotType);
+    /**
+     * Tekst (slot lub funkcja zwracająca slot).
+     */
+    text?: TextSlotType | (() => TextSlotType);
 }
 
 /**
@@ -148,15 +171,15 @@ export interface TitleSlot extends CustomSlot {
     /**
      * Ikona tytułu (opcjonalnie).
      */
-    icon?: React.ReactNode | (() => React.ReactNode);
+    icon?: ReactNodeTypeResult;
     /**
      * Tytuł (tekst lub element).
      */
-    title: React.ReactNode | (() => React.ReactNode);
+    title: ReactNodeTypeResult;
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    actions?: string[] | (() => string[]);
+    actions?: ActionIdsTypeResult;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      */
@@ -208,7 +231,7 @@ export interface EditorSlot extends CustomSlot {
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
-    content: string | (() => string);
+    content: TextTypeResult;
 }
 
 /**
@@ -220,7 +243,7 @@ export interface TextSlot extends CustomSlot {
     /**
      * Tekst do wyświetlenia (może być ReactNode lub funkcją zwracającą ReactNode).
      */
-    text: React.ReactNode | (() => React.ReactNode);
+    text: ReactNodeTypeResult;
     /**
      * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie, domyślnie 3).
      */

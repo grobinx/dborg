@@ -4,7 +4,7 @@ import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { ReactNode } from "react";
-import { ContentSlot, TabsSlot } from "./CustomSlots";
+import { ContentSlot, TabsSlot, TabSlotsTypeResult } from "./CustomSlots";
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -224,8 +224,8 @@ export interface CustomRootSlot extends IConnectionViewSlot {
 export interface CustomIntegratedSlot extends IConnectionViewSlot {
     type: "integrated";
     side?: ContentSlot;
-    editor?: TabsSlot;
-    result?: TabsSlot;
+    editors?: TabSlotsTypeResult;
+    results?: TabSlotsTypeResult;
 }
 
 /**
