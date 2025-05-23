@@ -212,6 +212,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }, [sessionViewState, plugins]);
 
     const initMetadata = (session: IDatabaseSession, force?: boolean) => {
+        if (!session.info.driver.implements.includes("metadata")) {
+            return;
+        }
         setTimeout(() => {
             sendMessage(Messages.SESSION_GET_METADATA_START, {
                 connectionId: session.info.uniqueId,

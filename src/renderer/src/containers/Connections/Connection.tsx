@@ -47,8 +47,8 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
 
     useEffect(() => {
         setSelectedThis(
-            selectedContainer?.type === "connections" && 
-            selectedSession?.getUniqueId() === session.info.uniqueId && 
+            selectedContainer?.type === "connections" &&
+            selectedSession?.getUniqueId() === session.info.uniqueId &&
             selectedView !== null
         );
     }, [selectedContainer, selectedView, selectedSession]);
@@ -112,55 +112,53 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
 
     React.useEffect(() => {
-            const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
-                if (message.connectionId !== session.info.uniqueId) {
-                    return; 
-                }
-                setGettingMetadata(true);
-            };
+        const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
+            if (message.connectionId !== session.info.uniqueId) {
+                return;
+            }
+            setGettingMetadata(true);
+        };
 
-            const metadataEndHandle = (message: Messages.SessionGetMetadataEnd) => {
-                if (message.connectionId !== session.info.uniqueId) {
-                    return; 
-                }
-                setGettingMetadata(false);
-            };
+        const metadataEndHandle = (message: Messages.SessionGetMetadataEnd) => {
+            if (message.connectionId !== session.info.uniqueId) {
+                return;
+            }
+            setGettingMetadata(false);
+        };
 
-            // Rejestracja wiadomości
-            subscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
-            subscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
-    
-            return () => {
-                // Wyrejestrowanie wiadomości
-                unsubscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
-                unsubscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
-            };
-        }, [subscribe, unsubscribe]);
+        subscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
+        subscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
+
+        return () => {
+            unsubscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
+            unsubscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
+        };
+    }, [subscribe, unsubscribe, session]);
 
     return (
         <TabPanelButtons>
-            <Tooltip title={t("refresh-metadata", "Refresh metadata")}>
-                <span>
-                    <ToolButton
-                        color="success"
-                        onClick={() => sendMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
-                        disabled={gettingMetadata}
-                    >
-                        <theme.icons.RefreshMetadata />
-                    </ToolButton>
-                </span>
-            </Tooltip>
+            {session.info.driver.implements.includes("metadata") && (
+                < Tooltip title={t("refresh-metadata", "Refresh metadata")}>
+                    <span>
+                        <ToolButton
+                            onClick={() => sendMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
+                            disabled={gettingMetadata}
+                        >
+                            <theme.icons.RefreshMetadata />
+                        </ToolButton>
+                    </span>
+                </Tooltip>
+            )}
             <Tooltip title={t("disconnect", "Close connection")}>
                 <span>
                     <ToolButton
-                        color="warning"
                         onClick={() => sendMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
                     >
                         <theme.icons.Disconnected />
                     </ToolButton>
                 </span>
             </Tooltip>
-        </TabPanelButtons>
+        </TabPanelButtons >
     );
 };
 
