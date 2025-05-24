@@ -689,11 +689,11 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
-        if (mode && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
+        if (mode === "data" && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
             actionManager.current.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
-            setAdjustWidthExecuted(true); // Oznacz akcję jako wykonaną
+            setAdjustWidthExecuted(true);
         }
-    }, [adjustWidthExecuted, actionManager.current, filteredDataState]);
+    }, [adjustWidthExecuted, actionManager.current, filteredDataState, mode]);
 
     // Resetuj stan przy zmianie dataState
     useEffect(() => {

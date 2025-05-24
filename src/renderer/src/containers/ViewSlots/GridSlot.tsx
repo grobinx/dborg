@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
-import { ColumnDefinition, DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
     IGridSlot,
@@ -11,6 +11,8 @@ import {
     resolveRecordsFactory
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
+import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useTranslation } from "react-i18next";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -25,24 +27,38 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [refresh, setRefresh] = React.useState(false);
+    const { addNotification } = useNotification();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { t } = useTranslation();
+    const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
         const fetchRows = async () => {
             setLoading(true);
             try {
+                let position: TableCellPosition | null = null;
+                if (dataGridRef && dataGridRef.current) {
+                    position = dataGridRef.current.getPosition();
+                }
                 setRows(await resolveRecordsFactory(slot.rows, refreshSlot) ?? []);
                 setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
+                if (position) {
+                    setTimeout(() => {
+                        dataGridRef!.current!.setPosition(position);
+                        dataGridRef!.current!.focus();
+                    }, 10);
+                }
             } catch (error) {
-                console.error("Error fetching rows:", error);
+                addNotification("error", t("refresh-failed", "Refresh failed"), {
+                    reason: error,
+                    source: "GridSlot",
+                });
             } finally {
                 setLoading(false);
             }
         };
-        console.log("grid rows refresh");
         fetchRows();
     }, [slot.columns, slot.rows, refresh]);
-
 
     React.useEffect(() => {
         const unregister = registerRefresh(slot.id, () => {
@@ -67,6 +83,17 @@ const GridSlot: React.FC<GridSlotProps> = ({
         }));
     }
 
+    function handleRowClick(row: Record<string, any>) {
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+        debounceRef.current = setTimeout(() => {
+            if (slot.onRowClick) {
+                slot.onRowClick(row, refreshSlot);
+            }
+        }, 250);
+    }
+
     return (
         <Box
             key={slot.id}
@@ -80,7 +107,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 columns={columns}
                 data={rows}
                 loading={loading ? "Loading..." : undefined}
-                onRowClick={(row) => slot.onRowClick?.(row, refreshSlot)}
+                onRowClick={handleRowClick}
                 ref={dataGridRef}
                 onMount={dataGridMountHandler}
                 uniqueId={slot.storeLayoutId ?? slot.id}
