@@ -1,6 +1,7 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import * as monaco from "monaco-editor";
 
 export type CustomSlotType =
@@ -16,38 +17,58 @@ export type CustomSlotType =
 
 export type RefreshSlotCallback = (slotId: string) => void;
 
-export type ReactNodeTypeResult = React.ReactNode | (() => React.ReactNode);
-export type TextTypeResult = string | (() => string);
-export type ActionIdsTypeResult = string[] | (() => string[]);
+export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolean);
+export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
+export type IconFactory = React.ReactNode | (() => React.ReactNode);
+export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
+export type ActionIdsFactory = string[] | ((refresh: RefreshSlotFunction) => string[]);
+export type RecordsFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
+export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
+export type ActionDescriptorsFactory<T = any> = ActionDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionDescriptor<T>[]);
+export type ActionGroupDescriptorsFactory<T = any> = ActionGroupDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionGroupDescriptor<T>[]);
+export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 
-/**
- * Interface representing a connection view slot
- */
-export interface CustomSlot {
+export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
+export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
+export type TabLabelFactory = ITabLabel | ((refresh: RefreshSlotFunction) => ITabLabel);
+export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFunction) => ContentSlotKind);
+export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
+export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
+export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
+
+export interface ISlot {
     /**
      * Unique identifier for the slot.
      */
     id: string;
+    /**
+     * Type of the slot (not defined in this base interface).
+     */
+    type: string;
+}
+
+/**
+ * Interface representing a connection view slot
+ */
+export interface ICustomSlot extends ISlot {
     /**
      * Type of the slot
      */
     type: CustomSlotType;
 }
 
-export type SplitSlotType =
-    SplitSlot
-    | TabsSlot
-    | ContentSlot
-    | RenderedSlot;
-
-export type SplitSlotTypeResult = SplitSlotType | (() => SplitSlotType);
+export type SplitSlotPartKind =
+    ISplitSlot
+    | ITabsSlot
+    | IContentSlot
+    | IRenderedSlot;
 
 /**
  * Slot typu split.
  * Pozwala na podział widoku na dwie części (pionowo lub poziomo).
  * Każda część może być kolejnym splitem, zakładkami lub inną zawartością.
  */
-export interface SplitSlot extends CustomSlot {
+export interface ISplitSlot extends ICustomSlot {
     type: "split";
     /**
      * Kierunek podziału: "vertical" (góra/dół) lub "horizontal" (lewo/prawo).
@@ -56,59 +77,57 @@ export interface SplitSlot extends CustomSlot {
     /**
      * Zawartość pierwszej części (slot lub funkcja zwracająca slot).
      */
-    first: SplitSlotTypeResult;
+    first: SplitSlotPartKindFactory;
     /**
      * Zawartość drugiej części (slot lub funkcja zwracająca slot).
      */
-    second: SplitSlotTypeResult;
+    second: SplitSlotPartKindFactory;
 }
-
-export type TabSlotsTypeResult = TabSlot[] | (() => TabSlot[]);
 
 /**
  * Slot typu tabs.
  * Pozwala na wyświetlenie grupy zakładek.
  */
-export interface TabsSlot extends CustomSlot {
+export interface ITabsSlot extends ICustomSlot {
     type: "tabs";
     /**
      * Tablica zakładek lub funkcja zwracająca tablicę zakładek.
      */
-    tabs: TabSlotsTypeResult;
+    tabs: TabSlotsFactory;
 }
 
 /**
  * Struktura etykiety zakładki (label).
  */
-export interface TabLabel {
+export interface ITabLabel {
     /**
      * Ikona zakładki (opcjonalnie).
      */
-    icon?: ReactNodeTypeResult;
+    icon?: IconFactory;
     /**
      * Tekst lub element etykiety zakładki.
      */
-    label: ReactNodeTypeResult;
+    label: ReactNodeFactory;
 }
 
 /**
  * Slot typu tab.
  * Reprezentuje pojedynczą zakładkę w TabsSlot.
  */
-export interface TabSlot extends CustomSlot {
+export interface ITabSlot extends ICustomSlot {
     type: "tab";
     /**
      * Czy zakładka jest zamykalna (opcjonalnie).
      */
-    closable?: boolean | (() => boolean);
+    closable?: BooleanFactory;
     /**
      * Etykieta zakładki (ikona, tekst).
      */
-    label: TabLabel | (() => TabLabel);
+    label: TabLabelFactory;
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    actions?: ActionIdsTypeResult;
+    actions?: ActionIdsFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      */
@@ -116,14 +135,14 @@ export interface TabSlot extends CustomSlot {
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
-    content: ContentSlot | (() => ContentSlot);
+    content: ContentSlotKindFactory;
 }
 
 /**
  * Slot typu rendered.
  * Pozwala na wyświetlenie niestandardowego komponentu React.
  */
-export interface RenderedSlot extends CustomSlot {
+export interface IRenderedSlot extends ICustomSlot {
     type: "rendered";
     /**
      * Zawartość slotu (funkcja renderująca).
@@ -131,55 +150,56 @@ export interface RenderedSlot extends CustomSlot {
     render: () => React.ReactNode;
 }
 
-export type ContentSlotType =
-    SplitSlot
-    | TabsSlot
-    | RenderedSlot
-    | GridSlot
-    | EditorSlot;
+export type ContentSlotKind =
+    ISplitSlot
+    | ITabsSlot
+    | IRenderedSlot
+    | IGridSlot
+    | IEditorSlot
+    | IContentSlot;
 
-export type TitleSlotType =
-    TitleSlot
-    | RenderedSlot;
+export type TitleSlotKind =
+    ITitleSlot
+    | IRenderedSlot;
 
-export type TextSlotType =
-    TextSlot
-    | RenderedSlot;
+export type TextSlotKind =
+    ITextSlot
+    | IRenderedSlot;
 
-export interface ContentSlot extends CustomSlot {
+export interface IContentSlot extends ICustomSlot {
     type: "content";
     /**
      * Tytuł (slot lub funkcja zwracająca slot).
      */
-    title?: TitleSlotType | (() => TitleSlotType);
+    title?: TitleSlotKindFactory;
     /**
      * Slot lub funkcja zwracająca zawartość główną.
      */
-    content: ContentSlotType | (() => ContentSlotType);
+    main: ContentSlotKindFactory;
     /**
      * Tekst (slot lub funkcja zwracająca slot).
      */
-    text?: TextSlotType | (() => TextSlotType);
+    text?: TextSlotKindFactory;
 }
 
 /**
  * Slot typu title.
  * Pozwala na wyświetlenie tytułu z opcjonalną ikoną i akcjami.
  */
-export interface TitleSlot extends CustomSlot {
+export interface ITitleSlot extends ICustomSlot {
     type: "title";
     /**
      * Ikona tytułu (opcjonalnie).
      */
-    icon?: ReactNodeTypeResult;
+    icon?: IconFactory;
     /**
      * Tytuł (tekst lub element).
      */
-    title: ReactNodeTypeResult;
+    title: ReactNodeFactory;
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    actions?: ActionIdsTypeResult;
+    actions?: ActionIdsFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      */
@@ -190,7 +210,7 @@ export interface TitleSlot extends CustomSlot {
  * Slot typu grid.
  * Pozwala na wyświetlenie siatki danych (np. wyników zapytania SQL).
  */
-export interface GridSlot extends CustomSlot {
+export interface IGridSlot extends ICustomSlot {
     type: "grid";
     /**
      * Tryb działania siatki (np. dynamiczne lub zdefiniowane kolumny).
@@ -199,53 +219,106 @@ export interface GridSlot extends CustomSlot {
     /**
      * Zapytanie SQL do pobrania danych.
      */
-    rows: Record<string, any>[] | (() => Record<string, any>[]);
+    rows: RecordsFactory;
     /**
      * Definicje kolumn (opcjonalnie).
      */
-    columns?: ColumnDefinition[] | (() => ColumnDefinition[]);
+    columns?: ColumnDefinitionsFactory;
     /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
-    actions?: ActionDescriptor<any>[] | (() => ActionDescriptor<any>[]);
+    actions?: ActionDescriptorsFactory;
     /**
      * Grupy akcji dostępne w gridzie (opcjonalnie).
      */
-    actionGroups?: ActionGroupDescriptor<any>[] | (() => ActionGroupDescriptor<any>[]);
+    actionGroups?: ActionGroupDescriptorsFactory;
     /**
      * Callback po kliknięciu w wiersz (opcjonalnie).
      */
-    onRowClick?: (row: any) => void;
+    onRowClick?: (row: any, refresh: (id: string) => void) => void;
+    /**
+     * Identyfikator do przechowywania układu siatki (opcjonalnie).
+     */
+    storeLayoutId?: string;
 }
 
 /**
  * Slot typu edytor tekstowy.
  * Pozwala na wyświetlenie edytora z opcjonalnymi akcjami.
  */
-export interface EditorSlot extends CustomSlot {
+export interface IEditorSlot extends ICustomSlot {
     type: "editor";
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: monaco.editor.IActionDescriptor[] | (() => monaco.editor.IActionDescriptor[]);
+    actions?: EditorActionDescriptorsFactory;
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
-    content: TextTypeResult;
+    content: StringFactory;
 }
 
 /**
  * Slot typu tekst.
  * Pozwala na wyświetlenie tekstu (np. opisu, komunikatu) z opcjonalnym limitem linii.
  */
-export interface TextSlot extends CustomSlot {
+export interface ITextSlot extends ICustomSlot {
     type: "text";
     /**
      * Tekst do wyświetlenia (może być ReactNode lub funkcją zwracającą ReactNode).
      */
-    text: ReactNodeTypeResult;
+    text: ReactNodeFactory;
     /**
      * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie, domyślnie 3).
      */
     maxLines?: number;
+}
+
+export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, refresh: RefreshSlotFunction): React.ReactNode {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveBooleanFactory(factory: BooleanFactory | undefined, refresh: RefreshSlotFunction): boolean | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveActionIdsFactory(factory: ActionIdsFactory | undefined, refresh: RefreshSlotFunction): string[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveRecordsFactory(factory: RecordsFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | undefined> | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveActionDescriptorsFactory<T = any>(factory: ActionDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionDescriptor<T>[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroupDescriptor<T>[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveEditorActionDescriptorsFactory(factory: EditorActionDescriptorsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, refresh: RefreshSlotFunction): SplitSlotPartKind | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, refresh: RefreshSlotFunction): ITabSlot[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveTabLabelFactory(factory: TabLabelFactory | undefined, refresh: RefreshSlotFunction): ITabLabel | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): ContentSlotKind | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, refresh: RefreshSlotFunction): TitleSlotKind | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, refresh: RefreshSlotFunction): TextSlotKind | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, refresh: RefreshSlotFunction): IContentSlot | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
 }

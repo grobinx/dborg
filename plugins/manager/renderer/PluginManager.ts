@@ -1,5 +1,5 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin, PluginConnectionViewsFunction } from "./Plugin";
+import { Plugin, ConnectionViewsFactory } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { View } from "@renderer/contexts/ApplicationContext";
 
@@ -18,7 +18,7 @@ export interface IPluginManager {
 
 class PluginManager implements IPluginManager {
     private plugins: Map<string, Plugin> = new Map();
-    pluginConnectionViewsFactories: PluginConnectionViewsFunction[] = []; // Array to hold connection view factories
+    pluginConnectionViewsFactories: ConnectionViewsFactory[] = []; // Array to hold connection view factories
 
     constructor() {
     }
@@ -30,7 +30,7 @@ class PluginManager implements IPluginManager {
 
         plugin.initialize({
             internal: internal,
-            registerConnectionViewsFactory: (factory: PluginConnectionViewsFunction) => {
+            registerConnectionViewsFactory: (factory: ConnectionViewsFactory) => {
                 this.registerConnectionViewFactory(factory);
             },
         });
@@ -38,7 +38,7 @@ class PluginManager implements IPluginManager {
         this.plugins.set(plugin.id, plugin);
     }
 
-    registerConnectionViewFactory(factory: PluginConnectionViewsFunction): void {
+    registerConnectionViewFactory(factory: ConnectionViewsFactory): void {
         this.pluginConnectionViewsFactories.push(factory);
     }
 

@@ -119,7 +119,10 @@ export interface ThemeIcons {
     RefreshMetadata: IconWrapperFC;
 }
 
-export const resolveIcon = (theme: Theme, icon?: React.ReactNode) => {
+export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode)) => {
+    if (typeof icon === 'function') {
+        icon = icon();
+    }
     if (typeof icon === 'string') {
         // Jeśli `icon` jest ciągiem znaków, sprawdź w `theme.icons`
         if (theme.icons[icon]) {
@@ -129,7 +132,6 @@ export const resolveIcon = (theme: Theme, icon?: React.ReactNode) => {
             return <img src={icon} alt={icon} style={{ width: 24, height: 24 }} />;
         }
     } else {
-        // Jeśli `icon` jest elementem ReactNode, wyświetl go
         return icon;
     }
 };

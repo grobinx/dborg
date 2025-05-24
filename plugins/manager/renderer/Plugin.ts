@@ -1,10 +1,8 @@
-import { BaseContainer, BaseView, View } from "@renderer/contexts/ApplicationContext";
+import { IContainer, IView, View } from "@renderer/contexts/ApplicationContext";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { ReactNode } from "react";
-import { ContentSlot, TabsSlot, TabSlotsTypeResult } from "./CustomSlots";
+import { IContentSlot } from "./CustomSlots";
+import { ConnectionViewSlotKind } from "./ConnectionSlots";
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -91,148 +89,39 @@ export interface Plugin {
 /**
  * Interface representing a custom container in the DBorg application.
  */
-export interface CustomContainer extends BaseContainer {
+export interface CustomContainer extends IContainer {
     type: "custom";
 }
 
 /**
  * Interface representing a rendered view
  */
-export interface RenderedView extends BaseView {
+export interface RenderedView extends IView {
     type: "rendered"; // Type of the view
     render: () => React.ReactNode; // Panel component to be rendered for the view
-}
-
-export type ConnectionViewSlotType = 
-"title" 
-| "datagrid" 
-| "text" 
-| "rendered" 
-| "integrated" 
-| "tabs"
-| "tab" 
-| "root";
-
-/**
- * Interface representing a connection view slot
- */
-export interface IConnectionViewSlot {
-    /**
-     * Unique identifier for the slot.
-     */
-    id: string;
-    /**
-     * Type of the slot
-     */
-    type: ConnectionViewSlotType;
-}
-
-/**
- * Interface representing a title connection view slot
- */
-export interface TitleConnectionViewSlot extends IConnectionViewSlot {
-    /**
-     * Type of the slot.
-     * This slot is used to display a title in the connection view.
-     */
-    type: "title";
-    /**
-     * Optional icon for the title.
-     */
-    icon?: ReactNode;
-    /**
-     * Title of the slot
-     */
-    title: string | (() => string);
-    /**
-     * Array of action IDs to be performed on the title, defined in DataGrid and/or DataGridConnectionViewSlot
-     * These actions will be displayed as buttons in the title bar.
-     */
-    actions?: string[];
-}
-
-/**
- * Interface representing a connection view slot for a data grid
- */
-export interface DataGridConnectionViewSlot extends IConnectionViewSlot {
-    /**
-     * Type of the slot
-     */
-    type: "datagrid";
-    /**
-     * SQL query to be executed to fetch data for the data grid
-     * This query will be executed in the context of the current database session.
-     */
-    sql: string;
-    /**
-     * Optional parameters for the SQL query
-     * This can be an array of parameters or a function that returns an array of parameters.
-     */
-    parameters?: any[] | ((context: DataGridActionContext<any> | undefined) => any[]);
-    /**
-     * Array of column definitions for the data grid
-     */
-    columns: ColumnDefinition[];
-    /**
-     * Array of actions to be performed on the data grid
-     */
-    actions?: ActionDescriptor<any>[];
-    /**
-     * Array of action groups to be performed on the data grid
-     */
-    actionGroups?: ActionGroupDescriptor<any>[];
-    /**
-     * Callback function for row click events
-     * @param row The clicked row data
-     */
-    onRowClick?: (row: any) => void;
-}
-
-/**
- * Interface representing a connection view slot for displaying text, eg a description of object on clicked row
- * This slot is used to display static or dynamic text content in the connection view.
- */
-export interface TextConnectionViewSlot extends IConnectionViewSlot {
-    /**
-     * Type of the slot
-     */
-    type: "text";
-    /**
-     * Content of the text slot
-     */
-    content: string | (() => string);
 }
 
 /**
  * Interface representing a connection view
  */
-export interface ConnectionView extends BaseView {
+export interface ConnectionView extends IView {
     type: "connection"; // Type of the view
-    slots: IConnectionViewSlot[]; // Array of slots in the view
+    slot: ConnectionViewSlotKind;
 }
 
-export interface CustomConnectionView extends BaseView {
+/**
+ * Interface representing a custom view
+ */
+export interface CustomView extends IView {
     type: "custom"; // Type of the view
-    slot: CustomIntegratedSlot | CustomRootSlot;
-}
-
-export interface CustomRootSlot extends IConnectionViewSlot {
-    type: "root";
-    root: ContentSlot;
-}
-
-export interface CustomIntegratedSlot extends IConnectionViewSlot {
-    type: "integrated";
-    side?: ContentSlot;
-    editors?: TabSlotsTypeResult;
-    results?: TabSlotsTypeResult;
+    slot: IContentSlot;
 }
 
 /**
  * Interface representing a callback function for registering connection views
  * @param session The database session for which the views are being registered
  */
-export type PluginConnectionViewsFunction = (session: IDatabaseSession) => View[] | null;
+export type ConnectionViewsFactory = (session: IDatabaseSession) => View[] | null;
 
 /**
  * Interface representing the context in which a plugin operates
@@ -249,5 +138,5 @@ export interface IPluginContext {
      * @param factory Function to register connection views
      * @returns 
      */
-    registerConnectionViewsFactory: (factory: PluginConnectionViewsFunction) => void;
+    registerConnectionViewsFactory: (factory: ConnectionViewsFactory) => void;
 }

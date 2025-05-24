@@ -167,9 +167,6 @@ const layout = (palette: Palette): ThemeOptions => {
                         '&.warning': {
                             color: palette.warning.main,
                         },
-                        '&.refresh-metadata': {
-                            color: palette.primary.main,
-                        }
                     }
                 }
             },

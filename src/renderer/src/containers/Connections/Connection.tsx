@@ -8,14 +8,15 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { EditorsTabs } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
-import { UseListenersType } from "@renderer/hooks/useListeners";
 import "./ConnectionStatusBar";
 import ResultsTabs from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
-import ConnectionView from "./ConnectionView/ViewSlots/ConnectionView";
+import { RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
+import ContentSlot from "../ViewSlots/ContentSlot";
+import { resolveContentSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -33,17 +34,19 @@ interface ConnectionsOwnProps extends ConnectionProps {
     tabsItemID?: string;
 }
 
-export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
+const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = useThemeProps({ name: "Connection", props });
     const { selectedContainer, selectedView } = useContainers();
     const { selectedSession } = useSessions();
     const [selectedThis, setSelectedThis] = React.useState(false);
+    const { refreshSlot } = useRefreshSlot();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
 
     // Przechowuj utworzone widoki w stanie
-    const [viewsMap, setViewsMap] = React.useState<Record<string, React.ReactNode>>({});
+    const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
+    const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
         setSelectedThis(
@@ -55,18 +58,24 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
 
     // Twórz i zapamiętuj widok tylko gdy zmienia się selectedView
     useEffect(() => {
-        if (selectedView && selectedView.id && !viewsMap[selectedView.id] && selectedThis) {
+        if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {
             let node: React.ReactNode = null;
-            if (selectedView.type === "connection" && selectedView.slots !== null) {
-                node = <ConnectionView slots={selectedView.slots} key={selectedView.id} session={session} />;
+            if (selectedView.type === "connection" && selectedView.slot) {
+                const slot = selectedView.slot;
+                if (slot.type === "integrated") {
+                    const side = resolveContentSlotFactory(slot.side, refreshSlot);
+                    if (side) {
+                        node = <ContentSlot slot={side} />;
+                    }
+                }
             } else if (selectedView.type === "rendered" && selectedView.render !== null) {
                 node = <selectedView.render key={selectedView.id} />;
             }
             if (node) {
-                setViewsMap(prev => ({ ...prev, [selectedView.id]: node }));
+                setSideViewsMap(prev => ({ ...prev, [selectedView.id]: node }));
             }
         }
-    }, [selectedView, session, viewsMap, selectedThis]);
+    }, [selectedView, session, sideViewsMap, selectedThis]);
 
     return (
         <StyledConnection className="Connection-root" {...other}>
@@ -75,7 +84,7 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
                 autoSaveId={`connection-panel-left-${session.schema.sch_id}`}
             >
                 <SplitPanel defaultSize={20} hidden={!selectedThis}>
-                    {Object.entries(viewsMap).map(([id, node]) => (
+                    {Object.entries(sideViewsMap).map(([id, node]) => (
                         <Box
                             key={id}
                             hidden={selectedView?.id !== id}
@@ -102,6 +111,14 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
                 </SplitPanel>
             </SplitPanelGroup>
         </StyledConnection>
+    );
+}
+
+export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
+    return (
+        <RefreshSlotProvider>
+            <ConnectionContentInner {...props} />
+        </RefreshSlotProvider>
     );
 };
 

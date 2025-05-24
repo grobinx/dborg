@@ -1,6 +1,6 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshConnectionDataGrid_ID } from "@renderer/containers/Connections/ConnectionView/ViewSlots/actions/RefreshConnectionDataGrid";
+import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { DatabasesMetadata, SchemaMetadata } from "src/api/db";
@@ -55,7 +55,7 @@ export const SelectSchemaGroup = (
                         if (currentSchemaName !== schemaName) {
                             context.setUserData('schema_name', schemaName);
                             onSelectSchema(schemaName);
-                            context.actionManager()?.executeAction(RefreshConnectionDataGrid_ID, context);
+                            context.actionManager()?.executeAction(RefreshGridAction_ID, context);
                         }
                     },
                     selected: context => context.getUserData('schema_name') === schemaName,

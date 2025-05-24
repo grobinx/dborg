@@ -13,7 +13,7 @@ import { uuidv7 } from 'uuidv7';
 import { RefreshMetadata, TabPanelChangedMessage } from '@renderer/app/Messages';
 import { useNotification } from './NotificationContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
-import { CustomContainer, RenderedView, ConnectionView } from 'plugins/manager/renderer/Plugin';
+import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -24,7 +24,7 @@ export type ContainerType =
     | "plugins"
     | "custom";
 
-export interface BaseContainer {
+export interface IContainer {
     id: string; // Unique identifier for the container
     type: ContainerType; // Type of container
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
@@ -35,7 +35,7 @@ export interface BaseContainer {
 
 export type ViewType = "rendered" | "connection" | "custom"; // Define the types of views
 
-export interface BaseView {
+export interface IView {
     type: ViewType; // Type of the view
     id: string; // Unique identifier for the view
     icon: React.ReactNode; // Icon for the button, can be a string (theme.icon) or a React node
@@ -45,26 +45,27 @@ export interface BaseView {
 // Union type for all view types
 export type View =
     RenderedView
-    | ConnectionView;
+    | ConnectionView
+    | CustomView;
 
 // Define specific container structures for each ContainerType
-interface NewConnectionContainer extends BaseContainer {
+interface NewConnectionContainer extends IContainer {
     type: "new-connection";
 }
 
-interface ConnectionsContainer extends BaseContainer {
+interface ConnectionsContainer extends IContainer {
     type: "connections";
 }
 
-interface ConnectionListContainer extends BaseContainer {
+interface ConnectionListContainer extends IContainer {
     type: "connection-list";
 }
 
-interface SettingsContainer extends BaseContainer {
+interface SettingsContainer extends IContainer {
     type: "settings";
 }
 
-interface PluginsContainer extends BaseContainer {
+interface PluginsContainer extends IContainer {
     type: "plugins";
     views: View[]; // List of views associated with the plugins container
 }

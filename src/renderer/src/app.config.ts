@@ -63,7 +63,6 @@ export const default_settings: ApplicationSettings = {
         store_settings_timeout,
     },
     dborg: {
-        // Wypełnij, jeśli są jakieś ustawienia dla "dborg"
         data_grid: {
             null_value: '{null}',
             colors_enabled: true,

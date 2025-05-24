@@ -2,19 +2,21 @@ import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionMana
 import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
 import i18next, { TFunction } from "i18next";
 
-export const RefreshConnectionDataGrid_ID = "dataGrid.connectionSlot.actions.refresh";
+export const RefreshGridAction_ID = "dataGrid.gridSlot.actions.refresh";
 
-export const RefreshConnectionDataGrid = (
+const RefreshGridAction = (
     run: (context: DataGridActionContext<any>) => void
 ): ActionDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
-        id: RefreshConnectionDataGrid_ID,
+        id: RefreshGridAction_ID,
         keybindings: ["F5"],
-        label: t(RefreshConnectionDataGrid_ID, "Refresh list"),
+        label: t(RefreshGridAction_ID, "Refresh list"),
         icon: "Refresh",
         contextMenuGroupId: "objectGrid",
         contextMenuOrder: 2,
         run: run,
     };
 }
+
+export default RefreshGridAction;

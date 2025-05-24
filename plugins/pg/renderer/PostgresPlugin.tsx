@@ -3,12 +3,14 @@ import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
-import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "./actions/SelectSchemaAction";
 import { SelectSchemaGroup } from "./actions/SelectSchemaGroup";
 import i18next from "i18next";
-import { RefreshConnectionDataGrid_ID } from "@renderer/containers/Connections/ConnectionView/ViewSlots/actions/RefreshConnectionDataGrid";
+import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
+import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -38,86 +40,101 @@ const PostgresPlugin: Plugin = {
                     id: "tables-" + session.info.uniqueId,
                     icon: "DatabaseTables",
                     label: t("database-tables", "Tables"),
-                    slots: [
-                        {
-                            id: "tables-title-" + session.info.uniqueId,
-                            type: "title",
-                            icon: "DatabaseTables",
-                            title: () => t("pg-tables-with-schema", "Tables {{schemaName}}", { schemaName: selectedSchemaName }),
-                            actions: [
-                                RefreshConnectionDataGrid_ID,
-                                SearchData_ID,
-                                SelectSchemaAction_ID,
-                            ],
-                        },
-                        {
-                            id: "tables-datagrid-" + session.info.uniqueId,
-                            type: "datagrid",
-                            sql: `
-                                select 
-                                    n.nspname as schema_name, c.relname as table_name, pg_get_userbyid(c.relowner) as owner_name, d.description,
-                                    case c.relkind when 'r'::"char" then 'ordinary' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
-                                from 
-                                    pg_class c
-                                    left join pg_namespace n on n.oid = c.relnamespace
-                                    left join pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
-                                where 
-                                    c.relkind in ('r'::"char", 'f'::"char", 'p'::"char")
-                                    and (n.nspname = $1 or (n.nspname = any (current_schemas(false)) and coalesce($1, current_schema()) = current_schema() and n.nspname <> 'public'))
-                                order by 
-                                    schema_name, table_name`,
-                            parameters: (_context: DataGridActionContext<any> | undefined) => [selectedSchemaName],
-                            columns: [
-                                {
-                                    label: "Table Name",
-                                    key: "table_name",
-                                    dataType: "string",
-                                    width: 170,
+                    slot: {
+                        id: "tables-" + session.info.uniqueId,
+                        type: "integrated",
+                        side: {
+                            id: "tables-side-" + session.info.uniqueId,
+                            type: "content",
+                            title: {
+                                id: "tables-title-" + session.info.uniqueId,
+                                type: "title",
+                                icon: "DatabaseTables",
+                                title: () => t("pg-tables-with-schema", "Tables {{schemaName}}", { schemaName: selectedSchemaName }),
+                                actions: [
+                                    RefreshGridAction_ID,
+                                    SearchData_ID,
+                                    SelectSchemaAction_ID,
+                                ],
+                            } as ITitleSlot,
+                            main: {
+                                id: "tables-grid-" + session.info.uniqueId,
+                                type: "grid",
+                                mode: "defined",
+                                rows: async () => {
+                                    const { rows } = await session.query(`
+                                        select 
+                                            n.nspname as schema_name, c.relname as table_name, pg_get_userbyid(c.relowner) as owner_name, d.description,
+                                            case c.relkind when 'r'::"char" then 'ordinary' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
+                                        from 
+                                            pg_class c
+                                            left join pg_namespace n on n.oid = c.relnamespace
+                                            left join pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
+                                        where 
+                                            c.relkind in ('r'::"char", 'f'::"char", 'p'::"char")
+                                            and (n.nspname = $1 or (n.nspname = any (current_schemas(false)) and coalesce($1, current_schema()) = current_schema() and n.nspname <> 'public'))
+                                        order by 
+                                            schema_name, table_name`,
+                                        [selectedSchemaName]
+                                    );
+                                    return rows;
                                 },
-                                {
-                                    label: "Schema Name",
-                                    key: "schema_name",
-                                    dataType: "string",
-                                    width: 150,
+                                columns: [
+                                    {
+                                        label: "Table Name",
+                                        key: "table_name",
+                                        dataType: "string",
+                                        width: 170,
+                                    },
+                                    {
+                                        label: "Schema Name",
+                                        key: "schema_name",
+                                        dataType: "string",
+                                        width: 150,
+                                    },
+                                    {
+                                        label: "Owner Name",
+                                        key: "owner_name",
+                                        dataType: "string",
+                                        width: 120,
+                                    },
+                                    {
+                                        label: "Table Type",
+                                        key: "table_type",
+                                        dataType: "string",
+                                        width: 80,
+                                    },
+                                ] as ColumnDefinition[],
+                                onRowClick: (row: TableRecord, refresh: RefreshSlotFunction) => {
+                                    if (row) {
+                                        description = row.description;
+                                    }
+                                    else {
+                                        description = null;
+                                    }
+                                    refresh("tables-text-" + session.info.uniqueId);
                                 },
-                                {
-                                    label: "Owner Name",
-                                    key: "owner_name",
-                                    dataType: "string",
-                                    width: 120,
+                                actions: [
+                                    SelectSchemaAction(),
+                                ],
+                                actionGroups: (refresh: RefreshSlotFunction) => [
+                                    SelectSchemaGroup(session, (schemaName: string) => {
+                                        selectedSchemaName = schemaName;
+                                        refresh("tables-grid-" + session.info.uniqueId);
+                                        refresh("tables-title-" + session.info.uniqueId);
+                                    }),
+                                ],
+                                storeLayoutId: "tables-grid-" + session.schema.sch_id,
+                            } as IGridSlot,
+                            text: {
+                                id: "tables-text-" + session.info.uniqueId,
+                                type: "text",
+                                text: () => {
+                                    return description ? description : "No description.";
                                 },
-                                {
-                                    label: "Table Type",
-                                    key: "table_type",
-                                    dataType: "string",
-                                    width: 80,
-                                },
-                            ] as ColumnDefinition[],
-                            onRowClick: (row: TableRecord) => {
-                                if (row) {
-                                    description = row.description;
-                                }
-                                else {
-                                    description = null;
-                                }
-                            },
-                            actions: [
-                                SelectSchemaAction(),
-                            ],
-                            actionGroups: [
-                                SelectSchemaGroup(session, (schemaName: string) => {
-                                    selectedSchemaName = schemaName;
-                                }),
-                            ],
-                        },
-                        {
-                            id: "tables-text-" + session.info.uniqueId,
-                            type: "text",
-                            content: () => {
-                                return description ? description : "No description.";
-                            },
-                        },
-                    ],
+                            } as ITextSlot
+                        }
+                    }
                 },
                 {
                     type: "rendered",
