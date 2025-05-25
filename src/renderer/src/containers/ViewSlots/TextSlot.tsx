@@ -12,7 +12,7 @@ interface TextSlotOwnProps extends TextSlotProps {
 }
 
 // Stylowany Box
-const StyledTextViewBox = styled(Box, {
+const StyledTextSlot = styled(Box, {
     shouldForwardProp: (prop) => prop !== "maxLines"
 })<{ maxLines?: number }>(({ maxLines }) => ({
     maxHeight: `calc(${maxLines ?? 3} * 1.4em)`,
@@ -21,7 +21,7 @@ const StyledTextViewBox = styled(Box, {
 }));
 
 const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
-    const { slot, ref, ...other } = useThemeProps({ name: "TextSlot", props });
+    const { slot, ref, className, ...other } = useThemeProps({ name: "TextSlot", props });
     const [text, setText] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
@@ -42,13 +42,19 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);
 
     return (
-        <StyledTextViewBox ref={ref} maxLines={slot.maxLines} key={slot.id} {...other}>
+        <StyledTextSlot
+            ref={ref}
+            maxLines={slot.maxLines}
+            key={slot.id}
+            className={`TextSlot-root ${className ?? ""}`}
+            {...other}
+        >
             {isSimpleText ? (
                 <Typography variant="body2">{text}</Typography>
             ) : (
                 text
             )}
-        </StyledTextViewBox>
+        </StyledTextSlot>
     );
 };
 

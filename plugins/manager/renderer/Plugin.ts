@@ -121,7 +121,7 @@ export interface CustomView extends IView {
  * Interface representing a callback function for registering connection views
  * @param session The database session for which the views are being registered
  */
-export type ConnectionViewsFactory = (session: IDatabaseSession) => View[] | null;
+export type ConnectionViewsFactory = (session: IDatabaseSession) => ConnectionView[] | null;
 
 /**
  * Interface representing the context in which a plugin operates

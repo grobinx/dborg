@@ -29,6 +29,8 @@ const PostgresPlugin: Plugin = {
         context.registerConnectionViewsFactory((session) => {
             let description: string | null = null;
             let selectedSchemaName: string | null = null;
+            let rowSchemaName: string | null = null;
+            let rowTableName: string | null = null;
             const t = i18next.t.bind(i18next);
 
             if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
@@ -65,7 +67,7 @@ const PostgresPlugin: Plugin = {
                                     const { rows } = await session.query(`
                                         select 
                                             n.nspname as schema_name, c.relname as table_name, pg_get_userbyid(c.relowner) as owner_name, d.description,
-                                            case c.relkind when 'r'::"char" then 'ordinary' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
+                                            case c.relkind when 'r'::"char" then 'regular' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
                                         from 
                                             pg_class c
                                             left join pg_namespace n on n.oid = c.relnamespace
@@ -108,11 +110,16 @@ const PostgresPlugin: Plugin = {
                                 onRowClick: (row: TableRecord, refresh: RefreshSlotFunction) => {
                                     if (row) {
                                         description = row.description;
+                                        rowSchemaName = row.schema_name;
+                                        rowTableName = row.table_name;
                                     }
                                     else {
                                         description = null;
+                                        rowSchemaName = null;
+                                        rowTableName = null;
                                     }
                                     refresh("tables-text-" + session.info.uniqueId);
+                                    refresh("tables-editor-content-" + session.info.uniqueId);
                                 },
                                 actions: [
                                     SelectSchemaAction(),
@@ -133,39 +140,58 @@ const PostgresPlugin: Plugin = {
                                     return description ? description : "No description.";
                                 },
                             } as ITextSlot
-                        }
+                        },
+                        editors: [
+                            {
+                                id: "tables-editor-description-" + session.info.uniqueId,
+                                type: "tab",
+                                closable: false,
+                                label: {
+                                    label: () => `${rowSchemaName}.${rowTableName}`,
+                                    icon: "DatabaseTables",
+                                },
+                                content: {
+                                    id: "tables-editor-content-" + session.info.uniqueId,
+                                    type: "rendered",
+                                    render() {
+                                        return (
+                                            <div>
+                                                <h1>{`${rowSchemaName}.${rowTableName}`}</h1>
+                                            </div>
+                                        );
+                                    }
+                                },
+                            }
+                        ]
                     }
                 },
                 {
-                    type: "rendered",
+                    type: "connection",
                     id: "views-" + session.info.uniqueId,
                     icon: "DatabaseViews",
                     label: t("database-views", "Views"),
-                    render() {
-                        return (
-                            <div>
-                                <h1>Views</h1>
-                                <p>This is a PostgreSQL plugin for DBorg.</p>
-                                <p>{session.schema.sch_name}</p>
-                            </div>
-                        );
-                    },
+                    slot: {
+                        id: "views-test" + session.info.uniqueId,
+                        type: "integrated",
+                        side: {
+                            id: "views-side-" + session.info.uniqueId,
+                            type: "content",
+                            main: {
+                                id: "views-main-" + session.info.uniqueId,
+                                type: "rendered",
+                                render() {
+                                    return (
+                                        <div>
+                                            <h1>Views</h1>
+                                            <p>This is a PostgreSQL plugin for DBorg.</p>
+                                            <p>{session.schema.sch_name}</p>
+                                        </div>
+                                    );
+                                },
+                            }
+                        }
+                    }
                 },
-                {
-                    type: "rendered",
-                    id: "postgresql-rendered-" + session.info.uniqueId,
-                    icon: "GroupList",
-                    label: "PostgreSQL",
-                    render() {
-                        return (
-                            <div>
-                                <h1>PostgreSQL Plugin</h1>
-                                <p>This is a PostgreSQL plugin for DBorg.</p>
-                                <p>{session.schema.sch_name}</p>
-                            </div>
-                        );
-                    },
-                }
             ];
         });
     }

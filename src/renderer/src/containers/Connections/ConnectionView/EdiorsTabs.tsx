@@ -34,12 +34,13 @@ interface EditorsTabsProps extends React.ComponentProps<typeof StyledEditorsTabs
 interface EditorsTabsOwnProps extends EditorsTabsProps {
     session: IDatabaseSession;
     editorContentManager: EditorContentManager; // Dodano EditorContentManager jako prop
+    additionalTabs?: React.ReactElement<TabPanelOwnProps>[];
 }
 
 export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const { session, editorContentManager, ...other } = props;
+    const { session, editorContentManager, additionalTabs, ...other } = props;
     const [editorsTabs, setEditorsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
     const tabsItemID = useMemo(() => session.schema.sch_id + ":" + session.info.uniqueId + "sql-editors", [session]);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -282,6 +283,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 buttons={renderSqlEditorButtons()}
             >
                 {editorsTabs}
+                {additionalTabs}
             </TabsPanel>
         </StyledEditorsTabs>
     );

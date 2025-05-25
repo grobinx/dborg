@@ -1,15 +1,24 @@
 import React from "react";
-import { Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { resolveIcon } from "@renderer/themes/icons";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import { styled } from "@mui/material/styles";
+import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveActionIdsFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 
-const StyledConnectionTitleViewSlot = styled("div")(({ theme }) => ({
+interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
+}
+
+interface TitleSlotOwnProps extends TitleSlotProps {
+    slot: ITitleSlot;
+    ref?: React.Ref<HTMLDivElement>;
+    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
+}
+
+const StyledTitleSlot = styled(Box)(() => ({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -18,15 +27,8 @@ const StyledConnectionTitleViewSlot = styled("div")(({ theme }) => ({
     paddingLeft: 4,
 }));
 
-interface TitleSlotProps {
-    slot: ITitleSlot;
-    ref?: React.Ref<HTMLDivElement>;
-    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
-}
-
-const TitleSlot: React.FC<TitleSlotProps> = ({
-    slot, ref, dataGridRef
-}) => {
+const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
+    const { slot, ref, dataGridRef, className, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
     const { t } = useTranslation();
     const [actions, setActions] = React.useState<string[]>([]);
@@ -53,7 +55,12 @@ const TitleSlot: React.FC<TitleSlotProps> = ({
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
 
     return (
-        <StyledConnectionTitleViewSlot ref={ref} key={slot.id}>
+        <StyledTitleSlot
+            ref={ref}
+            key={slot.id}
+            className={`TitleSlot-root ${className ?? ""}`}
+            {...other}
+        >
             {icon}
             {isSimpleTitle ? (
                 <Typography
@@ -89,7 +96,7 @@ const TitleSlot: React.FC<TitleSlotProps> = ({
                     })}
                 </TabPanelButtons>
             )}
-        </StyledConnectionTitleViewSlot>
+        </StyledTitleSlot>
     );
 };
 

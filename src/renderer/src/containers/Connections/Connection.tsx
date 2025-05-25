@@ -16,7 +16,9 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { resolveContentSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
+import { createContentComponent, createTabLabel } from "../ViewSlots/helpers";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -36,6 +38,7 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = useThemeProps({ name: "Connection", props });
+    const theme = useTheme();
     const { selectedContainer, selectedView } = useContainers();
     const { selectedSession } = useSessions();
     const [selectedThis, setSelectedThis] = React.useState(false);
@@ -46,6 +49,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 
     // Przechowuj utworzone widoki w stanie
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
+    const [editorTabsMap, setEditorTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
@@ -59,20 +63,39 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     // Twórz i zapamiętuj widok tylko gdy zmienia się selectedView
     useEffect(() => {
         if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {
-            let node: React.ReactNode = null;
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
                 if (slot.type === "integrated") {
                     const side = resolveContentSlotFactory(slot.side, refreshSlot);
                     if (side) {
-                        node = <ContentSlot slot={side} />;
+                        setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot slot={side} /> }));
+                        if (slot.editors && slot.editors.length > 0) {
+                            const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
+                            setEditorTabsMap(prev => ({
+                                ...prev,
+                                [selectedView.id]: tabs!.map(editor => {
+                                    const contentRef = React.createRef<HTMLDivElement>();
+                                    const content = createContentComponent(editor.content, refreshSlot, contentRef);
+                                    const labelRef = React.createRef<HTMLDivElement>();
+                                    const label = createTabLabel(editor.label, refreshSlot, theme, labelRef);
+                                    if (content && label) {
+                                        return (
+                                            <TabPanel
+                                                key={editor.id}
+                                                itemID={editor.id}
+                                                label={label}
+                                                content={content}
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[],
+                            }));
+                        }
                     }
                 }
             } else if (selectedView.type === "rendered" && selectedView.render !== null) {
-                node = <selectedView.render key={selectedView.id} />;
-            }
-            if (node) {
-                setSideViewsMap(prev => ({ ...prev, [selectedView.id]: node }));
+                setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
     }, [selectedView, session, sideViewsMap, selectedThis]);
@@ -101,11 +124,17 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 <SplitPanel>
                     <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.schema.sch_id}`}>
                         <SplitPanel>
-                            <EditorsTabs session={session} editorContentManager={editorContentManager} />
+                            <EditorsTabs
+                                session={session}
+                                editorContentManager={editorContentManager}
+                                additionalTabs={editorTabsMap[selectedView?.id ?? ""] ?? undefined}
+                            />
                         </SplitPanel>
                         <Splitter />
                         <SplitPanel defaultSize={20}>
-                            <ResultsTabs session={session} />
+                            <ResultsTabs
+                                session={session}
+                            />
                         </SplitPanel>
                     </SplitPanelGroup>
                 </SplitPanel>

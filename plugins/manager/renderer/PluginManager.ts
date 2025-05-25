@@ -1,5 +1,5 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin, ConnectionViewsFactory } from "./Plugin";
+import { Plugin, ConnectionViewsFactory, ConnectionView } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { View } from "@renderer/contexts/ApplicationContext";
 
@@ -8,7 +8,7 @@ export interface IPluginManager {
      * Get session views for a given database session
      * @param session database session
      */
-    getConnectionViews(session: IDatabaseSession): View[] | null;
+    getConnectionViews(session: IDatabaseSession): ConnectionView[] | null;
     /**
      * Get all registered plugins
      * @returns array of registered plugins
@@ -42,7 +42,7 @@ class PluginManager implements IPluginManager {
         this.pluginConnectionViewsFactories.push(factory);
     }
 
-    getConnectionViews(session: IDatabaseSession): View[] | null {
+    getConnectionViews(session: IDatabaseSession): ConnectionView[] | null {
         const views = this.pluginConnectionViewsFactories.map((factory) => factory(session)).flat().filter((view) => view !== null);
         return views;
     }

@@ -1,33 +1,37 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { styled } from "@mui/material/styles";
-import { 
-    IContentSlot, 
-    resolveContentSlotKindFactory, 
-    resolveTextSlotKindFactory, 
-    resolveTitleSlotKindFactory 
+import { styled, useThemeProps } from "@mui/material/styles";
+import {
+    IContentSlot,
+    resolveContentSlotKindFactory,
+    resolveTextSlotKindFactory,
+    resolveTitleSlotKindFactory
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import GridSlot from "./GridSlot";
+import RenderedSlot from "./RenderedSlot";
+import { createContentComponent } from "./helpers";
 
-const StyledContentSlot = styled("div")(() => ({
+interface ContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
+}
+
+interface ContentSlotOwnProps extends ContentSlotProps {
+    slot: IContentSlot;
+    ref?: React.Ref<HTMLDivElement>;
+}
+
+const StyledContentSlot = styled(Box)(() => ({
     display: "flex",
     flexDirection: "column",
     width: "100%",
     height: "100%",
 }));
 
-interface ContentSlotProps {
-    slot: IContentSlot;
-    ref?: React.Ref<HTMLDivElement>;
-}
-
-const ContentSlot: React.FC<ContentSlotProps> = ({
-    slot, ref
-}) => {
+const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
+    const { slot, ref, className, ...other } = useThemeProps({ name: "ContentSlot", props });
     const theme = useTheme();
     const [titleSlot, setTitleSlot] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
@@ -54,8 +58,11 @@ const ContentSlot: React.FC<ContentSlotProps> = ({
                     ...prev,
                     node: <TitleSlot slot={resolvedTitleSlot} ref={prev.ref} dataGridRef={mainSlot.dataGridRef} />
                 }));
-            } else {
-                setTitleSlot(prev => ({ ...prev, node: null }));
+            } else if (resolvedTitleSlot.type === "rendered") {
+                setTitleSlot(prev => ({
+                    ...prev,
+                    node: <RenderedSlot slot={resolvedTitleSlot} ref={prev.ref} />
+                }));
             }
         } else {
             setTitleSlot(prev => ({ ...prev, node: null }));
@@ -67,25 +74,19 @@ const ContentSlot: React.FC<ContentSlotProps> = ({
                     ...prev,
                     node: <TextSlot slot={resolvedTextSlot} ref={prev.ref} />
                 }));
-            } else {
-                setTextSlot(prev => ({ ...prev, node: null }));
+            } else if (resolvedTextSlot.type === "rendered") {
+                setTextSlot(prev => ({
+                    ...prev,
+                    node: <RenderedSlot slot={resolvedTextSlot} ref={prev.ref} />
+                }));
             }
         } else {
             setTextSlot(prev => ({ ...prev, node: null }));
         }
-        const resolvedMainSlot = resolveContentSlotKindFactory(slot.main, refreshSlot);
-        if (resolvedMainSlot) {
-            if (resolvedMainSlot.type === "grid") {
-                setMainSlot(prev => ({
-                    ...prev,
-                    node: <GridSlot slot={resolvedMainSlot} ref={prev.ref} dataGridRef={prev.dataGridRef} />
-                }));
-            } else {
-                setMainSlot(prev => ({ ...prev, node: null }));
-            }
-        } else {
-            setMainSlot(prev => ({ ...prev, node: null }));
-        }
+        setMainSlot(prev => ({
+            ...prev,
+            node: createContentComponent(slot.main, refreshSlot, mainSlot.ref, mainSlot.dataGridRef)
+        }));
     }, [slot.title, slot.main, slot.text, refresh]);
 
     React.useEffect(() => {
@@ -114,8 +115,13 @@ const ContentSlot: React.FC<ContentSlotProps> = ({
     }, [titleSlot.node, textSlot.node]);
 
     return (
-        <StyledContentSlot ref={ref} key={slot.id}>
-            {titleSlot.node}
+        <StyledContentSlot
+            ref={ref}
+            key={slot.id}
+            className={`ContentSlot-root ${className ?? ""}`}
+            {...other}
+        >
+            {(titleSlot.node != null) && titleSlot.node}
             <Box
                 sx={{
                     width: "100%",
@@ -123,10 +129,11 @@ const ContentSlot: React.FC<ContentSlotProps> = ({
                     minHeight: 0,
                     height: `calc(100% - ${minusHeight}px)`,
                 }}
+                className={"ContentSlot-main-root"}
             >
                 {mainSlot.node}
             </Box>
-            {textSlot.node}
+            {(textSlot.node != null) && textSlot.node}
         </StyledContentSlot>
     );
 };
