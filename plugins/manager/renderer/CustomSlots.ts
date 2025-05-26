@@ -95,6 +95,11 @@ export interface ITabsSlot extends ICustomSlot {
      * Tablica zakładek lub funkcja zwracająca tablicę zakładek.
      */
     tabs: TabSlotsFactory;
+    /**
+     * Pozyjca zakładek: "top" (góra) lub "bottom" (dół).
+     * Domyślnie "top".
+     */
+    position?: "top" | "bottom";
 }
 
 /**

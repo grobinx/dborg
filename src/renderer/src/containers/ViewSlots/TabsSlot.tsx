@@ -74,6 +74,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         <TabsPanel
             itemID={slot.id}
             className="TabsSlot-root"
+            tabPosition={slot.position}
         >
             {tabs}
         </TabsPanel>
