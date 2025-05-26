@@ -14,6 +14,8 @@ import TextSlot from "./TextSlot";
 import GridSlot from "./GridSlot";
 import RenderedSlot from "./RenderedSlot";
 import { createContentComponent } from "./helpers";
+import { useMessages } from "@renderer/contexts/MessageContext";
+import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 
 interface ContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -114,7 +116,6 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     return (
         <StyledContentSlot
             ref={ref}
-            key={slot.id}
             className={`ContentSlot-root ${className ?? ""}`}
             {...other}
         >

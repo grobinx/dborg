@@ -39,7 +39,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             setLoading(true);
             try {
                 let position: TableCellPosition | null = null;
-                if (dataGridRef && dataGridRef.current) {
+                if (dataGridRef && dataGridRef.current && dataGridRef.current.isFocused()) {
                     position = dataGridRef.current.getPosition();
                 }
                 setRows(await resolveRecordsFactory(slot.rows, refreshSlot) ?? []);
@@ -87,7 +87,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         }));
     }
 
-    function handleRowClick(row: Record<string, any>) {
+    function handleRowClick(row: Record<string, any> | undefined) {
         if (debounceRef.current) {
             clearTimeout(debounceRef.current);
         }

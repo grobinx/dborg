@@ -6,11 +6,11 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITabSlot, ITabsSlot, ITitleSlot, resolveActionIdsFactory, resolveContentSlotKindFactory, resolveReactNodeFactory, resolveTabLabelKindFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, ITitleSlot, resolveActionIdsFactory, resolveBooleanFactory, resolveContentSlotKindFactory, resolveReactNodeFactory, resolveStringFactory, resolveTabLabelKindFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
-import { createContentComponent, createTabLabel } from "./helpers";
+import { createContentComponent, createTabContent, createTabLabel } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
 interface TabsSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
@@ -35,24 +35,32 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
+    const [activeTab, setActiveTab] = React.useState<number | null>(null);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
         if (resolvedTabSlots) {
-            setTabs(resolvedTabSlots.map((tab: ITabSlot) => {
+            const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;
+            setTabs(resolvedTabSlots.map((tab: ITabSlot, index) => {
                 const contentRef = React.createRef<HTMLDivElement>();
-                const content = createContentComponent(tab.content, refreshSlot, contentRef);
+                const content = createTabContent(tab.content, refreshSlot, contentRef);
                 const labelRef = React.createRef<HTMLDivElement>();
-                const label = createTabLabel(tab.label, refreshSlot, labelRef);
+                const closeable = resolveBooleanFactory(tab.closable, refreshSlot);
+                const label = createTabLabel(tab.label, refreshSlot, labelRef, closeable ? () => {
+                    setTabs(prevTabs => prevTabs.filter(t => t.props.itemID !== tab.id));
+                } : undefined);
                 if (content && label) {
+                    if (defaultTabId && tab.id === defaultTabId) {
+                        setActiveTab(index);
+                    }
                     return (
                         <TabPanel
                             key={tab.id}
                             itemID={tab.id}
                             label={label}
-                            content={<TabPanelContent>{content}</TabPanelContent>}
+                            content={content}
                         />
                     );
                 }
@@ -75,6 +83,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
             itemID={slot.id}
             className="TabsSlot-root"
             tabPosition={slot.position}
+            activeTab={activeTab ?? undefined}
         >
             {tabs}
         </TabsPanel>

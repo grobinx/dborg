@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabContentSlot, ITabLabelSlot, resolveContentSlotFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -8,38 +8,49 @@ import ToolButton from "@renderer/components/ToolButton";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SQL_EDITOR_CLOSE } from "../Connections/ConnectionView/EdiorsTabs";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
+import { createContentComponent } from "./helpers";
+import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
-interface TabLabelSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
+interface TabContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
 
-interface TabLabelSlotOwnProps extends TabLabelSlotProps {
-    slot: ITabLabelSlot;
+interface TabContentSlotOwnProps extends TabContentSlotProps {
+    slot: ITabContentSlot;
     ref?: React.Ref<HTMLDivElement>;
     tabsItemID?: string;
     onClose?: () => void;
 }
 
-const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
+const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
-    const theme = useTheme();
-    const [label, setLabel] = React.useState<React.ReactNode | null>(null);
-    const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
+    const [content, setContent] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState(false);
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { subscribe, unsubscribe, sendMessage } = useMessages();
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {
-        setIcon(resolveIcon(theme, slot.icon));
-        setLabel(resolveReactNodeFactory(slot.label, refreshSlot) ?? "");
-    }, [slot.icon, slot.label, refresh]);
+        setContent(createContentComponent(slot.content, refreshSlot, ref) ?? "");
+    }, [slot.content, refresh]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
+            if (active) {
+                setRefresh(prev => !prev);
+            } else {
+                setPendingRefresh(true);
+            }
         });
         return unregisterRefresh;
-    }, [slot.id]);
+    }, [slot.id, active]);
+
+    React.useEffect(() => {
+        if (active && pendingRefresh) {
+            setRefresh(prev => !prev);
+            setPendingRefresh(false);
+        }
+    }, [active, pendingRefresh]);
 
     React.useEffect(() => {
         const handleTabPanelChangedMessage = (message: TabPanelChangedMessage) => {
@@ -58,21 +69,10 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     }, [tabsItemID, itemID, active]);
 
     return (
-        <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
-            {icon}
-            {label}
-            {onClose !== undefined && (
-                <ToolButton
-                    color="error"
-                    onClick={onClose}
-                    size="small"
-                    disabled={!active}
-                >
-                    <theme.icons.Close />
-                </ToolButton>
-            )}
-        </TabPanelLabel>
+        <TabPanelContent ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
+            {content}
+        </TabPanelContent>
     );
 };
 
-export default TabLabelSlot;
+export default TabContentSlot;

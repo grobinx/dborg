@@ -7,6 +7,8 @@ const StyledTabPanelContent = styled(Stack, {
 })(({ /*theme*/ }) => ({
     flexDirection: "row",
     alignItems: "center",
+    width: "100%",
+    height: "100%",
 }));
 
 export interface TabPanelContentProps extends React.ComponentProps<typeof StyledTabPanelContent> {

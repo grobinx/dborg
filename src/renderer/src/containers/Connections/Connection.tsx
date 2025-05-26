@@ -6,7 +6,7 @@ import ToolButton from "@renderer/components/ToolButton";
 import { useTranslation } from "react-i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { EditorsTabs } from "./ConnectionView/EdiorsTabs";
+import { EditorsTabs, SQL_EDITOR_CLOSE } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import "./ConnectionStatusBar";
 import ResultsTabs from "./ConnectionView/ResultsTabs";
@@ -16,9 +16,9 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { resolveBooleanFactory, resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
-import { createContentComponent, createTabLabel } from "../ViewSlots/helpers";
+import { createContentComponent, createTabContent, createTabLabel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
@@ -45,6 +45,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { selectedSession } = useSessions();
     const [selectedThis, setSelectedThis] = React.useState(false);
     const { refreshSlot } = useRefreshSlot();
+    const { sendMessage } = useMessages();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
@@ -70,30 +71,36 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 if (slot.type === "integrated") {
                     const side = resolveContentSlotFactory(slot.side, refreshSlot);
                     if (side) {
-                        setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot slot={side} /> }));
-                        if (slot.editors && slot.editors.length > 0) {
-                            const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
-                            setEditorTabsMap(prev => ({
-                                ...prev,
-                                [selectedView.id]: tabs!.map(editor => {
-                                    const contentRef = React.createRef<HTMLDivElement>();
-                                    const content = createContentComponent(editor.content, refreshSlot, contentRef);
-                                    const labelRef = React.createRef<HTMLDivElement>();
-                                    const label = createTabLabel(editor.label, refreshSlot, labelRef);
-                                    if (content && label) {
-                                        return (
-                                            <TabPanel
-                                                key={editor.id}
-                                                itemID={editor.id}
-                                                label={label}
-                                                content={<TabPanelContent>{content}</TabPanelContent>}
-                                            />
-                                        );
-                                    }
-                                    return null;
-                                }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[],
-                            }));
-                        }
+                        setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot key={side.id} slot={side} /> }));
+                    }
+                    if (slot.editors && slot.editors.length > 0) {
+                        const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
+                        setEditorTabsMap(prev => ({
+                            ...prev,
+                            [selectedView.id]: tabs!.map(editor => {
+                                const contentRef = React.createRef<HTMLDivElement>();
+                                const content = createTabContent(editor.content, refreshSlot, contentRef);
+                                const labelRef = React.createRef<HTMLDivElement>();
+                                const closeable = resolveBooleanFactory(editor.closable, refreshSlot);
+                                const label = createTabLabel(editor.label, refreshSlot, labelRef, closeable ? () => {
+                                    setEditorTabsMap(prevTabs => ({
+                                        ...prevTabs,
+                                        [selectedView.id]: prevTabs[selectedView.id].filter(t => t.props.itemID !== editor.id),
+                                    }));
+                                } : undefined);
+                                if (content && label) {
+                                    return (
+                                        <TabPanel
+                                            key={editor.id}
+                                            itemID={editor.id}
+                                            label={label}
+                                            content={<TabPanelContent>{content}</TabPanelContent>}
+                                        />
+                                    );
+                                }
+                                return null;
+                            }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[],
+                        }));
                     }
                 }
             } else if (selectedView.type === "rendered" && selectedView.render !== null) {

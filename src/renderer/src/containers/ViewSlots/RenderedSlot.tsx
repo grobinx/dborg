@@ -9,6 +9,7 @@ interface RenderedSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot
 interface RenderedSlotOwnProps extends RenderedSlotProps {
     slot: IRenderedSlot;
     ref?: React.Ref<HTMLDivElement>;
+    tabsItemID?: string;
 }
 
 const StyledRenderedSlotBox = styled(Box)({
@@ -19,7 +20,7 @@ const StyledRenderedSlotBox = styled(Box)({
 });
 
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
-    const { slot, ref, className, ...other } = useThemeProps({ name: "RenderedSlot", props });
+    const { slot, ref, className, tabsItemID, ...other } = useThemeProps({ name: "RenderedSlot", props });
     const [refresh, setRefresh] = React.useState(0);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 

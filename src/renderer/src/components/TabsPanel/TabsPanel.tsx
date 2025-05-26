@@ -49,12 +49,16 @@ interface TabsPanelOwnProps extends TabsPanelProps {
     buttons?: React.ReactNode;
     tabPosition?: "top" | "bottom";
     onMove?: (draggedItemID: string, targetItemID: string) => void;
+    activeTab?: number;
 }
 
 export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
-    const { children, buttons, slotProps, className, tabPosition = "top", onMove, ...other } = useThemeProps({ name: "TabsPanel", props: props });
+    const {
+        children, buttons, slotProps, className, tabPosition = "top", onMove,
+        activeTab: initActiveTab, ...other
+    } = useThemeProps({ name: "TabsPanel", props: props });
     const { sendMessage, subscribe, unsubscribe } = useMessages();
-    const [activeTab, setActiveTab] = React.useState(0);
+    const [activeTab, setActiveTab] = React.useState(initActiveTab ?? 0);
     const [contentHeight, setContentHeight] = React.useState<string | number>("auto");
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [contents, setContents] = React.useState<Map<string, React.ReactNode>>(new Map());
@@ -109,7 +113,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             }
             setActiveTab(newValue);
         }
-    }, [tabs, sendMessage, other.itemID]);
+    }, [tabs, other.itemID]);
 
     // Adjust activeTab when tabs change
     React.useEffect(() => {
@@ -125,7 +129,12 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (tabs.length > previousTabsLength.current) {
-            setActiveTabAndNotify(tabs.length - 1);
+            if (previousTabsLength.current > 0) {
+                setActiveTabAndNotify(tabs.length - 1);
+            }
+            else {
+                setActiveTabAndNotify(initActiveTab ?? 0);
+            }
         }
         previousTabsLength.current = tabs.length;
     }, [tabs.length, setActiveTabAndNotify]);
@@ -152,7 +161,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         return () => {
             unsubscribe(SWITCH_PANEL_TAB, handleSwitchTabMessage);
         };
-    }, [tabs, subscribe, unsubscribe, setActiveTabAndNotify]);
+    }, [tabs, setActiveTabAndNotify]);
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {

@@ -43,7 +43,6 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
         <StyledTextSlot
             ref={ref}
             maxLines={slot.maxLines}
-            key={slot.id}
             className={`TextSlot-root ${className ?? ""}`}
             {...other}
         >

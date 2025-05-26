@@ -9,6 +9,7 @@ export type CustomSlotType =
     | "tabs"
     | "tab"
     | "tablabel"
+    | "tabcontent"
     | "content"
     | "title"
     | "grid"
@@ -32,6 +33,7 @@ export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] |
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
 export type TabLabelSlotKindFactory = TabLabelSlotKind | ((refresh: RefreshSlotFunction) => TabLabelSlotKind);
+export type TabContentSlotKindFactory = TabContentSlotKind | ((refresh: RefreshSlotFunction) => TabContentSlotKind);
 export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFunction) => ContentSlotKind);
 export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
@@ -100,6 +102,11 @@ export interface ITabsSlot extends ICustomSlot {
      * Domyślnie "top".
      */
     position?: "top" | "bottom";
+    /**
+     * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
+     * Jeśli nie podano, pierwsza zakładka będzie aktywna.
+     */
+    defaultTabId?: StringFactory;
 }
 
 /**
@@ -117,8 +124,20 @@ export interface ITabLabelSlot extends ICustomSlot {
     label: ReactNodeFactory;
 }
 
+export interface ITabContentSlot extends ICustomSlot {
+    type: "tabcontent";
+    /**
+     * Zawartość zakładki (slot lub funkcja zwracająca slot).
+     */
+    content: ContentSlotKindFactory;
+}
+
 export type TabLabelSlotKind =
     ITabLabelSlot
+    | IRenderedSlot;
+
+export type TabContentSlotKind =
+    ITabContentSlot
     | IRenderedSlot;
 
 /**
@@ -146,7 +165,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
-    content: ContentSlotKindFactory;
+    content: TabContentSlotKindFactory;
 }
 
 /**
@@ -225,8 +244,9 @@ export interface IGridSlot extends ICustomSlot {
     type: "grid";
     /**
      * Tryb działania siatki (np. dynamiczne lub zdefiniowane kolumny).
+     * Domyślnie "data".
      */
-    mode: DataGridMode;
+    mode?: DataGridMode;
     /**
      * Zapytanie SQL do pobrania danych.
      */
@@ -246,7 +266,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Callback po kliknięciu w wiersz (opcjonalnie).
      */
-    onRowClick?: (row: any, refresh: (id: string) => void) => void;
+    onRowClick?: (row: any | undefined, refresh: (id: string) => void) => void;
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */
@@ -319,6 +339,9 @@ export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, ref
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, refresh: RefreshSlotFunction): TabLabelSlotKind | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): TabContentSlotKind | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): ContentSlotKind | undefined {

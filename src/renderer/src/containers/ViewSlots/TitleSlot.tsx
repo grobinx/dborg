@@ -56,7 +56,6 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     return (
         <StyledTitleSlot
             ref={ref}
-            key={slot.id}
             className={`TitleSlot-root ${className ?? ""}`}
             {...other}
         >

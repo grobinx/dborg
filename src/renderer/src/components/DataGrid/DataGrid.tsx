@@ -66,7 +66,7 @@ interface DataGridProps<T extends object> {
      * Wywoływane jest po kliknięciu w wiersz
      * @param row 
      */
-    onRowClick?: (row: T) => void;
+    onRowClick?: (row: T | undefined) => void;
     /**
      * Padding w poziomie dla komórek
      */
@@ -538,8 +538,13 @@ export const DataGrid = <T extends object>({
     }, [rowHeight, mode]);
 
     useEffect(() => {
-        if (onRowClick && selectedCell?.row !== undefined) {
-            onRowClick(filteredDataState[selectedCell.row]);
+        if (onRowClick) {
+            if (selectedCell?.row !== undefined) {
+                onRowClick(filteredDataState[selectedCell.row]);
+            }
+            else {
+                onRowClick(undefined);
+            }
         }
     }, [filteredDataState, selectedCell?.row]);
 
@@ -1028,7 +1033,7 @@ export const DataGrid = <T extends object>({
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                             dataType={dataType}
-                                            colorsEnabled={mode === "data" ? settings.data_grid.colors_enabled : true}
+                                            colorsEnabled={mode === "defined" ? settings.data_grid.colors_enabled : true}
                                         >
                                             {(() => {
                                                 const formattedValue = columnDataFormatter(row[col.key], col, settings.data_grid.null_value);

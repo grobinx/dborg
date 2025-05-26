@@ -11,6 +11,7 @@ import i18next from "i18next";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import tableColumnsSlot from "./slots/tableColumnsSlot";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -108,7 +109,7 @@ const PostgresPlugin: Plugin = {
                                         width: 80,
                                     },
                                 ] as ColumnDefinition[],
-                                onRowClick: (row: TableRecord, refresh: RefreshSlotFunction) => {
+                                onRowClick: (row: TableRecord | undefined, refresh: RefreshSlotFunction) => {
                                     if (row) {
                                         description = row.description;
                                         rowSchemaName = row.schema_name;
@@ -120,7 +121,7 @@ const PostgresPlugin: Plugin = {
                                         rowTableName = null;
                                     }
                                     refresh("tables-text-" + session.info.uniqueId);
-                                    refresh("tables-editor-content-" + session.info.uniqueId);
+                                    refresh("tables-editor-content-columns-" + session.info.uniqueId);
                                     refresh("tables-editor-label-" + session.info.uniqueId);
                                 },
                                 actions: [
@@ -145,7 +146,7 @@ const PostgresPlugin: Plugin = {
                         },
                         editors: [
                             {
-                                id: "tables-editor-description-" + session.info.uniqueId,
+                                id: "tables-editor-info-" + session.info.uniqueId,
                                 type: "tab",
                                 closable: false,
                                 label: {
@@ -156,13 +157,69 @@ const PostgresPlugin: Plugin = {
                                 },
                                 content: {
                                     id: "tables-editor-content-" + session.info.uniqueId,
-                                    type: "rendered",
-                                    render() {
-                                        return (
-                                            <div>
-                                                <h1>{`${rowSchemaName}.${rowTableName}`}</h1>
-                                            </div>
-                                        );
+                                    type: "tabcontent",
+                                    content: {
+                                        id: "tables-editor-tabs-" + session.info.uniqueId,
+                                        type: "tabs",
+                                        defaultTabId: "tables-editor-tab-columns-" + session.info.uniqueId,
+                                        tabs: [
+                                            {
+                                                id: "tables-editor-tab-columns-" + session.info.uniqueId,
+                                                type: "tab",
+                                                label: {
+                                                    id: "tables-editor-label-columns-" + session.info.uniqueId,
+                                                    type: "tablabel",
+                                                    label: t("columns", "Columns"),
+                                                },
+                                                content: {
+                                                    id: "tables-editor-content-columns-" + session.info.uniqueId,
+                                                    type: "tabcontent",
+                                                    content: () => tableColumnsSlot(session, rowSchemaName, rowTableName),
+                                                }
+                                            },
+                                            {
+                                                id: "tables-editor-tab-indexes-" + session.info.uniqueId,
+                                                type: "tab",
+                                                label: {
+                                                    id: "tables-editor-label-indexes-" + session.info.uniqueId,
+                                                    type: "tablabel",
+                                                    label: t("indexes", "Indexes"),
+                                                },
+                                                content: {
+                                                    id: "tables-editor-content-indexes-" + session.info.uniqueId,
+                                                    type: "rendered",
+                                                    render() {
+                                                        return (
+                                                            <div>
+                                                                <h1>{t("indexes", "Indexes")}</h1>
+                                                                <p>{rowSchemaName}.{rowTableName}</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                id: "tables-editor-tab-constraints-" + session.info.uniqueId,
+                                                type: "tab",
+                                                label: {
+                                                    id: "tables-editor-label-constraints-" + session.info.uniqueId,
+                                                    type: "tablabel",
+                                                    label: t("constraints", "Constraints"),
+                                                },
+                                                content: {
+                                                    id: "tables-editor-content-constraints-" + session.info.uniqueId,
+                                                    type: "rendered",
+                                                    render() {
+                                                        return (
+                                                            <div>
+                                                                <h1>{t("constraints", "Constraints")}</h1>
+                                                                <p>{rowSchemaName}.{rowTableName}</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+                                            },
+                                        ],
                                     }
                                 },
                             }
