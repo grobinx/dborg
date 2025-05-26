@@ -43,9 +43,8 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [mainSlot, setMainSlot] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
-        dataGridRef?: React.RefObject<DataGridActionContext<any> | null>,
         node: React.ReactNode
-    }>({ ref: React.createRef<HTMLDivElement>(), node: null, dataGridRef: React.createRef<DataGridActionContext<any> | null>() });
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [minusHeight, setMinusHeight] = React.useState<number | null>(null);
@@ -56,7 +55,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             if (resolvedTitleSlot.type === "title") {
                 setTitleSlot(prev => ({
                     ...prev,
-                    node: <TitleSlot slot={resolvedTitleSlot} ref={prev.ref} dataGridRef={mainSlot.dataGridRef} />
+                    node: <TitleSlot slot={resolvedTitleSlot} ref={prev.ref} />
                 }));
             } else if (resolvedTitleSlot.type === "rendered") {
                 setTitleSlot(prev => ({
@@ -85,17 +84,15 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         }
         setMainSlot(prev => ({
             ...prev,
-            node: createContentComponent(slot.main, refreshSlot, mainSlot.ref, mainSlot.dataGridRef)
+            node: createContentComponent(slot.main, refreshSlot, mainSlot.ref)
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => !prev);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
         });
-        return unregister;
+        return unregisterRefresh;
     }, [slot.id]);
 
     React.useEffect(() => {

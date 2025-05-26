@@ -8,6 +8,7 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveActionIdsFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
+import { useRefSlot } from "./RefSlotContext";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -15,7 +16,6 @@ interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> 
 interface TitleSlotOwnProps extends TitleSlotProps {
     slot: ITitleSlot;
     ref?: React.Ref<HTMLDivElement>;
-    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
 }
 
 const StyledTitleSlot = styled(Box)(() => ({
@@ -28,7 +28,7 @@ const StyledTitleSlot = styled(Box)(() => ({
 }));
 
 const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
-    const { slot, ref, dataGridRef, className, ...other } = useThemeProps({ name: "TitleSlot", props });
+    const { slot, ref, className, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
     const { t } = useTranslation();
     const [actions, setActions] = React.useState<string[]>([]);
@@ -36,6 +36,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [refresh, setRefresh] = React.useState(false);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { getRefSlot } = useRefSlot();
 
     React.useEffect(() => {
         setActions(resolveActionIdsFactory(slot.actions, refreshSlot) ?? []);
@@ -44,12 +45,10 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     }, [slot.actions, slot.title, slot.icon, refresh]);
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => !prev);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
         });
-        return unregister;
+        return unregisterRefresh;
     }, [slot.id]);
 
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
@@ -82,6 +81,8 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
             {actions.length > 0 && (
                 <TabPanelButtons>
                     {actions.map((action) => {
+                        if (!slot.actionSlotId) return null;
+                        const dataGridRef = getRefSlot<DataGridActionContext<any>>(slot.actionSlotId, "datagrid");
                         const context = dataGridRef?.current;
                         const actionManager = context?.actionManager();
                         if (!actionManager || !context) return null;

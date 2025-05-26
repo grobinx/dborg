@@ -13,22 +13,24 @@ import {
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useNotification } from "@renderer/contexts/NotificationContext";
 import { useTranslation } from "react-i18next";
+import { useRefSlot } from "./RefSlotContext";
 
 interface GridSlotProps {
     slot: IGridSlot;
     ref?: React.Ref<HTMLDivElement>;
-    dataGridRef?: React.RefObject<DataGridActionContext<any> | null>;
 }
 
 const GridSlot: React.FC<GridSlotProps> = ({
-    slot, ref, dataGridRef
+    slot, ref
 }) => {
+    const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [refresh, setRefresh] = React.useState(false);
     const { addNotification } = useNotification();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
     const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -61,12 +63,14 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }, [slot.columns, slot.rows, refresh]);
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => !prev);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
         });
-        return unregister;
+        const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
+        return () => {
+            unregisterRefresh();
+            unregisterRefSlot();
+        };
     }, [slot.id]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {

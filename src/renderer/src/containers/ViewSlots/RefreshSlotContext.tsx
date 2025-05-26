@@ -25,7 +25,11 @@ export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     const refreshSlot = useCallback((id: string) => {
         const fn = refreshers.current.get(id);
-        if (fn) fn();
+        if (fn) {
+            setTimeout(() => {
+                fn();
+            }, 0);
+        }
     }, []);
 
     return (

@@ -31,12 +31,10 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     }, [slot.text, refresh]);
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => !prev);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
         });
-        return unregister;
+        return unregisterRefresh;
     }, [slot.id]);
 
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);

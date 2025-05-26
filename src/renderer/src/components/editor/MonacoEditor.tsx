@@ -67,15 +67,18 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         }
     };
 
-    // React.useEffect(() => {
-    //     return () => {
-    //         // Czyszczenie edytora przy odmontowaniu
-    //         if (editorInstance) {
-    //             editorInstance.dispose();
-    //             setEditorInstance(null);
-    //         }
-    //     };
-    // }, [editorInstance]);
+    React.useEffect(() => {
+        return () => {
+            if (editorInstance) {
+                try {
+                    editorInstance.dispose();
+                } catch (error) {
+                } finally {
+                    setEditorInstance(null);
+                }
+            }
+        }
+    }, [editorInstance]);
 
     return (
         <Editor

@@ -6,11 +6,12 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITabSlot, ITabsSlot, ITitleSlot, resolveActionIdsFactory, resolveContentSlotKindFactory, resolveReactNodeFactory, resolveTabLabelFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, ITitleSlot, resolveActionIdsFactory, resolveContentSlotKindFactory, resolveReactNodeFactory, resolveTabLabelKindFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabLabel } from "./helpers";
+import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
 interface TabsSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -44,14 +45,14 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 const contentRef = React.createRef<HTMLDivElement>();
                 const content = createContentComponent(tab.content, refreshSlot, contentRef);
                 const labelRef = React.createRef<HTMLDivElement>();
-                const label = createTabLabel(tab.label, refreshSlot, theme, labelRef);
+                const label = createTabLabel(tab.label, refreshSlot, labelRef);
                 if (content && label) {
                     return (
                         <TabPanel
                             key={tab.id}
                             itemID={tab.id}
                             label={label}
-                            content={content}
+                            content={<TabPanelContent>{content}</TabPanelContent>}
                         />
                     );
                 }
@@ -63,12 +64,10 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     }, [slot.tabs, refresh]);
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => !prev);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
         });
-        return unregister;
+        return unregisterRefresh;
     }, [slot.id]);
 
     return (

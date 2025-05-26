@@ -8,6 +8,7 @@ export type CustomSlotType =
     "split"
     | "tabs"
     | "tab"
+    | "tablabel"
     | "content"
     | "title"
     | "grid"
@@ -30,7 +31,7 @@ export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] |
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
-export type TabLabelFactory = ITabLabel | ((refresh: RefreshSlotFunction) => ITabLabel);
+export type TabLabelSlotKindFactory = TabLabelSlotKind | ((refresh: RefreshSlotFunction) => TabLabelSlotKind);
 export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFunction) => ContentSlotKind);
 export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
@@ -99,7 +100,8 @@ export interface ITabsSlot extends ICustomSlot {
 /**
  * Struktura etykiety zakładki (label).
  */
-export interface ITabLabel {
+export interface ITabLabelSlot extends ICustomSlot {
+    type: "tablabel";
     /**
      * Ikona zakładki (opcjonalnie).
      */
@@ -109,6 +111,10 @@ export interface ITabLabel {
      */
     label: ReactNodeFactory;
 }
+
+export type TabLabelSlotKind =
+    ITabLabelSlot
+    | IRenderedSlot;
 
 /**
  * Slot typu tab.
@@ -123,7 +129,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Etykieta zakładki (ikona, tekst).
      */
-    label: TabLabelFactory;
+    label: TabLabelSlotKindFactory;
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
@@ -307,7 +313,7 @@ export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactor
 export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, refresh: RefreshSlotFunction): ITabSlot[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveTabLabelFactory(factory: TabLabelFactory | undefined, refresh: RefreshSlotFunction): ITabLabel | undefined {
+export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, refresh: RefreshSlotFunction): TabLabelSlotKind | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): ContentSlotKind | undefined {

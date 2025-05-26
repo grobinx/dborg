@@ -58,6 +58,7 @@ const PostgresPlugin: Plugin = {
                                     SearchData_ID,
                                     SelectSchemaAction_ID,
                                 ],
+                                actionSlotId: "tables-grid-" + session.info.uniqueId,
                             } as ITitleSlot,
                             main: {
                                 id: "tables-grid-" + session.info.uniqueId,
@@ -120,6 +121,7 @@ const PostgresPlugin: Plugin = {
                                     }
                                     refresh("tables-text-" + session.info.uniqueId);
                                     refresh("tables-editor-content-" + session.info.uniqueId);
+                                    refresh("tables-editor-label-" + session.info.uniqueId);
                                 },
                                 actions: [
                                     SelectSchemaAction(),
@@ -147,7 +149,9 @@ const PostgresPlugin: Plugin = {
                                 type: "tab",
                                 closable: false,
                                 label: {
-                                    label: () => `${rowSchemaName}.${rowTableName}`,
+                                    id: "tables-editor-label-" + session.info.uniqueId,
+                                    type: "tablabel",
+                                    label: () => rowTableName ? `${rowSchemaName}.${rowTableName}` : "No selected",
                                     icon: "DatabaseTables",
                                 },
                                 content: {

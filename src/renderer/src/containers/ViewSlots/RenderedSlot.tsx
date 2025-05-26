@@ -24,12 +24,10 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, () => {
-            setTimeout(() => {
-                setRefresh(prev => prev + 1);
-            }, 0);
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1);
         });
-        return unregister;
+        return unregisterRefresh;
     }, [slot.id]);
 
     return (

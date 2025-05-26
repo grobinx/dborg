@@ -19,6 +19,8 @@ import ContentSlot from "../ViewSlots/ContentSlot";
 import { resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabLabel } from "../ViewSlots/helpers";
+import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
+import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -77,14 +79,14 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                     const contentRef = React.createRef<HTMLDivElement>();
                                     const content = createContentComponent(editor.content, refreshSlot, contentRef);
                                     const labelRef = React.createRef<HTMLDivElement>();
-                                    const label = createTabLabel(editor.label, refreshSlot, theme, labelRef);
+                                    const label = createTabLabel(editor.label, refreshSlot, labelRef);
                                     if (content && label) {
                                         return (
                                             <TabPanel
                                                 key={editor.id}
                                                 itemID={editor.id}
                                                 label={label}
-                                                content={content}
+                                                content={<TabPanelContent>{content}</TabPanelContent>}
                                             />
                                         );
                                     }
@@ -146,7 +148,9 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
     return (
         <RefreshSlotProvider>
-            <ConnectionContentInner {...props} />
+            <RefSlotProvider>
+                <ConnectionContentInner {...props} />
+            </RefSlotProvider>
         </RefreshSlotProvider>
     );
 };
