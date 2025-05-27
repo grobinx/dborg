@@ -9,6 +9,7 @@ interface MessageContextProps {
     subscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => () => void;
     unsubscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => void;
     sendMessage: <Args extends any[], R = any>(message: string, ...args: Args) => Promise<R | undefined>;
+    queueMessage: (message: string, ...args: any[]) => void;
     emit: <Args extends any[], R = any>(message: string, ...args: Args) => Promise<R | undefined>;
 }
 
@@ -52,8 +53,14 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return results[0];
     }, []);
 
+    const queueMessage = React.useCallback((message: string, ...args: any[]) => {
+        setTimeout(() => {
+            sendMessage(message, ...args);
+        }, 10);
+    }, []);
+
     return (
-        <MessageContext.Provider value={{ subscribe: subscribe, unsubscribe: unsubscribe, sendMessage, emit: sendMessage }}>
+        <MessageContext.Provider value={{ subscribe, unsubscribe, sendMessage, emit: sendMessage, queueMessage }}>
             {children}
         </MessageContext.Provider>
     );

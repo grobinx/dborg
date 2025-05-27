@@ -42,9 +42,9 @@ const Connections: React.FC<ConnectionsOwnProps> = (props) => {
                         <TabPanel
                             key={session.info.uniqueId}
                             itemID={session.info.uniqueId}
-                            label={<ConnectionLabel session={session} />} // Przekazanie listeners do ConnectionLabel
-                            content={<ConnectionContent session={session}>{children}</ConnectionContent>} // Przekazanie listeners do ConnectionContent
-                            buttons={<ConnectionButtons session={session} />} // Przekazanie listeners do ConnectionButtons
+                            label={<ConnectionLabel key={session.info.uniqueId} session={session} />} // Przekazanie listeners do ConnectionLabel
+                            content={<ConnectionContent key={session.info.uniqueId} session={session}>{children}</ConnectionContent>} // Przekazanie listeners do ConnectionContent
+                            buttons={<ConnectionButtons key={session.info.uniqueId} session={session} />} // Przekazanie listeners do ConnectionButtons
                         />
                     );
                 })}

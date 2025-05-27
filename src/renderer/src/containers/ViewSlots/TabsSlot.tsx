@@ -37,10 +37,9 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
-    const [activeTab, setActiveTab] = React.useState<number | null>(null);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const { sendMessage } = useMessages();
+    const { queueMessage } = useMessages();
 
     React.useEffect(() => {
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
@@ -56,10 +55,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 } : undefined);
                 if (content && label) {
                     if (defaultTabId && tab.id === defaultTabId) {
-                        setActiveTab(index);
-                        setTimeout(() => {
-                            sendMessage(SWITCH_PANEL_TAB, defaultTabId);
-                        }, 0);
+                        queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
                     }
                     return (
                         <TabPanel

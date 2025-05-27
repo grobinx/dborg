@@ -6,7 +6,7 @@ import ToolButton from "@renderer/components/ToolButton";
 import { useTranslation } from "react-i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { EditorsTabs, SQL_EDITOR_CLOSE } from "./ConnectionView/EdiorsTabs";
+import { EditorsTabs, editorsTabsId, SQL_EDITOR_CLOSE } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import "./ConnectionStatusBar";
 import ResultsTabs from "./ConnectionView/ResultsTabs";
@@ -45,7 +45,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { selectedSession } = useSessions();
     const [selectedThis, setSelectedThis] = React.useState(false);
     const { refreshSlot } = useRefreshSlot();
-    const { sendMessage } = useMessages();
+    const { queueMessage } = useMessages();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
@@ -56,15 +56,12 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
-        setSelectedThis(
+        const selectedThis = 
             selectedContainer?.type === "connections" &&
             selectedSession?.getUniqueId() === session.info.uniqueId &&
-            selectedView !== null
-        );
-    }, [selectedContainer, selectedView, selectedSession]);
-
-    // Twórz i zapamiętuj widok tylko gdy zmienia się selectedView
-    useEffect(() => {
+            selectedView !== null;
+        setSelectedThis(selectedThis);
+        
         if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
@@ -77,7 +74,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
                         setEditorTabsMap(prev => ({
                             ...prev,
-                            [selectedView.id]: tabs!.map(editor => {
+                            [selectedView.id]: tabs!.map((editor, index) => {
                                 const contentRef = React.createRef<HTMLDivElement>();
                                 const content = createTabContent(editor.content, refreshSlot, contentRef);
                                 const labelRef = React.createRef<HTMLDivElement>();
@@ -89,6 +86,9 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                     }));
                                 } : undefined);
                                 if (content && label) {
+                                    if (index === 0) {
+                                        queueMessage(Messages.SWITCH_PANEL_TAB, editorsTabsId(session), editor.id);
+                                    }
                                     return (
                                         <TabPanel
                                             key={editor.id}
@@ -107,7 +107,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
-    }, [selectedView, session, sideViewsMap, selectedThis]);
+    }, [selectedView, session, sideViewsMap]);
 
     return (
         <StyledConnection className="Connection-root" {...other}>

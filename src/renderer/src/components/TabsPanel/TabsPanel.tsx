@@ -123,10 +123,12 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     };
 
     React.useEffect(() => {
-        const handleSwitchTabMessage = (itemID: string) => {
-            const tabIndex = tabs.findIndex((tab) => tab.props.itemID === itemID);
-            if (tabIndex >= 0) {
-                setActiveTab(tabIndex);
+        const handleSwitchTabMessage = (tabsItemID: string, itemID: string) => {
+            if (tabsItemID === other.itemID) {
+                const tabIndex = tabs.findIndex((tab) => tab.props.itemID === itemID);
+                if (tabIndex >= 0) {
+                    setActiveTab(tabIndex);
+                }
             }
         };
 

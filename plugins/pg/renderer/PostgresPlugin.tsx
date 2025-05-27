@@ -40,11 +40,11 @@ const PostgresPlugin: Plugin = {
             return [
                 {
                     type: "connection",
-                    id: "tables-" + session.info.uniqueId,
+                    id: "tables-view-" + session.info.uniqueId,
                     icon: "DatabaseTables",
                     label: t("database-tables", "Tables"),
                     slot: {
-                        id: "tables-" + session.info.uniqueId,
+                        id: "tables-slot-" + session.info.uniqueId,
                         type: "integrated",
                         side: {
                             id: "tables-side-" + session.info.uniqueId,
@@ -120,9 +120,12 @@ const PostgresPlugin: Plugin = {
                                         rowSchemaName = null;
                                         rowTableName = null;
                                     }
-                                    refresh("tables-text-" + session.info.uniqueId);
-                                    refresh("tables-editor-content-columns-" + session.info.uniqueId);
-                                    refresh("tables-editor-label-" + session.info.uniqueId);
+                                    refresh("tables-text" + session.info.uniqueId);
+                                    refresh("tables-title-" + session.info.uniqueId);
+                                    refresh("table-tab-label-" + session.info.uniqueId);
+                                    refresh("columns-tab-content-" + session.info.uniqueId);
+                                    refresh("indexes-tab-content-" + session.info.uniqueId);
+                                    refresh("constraints-tab-content-" + session.info.uniqueId);
                                 },
                                 actions: [
                                     SelectSchemaAction(),
@@ -146,47 +149,46 @@ const PostgresPlugin: Plugin = {
                         },
                         editors: [
                             {
-                                id: "tables-editor-info-" + session.info.uniqueId,
+                                id: "table-editors-tab-" + session.info.uniqueId,
                                 type: "tab",
                                 closable: false,
                                 label: {
-                                    id: "tables-editor-label-" + session.info.uniqueId,
+                                    id: "table-tab-label-" + session.info.uniqueId,
                                     type: "tablabel",
                                     label: () => rowTableName ? `${rowSchemaName}.${rowTableName}` : "No selected",
                                     icon: "DatabaseTables",
                                 },
                                 content: {
-                                    id: "tables-editor-content-" + session.info.uniqueId,
+                                    id: "table-tab-content-" + session.info.uniqueId,
                                     type: "tabcontent",
                                     content: {
-                                        id: "tables-editor-tabs-" + session.info.uniqueId,
+                                        id: "table-columns-tabs-" + session.info.uniqueId,
                                         type: "tabs",
-                                        defaultTabId: "tables-editor-tab-indexes-" + session.info.uniqueId,
                                         tabs: [
                                             {
-                                                id: "tables-editor-tab-columns-" + session.info.uniqueId,
+                                                id: "columns-tab-" + session.info.uniqueId,
                                                 type: "tab",
                                                 label: {
-                                                    id: "tables-editor-label-columns-" + session.info.uniqueId,
+                                                    id: "columns-tab-label-" + session.info.uniqueId,
                                                     type: "tablabel",
                                                     label: t("columns", "Columns"),
                                                 },
                                                 content: {
-                                                    id: "tables-editor-content-columns-" + session.info.uniqueId,
+                                                    id: "columns-tab-content-" + session.info.uniqueId,
                                                     type: "tabcontent",
                                                     content: () => tableColumnsSlot(session, rowSchemaName, rowTableName),
                                                 }
                                             },
                                             {
-                                                id: "tables-editor-tab-indexes-" + session.info.uniqueId,
+                                                id: "indexes-tab-" + session.info.uniqueId,
                                                 type: "tab",
                                                 label: {
-                                                    id: "tables-editor-label-indexes-" + session.info.uniqueId,
+                                                    id: "indexes-tab-label-" + session.info.uniqueId,
                                                     type: "tablabel",
                                                     label: t("indexes", "Indexes"),
                                                 },
                                                 content: {
-                                                    id: "tables-editor-content-indexes-" + session.info.uniqueId,
+                                                    id: "indexes-tab-content-" + session.info.uniqueId,
                                                     type: "rendered",
                                                     render() {
                                                         return (
@@ -199,15 +201,15 @@ const PostgresPlugin: Plugin = {
                                                 }
                                             },
                                             {
-                                                id: "tables-editor-tab-constraints-" + session.info.uniqueId,
+                                                id: "constraints-tab-" + session.info.uniqueId,
                                                 type: "tab",
                                                 label: {
-                                                    id: "tables-editor-label-constraints-" + session.info.uniqueId,
+                                                    id: "constraints-tab-label-" + session.info.uniqueId,
                                                     type: "tablabel",
                                                     label: t("constraints", "Constraints"),
                                                 },
                                                 content: {
-                                                    id: "tables-editor-content-constraints-" + session.info.uniqueId,
+                                                    id: "constraints-tab-content-" + session.info.uniqueId,
                                                     type: "rendered",
                                                     render() {
                                                         return (

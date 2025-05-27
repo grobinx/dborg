@@ -121,6 +121,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         >
             {(titleSlot.node != null) && titleSlot.node}
             <Box
+                key={slot.id + "-" + "inner-box"}
                 sx={{
                     width: "100%",
                     flex: 1,

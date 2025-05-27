@@ -8,6 +8,7 @@ export const TOGGLE_TOOOLS_TABS_PANEL = "toggle-tools-tabs-panel";
 
 /**
  * Switch to a specific tab in the tools panel.
+ * @param tabsItemID The ID of the tabs panel that changed.
  * @param itemID The name of the tab to switch to.
  */
 export const SWITCH_PANEL_TAB = "switch-panel-tab";

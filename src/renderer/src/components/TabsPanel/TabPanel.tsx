@@ -12,7 +12,7 @@ const StyledTabPanel = styled(Box, {
 export interface TabPanelProps extends React.ComponentProps<typeof StyledTabPanel> {
 }
 
-export interface TabPanelOwnProps extends TabPanelProps {
+export interface TabPanelOwnProps extends Omit<TabPanelProps, "label"> {
     label?: React.ReactNode;
     content?: React.ReactNode;
     buttons?: React.ReactNode;

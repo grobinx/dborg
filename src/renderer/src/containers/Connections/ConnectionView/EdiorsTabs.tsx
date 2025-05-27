@@ -14,6 +14,7 @@ import { DateTime } from "luxon";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs"; // Możesz wybrać inny styl
 import { useMessages } from "@renderer/contexts/MessageContext";
+import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
@@ -37,15 +38,19 @@ interface EditorsTabsOwnProps extends EditorsTabsProps {
     additionalTabs?: React.ReactElement<TabPanelOwnProps>[];
 }
 
+export function editorsTabsId(session: IDatabaseSession): string {
+    return session.schema.sch_id + ":" + session.info.uniqueId + "sql-editors";
+}
+
 export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { session, editorContentManager, additionalTabs, ...other } = props;
     const [editorsTabs, setEditorsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
-    const tabsItemID = useMemo(() => session.schema.sch_id + ":" + session.info.uniqueId + "sql-editors", [session]);
+    const tabsItemID = useMemo(() => editorsTabsId(session), [session]);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [closedEditors, setClosedEditors] = useState<EditorState[]>([]);
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { sendMessage, subscribe, unsubscribe, queueMessage } = useMessages();
 
     useEffect(() => {
         const initializeTabs = async () => {
@@ -158,6 +163,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 editorContentManager.setOpen(newEditorId, true);
             }
             setEditorsTabs((prevTabs) => [...prevTabs, newEditor]);
+            queueMessage(SWITCH_PANEL_TAB, tabsItemID, newEditorId);
         };
 
         const handleMenuReopenSqlEditor = async (message: { tabsItemID: string }) => {

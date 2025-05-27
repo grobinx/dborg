@@ -208,7 +208,7 @@ const App: React.FC = () => {
                             key="notifications"
                             onClick={() => {
                                 sendMessage(Messages.TOGGLE_TOOOLS_TABS_PANEL);
-                                sendMessage(Messages.SWITCH_PANEL_TAB, "notifications");
+                                sendMessage(Messages.SWITCH_PANEL_TAB, "tools-tabs-panel", "notifications");
                             }}
                         >
                             <theme.icons.Error />
