@@ -234,6 +234,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                         <Tab
                             itemID={tab.props.itemID}
                             key={tab.props.itemID}
+                            aria-label="Tab"
                             label={
                                 React.isValidElement(tab.props.label)
                                     ? React.cloneElement(

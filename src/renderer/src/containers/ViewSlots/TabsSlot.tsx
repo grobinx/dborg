@@ -45,7 +45,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
         if (resolvedTabSlots) {
             const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;
-            setTabs(resolvedTabSlots.map((tab: ITabSlot, index) => {
+            setTabs(resolvedTabSlots.map((tab: ITabSlot) => {
                 const contentRef = React.createRef<HTMLDivElement>();
                 const content = createTabContent(tab.content, refreshSlot, contentRef);
                 const labelRef = React.createRef<HTMLDivElement>();
@@ -82,6 +82,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
 
     return (
         <TabsPanel
+            key={slot.id}
             itemID={slot.id}
             className="TabsSlot-root"
             tabPosition={slot.position}

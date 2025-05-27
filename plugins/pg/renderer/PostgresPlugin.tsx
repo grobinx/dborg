@@ -120,7 +120,7 @@ const PostgresPlugin: Plugin = {
                                         rowSchemaName = null;
                                         rowTableName = null;
                                     }
-                                    refresh("tables-text" + session.info.uniqueId);
+                                    refresh("tables-text-" + session.info.uniqueId);
                                     refresh("tables-title-" + session.info.uniqueId);
                                     refresh("table-tab-label-" + session.info.uniqueId);
                                     refresh("columns-tab-content-" + session.info.uniqueId);

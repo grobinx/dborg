@@ -13,7 +13,7 @@ import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import GridSlot from "./GridSlot";
 import RenderedSlot from "./RenderedSlot";
-import { createContentComponent } from "./helpers";
+import { createContentComponent, createTextContent, createTitleContent } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 
@@ -52,37 +52,17 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [minusHeight, setMinusHeight] = React.useState<number | null>(null);
 
     React.useEffect(() => {
-        const resolvedTitleSlot = resolveTitleSlotKindFactory(slot.title, refreshSlot);
-        if (resolvedTitleSlot) {
-            if (resolvedTitleSlot.type === "title") {
-                setTitleSlot(prev => ({
-                    ...prev,
-                    node: <TitleSlot slot={resolvedTitleSlot} ref={prev.ref} />
-                }));
-            } else if (resolvedTitleSlot.type === "rendered") {
-                setTitleSlot(prev => ({
-                    ...prev,
-                    node: <RenderedSlot slot={resolvedTitleSlot} ref={prev.ref} />
-                }));
-            }
-        } else {
-            setTitleSlot(prev => ({ ...prev, node: null }));
+        if (slot.title) {
+            setTitleSlot(prev => ({
+                ...prev,
+                node: createTitleContent(slot.title!, refreshSlot, prev.ref)
+            }));
         }
-        const resolvedTextSlot = resolveTextSlotKindFactory(slot.text, refreshSlot) ?? null;
-        if (resolvedTextSlot) {
-            if (resolvedTextSlot.type === "text") {
-                setTextSlot(prev => ({
-                    ...prev,
-                    node: <TextSlot slot={resolvedTextSlot} ref={prev.ref} />
-                }));
-            } else if (resolvedTextSlot.type === "rendered") {
-                setTextSlot(prev => ({
-                    ...prev,
-                    node: <RenderedSlot slot={resolvedTextSlot} ref={prev.ref} />
-                }));
-            }
-        } else {
-            setTextSlot(prev => ({ ...prev, node: null }));
+        if (slot.text) {
+            setTextSlot(prev => ({
+                ...prev,
+                node: createTextContent(slot.text!, refreshSlot, prev.ref)
+            }));
         }
         setMainSlot(prev => ({
             ...prev,

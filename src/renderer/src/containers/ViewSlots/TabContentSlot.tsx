@@ -23,7 +23,10 @@ interface TabContentSlotOwnProps extends TabContentSlotProps {
 
 const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
-    const [content, setContent] = React.useState<React.ReactNode | null>(null);
+    const [content, setContent] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState(false);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
@@ -31,7 +34,10 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {
-        setContent(createContentComponent(slot.content, refreshSlot, ref) ?? "");
+        setContent(prev => ({
+            ...prev,
+            node: createContentComponent(slot.content!, refreshSlot, prev.ref)
+        }));
     }, [slot.content, refresh]);
 
     React.useEffect(() => {
@@ -70,7 +76,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
     return (
         <TabPanelContent ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
-            {content}
+            {content.node}
         </TabPanelContent>
     );
 };

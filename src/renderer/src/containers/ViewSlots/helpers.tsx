@@ -5,8 +5,12 @@ import {
     resolveReactNodeFactory,
     resolveTabContentSlotKindFactory,
     resolveTabLabelKindFactory,
+    resolveTextSlotKindFactory,
+    resolveTitleSlotKindFactory,
     TabContentSlotKindFactory,
     TabLabelSlotKindFactory,
+    TextSlotKindFactory,
+    TitleSlotKindFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -18,6 +22,8 @@ import { resolveIcon } from "@renderer/themes/icons";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
 import TabContentSlot from "./TabContentSlot";
+import TitleSlot from "./TitleSlot";
+import TextSlot from "./TextSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -104,6 +110,63 @@ export function createTabContent(
         if (resolvedContent.type === "tabcontent") {
             return (
                 <TabContentSlot
+                    key={resolvedContent.id}
+                    slot={resolvedContent}
+                    ref={ref}
+                />
+            );
+        }
+        else if (resolvedContent.type === "rendered") {
+            return (
+                <RenderedSlot
+                    key={resolvedContent.id}
+                    slot={resolvedContent}
+                    ref={ref}
+                />
+            );
+        }
+    }
+    return null;
+}
+
+export function createTitleContent(
+    slot: TitleSlotKindFactory,
+    refreshSlot: (id: string) => void,
+    ref: React.Ref<HTMLDivElement>,
+): React.ReactNode {
+    const resolvedContent = resolveTitleSlotKindFactory(slot, refreshSlot);
+    if (resolvedContent) {
+        if (resolvedContent.type === "title") {
+            return (
+                <TitleSlot
+                    key={resolvedContent.id}
+                    slot={resolvedContent}
+                    ref={ref}
+                />
+            );
+        }
+        else if (resolvedContent.type === "rendered") {
+            return (
+                <RenderedSlot
+                    key={resolvedContent.id}
+                    slot={resolvedContent}
+                    ref={ref}
+                />
+            );
+        }
+    }
+    return null;
+}
+export function createTextContent(
+    slot: TextSlotKindFactory,
+    refreshSlot: (id: string) => void,
+    ref: React.Ref<HTMLDivElement>,
+): React.ReactNode {
+    const resolvedContent = resolveTextSlotKindFactory(slot, refreshSlot);
+    if (resolvedContent) {
+        if (resolvedContent.type === "text") {
+            return (
+                <TextSlot
                     key={resolvedContent.id}
                     slot={resolvedContent}
                     ref={ref}
