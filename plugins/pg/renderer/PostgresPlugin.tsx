@@ -161,7 +161,7 @@ const PostgresPlugin: Plugin = {
                                     content: {
                                         id: "tables-editor-tabs-" + session.info.uniqueId,
                                         type: "tabs",
-                                        defaultTabId: "tables-editor-tab-columns-" + session.info.uniqueId,
+                                        defaultTabId: "tables-editor-tab-indexes-" + session.info.uniqueId,
                                         tabs: [
                                             {
                                                 id: "tables-editor-tab-columns-" + session.info.uniqueId,

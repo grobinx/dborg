@@ -45,13 +45,13 @@ const tableColumnsSlot = (
                     join pg_catalog.pg_namespace na on na.oid = cl.relnamespace
                     left outer join pg_catalog.pg_attrdef def on adrelid = att.attrelid and adnum = att.attnum
                     left outer join pg_catalog.pg_description des on des.classoid = 'pg_class'::regclass and des.objoid = att.attrelid and des.objsubid = att.attnum
-                    left join pg_catalog.pg_inherits inh on cl.oid = inh.inhrelid
+                    --left join pg_catalog.pg_inherits inh on cl.oid = inh.inhrelid
                 where att.attnum > 0
                     and cl.relkind in ('r', 'f', 'p', 't', 'v', 'm')
                     and na.nspname not ilike 'pg_toast%' and na.nspname not ilike 'pg_temp%'
                     and na.nspname = $1
                     and cl.relname = $2
-                    and inh.inhrelid is null
+                    --and inh.inhrelid is null
                 order by no`,
                 [schemaName, tableName]
             );
@@ -78,8 +78,8 @@ const tableColumnsSlot = (
             },
             {
                 key: "nullable",
-                label: "Nullable",
-                width: 80,
+                label: "Null",
+                width: 40,
                 dataType: "boolean",
                 formatter: (value: boolean) => value ? "No" : "Yes",
             },
@@ -113,7 +113,7 @@ const tableColumnsSlot = (
             {
                 key: "description",
                 label: "Description",
-                width: 200,
+                width: 350,
                 dataType: "string",
             },
         ] as ColumnDefinition[],

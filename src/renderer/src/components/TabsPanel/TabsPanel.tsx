@@ -16,8 +16,8 @@ const StyledTabsPanel = styled(Stack, {
     slot: "root",
 })(() => ({
     flexDirection: "column",
-    height: "100%", // Wypełnia całą dostępną wysokość
-    width: "100%", // Wypełnia całą dostępną szerokość
+    height: "100%",
+    width: "100%",
 }));
 
 // Styled Tabs header
@@ -25,7 +25,7 @@ const StyledTabsHeader = styled(Box, {
     name: "TabsPanel",
     slot: "header",
 })(() => ({
-    flex: 0, // Header ma stałą wysokość zależną od zawartości
+    flex: 0,
 }));
 
 // Styled Tabs content area
@@ -33,7 +33,7 @@ const StyledTabsContent = styled(Box, {
     name: "TabsPanel",
     slot: "content",
 })(() => ({
-    flex: 1, // Wypełnia pozostałą przestrzeń
+    flex: 1,
 }));
 
 export interface TabsPanelProps extends React.ComponentProps<typeof StyledTabsPanel> {
@@ -42,23 +42,23 @@ export interface TabsPanelProps extends React.ComponentProps<typeof StyledTabsPa
         content?: React.ComponentProps<typeof StyledTabsContent>;
         tabs?: React.ComponentProps<typeof Tabs>;
         tab?: React.ComponentProps<typeof Tab>;
-    }
+    };
 }
 
 interface TabsPanelOwnProps extends TabsPanelProps {
     buttons?: React.ReactNode;
     tabPosition?: "top" | "bottom";
     onMove?: (draggedItemID: string, targetItemID: string) => void;
-    activeTab?: number;
 }
 
 export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const {
-        children, buttons, slotProps, className, tabPosition = "top", onMove,
-        activeTab: initActiveTab, ...other
+        children, buttons, slotProps, className, tabPosition = "top", 
+        onMove, ...other
     } = useThemeProps({ name: "TabsPanel", props: props });
     const { sendMessage, subscribe, unsubscribe } = useMessages();
-    const [activeTab, setActiveTab] = React.useState(initActiveTab ?? 0);
+
+    const [activeTab, setActiveTab] = React.useState(0);
     const [contentHeight, setContentHeight] = React.useState<string | number>("auto");
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [contents, setContents] = React.useState<Map<string, React.ReactNode>>(new Map());
@@ -66,12 +66,11 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const sourceDragIndexRef = React.useRef<number | null>(null);
 
     const headerRef = React.useRef<HTMLDivElement>(null);
-    const tabsListRef = React.useRef<HTMLDivElement | null>(null); // Referencja do listy zakładek
+    const tabsListRef = React.useRef<HTMLDivElement | null>(null);
 
-    // Obsługa przewijania rolką myszy
     const handleWheel = (event: React.WheelEvent) => {
         if (tabsListRef.current) {
-            tabsListRef.current.scrollLeft += event.deltaY; // Przewijanie w poziomie
+            tabsListRef.current.scrollLeft += event.deltaY;
         }
     };
 
@@ -88,7 +87,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
         setTabs(validatedTabs);
 
-        // Wypełnienie contents
         const contentsMap = new Map<string, React.ReactNode>();
         validatedTabs.forEach((tab) => {
             const itemID = tab.props.itemID;
@@ -104,56 +102,31 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         setContents(contentsMap);
     }, [children]);
 
-    // Unified function to set active tab and send message
-    const setActiveTabAndNotify = React.useCallback((newValue: number) => {
-        if (newValue >= 0 && newValue < tabs.length) {
-            const selectedTab = tabs[newValue];
+    React.useEffect(() => {
+        if (activeTab >= tabs.length) {
+            setActiveTab(Math.max(0, tabs.length - 1));
+        }
+        sendMessage(TAB_PANEL_LENGTH, { tabsItemID: other.itemID, length: tabs.length } as TabPanelLengthMessage);
+    }, [tabs.length]);
+
+    React.useEffect(() => {
+        if (activeTab !== null && activeTab < tabs.length) {
+            const selectedTab = tabs[activeTab];
             if (React.isValidElement(selectedTab)) {
                 sendMessage(TAB_PANEL_CHANGED, { tabsItemID: other.itemID, itemID: selectedTab.props.itemID } as TabPanelChangedMessage);
             }
-            setActiveTab(newValue);
         }
-    }, [tabs, other.itemID]);
-
-    // Adjust activeTab when tabs change
-    React.useEffect(() => {
-        if (activeTab >= tabs.length) {
-            setActiveTabAndNotify(Math.max(0, tabs.length - 1));
-        } else if (tabs.length < previousTabsLength.current) {
-            sendMessage(TAB_PANEL_CHANGED, { tabsItemID: other.itemID, itemID: tabs[activeTab].props.itemID } as TabPanelChangedMessage);
-        }
-        sendMessage(TAB_PANEL_LENGTH, { tabsItemID: other.itemID, length: tabs.length } as TabPanelLengthMessage);
-    }, [tabs.length, setActiveTabAndNotify]);
-
-    const previousTabsLength = React.useRef(tabs.length);
-
-    React.useEffect(() => {
-        if (tabs.length > previousTabsLength.current) {
-            if (previousTabsLength.current > 0) {
-                setActiveTabAndNotify(tabs.length - 1);
-            }
-            else {
-                setActiveTabAndNotify(initActiveTab ?? 0);
-            }
-        }
-        previousTabsLength.current = tabs.length;
-    }, [tabs.length, setActiveTabAndNotify]);
-
-    // Handle tab change
-    const handleTabChange = (newValue: number) => {
-        setActiveTabAndNotify(newValue);
-    };
+    }, [activeTab, tabs, other.itemID]);
 
     const handleTabClick = (index: number) => {
         sendMessage(TAB_PANEL_CLICK, { itemID: tabs[index].props.itemID, tabsItemID: other.itemID } as TabPanelClickMessage);
-    }
+    };
 
-    // Handle message to switch tabs
     React.useEffect(() => {
         const handleSwitchTabMessage = (itemID: string) => {
             const tabIndex = tabs.findIndex((tab) => tab.props.itemID === itemID);
             if (tabIndex >= 0) {
-                setActiveTabAndNotify(tabIndex);
+                setActiveTab(tabIndex);
             }
         };
 
@@ -161,7 +134,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         return () => {
             unsubscribe(SWITCH_PANEL_TAB, handleSwitchTabMessage);
         };
-    }, [tabs, setActiveTabAndNotify]);
+    }, [tabs]);
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
@@ -183,30 +156,24 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     }, [headerRef.current, tabPosition]);
 
     const handleDragStart = (event: React.DragEvent, sourceIndex: number) => {
-        sourceDragIndexRef.current = sourceIndex; // Ustaw indeks przeciąganego elementu
+        sourceDragIndexRef.current = sourceIndex;
         event.dataTransfer.effectAllowed = "move";
 
-        // Znajdź element zakładki
         const tabElement = event.currentTarget as HTMLElement;
-
-        // Sklonuj element zakładki
         const dragImage = tabElement.cloneNode(true) as HTMLElement;
         dragImage.style.position = "absolute";
-        dragImage.style.top = "-9999px"; // Ukryj element poza ekranem
+        dragImage.style.top = "-9999px";
         dragImage.style.left = "-9999px";
         document.body.appendChild(dragImage);
 
-        // Ustaw obraz przeciągania
         event.dataTransfer.setDragImage(dragImage, 0, 0);
-
-        // Usuń obraz po zakończeniu przeciągania
         setTimeout(() => document.body.removeChild(dragImage), 0);
     };
 
     const handleDragOver = (event: React.DragEvent, targetIndex: number) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = "move";
-        setDragOverIndex(targetIndex); // Ustaw indeks docelowy
+        setDragOverIndex(targetIndex);
     };
 
     const handleDrop = (event: React.DragEvent, targetIndex: number) => {
@@ -218,8 +185,8 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             onMove(sourceTab.props.itemID!, targetTab.props.itemID!);
         }
 
-        sourceDragIndexRef.current = null; // Resetuj indeks przeciąganego elementu
-        setDragOverIndex(null); // Resetuj indeks docelowy
+        sourceDragIndexRef.current = null;
+        setDragOverIndex(null);
     };
 
     const tabHeader = (
@@ -233,7 +200,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                 {buttons}
                 <Tabs
                     value={activeTab < tabs.length ? activeTab : 0}
-                    onChange={(_event, newValue: number) => handleTabChange(newValue)}
+                    onChange={(_event, newValue: number) => setActiveTab(newValue)}
                     aria-label="Tabs Panel"
                     variant="scrollable"
                     scrollButtons="auto"
@@ -271,8 +238,8 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                                         tab.props.label as React.ReactElement<{ itemID: string, tabsItemID: string }>,
                                         { itemID: tab.props.itemID, tabsItemID: other.itemID }
                                     ) : tab.props.label ?? tab.props.itemID
-                            } // Safely pass itemID to label
-                            onClick={() => handleTabClick(tabs.findIndex((t) => t.props.itemID === tab.props.itemID))}
+                            }
+                            onClick={() => handleTabClick(index)}
                             draggable={onMove !== undefined}
                             onDragStart={(event) => handleDragStart(event, index)}
                             onDragOver={(event) => handleDragOver(event, index)}

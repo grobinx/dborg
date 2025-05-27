@@ -12,6 +12,8 @@ import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
+import { useMessages } from "@renderer/contexts/MessageContext";
+import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 
 interface TabsSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -38,6 +40,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const [activeTab, setActiveTab] = React.useState<number | null>(null);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { sendMessage } = useMessages();
 
     React.useEffect(() => {
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
@@ -54,6 +57,9 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 if (content && label) {
                     if (defaultTabId && tab.id === defaultTabId) {
                         setActiveTab(index);
+                        setTimeout(() => {
+                            sendMessage(SWITCH_PANEL_TAB, defaultTabId);
+                        }, 0);
                     }
                     return (
                         <TabPanel
@@ -83,7 +89,6 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
             itemID={slot.id}
             className="TabsSlot-root"
             tabPosition={slot.position}
-            activeTab={activeTab ?? undefined}
         >
             {tabs}
         </TabsPanel>
