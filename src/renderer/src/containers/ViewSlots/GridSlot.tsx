@@ -1,7 +1,7 @@
 import React from "react";
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
     IGridSlot,
@@ -14,6 +14,7 @@ import { useRefreshSlot } from "./RefreshSlotContext";
 import { useNotification } from "@renderer/contexts/NotificationContext";
 import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
+import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -33,6 +34,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
     const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
+    const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
+    const statusBarRef = React.useRef<HTMLDivElement>(null);
+    const [boxHeight, setBoxHeight] = React.useState<string>("100%");
 
     React.useEffect(() => {
         const fetchRows = async () => {
@@ -73,6 +77,26 @@ const GridSlot: React.FC<GridSlotProps> = ({
         };
     }, [slot.id]);
 
+    React.useEffect(() => {
+        const observer = new ResizeObserver(() => {
+            if (statusBarRef.current) {
+                const statusBarHeight = statusBarRef.current.offsetHeight;
+                setBoxHeight(`calc(100% - ${statusBarHeight}px)`);
+            }
+        });
+
+        if (statusBarRef.current) {
+            observer.observe(statusBarRef.current);
+        }
+
+        return () => {
+            if (statusBarRef.current) {
+                observer.unobserve(statusBarRef.current);
+            }
+            observer.disconnect();
+        };
+    }, []);
+
     function dataGridMountHandler(context: DataGridContext<any>): void {
         const actionGroups = resolveActionGroupDescriptorsFactory(slot.actionGroups, refreshSlot) ?? [];
         if (actionGroups.length) {
@@ -99,25 +123,42 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }
 
     return (
-        <Box
-            key={slot.id}
+        <Stack
+            direction="column"
             sx={{
                 width: "100%",
                 height: "100%",
+                overflow: "hidden",
             }}
-            ref={ref}
         >
-            <DataGrid
-                columns={columns}
-                data={rows}
-                loading={loading ? "Loading..." : undefined}
-                onRowClick={handleRowClick}
-                ref={dataGridRef}
-                onMount={dataGridMountHandler}
-                autoSaveId={slot.autoSaveId ?? slot.id}
-                mode={slot.mode}
-            />
-        </Box>
+            <Box
+                key={slot.id}
+                sx={{
+                    width: "100%",
+                    height: boxHeight,
+                }}
+                ref={ref}
+            >
+                <DataGrid
+                    columns={columns}
+                    data={rows}
+                    loading={loading ? t("loading---", "Loading...") : undefined}
+                    onRowClick={handleRowClick}
+                    ref={dataGridRef}
+                    onMount={dataGridMountHandler}
+                    autoSaveId={slot.autoSaveId ?? slot.id}
+                    mode={slot.mode}
+                    onChange={(status) => setDataGridStatus(status)}
+                />
+            </Box>
+            {slot.status && slot.status.length > 0 && (
+                <DataGridStatusBar
+                    ref={statusBarRef}
+                    status={dataGridStatus}
+                    statuses={slot.status}
+                />)
+            }
+        </Stack>
     );
 };
 

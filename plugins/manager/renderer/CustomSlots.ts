@@ -1,5 +1,6 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
+import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import * as monaco from "monaco-editor";
@@ -280,6 +281,10 @@ export interface IGridSlot extends ICustomSlot {
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */
     autoSaveId?: string;
+    /**
+     * Statusy siatki (np. liczba wierszy, pozycja) do wyświetlenia w pasku stanu (opcjonalnie).
+     */
+    status?: DataGridStatusPart[];
 }
 
 /**

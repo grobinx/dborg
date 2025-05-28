@@ -32,6 +32,7 @@ interface SqlResultContentProps {
 export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const { session, itemID, tabsItemID, hidden } = props;
     const theme = useTheme();
+    const { t } = useTranslation();
     const { subscribe, unsubscribe, sendMessage } = useMessages();
     const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
     const [rows, setRows] = React.useState<object[] | null>(null);
@@ -54,7 +55,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const onMountHandle = (context: DataGridContext<any>) => {
         context.addAction({
             id: "refresh-query",
-            label: "Refresh query",
+            label: t("refresh-query", "Refresh query"),
             icon: <theme.icons.Refresh />,
             keybindings: ["F5"],
             run: (_context) => {
@@ -276,7 +277,13 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     data={rows ?? []}
                     mode="data"
                     columnsResizable={true}
-                    loading={rowsFetched ?? 0 > 0 ? `Fetching data... ${rowsFetched} rows` : executing ? "Executing..." : undefined}
+                    loading={
+                        rowsFetched ?? 0 > 0 ?
+                            t("fetching-data---", `Fetching data... {{rowsFetched}} rows`, { rowsFetched })
+                            : executing ?
+                                t("executing---", "Executing...")
+                                : undefined
+                    }
                     onCancelLoading={
                         (cancelExecution.current || rowsFetched !== undefined) ?
                             () => {
@@ -303,23 +310,21 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 buttons={{
                     last: [
                         <StatusBarButton key="queryDuration">
-                            {queryDuration !== null ?
-                                `Duration ${Duration.fromMillis(queryDuration)
-                                    .shiftTo("hour", "minutes", "seconds")
-                                    .toHuman({ unitDisplay: 'narrow' })}`
-                                : "No Query"}
+                            {queryDuration !== null
+                                ? t(
+                                    "query-duration",
+                                    "Duration {{duration}}",
+                                    {
+                                        duration: Duration.fromMillis(queryDuration)
+                                            .shiftTo("hour", "minutes", "seconds")
+                                            .toHuman({ unitDisplay: "narrow" }),
+                                    }
+                                )
+                                : t("no-query", "No Query")}
                         </StatusBarButton>,
-                        dataGridStatus?.column?.info && (
-                            <StatusBarButton key="column-type">
-                                {`Type ${dataGridStatus.column.info.typeName} (${dataGridStatus.column.info.dataType}) (${dataGridStatus.valueType})`}
-                            </StatusBarButton>),
-                        dataGridStatus?.valueLength && (
-                            <StatusBarButton key="value-length">
-                                {`Len ${dataGridStatus.valueLength}`}
-                            </StatusBarButton>),
                         updatedCount !== null && (
                             <StatusBarButton key="command-updated">
-                                {`Updated ${updatedCount} row(s)`}
+                                {t("updated-rows", "Updated {{count}} row(s)", { count: updatedCount })}
                             </StatusBarButton>),
                     ],
                 }}

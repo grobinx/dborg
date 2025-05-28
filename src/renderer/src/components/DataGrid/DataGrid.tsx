@@ -16,6 +16,7 @@ import { useColumnsState } from "./useColumnsState";
 import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
+import { useTranslation } from "react-i18next";
 
 export type DataGridMode = "defined" | "data";
 
@@ -92,7 +93,10 @@ interface DataGridProps<T extends object> {
     autoSaveId?: string;
 }
 
-const StyledTable = styled('div')({
+const StyledTable = styled('div', {
+    name: "DataGrid",
+    slot: "root",
+})({
     position: "relative",
     display: "flex",
     height: "100%",
@@ -100,7 +104,10 @@ const StyledTable = styled('div')({
     userSelect: "none", // Wyłączenie zaznaczania tekstu
 });
 
-const StyledHeader = styled('div')(({ theme }) => ({
+const StyledHeader = styled('div', {
+    name: "DataGrid",
+    slot: "header",
+})(({ theme }) => ({
     position: "sticky",
     top: 0,
     display: "flex",
@@ -109,7 +116,11 @@ const StyledHeader = styled('div')(({ theme }) => ({
     color: theme.palette.table.contrastText,
 }));
 
-const StyledHeaderCell = styled('div')<{ rowHeight: number; paddingX: number; paddingY: number }>(
+const StyledHeaderCell = styled('div', {
+    name: "DataGrid",
+    slot: "headerCell",
+    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY',
+})<{ rowHeight: number; paddingX: number; paddingY: number }>(
     ({ theme, rowHeight, paddingX, paddingY }) => {
         const contentHeight = rowHeight - paddingY * 2; // Wysokość dostępna dla treści
 
@@ -143,13 +154,19 @@ const StyledHeaderCell = styled('div')<{ rowHeight: number; paddingX: number; pa
     }
 );
 
-const HeaderCellContent = styled('div')({
+const StyledHeaderCellContent = styled('div', {
+    name: "DataGrid",
+    slot: "headerCellContent",
+})({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
 });
 
-const SortIconContainer = styled('div')({
+const StyledSortIconContainer = styled('div', {
+    name: "DataGrid",
+    slot: "sortIconContainer",
+})({
     display: "flex",
     alignItems: "center",
     gap: "4px",
@@ -158,7 +175,11 @@ const SortIconContainer = styled('div')({
 });
 
 // Styled components
-const StyledTableContainer = styled('div')<{ rowHeight: number; paddingY: number }>(
+const StyledTableContainer = styled('div', {
+    name: "DataGrid",
+    slot: "tableContainer",
+    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingY',
+})<{ rowHeight: number; paddingY: number }>(
     ({ rowHeight, paddingY }) => {
         const contentHeight = rowHeight - paddingY * 2;
         const fontSize = Math.max(12, contentHeight * 0.8);
@@ -174,7 +195,10 @@ const StyledTableContainer = styled('div')<{ rowHeight: number; paddingY: number
     }
 );
 
-const StyledRow = styled("div")(({ theme }) => ({
+const StyledRow = styled("div", {
+    name: "DataGrid",
+    slot: "row",
+})(({ theme }) => ({
     display: "flex",
     position: "absolute",
     top: 0,
@@ -200,7 +224,11 @@ const StyledRow = styled("div")(({ theme }) => ({
     },
 }));
 
-const StyledCell = styled("div")<{
+const StyledCell = styled("div", {
+    name: "DataGrid",
+    slot: "cell",
+    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY' && prop !== 'dataType' && prop !== 'colorsEnabled',
+})<{
     rowHeight: number;
     paddingX: number;
     paddingY: number;
@@ -240,11 +268,17 @@ const StyledCell = styled("div")<{
     }
 );
 
-const StyledRowsContainer = styled("div")({
+const StyledRowsContainer = styled("div", {
+    name: "DataGrid",
+    slot: "rowsContainer",
+})({
     position: "relative",
 });
 
-const StyledFooter = styled('div')(({ theme }) => ({
+const StyledFooter = styled('div', {
+    name: "DataGrid",
+    slot: "footer",
+})(({ theme }) => ({
     position: "sticky",
     bottom: 0,
     display: "flex",
@@ -253,7 +287,11 @@ const StyledFooter = styled('div')(({ theme }) => ({
     color: theme.palette.table.contrastText,
 }));
 
-const StyledFooterCell = styled('div')<{
+const StyledFooterCell = styled('div', {
+    name: "DataGrid",
+    slot: "footerCell",
+    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY' && prop !== 'dataType',
+})<{
     rowHeight: number;
     paddingX: number;
     paddingY: number;
@@ -284,7 +322,10 @@ const StyledFooterCell = styled('div')<{
 );
 
 // Dodaj styled komponent dla kolumny z numerami wierszy
-const StyledRowNumberColumn = styled('div')(({ theme }) => ({
+const StyledRowNumberColumn = styled('div', {
+    name: "DataGrid",
+    slot: "rowNumberColumn",
+})(({ theme }) => ({
     position: "absolute",
     top: 0,
     left: 0,
@@ -298,7 +339,11 @@ const StyledRowNumberColumn = styled('div')(({ theme }) => ({
     overflow: "hidden",
 }));
 
-const StyledRowNumberCell = styled('div')<{ rowHeight: number }>(({ theme, rowHeight }) => ({
+const StyledRowNumberCell = styled('div', {
+    name: "DataGrid",
+    slot: "rowNumberCell",
+    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingY',
+})<{ rowHeight: number }>(({ theme, rowHeight }) => ({
     position: "absolute",
     width: "100%",
     height: rowHeight,
@@ -310,7 +355,10 @@ const StyledRowNumberCell = styled('div')<{ rowHeight: number }>(({ theme, rowHe
     },
 }));
 
-const StyledNoRowsInfo = styled('div')(({ theme }) => ({
+const StyledNoRowsInfo = styled('div', {
+    name: "DataGrid",
+    slot: "noRowsInfo",
+})(({ theme }) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -341,6 +389,7 @@ export const DataGrid = <T extends object>({
     autoSaveId,
 }: DataGridProps<T>) => {
     const theme = useTheme();
+    const { t } = useTranslation();
     const containerRef = useRef<HTMLDivElement>(null);
     const commandManager = useRef<CommandManager<DataGridActionContext<T>> | null>(null);
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
@@ -878,10 +927,11 @@ export const DataGrid = <T extends object>({
     }, [resizingColumn]);
 
     return (
-        <StyledTable>
+        <StyledTable className="DataGrid-table">
             {/* Kolumna z numerami wierszy */}
             {showRowNumberColumn && (
                 <StyledRowNumberColumn
+                    className="DataGrid-rowNumberColumn"
                     style={{
                         width: rowNumberColumnWidth,
                         height: containerHeight + (
@@ -905,7 +955,7 @@ export const DataGrid = <T extends object>({
                             return (
                                 <StyledRowNumberCell
                                     key={absoluteRowIndex}
-                                    className={selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}
+                                    className={`DataGrid-rowNumberCell ${selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}`}
                                     rowHeight={rowHeight}
                                     style={{
                                         top: absoluteRowIndex * rowHeight,
@@ -922,7 +972,7 @@ export const DataGrid = <T extends object>({
 
             {loading && (
                 <LoadingOverlay
-                    label={loading.trim() === "" ? "Loading..." : loading}
+                    label={loading.trim() === "" ? t("loading---", "Loading...") : loading}
                     onCancelLoading={onCancelLoading}
                 />
             )}
@@ -930,6 +980,7 @@ export const DataGrid = <T extends object>({
             {/* Główna tabela */}
             <StyledTableContainer
                 ref={containerRef}
+                className="DataGrid-tableContainer"
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
                 rowHeight={rowHeight}
@@ -949,10 +1000,14 @@ export const DataGrid = <T extends object>({
                     parentRef={containerRef}
                     prefix={commandPalettePrefix}
                 />
-                <StyledHeader style={{ width: columnsState.totalWidth, height: rowHeight }}>
+                <StyledHeader
+                    className="DataGrid-header"
+                    style={{ width: columnsState.totalWidth, height: rowHeight }}
+                >
                     {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
                         <StyledHeaderCell
                             key={colIndex}
+                            className="DataGrid-headerCell"
                             style={{
                                 width: col.width || 150,
                                 left: columnsState.columnLeft(startColumn + colIndex),
@@ -967,15 +1022,15 @@ export const DataGrid = <T extends object>({
                                 }
                             }}
                         >
-                            <HeaderCellContent>
+                            <StyledHeaderCellContent className="DataGrid-headerCellContent">
                                 <span className="label">{col.label}</span>
                                 {col.sortDirection && (
-                                    <SortIconContainer>
+                                    <StyledSortIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
                                         {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
-                                    </SortIconContainer>
+                                    </StyledSortIconContainer>
                                 )}
-                            </HeaderCellContent>
+                            </StyledHeaderCellContent>
                             {(col.resizable ?? columnsResizable) && (
                                 <div
                                     className="resize-handle"
@@ -986,11 +1041,14 @@ export const DataGrid = <T extends object>({
                     ))}
                 </StyledHeader>
                 {filteredDataState.length === 0 && (
-                    <StyledNoRowsInfo>
-                        No rows to display
+                    <StyledNoRowsInfo className="DataGrid-noRowsInfo">
+                        {t("no-rows-to-display", "No rows to display")}
                     </StyledNoRowsInfo>
                 )}
-                <StyledRowsContainer style={{ height: totalHeight, width: columnsState.totalWidth }}>
+                <StyledRowsContainer
+                    style={{ height: totalHeight, width: columnsState.totalWidth }}
+                    className="DataGrid-rowsContainer"
+                >
                     {filteredDataState.slice(Math.max(startRow - overscanRowCount, 0), Math.min(endRow + overscanRowCount, filteredDataState.length)).map((row, rowIndex) => {
                         const absoluteRowIndex = Math.max(startRow - overscanRowCount, 0) + rowIndex;
                         const isRowSelected = selectedCell?.row === absoluteRowIndex;
@@ -999,7 +1057,7 @@ export const DataGrid = <T extends object>({
                         return (
                             <StyledRow
                                 key={absoluteRowIndex}
-                                className={`${rowClass} ${selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}`}
+                                className={`DataGrid-row ${rowClass} ${selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}`}
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
@@ -1017,6 +1075,7 @@ export const DataGrid = <T extends object>({
                                         <StyledCell
                                             key={colIndex}
                                             className={
+                                                "DataGrid-cell" +
                                                 (isCellSelected ? " Mui-selected" : "") +
                                                 (isCellSelected && isFocused ? " Mui-focused" : "") +
                                                 (" " + columnDataTypeClassMap[dataType] || "")
@@ -1046,7 +1105,10 @@ export const DataGrid = <T extends object>({
                     })}
                 </StyledRowsContainer>
                 {footerVisible && (
-                    <StyledFooter style={{ width: columnsState.totalWidth, height: rowHeight * 2 }}>
+                    <StyledFooter
+                        style={{ width: columnsState.totalWidth, height: rowHeight * 2 }}
+                        className="DataGrid-footer"
+                    >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                             const dataType = resolveDataType(summaryRow[col.key], col.dataType);
                             let operationLabel = "";
@@ -1057,7 +1119,7 @@ export const DataGrid = <T extends object>({
                             return (
                                 <React.Fragment key={colIndex}>
                                     <StyledFooterCell
-                                        className={(" " + columnDataTypeClassMap[dataType] || "")}
+                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[dataType] || ""}`}
                                         style={{
                                             width: col.width || 150,
                                             left: columnsState.columnLeft(startColumn + colIndex),
@@ -1073,7 +1135,7 @@ export const DataGrid = <T extends object>({
                                         {operationLabel}
                                     </StyledFooterCell>
                                     <StyledFooterCell
-                                        className={(" " + columnDataTypeClassMap[dataType] || "")}
+                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[dataType] || ""}`}
                                         style={{
                                             width: col.width || 150,
                                             left: columnsState.columnLeft(startColumn + colIndex),

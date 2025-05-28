@@ -61,6 +61,7 @@
 	"name": "Name",
 	"value": "Value",
 	"ordinal-number-short": "No.",
+	"no-rows-to-display": "No rows to display",
 	"sqlite3": {
 		"driver": {
 			"connection": {

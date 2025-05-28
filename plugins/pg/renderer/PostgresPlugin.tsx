@@ -146,6 +146,7 @@ const PostgresPlugin: Plugin = {
                                     }),
                                 ],
                                 autoSaveId: "tables-grid-" + session.schema.sch_id,
+                                status: ["data-rows"]
                             } as IGridSlot,
                             text: {
                                 id: "tables-text-" + session.info.uniqueId,
