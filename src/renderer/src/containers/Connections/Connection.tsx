@@ -140,6 +140,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         <SplitPanel defaultSize={20}>
                             <ResultsTabs
                                 session={session}
+                                additionalTabs={resultTabsMap[selectedView?.id ?? ""] ?? undefined}
                             />
                         </SplitPanel>
                     </SplitPanelGroup>
