@@ -246,7 +246,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.uniqueId,
                 } as Messages.SessionGetMetadataEnd);
             });
-        }, force ? 1000 : 10000);
+        }, force ? 250 : 1000);
     };
 
     useEffect(() => {

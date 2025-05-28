@@ -12,6 +12,7 @@ import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/Ref
 import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import tableColumnsSlot from "./slots/tableColumnsSlot";
+import { DatabasesMetadata } from "../../../src/api/db";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -28,15 +29,22 @@ const PostgresPlugin: Plugin = {
 
     initialize(context: IPluginContext): void {
         context.registerConnectionViewsFactory((session) => {
+            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
+                return null;
+            }
+
             let description: string | null = null;
             let selectedSchemaName: string | null = null;
             let rowSchemaName: string | null = null;
             let rowTableName: string | null = null;
             const t = i18next.t.bind(i18next);
 
-            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
-                return null;
+            const setSelectedSchemaName = async () => {
+                const { rows } = await session.query<{ schema_name: string }>('select current_schema() as schema_name');
+                selectedSchemaName = rows[0]?.schema_name ?? null;
             }
+            setSelectedSchemaName();
+
             return [
                 {
                     type: "connection",
@@ -131,13 +139,13 @@ const PostgresPlugin: Plugin = {
                                     SelectSchemaAction(),
                                 ],
                                 actionGroups: (refresh: RefreshSlotFunction) => [
-                                    SelectSchemaGroup(session, (schemaName: string) => {
+                                    SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
                                         selectedSchemaName = schemaName;
                                         refresh("tables-grid-" + session.info.uniqueId);
                                         refresh("tables-title-" + session.info.uniqueId);
                                     }),
                                 ],
-                                storeLayoutId: "tables-grid-" + session.schema.sch_id,
+                                autoSaveId: "tables-grid-" + session.schema.sch_id,
                             } as IGridSlot,
                             text: {
                                 id: "tables-text-" + session.info.uniqueId,

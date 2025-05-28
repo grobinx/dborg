@@ -14,14 +14,19 @@ export const SQL_RESULT_CLOSE = "sql-result:close";
 
 interface ResultsTabsProps {
     session: IDatabaseSession;
+    additionalTabs?: React.ReactElement<TabPanelOwnProps>[];
 }
 
-const ResultsTabs: React.FC<ResultsTabsProps> = ({ session }) => {
+export function resultsTabsId(session: IDatabaseSession): string {
+    return session.schema.sch_id + ":" + session.info.uniqueId + ":results-tabs";
+}
+
+const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {
     const theme = useTheme();
     const [resultsTabs, setResultsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
     const { subscribe, unsubscribe, sendMessage } = useMessages();
 
-    const tabsItemID = useMemo(() => session.schema.sch_id + ":" + session.info.uniqueId + ":results-tab", [session]);
+    const tabsItemID = useMemo(() => resultsTabsId(session), [session]);
 
     const handleAddSqlResult = useCallback(() => {
         const newResultId = uuidv7();
@@ -89,6 +94,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session }) => {
             buttons={renderAddResultButton()}
         >
             {resultsTabs}
+            {additionalTabs}
         </TabsPanel>
     );
 };

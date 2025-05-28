@@ -89,7 +89,7 @@ interface DataGridProps<T extends object> {
     /**
      * Extra unique ID for the DataGrid to save column layout, eg for connection schema
      */
-    uniqueId?: string;
+    autoSaveId?: string;
 }
 
 const StyledTable = styled('div')({
@@ -338,7 +338,7 @@ export const DataGrid = <T extends object>({
     onCancelLoading,
     active,
     ref,
-    uniqueId,
+    autoSaveId,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -353,7 +353,7 @@ export const DataGrid = <T extends object>({
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
-    const columnsState = useColumnsState(columns, mode, uniqueId);
+    const columnsState = useColumnsState(columns, mode, autoSaveId);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);

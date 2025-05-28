@@ -25,7 +25,7 @@ function hashString(str: string): string {
 }
 
 // Pomocnicza funkcja do generowania klucza układu
-function getColumnsLayoutKey(columns: ColumnDefinition[], uniqueId?: string): string {
+function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): string {
     const keyString = columns
         .slice()
         .sort((a, b) =>
@@ -35,7 +35,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[], uniqueId?: string): st
         )
         .map((col) => `${col.key}:${col.dataType}`)
         .join("|");
-    return "datagrid-layout-" + hashString(keyString + (uniqueId ? "|" + uniqueId : ""));
+    return "datagrid-layout-" + hashString(keyString + (autoSaveId ? "|" + autoSaveId : ""));
 }
 
 // Zapisz tylko szerokość, kolejność i datę modyfikacji
@@ -127,8 +127,8 @@ function cleanupOldColumnLayouts() {
     }
 }
 
-export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGridMode, uniqueId?: string): UseColumnsState => {
-    const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, uniqueId), [initialColumns]);
+export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGridMode, autoSaveId?: string): UseColumnsState => {
+    const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
         restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
     );

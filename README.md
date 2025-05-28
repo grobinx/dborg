@@ -17,3 +17,4 @@ Below are sample screenshots of the application:
 
 ![Schema List](doc/screenshots/schema-list.png )
 ![Sql Editor and Result](doc/screenshots/sql-editor-and-result.png)
+![Defined plugin slot - tables view](doc/screenshots/tables-view.png)

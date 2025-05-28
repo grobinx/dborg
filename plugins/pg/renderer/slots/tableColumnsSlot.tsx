@@ -1,5 +1,7 @@
+import { Typography } from "@mui/material";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import i18next from "i18next";
 import { IGridSlot } from "plugins/manager/renderer/CustomSlots";
 
 export interface TableColumnRecord {
@@ -20,6 +22,8 @@ const tableColumnsSlot = (
     schemaName: string | null,
     tableName: string | null
 ): IGridSlot => {
+    const t = i18next.t.bind(i18next);
+
     return {
         id: `tableColumns-${session.info.uniqueId}`,
         type: "grid",
@@ -51,6 +55,7 @@ const tableColumnsSlot = (
                     and na.nspname not ilike 'pg_toast%' and na.nspname not ilike 'pg_temp%'
                     and na.nspname = $1
                     and cl.relname = $2
+                    and att.atttypid != 0
                     --and inh.inhrelid is null
                 order by no`,
                 [schemaName, tableName]
@@ -60,64 +65,72 @@ const tableColumnsSlot = (
         columns: [
             {
                 key: "no",
-                label: "No",
+                label: t("ordinal-number-short", "No"),
                 width: 50,
                 dataType: "number",
             },
             {
                 key: "name",
-                label: "Name",
+                label: t("name", "Name"),
                 width: 160,
                 dataType: "string",
             },
             {
                 key: "display_type",
-                label: "Data Type",
+                label: t("data-type", "Data Type"),
                 width: 160,
                 dataType: "string",
             },
             {
                 key: "nullable",
-                label: "Null",
+                label: t("null", "Null"),
                 width: 40,
                 dataType: "boolean",
-                formatter: (value: boolean) => value ? "No" : "Yes",
+                formatter: (value: boolean) => (
+                    <Typography
+                        component="span"
+                        variant="inherit"
+                        color={value ? "success" : "warning"}
+                    >
+                        {value ? t("no", "No") : t("yes", "Yes")}
+                    </Typography>
+                ),
             },
             {
                 key: "default_value",
-                label: "Default",
+                label: t("default", "Default"),
                 width: 120,
                 dataType: "string",
             },
             {
                 key: "foreign_key",
-                label: "FK",
+                label: t("fk", "FK"),
                 width: 40,
                 dataType: "boolean",
-                formatter: (value: boolean) => value ? "Yes" : "",
+                formatter: (value: boolean) => value ? t("yes", "Yes") : "",
             },
             {
                 key: "primary_key",
-                label: "PK",
+                label: t("pk", "PK"),
                 width: 40,
                 dataType: "boolean",
-                formatter: (value: boolean) => value ? "Yes" : "",
+                formatter: (value: boolean) => value ? t("yes", "Yes") : "",
             },
             {
                 key: "unique",
-                label: "Unq",
+                label: t("unq", "Unq"),
                 width: 40,
                 dataType: "boolean",
-                formatter: (value: boolean) => value ? "Yes" : "",
+                formatter: (value: boolean) => value ? t("yes", "Yes") : "",
             },
             {
                 key: "description",
-                label: "Description",
+                label: t("comment", "Comment"),
                 width: 350,
                 dataType: "string",
             },
         ] as ColumnDefinition[],
-        storeLayoutId: "table-columns-grid-" + session.schema.sch_id,
+        autoSaveId: "table-columns-grid-" + session.schema.sch_id,
     };
 };
 

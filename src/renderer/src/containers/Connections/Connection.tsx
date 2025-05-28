@@ -9,14 +9,14 @@ import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { EditorsTabs, editorsTabsId, SQL_EDITOR_CLOSE } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import "./ConnectionStatusBar";
-import ResultsTabs from "./ConnectionView/ResultsTabs";
+import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
-import { RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { resolveBooleanFactory, resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
@@ -53,15 +53,16 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     // Przechowuj utworzone widoki w stanie
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
     const [editorTabsMap, setEditorTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
+    const [resultTabsMap, setResultTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
-        const selectedThis = 
+        const selectedThis =
             selectedContainer?.type === "connections" &&
             selectedSession?.getUniqueId() === session.info.uniqueId &&
             selectedView !== null;
         setSelectedThis(selectedThis);
-        
+
         if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
@@ -74,32 +75,28 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
                         setEditorTabsMap(prev => ({
                             ...prev,
-                            [selectedView.id]: tabs!.map((editor, index) => {
-                                const contentRef = React.createRef<HTMLDivElement>();
-                                const content = createTabContent(editor.content, refreshSlot, contentRef);
-                                const labelRef = React.createRef<HTMLDivElement>();
-                                const closeable = resolveBooleanFactory(editor.closable, refreshSlot);
-                                const label = createTabLabel(editor.label, refreshSlot, labelRef, closeable ? () => {
-                                    setEditorTabsMap(prevTabs => ({
-                                        ...prevTabs,
-                                        [selectedView.id]: prevTabs[selectedView.id].filter(t => t.props.itemID !== editor.id),
-                                    }));
-                                } : undefined);
-                                if (content && label) {
-                                    if (index === 0) {
-                                        queueMessage(Messages.SWITCH_PANEL_TAB, editorsTabsId(session), editor.id);
-                                    }
-                                    return (
-                                        <TabPanel
-                                            key={editor.id}
-                                            itemID={editor.id}
-                                            label={label}
-                                            content={<TabPanelContent>{content}</TabPanelContent>}
-                                        />
-                                    );
-                                }
-                                return null;
-                            }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[],
+                            [selectedView.id]: createTabPanels(
+                                tabs,
+                                refreshSlot,
+                                selectedView.id,
+                                queueMessage,
+                                editorsTabsId(session),
+                                setEditorTabsMap
+                            )
+                        }));
+                    }
+                    if (slot.results && slot.results.length > 0) {
+                        const tabs = resolveTabSlotsFactory(slot.results, refreshSlot);
+                        setResultTabsMap(prev => ({
+                            ...prev,
+                            [selectedView.id]: createTabPanels(
+                                tabs,
+                                refreshSlot,
+                                selectedView.id,
+                                queueMessage,
+                                resultsTabsId(session),
+                                setResultTabsMap
+                            ),
                         }));
                     }
                 }
@@ -286,3 +283,40 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
         </TabPanelLabel>
     );
 };
+
+function createTabPanels(
+    tabs: ITabSlot[] | undefined,
+    refreshSlot: RefreshSlotFunction,
+    selectedViewId: string,
+    queueMessage: (...args: any[]) => void,
+    tabsItemID: string,
+    setTabsMap: React.Dispatch<React.SetStateAction<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>>
+) {
+    if (!tabs) return [];
+    return tabs.map((tab, index) => {
+        const contentRef = React.createRef<HTMLDivElement>();
+        const content = createTabContent(tab.content, refreshSlot, contentRef);
+        const labelRef = React.createRef<HTMLDivElement>();
+        const closeable = resolveBooleanFactory(tab.closable, refreshSlot);
+        const label = createTabLabel(tab.label, refreshSlot, labelRef, closeable ? () => {
+            setTabsMap(prevTabs => ({
+                ...prevTabs,
+                [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
+            }));
+        } : undefined);
+        if (content && label) {
+            if (index === 0) {
+                queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
+            }
+            return (
+                <TabPanel
+                    key={tab.id}
+                    itemID={tab.id}
+                    label={label}
+                    content={<TabPanelContent>{content}</TabPanelContent>}
+                />
+            );
+        }
+        return null;
+    }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[];
+}

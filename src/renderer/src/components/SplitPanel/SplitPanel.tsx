@@ -42,26 +42,26 @@ interface SplitterOwnProps extends SplitterProps {
 
 // Komponenty React z obsługą propsów
 export const SplitPanelGroup: React.FC<SplitPanelGroupOwnProps> = (props) => {
-    const { className, children, ...other } = useThemeProps({
+    const { className, children, ref, ...other } = useThemeProps({
         props,
         name: "SplitPanelGroup",
     });
 
     return (
-        <StyledSplitPanelGroup className={(className ?? "") + " SplitPanel-group"} {...other}>
+        <StyledSplitPanelGroup className={(className ?? "") + " SplitPanel-group"} {...other} ref={ref}>
             {children}
         </StyledSplitPanelGroup>
     );
 };
 
 export const SplitPanel: React.FC<SplitPanelOwnProps> = (props) => {
-    const { className, children, ...other } = useThemeProps({
+    const { className, children, ref, ...other } = useThemeProps({
         props,
         name: "SplitPanel",
     });
 
     return (
-        <StyledSplitPanel className={(className ?? "") + " SplitPanel-panel"} {...other}>
+        <StyledSplitPanel className={(className ?? "") + " SplitPanel-panel"} {...other} ref={ref}>
             {children}
         </StyledSplitPanel>
     );

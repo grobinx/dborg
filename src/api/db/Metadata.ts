@@ -69,7 +69,7 @@ export interface SchemaMetadata {
     default?: boolean;
 
     /** is database catalog schema */
-    catalog?: string;
+    catalog?: boolean;
 
     /** Schema name */
     name: string;

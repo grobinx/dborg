@@ -114,7 +114,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 onRowClick={handleRowClick}
                 ref={dataGridRef}
                 onMount={dataGridMountHandler}
-                uniqueId={slot.storeLayoutId ?? slot.id}
+                autoSaveId={slot.autoSaveId ?? slot.id}
                 mode={slot.mode}
             />
         </Box>

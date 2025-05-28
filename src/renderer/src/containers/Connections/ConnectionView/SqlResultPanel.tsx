@@ -291,7 +291,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     onChange={(status) => setDataGridStatus(status)}
                     onMount={onMountHandle}
                     ref={dataGridRef}
-                    uniqueId={session.schema.sch_id}
+                    autoSaveId={session.schema.sch_id}
                 />
             </Box>
             <DataGridStatusBar

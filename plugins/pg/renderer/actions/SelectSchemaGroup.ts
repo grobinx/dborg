@@ -14,6 +14,7 @@ const sql =
 
 export const SelectSchemaGroup = (
     session: IDatabaseSession,
+    selectedSchemaName: string | null,
     onSelectSchema: (schemaName: string) => void
 ): ActionGroupDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
@@ -51,14 +52,14 @@ export const SelectSchemaGroup = (
                     id: `dataGrid.pg.schema.${schemaName}`,
                     label: schemaName,
                     run: (context: DataGridActionContext<any>) => {
-                        const currentSchemaName = context.getUserData('schema_name');
+                        const currentSchemaName = (context.getUserData('schema_name') ?? selectedSchemaName);
                         if (currentSchemaName !== schemaName) {
                             context.setUserData('schema_name', schemaName);
                             onSelectSchema(schemaName);
                             context.actionManager()?.executeAction(RefreshGridAction_ID, context);
                         }
                     },
-                    selected: context => context.getUserData('schema_name') === schemaName,
+                    selected: context => (context.getUserData('schema_name') ?? selectedSchemaName) === schemaName,
                 });
             });
 

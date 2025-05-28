@@ -53,6 +53,14 @@
 	"ungrouped": "Niepogrupowane",
 	"never": "Nigdy",
 	"delete": "Usuń",
+	"yes": "Tak",
+	"no": "Nie",
+	"default": "Domyślnie",
+	"comment": "Komentarz",
+	"null": "Null",
+	"name": "Nazwa",
+	"value": "Wartość",
+	"ordinal-number-short": "Nr",
 	"sqlite3": {
 		"driver": {
 			"connection": {

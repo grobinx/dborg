@@ -85,6 +85,15 @@ export interface ISplitSlot extends ICustomSlot {
      * Zawartość drugiej części (slot lub funkcja zwracająca slot).
      */
     second: SplitSlotPartKindFactory;
+    /**
+     * Procentowy udział drugiej części (domyślnie 30%).
+     * Wartość musi być z zakresu 0-100.
+     */
+    secondSize?: number;
+    /**
+     * Identyfikator do automatycznego zapisywania układu (opcjonalnie).
+     */
+    autoSaveId?: string;
 }
 
 /**
@@ -270,7 +279,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */
-    storeLayoutId?: string;
+    autoSaveId?: string;
 }
 
 /**
