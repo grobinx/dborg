@@ -20,7 +20,7 @@ export const GotoColumnGroup = (): ActionGroupDescriptor<DataGridActionContext<a
                         label: col.label,
                         run: (context) => {
                             const { row } = context.getPosition() || { row: 0 };
-                            context.setPosition(row, index);
+                            context.setPosition({ row, column: index });
                         },
                     });
                 }
