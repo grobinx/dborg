@@ -3,9 +3,7 @@ import { Box, darken, lighten, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
-import { produce } from "immer"; // Dodaj import biblioteki Immer
 import * as actions from "./actions";
-import { useTranslation } from "react-i18next";
 import { ColumnDataType, columnDataTypeClassMap, ColumnDataValueType, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
@@ -78,8 +76,7 @@ interface DataGridProps<T extends object> {
     /**
      * Czy dane są ładowane
      */
-    loading?: string; // Dodano właściwość loading
-
+    loading?: string;
     /**
      * Wywoływane, gdy ładowanie jest anulowane
      */
