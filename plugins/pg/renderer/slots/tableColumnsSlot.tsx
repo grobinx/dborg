@@ -35,8 +35,8 @@ const tableColumnsTab = (
         content: {
             id: "columns-tab-content-" + session.info.uniqueId,
             type: "tabcontent",
-            content: {
-                id: "tableColumns-" + session.info.uniqueId,
+            content: () => ({
+                id: "table-columns-grid-" + session.info.uniqueId,
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
@@ -140,10 +140,9 @@ const tableColumnsTab = (
                     },
                 ] as ColumnDefinition[],
                 autoSaveId: "table-columns-grid-" + session.schema.sch_id,
-            } as IGridSlot,
+            } as IGridSlot),
         }
-    }
-        ;
+    };
 };
 
 export default tableColumnsTab;

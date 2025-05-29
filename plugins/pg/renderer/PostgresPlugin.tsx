@@ -13,6 +13,7 @@ import { IGridSlot, ITextField, ITextSlot, ITitleSlot } from "plugins/manager/re
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import tableColumnsTab from "./slots/tableColumnsSlot";
 import { DatabasesMetadata } from "../../../src/api/db";
+import tableIndexesTab from "./slots/tableIndexesSlot";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -131,7 +132,7 @@ const PostgresPlugin: Plugin = {
                                     refresh("tables-text-" + session.info.uniqueId);
                                     refresh("tables-title-" + session.info.uniqueId);
                                     refresh("table-tab-label-" + session.info.uniqueId);
-                                    refresh("tableColumns-" + session.info.uniqueId);
+                                    refresh("columns-tab-content-" + session.info.uniqueId);
                                     refresh("indexes-tab-content-" + session.info.uniqueId);
                                     refresh("constraints-tab-content-" + session.info.uniqueId);
                                 },
@@ -175,27 +176,7 @@ const PostgresPlugin: Plugin = {
                                         type: "tabs",
                                         tabs: [
                                             tableColumnsTab(session, () => rowSchemaName, () => rowTableName),
-                                            {
-                                                id: "indexes-tab-" + session.info.uniqueId,
-                                                type: "tab",
-                                                label: {
-                                                    id: "indexes-tab-label-" + session.info.uniqueId,
-                                                    type: "tablabel",
-                                                    label: t("indexes", "Indexes"),
-                                                },
-                                                content: {
-                                                    id: "indexes-tab-content-" + session.info.uniqueId,
-                                                    type: "rendered",
-                                                    render() {
-                                                        return (
-                                                            <div>
-                                                                <h1>{t("indexes", "Indexes")}</h1>
-                                                                <p>{rowSchemaName}.{rowTableName}</p>
-                                                            </div>
-                                                        );
-                                                    }
-                                                }
-                                            },
+                                            tableIndexesTab(session, () => rowSchemaName, () => rowTableName),
                                             {
                                                 id: "constraints-tab-" + session.info.uniqueId,
                                                 type: "tab",
