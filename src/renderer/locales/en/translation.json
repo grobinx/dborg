@@ -20,7 +20,7 @@
 	"select-file-name": "Select file name",
 	"schema-group": "Schema group",
 	"schema-fields": "Schema properties",
-	"search": "Search...",
+	"search---": "Search...",
 	"schema-name": "Schema name",
 	"visible-schema-name": "Visible name",
 	"add-property-as-pattern": "Add property as pattern",

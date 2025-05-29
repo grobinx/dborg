@@ -1,9 +1,11 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import * as monaco from "monaco-editor";
+import { HTMLInputTypeAttribute } from "react";
 
 export type CustomSlotType =
     "split"
@@ -24,7 +26,8 @@ export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolea
 export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
-export type ActionIdsFactory = string[] | ((refresh: RefreshSlotFunction) => string[]);
+export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
+export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
 export type RecordsFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionDescriptorsFactory<T = any> = ActionDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionDescriptor<T>[]);
@@ -39,6 +42,41 @@ export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFun
 export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
+
+export type ActionKind<T = any> = string | ActionDescriptor<T> | CommandDescriptor<T> | ITextField;
+
+export interface ISelectOption {
+    value: string,
+    label: string,
+}
+
+export interface ITextField {
+    /**
+     * Typ pola tekstowego, np. "text", "password", "email" itp.
+     * @default "text"
+     */
+    type?: HTMLInputTypeAttribute | "select",
+    /**
+     * Etykieta pola tekstowego.
+     */
+    placeholder?: string,
+    /**
+     * Domyśla wartość pola tekstowego.
+     */
+    defaultValue?: string,
+    /**
+     * Funkcja wywoływana po zmianie wartości pola tekstowego.
+     */
+    onChange: (value: string) => void,
+    /**
+     * Czy pole tekstowe jest zablokowane.
+     */
+    disabled?: BooleanFactory;
+    /**
+     * Opcje dla typu select
+     */
+    options?: SelectOptionsFactory;
+}
 
 export interface ISlot {
     /**
@@ -113,6 +151,10 @@ export interface ITabsSlot extends ICustomSlot {
      */
     position?: "top" | "bottom";
     /**
+     * Akcje dostępne dla listy zakładek (opcjonalnie).
+     */
+    actions?: ActionDescriptorsFactory;
+    /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
      */
@@ -167,9 +209,10 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    actions?: ActionIdsFactory;
+    actions?: ActionsFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
+     * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
      */
     actionSlotId?: string;
     /**
@@ -239,9 +282,10 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    actions?: ActionIdsFactory;
+    actions?: ActionsFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
+     * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
      */
     actionSlotId?: string;
 }
@@ -328,7 +372,7 @@ export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, r
 export function resolveBooleanFactory(factory: BooleanFactory | undefined, refresh: RefreshSlotFunction): boolean | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionIdsFactory(factory: ActionIdsFactory | undefined, refresh: RefreshSlotFunction): string[] | undefined {
+export function resolveActionsFactory(factory: ActionsFactory | undefined, refresh: RefreshSlotFunction): ActionKind[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveRecordsFactory(factory: RecordsFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | undefined> | undefined {
@@ -369,4 +413,15 @@ export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefi
 }
 export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, refresh: RefreshSlotFunction): IContentSlot | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): ISelectOption[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+
+export function isITextField(obj: any): obj is ITextField {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.onChange === "function"
+    );
 }

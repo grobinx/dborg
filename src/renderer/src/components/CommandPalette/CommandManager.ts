@@ -7,6 +7,15 @@ export interface CommandDescriptor<T> {
     execute: CommandFunction<T>; // Funkcja, która zostanie wykonana
 }
 
+export function isCommandDescriptor(obj: any): obj is CommandDescriptor<any> {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.keybinding === "string" &&
+        typeof obj.execute === "function"
+    );
+}
+
 /**
  * Menedżer poleceń, który obsługuje rejestrację i wykonanie poleceń na podstawie skrótów klawiszowych.
  * Umożliwia dodawanie, usuwanie i wykonywanie poleceń związanych z konkretnym komponentem.

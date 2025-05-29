@@ -18,6 +18,7 @@ export const SearchDataGroup = (): ActionGroupDescriptor<DataGridActionContext<a
         prefix: "*",
         label: t(id, "* Search data"),
         mode: "filter",
+        position: "bottom",
         actions: (context, searchText) => {
             if (searchText !== oldSearchText) {
                 // Resetuj poprzedni timeout przy każdej zmianie

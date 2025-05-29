@@ -6,9 +6,13 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveActionIdsFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { isITextField, ITitleSlot, resolveActionsFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
+import { ActionDescriptor, isActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import ToolTextField from "@renderer/components/ToolTextField";
+import { isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
+import { useActionComponents } from "./helpers";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -31,18 +35,18 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
     const { t } = useTranslation();
-    const [actions, setActions] = React.useState<string[]>([]);
-    const [title, setTitle] = React.useState<React.ReactNode | null>(null);
+    const [title, setTitle] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState(false);
-    const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
+    const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { getRefSlot } = useRefSlot();
+    const { actionComponents, actionManager, commandManager } =
+        useActionComponents(slot.actions, slot.actionSlotId, getRefSlot, refreshSlot, {}, refresh);
 
     React.useEffect(() => {
-        setActions(resolveActionIdsFactory(slot.actions, refreshSlot) ?? []);
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
-    }, [slot.actions, slot.title, slot.icon, refresh]);
+    }, [slot.title, slot.icon, refresh]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
@@ -51,12 +55,24 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         return unregisterRefresh;
     }, [slot.id]);
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (commandManager && commandManager.executeCommand(event, {})) {
+            event.preventDefault();
+            return;
+        }
+        if (actionManager && actionManager.executeActionByKeybinding(event, {})) {
+            event.preventDefault();
+            return;
+        }
+    };
+
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
 
     return (
         <StyledTitleSlot
             ref={ref}
             className={`TitleSlot-root ${className ?? ""}`}
+            onKeyDown={handleKeyDown}
             {...other}
         >
             {icon}
@@ -77,23 +93,9 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                 title
             )}
             <div style={{ flexGrow: 1 }} />
-            {actions.length > 0 && (
+            {actionComponents.length > 0 && (
                 <TabPanelButtons>
-                    {actions.map((action) => {
-                        if (!slot.actionSlotId) return null;
-                        const dataGridRef = getRefSlot<DataGridActionContext<any>>(slot.actionSlotId, "datagrid");
-                        const context = dataGridRef?.current;
-                        const actionManager = context?.actionManager();
-                        if (!actionManager || !context) return null;
-                        return (
-                            <ActionButton
-                                key={action}
-                                actionId={action}
-                                getContext={() => context}
-                                actionManager={actionManager}
-                            />
-                        );
-                    })}
+                    {actionComponents}
                 </TabPanelButtons>
             )}
         </StyledTitleSlot>

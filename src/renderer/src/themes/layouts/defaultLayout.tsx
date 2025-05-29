@@ -598,14 +598,6 @@ const layout = (palette: Palette): ThemeOptions => {
                     sx: {
                         padding: 2,
                         gap: 2,
-                        '& input': {
-                            fontSize: "0.8rem",
-                            paddingX: 4,
-                            paddingY: 0,
-                        },
-                        '& .MuiInputBase-root': {
-                            padding: 2,
-                        },
                     }
                 }
             },
@@ -616,6 +608,27 @@ const layout = (palette: Palette): ThemeOptions => {
                         borderRadius: 1,
                     }
                 },
+            },
+            ToolTextField: {
+                defaultProps: {
+                    variant: "outlined",
+                    size: "small",
+                    sx: {
+                        '& input': {
+                            fontSize: "0.8rem",
+                            paddingX: 4,
+                            paddingY: 0,
+                        },
+                        '& .MuiSelect-select': {
+                            fontSize: "0.8rem",
+                            paddingX: 4,
+                            paddingY: 0,
+                        },
+                        '& .MuiInputBase-root': {
+                            padding: 2,
+                        },
+                    }
+                }
             },
             TabPanelLabel: {
                 defaultProps: {

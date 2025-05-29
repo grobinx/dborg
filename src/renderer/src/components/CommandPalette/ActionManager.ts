@@ -81,6 +81,12 @@ export interface ActionGroupDescriptor<T = any> {
      * Używane do dodawania dodatkowych akcji związanych z tą grupą akcji.
      */
     options?: ActionGroupOptionDescription<T>[];
+
+    /**
+     * Pozycja okna poleceń względem rodzica (np. na dole można umieścić gdy grupa służy do wyszukiwania)
+     * @default 'top'
+     */
+    position?: 'top' | 'bottom';
 }
 
 export interface ActionDescriptor<T> {
@@ -153,6 +159,16 @@ export interface ActionDescriptor<T> {
      * Używane do oznaczania akcji jako wybranej w interfejsie użytkownika.
      */
     selected?: boolean | ((context: T) => boolean);
+}
+
+export function isActionDescriptor(obj: any): obj is ActionDescriptor<any> {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.id === "string" &&
+        typeof obj.label === "string" &&
+        typeof obj.run === "function"
+    );
 }
 
 export class ActionManager<T> {

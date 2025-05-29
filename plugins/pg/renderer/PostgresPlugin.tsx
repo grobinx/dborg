@@ -9,9 +9,9 @@ import { SelectSchemaAction, SelectSchemaAction_ID } from "./actions/SelectSchem
 import { SelectSchemaGroup } from "./actions/SelectSchemaGroup";
 import i18next from "i18next";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
-import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ITextField, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
-import tableColumnsSlot from "./slots/tableColumnsSlot";
+import tableColumnsTab from "./slots/tableColumnsSlot";
 import { DatabasesMetadata } from "../../../src/api/db";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
@@ -131,7 +131,7 @@ const PostgresPlugin: Plugin = {
                                     refresh("tables-text-" + session.info.uniqueId);
                                     refresh("tables-title-" + session.info.uniqueId);
                                     refresh("table-tab-label-" + session.info.uniqueId);
-                                    refresh("columns-tab-content-" + session.info.uniqueId);
+                                    refresh("tableColumns-" + session.info.uniqueId);
                                     refresh("indexes-tab-content-" + session.info.uniqueId);
                                     refresh("constraints-tab-content-" + session.info.uniqueId);
                                 },
@@ -174,20 +174,7 @@ const PostgresPlugin: Plugin = {
                                         id: "table-columns-tabs-" + session.info.uniqueId,
                                         type: "tabs",
                                         tabs: [
-                                            {
-                                                id: "columns-tab-" + session.info.uniqueId,
-                                                type: "tab",
-                                                label: {
-                                                    id: "columns-tab-label-" + session.info.uniqueId,
-                                                    type: "tablabel",
-                                                    label: t("columns", "Columns"),
-                                                },
-                                                content: {
-                                                    id: "columns-tab-content-" + session.info.uniqueId,
-                                                    type: "tabcontent",
-                                                    content: () => tableColumnsSlot(session, rowSchemaName, rowTableName),
-                                                }
-                                            },
+                                            tableColumnsTab(session, () => rowSchemaName, () => rowTableName),
                                             {
                                                 id: "indexes-tab-" + session.info.uniqueId,
                                                 type: "tab",

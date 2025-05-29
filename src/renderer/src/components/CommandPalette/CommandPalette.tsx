@@ -389,17 +389,22 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             let top = parentRect.top;
             let left = (parentRect.left + parentRect.width) / 2 - containerWidth / 2;
 
+            // Jeśli pozycja grupy to "bottom", ustaw okno przy dolnej krawędzi
+            if (selectedGroup?.position === "bottom") {
+                top = parentRect.top + parentRect.height - containerHeight - 8; // 8px margines od dołu
+            } else {
+                // Korekta, by nie wychodziło poza ekran pionowo
+                if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
+                if (top < 8) top = 8;
+            }
+
             // Korekta, by nie wychodziło poza ekran poziomo
             if (left < 8) left = 8;
             if (left + containerWidth > viewportWidth - 8) left = viewportWidth - containerWidth - 8;
 
-            // Korekta, by nie wychodziło poza ekran pionowo
-            if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
-            if (top < 8) top = 8;
-
             setPosition({ top, left });
         }
-    }, [open, listMaxHeight, filteredCommands]);
+    }, [open, listMaxHeight, filteredCommands, selectedGroup]);
 
     return (
         <>

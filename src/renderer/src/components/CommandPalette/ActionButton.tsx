@@ -5,8 +5,8 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { renderKeybindings } from "./CommandPalette";
 
 interface ActionButtonProps<T> extends Omit<ToolButtonProps, "action"> {
-    actionManager: ActionManager<T>; // Menedżer akcji
-    actionId: string; // Identyfikator akcji
+    actionManager?: ActionManager<T>; // Menedżer akcji
+    actionId?: string; // Identyfikator akcji
     action?: ActionDescriptor<T>; // Opis akcji
     getContext: () => T; // Funkcja zwracająca kontekst
 }
@@ -17,7 +17,7 @@ interface ActionButtonProps<T> extends Omit<ToolButtonProps, "action"> {
  */
 const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...other }: ActionButtonProps<T>) => {
     const theme = useTheme();
-    const resolvedAction = actionManager.getAction(actionId) ?? action;
+    const resolvedAction = actionId && actionManager ? actionManager.getAction(actionId) : action;
 
     if (!resolvedAction) {
         return null;
@@ -38,7 +38,8 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...othe
             resolvedAction.keybindings
                 ? (
                     <span style={{ display: "inline", whiteSpace: "nowrap" }}>
-                        <span>{resolvedAction.label}</span>{renderKeybindings(resolvedAction.keybindings)}
+                        <span>{resolvedAction.label}</span>
+                        {renderKeybindings(resolvedAction.keybindings)}
                     </span>
                 )
                 : resolvedAction.label

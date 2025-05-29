@@ -21,6 +21,7 @@ import ToolButton from "@renderer/components/ToolButton";
 import { useTranslation } from "react-i18next";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { DateTime } from "luxon";
+import ToolTextField from "../ToolTextField";
 
 const SEARCH_NOTIFICATIONS = "search-notifications";
 
@@ -216,10 +217,8 @@ export const NotificationAdminListButtons: React.FC = () => {
     const { sendMessage } = useMessages();
 
     return <TabPanelButtons>
-        <TextField
-            placeholder={t("search", "Search...")}
-            variant="outlined"
-            size="small"
+        <ToolTextField
+            placeholder={t("search---", "Search...")}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); sendMessage(SEARCH_NOTIFICATIONS, e.target.value); }}
             disabled={notifications.length === 0}

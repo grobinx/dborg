@@ -1,8 +1,13 @@
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import {
+    ActionsFactory,
     ContentSlotKindFactory,
+    isITextField,
+    resolveActionsFactory,
+    resolveBooleanFactory,
     resolveContentSlotKindFactory,
     resolveReactNodeFactory,
+    resolveSelectOptionsFactory,
     resolveSplitSlotPartKindFactory,
     resolveTabContentSlotKindFactory,
     resolveTabLabelKindFactory,
@@ -19,7 +24,7 @@ import GridSlot from "./GridSlot";
 import ContentSlot from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
-import { Theme } from "@mui/material";
+import { MenuItem, Theme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
@@ -27,6 +32,11 @@ import TabContentSlot from "./TabContentSlot";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import SplitSlot from "./SplitSlot";
+import { ActionManager, isActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
+import { useRefSlot } from "./RefSlotContext";
+import ActionButton from "@renderer/components/CommandPalette/ActionButton";
+import ToolTextField from "@renderer/components/ToolTextField";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -132,4 +142,85 @@ export function createSplitPartContent(
         }
     }
     return null;
+}
+
+export function useActionComponents(
+    actions: ActionsFactory | undefined,
+    actionSlotId: string | undefined,
+    getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
+    refreshSlot: (id: string) => void,
+    context: any,
+    refresh: boolean,
+) {
+    const [actionComponents, setActionComponents] = React.useState<React.ReactNode[]>([]);
+    const [actionManager, setActionManager] = React.useState<ActionManager<any> | null>(null);
+    const [commandManager, setCommandManager] = React.useState<CommandManager<any> | null>(null);
+
+    React.useEffect(() => {
+        const resolvedActions = resolveActionsFactory(actions, refreshSlot);
+        if (resolvedActions) {
+            let dataGridRef: React.RefObject<DataGridActionContext<any>> | undefined = undefined;
+            if (actionSlotId) {
+                dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
+            }
+            let actionManager: ActionManager<any> | null = null;
+            let commandManager: CommandManager<any> | null = null;
+
+            const components = resolvedActions.map((action, index) => {
+                if (typeof action === "object") {
+                    if (isActionDescriptor(action)) {
+                        if (!actionManager) {
+                            actionManager = new ActionManager<typeof context>();
+                        }
+                        actionManager.registerAction(action);
+                        return <ActionButton
+                            key={action.id}
+                            actionId={action.id}
+                            getContext={() => context}
+                            actionManager={actionManager}
+                        />;
+                    }
+                    if (isITextField(action)) {
+                        const options = resolveSelectOptionsFactory(action.options, refreshSlot);
+                        return <ToolTextField
+                            key={index}
+                            type={action.type !== 'select' ? action.type : undefined}
+                            select={action.type === 'select' ? true : undefined}
+                            placeholder={action.placeholder}
+                            defaultValue={action.defaultValue ?? ""}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                action.onChange(event.target.value);
+                            }}
+                            disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                        >
+                            {options?.map((option, optionIndex) => (
+                                <MenuItem key={optionIndex} value={option.value}>{option.label}</MenuItem>
+                            ))}
+                        </ToolTextField>;
+                    }
+                    if (isCommandDescriptor(action)) {
+                        if (!commandManager) {
+                            commandManager = new CommandManager<typeof context>();
+                        }
+                        commandManager.registerCommand(action);
+                        return null;
+                    }
+                }
+                if (typeof action === "string" && dataGridRef?.current) {
+                    return <ActionButton
+                        key={action}
+                        actionId={action}
+                        getContext={() => dataGridRef?.current}
+                        actionManager={dataGridRef.current.actionManager() ?? undefined}
+                    />;
+                }
+                return null
+            }).filter(Boolean) as React.ReactNode[];
+            setActionComponents(components);
+            setActionManager(actionManager);
+            setCommandManager(commandManager);
+        }
+    }, [actions, refresh]);
+
+    return { actionComponents, actionManager, commandManager };
 }

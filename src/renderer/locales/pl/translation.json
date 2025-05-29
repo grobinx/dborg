@@ -20,7 +20,7 @@
 	"select-file-name": "Wskaż nazwę pliku",
 	"schema-group": "Grupa schematów",
 	"schema-fields": "Właściwości schematu",
-	"search": "Wyszukaj...",
+	"search---": "Wyszukaj...",
 	"schema-name": "Nazwa schematu",
 	"visible-schema-name": "Widoczna nazwa",
 	"add-property-as-pattern": "Dodaj właściwość jako wzorzec",
