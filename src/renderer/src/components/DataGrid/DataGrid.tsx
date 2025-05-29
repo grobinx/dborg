@@ -1023,7 +1023,18 @@ export const DataGrid = <T extends object>({
                             }}
                         >
                             <StyledHeaderCellContent className="DataGrid-headerCellContent">
-                                <span className="label">{col.label}</span>
+                                <span
+                                    className="label"
+                                    style={{
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        display: "block",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {col.label}
+                                </span>
                                 {col.sortDirection && (
                                     <StyledSortIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>

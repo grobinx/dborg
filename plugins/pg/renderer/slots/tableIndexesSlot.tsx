@@ -68,27 +68,31 @@ const tableIndexesTab = (
                     },
                     {
                         key: "unique",
-                        label: t("unique", "Unique"),
+                        label: t("unq", "Unq"),
                         dataType: "boolean",
-                        width: 80,
+                        width: 40,
+                        formatter: (value: boolean) => value ? t("yes", "Yes") : "",
                     },
                     {
                         key: "clustered",
                         label: t("clustered", "Clustered"),
                         dataType: "boolean",
                         width: 40,
+                        formatter: (value: boolean) => value ? t("yes", "Yes") : "",
                     },
                     {
                         key: "primary_key",
                         label: t("pk", "PK"),
                         dataType: "boolean",
                         width: 40,
+                        formatter: (value: boolean) => value ? t("yes", "Yes") : "",
                     },
                     {
                         key: "foreign_key",
                         label: t("fk", "FK"),
                         dataType: "boolean",
                         width: 40,
+                        formatter: (value: boolean) => value ? t("yes", "Yes") : "",
                     },
                     {
                         key: "index_type",
