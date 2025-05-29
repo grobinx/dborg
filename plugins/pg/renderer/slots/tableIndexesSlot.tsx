@@ -62,7 +62,7 @@ const tableIndexesTab = (
                 columns: [
                     {
                         key: "index_name",
-                        label: t("index_name", "Index Name"),
+                        label: t("index-name", "Index Name"),
                         dataType: "string",
                         width: 200,
                     },
