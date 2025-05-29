@@ -4,33 +4,38 @@ export function changeCaseExceptQuotes(input: string, toUpper: boolean): string 
     let result = "";
     let insideQuotes = false; // Flaga wskazująca, czy jesteśmy wewnątrz cudzysłowów lub apostrofów
     let quoteChar = ""; // Przechowuje aktualny znak cudzysłowu (' lub ")
-    let insideComment = false; // Flaga wskazująca, czy jesteśmy wewnątrz komentarza
+    let insideComment: "line" | "block" | false = false; // Flaga wskazująca, czy jesteśmy wewnątrz komentarza
 
     for (let i = 0; i < input.length; i++) {
         const char = input[i];
-        const prevChar = i > 0 ? input[i - 1] : null; // Poprzedni znak
-        const nextChar = i < input.length - 1 ? input[i + 1] : null; // Następny znak
+        const prevChar = i > 0 ? input[i - 1] : null;
+        const nextChar = i < input.length - 1 ? input[i + 1] : null;
 
-        // Sprawdź, czy wchodzimy w komentarz liniowy (--)
+        // Sprawdź, czy wchodzimy w komentarz liniowy
         if (!insideQuotes && !insideComment && char === "-" && nextChar === "-") {
-            insideComment = true;
+            insideComment = "line";
         }
 
-        // Sprawdź, czy wchodzimy w komentarz blokowy (/*)
+        // Sprawdź, czy wchodzimy w komentarz blokowy
         if (!insideQuotes && !insideComment && char === "/" && nextChar === "*") {
-            insideComment = true;
+            insideComment = "block";
         }
 
-        // Sprawdź, czy wychodzimy z komentarza blokowego (*/)
-        if (insideComment && char === "*" && nextChar === "/") {
+        // Sprawdź, czy wychodzimy z komentarza blokowego
+        if (insideComment === "block" && char === "*" && nextChar === "/") {
             insideComment = false;
-            result += char + nextChar; // Dodaj końcowe znaki komentarza blokowego
-            i++; // Pomiń następny znak
+            result += char + nextChar;
+            i++;
             continue;
         }
 
+        // Sprawdź, czy kończymy komentarz liniowy
+        if (insideComment === "line" && char === "\n") {
+            insideComment = false;
+        }
+
         if (insideComment) {
-            result += char; // Dodaj znaki komentarza bez zmian
+            result += char;
             continue;
         }
 
