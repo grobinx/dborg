@@ -1,3 +1,4 @@
+import { send } from "process";
 import React from "react";
 export * as Messages from "../app/Messages"; // Export all messages for easy access
 
@@ -59,6 +60,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }, 10);
     }, []);
 
+    React.useEffect(() => {
+        setBusFunctions(sendMessage, queueMessage);
+    }, [sendMessage, queueMessage]);
+
     return (
         <MessageContext.Provider value={{ subscribe, unsubscribe, sendMessage, emit: sendMessage, queueMessage }}>
             {children}
@@ -74,3 +79,14 @@ export const useMessages = (): MessageContextProps => {
 
     return context;
 };
+
+function setBusFunctions(
+    send: MessageContextProps["sendMessage"],
+    queue: MessageContextProps["queueMessage"]
+) {
+    sendMessage = send;
+    queueMessage = queue;
+}
+
+export let sendMessage: MessageContextProps["sendMessage"];
+export let queueMessage: MessageContextProps["queueMessage"];

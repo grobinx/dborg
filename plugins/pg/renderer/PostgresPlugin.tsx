@@ -14,6 +14,9 @@ import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotC
 import tableColumnsTab from "./slots/tableColumnsSlot";
 import { DatabasesMetadata } from "../../../src/api/db";
 import tableIndexesTab from "./slots/tableIndexesSlot";
+import { ShowRelationDataAction, ShowRelationDataAction_ID } from "./actions/ShowRelationData";
+import { sendMessage, useMessages } from "@renderer/contexts/MessageContext";
+import { SQL_EDITOR_EXECUTE_QUERY } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -138,6 +141,16 @@ const PostgresPlugin: Plugin = {
                                 },
                                 actions: [
                                     SelectSchemaAction(),
+                                    ShowRelationDataAction(context => {
+                                        const record = context.getData();
+                                        if (record) {
+                                            sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
+                                                to: session.info.uniqueId,
+                                                from: "tables-grid-" + session.info.uniqueId,
+                                                query: `select * from "${record.schema_name}"."${record.table_name}"`,
+                                            });
+                                        }
+                                    })
                                 ],
                                 actionGroups: (refresh: RefreshSlotFunction) => [
                                     SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
@@ -201,6 +214,10 @@ const PostgresPlugin: Plugin = {
                                         ],
                                     }
                                 },
+                                actions: [
+                                    ShowRelationDataAction_ID
+                                ],
+                                actionSlotId: "tables-grid-" + session.info.uniqueId
                             }
                         ]
                     }

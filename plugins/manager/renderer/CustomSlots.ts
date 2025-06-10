@@ -26,9 +26,10 @@ export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolea
 export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
+export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
 export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
 export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
-export type RecordsFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
+export type RecordsAsyncFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionDescriptorsFactory<T = any> = ActionDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionDescriptor<T>[]);
 export type ActionGroupDescriptorsFactory<T = any> = ActionGroupDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionGroupDescriptor<T>[]);
@@ -138,6 +139,7 @@ export interface ISplitSlot extends ICustomSlot {
 /**
  * Slot typu tabs.
  * Pozwala na wyświetlenie grupy zakładek.
+ * @property {string} id musi być unikalne w ramach aplikacji.
  */
 export interface ITabsSlot extends ICustomSlot {
     type: "tabs";
@@ -304,7 +306,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Zapytanie SQL do pobrania danych.
      */
-    rows: RecordsFactory;
+    rows: RecordsAsyncFactory;
     /**
      * Definicje kolumn (opcjonalnie).
      */
@@ -344,7 +346,7 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
-    content: StringFactory;
+    content: StringAsyncFactory;
 }
 
 /**
@@ -366,6 +368,9 @@ export interface ITextSlot extends ICustomSlot {
 export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
+export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<string | undefined> | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
 export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, refresh: RefreshSlotFunction): React.ReactNode {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
@@ -375,7 +380,7 @@ export function resolveBooleanFactory(factory: BooleanFactory | undefined, refre
 export function resolveActionsFactory(factory: ActionsFactory | undefined, refresh: RefreshSlotFunction): ActionKind[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveRecordsFactory(factory: RecordsFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | undefined> | undefined {
+export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | undefined> | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {

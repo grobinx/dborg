@@ -181,7 +181,7 @@ export interface DataGridActionContext<T extends object> {
     getRowCount: () => number;
     getColumn: (index?: number) => ColumnDefinition | null;
     updateColumn: (index: number, newColumn: Partial<ColumnDefinition>) => void;
-    getData: (row: number) => T | null;
+    getData: (row?: number) => T | null;
     getField: () => keyof T | null;
     openCommandPalette: (prefix: string, query: string) => void;
     closeCommandPalette: () => void;

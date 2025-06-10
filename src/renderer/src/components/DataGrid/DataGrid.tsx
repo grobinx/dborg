@@ -662,7 +662,15 @@ export const DataGrid = <T extends object>({
         getRowCount: () => filteredDataState.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCell ? columnsState.current[selectedCell.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
-        getData: (row) => filteredDataState[row] || null,
+        getData: (row) => {
+            if (row === undefined) {
+                if (selectedCell) {
+                    return filteredDataState[selectedCell.row] || null;
+                }
+                return null;
+            }
+            return filteredDataState[row] || null;
+        },
         getField: () => {
             if (selectedCell) {
                 return columnsState.current[selectedCell.column].key as keyof T;

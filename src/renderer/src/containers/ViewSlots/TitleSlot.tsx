@@ -1,18 +1,15 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { resolveIcon } from "@renderer/themes/icons";
-import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { isITextField, ITitleSlot, resolveActionsFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
-import { ActionDescriptor, isActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import ToolTextField from "@renderer/components/ToolTextField";
-import { isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
-import { useActionComponents } from "./helpers";
+import { createActionComponents } from "./helpers";
+import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -40,13 +37,17 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { getRefSlot } = useRefSlot();
-    const { actionComponents, actionManager, commandManager } =
-        useActionComponents(slot.actions, slot.actionSlotId, getRefSlot, refreshSlot, {}, refresh);
+    const [actions, setActions] = React.useState<{ 
+        actionComponents: React.ReactNode[], 
+        actionManager: ActionManager<any> | null, 
+        commandManager: CommandManager<any> | null
+    } | null>(null);
 
     React.useEffect(() => {
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
-    }, [slot.title, slot.icon, refresh]);
+        setActions(createActionComponents(slot.actions, slot.actionSlotId, getRefSlot, refreshSlot, {}));
+    }, [slot.title, slot.icon, slot.actions, refresh]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
@@ -56,13 +57,15 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     }, [slot.id]);
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (commandManager && commandManager.executeCommand(event, {})) {
-            event.preventDefault();
-            return;
-        }
-        if (actionManager && actionManager.executeActionByKeybinding(event, {})) {
-            event.preventDefault();
-            return;
+        if (actions) {
+            if (actions.commandManager && actions.commandManager.executeCommand(event, {})) {
+                event.preventDefault();
+                return;
+            }
+            if (actions.actionManager && actions.actionManager.executeActionByKeybinding(event, {})) {
+                event.preventDefault();
+                return;
+            }
         }
     };
 
@@ -93,9 +96,9 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                 title
             )}
             <div style={{ flexGrow: 1 }} />
-            {actionComponents.length > 0 && (
+            {actions && actions.actionComponents.length > 0 && (
                 <TabPanelButtons>
-                    {actionComponents}
+                    {actions.actionComponents}
                 </TabPanelButtons>
             )}
         </StyledTitleSlot>

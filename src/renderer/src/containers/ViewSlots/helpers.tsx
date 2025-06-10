@@ -144,83 +144,75 @@ export function createSplitPartContent(
     return null;
 }
 
-export function useActionComponents(
+export function createActionComponents(
     actions: ActionsFactory | undefined,
     actionSlotId: string | undefined,
     getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
     refreshSlot: (id: string) => void,
     context: any,
-    refresh: boolean,
 ) {
-    const [actionComponents, setActionComponents] = React.useState<React.ReactNode[]>([]);
-    const [actionManager, setActionManager] = React.useState<ActionManager<any> | null>(null);
-    const [commandManager, setCommandManager] = React.useState<CommandManager<any> | null>(null);
+    let actionComponents: React.ReactNode[] = [];
+    let actionManager: ActionManager<any> | null = null;
+    let commandManager: CommandManager<any> | null = null;
 
-    React.useEffect(() => {
-        const resolvedActions = resolveActionsFactory(actions, refreshSlot);
-        if (resolvedActions) {
-            let dataGridRef: React.RefObject<DataGridActionContext<any>> | undefined = undefined;
-            if (actionSlotId) {
-                dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
-            }
-            let actionManager: ActionManager<any> | null = null;
-            let commandManager: CommandManager<any> | null = null;
+    const resolvedActions = resolveActionsFactory(actions, refreshSlot);
+    if (resolvedActions) {
+        let dataGridRef: React.RefObject<DataGridActionContext<any>> | undefined = undefined;
+        if (actionSlotId) {
+            dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
+        }
 
-            const components = resolvedActions.map((action, index) => {
-                if (typeof action === "object") {
-                    if (isActionDescriptor(action)) {
-                        if (!actionManager) {
-                            actionManager = new ActionManager<typeof context>();
-                        }
-                        actionManager.registerAction(action);
-                        return <ActionButton
-                            key={action.id}
-                            actionId={action.id}
-                            getContext={() => context}
-                            actionManager={actionManager}
-                        />;
+        actionComponents = resolvedActions.map((action, index) => {
+            if (typeof action === "object") {
+                if (isActionDescriptor(action)) {
+                    if (!actionManager) {
+                        actionManager = new ActionManager<typeof context>();
                     }
-                    if (isITextField(action)) {
-                        const options = resolveSelectOptionsFactory(action.options, refreshSlot);
-                        return <ToolTextField
-                            key={index}
-                            type={action.type !== 'select' ? action.type : undefined}
-                            select={action.type === 'select' ? true : undefined}
-                            placeholder={action.placeholder}
-                            defaultValue={action.defaultValue ?? ""}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                                action.onChange(event.target.value);
-                            }}
-                            disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                        >
-                            {options?.map((option, optionIndex) => (
-                                <MenuItem key={optionIndex} value={option.value}>{option.label}</MenuItem>
-                            ))}
-                        </ToolTextField>;
-                    }
-                    if (isCommandDescriptor(action)) {
-                        if (!commandManager) {
-                            commandManager = new CommandManager<typeof context>();
-                        }
-                        commandManager.registerCommand(action);
-                        return null;
-                    }
-                }
-                if (typeof action === "string" && dataGridRef?.current) {
+                    actionManager.registerAction(action);
                     return <ActionButton
-                        key={action}
-                        actionId={action}
-                        getContext={() => dataGridRef?.current}
-                        actionManager={dataGridRef.current.actionManager() ?? undefined}
+                        key={action.id}
+                        actionId={action.id}
+                        getContext={() => context}
+                        actionManager={actionManager}
                     />;
                 }
-                return null
-            }).filter(Boolean) as React.ReactNode[];
-            setActionComponents(components);
-            setActionManager(actionManager);
-            setCommandManager(commandManager);
-        }
-    }, [actions, refresh]);
+                if (isITextField(action)) {
+                    const options = resolveSelectOptionsFactory(action.options, refreshSlot);
+                    return <ToolTextField
+                        key={index}
+                        type={action.type !== 'select' ? action.type : undefined}
+                        select={action.type === 'select' ? true : undefined}
+                        placeholder={action.placeholder}
+                        defaultValue={action.defaultValue ?? ""}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                            action.onChange(event.target.value);
+                        }}
+                        disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                    >
+                        {options?.map((option, optionIndex) => (
+                            <MenuItem key={optionIndex} value={option.value}>{option.label}</MenuItem>
+                        ))}
+                    </ToolTextField>;
+                }
+                if (isCommandDescriptor(action)) {
+                    if (!commandManager) {
+                        commandManager = new CommandManager<typeof context>();
+                    }
+                    commandManager.registerCommand(action);
+                    return null;
+                }
+            }
+            if (typeof action === "string" && dataGridRef?.current) {
+                return <ActionButton
+                    key={action}
+                    actionId={action}
+                    getContext={() => dataGridRef?.current}
+                    actionManager={dataGridRef.current.actionManager() ?? undefined}
+                />;
+            }
+            return null
+        }).filter(Boolean) as React.ReactNode[];
+    }
 
     return { actionComponents, actionManager, commandManager };
 }

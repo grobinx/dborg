@@ -1,12 +1,8 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { styled, useThemeProps } from "@mui/material/styles";
 import {
-    IContentSlot,
-    resolveContentSlotKindFactory,
-    resolveTextSlotKindFactory,
-    resolveTitleSlotKindFactory
+    IContentSlot
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TitleSlot from "./TitleSlot";
@@ -50,7 +46,6 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [minusHeight, setMinusHeight] = React.useState<number | null>(null);
-    const recursiveIds = React.useRef<string[] | null>(null);
 
     React.useEffect(() => {
         if (slot.title) {
