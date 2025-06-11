@@ -214,10 +214,10 @@ const PostgresPlugin: Plugin = {
                                         ],
                                     }
                                 },
-                                actions: [
-                                    ShowRelationDataAction_ID
-                                ],
-                                actionSlotId: "tables-grid-" + session.info.uniqueId
+                                // actions: [
+                                //     ShowRelationDataAction_ID
+                                // ],
+                                // actionSlotId: "tables-grid-" + session.info.uniqueId
                             }
                         ]
                     }

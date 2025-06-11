@@ -9,7 +9,6 @@ export const ShowRelationDataAction = (onAction: (context: DataGridActionContext
     return {
         id: ShowRelationDataAction_ID,
         label: t(ShowRelationDataAction_ID, "Show relation data"),
-        icon: "SelectDatabaseSchema",
         contextMenuGroupId: "objectGrid",
         contextMenuOrder: 3,
         run: (context) => {

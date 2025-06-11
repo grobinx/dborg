@@ -21,6 +21,7 @@ import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPa
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
+import ActionsBar from "../ViewSlots/ActionsBar";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -46,7 +47,6 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [selectedThis, setSelectedThis] = React.useState(false);
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
-    const { getRefSlot } = useRefSlot();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
@@ -83,7 +83,6 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                 queueMessage,
                                 editorsTabsId(session),
                                 setEditorTabsMap,
-                                getRefSlot
                             )
                         }));
                     }
@@ -98,7 +97,6 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                 queueMessage,
                                 resultsTabsId(session),
                                 setResultTabsMap,
-                                getRefSlot
                             ),
                         }));
                     }
@@ -107,7 +105,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
-    }, [selectedView, session, sideViewsMap]);
+    }, [selectedView, session, sideViewsMap, selectedContainer]);
 
     return (
         <StyledConnection className="Connection-root" {...other}>
@@ -295,7 +293,6 @@ function createTabPanels(
     queueMessage: (...args: any[]) => void,
     tabsItemID: string,
     setTabsMap: React.Dispatch<React.SetStateAction<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>>,
-    getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
 ) {
     if (!tabs) return [];
 
@@ -310,7 +307,6 @@ function createTabPanels(
                 [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
             }));
         } : undefined);
-        const { actionComponents } = createActionComponents(tab.actions, tab.actionSlotId, getRefSlot, refreshSlot, {});
         if (content && label) {
             if (index === 0) {
                 queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
@@ -320,13 +316,7 @@ function createTabPanels(
                     key={tab.id}
                     itemID={tab.id}
                     label={label}
-                    buttons={
-                        actionComponents.length > 0 ? (
-                            <TabPanelButtons>
-                                {actionComponents}
-                            </TabPanelButtons>
-                        ) : null
-                    }
+                    buttons={<ActionsBar actions={tab.actions} actionSlotId={tab.actionSlotId} />}
                     content={content}
                 />
             );

@@ -10,6 +10,7 @@ import { useRefSlot } from "./RefSlotContext";
 import { createActionComponents } from "./helpers";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
+import ActionsBar from "./ActionsBar";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -37,16 +38,12 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { getRefSlot } = useRefSlot();
-    const [actions, setActions] = React.useState<{ 
-        actionComponents: React.ReactNode[], 
-        actionManager: ActionManager<any> | null, 
-        commandManager: CommandManager<any> | null
-    } | null>(null);
+    const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
 
     React.useEffect(() => {
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
-        setActions(createActionComponents(slot.actions, slot.actionSlotId, getRefSlot, refreshSlot, {}));
+        setActionBar(<ActionsBar actions={slot.actions} actionSlotId={slot.actionSlotId} />);
     }, [slot.title, slot.icon, slot.actions, refresh]);
 
     React.useEffect(() => {
@@ -56,18 +53,18 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         return unregisterRefresh;
     }, [slot.id]);
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (actions) {
-            if (actions.commandManager && actions.commandManager.executeCommand(event, {})) {
-                event.preventDefault();
-                return;
-            }
-            if (actions.actionManager && actions.actionManager.executeActionByKeybinding(event, {})) {
-                event.preventDefault();
-                return;
-            }
-        }
-    };
+    // const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    //     if (actions) {
+    //         if (actions.commandManager && actions.commandManager.executeCommand(event, {})) {
+    //             event.preventDefault();
+    //             return;
+    //         }
+    //         if (actions.actionManager && actions.actionManager.executeActionByKeybinding(event, {})) {
+    //             event.preventDefault();
+    //             return;
+    //         }
+    //     }
+    // };
 
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
 
@@ -75,7 +72,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         <StyledTitleSlot
             ref={ref}
             className={`TitleSlot-root ${className ?? ""}`}
-            onKeyDown={handleKeyDown}
+//            onKeyDown={handleKeyDown}
             {...other}
         >
             {icon}
@@ -96,11 +93,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                 title
             )}
             <div style={{ flexGrow: 1 }} />
-            {actions && actions.actionComponents.length > 0 && (
-                <TabPanelButtons>
-                    {actions.actionComponents}
-                </TabPanelButtons>
-            )}
+            {actionBar}
         </StyledTitleSlot>
     );
 };
