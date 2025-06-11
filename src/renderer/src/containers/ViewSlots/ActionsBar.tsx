@@ -10,11 +10,13 @@ import { createActionComponents } from "./helpers";
 export interface ActionsBarProps {
     actions?: ActionsFactory;
     actionSlotId?: string;
+    handleRef?: React.Ref<HTMLDivElement>;
 }
 
 const ActionsBar: React.FC<ActionsBarProps> = ({
     actions,
     actionSlotId,
+    handleRef
 }) => {
     const { refreshSlot } = useRefreshSlot();
     const { getRefSlot } = useRefSlot();
@@ -32,11 +34,43 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
         setActionComponents(createActionComponents(actions, actionSlotId, getRefSlot, refreshSlot, {}));
     }, [actions, actionSlotId]);
 
+    // Handler onKeyDown
+    const handleKeyDown = React.useCallback(
+        (event: React.KeyboardEvent<HTMLDivElement>) => {
+            if (actionComponents?.commandManager && actionComponents.commandManager.executeCommand(event, {})) {
+                event.preventDefault();
+                return;
+            }
+            if (actionComponents?.actionManager && actionComponents.actionManager.executeActionByKeybinding(event, {})) {
+                event.preventDefault();
+                return;
+            }
+        },
+        [actionComponents]
+    );
+
+    // Przypisz handler do ref jeśli podany
+    React.useEffect(() => {
+        // Only attach event if handleRef is an object ref (not a callback ref)
+        if (handleRef && typeof handleRef !== "function" && handleRef.current) {
+            const node = handleRef.current;
+            node.addEventListener("keydown", handleKeyDown as any);
+            return () => {
+                node.removeEventListener("keydown", handleKeyDown as any);
+            };
+        }
+        return;
+    }, [handleRef, handleKeyDown]);
+
+    if (!actions) {
+        return null;
+    }
+
     return (
         <TabPanelButtons>
             {actionComponents?.actionComponents}
         </TabPanelButtons>
-    )
+    );
 };
 
 export default ActionsBar;
