@@ -23,10 +23,10 @@ export const resolveDataType = (value: any, dataType?: api.ColumnDataType): api.
     } else if (value instanceof Date || !isNaN(Date.parse(value))) {
         return 'datetime';
     } else if (Array.isArray(value)) {
-        return 'array'; 
+        return 'array';
     } else if (typeof value === 'object') {
-        return 'object'; 
-    } 
+        return 'object';
+    }
 
     if (dataType) {
         return dataType; // Jeśli dataType jest podany, zwróć go
@@ -35,6 +35,23 @@ export const resolveDataType = (value: any, dataType?: api.ColumnDataType): api.
     // Jeśli nie można ustalić typu, zwróć 'custom'
     return 'custom';
 };
+
+export function formatDecimalWithThousandsSeparator(value: Decimal): string {
+    const [intPart, fracPart] = value.toString().split(".");
+
+    // Pobierz przykładowy sformatowany string
+    const sample = (1000000.1).toLocaleString();
+
+    // Wyodrębnij separator tysięcy i dziesiętny
+    const match = sample.match(/1(.?)000(.?)000(.?)1/);
+    const thousandSeparator = match ? match[1] : ",";
+    const decimalSeparator = match ? match[3] : ".";
+
+    // Sformatuj część całkowitą ręcznie (dla dużych liczb)
+    const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+
+    return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
+}
 
 export const valueToString = (value: any, dataType?: api.ColumnDataType): string | null => {
     if (value === undefined || value === null) {
@@ -53,9 +70,9 @@ export const valueToString = (value: any, dataType?: api.ColumnDataType): string
         return value ? 'true' : 'false'; // Zwróć jako string
     } else if (dataType === 'datetime') {
         if (value instanceof Date) {
-            return DateTime.fromJSDate(value).toSQL(); 
+            return DateTime.fromJSDate(value).toSQL();
         } else if (typeof value === 'number' || typeof value === 'bigint') {
-            return DateTime.fromMillis(Number(value)).toSQL(); 
+            return DateTime.fromMillis(Number(value)).toSQL();
         }
         else {
             return value.toString();
@@ -63,7 +80,7 @@ export const valueToString = (value: any, dataType?: api.ColumnDataType): string
     } else if (dataType === 'object' || dataType === 'array') {
         return JSON.stringify(value); // Zwróć jako JSON string
     } else if (dataType === 'decimal') {
-        return Decimal(value).toString();
+        return formatDecimalWithThousandsSeparator(new Decimal(value));
     }
 
     return String(value); // Domyślnie zwróć jako string
@@ -160,7 +177,7 @@ export const scrollToCell = (
 
     // Oblicz pozycję w pionie
     const rowTop = Math.max(0, rowIndex * rowHeight); // Ograniczenie do minimum 0
-    const rowBottom = Math.min(container.scrollHeight, rowTop + rowHeight + (footerVisible ? (rowHeight *2) : 0)); // Ograniczenie do maksymalnej wysokości
+    const rowBottom = Math.min(container.scrollHeight, rowTop + rowHeight + (footerVisible ? (rowHeight * 2) : 0)); // Ograniczenie do maksymalnej wysokości
 
     const visibleHeight = container.offsetHeight - scrollbarHeight; // Widoczna wysokość kontenera (bez paska przewijania)
 
@@ -187,7 +204,7 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[], data: ob
         return {
             key: column.name,
             label: column.name,
-            width: 150, 
+            width: 150,
             dataType: column.dataType || resolveDataType(data[0]?.[column.name], column.dataType),
             info: column,
         };
@@ -248,7 +265,7 @@ export const calculateSummary = (
                 case "range":
                     summary[col.key] = numericValues.length > 0
                         ? numericValues.reduce((max, val) => (val.comparedTo(max) > 0 ? val : max), Decimal(-Infinity)).minus(
-                          numericValues.reduce((min, val) => (val.comparedTo(min) < 0 ? val : min), Decimal(Infinity))
+                            numericValues.reduce((min, val) => (val.comparedTo(min) < 0 ? val : min), Decimal(Infinity))
                         ) : null;
                     break;
                 case "count":
