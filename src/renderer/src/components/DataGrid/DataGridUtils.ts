@@ -1,12 +1,13 @@
 import React, { useMemo } from "react";
-import { ColumnDataType, ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
+import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
+import Decimal from "decimal.js";
 
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 
-export const resolveDataType = (value: any, dataType?: ColumnDataType): ColumnDataType => {
+export const resolveDataType = (value: any, dataType?: api.ColumnDataType): api.ColumnDataType => {
     if (value === undefined || value === null) {
         return dataType ? dataType : 'null'; // Typ null dla undefined i null
     }
@@ -35,7 +36,7 @@ export const resolveDataType = (value: any, dataType?: ColumnDataType): ColumnDa
     return 'custom';
 };
 
-export const valueToString = (value: any, dataType?: ColumnDataType): string | null => {
+export const valueToString = (value: any, dataType?: api.ColumnDataType): string | null => {
     if (value === undefined || value === null) {
         return null; // Typ null dla undefined i null
     }
@@ -61,6 +62,8 @@ export const valueToString = (value: any, dataType?: ColumnDataType): string | n
         }
     } else if (dataType === 'object' || dataType === 'array') {
         return JSON.stringify(value); // Zwróć jako JSON string
+    } else if (dataType === 'decimal') {
+        return Decimal(value).toString();
     }
 
     return String(value); // Domyślnie zwróć jako string
@@ -71,7 +74,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (value === null || value === undefined) {
             return nullValue || "NULL";
         }
-        return React.isValidElement(value) ? value : valueToString(value);
+        return React.isValidElement(value) ? value : valueToString(value, column.dataType);
     };
 
     if (column.formatter) {
@@ -185,7 +188,7 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[], data: ob
             key: column.name,
             label: column.name,
             width: 150, 
-            dataType: resolveDataType(data[0]?.[column.name]), 
+            dataType: column.dataType || resolveDataType(data[0]?.[column.name], column.dataType),
             info: column,
         };
     });
@@ -209,25 +212,25 @@ export const calculateSummary = (
             return;
         }
 
-        if (col.dataType === 'number' || col.dataType === 'bigint') {
-            const numericValues = values.map((value) => Number(value));
+        if (col.dataType === 'number' || col.dataType === 'decimal' || col.dataType === 'bigint') {
+            const numericValues = values.map((value) => Decimal(value));
             switch (columnOperation) {
                 case "sum":
-                    summary[col.key] = numericValues.reduce((acc, val) => acc + val, 0);
+                    summary[col.key] = numericValues.reduce((acc, val) => acc.add(val), Decimal(0));
                     break;
                 case "avg":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.reduce((acc, val) => acc + val, 0) / numericValues.length
+                        ? numericValues.reduce((acc, val) => acc.add(val), Decimal(0)).div(numericValues.length)
                         : null;
                     break;
                 case "min":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.reduce((min, val) => (val < min ? val : min), Infinity)
+                        ? numericValues.reduce((min, val) => (val.comparedTo(min) < 0 ? val : min), Decimal(Infinity))
                         : null;
                     break;
                 case "max":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.reduce((max, val) => (val > max ? val : max), -Infinity)
+                        ? numericValues.reduce((max, val) => (val.comparedTo(max) > 0 ? val : max), Decimal(-Infinity))
                         : null;
                     break;
                 case "unique":
@@ -244,31 +247,31 @@ export const calculateSummary = (
                     break;
                 case "range":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.reduce((max, val) => (val > max ? val : max), -Infinity) -
-                          numericValues.reduce((min, val) => (val < min ? val : min), Infinity)
-                        : null;
+                        ? numericValues.reduce((max, val) => (val.comparedTo(max) > 0 ? val : max), Decimal(-Infinity)).minus(
+                          numericValues.reduce((min, val) => (val.comparedTo(min) < 0 ? val : min), Decimal(Infinity))
+                        ) : null;
                     break;
                 case "count":
                     summary[col.key] = numericValues.length;
                     break;
                 case "sumOfSquares":
-                    summary[col.key] = numericValues.reduce((acc, val) => acc + Math.pow(val, 2), 0);
+                    summary[col.key] = numericValues.reduce((acc, val) => acc.add(val.pow(2)), Decimal(0));
                     break;
                 case "emptyCount":
                     summary[col.key] = values.filter((value) => value == null).length;
                     break;
                 case "variance":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.reduce((acc, val) => acc + Math.pow(val - (numericValues.reduce((a, b) => a + b, 0) / numericValues.length), 2), 0) / numericValues.length
+                        ? numericValues.reduce((acc, val) => acc.add(val.minus(numericValues.reduce((a, b) => a.add(b), Decimal(0)).div(numericValues.length)).pow(2)), Decimal(0)).div(numericValues.length)
                         : null;
                     break;
                 case "skewness":
                     if (numericValues.length > 0) {
-                        const mean = numericValues.reduce((acc, val) => acc + val, 0) / numericValues.length;
-                        const variance = numericValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numericValues.length;
-                        const stdDev = Math.sqrt(variance);
-                        summary[col.key] = stdDev > 0
-                            ? numericValues.reduce((acc, val) => acc + Math.pow((val - mean) / stdDev, 3), 0) / numericValues.length
+                        const mean = numericValues.reduce((acc, val) => acc.add(val), Decimal(0)).div(numericValues.length);
+                        const variance = numericValues.reduce((acc, val) => acc.add(val.minus(mean).pow(2)), Decimal(0)).div(numericValues.length);
+                        const stdDev = variance.sqrt();
+                        summary[col.key] = stdDev.comparedTo(Decimal(0)) > 0
+                            ? numericValues.reduce((acc, val) => acc.add((val.minus(mean)).div(stdDev).pow(3)), Decimal(0)).div(numericValues.length)
                             : null;
                     } else {
                         summary[col.key] = null;
@@ -276,11 +279,11 @@ export const calculateSummary = (
                     break;
                 case "kurtosis":
                     if (numericValues.length > 0) {
-                        const mean = numericValues.reduce((acc, val) => acc + val, 0) / numericValues.length;
-                        const variance = numericValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numericValues.length;
-                        const stdDev = Math.sqrt(variance);
-                        summary[col.key] = stdDev > 0
-                            ? numericValues.reduce((acc, val) => acc + Math.pow((val - mean) / stdDev, 4), 0) / numericValues.length - 3
+                        const mean = numericValues.reduce((acc, val) => acc.add(val), Decimal(0)).div(numericValues.length);
+                        const variance = numericValues.reduce((acc, val) => acc.add(val.minus(mean).pow(2)), Decimal(0)).div(numericValues.length);
+                        const stdDev = variance.sqrt();
+                        summary[col.key] = stdDev.comparedTo(Decimal(0)) > 0
+                            ? numericValues.reduce((acc, val) => acc.add((val.minus(mean)).div(stdDev).pow(4)), Decimal(0)).div(numericValues.length).minus(3)
                             : null;
                     } else {
                         summary[col.key] = null;
@@ -289,20 +292,20 @@ export const calculateSummary = (
                 case "iqr":
                     const q1 = calculatePercentile(numericValues, 25);
                     const q3 = calculatePercentile(numericValues, 75);
-                    summary[col.key] = q3 !== null && q1 !== null ? q3 - q1 : null;
+                    summary[col.key] = q3 !== null && q1 !== null ? q3.minus(q1) : null;
                     break;
                 case "sumOfAbsoluteDifferences":
-                    const mean = numericValues.reduce((acc, val) => acc + val, 0) / numericValues.length;
-                    summary[col.key] = numericValues.reduce((acc, val) => acc + Math.abs(val - mean), 0);
+                    const mean = numericValues.reduce((acc, val) => acc.add(val), Decimal(0)).div(numericValues.length);
+                    summary[col.key] = numericValues.reduce((acc, val) => acc.add(val.minus(mean).abs()), Decimal(0));
                     break;
                 case "geometricMean":
                     summary[col.key] = numericValues.length > 0
-                        ? Math.pow(numericValues.reduce((acc, val) => acc * val, 1), 1 / numericValues.length)
+                        ? numericValues.reduce((acc, val) => acc.mul(val), Decimal(1)).pow(1 / numericValues.length)
                         : null;
                     break;
                 case "harmonicMean":
                     summary[col.key] = numericValues.length > 0
-                        ? numericValues.length / numericValues.reduce((acc, val) => acc + (1 / val), 0)
+                        ? Decimal(numericValues.length).div(numericValues.reduce((acc, val) => acc.add(Decimal(1).div(val)), Decimal(0)))
                         : null;
                     break;
                 default:
@@ -454,11 +457,11 @@ export const calculateSummary = (
                     summary[col.key] = new Set(dateValues.map((date) => date.getTime())).size;
                     break;
                 case "mode":
-                    summary[col.key] = dateValues.length > 0 ? calculateMode(dateValues.map((date) => date.getTime())) : null;
+                    summary[col.key] = dateValues.length > 0 ? calculateMode(dateValues.map((date) => new Decimal(date.getTime()))) : null;
                     break;
                 case "median":
                     summary[col.key] = dateValues.length > 0
-                        ? new Date(calculateMedian(dateValues.map((date) => date.getTime()))!)
+                        ? new Date(calculateMedian(dateValues.map((date) => new Decimal(date.getTime())))!)
                         : null;
                     break;
                 case "avg":
@@ -493,39 +496,40 @@ export const calculateSummary = (
 };
 
 // Funkcje pomocnicze
-const calculateMedian = (values: number[]): number | null => {
+const calculateMedian = (values: Decimal[]): number | null => {
     if (values.length === 0) return null;
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].sort((a, b) => a.comparedTo(b));
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    return sorted.length % 2 !== 0 ? sorted[mid].toNumber() : (sorted[mid - 1].add(sorted[mid])).div(2).toNumber();
 };
 
-const calculateMode = <T extends string | number | boolean>(values: T[]): T | null => {
+const calculateMode = <T extends string | Decimal | number | boolean>(values: T[]): T | null => {
     if (values.length === 0) return null;
 
     const frequencyMap = values.reduce((acc, value) => {
-        acc[value as string] = (acc[value as string] || 0) + 1;
+        const key = value.toString();
+        acc[key] = (acc[key] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
 
-    const maxFrequency = Math.max(...Object.values(frequencyMap) as number[]);
+    const maxFrequency = Math.max(...Object.values(frequencyMap));
     const modes = Object.entries(frequencyMap)
         .filter(([_, frequency]) => frequency === maxFrequency)
-        .map(([key]) => key as T);
+        .map(([key]) => key as unknown as T);
 
     return modes.length === 1 ? modes[0] : null; // Return the mode if there's only one, otherwise null
 };
 
-const calculateStandardDeviation = (values: number[]): number | null => {
+const calculateStandardDeviation = (values: Decimal[]): Decimal | null => {
     if (values.length === 0) return null;
-    const mean = values.reduce((acc, val) => acc + val, 0) / values.length;
-    const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
-    return Math.sqrt(variance);
+    const mean = values.reduce((acc, val) => acc.add(val), new Decimal(0)).div(values.length);
+    const variance = values.reduce((acc, val) => acc.add(val.sub(mean).pow(2)), new Decimal(0)).div(values.length);
+    return variance.sqrt();
 };
 
-const calculatePercentile = (values: number[], percentile: number): number | null => {
+const calculatePercentile = (values: Decimal[], percentile: number): Decimal | null => {
     if (values.length === 0) return null;
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].sort((a, b) => a.comparedTo(b));
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
     return sorted[index] || null;
 };

@@ -34,7 +34,8 @@ const driver_max_statement_rows_default = 10000;
 const application_name_default = "DBorg for PostgreSQL";
 
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
-    return parseFloat(val);
+    return val;
+    //return parseFloat(val);
 });
 pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
     return BigInt(val);
@@ -45,6 +46,85 @@ pg.types.setTypeParser(pg.types.builtins.INT4, function (val) {
 pg.types.setTypeParser(pg.types.builtins.INT2, function (val) {
     return BigInt(val);
 });
+
+/**
+ * Mapuje typy PostgreSQL (OID) na typy obsługiwane przez aplikację.
+ */
+export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataType {
+    switch (pgType) {
+        case pg.types.builtins.BOOL:
+            return 'boolean';
+        case pg.types.builtins.INT2:
+        case pg.types.builtins.INT4:
+            return 'number';
+        case pg.types.builtins.OID:
+        case pg.types.builtins.INT8:
+            return 'bigint';
+        case pg.types.builtins.FLOAT4:
+        case pg.types.builtins.FLOAT8:
+        case pg.types.builtins.MONEY:
+            return 'number';
+        case pg.types.builtins.NUMERIC:
+            return 'decimal';
+        case pg.types.builtins.DATE:
+        case pg.types.builtins.TIME:
+        case pg.types.builtins.TIMESTAMP:
+        case pg.types.builtins.TIMESTAMPTZ:
+        case pg.types.builtins.TIMETZ:
+        case pg.types.builtins.ABSTIME:
+        case pg.types.builtins.RELTIME:
+            return 'datetime';
+        case pg.types.builtins.TINTERVAL:
+        case pg.types.builtins.INTERVAL:
+            return 'duration';
+        case pg.types.builtins.JSON:
+        case pg.types.builtins.JSONB:
+            return 'json';
+        case pg.types.builtins.XML:
+            return 'xml';
+        case pg.types.builtins.BYTEA:
+            return 'binary';
+        case pg.types.builtins.TEXT:
+        case pg.types.builtins.BPCHAR:
+        case pg.types.builtins.VARCHAR:
+        case pg.types.builtins.CHAR:
+        case pg.types.builtins.UUID:
+        case pg.types.builtins.REGPROC:
+        case pg.types.builtins.REGPROCEDURE:
+        case pg.types.builtins.REGOPER:
+        case pg.types.builtins.REGOPERATOR:
+        case pg.types.builtins.REGCLASS:
+        case pg.types.builtins.REGTYPE:
+        case pg.types.builtins.PG_NODE_TREE:
+        case pg.types.builtins.SMGR:
+        case pg.types.builtins.PATH:
+        case pg.types.builtins.POLYGON:
+        case pg.types.builtins.CIDR:
+        case pg.types.builtins.MACADDR:
+        case pg.types.builtins.MACADDR8:
+        case pg.types.builtins.INET:
+        case pg.types.builtins.ACLITEM:
+        case pg.types.builtins.PG_LSN:
+        case pg.types.builtins.TSVECTOR:
+        case pg.types.builtins.TSQUERY:
+        case pg.types.builtins.GTSVECTOR:
+        case pg.types.builtins.REGCONFIG:
+        case pg.types.builtins.REGDICTIONARY:
+        case pg.types.builtins.REGROLE:
+        case pg.types.builtins.PG_NDISTINCT:
+        case pg.types.builtins.PG_DEPENDENCIES:
+            return 'string';
+        case pg.types.builtins.BIT:
+        case pg.types.builtins.VARBIT:
+            return 'string';
+        // case pg.types.builtins.REFCURSOR:
+        //     return 'custom';
+        // case pg.types.builtins.ARRAY:
+        //     return 'array';
+        default:
+            return 'string';
+    }
+}
 
 export class Cursor extends driver.Cursor {
     private uniqueId: string;
@@ -290,11 +370,12 @@ export class Connection extends driver.Connection {
         for (const c of fields) {
             columns.push({
                 name: c.name,
-                dataType: c.dataTypeID,
+                dbDataType: c.dataTypeID,
                 typeName: getEnumKeyByValue(pg.types.builtins, c.dataTypeID) ?? c.format,
                 dataTypeSize: c.dataTypeSize,
                 field: c.columnID,
                 table: c.tableID,
+                dataType: mapPostgresTypeToColumnDataType(c.dataTypeID),
             });
         }
         return columns;

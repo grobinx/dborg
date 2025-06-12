@@ -1,6 +1,6 @@
 import React from "react";
 import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
-import { ColumnInfo } from "src/api/db";
+import { ColumnDataType, ColumnInfo } from "src/api/db";
 import { CommandManager } from "../CommandPalette/CommandManager";
 
 export interface DataGridInfoMessage {
@@ -30,13 +30,17 @@ export interface DataGridInfoMessage {
     active: boolean;
 }
 
-export type ColumnDataType = 'string' | 'bigint' | 'number' | 'boolean' | 'datetime' | 'custom' | 'object' | 'array' | 'null';
-export const columnDataTypeClassMap = {
+export const columnDataTypeClassMap: Record<ColumnDataType, string> = {
     string: 'data-type-string',
     bigint: 'data-type-bigint',
     number: 'data-type-number',
     boolean: 'data-type-boolean',
     datetime: 'data-type-datetime',
+    binary: 'data-type-binary',
+    json: 'data-type-json',
+    decimal: 'data-type-decimal',
+    duration: 'data-type-duration',
+    xml: 'data-type-xml',
     custom: 'data-type-custom',
     object: 'data-type-object',
     array: 'data-type-array',
@@ -136,25 +140,25 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
 };
 
 export const typeToOperationMap: Record<SummaryOperation, ColumnDataType[]> = {
-    sum: ["number", "bigint", "boolean", "string"],
-    avg: ["number", "bigint", "boolean", "string", "datetime"],
-    min: ["number", "bigint", "boolean", "string", "datetime"],
-    max: ["number", "bigint", "boolean", "string", "datetime"],
-    unique: ["number", "bigint", "boolean", "string", "object", "datetime"],
-    median: ["number", "bigint", "datetime"],
-    mode: ["number", "bigint", "boolean", "string", "datetime"],
-    stdDev: ["number", "bigint"],
-    range: ["number", "bigint", "datetime"],
-    count: ["number", "bigint", "boolean", "string", "object"],
-    sumOfSquares: ["number", "bigint"],
+    sum: ["number", "bigint", "decimal", "boolean", "string"],
+    avg: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
+    min: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
+    max: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
+    unique: ["number", "bigint", "decimal", "boolean", "string", "object", "datetime"],
+    median: ["number", "bigint", "decimal", "datetime"],
+    mode: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
+    stdDev: ["number", "bigint", "decimal"],
+    range: ["number", "bigint", "decimal", "datetime"],
+    count: ["number", "bigint", "decimal", "boolean", "string", "object"],
+    sumOfSquares: ["number", "bigint", "decimal"],
     emptyCount: ["boolean", "string", "object", "datetime"],
-    variance: ["number", "bigint"],
-    skewness: ["number", "bigint"],
-    kurtosis: ["number", "bigint"],
-    iqr: ["number", "bigint"],
-    sumOfAbsoluteDifferences: ["number", "bigint"],
-    geometricMean: ["number", "bigint"],
-    harmonicMean: ["number", "bigint"],
+    variance: ["number", "bigint", "decimal"],
+    skewness: ["number", "bigint", "decimal"],
+    kurtosis: ["number", "bigint", "decimal"],
+    iqr: ["number", "bigint", "decimal"],
+    sumOfAbsoluteDifferences: ["number", "bigint", "decimal"],
+    geometricMean: ["number", "bigint", "decimal"],
+    harmonicMean: ["number", "bigint", "decimal"],
     truePercentage: ["boolean"],
     minLength: ["string"],
     maxLength: ["string"],

@@ -27,6 +27,35 @@ const driver_fetch_record_count_default = 100;
 const driver_max_statement_rows = "driver:max_statement_rows";
 const driver_max_statement_rows_default = 10000;
 
+/**
+ * Mapuje typ JS (typeof value) na typ obsługiwany przez aplikację.
+ * Nie korzysta z deklarowanego typu kolumny.
+ */
+export function mapSqliteValueToColumnDataType(value: unknown): api.ColumnDataType {
+    if (value === null || value === undefined) return "null";
+    if (typeof value === "boolean") return "boolean";
+    if (typeof value === "number") return Number.isInteger(value) ? "number" : "decimal";
+    if (typeof value === "bigint") return "bigint";
+    if (typeof value === "string") {
+        // Heurystyka: czy to data/czas?
+        if (/^\d{4}-\d{2}-\d{2}(T|\s)?/.test(value)) return "datetime";
+        // Heurystyka: czy to JSON?
+        if ((value.startsWith("{") && value.endsWith("}")) || (value.startsWith("[") && value.endsWith("]"))) {
+            try {
+                const parsed = JSON.parse(value);
+                if (Array.isArray(parsed)) return "array";
+                if (typeof parsed === "object" && parsed !== null) return "json";
+            } catch { /* ignore */ }
+        }
+        // Heurystyka: czy to XML?
+        if (/^\s*<\?xml[\s\S]*\?>/.test(value) || /^\s*<[\w]+[\s\S]*>[\s\S]*<\/[\w]+>/.test(value)) return "xml";
+        return "string";
+    }
+    if (Array.isArray(value)) return "array";
+    if (typeof value === "object") return "object";
+    return "custom";
+}
+
 export class Cursor extends driver.Cursor {
     private uniqueId: string;
     private statement: sqlite3.Statement;
@@ -121,7 +150,8 @@ export class Cursor extends driver.Cursor {
                     this.columns.push({
                         typeName: "any",
                         name: key,
-                        dataType: typeof value,
+                        dbDataType: typeof value,
+                        dataType: mapSqliteValueToColumnDataType(value),
                     });
                 }
             }
@@ -305,7 +335,8 @@ export class Connection extends driver.Connection {
                             columns.push({
                                 typeName: "any",
                                 name: key,
-                                dataType: typeof value,
+                                dbDataType: typeof value,
+                                dataType: mapSqliteValueToColumnDataType(value),
                             });
                         }
                     }

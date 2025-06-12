@@ -1,6 +1,21 @@
 import Version from "../version";
 import { DatabasesMetadata } from "./Metadata";
 
+export type ColumnDataType = 
+    'string' 
+    | 'bigint' 
+    | 'number' 
+    | 'boolean' 
+    | 'datetime'
+    | 'duration' 
+    | 'custom' 
+    | 'object' 
+    | 'array'
+    | 'decimal'
+    | 'xml'
+    | 'json'
+    | 'binary'
+    | 'null';
 /**
  * (Query) Result column information
  */
@@ -9,10 +24,6 @@ export interface ColumnInfo {
      * Result column name
      */
     name: string,
-    /**
-     * Space name
-     */
-    space?: string | number,
     /**
      * Source table name or id
      */
@@ -24,7 +35,7 @@ export interface ColumnInfo {
     /**
      * Column data type, id 
      */
-    dataType: string | number,
+    dbDataType: string | number,
     /**
      * Column data type logical size
      */
@@ -33,6 +44,10 @@ export interface ColumnInfo {
      * Display data type
      */
     typeName: string,
+    /**
+     * Column js data type
+     */
+    dataType: ColumnDataType,
 }
 
 /**

@@ -15,7 +15,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
             let actions: (ActionDescriptor<any> & { operation: SummaryOperation })[] = [];
             const summaryFooterOperation = context.getSummaryFooterOperation();
             const column = context.getColumn();
-            const columnType = resolveDataType(context.getValue(), column?.dataType);
+            const columnType = column?.dataType || resolveDataType(context.getValue(), column?.dataType);
 
             const isOperationSupported = (operation: string): boolean => {
                 return columnType && typeToOperationMap[operation]?.includes(columnType);
