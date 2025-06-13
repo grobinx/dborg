@@ -1091,6 +1091,11 @@ export const DataGrid = <T extends object>({
                                         dataType = "null";
                                     }
 
+                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value);
+                                    if (typeof formattedValue === "string") {
+                                        formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                    }
+
                                     return (
                                         <StyledCell
                                             key={colIndex}
@@ -1111,12 +1116,7 @@ export const DataGrid = <T extends object>({
                                             dataType={dataType}
                                             colorsEnabled={mode === "defined" ? settings.data_grid.colors_enabled : true}
                                         >
-                                            {(() => {
-                                                const formattedValue = columnDataFormatter(row[col.key], col, settings.data_grid.null_value);
-                                                return (typeof formattedValue === "string")
-                                                    ? highlightText(formattedValue, searchState.current.text || "", theme)
-                                                    : formattedValue;
-                                            })()}
+                                            {formattedValue}
                                         </StyledCell>
                                     );
                                 })}
