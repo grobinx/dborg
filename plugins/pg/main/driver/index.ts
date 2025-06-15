@@ -56,7 +56,6 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
             return 'boolean';
         case pg.types.builtins.INT2:
         case pg.types.builtins.INT4:
-            return 'number';
         case pg.types.builtins.OID:
         case pg.types.builtins.INT8:
             return 'bigint';
