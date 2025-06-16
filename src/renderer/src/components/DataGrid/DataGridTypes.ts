@@ -41,7 +41,6 @@ export const columnDataTypeClassMap: Record<ColumnDataType, string> = {
     decimal: 'data-type-decimal',
     duration: 'data-type-duration',
     xml: 'data-type-xml',
-    custom: 'data-type-custom',
     object: 'data-type-object',
     array: 'data-type-array',
     null: 'data-type-null',
