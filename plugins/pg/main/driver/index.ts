@@ -47,6 +47,38 @@ pg.types.setTypeParser(pg.types.builtins.INT2, function (val) {
     return BigInt(val);
 });
 
+// Only array types from the original enum are included below
+export enum pgTypes {
+    BIT_ARRAY = 1561,
+    BOOL_ARRAY = 1000,
+    BPCHAR_ARRAY = 1014,
+    BYTEA_ARRAY = 1001,
+    CHAR_ARRAY = 1002,
+    DATE_ARRAY = 1182,
+    FLOAT4_ARRAY = 1021,
+    FLOAT8_ARRAY = 1022,
+    INT2_ARRAY = 1005,
+    INT4_ARRAY = 1007,
+    INT8_ARRAY = 1016,
+    INTERVAL_ARRAY = 1187,
+    JSON_ARRAY = 199,
+    JSONB_ARRAY = 3807,
+    MONEY_ARRAY = 791,
+    NAME_ARRAY = 1003,
+    NUMERIC_ARRAY = 1231,
+    OID_ARRAY = 1028,
+    POINT_ARRAY = 1017,
+    REF_CURSOR_ARRAY = 2201,
+    TEXT_ARRAY = 1009,
+    TIME_ARRAY = 1183,
+    TIMESTAMP_ARRAY = 1115,
+    TIMESTAMPTZ_ARRAY = 1185,
+    TIMETZ_ARRAY = 1270,
+    VARBIT_ARRAY = 1563,
+    VARCHAR_ARRAY = 1015,
+    XML_ARRAY = 143,
+}
+
 /**
  * Mapuje typy PostgreSQL (OID) na typy obsługiwane przez aplikację.
  */
@@ -116,10 +148,35 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.BIT:
         case pg.types.builtins.VARBIT:
             return 'string';
-        // case pg.types.builtins.REFCURSOR:
-        //     return 'custom';
-        // case pg.types.builtins.ARRAY:
-        //     return 'array';
+        case pgTypes.BIT_ARRAY:
+        case pgTypes.BOOL_ARRAY:
+        case pgTypes.BPCHAR_ARRAY:
+        case pgTypes.BYTEA_ARRAY:
+        case pgTypes.CHAR_ARRAY:
+        case pgTypes.DATE_ARRAY:
+        case pgTypes.FLOAT4_ARRAY:
+        case pgTypes.FLOAT8_ARRAY:
+        case pgTypes.INT2_ARRAY:
+        case pgTypes.INT4_ARRAY:
+        case pgTypes.INT8_ARRAY:
+        case pgTypes.INTERVAL_ARRAY:
+        case pgTypes.JSON_ARRAY:
+        case pgTypes.JSONB_ARRAY:
+        case pgTypes.MONEY_ARRAY:
+        case pgTypes.NAME_ARRAY:
+        case pgTypes.NUMERIC_ARRAY:
+        case pgTypes.OID_ARRAY:
+        case pgTypes.POINT_ARRAY:
+        case pgTypes.REF_CURSOR_ARRAY:
+        case pgTypes.TEXT_ARRAY:
+        case pgTypes.TIME_ARRAY:
+        case pgTypes.TIMESTAMP_ARRAY:
+        case pgTypes.TIMESTAMPTZ_ARRAY:
+        case pgTypes.TIMETZ_ARRAY:
+        case pgTypes.VARBIT_ARRAY:
+        case pgTypes.VARCHAR_ARRAY:
+        case pgTypes.XML_ARRAY:
+            return 'array';
         default:
             return 'string';
     }
@@ -370,7 +427,7 @@ export class Connection extends driver.Connection {
             columns.push({
                 name: c.name,
                 dbDataType: c.dataTypeID,
-                typeName: getEnumKeyByValue(pg.types.builtins, c.dataTypeID) ?? c.format,
+                typeName: getEnumKeyByValue(pg.types.builtins, c.dataTypeID) ?? getEnumKeyByValue(pgTypes, c.dataTypeID) ?? c.format,
                 dataTypeSize: c.dataTypeSize,
                 field: c.columnID,
                 table: c.tableID,
