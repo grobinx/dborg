@@ -23,7 +23,8 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
     const [actionComponents, setActionComponents] = React.useState<{
         actionComponents: React.ReactNode[],
         actionManager: ActionManager<any> | null,
-        commandManager: CommandManager<any> | null
+        commandManager: CommandManager<any> | null,
+        actionContext: any | null
     } | null>(null);
 
     if (!actions) {
@@ -37,11 +38,11 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
     // Handler onKeyDown
     const handleKeyDown = React.useCallback(
         (event: React.KeyboardEvent<HTMLDivElement>) => {
-            if (actionComponents?.commandManager && actionComponents.commandManager.executeCommand(event, {})) {
+            if (actionComponents?.commandManager && actionComponents.commandManager.executeCommand(event, actionComponents.actionContext)) {
                 event.preventDefault();
                 return;
             }
-            if (actionComponents?.actionManager && actionComponents.actionManager.executeActionByKeybinding(event, {})) {
+            if (actionComponents?.actionManager && actionComponents.actionManager.executeActionByKeybinding(event, actionComponents.actionContext)) {
                 event.preventDefault();
                 return;
             }
@@ -60,7 +61,7 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
             };
         }
         return;
-    }, [handleRef, handleKeyDown]);
+    }, [handleKeyDown]);
 
     if (!actions) {
         return null;

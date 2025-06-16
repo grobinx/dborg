@@ -1,6 +1,7 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
+import { valueToString } from "../DataGridUtils";
 
 export const CopyValueToClipboard = (): ActionDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
@@ -15,8 +16,12 @@ export const CopyValueToClipboard = (): ActionDescriptor<DataGridActionContext<a
         contextMenuOrder: 1,
         run: (context) => {
             const value = context.getValue();
-            if (value !== null && value !== undefined) {
-                navigator.clipboard.writeText(value.toString());
+            const column = context.getColumn();
+            if (value !== null && value !== undefined && column) {
+                const stringValue = valueToString(value, column.dataType);
+                if (stringValue !== null) {
+                    navigator.clipboard.writeText(stringValue);
+                }
             }
         },
     };

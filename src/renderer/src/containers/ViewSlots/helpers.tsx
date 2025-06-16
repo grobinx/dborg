@@ -154,12 +154,17 @@ export function createActionComponents(
     let actionComponents: React.ReactNode[] = [];
     let actionManager: ActionManager<any> | null = null;
     let commandManager: CommandManager<any> | null = null;
+    let actionContext: any | null = null;
 
     const resolvedActions = resolveActionsFactory(actions, refreshSlot);
     if (resolvedActions) {
         let dataGridRef: React.RefObject<DataGridActionContext<any>> | undefined = undefined;
         if (actionSlotId) {
             dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
+            if (dataGridRef) {
+                actionManager = dataGridRef.current?.actionManager() ?? null;
+                actionContext = dataGridRef.current;
+            }
         }
 
         actionComponents = resolvedActions.map((action, index) => {
@@ -214,5 +219,5 @@ export function createActionComponents(
         }).filter(Boolean) as React.ReactNode[];
     }
 
-    return { actionComponents, actionManager, commandManager };
+    return { actionComponents, actionManager, commandManager, actionContext };
 }

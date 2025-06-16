@@ -1,4 +1,4 @@
-import { darken, lighten, Palette, ThemeOptions } from "@mui/material";
+import { darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 
 const layout = (palette: Palette): ThemeOptions => {
     return {
@@ -125,6 +125,18 @@ const layout = (palette: Palette): ThemeOptions => {
                 defaultProps: {
                     sx: {
                         margin: 0,
+                    }
+                }
+            },
+            MuiMenu: {
+                defaultProps: {
+                    slots: {
+                        transition: Fade,
+                    },
+                    slotProps: {
+                        transition: {
+                            timeout: 0,
+                        }
                     }
                 }
             },

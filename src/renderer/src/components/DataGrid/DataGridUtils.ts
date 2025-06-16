@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import Decimal from "decimal.js";
 
 const canvas = document.createElement('canvas');
@@ -77,10 +77,19 @@ export const valueToString = (value: any, dataType?: api.ColumnDataType): string
         else {
             return value.toString();
         }
-    } else if (dataType === 'object' || dataType === 'array') {
-        return JSON.stringify(value); // Zwróć jako JSON string
     } else if (dataType === 'decimal') {
         return formatDecimalWithThousandsSeparator(new Decimal(value));
+    } else if (dataType === 'duration') {
+        if (typeof value === 'object') {
+            return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
+        } else if (typeof value === 'number' || typeof value === 'bigint') {
+            return Duration.fromMillis(Number(value)).toFormat('hhhh-MM-dd hh:mm:ss SSS');
+        } else if (typeof value === 'string') {
+            return Duration.fromISO(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
+        }
+        return value.toString(); // Zwróć jako string
+    } else if (dataType === 'object' || dataType === 'array' || typeof value === 'object') {
+        return JSON.stringify(value); // Zwróć jako JSON string
     }
 
     return String(value); // Domyślnie zwróć jako string

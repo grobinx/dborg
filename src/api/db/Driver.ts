@@ -8,7 +8,6 @@ export type ColumnDataType =
     | 'boolean' 
     | 'datetime'
     | 'duration' 
-    | 'custom' 
     | 'object' 
     | 'array'
     | 'decimal'
@@ -16,6 +15,71 @@ export type ColumnDataType =
     | 'json'
     | 'binary'
     | 'null';
+
+export type ColumnBaseType = 
+    'string' 
+    | 'number' 
+    | 'boolean' 
+    | 'datetime'
+    | 'object' 
+    | 'binary';
+
+export type ColumnStringType = 
+    'string'
+    | 'uuid'
+    | 'email'
+    | 'url'
+    | 'phone'
+    | 'mac'
+    | 'ip'
+    | 'barcode'
+    | 'hash';
+
+export type ColumnNumberType = 
+    'number'
+    | 'bigint'
+    | 'decimal'
+    | 'money'
+    | 'int';
+
+export type ColumnBooleanType =
+    'boolean'
+    | 'bit';
+
+export type ColumnDateTimeType =
+    'datetime'
+    | 'date'
+    | 'time'
+    | 'duration'
+
+export type ColumnObjectType =
+    'object'
+    | 'json'
+    | 'xml'
+    | 'enum'
+    | 'geometry';
+
+export type ColumnBinaryType =
+    'binary'
+    | 'blob'
+    | 'image'
+    | 'file';
+
+export type ValuePrimitiveType =
+    string 
+    | number 
+    | bigint 
+    | boolean 
+    | object 
+    | null;
+
+export interface FieldDataType {
+    isArray: boolean;
+    baseType: ColumnBaseType;
+    subType?: ColumnStringType | ColumnNumberType | ColumnBooleanType | ColumnDateTimeType | ColumnObjectType | ColumnBinaryType;
+    primitiveType: ValuePrimitiveType;
+}
+
 /**
  * (Query) Result column information
  */

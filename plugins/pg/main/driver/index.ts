@@ -38,13 +38,16 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
     //return parseFloat(val);
 });
 pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
-    return BigInt(val);
+    return val;
+    //return BigInt(val);
 });
 pg.types.setTypeParser(pg.types.builtins.INT4, function (val) {
-    return BigInt(val);
+    return val;
+    //return BigInt(val);
 });
 pg.types.setTypeParser(pg.types.builtins.INT2, function (val) {
-    return BigInt(val);
+    return val;
+    //return BigInt(val);
 });
 
 // Only array types from the original enum are included below

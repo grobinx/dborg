@@ -53,7 +53,7 @@ export function mapSqliteValueToColumnDataType(value: unknown): api.ColumnDataTy
     }
     if (Array.isArray(value)) return "array";
     if (typeof value === "object") return "object";
-    return "custom";
+    return "string";
 }
 
 export class Cursor extends driver.Cursor {
