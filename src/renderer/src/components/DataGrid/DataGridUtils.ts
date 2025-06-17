@@ -33,7 +33,7 @@ export const resolveDataType = (value: any, dataType?: api.ColumnDataType): api.
     }
 
     // Jeśli nie można ustalić typu, zwróć 'custom'
-    return 'custom';
+    return 'string';
 };
 
 export function formatDecimalWithThousandsSeparator(value: Decimal): string {
