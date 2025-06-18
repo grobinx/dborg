@@ -1,92 +1,190 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
 
-export type SettingsContextType = {
-    settings: Record<string, TSettings>;
-    updateSettings: <T extends TSettings>(name: string, key: keyof T, value: T[keyof T]) => void;
+// Globalna zmienna przechowująca listę nazw ustawień oraz ich domyślne wartości
+export const SETTINGS_NAMES: Record<string, TSettings> = {
+    // default: { theme: "light", notificationsEnabled: true },
+    // user: { theme: "dark", notificationsEnabled: false },
+    // app: { version: "1.0.0", autoUpdate: true },
 };
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+// Typ dla kontekstu ustawień
+interface SettingsContextType {
+    updateSettings: <T extends TSettings>(name: string, newSettings: T) => Promise<void>;
+    getSettings: <T extends TSettings>(name: string) => T | undefined;
+    settings: Record<string, TSettings>;
+}
+
+// Domyślna wartość kontekstu
+const SettingsContext = createContext<SettingsContextType>({
+    updateSettings: async () => {},
+    getSettings: () => undefined,
+    settings: {},
+});
+
+// Mechanizm debouncing dla zapisu ustawień
+const debounceMap: Record<string, NodeJS.Timeout> = {};
 
 /**
- * Initialize settings by loading all known settings groups.
- * This function should be called before rendering the provider.
+ * Hook `useSettings` pozwala na dostęp do ustawień dla określonej grupy oraz ich aktualizację.
+ * Można aktualizować pojedynczy klucz lub część/całą strukturę ustawień.
+ *
+ * @example
+ * 
+ * interface UserSettings {
+ *     theme: string;
+ *     notificationsEnabled: boolean;
+ * }
+ *
+ * const App: React.FC = () => {
+ *     const [userSettings, updateUserSetting] = useSettings<UserSettings>("user");
+ *
+ *     const handleThemeChange = () => {
+ *         updateUserSetting("theme", "dark");
+ *     };
+ *
+ *     const handleNotificationsChange = () => {
+ *         updateUserSetting("notificationsEnabled", true);
+ *     };
+ *
+ *     const handleUpdateStructure = () => {
+ *         updateUserSetting({
+ *             theme: "light",
+ *             notificationsEnabled: false,
+ *         });
+ *     };
+ *
+ *     return (
+ *         <div>
+ *             <h1>Ustawienia użytkownika</h1>
+ *             <pre>{JSON.stringify(userSettings, null, 2)}</pre>
+ *             <button onClick={handleThemeChange}>Zmień motyw</button>
+ *             <button onClick={handleNotificationsChange}>Włącz powiadomienia</button>
+ *             <button onClick={handleUpdateStructure}>Zaktualizuj całą strukturę</button>
+ *         </div>
+ *     );
+ * };
+ *
+ * @param name Nazwa grupy ustawień, dla której chcemy uzyskać dostęp.
+ * @returns Tablica zawierająca:
+ * - Obiekt ustawień dla określonej grupy.
+ * - Funkcję do aktualizacji ustawień (pojedynczego klucza lub całą strukturę).
  */
-export const initializeSettings = async (defaultSettings: Record<string, TSettings> = {}): Promise<Record<string, TSettings>> => {
-    const allSettings = await Promise.all(
-        Object.keys(defaultSettings).map(async (group) => ({
-            [group]: {
-                ...defaultSettings[group],
-                ...(await window.dborg.settings.get(group)),
-            },
-        }))
-    );
-    return allSettings.reduce((acc, groupSettings) => ({ ...acc, ...groupSettings }), {});
-};
-
-export const SettingsProvider: React.FC<{ children: React.ReactNode, settings: Record<string, TSettings> }> = (props) => {
-    const [settings, setSettings] = useState<Record<string, TSettings>>(props.settings);
-    const [changedGroups, setChangedGroups] = useState<Set<string>>(new Set()); // Track changed groups
-
-    // Automatically save changed groups after 1 second
-    useEffect(() => {
-        if (changedGroups.size > 0) {
-            const timer = setTimeout(async () => {
-                for (const group of changedGroups) {
-                    window.dborg.settings.store(group, settings[group]);
-                }
-                setChangedGroups(new Set()); // Clear the changed groups after saving
-            }, Number(settings?.app?.store_settings_timeout) ?? 1000);
-
-            return () => clearTimeout(timer); // Clear timeout if dependencies change
-        }
-
-        return;
-    }, [changedGroups]);
-
-    // Update settings for a specific group and allow setting a single value
-    const updateSettings = useCallback(
-        <T extends TSettings>(name: string, key: keyof T, value: T[keyof T]) => {
-            setSettings((prev) => {
-                const currentValue = (prev[name] as T)?.[key];
-                if (currentValue === value) {
-                    return prev; // Do not update if the value hasn't changed
-                }
-                const updatedSettings = {
-                    ...prev,
-                    [name]: { ...prev[name], [key]: value },
-                };
-                setChangedGroups((prevChanged) => new Set(prevChanged).add(name)); // Mark group as changed
-                return updatedSettings;
-            });
-        },
-        []
-    );
-
-    return (
-        <SettingsContext.Provider value={{ settings, updateSettings }}>
-            {props.children}
-        </SettingsContext.Provider>
-    );
-};
-
-export const useSettings = <T extends TSettings>(name: string): readonly [T, (key: keyof T, value: T[keyof T]) => void] => {
+export const useSettings = <T extends TSettings>(
+    name: string
+): readonly [
+    T, 
+    (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => void
+] => {
     const context = useContext(SettingsContext);
+
     if (!context) {
         throw new Error("useSettings must be used within a SettingsProvider");
     }
 
     return [
         /**
-         * Get the settings for a specific group.
+         * Pobierz ustawienia dla określonej grupy.
          */
         (context.settings[name] || {}) as T,
         /**
-         * Update a specific setting in the group.
-         * @param key The key of the setting to update.
-         * @param value The new value for the setting.
+         * Zaktualizuj ustawienia dla określonej grupy.
+         * Jeśli przekazano klucz i wartość, aktualizuje tylko ten klucz.
+         * Jeśli przekazano strukturę, aktualizuje wszystkie klucze w strukturze.
+         * @param keyOrStructure Klucz ustawienia lub struktura ustawień.
+         * @param value Nowa wartość dla klucza (opcjonalne, używane tylko przy aktualizacji pojedynczego klucza).
          */
-        (key: keyof T, value: T[keyof T]) => context.updateSettings<T>(name, key as string, value),
+        (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => {
+            const currentSettings = context.settings[name] || {};
+            let updatedSettings: T;
+
+            if (typeof keyOrStructure === "object") {
+                // Aktualizacja na podstawie struktury
+                updatedSettings = {
+                    ...currentSettings,
+                    ...keyOrStructure,
+                } as T;
+            } else {
+                // Aktualizacja pojedynczego klucza
+                updatedSettings = {
+                    ...currentSettings,
+                    [keyOrStructure]: value,
+                } as T;
+            }
+
+            context.updateSettings<T>(name, updatedSettings);
+        },
     ];
 };
 
+// Provider kontekstu ustawień
+export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [settings, setSettings] = useState<Record<string, TSettings>>({});
+
+    // Funkcja do odczytu ustawień z plików
+    const loadSettings = async () => {
+        const loadedSettings: Record<string, TSettings> = {};
+        for (const name in SETTINGS_NAMES) {
+            try {
+                const fileSettings = await window.dborg.settings.get(name);
+                loadedSettings[name] = fileSettings || SETTINGS_NAMES[name]; // Użyj domyślnych ustawień, jeśli brak danych
+            } catch (error) {
+                console.error(`Nie udało się odczytać ustawień z pliku: ${name}`, error);
+                loadedSettings[name] = SETTINGS_NAMES[name]; // Użyj domyślnych ustawień w przypadku błędu
+            }
+        }
+        setSettings(loadedSettings);
+    };
+
+    // Funkcja do zmiany ustawień z debouncing
+    const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
+        // Aktualizuj lokalne ustawienia
+        setSettings((prev) => ({
+            ...prev,
+            [name]: newSettings,
+        }));
+
+        // Debouncing zapisu na dysku
+        if (debounceMap[name]) {
+            clearTimeout(debounceMap[name]);
+        }
+
+        debounceMap[name] = setTimeout(async () => {
+            try {
+                window.dborg.settings.store(name, newSettings);
+                delete debounceMap[name]; // Usuń z debounceMap po zapisaniu
+            } catch (error) {
+                console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
+            }
+        }, 500); // Opóźnienie zapisu (500 ms)
+    };
+
+    // Funkcja do pobierania ustawień z typem generycznym
+    const getSettings = <T extends TSettings>(name: string): T | undefined => {
+        return settings[name] as T | undefined;
+    };
+
+    // Inicjalizacja ustawień podczas montowania komponentu
+    useEffect(() => {
+        loadSettings();
+
+        // Cleanup: zapisanie zmienionych ustawień przy odmontowaniu kontekstu
+        return () => {
+            Object.keys(debounceMap).forEach(async (name) => {
+                try {
+                    clearTimeout(debounceMap[name]);
+                    window.dborg.settings.store(name, settings[name]);
+                    delete debounceMap[name]; // Usuń z debounceMap po zapisaniu
+                } catch (error) {
+                    console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
+                }
+            });
+        };
+    }, []);
+
+    return (
+        <SettingsContext.Provider value={{ updateSettings, getSettings, settings }}>
+            {children}
+        </SettingsContext.Provider>
+    );
+};

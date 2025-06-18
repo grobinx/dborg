@@ -1,7 +1,6 @@
 import { Plugin } from "plugins/manager/renderer/Plugin";
 import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL logo
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
-import { default_settings } from "@renderer/app.config";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
@@ -9,14 +8,14 @@ import { SelectSchemaAction, SelectSchemaAction_ID } from "./actions/SelectSchem
 import { SelectSchemaGroup } from "./actions/SelectSchemaGroup";
 import i18next from "i18next";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
-import { IGridSlot, ITextField, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import tableColumnsTab from "./slots/tableColumnsSlot";
-import { DatabasesMetadata } from "../../../src/api/db";
 import tableIndexesTab from "./slots/tableIndexesSlot";
-import { ShowRelationDataAction, ShowRelationDataAction_ID } from "./actions/ShowRelationData";
-import { sendMessage, useMessages } from "@renderer/contexts/MessageContext";
+import { ShowRelationDataAction } from "./actions/ShowRelationData";
+import { sendMessage } from "@renderer/contexts/MessageContext";
 import { SQL_EDITOR_EXECUTE_QUERY } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
+import { SETTINGS_NAMES } from "@renderer/contexts/SettingsContext";
 
 export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
 
@@ -262,6 +261,6 @@ interface TableRecord {
     description: string;
 }
 
-default_settings[PLUGIN_ID] = {};
+SETTINGS_NAMES[PLUGIN_ID] = {};
 
 export default PostgresPlugin;

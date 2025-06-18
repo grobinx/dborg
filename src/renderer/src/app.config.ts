@@ -1,5 +1,6 @@
 import { TSettings } from "src/api/settings";
 import "./components/notifications/NotificationAdminList";
+import { SETTINGS_NAMES } from "./contexts/SettingsContext";
 
 export interface AppSettings extends TSettings {
     /**
@@ -72,3 +73,7 @@ export const default_settings: ApplicationSettings = {
         theme: 'system',
     },
 };
+
+SETTINGS_NAMES['app'] = default_settings.app;
+SETTINGS_NAMES['dborg'] = default_settings.dborg;
+SETTINGS_NAMES['ui'] = default_settings.ui;
