@@ -121,7 +121,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 }
                 lastQuery.current = query;
                 setQueryDuration(info.duration ?? null);
-                setColumns(queryToDataGridColumns(info.columns ?? [], fetchedRows))
+                setColumns(queryToDataGridColumns(info.columns ?? []))
                 setRows(rows);
                 if (cellPosition) {
                     setTimeout(() => {
@@ -158,7 +158,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 const result = await session.execute(query!);
                 if (result.rows) {
                     setRows(result.rows);
-                    setColumns(queryToDataGridColumns(result.columns ?? [], result.rows));
+                    setColumns(queryToDataGridColumns(result.columns ?? []));
                 }
                 else {
                     setRows([]);

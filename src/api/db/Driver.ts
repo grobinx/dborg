@@ -1,20 +1,6 @@
 import Version from "../version";
+import { ColumnBaseType, ColumnDataType } from "./DataType";
 import { DatabasesMetadata } from "./Metadata";
-
-export type ColumnDataType = 
-    'string' 
-    | 'bigint' 
-    | 'number' 
-    | 'boolean' 
-    | 'datetime'
-    | 'duration' 
-    | 'object' 
-    | 'array'
-    | 'decimal'
-    | 'xml'
-    | 'json'
-    | 'binary'
-    | 'null';
 
 /**
  * (Query) Result column information

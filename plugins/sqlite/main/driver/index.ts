@@ -32,28 +32,25 @@ const driver_max_statement_rows_default = 10000;
  * Nie korzysta z deklarowanego typu kolumny.
  */
 export function mapSqliteValueToColumnDataType(value: unknown): api.ColumnDataType {
-    if (value === null || value === undefined) return "null";
-    if (typeof value === "boolean") return "boolean";
-    if (typeof value === "number") return Number.isInteger(value) ? "number" : "decimal";
-    if (typeof value === "bigint") return "bigint";
-    if (typeof value === "string") {
-        // Heurystyka: czy to data/czas?
-        if (/^\d{4}-\d{2}-\d{2}(T|\s)?/.test(value)) return "datetime";
-        // Heurystyka: czy to JSON?
-        if ((value.startsWith("{") && value.endsWith("}")) || (value.startsWith("[") && value.endsWith("]"))) {
-            try {
-                const parsed = JSON.parse(value);
-                if (Array.isArray(parsed)) return "array";
-                if (typeof parsed === "object" && parsed !== null) return "json";
-            } catch { /* ignore */ }
+    let subType = api.resolveSubTypeFromString(value as string);
+    const isArray = Array.isArray(value);
+    if (isArray) {
+        if (value.length > 0) {
+            subType = api.resolveSubTypeFromString(value[0] as string)
         }
-        // Heurystyka: czy to XML?
-        if (/^\s*<\?xml[\s\S]*\?>/.test(value) || /^\s*<[\w]+[\s\S]*>[\s\S]*<\/[\w]+>/.test(value)) return "xml";
-        return "string";
+        else {
+            subType = 'object';
+        }
     }
-    if (Array.isArray(value)) return "array";
-    if (typeof value === "object") return "object";
-    return "string";
+    else {
+        subType = api.resolveSubTypeFromString(value as string);
+    }
+    const baseType = subType === null ? 'string' : api.subTypeToBaseType(subType);
+    return {
+        isArray,
+        baseType,
+        subType: subType ?? baseType,
+    }
 }
 
 export class Cursor extends driver.Cursor {
@@ -168,7 +165,7 @@ export class Cursor extends driver.Cursor {
             }
 
             this.rowCount = (this.rowCount ?? 0) + rows.length;
-            
+
             if (((this.maxRowsMode ?? "set") === "set" && this.rowCount >= this.maxStatementRows) ||
                 (typeof this.maxRowsMode === "number" && this.rowCount >= this.maxRowsMode)) {
                 this.ended = true;

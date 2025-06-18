@@ -1,7 +1,6 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext, SummaryOperation, typeToOperationMap } from "../DataGridTypes";
-import { resolveDataType } from "../DataGridUtils";
 
 export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
@@ -15,10 +14,10 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
             let actions: (ActionDescriptor<any> & { operation: SummaryOperation })[] = [];
             const summaryFooterOperation = context.getSummaryFooterOperation();
             const column = context.getColumn();
-            const columnType = column?.dataType || resolveDataType(context.getValue(), column?.dataType);
+            const baseType = typeof column?.dataType === 'object' ? column.dataType.baseType : column?.dataType;
 
             const isOperationSupported = (operation: string): boolean => {
-                return columnType && typeToOperationMap[operation]?.includes(columnType);
+                return baseType && typeToOperationMap[operation]?.includes(baseType);
             };
 
             // Dodaj pozostałe akcje

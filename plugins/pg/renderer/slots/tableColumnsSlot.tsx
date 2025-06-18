@@ -2,7 +2,7 @@ import { Typography } from "@mui/material";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IContentSlot, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 
 export interface TableColumnRecord {
     no: number;

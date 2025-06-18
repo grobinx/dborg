@@ -7,7 +7,7 @@ import * as actions from "./actions";
 import { columnDataTypeClassMap, ColumnDataValueType, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
-import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, resolveDataType, scrollToCell, valueToString } from "./DataGridUtils";
+import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
 import LoadingOverlay from "../useful/LoadingOverlay";
@@ -17,7 +17,7 @@ import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
-import { ColumnDataType } from "src/api/db";
+import { ColumnBaseType, columnDataType, resolvePrimitiveType, valueToString } from "../../../../../src/api/db";
 
 export type DataGridMode = "defined" | "data";
 
@@ -233,7 +233,7 @@ const StyledCell = styled("div", {
     rowHeight: number;
     paddingX: number;
     paddingY: number;
-    dataType?: ColumnDataType;
+    dataType?: ColumnBaseType | 'null';
     colorsEnabled: boolean;
 }>(
     ({ theme, rowHeight, paddingX, paddingY, dataType, colorsEnabled }) => {
@@ -251,7 +251,7 @@ const StyledCell = styled("div", {
             lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
             alignItems: "center",
             color: colorsEnabled ? theme.palette?.dataType?.[dataType ?? "string"] : "inherit",
-            textAlign: (dataType === 'number' || dataType === 'decimal' || dataType === 'bigint') ? 'right' : dataType === 'boolean' ? 'center' : 'left',
+            textAlign: dataType === 'number' ? 'right' : dataType === 'boolean' ? 'center' : 'left',
             zIndex: 1,
             "&.Mui-selected": {
                 backgroundColor: theme.palette.action.selected,
@@ -296,7 +296,7 @@ const StyledFooterCell = styled('div', {
     rowHeight: number;
     paddingX: number;
     paddingY: number;
-    dataType?: ColumnDataType;
+    dataType?: ColumnBaseType | 'null';
 }>(
     ({ theme, rowHeight, paddingX, paddingY, dataType }) => {
         const contentHeight = rowHeight - paddingY * 2; // Wysokość dostępna dla treści
@@ -314,7 +314,7 @@ const StyledFooterCell = styled('div', {
             lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
             borderRadius: 0, // Ustawienie zaokrąglenia na 0
             alignItems: "center",
-            textAlign: (dataType === 'number' || dataType === 'bigint' || dataType === 'decimal') ? 'right' : dataType === 'boolean' ? 'center' : 'left',
+            textAlign: dataType === 'number' ? 'right' : dataType === 'boolean' ? 'center' : 'left',
             "&:not(:first-of-type)": {
                 borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
             },
@@ -525,7 +525,7 @@ export const DataGrid = <T extends object>({
                     dataRowCount: dataState?.length || 0,
                     selectedRowCount: selectedRows.length,
                     column: selectedCell?.column !== undefined ? columnsState.current[selectedCell.column] || null : null,
-                    valueType: resolveDataType(value),
+                    valueType: resolvePrimitiveType(value),
                     valueLength: value ? value.length : null,
                 };
 
@@ -1086,7 +1086,7 @@ export const DataGrid = <T extends object>({
                                 {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                                     const absoluteColIndex = startColumn + colIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
-                                    let dataType = col.dataType || resolveDataType(row[col.key], col.dataType);
+                                    let dataType: ColumnBaseType | 'null' = (typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType) ?? 'null';
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         dataType = "null";
                                     }
@@ -1130,7 +1130,7 @@ export const DataGrid = <T extends object>({
                         className="DataGrid-footer"
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
-                            const dataType = col.dataType || resolveDataType(summaryRow[col.key], col.dataType);
+                            let dataType: ColumnBaseType | 'null' = (typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType) ?? 'null';
                             let operationLabel = "";
                             if (summaryOperation && summaryOperation?.[col.key] !== null) {
                                 operationLabel = summaryOperationDisplayMap[summaryOperation[col.key]!] || "";
@@ -1166,7 +1166,7 @@ export const DataGrid = <T extends object>({
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
                                     >
-                                        {valueToString(summaryRow[col.key], col.dataType)}
+                                        {valueToString(summaryRow[col.key], columnDataType(col.dataType ?? 'string'))}
                                     </StyledFooterCell>
                                 </React.Fragment>
                             );

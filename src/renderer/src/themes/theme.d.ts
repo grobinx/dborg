@@ -36,6 +36,7 @@ import { TabPanelButtonsProps } from "@renderer/components/TabsPanel/TabPanelBut
 import { UnboundBadgeProps } from "@renderer/components/UnboundBadge";
 import { ColumnDataType } from "@renderer/components/DataGrid/DataGridTypes";
 import { ToolTextFieldProps } from "@renderer/components/ToolTextField";
+import { ColumnBaseType } from "src/api/db";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -44,7 +45,7 @@ export interface PaletteColorExtend extends PaletteColor {
 }
 
 export type DataTypeColors = {
-    [key in ColumnDataType]: string;
+    [key in ColumnBaseType | 'null']: string;
 };
 
 export type PaletteColorOptionsExtend = PaletteColorOptions & {

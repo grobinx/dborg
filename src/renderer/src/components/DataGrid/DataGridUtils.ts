@@ -1,106 +1,17 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
-import { DateTime, Duration } from "luxon";
 import Decimal from "decimal.js";
 
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
-
-export const resolveDataType = (value: any, dataType?: api.ColumnDataType): api.ColumnDataType => {
-    if (value === undefined || value === null) {
-        return dataType ? dataType : 'null'; // Typ null dla undefined i null
-    }
-    // Ustal typ na podstawie wartości
-    if (typeof value === 'string') {
-        return 'string';
-    } else if (typeof value === 'number') {
-        return 'number';
-    } else if (typeof value === 'bigint') {
-        return 'bigint';
-    } else if (typeof value === 'boolean') {
-        return 'boolean';
-    } else if (value instanceof Date || !isNaN(Date.parse(value))) {
-        return 'datetime';
-    } else if (Array.isArray(value)) {
-        return 'array';
-    } else if (typeof value === 'object') {
-        return 'object';
-    }
-
-    if (dataType) {
-        return dataType; // Jeśli dataType jest podany, zwróć go
-    }
-
-    // Jeśli nie można ustalić typu, zwróć 'custom'
-    return 'string';
-};
-
-export function formatDecimalWithThousandsSeparator(value: Decimal): string {
-    const [intPart, fracPart] = value.toString().split(".");
-
-    // Pobierz przykładowy sformatowany string
-    const sample = (1000000.1).toLocaleString();
-
-    // Wyodrębnij separator tysięcy i dziesiętny
-    const match = sample.match(/1(.?)000(.?)000(.?)1/);
-    const thousandSeparator = match ? match[1] : ",";
-    const decimalSeparator = match ? match[3] : ".";
-
-    // Sformatuj część całkowitą ręcznie (dla dużych liczb)
-    const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
-
-    return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
-}
-
-export const valueToString = (value: any, dataType?: api.ColumnDataType): string | null => {
-    if (value === undefined || value === null) {
-        return null; // Typ null dla undefined i null
-    }
-
-    dataType = dataType ? dataType : resolveDataType(value);
-
-    if (dataType === 'string') {
-        return String(value); // Zwróć jako string
-    } else if (dataType === 'number') {
-        return String(value); // Zwróć jako string
-    } else if (dataType === 'bigint') {
-        return String(value); // Zwróć jako string
-    } else if (dataType === 'boolean') {
-        return value ? 'true' : 'false'; // Zwróć jako string
-    } else if (dataType === 'datetime') {
-        if (value instanceof Date) {
-            return DateTime.fromJSDate(value).toSQL();
-        } else if (typeof value === 'number' || typeof value === 'bigint') {
-            return DateTime.fromMillis(Number(value)).toSQL();
-        }
-        else {
-            return value.toString();
-        }
-    } else if (dataType === 'decimal') {
-        return formatDecimalWithThousandsSeparator(new Decimal(value));
-    } else if (dataType === 'duration') {
-        if (typeof value === 'object') {
-            return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-        } else if (typeof value === 'number' || typeof value === 'bigint') {
-            return Duration.fromMillis(Number(value)).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-        } else if (typeof value === 'string') {
-            return Duration.fromISO(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-        }
-        return value.toString(); // Zwróć jako string
-    } else if (dataType === 'object' || dataType === 'array' || typeof value === 'object') {
-        return JSON.stringify(value); // Zwróć jako JSON string
-    }
-
-    return String(value); // Domyślnie zwróć jako string
-};
 
 export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string) => {
     const nullFormatter = (value: any) => {
         if (value === null || value === undefined) {
             return nullValue || "NULL";
         }
-        return React.isValidElement(value) ? value : valueToString(value, column.dataType);
+        return React.isValidElement(value) ? value : api.valueToString(value, api.columnDataType(column.dataType ?? 'string'));
     };
 
     if (column.formatter) {
@@ -208,13 +119,13 @@ export const scrollToCell = (
     }
 };
 
-export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[], data: object[]): ColumnDefinition[] => {
+export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnDefinition[] => {
     const columns: ColumnDefinition[] = (resultColumns ?? []).map((column) => {
         return {
             key: column.name,
             label: column.name,
             width: 150,
-            dataType: column.dataType || resolveDataType(data[0]?.[column.name], column.dataType),
+            dataType: column.dataType,
             info: column,
         };
     });
@@ -230,6 +141,7 @@ export const calculateSummary = (
     const summary: Record<string, ColumnDataValueType> = {};
 
     columnsState.forEach((col) => {
+        const baseType = typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType;
         const values = data.map((row) => row[col.key]);
         const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
 
@@ -238,7 +150,7 @@ export const calculateSummary = (
             return;
         }
 
-        if (col.dataType === 'number' || col.dataType === 'decimal' || col.dataType === 'bigint') {
+        if (baseType === 'number') {
             const numericValues = values.map((value) => Decimal(value));
             switch (columnOperation) {
                 case "sum":
@@ -337,7 +249,7 @@ export const calculateSummary = (
                 default:
                     summary[col.key] = null;
             }
-        } else if (col.dataType === "boolean") {
+        } else if (baseType === "boolean") {
             const booleanValues = values.filter((value) => typeof value === "boolean") as boolean[];
             const trueCount = booleanValues.filter((value) => value === true).length;
             switch (columnOperation) {
@@ -373,7 +285,7 @@ export const calculateSummary = (
                 default:
                     summary[col.key] = null;
             }
-        } else if (col.dataType === "string") {
+        } else if (baseType === "string") {
             const stringValues = values.filter((value) => typeof value === "string") as string[];
             const lengths = stringValues.map((value) => value.length);
             switch (columnOperation) {
@@ -455,7 +367,7 @@ export const calculateSummary = (
                 default:
                     summary[col.key] = null;
             }
-        } else if (col.dataType === "datetime") {
+        } else if (baseType === "datetime") {
             const dateValues = values.filter((value) => value instanceof Date) as Date[];
             switch (columnOperation) {
                 case "min":

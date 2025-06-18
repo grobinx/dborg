@@ -33,23 +33,6 @@ const driver_max_statement_rows_default = 10000;
 
 const application_name_default = "DBorg for PostgreSQL";
 
-pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
-    return val;
-    //return parseFloat(val);
-});
-pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
-    return val;
-    //return BigInt(val);
-});
-pg.types.setTypeParser(pg.types.builtins.INT4, function (val) {
-    return val;
-    //return BigInt(val);
-});
-pg.types.setTypeParser(pg.types.builtins.INT2, function (val) {
-    return val;
-    //return BigInt(val);
-});
-
 // Only array types from the original enum are included below
 export enum pgTypes {
     BIT_ARRAY = 1561,
@@ -82,47 +65,98 @@ export enum pgTypes {
     XML_ARRAY = 143,
 }
 
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
+    return val;
+});
+pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY, function (val) {
+    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+});
+pg.types.setTypeParser(pgTypes.INT8_ARRAY, function (val) {
+    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+});
+pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
+    return val;
+    //return BigInt(val);
+});
+pg.types.setTypeParser(pg.types.builtins.INT4, function (val) {
+    return val;
+    //return BigInt(val);
+});
+pg.types.setTypeParser(pg.types.builtins.INT2, function (val) {
+    return val;
+    //return BigInt(val);
+});
+
 /**
  * Mapuje typy PostgreSQL (OID) na typy obsługiwane przez aplikację.
  */
 export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataType {
+    let subType: api.ColumnDataSubType;
+    let isArray: boolean = false;
     switch (pgType) {
         case pg.types.builtins.BOOL:
-            return 'boolean';
+            subType = 'boolean';
+            break;
         case pg.types.builtins.INT2:
         case pg.types.builtins.INT4:
+            subType = 'int';
+            break;
         case pg.types.builtins.OID:
         case pg.types.builtins.INT8:
-            return 'bigint';
+            subType = 'bigint';
+            break;
         case pg.types.builtins.FLOAT4:
         case pg.types.builtins.FLOAT8:
         case pg.types.builtins.MONEY:
-            return 'number';
+            subType = 'number';
+            break;
         case pg.types.builtins.NUMERIC:
-            return 'decimal';
+            subType = 'decimal';
+            break;
         case pg.types.builtins.DATE:
+            subType = 'date';
+            break;
         case pg.types.builtins.TIME:
+            subType = 'time';
+            break;
         case pg.types.builtins.TIMESTAMP:
         case pg.types.builtins.TIMESTAMPTZ:
         case pg.types.builtins.TIMETZ:
         case pg.types.builtins.ABSTIME:
         case pg.types.builtins.RELTIME:
-            return 'datetime';
+            subType = 'datetime';
+            break;
         case pg.types.builtins.TINTERVAL:
         case pg.types.builtins.INTERVAL:
-            return 'duration';
+            subType = 'duration';
+            break;
         case pg.types.builtins.JSON:
         case pg.types.builtins.JSONB:
-            return 'json';
+            subType = 'json';
+            break;
         case pg.types.builtins.XML:
-            return 'xml';
+            subType = 'xml';
+            break;
         case pg.types.builtins.BYTEA:
-            return 'binary';
+            subType = 'binary';
+            break;
+        case pg.types.builtins.UUID:
+            subType = 'uuid';
+            break;
+        case pg.types.builtins.PATH:
+            subType = 'file';
+            break;
+        case pg.types.builtins.MACADDR:
+        case pg.types.builtins.MACADDR8:
+            subType = 'mac';
+            break;
+        case pg.types.builtins.POLYGON:
+            subType = 'geometry';
+            break;
         case pg.types.builtins.TEXT:
         case pg.types.builtins.BPCHAR:
         case pg.types.builtins.VARCHAR:
         case pg.types.builtins.CHAR:
-        case pg.types.builtins.UUID:
         case pg.types.builtins.REGPROC:
         case pg.types.builtins.REGPROCEDURE:
         case pg.types.builtins.REGOPER:
@@ -131,11 +165,7 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.REGTYPE:
         case pg.types.builtins.PG_NODE_TREE:
         case pg.types.builtins.SMGR:
-        case pg.types.builtins.PATH:
-        case pg.types.builtins.POLYGON:
         case pg.types.builtins.CIDR:
-        case pg.types.builtins.MACADDR:
-        case pg.types.builtins.MACADDR8:
         case pg.types.builtins.INET:
         case pg.types.builtins.ACLITEM:
         case pg.types.builtins.PG_LSN:
@@ -147,41 +177,101 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.REGROLE:
         case pg.types.builtins.PG_NDISTINCT:
         case pg.types.builtins.PG_DEPENDENCIES:
-            return 'string';
+            subType = 'string';
+            break;
         case pg.types.builtins.BIT:
         case pg.types.builtins.VARBIT:
-            return 'string';
+            subType = 'string';
+            break;
         case pgTypes.BIT_ARRAY:
+            subType = 'string';
+            isArray = true;
+            break;
         case pgTypes.BOOL_ARRAY:
+            subType = 'boolean';
+            isArray = true;
+            break;
         case pgTypes.BPCHAR_ARRAY:
-        case pgTypes.BYTEA_ARRAY:
         case pgTypes.CHAR_ARRAY:
+        case pgTypes.NAME_ARRAY:
+        case pgTypes.TEXT_ARRAY:
+        case pgTypes.VARCHAR_ARRAY:
+            subType = 'string';
+            isArray = true;
+            break;
+        case pgTypes.BYTEA_ARRAY:
+            subType = 'binary';
+            isArray = true;
+            break;
         case pgTypes.DATE_ARRAY:
+            subType = 'date';
+            isArray = true;
+            break;
         case pgTypes.FLOAT4_ARRAY:
         case pgTypes.FLOAT8_ARRAY:
+        case pgTypes.MONEY_ARRAY:
+            subType = 'number';
+            isArray = true;
+            break;
         case pgTypes.INT2_ARRAY:
         case pgTypes.INT4_ARRAY:
+            subType = 'int';
+            isArray = true;
+            break;
         case pgTypes.INT8_ARRAY:
+        case pgTypes.OID_ARRAY:
+            subType = 'bigint';
+            isArray = true;
+            break;
         case pgTypes.INTERVAL_ARRAY:
+            subType = 'duration';
+            isArray = true;
+            break;
         case pgTypes.JSON_ARRAY:
         case pgTypes.JSONB_ARRAY:
-        case pgTypes.MONEY_ARRAY:
-        case pgTypes.NAME_ARRAY:
+            subType = 'json';
+            isArray = true;
+            break;
         case pgTypes.NUMERIC_ARRAY:
-        case pgTypes.OID_ARRAY:
+            subType = 'decimal';
+            isArray = true;
+            break;
         case pgTypes.POINT_ARRAY:
+            subType = 'geometry';
+            isArray = true;
+            break;
         case pgTypes.REF_CURSOR_ARRAY:
-        case pgTypes.TEXT_ARRAY:
+            subType = 'string';
+            isArray = true;
+            break;
         case pgTypes.TIME_ARRAY:
+            subType = 'time';
+            isArray = true;
+            break;
         case pgTypes.TIMESTAMP_ARRAY:
         case pgTypes.TIMESTAMPTZ_ARRAY:
         case pgTypes.TIMETZ_ARRAY:
+            subType = 'datetime';
+            isArray = true;
+            break;
         case pgTypes.VARBIT_ARRAY:
-        case pgTypes.VARCHAR_ARRAY:
+        case pgTypes.BIT_ARRAY:
+            subType = 'string';
+            isArray = true;
+            break;
         case pgTypes.XML_ARRAY:
-            return 'array';
+            subType = 'xml';
+            isArray = true;
+            break;
         default:
-            return 'string';
+            subType = 'string';
+    }
+
+    const baseType = api.subTypeToBaseType(subType);
+    return {
+        isArray,
+        subType,
+        baseType,
     }
 }
 

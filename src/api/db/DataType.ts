@@ -9,6 +9,15 @@ export type ColumnBaseType =
     | 'object'
     | 'binary';
 
+const columnBaseTypes: readonly ColumnBaseType[] = [
+    "string",
+    "number",
+    "boolean",
+    "datetime",
+    "object",
+    "binary"
+];
+
 export type ColumnStringType =
     'string'
     | 'uuid'
@@ -101,13 +110,46 @@ const columnBinaryTypes: readonly ColumnBinaryType[] = [
 
 export type ColumnDataSubType = ColumnStringType | ColumnNumberType | ColumnBooleanType | ColumnDateTimeType | ColumnObjectType | ColumnBinaryType;
 
-export type FieldPrimitiveType =
+export type ValuePrimitiveType =
     'string'
     | 'number'
     | 'bigint'
     | 'boolean'
     /** obiekt w tym array */
     | 'object';
+
+export const subTypeToGeneralType: Record<ColumnDataSubType, ColumnDataSubType> = {
+    string: 'string',
+    uuid: 'string',
+    email: 'string',
+    url: 'string',
+    file: 'string',
+    barcode: 'string',
+    color: 'string',
+    ip: 'string',
+    mac: 'string',
+    hash: 'string',
+    phone: 'string',
+    number: 'decimal',
+    bigint: 'number',
+    decimal: 'decimal',
+    money: 'decimal',
+    int: 'bigint',
+    boolean: 'boolean',
+    bit: 'boolean',
+    datetime: 'datetime',
+    date: 'datetime',
+    time: 'datetime',
+    duration: 'duration',
+    object: 'object',
+    json: 'object',
+    xml: 'object',
+    enum: 'object',
+    geometry: 'object',
+    binary: 'binary',
+    blob: 'binary',
+    image: 'binary',
+}
 
 /**
  * Typ danych kolumny w bazie danych.
@@ -116,24 +158,36 @@ export type FieldPrimitiveType =
  */
 export interface ColumnDataType {
     /**
-     * Czy typ jest tablicą
+     * Czy wartość jest tablicą, typów
      */
     isArray: boolean;
     /**
-     * Bazowy typ kolumny
+     * Bazowy typ kolumny, zgodny z podstawowymi typami js
      */
     baseType: ColumnBaseType;
     /**
      * Typ kolumny, który może być bardziej szczegółowy niż baseType
      */
     subType?: ColumnDataSubType;
-    /**
-     * Typ wartości, prymitywny, który jest używany do przechowywania danych w kolumnie.
-     */
-    primitiveType: FieldPrimitiveType;
 }
 
-export const resolvePrimitiveType = (value: any): FieldPrimitiveType | null => {
+export const columnDataType = (baseType: ColumnDataType | ColumnBaseType, subType?: ColumnDataSubType, isArray: boolean = false): ColumnDataType => {
+    if (typeof baseType === 'object') {
+        return {
+            isArray: baseType.isArray || isArray,
+            baseType: baseType.baseType,
+            subType: subType ?? baseType.subType,
+        }
+    }
+
+    return {
+        isArray,
+        baseType,
+        subType: subType ?? baseType,
+    }
+}
+
+export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     switch (typeof value) {
         case 'string': return 'string';
         case 'number': return 'number';
@@ -167,6 +221,13 @@ export const subTypeToBaseType = (subType: ColumnDataSubType): ColumnBaseType =>
     return subType as ColumnBaseType;
 }
 
+/**
+ * Funkcję można wykorzystać do
+ * - sprawdzania typu dla baz danych zwracających ciągi znaków, np. sqlite
+ * - do sprawdzenie wartości w celu jej prezentacji lub dodatkowego działania
+ * @param value 
+ * @returns 
+ */
 export const resolveSubTypeFromString = (value: string | null | undefined): ColumnDataSubType | null => {
     if (value === null || value === undefined) {
         return null;
@@ -182,7 +243,7 @@ export const resolveSubTypeFromString = (value: string | null | undefined): Colu
             return 'bigint';
         } catch { }
     }
-    if (/^-?\d+\.\d+$/.test(value)) {
+    if (/^-?\d+\.\d+(e[+-]?\d+)?$/i.test(value)) {
         const num = Number(value);
         if (!Number.isNaN(num) && Number.isFinite(num)) {
             return 'number';
@@ -197,7 +258,7 @@ export const resolveSubTypeFromString = (value: string | null | undefined): Colu
         return 'bit';
     }
     // daty/czas
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}( \d{3})?$/.test(value)) {
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}([\. ]\d{3})?\s*(?:Z|[+-]\d{2}:\d{2})?$/.test(value)) {
         return 'datetime';
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -259,14 +320,46 @@ export const resolveSubTypeFromString = (value: string | null | undefined): Colu
         return 'geometry';
     }
     // color
-    if (/^(\#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)$|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)$|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\)$|transparent$|currentColor$|inherit$|[a-zA-Z]+$)/i.test(value)) {
+    if (/^(\#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)$|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)$|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\)$|transparent$|currentColor$|inherit$|$)/i.test(value)) {
         return 'color';
     }
     return 'string';
 };
 
+/**
+ * Zwraca najbardziej ogólny wspólny typ dla tablicy subtypów pobranych np. z 
+ * jakiejś puli wartości w danej kolumnie.
+ * Korzysta z mapy subTypeToGeneralType, aby sprowadzić subtypy do ogólnych typów.
+ */
+export function getMostGeneralSubType(subTypes: ColumnDataSubType[]): ColumnDataSubType {
+    if (!subTypes.length) return 'object'; // Jeśli brak subtypów, zwróć 'object'
 
-export function formatDecimalWithThousandsSeparator(value: Decimal): string {
+    // Mapuj subtypy do typów ogólnych
+    const mapped = subTypes.map(t => subTypeToGeneralType[t] ?? t);
+
+    // Jeśli wszystkie ogólne typy są identyczne, zwróć ten typ
+    const firstGeneral = mapped[0];
+    if (mapped.every(t => t === firstGeneral)) {
+        return firstGeneral;
+    }
+
+    // Priorytet typów ogólnych: najbardziej precyzyjne do najbardziej ogólnych
+    const priority: ColumnDataSubType[] = [
+        'string', 'decimal', 'number', 'datetime', 'duration', 'boolean', 'object', 'binary'
+    ];
+
+    // Znajdź pierwszy typ z priorytetu, który występuje w mapped
+    for (const type of priority) {
+        if (mapped.includes(type)) {
+            return type;
+        }
+    }
+
+    // Fallback: jeśli nic nie pasuje, zwróć 'object'
+    return 'object';
+}
+
+function formatDecimalWithThousandsSeparator(value: Decimal): string {
     const [intPart, fracPart] = value.toString().split(".");
 
     // Pobierz przykładowy sformatowany string
@@ -289,13 +382,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
     }
 
     if (Array.isArray(value)) {
-        if (dataType.isArray) {
-            return '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
-        }
-        return JSON.stringify(value);
-    }
-    else if (dataType.isArray) {
-        return String(value);
+        return '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
     }
 
     switch (dataType.baseType) {
@@ -310,6 +397,9 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             }
             if (dataType.subType === 'money') {
                 return Number(value).toLocaleString(undefined, { style: 'currency', });
+            }
+            if (dataType.subType === 'bigint') {
+                return value.toString();
             }
             return typeof value === 'bigint' ? value.toString() : Number(value).toString();
         case 'boolean':
@@ -345,6 +435,13 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
                 }
                 return value.toString();
             } else if (typeof value === 'object') {
+                if (dataType.subType === 'date') {
+                    return DateTime.fromObject(value).toISODate() ?? '';
+                } else if (dataType.subType === 'time') {
+                    return DateTime.fromObject(value).toFormat('HH:mm:ss') ?? '';
+                } else if (dataType.subType === 'duration') {
+                    return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
+                }
                 return DateTime.fromObject(value).toISODate() ?? '';
             }
             return String(value);

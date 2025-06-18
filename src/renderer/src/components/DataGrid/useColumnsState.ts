@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
+import { ColumnBaseType, ColumnDataType } from "src/api/db";
 
 interface UseColumnsState {
     current: ColumnDefinition[];
@@ -28,12 +29,10 @@ function hashString(str: string): string {
 function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): string {
     const keyString = columns
         .slice()
-        .sort((a, b) =>
-            a.key === b.key
-                ? (a.dataType || "").localeCompare(b.dataType || "")
-                : (a.key || "").localeCompare(b.key || "")
-        )
-        .map((col) => `${col.key}:${col.dataType}`)
+        .sort((a, b) => {
+            return (a.key || "").localeCompare(b.key || "");
+        })
+        .map((col) => `${col.key}:${JSON.stringify(col.dataType)}`)
         .join("|");
     return "datagrid-layout-" + hashString(keyString + (autoSaveId ? "|" + autoSaveId : ""));
 }
@@ -75,11 +74,11 @@ function restoreColumnsLayout(
             return initialColumns;
         }
 
-        // Odtwórz kolejność i szerokość
+        // Odtwórz kolejność i typ kolumny
         return layout.map((savedCol: any) => {
             const orig = initialColumns.find(
                 (col) =>
-                    col.key === savedCol.key && col.dataType === savedCol.dataType
+                    col.key === savedCol.key && JSON.stringify(col.dataType) === JSON.stringify(savedCol.dataType)
             );
             return orig
                 ? { ...orig, width: savedCol.width ?? orig.width }
@@ -91,12 +90,12 @@ function restoreColumnsLayout(
 }
 
 function isSameColumnsSet(
-    a: { key: string; dataType: string | undefined }[],
-    b: { key: string; dataType: string | undefined }[]
+    a: { key: string; dataType: ColumnDataType | ColumnBaseType | undefined }[],
+    b: { key: string; dataType: ColumnDataType | ColumnBaseType | undefined }[]
 ): boolean {
     if (a.length !== b.length) return false;
-    const aSet = new Set(a.map(col => `${col.key}:${col.dataType}`));
-    const bSet = new Set(b.map(col => `${col.key}:${col.dataType}`));
+    const aSet = new Set(a.map(col => `${col.key}:${JSON.stringify(col.dataType)}`));
+    const bSet = new Set(b.map(col => `${col.key}:${JSON.stringify(col.dataType)}`));
     if (aSet.size !== bSet.size) return false;
     for (const item of aSet) {
         if (!bSet.has(item)) return false;
@@ -158,7 +157,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
             const prevCol = prevColumnsState[index];
             return (
                 col.key !== prevCol?.key ||
-                col.dataType !== prevCol?.dataType ||
+                JSON.stringify(col.dataType) !== JSON.stringify(prevCol?.dataType) ||
                 col.sortDirection !== prevCol?.sortDirection
             );
         });
@@ -196,8 +195,8 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
                     column.sortDirection === undefined
                         ? "asc"
                         : column.sortDirection === "asc"
-                        ? "desc"
-                        : undefined;
+                            ? "desc"
+                            : undefined;
 
                 if (column.sortDirection === undefined) {
                     column.sortOrder = undefined;

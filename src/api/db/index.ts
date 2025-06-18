@@ -1,2 +1,3 @@
 export * from './Driver';
-export * from './Metadata'
+export * from './DataType';
+export * from './Metadata';

@@ -45,12 +45,9 @@ const palette = createPalette({
         boolean: colors.purple[800],
         datetime: colors.green[800],
         number: colors.red[800],
-        decimal: colors.red[800],
-        bigint: colors.red[800],
         string: colors.grey[900],
         object: colors.grey[900],
-        array: colors.grey[900],
-        custom: colors.grey[900],
+        binary: colors.grey[900],
         null: colors.grey[500],
     },
     text: {

@@ -1,7 +1,6 @@
 import React from "react";
 import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
-import { ColumnDataType, ColumnInfo } from "src/api/db";
-import { CommandManager } from "../CommandPalette/CommandManager";
+import { ColumnBaseType, ColumnDataSubType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "src/api/db";
 
 export interface DataGridInfoMessage {
     /**
@@ -30,19 +29,13 @@ export interface DataGridInfoMessage {
     active: boolean;
 }
 
-export const columnDataTypeClassMap: Record<ColumnDataType, string> = {
+export const columnDataTypeClassMap: Record<ColumnBaseType | 'null', string> = {
     string: 'data-type-string',
-    bigint: 'data-type-bigint',
     number: 'data-type-number',
     boolean: 'data-type-boolean',
     datetime: 'data-type-datetime',
     binary: 'data-type-binary',
-    json: 'data-type-json',
-    decimal: 'data-type-decimal',
-    duration: 'data-type-duration',
-    xml: 'data-type-xml',
     object: 'data-type-object',
-    array: 'data-type-array',
     null: 'data-type-null',
 };
 export type ColumnDataValueType = string | bigint | number | boolean | any[] | Date | object | null;
@@ -79,7 +72,7 @@ export interface ColumnDefinition {
      * Jest to typ orientacyjny, moze posłużyć do formatowania danych w kolumnie.
      * Domyślnie jest to 'string'.
      */
-    dataType?: ColumnDataType;
+    dataType?: ColumnDataType | ColumnBaseType;
     /**
      * Czy kolumna jest sortowalna i w jakim kierunku.
      */
@@ -138,26 +131,26 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
     longestCommonPrefix: "Longest Common Prefix",
 };
 
-export const typeToOperationMap: Record<SummaryOperation, ColumnDataType[]> = {
-    sum: ["number", "bigint", "decimal", "boolean", "string"],
-    avg: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
-    min: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
-    max: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
-    unique: ["number", "bigint", "decimal", "boolean", "string", "object", "datetime"],
-    median: ["number", "bigint", "decimal", "datetime"],
-    mode: ["number", "bigint", "decimal", "boolean", "string", "datetime"],
-    stdDev: ["number", "bigint", "decimal"],
-    range: ["number", "bigint", "decimal", "datetime"],
-    count: ["number", "bigint", "decimal", "boolean", "string", "object"],
-    sumOfSquares: ["number", "bigint", "decimal"],
+export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
+    sum: ["number", "boolean", "string"],
+    avg: ["number", "boolean", "string", "datetime"],
+    min: ["number", "boolean", "string", "datetime"],
+    max: ["number", "boolean", "string", "datetime"],
+    unique: ["number", "boolean", "string", "object", "datetime"],
+    median: ["number", "boolean", "string", "datetime"],
+    mode: ["number", "boolean", "string", "datetime"],
+    stdDev: ["number", "boolean", "string"],
+    range: ["number", "boolean", "string", "datetime"],
+    count: ["number", "boolean", "string", "object"],
+    sumOfSquares: ["number", "boolean", "string"],
     emptyCount: ["boolean", "string", "object", "datetime"],
-    variance: ["number", "bigint", "decimal"],
-    skewness: ["number", "bigint", "decimal"],
-    kurtosis: ["number", "bigint", "decimal"],
-    iqr: ["number", "bigint", "decimal"],
-    sumOfAbsoluteDifferences: ["number", "bigint", "decimal"],
-    geometricMean: ["number", "bigint", "decimal"],
-    harmonicMean: ["number", "bigint", "decimal"],
+    variance: ["number"],
+    skewness: ["number"],
+    kurtosis: ["number"],
+    iqr: ["number"],
+    sumOfAbsoluteDifferences: ["number"],
+    geometricMean: ["number"],
+    harmonicMean: ["number"],
     truePercentage: ["boolean"],
     minLength: ["string"],
     maxLength: ["string"],
@@ -231,6 +224,6 @@ export interface DataGridStatus {
     dataRowCount: number;
     selectedRowCount: number;
     column: ColumnDefinition | null;
-    valueType: ColumnDataValueType | null;
+    valueType: ValuePrimitiveType | null;
     valueLength: number | null;
 }
