@@ -68,10 +68,16 @@ export enum pgTypes {
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
     return val;
 });
+pg.types.setTypeParser(pg.types.builtins.MONEY, function (val) {
+    return val;
+});
 pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY, function (val) {
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
 pg.types.setTypeParser(pgTypes.INT8_ARRAY, function (val) {
+    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+});
+pg.types.setTypeParser(pgTypes.MONEY_ARRAY, function (val) {
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
 pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
