@@ -398,10 +398,10 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             if (dataType.subType === 'money') {
                 return Number(value).toLocaleString(undefined, { style: 'currency', });
             }
-            if (dataType.subType === 'bigint') {
+            if (dataType.subType === 'bigint' || typeof value === 'bigint') {
                 return value.toString();
             }
-            return typeof value === 'bigint' ? value.toString() : Number(value).toString();
+            return Number(value).toString();
         case 'boolean':
             if (dataType.subType === 'bit') {
                 return value ? '1' : '0';
