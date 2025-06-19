@@ -32,25 +32,16 @@ const driver_max_statement_rows_default = 10000;
  * Nie korzysta z deklarowanego typu kolumny.
  */
 export function mapSqliteValueToColumnDataType(value: unknown): api.ColumnDataType {
-    let subType = api.resolveSubTypeFromString(value as string);
     const isArray = Array.isArray(value);
     if (isArray) {
         if (value.length > 0) {
-            subType = api.resolveSubTypeFromString(value[0] as string)
+            return api.resolveDataTypeFromString(value[0] as string) ?? 'string';
         }
         else {
-            subType = 'object';
+            return 'object';
         }
     }
-    else {
-        subType = api.resolveSubTypeFromString(value as string);
-    }
-    const baseType = subType === null ? 'string' : api.subTypeToBaseType(subType);
-    return {
-        isArray,
-        baseType,
-        subType: subType ?? baseType,
-    }
+    return api.resolveDataTypeFromString(value as string) ?? 'string';
 }
 
 export class Cursor extends driver.Cursor {

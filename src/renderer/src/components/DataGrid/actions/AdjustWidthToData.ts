@@ -1,7 +1,7 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { ColumnDefinition, DataGridActionContext } from "../DataGridTypes";
-import { columnDataType, valueToString } from "../../../../../../src/api/db";
+import { valueToString } from "../../../../../../src/api/db";
 
 export const AdjustWidthToData_ID = "dataGrid.actions.adjustWidthToData";
 
@@ -36,7 +36,7 @@ export const AdjustWidthToData = (): ActionDescriptor<DataGridActionContext<any>
                 const data = context.getData(row);
                 for (let column = 0; column < columns.length; column++) {
                     const columnDefinition = columns[column];
-                    const value = valueToString(data[columnDefinition.key], columnDataType(columnDefinition.dataType ?? 'string'));
+                    const value = valueToString(data[columnDefinition.key], columnDefinition.dataType);
                     if (value !== undefined && value !== null) {
                         const width = context.getTextWidth(value.toString());
                         if (width) {

@@ -108,7 +108,7 @@ const columnBinaryTypes: readonly ColumnBinaryType[] = [
     "image"
 ];
 
-export type ColumnDataSubType = ColumnStringType | ColumnNumberType | ColumnBooleanType | ColumnDateTimeType | ColumnObjectType | ColumnBinaryType;
+export type ColumnDataType = ColumnStringType | ColumnNumberType | ColumnBooleanType | ColumnDateTimeType | ColumnObjectType | ColumnBinaryType;
 
 export type ValuePrimitiveType =
     'string'
@@ -118,7 +118,7 @@ export type ValuePrimitiveType =
     /** obiekt w tym array */
     | 'object';
 
-export const subTypeToGeneralType: Record<ColumnDataSubType, ColumnDataSubType> = {
+export const subTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
     string: 'string',
     uuid: 'string',
     email: 'string',
@@ -151,42 +151,6 @@ export const subTypeToGeneralType: Record<ColumnDataSubType, ColumnDataSubType> 
     image: 'binary',
 }
 
-/**
- * Typ danych kolumny w bazie danych.
- * 
- * Typ: object musi być serializowany
- */
-export interface ColumnDataType {
-    /**
-     * Czy wartość jest tablicą, typów
-     */
-    isArray: boolean;
-    /**
-     * Bazowy typ kolumny, zgodny z podstawowymi typami js
-     */
-    baseType: ColumnBaseType;
-    /**
-     * Typ kolumny, który może być bardziej szczegółowy niż baseType
-     */
-    subType?: ColumnDataSubType;
-}
-
-export const columnDataType = (baseType: ColumnDataType | ColumnBaseType, subType?: ColumnDataSubType, isArray: boolean = false): ColumnDataType => {
-    if (typeof baseType === 'object') {
-        return {
-            isArray: baseType.isArray || isArray,
-            baseType: baseType.baseType,
-            subType: subType ?? baseType.subType,
-        }
-    }
-
-    return {
-        isArray,
-        baseType,
-        subType: subType ?? baseType,
-    }
-}
-
 export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     switch (typeof value) {
         case 'string': return 'string';
@@ -199,7 +163,7 @@ export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     }
 }
 
-export const subTypeToBaseType = (subType: ColumnDataSubType): ColumnBaseType => {
+export const toBaseType = (subType: ColumnDataType): ColumnBaseType => {
     if (columnStringTypes.includes(subType as any)) {
         return 'string';
     }
@@ -228,7 +192,7 @@ export const subTypeToBaseType = (subType: ColumnDataSubType): ColumnBaseType =>
  * @param value 
  * @returns 
  */
-export const resolveSubTypeFromString = (value: string | null | undefined): ColumnDataSubType | null => {
+export const resolveDataTypeFromString = (value: string | null | undefined): ColumnDataType | null => {
     if (value === null || value === undefined) {
         return null;
     }
@@ -331,7 +295,7 @@ export const resolveSubTypeFromString = (value: string | null | undefined): Colu
  * jakiejś puli wartości w danej kolumnie.
  * Korzysta z mapy subTypeToGeneralType, aby sprowadzić subtypy do ogólnych typów.
  */
-export function getMostGeneralSubType(subTypes: ColumnDataSubType[]): ColumnDataSubType {
+export function getMostGeneralType(subTypes: ColumnDataType[]): ColumnDataType {
     if (!subTypes.length) return 'object'; // Jeśli brak subtypów, zwróć 'object'
 
     // Mapuj subtypy do typów ogólnych
@@ -344,7 +308,7 @@ export function getMostGeneralSubType(subTypes: ColumnDataSubType[]): ColumnData
     }
 
     // Priorytet typów ogólnych: najbardziej precyzyjne do najbardziej ogólnych
-    const priority: ColumnDataSubType[] = [
+    const priority: ColumnDataType[] = [
         'string', 'decimal', 'number', 'datetime', 'duration', 'boolean', 'object', 'binary'
     ];
 
@@ -385,25 +349,25 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
         return '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
     }
 
-    switch (dataType.baseType) {
+    switch (toBaseType(dataType)) {
         case 'string':
             return String(value);
         case 'number':
-            if (dataType.subType === 'decimal') {
+            if (dataType === 'decimal') {
                 if (value instanceof Decimal) {
                     return formatDecimalWithThousandsSeparator(value);
                 }
                 return formatDecimalWithThousandsSeparator(new Decimal(value));
             }
-            if (dataType.subType === 'money') {
+            if (dataType === 'money') {
                 return Number(value).toLocaleString(undefined, { style: 'currency', });
             }
-            if (dataType.subType === 'bigint' || typeof value === 'bigint') {
+            if (dataType === 'bigint' || typeof value === 'bigint') {
                 return value.toString();
             }
             return Number(value).toString();
         case 'boolean':
-            if (dataType.subType === 'bit') {
+            if (dataType === 'bit') {
                 return value ? '1' : '0';
             }
             if (typeof value === 'boolean') {
@@ -412,18 +376,18 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             return String(value).toLowerCase() === 'true' ? 'true' : 'false';
         case 'datetime':
             if (value instanceof Date) {
-                if (dataType.subType === 'date') {
+                if (dataType === 'date') {
                     return DateTime.fromJSDate(value).toISODate() ?? '';
-                } else if (dataType.subType === 'time') {
+                } else if (dataType === 'time') {
                     return DateTime.fromJSDate(value).toFormat('HH:mm:ss') ?? '';
                 }
                 return DateTime.fromJSDate(value).toSQL() ?? '';
             } else if (typeof value === 'number' || typeof value === 'bigint') {
-                if (dataType.subType === 'date') {
+                if (dataType === 'date') {
                     return DateTime.fromMillis(Number(value)).toISODate() ?? '';
-                } else if (dataType.subType === 'time') {
+                } else if (dataType === 'time') {
                     return DateTime.fromMillis(Number(value)).toFormat('HH:mm:ss') ?? '';
-                } else if (dataType.subType === 'duration') {
+                } else if (dataType === 'duration') {
                     if (typeof value === 'object') {
                         return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
                     } else if (typeof value === 'number' || typeof value === 'bigint') {
@@ -435,29 +399,29 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
                 }
                 return value.toString();
             } else if (typeof value === 'object') {
-                if (dataType.subType === 'date') {
+                if (dataType === 'date') {
                     return DateTime.fromObject(value).toISODate() ?? '';
-                } else if (dataType.subType === 'time') {
+                } else if (dataType === 'time') {
                     return DateTime.fromObject(value).toFormat('HH:mm:ss') ?? '';
-                } else if (dataType.subType === 'duration') {
+                } else if (dataType === 'duration') {
                     return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
                 }
                 return DateTime.fromObject(value).toISODate() ?? '';
             }
             return String(value);
         case 'object':
-            if (dataType.subType === 'json') {
+            if (dataType === 'json') {
                 if (typeof value === 'object') {
                     return JSON.stringify(value);
                 }
                 return String(value);
-            } else if (dataType.subType === 'xml') {
+            } else if (dataType === 'xml') {
                 // zakładamy, że value jest poprawnym XML-em
                 return value.toString();
-            } else if (dataType.subType === 'enum') {
+            } else if (dataType === 'enum') {
                 // zakładamy, że value jest obiektem enum
                 return JSON.stringify(value);
-            } else if (dataType.subType === 'geometry') {
+            } else if (dataType === 'geometry') {
                 if (typeof value === 'object') {
                     // zakładamy, że value jest obiektem geojson
                     return JSON.stringify(value);

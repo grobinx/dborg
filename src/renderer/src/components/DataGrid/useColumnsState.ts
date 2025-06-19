@@ -32,7 +32,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): 
         .sort((a, b) => {
             return (a.key || "").localeCompare(b.key || "");
         })
-        .map((col) => `${col.key}:${JSON.stringify(col.dataType)}`)
+        .map((col) => `${col.key}:${col.dataType}`)
         .join("|");
     return "datagrid-layout-" + hashString(keyString + (autoSaveId ? "|" + autoSaveId : ""));
 }
@@ -78,7 +78,7 @@ function restoreColumnsLayout(
         return layout.map((savedCol: any) => {
             const orig = initialColumns.find(
                 (col) =>
-                    col.key === savedCol.key && JSON.stringify(col.dataType) === JSON.stringify(savedCol.dataType)
+                    col.key === savedCol.key && col.dataType === savedCol.dataType
             );
             return orig
                 ? { ...orig, width: savedCol.width ?? orig.width }
@@ -94,8 +94,8 @@ function isSameColumnsSet(
     b: { key: string; dataType: ColumnDataType | ColumnBaseType | undefined }[]
 ): boolean {
     if (a.length !== b.length) return false;
-    const aSet = new Set(a.map(col => `${col.key}:${JSON.stringify(col.dataType)}`));
-    const bSet = new Set(b.map(col => `${col.key}:${JSON.stringify(col.dataType)}`));
+    const aSet = new Set(a.map(col => `${col.key}:${col.dataType}`));
+    const bSet = new Set(b.map(col => `${col.key}:${col.dataType}`));
     if (aSet.size !== bSet.size) return false;
     for (const item of aSet) {
         if (!bSet.has(item)) return false;
@@ -157,7 +157,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
             const prevCol = prevColumnsState[index];
             return (
                 col.key !== prevCol?.key ||
-                JSON.stringify(col.dataType) !== JSON.stringify(prevCol?.dataType) ||
+                col.dataType !== prevCol?.dataType ||
                 col.sortDirection !== prevCol?.sortDirection
             );
         });

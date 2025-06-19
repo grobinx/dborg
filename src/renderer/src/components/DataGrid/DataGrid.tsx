@@ -17,7 +17,7 @@ import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
-import { ColumnBaseType, columnDataType, resolvePrimitiveType, valueToString } from "../../../../../src/api/db";
+import { ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 
 export type DataGridMode = "defined" | "data";
 
@@ -1086,7 +1086,7 @@ export const DataGrid = <T extends object>({
                                 {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                                     const absoluteColIndex = startColumn + colIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
-                                    let dataType: ColumnBaseType | 'null' = (typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType) ?? 'null';
+                                    let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType ?? 'string');
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         dataType = "null";
                                     }
@@ -1130,7 +1130,7 @@ export const DataGrid = <T extends object>({
                         className="DataGrid-footer"
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
-                            let dataType: ColumnBaseType | 'null' = (typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType) ?? 'null';
+                            let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType);
                             let operationLabel = "";
                             if (summaryOperation && summaryOperation?.[col.key] !== null) {
                                 operationLabel = summaryOperationDisplayMap[summaryOperation[col.key]!] || "";
@@ -1166,7 +1166,7 @@ export const DataGrid = <T extends object>({
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
                                     >
-                                        {valueToString(summaryRow[col.key], columnDataType(col.dataType ?? 'string'))}
+                                        {valueToString(summaryRow[col.key], col.dataType)}
                                     </StyledFooterCell>
                                 </React.Fragment>
                             );

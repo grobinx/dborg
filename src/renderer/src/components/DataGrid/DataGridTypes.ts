@@ -1,6 +1,6 @@
 import React from "react";
 import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
-import { ColumnBaseType, ColumnDataSubType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "src/api/db";
+import { ColumnBaseType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "../../../../../src/api/db";
 
 export interface DataGridInfoMessage {
     /**
@@ -72,7 +72,7 @@ export interface ColumnDefinition {
      * Jest to typ orientacyjny, moze posłużyć do formatowania danych w kolumnie.
      * Domyślnie jest to 'string'.
      */
-    dataType?: ColumnDataType | ColumnBaseType;
+    dataType: ColumnDataType;
     /**
      * Czy kolumna jest sortowalna i w jakim kierunku.
      */

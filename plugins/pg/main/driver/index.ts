@@ -88,68 +88,50 @@ pg.types.setTypeParser(pgTypes.MONEY_ARRAY, function (val) {
  * Mapuje typy PostgreSQL (OID) na typy obsługiwane przez aplikację.
  */
 export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataType {
-    let subType: api.ColumnDataSubType;
-    let isArray: boolean = false;
     switch (pgType) {
         case pg.types.builtins.BOOL:
-            subType = 'boolean';
-            break;
+            return 'boolean';
         case pg.types.builtins.INT2:
         case pg.types.builtins.INT4:
-            subType = 'int';
-            break;
+            return 'int';
         case pg.types.builtins.OID:
         case pg.types.builtins.INT8:
-            subType = 'bigint';
-            break;
+            return 'bigint';
         case pg.types.builtins.FLOAT4:
         case pg.types.builtins.FLOAT8:
         case pg.types.builtins.MONEY:
-            subType = 'number';
-            break;
+            return 'number';
         case pg.types.builtins.NUMERIC:
-            subType = 'decimal';
-            break;
+            return 'decimal';
         case pg.types.builtins.DATE:
-            subType = 'date';
-            break;
+            return 'date';
         case pg.types.builtins.TIME:
-            subType = 'time';
-            break;
+            return 'time';
         case pg.types.builtins.TIMESTAMP:
         case pg.types.builtins.TIMESTAMPTZ:
         case pg.types.builtins.TIMETZ:
         case pg.types.builtins.ABSTIME:
         case pg.types.builtins.RELTIME:
-            subType = 'datetime';
-            break;
+            return 'datetime';
         case pg.types.builtins.TINTERVAL:
         case pg.types.builtins.INTERVAL:
-            subType = 'duration';
-            break;
+            return 'duration';
         case pg.types.builtins.JSON:
         case pg.types.builtins.JSONB:
-            subType = 'json';
-            break;
+            return 'json';
         case pg.types.builtins.XML:
-            subType = 'xml';
-            break;
+            return 'xml';
         case pg.types.builtins.BYTEA:
-            subType = 'binary';
-            break;
+            return 'binary';
         case pg.types.builtins.UUID:
-            subType = 'uuid';
-            break;
+            return 'uuid';
         case pg.types.builtins.PATH:
-            subType = 'file';
-            break;
+            return 'file';
         case pg.types.builtins.MACADDR:
         case pg.types.builtins.MACADDR8:
-            subType = 'mac';
-            break;
+            return 'mac';
         case pg.types.builtins.POLYGON:
-            subType = 'geometry';
-            break;
+            return 'geometry';
         case pg.types.builtins.TEXT:
         case pg.types.builtins.BPCHAR:
         case pg.types.builtins.VARCHAR:
@@ -174,102 +156,58 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.REGROLE:
         case pg.types.builtins.PG_NDISTINCT:
         case pg.types.builtins.PG_DEPENDENCIES:
-            subType = 'string';
-            break;
+            return 'string';
         case pg.types.builtins.BIT:
         case pg.types.builtins.VARBIT:
-            subType = 'string';
-            break;
+            return 'string';
         case pgTypes.BIT_ARRAY:
-            subType = 'string';
-            isArray = true;
-            break;
+            return 'string';
         case pgTypes.BOOL_ARRAY:
-            subType = 'boolean';
-            isArray = true;
-            break;
+            return 'boolean';
         case pgTypes.BPCHAR_ARRAY:
         case pgTypes.CHAR_ARRAY:
         case pgTypes.NAME_ARRAY:
         case pgTypes.TEXT_ARRAY:
         case pgTypes.VARCHAR_ARRAY:
-            subType = 'string';
-            isArray = true;
-            break;
+            return 'string';
         case pgTypes.BYTEA_ARRAY:
-            subType = 'binary';
-            isArray = true;
-            break;
+            return 'binary';
         case pgTypes.DATE_ARRAY:
-            subType = 'date';
-            isArray = true;
-            break;
+            return 'date';
         case pgTypes.FLOAT4_ARRAY:
         case pgTypes.FLOAT8_ARRAY:
         case pgTypes.MONEY_ARRAY:
-            subType = 'number';
-            isArray = true;
-            break;
+            return 'number';
         case pgTypes.INT2_ARRAY:
         case pgTypes.INT4_ARRAY:
-            subType = 'int';
-            isArray = true;
-            break;
+            return 'int';
         case pgTypes.INT8_ARRAY:
         case pgTypes.OID_ARRAY:
-            subType = 'bigint';
-            isArray = true;
-            break;
+            return 'bigint';
         case pgTypes.INTERVAL_ARRAY:
-            subType = 'duration';
-            isArray = true;
-            break;
+            return 'duration';
         case pgTypes.JSON_ARRAY:
         case pgTypes.JSONB_ARRAY:
-            subType = 'json';
-            isArray = true;
-            break;
+            return 'json';
         case pgTypes.NUMERIC_ARRAY:
-            subType = 'decimal';
-            isArray = true;
-            break;
+            return 'decimal';
         case pgTypes.POINT_ARRAY:
-            subType = 'geometry';
-            isArray = true;
-            break;
+            return 'geometry';
         case pgTypes.REF_CURSOR_ARRAY:
-            subType = 'string';
-            isArray = true;
-            break;
+            return 'string';
         case pgTypes.TIME_ARRAY:
-            subType = 'time';
-            isArray = true;
-            break;
+            return 'time';
         case pgTypes.TIMESTAMP_ARRAY:
         case pgTypes.TIMESTAMPTZ_ARRAY:
         case pgTypes.TIMETZ_ARRAY:
-            subType = 'datetime';
-            isArray = true;
-            break;
+            return 'datetime';
         case pgTypes.VARBIT_ARRAY:
         case pgTypes.BIT_ARRAY:
-            subType = 'string';
-            isArray = true;
-            break;
+            return 'string';
         case pgTypes.XML_ARRAY:
-            subType = 'xml';
-            isArray = true;
-            break;
-        default:
-            subType = 'string';
+            return 'xml';
     }
-
-    const baseType = api.subTypeToBaseType(subType);
-    return {
-        isArray,
-        subType,
-        baseType,
-    }
+    return 'string';
 }
 
 export class Cursor extends driver.Cursor {

@@ -68,7 +68,7 @@ const DataGridStatusBar = forwardRef<HTMLDivElement, DataGridStatusBarProps>(({
                                 {
                                     typeName: status.column.info.typeName,
                                     dataType: status.column.info.dbDataType,
-                                    valueType: status.column.info.dataType.subType ?? status.column.info.dataType.baseType,
+                                    valueType: status.column.info.dataType,
                                 }
                             )}
                         </StatusBarButton>),

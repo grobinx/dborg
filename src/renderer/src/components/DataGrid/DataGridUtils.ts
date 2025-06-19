@@ -11,7 +11,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (value === null || value === undefined) {
             return nullValue || "NULL";
         }
-        return React.isValidElement(value) ? value : api.valueToString(value, api.columnDataType(column.dataType ?? 'string'));
+        return React.isValidElement(value) ? value : api.valueToString(value, column.dataType ?? 'string');
     };
 
     if (column.formatter) {
@@ -141,7 +141,7 @@ export const calculateSummary = (
     const summary: Record<string, ColumnDataValueType> = {};
 
     columnsState.forEach((col) => {
-        const baseType = typeof col.dataType === 'object' ? col.dataType.baseType : col.dataType;
+        const baseType = api.toBaseType(col.dataType);
         const values = data.map((row) => row[col.key]);
         const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
 
