@@ -1,6 +1,7 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext, SummaryOperation, typeToOperationMap } from "../DataGridTypes";
+import { toBaseType } from "../../../../../../src/api/db";
 
 export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
@@ -14,7 +15,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
             let actions: (ActionDescriptor<any> & { operation: SummaryOperation })[] = [];
             const summaryFooterOperation = context.getSummaryFooterOperation();
             const column = context.getColumn();
-            const baseType = typeof column?.dataType === 'object' ? column.dataType.baseType : column?.dataType;
+            const baseType = toBaseType(column?.dataType ?? "string");
 
             const isOperationSupported = (operation: string): boolean => {
                 return baseType && typeToOperationMap[operation]?.includes(baseType);
