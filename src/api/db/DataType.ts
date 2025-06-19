@@ -118,7 +118,7 @@ export type ValuePrimitiveType =
     /** obiekt w tym array */
     | 'object';
 
-export const subTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
+export const dataTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
     string: 'string',
     uuid: 'string',
     email: 'string',
@@ -151,6 +151,39 @@ export const subTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
     image: 'binary',
 }
 
+export const dataTypeToBaseType: Record<ColumnDataType, ColumnBaseType> = {
+    string: 'string',
+    uuid: 'string',
+    email: 'string',
+    url: 'string',
+    file: 'string',
+    barcode: 'string',
+    color: 'string',
+    ip: 'string',
+    mac: 'string',
+    hash: 'string',
+    phone: 'string',
+    number: 'number',
+    bigint: 'number',
+    decimal: 'number',
+    money: 'number',
+    int: 'number',
+    boolean: 'boolean',
+    bit: 'boolean',
+    datetime: 'datetime',
+    date: 'datetime',
+    time: 'datetime',
+    duration: 'datetime',
+    object: 'object',
+    json: 'object',
+    xml: 'object',
+    enum: 'object',
+    geometry: 'object',
+    binary: 'binary',
+    blob: 'binary',
+    image: 'binary',
+}
+
 export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     switch (typeof value) {
         case 'string': return 'string';
@@ -163,26 +196,8 @@ export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     }
 }
 
-export const toBaseType = (subType: ColumnDataType): ColumnBaseType => {
-    if (columnStringTypes.includes(subType as any)) {
-        return 'string';
-    }
-    if (columnNumberTypes.includes(subType as any)) {
-        return 'number';
-    }
-    if (columnBooleanTypes.includes(subType as any)) {
-        return 'boolean';
-    }
-    if (columnDateTimeTypes.includes(subType as any)) {
-        return 'datetime';
-    }
-    if (columnObjectTypes.includes(subType as any)) {
-        return 'object';
-    }
-    if (columnBinaryTypes.includes(subType as any)) {
-        return 'binary';
-    }
-    return subType as ColumnBaseType;
+export const toBaseType = (dataType: ColumnDataType): ColumnBaseType => {
+    return dataTypeToBaseType[dataType];
 }
 
 /**
@@ -295,11 +310,11 @@ export const resolveDataTypeFromString = (value: string | null | undefined): Col
  * jakiejś puli wartości w danej kolumnie.
  * Korzysta z mapy subTypeToGeneralType, aby sprowadzić subtypy do ogólnych typów.
  */
-export function getMostGeneralType(subTypes: ColumnDataType[]): ColumnDataType {
-    if (!subTypes.length) return 'object'; // Jeśli brak subtypów, zwróć 'object'
+export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType {
+    if (!dataTypes.length) return 'string'; // Jeśli brak subtypów, zwróć 'string'
 
     // Mapuj subtypy do typów ogólnych
-    const mapped = subTypes.map(t => subTypeToGeneralType[t] ?? t);
+    const mapped = dataTypes.map(t => dataTypeToGeneralType[t] ?? t);
 
     // Jeśli wszystkie ogólne typy są identyczne, zwróć ten typ
     const firstGeneral = mapped[0];
@@ -319,8 +334,8 @@ export function getMostGeneralType(subTypes: ColumnDataType[]): ColumnDataType {
         }
     }
 
-    // Fallback: jeśli nic nie pasuje, zwróć 'object'
-    return 'object';
+    // Fallback: jeśli nic nie pasuje, zwróć 'string'
+    return 'string';
 }
 
 function formatDecimalWithThousandsSeparator(value: Decimal): string {
@@ -365,7 +380,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             if (dataType === 'bigint' || typeof value === 'bigint') {
                 return value.toString();
             }
-            return Number(value).toString();
+            return formatDecimalWithThousandsSeparator(new Decimal(value));
         case 'boolean':
             if (dataType === 'bit') {
                 return value ? '1' : '0';
