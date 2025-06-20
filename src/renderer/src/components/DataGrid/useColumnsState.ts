@@ -162,9 +162,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
             );
         });
 
-        if (hasRelevantChanges) {
-            setstateChanged((prev) => !prev);
-        }
+        setstateChanged(hasRelevantChanges);
 
         prevColumnsStateRef.current = columnsState;
     }, [columnsState]);

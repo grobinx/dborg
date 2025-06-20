@@ -757,10 +757,10 @@ export const DataGrid = <T extends object>({
 
     // Resetuj stan przy zmianie dataState
     useEffect(() => {
-        if (mode === "data") {
+        if (mode === "data" && columnsState.stateChanged) {
             setAdjustWidthExecuted(false);
         }
-    }, [dataState]);
+    }, [dataState, columnsState.stateChanged]);
 
     useEffect(() => {
         const container = containerRef.current;
