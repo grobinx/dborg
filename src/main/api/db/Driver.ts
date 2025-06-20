@@ -202,6 +202,7 @@ export abstract class Driver implements api.Driver {
             properties: properties,
             implements: this.getImplementsMethods(),
             passwordProperty: properties.flatMap(group => group.properties).find(property => property.type === "password")?.name,
+            poolProperty: properties.flatMap(group => group.properties).find(property => property.flags?.includes("pool"))?.name,
         }
     }
 

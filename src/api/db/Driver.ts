@@ -117,6 +117,13 @@ export type PropertyTypeSelectOption = {
 export type PropertyType = 'string' | "password" | 'number' | 'boolean' | "file" | "text" | PropertyTypeSelectOption[];
 
 /**
+ * Specjal property flags.
+ * * pool - is pool logical property
+ */
+export type PropertyFlag = 'pool';
+export type PropertyFlags = PropertyFlag[];
+
+/**
  * Property info for settings, connection, others, for display and schema configuration
  */
 export type PropertyInfo = {
@@ -146,6 +153,11 @@ export type PropertyInfo = {
      * Default value for property
      */
     default?: string
+    /**
+     * Property flags
+     * @see PropertyFlag
+     */
+    flags?: PropertyFlags;
 }
 
 /**
@@ -466,6 +478,7 @@ export interface DriverInfo {
     properties: PropertiesInfo;
     implements: ConnectionImplementsMethods;
     passwordProperty?: string;
+    poolProperty?: string;
 }
 
 /**

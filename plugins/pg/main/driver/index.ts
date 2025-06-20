@@ -692,7 +692,7 @@ export class Driver extends driver.Driver {
                 title: "Pool",
                 description: "Enable connection pooling. Set specific properties.",
                 properties: [
-                    { name: "driver:pool", title: "Pool connections", type: "boolean", description: "Turn on connection pooling" },
+                    { name: "driver:pool", title: "Pool connections", type: "boolean", description: "Turn on connection pooling", flags: ["pool"] },
                     { name: "connectionTimeoutMillis", title: "Connection timeout (ms)", type: "number", description: "Number of milliseconds to wait before timing out when connecting a new client by default this is 0 which means no timeout" },
                     { name: "idleTimeoutMillis", title: "Idle timout (ms)", type: "number", description: "Number of milliseconds a client must sit idle in the pool and not be checked out before it is disconnected from the backend and discarded default is 10000 (10 seconds) - set to 0 to disable auto-disconnection of idle clients" },
                     { name: "max", title: "Max connections", type: "number", description: "Maximum number of clients the pool should contain by default this is set to 10." },
