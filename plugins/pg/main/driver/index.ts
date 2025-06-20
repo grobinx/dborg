@@ -29,7 +29,7 @@ const driver_fetch_record_count = "driver:fetch_record_count";
 const driver_fetch_record_count_default = 100;
 
 const driver_max_statement_rows = "driver:max_statement_rows";
-const driver_max_statement_rows_default = 10000;
+const driver_max_statement_rows_default = 1000;
 
 const application_name_default = "DBorg for PostgreSQL";
 

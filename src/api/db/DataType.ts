@@ -377,7 +377,10 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             if (dataType === 'money') {
                 return Number(value).toLocaleString(undefined, { style: 'currency', });
             }
-            if (dataType === 'bigint' || typeof value === 'bigint') {
+            if (dataType === 'bigint') {
+                return value.toString();
+            }
+            if (dataType === 'int') {
                 return value.toString();
             }
             return formatDecimalWithThousandsSeparator(new Decimal(value));
