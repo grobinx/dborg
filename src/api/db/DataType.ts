@@ -391,7 +391,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
             if (typeof value === 'boolean') {
                 return value ? 'true' : 'false';
             }
-            return String(value).toLowerCase() === 'true' ? 'true' : 'false';
+            return String(value);
         case 'datetime':
             if (value instanceof Date) {
                 if (dataType === 'date') {
