@@ -186,10 +186,12 @@ export const dataTypeToBaseType: Record<ColumnDataType, ColumnBaseType> = {
 
 export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
     switch (typeof value) {
+        case 'symbol':
         case 'string': return 'string';
         case 'number': return 'number';
         case 'bigint': return 'bigint';
         case 'boolean': return 'boolean';
+        case 'function': 
         case 'object': return 'object';
         case 'undefined': return null;
         default: return null;
@@ -434,10 +436,8 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
                 }
                 return String(value);
             } else if (dataType === 'xml') {
-                // zakładamy, że value jest poprawnym XML-em
                 return value.toString();
             } else if (dataType === 'enum') {
-                // zakładamy, że value jest obiektem enum
                 return JSON.stringify(value);
             } else if (dataType === 'geometry') {
                 if (typeof value === 'object') {
