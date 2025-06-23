@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './app/App';
 import './i18n';
@@ -15,13 +15,26 @@ import { ApplicationProvider } from './contexts/ApplicationContext';
 import { PluginManagerProvider } from './contexts/PluginManagerContext';
 import { ErrorBoundaryWrapper } from './contexts/ErrorBoundary';
 import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
+import SplashScreen from './SplashScreen';
 
 const AppWrapper: React.FC = () => {
-    const settingsContext = useContext(SettingsContext);
+    const settingsContext = React.useContext(SettingsContext);
+    const [pause, setPause] = React.useState(true);
 
-    if (!settingsContext || settingsContext.isLoading) {
+    useEffect(() => {
+        setTimeout(() => {
+            // Ustawienie pauzy na false po załadowaniu ustawień
+            setPause(false);
+        }, 5000);
+    }, [settingsContext.isLoading]);
+
+    if (!settingsContext || settingsContext.isLoading || pause) {
         // Wyświetl ekran ładowania, dopóki ustawienia nie zostaną załadowane
-        return <div>Loading...</div>;
+        return (
+            <ThemeWrapper>
+                <SplashScreen />
+            </ThemeWrapper>
+        );
     }
 
     return (

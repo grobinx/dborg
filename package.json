@@ -4,7 +4,7 @@
   "description": "DBORG - Database Organizer",
   "main": "./out/main/index.js",
   "author": "Andrzej Kałuża",
-  "homepage": "https://electron-vite.org",
+  "homepage": "https://github.com/grobinx/dborg",
   "license": "MIT",
   "productName": "DBORG",
   "build": {
