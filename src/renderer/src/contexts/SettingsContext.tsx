@@ -13,13 +13,15 @@ interface SettingsContextType {
     updateSettings: <T extends TSettings>(name: string, newSettings: T) => Promise<void>;
     getSettings: <T extends TSettings>(name: string) => T | undefined;
     settings: Record<string, TSettings>;
+    isLoading: boolean;
 }
 
 // Domyślna wartość kontekstu
-const SettingsContext = createContext<SettingsContextType>({
+export const SettingsContext = createContext<SettingsContextType>({
     updateSettings: async () => {},
     getSettings: () => undefined,
     settings: {},
+    isLoading: false,
 });
 
 // Mechanizm debouncing dla zapisu ustawień
@@ -120,6 +122,7 @@ export const useSettings = <T extends TSettings>(
 // Provider kontekstu ustawień
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [settings, setSettings] = useState<Record<string, TSettings>>({});
+    const [isLoading, setIsLoading] = useState(true);
 
     // Funkcja do odczytu ustawień z plików
     const loadSettings = async () => {
@@ -131,6 +134,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             } catch (error) {
                 console.error(`Nie udało się odczytać ustawień z pliku: ${name}`, error);
                 loadedSettings[name] = SETTINGS_NAMES[name]; // Użyj domyślnych ustawień w przypadku błędu
+            } finally {
+                setIsLoading(false);
             }
         }
         setSettings(loadedSettings);
@@ -183,7 +188,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ updateSettings, getSettings, settings }}>
+        <SettingsContext.Provider value={{ updateSettings, getSettings, settings, isLoading }}>
             {children}
         </SettingsContext.Provider>
     );
