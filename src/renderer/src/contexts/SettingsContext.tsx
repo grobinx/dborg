@@ -134,10 +134,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             } catch (error) {
                 console.error(`Nie udało się odczytać ustawień z pliku: ${name}`, error);
                 loadedSettings[name] = SETTINGS_NAMES[name]; // Użyj domyślnych ustawień w przypadku błędu
-            } finally {
-                setIsLoading(false);
             }
         }
+        setIsLoading(false);
         setSettings(loadedSettings);
     };
 
