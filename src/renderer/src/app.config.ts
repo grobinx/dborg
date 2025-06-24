@@ -34,6 +34,7 @@ export interface DborgSettings extends TSettings {
     data_grid: {
         null_value: string;
         colors_enabled: boolean;
+        max_value_length: number;
     }
 }
 
@@ -53,6 +54,7 @@ const notification_timeout = 5000;
 const remove_notification_timeout = 3600000; // 1 hour
 const notification_check_interval = 30000; // 30 seconds
 const store_settings_timeout = 1000; // 1 second
+const data_grid_max_value_length = 2000; // Maximum length of display data grid value
 
 export const default_settings: ApplicationSettings = {
     app: {
@@ -67,6 +69,7 @@ export const default_settings: ApplicationSettings = {
         data_grid: {
             null_value: '{null}',
             colors_enabled: true,
+            max_value_length: data_grid_max_value_length,
         },
     },
     ui: {

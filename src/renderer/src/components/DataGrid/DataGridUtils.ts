@@ -6,7 +6,7 @@ import Decimal from "decimal.js";
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 
-export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string) => {
+export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string, maxLength: number) => {
     const nullFormatter = (value: any) => {
         if (value === null || value === undefined) {
             return nullValue || "NULL";
@@ -14,7 +14,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (React.isValidElement(value)) {
             return value; 
         }
-        let str = api.valueToString(value, column.dataType ?? 'string');
+        let str = api.valueToString(value, column.dataType ?? 'string', maxLength);
         if (typeof str === 'string' && /[\r\n]/.test(str)) {
             str = str.replace(/[\r\n]+/g, " ");
         }

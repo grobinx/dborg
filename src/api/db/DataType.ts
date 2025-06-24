@@ -344,10 +344,35 @@ export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType 
 const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
 const MAX_CACHE_SIZE = 1000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadzą 100 MB
 
-export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: string): string => {
+export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: number): string => {
     // Obsługa wartości null/undefined
     if (value === null || value === undefined) {
-        return nullValue ?? '';
+        return '';
+    }
+
+    if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
+        value = value.substring(0, maxLength);
+    }
+
+    // Obsługa tablic
+    if (Array.isArray(value)) {
+        let formattedArray = '[';
+        let currentLength = formattedArray.length;
+
+        for (let i = 0; i < value.length; i++) {
+            const itemString = valueToString(value[i], dataType, maxLength);
+            currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
+
+            if (maxLength !== undefined && currentLength > maxLength) {
+                formattedArray += '...'; // Dodaj wielokropek, jeśli przekroczono limit
+                break;
+            }
+
+            formattedArray += (i > 0 ? ', ' : '') + itemString;
+        }
+
+        formattedArray += ']';
+        return formattedArray;
     }
 
     // Generowanie klucza dla cache
@@ -359,12 +384,6 @@ export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: 
         return cachedValue;
     }
 
-    // Obsługa tablic
-    if (Array.isArray(value)) {
-        const formattedArray = '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
-        cache.set(cacheKey, formattedArray);
-        return formattedArray;
-    }
 
     // Obsługa typów bazowych
     const baseType = toBaseType(dataType);

@@ -36,7 +36,7 @@ export const AdjustWidthToData = (): ActionDescriptor<DataGridActionContext<any>
                 const data = context.getData(row);
                 for (let column = 0; column < columns.length; column++) {
                     const columnDefinition = columns[column];
-                    const value = valueToString(data[columnDefinition.key], columnDefinition.dataType);
+                    const value = valueToString(data[columnDefinition.key], columnDefinition.dataType, 1000);
                     if (value !== undefined && value !== null) {
                         const width = context.getTextWidth(value.toString());
                         if (width) {

@@ -1091,7 +1091,7 @@ export const DataGrid = <T extends object>({
                                         dataType = "null";
                                     }
 
-                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value);
+                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value, settings.data_grid.max_value_length);
                                     if (typeof formattedValue === "string") {
                                         formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                     }
