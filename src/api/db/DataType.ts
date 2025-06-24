@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import { DateTime, Duration } from "luxon";
+import SparkMD5 from 'spark-md5';
 
 export type ColumnBaseType =
     'string'
@@ -191,7 +192,7 @@ export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
         case 'number': return 'number';
         case 'bigint': return 'bigint';
         case 'boolean': return 'boolean';
-        case 'function': 
+        case 'function':
         case 'object': return 'object';
         case 'undefined': return null;
         default: return null;
@@ -340,116 +341,151 @@ export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType 
     return 'string';
 }
 
-function formatDecimalWithThousandsSeparator(value: Decimal): string {
-    const [intPart, fracPart] = value.toString().split(".");
-
-    // Pobierz przykładowy sformatowany string
-    const sample = (1000000.1).toLocaleString();
-
-    // Wyodrębnij separator tysięcy i dziesiętny
-    const match = sample.match(/1(.?)000(.?)000(.?)1/);
-    const thousandSeparator = match ? match[1] : ",";
-    const decimalSeparator = match ? match[3] : ".";
-
-    // Sformatuj część całkowitą ręcznie (dla dużych liczb)
-    const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
-
-    return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
-}
+const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
+const MAX_CACHE_SIZE = 1000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadzą 100 MB
 
 export const valueToString = (value: any, dataType: ColumnDataType, nullValue?: string): string => {
+    // Obsługa wartości null/undefined
     if (value === null || value === undefined) {
         return nullValue ?? '';
     }
 
-    if (Array.isArray(value)) {
-        return '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
+    // Generowanie klucza dla cache
+    const cacheKey = `${generateHash(value)}-${dataType}`;
+    if (cache.has(cacheKey)) {
+        const cachedValue = cache.get(cacheKey)!;
+        cache.delete(cacheKey); // Usuń klucz z obecnej pozycji
+        cache.set(cacheKey, cachedValue); // Dodaj klucz na koniec
+        return cachedValue;
     }
 
-    switch (toBaseType(dataType)) {
-        case 'string':
-            return String(value);
-        case 'number':
-            if (dataType === 'decimal') {
-                if (value instanceof Decimal) {
-                    return formatDecimalWithThousandsSeparator(value);
-                }
-                return formatDecimalWithThousandsSeparator(new Decimal(value));
-            }
-            if (dataType === 'money') {
-                return Number(value).toLocaleString(undefined, { style: 'currency', });
-            }
-            if (dataType === 'bigint') {
-                return value.toString();
-            }
-            if (dataType === 'int') {
-                return value.toString();
-            }
-            return formatDecimalWithThousandsSeparator(new Decimal(value));
-        case 'boolean':
-            if (dataType === 'bit') {
-                return value ? '1' : '0';
-            }
-            if (typeof value === 'boolean') {
-                return value ? 'true' : 'false';
-            }
-            return String(value);
-        case 'datetime':
-            if (value instanceof Date) {
-                if (dataType === 'date') {
-                    return DateTime.fromJSDate(value).toISODate() ?? '';
-                } else if (dataType === 'time') {
-                    return DateTime.fromJSDate(value).toFormat('HH:mm:ss') ?? '';
-                }
-                return DateTime.fromJSDate(value).toSQL() ?? '';
-            } else if (typeof value === 'number' || typeof value === 'bigint') {
-                if (dataType === 'date') {
-                    return DateTime.fromMillis(Number(value)).toISODate() ?? '';
-                } else if (dataType === 'time') {
-                    return DateTime.fromMillis(Number(value)).toFormat('HH:mm:ss') ?? '';
-                } else if (dataType === 'duration') {
-                    if (typeof value === 'object') {
-                        return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-                    } else if (typeof value === 'number' || typeof value === 'bigint') {
-                        return Duration.fromMillis(Number(value)).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-                    } else if (typeof value === 'string') {
-                        return Duration.fromISO(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-                    }
-                    return DateTime.fromMillis(Number(value)).toSQL() ?? '';
-                }
-                return value.toString();
-            } else if (typeof value === 'object') {
-                if (dataType === 'date') {
-                    return DateTime.fromObject(value).toISODate() ?? '';
-                } else if (dataType === 'time') {
-                    return DateTime.fromObject(value).toFormat('HH:mm:ss') ?? '';
-                } else if (dataType === 'duration') {
-                    return Duration.fromObject(value).toFormat('hhhh-MM-dd hh:mm:ss SSS');
-                }
-                return DateTime.fromObject(value).toISODate() ?? '';
-            }
-            return String(value);
-        case 'object':
-            if (dataType === 'json') {
-                if (typeof value === 'object') {
-                    return JSON.stringify(value);
-                }
-                return String(value);
-            } else if (dataType === 'xml') {
-                return value.toString();
-            } else if (dataType === 'enum') {
-                return JSON.stringify(value);
-            } else if (dataType === 'geometry') {
-                if (typeof value === 'object') {
-                    // zakładamy, że value jest obiektem geojson
-                    return JSON.stringify(value);
-                }
-                return String(value);
-            }
-            return JSON.stringify(value);
-        case 'binary':
-            return value instanceof Blob ? URL.createObjectURL(value) : String(value);
-        default:
-            return String(value);
+    // Obsługa tablic
+    if (Array.isArray(value)) {
+        const formattedArray = '[' + value.map(item => valueToString(item, dataType)).join(', ') + ']';
+        cache.set(cacheKey, formattedArray);
+        return formattedArray;
     }
+
+    // Obsługa typów bazowych
+    const baseType = toBaseType(dataType);
+    let formattedValue: string;
+
+    switch (baseType) {
+        case 'string':
+            formattedValue = String(value);
+            break;
+
+        case 'number':
+            formattedValue = formatNumber(value, dataType);
+            break;
+
+        case 'boolean':
+            formattedValue = formatBoolean(value, dataType);
+            break;
+
+        case 'datetime':
+            formattedValue = formatDateTime(value, dataType);
+            break;
+
+        case 'object':
+            formattedValue = formatObject(value, dataType);
+            break;
+
+        case 'binary':
+            formattedValue = formatBinary(value);
+            break;
+
+        default:
+            formattedValue = String(value);
+    }
+
+    // Dodanie do cache
+    cache.set(cacheKey, formattedValue);
+    if (cache.size > MAX_CACHE_SIZE) {
+        const oldestKey = cache.keys().next().value;
+        cache.delete(oldestKey!);
+    }
+
+    return formattedValue;
+};
+
+// Funkcja pomocnicza do formatowania liczb
+const formatNumber = (value: any, dataType: ColumnDataType): string => {
+    if (dataType === 'decimal') {
+        return value instanceof Decimal
+            ? formatDecimalWithThousandsSeparator(value)
+            : formatDecimalWithThousandsSeparator(new Decimal(value));
+    }
+    if (dataType === 'money') {
+        return Number(value).toLocaleString(undefined, { style: 'currency' });
+    }
+    return value.toString();
+};
+
+// Funkcja pomocnicza do formatowania wartości boolean
+const formatBoolean = (value: any, dataType: ColumnDataType): string => {
+    if (dataType === 'bit') {
+        return value ? '1' : '0';
+    }
+    return value ? 'true' : 'false';
+};
+
+// Funkcja pomocnicza do formatowania daty/czasu
+const formatDateTime = (value: any, dataType: ColumnDataType): string => {
+    const dateTime = value instanceof Date
+        ? DateTime.fromJSDate(value)
+        : typeof value === 'number' || typeof value === 'bigint'
+            ? DateTime.fromMillis(Number(value))
+            : DateTime.fromObject(value);
+
+    if (dataType === 'date') {
+        return dateTime.toISODate() ?? '';
+    }
+    if (dataType === 'time') {
+        return dateTime.toFormat('HH:mm:ss') ?? '';
+    }
+    if (dataType === 'duration') {
+        const duration = Duration.fromObject(value);
+        if (duration.as('hours') >= 24) {
+            return duration.toFormat("yyyy-MM-dd hh:mm:ss") ?? '';
+        }
+        return duration.toFormat('hh:mm:ss') ?? '';
+    }
+    return dateTime.toSQL() ?? '';
+};
+
+// Funkcja pomocnicza do formatowania obiektów
+const formatObject = (value: any, dataType: ColumnDataType): string => {
+    if (dataType === 'json') {
+        return JSON.stringify(value);
+    }
+    if (dataType === 'xml' || dataType === 'enum' || dataType === 'geometry') {
+        return String(value);
+    }
+    return JSON.stringify(value);
+};
+
+// Funkcja pomocnicza do formatowania danych binarnych
+const formatBinary = (value: any): string => {
+    return value instanceof Blob ? URL.createObjectURL(value) : String(value);
+};
+
+// Funkcja pomocnicza do formatowania liczb z separatorami
+function formatDecimalWithThousandsSeparator(value: Decimal): string {
+    const [intPart, fracPart] = value.toString().split(".");
+    const sample = (1000000.1).toLocaleString();
+    const match = sample.match(/1(.?)000(.?)000(.?)1/);
+    const thousandSeparator = match ? match[1] : ",";
+    const decimalSeparator = match ? match[3] : ".";
+    const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+    return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
+}
+
+// Funkcja pomocnicza do generowania haszy
+const generateHash = (value: any): string => {
+    // tak, wiem, że im większy zbiór danych tym większe prawdopodobieństwo kolizji, ale dla małych danych nie powinno być problemu
+    // dla mnie małe dane to maksymalnie 100 000 bajtów, większych nie ma sensu wyświetlać w tabeli
+    // większe dane powinno się wykluczyć z wyświetlania
+    const stringifiedValue = typeof value === 'string' ? value : JSON.stringify(value);
+    return SparkMD5.hash(stringifiedValue);
 };

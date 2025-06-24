@@ -15,7 +15,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
             return value; 
         }
         let str = api.valueToString(value, column.dataType ?? 'string');
-        if (/[\r\n]/.test(str)) {
+        if (typeof str === 'string' && /[\r\n]/.test(str)) {
             str = str.replace(/[\r\n]+/g, " ");
         }
         return str;
