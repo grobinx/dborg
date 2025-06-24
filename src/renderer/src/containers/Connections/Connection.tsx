@@ -221,7 +221,6 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
 export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
     const theme = useTheme();
     const [executingFromList, setExecutingFromList] = React.useState<string[]>([]); // Lista message.from
-    const [showLoading, setShowLoading] = React.useState(false); // Stan dla opóźnionego efektu ładowania
     const { subscribe, unsubscribe } = useMessages();
 
     React.useEffect(() => {
@@ -248,30 +247,9 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
         };
     }, [session.info.uniqueId]);
 
-    React.useEffect(() => {
-        let timeout: NodeJS.Timeout | null = null;
-
-        if (executingFromList.length > 0) {
-            timeout = setTimeout(() => {
-                setShowLoading(true); // Pokaż efekt ładowania po 1000 ms
-            }, 1000);
-        } else {
-            setShowLoading(false); // Ukryj efekt ładowania natychmiast, gdy lista jest pusta
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        }
-
-        return () => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        };
-    }, [executingFromList]);
-
     return (
         <TabPanelLabel>
-            {showLoading ? (
+            {executingFromList.length > 0 ? (
                 <>
                     <theme.icons.Loading key="icon" />
                     {executingFromList.length > 1 && <UnboundBadge key="badge" content={executingFromList.length} size="small" />}

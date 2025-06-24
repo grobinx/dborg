@@ -241,7 +241,7 @@ const StyledCell = styled("div", {
 
         return {
             overflow: "hidden",
-            whiteSpace: "nowrap",
+            whiteSpace: "pre",
             textOverflow: "ellipsis",
             position: "absolute",
             userSelect: "none", // Wyłączenie zaznaczania tekstu

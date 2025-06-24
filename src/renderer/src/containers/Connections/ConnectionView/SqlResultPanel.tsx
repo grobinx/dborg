@@ -347,7 +347,6 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
     const [tabsLength, setTabsLength] = React.useState<number | null>(null); // Domyślnie 1 zakładka
     const [active, setActive] = React.useState(false);
     const [executing, setExecuting] = React.useState(false); // Dodano stan dla wykonywania zapytania
-    const [showLoading, setShowLoading] = React.useState(false); // Stan dla opóźnionego efektu ładowania
     const [highlight, setHighlight] = React.useState(false); // Stan dla zmiany koloru
 
     React.useEffect(() => {
@@ -390,30 +389,9 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
         };
     }, [tabsItemID, itemID, active]);
 
-    React.useEffect(() => {
-        let timeout: NodeJS.Timeout | null = null;
-
-        if (executing) {
-            timeout = setTimeout(() => {
-                setShowLoading(true); // Pokaż efekt ładowania po 1000 ms
-            }, 1000);
-        } else {
-            setShowLoading(false); // Ukryj efekt ładowania natychmiast, gdy zapytanie się zakończy
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        }
-
-        return () => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        };
-    }, [executing]);
-
     return (
         <TabPanelLabel>
-            {showLoading ? (
+            {executing ? (
                 <theme.icons.Loading /> // Wyświetl ikonę Loading po opóźnieniu
             ) : (
                 <theme.icons.DatabaseTables /> // Wyświetl domyślną ikonę, gdy nie ma ładowania

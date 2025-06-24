@@ -11,7 +11,14 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (value === null || value === undefined) {
             return nullValue || "NULL";
         }
-        return React.isValidElement(value) ? value : api.valueToString(value, column.dataType ?? 'string');
+        if (React.isValidElement(value)) {
+            return value; 
+        }
+        let str = api.valueToString(value, column.dataType ?? 'string');
+        if (/[\r\n]/.test(str)) {
+            str = str.replace(/[\r\n]+/g, " ");
+        }
+        return str;
     };
 
     if (column.formatter) {
