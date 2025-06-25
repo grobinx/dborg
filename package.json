@@ -5,7 +5,7 @@
   "main": "./out/main/index.js",
   "author": "Andrzej Kałuża",
   "homepage": "https://github.com/grobinx/dborg",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "productName": "DBORG",
   "build": {
     "productName": "DBORG",
