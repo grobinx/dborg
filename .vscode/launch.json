@@ -25,12 +25,19 @@
       "presentation": {
         "hidden": true
       }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Update consts",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/scripts/updateConsts.js"
     }
   ],
   "compounds": [
     {
       "name": "Debug All",
-      "configurations": ["Debug Main Process", "Debug Renderer Process"],
+      "configurations": ["Update consts", "Debug Main Process", "Debug Renderer Process"],
       "presentation": {
         "order": 1
       }

@@ -3,7 +3,7 @@ import logo from '../../../resources/dborg.png';
 import splashBackground from '../../../resources/splash-background.svg';
 import { useTranslation } from 'react-i18next';
 import dborgPackage from '../../../package.json';
-import { dborgDuration, version } from '../../../src/api/consts';
+import { dborgDate, dborgDuration, dborgReleaseName, version } from '../../../src/api/consts';
 
 const SplashScreen: React.FC = () => {
     const { t } = useTranslation();
@@ -65,11 +65,13 @@ const SplashScreen: React.FC = () => {
                 boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)',
                 zIndex: 2
             }}>
-                <p><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</p>
                 <p><strong>{t('description-dd', 'Description:')}</strong> {dborgPackage.description}</p>
+                <p><strong>{t('release-dd', 'Release:')}</strong> {dborgReleaseName}</p>
+                <p><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</p>
                 <p><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</p>
                 <p><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></p>
                 <p><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</p>
+                <p><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</p>
                 <p><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</p>
             </div>
         </div>
