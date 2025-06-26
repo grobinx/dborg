@@ -137,7 +137,7 @@ export const dataTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
     money: 'decimal',
     int: 'bigint',
     boolean: 'boolean',
-    bit: 'boolean',
+    bit: 'string',
     datetime: 'datetime',
     date: 'datetime',
     time: 'datetime',
@@ -170,7 +170,7 @@ export const dataTypeToBaseType: Record<ColumnDataType, ColumnBaseType> = {
     money: 'number',
     int: 'number',
     boolean: 'boolean',
-    bit: 'boolean',
+    bit: 'string',
     datetime: 'datetime',
     date: 'datetime',
     time: 'datetime',
@@ -443,10 +443,10 @@ const formatNumber = (value: any, dataType: ColumnDataType): string => {
 
 // Funkcja pomocnicza do formatowania wartości boolean
 const formatBoolean = (value: any, dataType: ColumnDataType): string => {
-    if (dataType === 'bit') {
-        return value ? '1' : '0';
+    if (typeof value === 'boolean') {
+        return value ? 'true' : 'false';
     }
-    return value ? 'true' : 'false';
+    return String(value);
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
