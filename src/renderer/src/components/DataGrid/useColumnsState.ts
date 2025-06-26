@@ -2,27 +2,20 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
-import { ColumnBaseType, ColumnDataType } from "src/api/db";
+import { ColumnBaseType, ColumnDataType, generateHash } from "../../../../../src/api/db";
 
 interface UseColumnsState {
     current: ColumnDefinition[];
     totalWidth: number;
+    /** zmienił się kolumny, typ danych lub sortDirection */
     stateChanged: boolean;
+    layoutChanged: boolean;
     sortColumn: (columnIndex: number) => void;
     resetColumns: () => void;
     moveColumn: (fromIndex: number, toIndex: number) => void;
     updateColumn: (columnIndex: number, updatedValues: Partial<ColumnDefinition>) => void;
     resetSorting: () => void;
     columnLeft: (columnIndex: number) => number;
-}
-
-// Funkcja do haszowania łańcuchów
-function hashString(str: string): string {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        hash = (hash * 33) ^ str.charCodeAt(i);
-    }
-    return (hash >>> 0).toString(36);
 }
 
 // Pomocnicza funkcja do generowania klucza układu
@@ -34,7 +27,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): 
         })
         .map((col) => `${col.key}:${col.dataType}`)
         .join("|");
-    return "datagrid-layout-" + hashString(keyString + (autoSaveId ? "|" + autoSaveId : ""));
+    return "datagrid-layout-" + generateHash(keyString + (autoSaveId ? "|" + autoSaveId : ""));
 }
 
 // Zapisz tylko szerokość, kolejność i datę modyfikacji
@@ -126,7 +119,11 @@ function cleanupOldColumnLayouts() {
     }
 }
 
-export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGridMode, autoSaveId?: string): UseColumnsState => {
+export const useColumnsState = (
+    initialColumns: ColumnDefinition[],
+    mode: DataGridMode,
+    autoSaveId?: string
+): UseColumnsState => {
     const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
         restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
@@ -136,6 +133,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
     );
     const prevColumnsStateRef = useRef<ColumnDefinition[]>(columnsState);
     const [stateChanged, setstateChanged] = useState(false);
+    const [layoutChanged, setLayoutChanged] = useState(false);
 
     // Zapisuj układ przy każdej zmianie columnsState
     useEffect(() => {
@@ -145,7 +143,9 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
                 initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
             )
         ) {
-            saveColumnsLayout(columnsState, layoutKey, mode === "data");
+            if (columnsState.length > 0) {
+                saveColumnsLayout(columnsState, layoutKey, mode === "data");
+            }
         }
     }, [columnsState, layoutKey, initialColumns, mode]);
 
@@ -162,7 +162,9 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
             );
         });
 
-        setstateChanged(hasRelevantChanges);
+        if (hasRelevantChanges) {
+            setstateChanged(prew => !prew);
+        }
 
         prevColumnsStateRef.current = columnsState;
     }, [columnsState]);
@@ -180,10 +182,14 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
             initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
             setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data"));
+            setLayoutChanged(true);
+        }
+        else {
+            setLayoutChanged(false);
         }
     }, [initialColumns, layoutKey, mode]);
 
-    // Funkcja do sortowania kolumn
+    // Funkcje operacyjne na kolumnach
     const sortColumn = (columnIndex: number) => {
         setColumnsState((prevColumns) =>
             produce(prevColumns, (draft) => {
@@ -278,6 +284,7 @@ export const useColumnsState = (initialColumns: ColumnDefinition[], mode: DataGr
         current: columnsState,
         totalWidth,
         stateChanged,
+        layoutChanged,
         sortColumn,
         resetColumns,
         moveColumn,

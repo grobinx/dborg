@@ -148,14 +148,15 @@ export const calculateSummary = (
     const summary: Record<string, ColumnDataValueType> = {};
 
     columnsState.forEach((col) => {
-        const baseType = api.toBaseType(col.dataType);
-        const values = data.map((row) => row[col.key]);
         const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
 
         if (!columnOperation) {
             summary[col.key] = null; // Skip if no operation is defined for the column
             return;
         }
+        
+        const baseType = api.toBaseType(col.dataType);
+        const values = data.map((row) => row[col.key]);
 
         if (baseType === 'number') {
             const numericValues = values.map((value) => Decimal(value));

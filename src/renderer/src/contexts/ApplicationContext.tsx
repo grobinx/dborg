@@ -14,6 +14,7 @@ import { RefreshMetadata, TabPanelChangedMessage } from '@renderer/app/Messages'
 import { useNotification } from './NotificationContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
+import About from '@renderer/About';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -154,6 +155,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             icon: <theme.icons.Settings />,
             label: t("settings", "Settings"),
             section: "last",
+            container: () => <About />
         },
     ]);
 

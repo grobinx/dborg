@@ -501,10 +501,7 @@ function formatDecimalWithThousandsSeparator(value: Decimal): string {
 }
 
 // Funkcja pomocnicza do generowania haszy
-const generateHash = (value: any): string => {
-    // tak, wiem, że im większy zbiór danych tym większe prawdopodobieństwo kolizji, ale dla małych danych nie powinno być problemu
-    // dla mnie małe dane to maksymalnie 100 000 bajtów, większych nie ma sensu wyświetlać w tabeli
-    // większe dane powinno się wykluczyć z wyświetlania
+export const generateHash = (value: any): string => {
     const stringifiedValue = typeof value === 'string' ? value : JSON.stringify(value);
     return SparkMD5.hash(stringifiedValue);
 };

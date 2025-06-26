@@ -425,10 +425,10 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         setDataState(data);
         setSummaryRow({});
-        setSummaryOperation(null);
-        setFooterVisible(false);
         setSelectedRows([]);
         setSelectedCell(null);
+        setSummaryOperation(null);
+        setFooterVisible(false);
         searchState.resetSearch();
     }, [columns, data])
 
@@ -757,10 +757,10 @@ export const DataGrid = <T extends object>({
 
     // Resetuj stan przy zmianie dataState
     useEffect(() => {
-        if (mode === "data" && columnsState.stateChanged) {
+        if (mode === "data" && columnsState.layoutChanged) {
             setAdjustWidthExecuted(false);
         }
-    }, [dataState, columnsState.stateChanged]);
+    }, [dataState, columnsState.layoutChanged]);
 
     useEffect(() => {
         const container = containerRef.current;

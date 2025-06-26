@@ -1,15 +1,13 @@
 const fs = require('fs');
+const { DateTime } = require('luxon');
 const path = require('path');
 
 // Ścieżka do pliku consts.ts
 const constsPath = path.join(__dirname, '../src/api/consts.ts');
 
 // Pobierz aktualną datę i czas
-const currentDate = new Date();
-const nowStrSplit = currentDate.toISOString().split('T');
-const formattedDate = nowStrSplit[0]; // Format: YYYY-MM-DD
-const formattedTime = nowStrSplit[1].split('.')[0]; // Format: HH:MM:SS
-const formattedDateTime = `${formattedDate} ${formattedTime}`; // Format: YYYY-MM-DD HH:MM:SS
+const currentDate = DateTime.now();
+const formattedDateTime = currentDate.toFormat('yyyy-MM-dd HH:mm:ss');
 
 // Funkcja aktualizująca wersję i datę
 function updateConstsFile() {

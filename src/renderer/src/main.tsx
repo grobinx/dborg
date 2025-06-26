@@ -15,7 +15,7 @@ import { ApplicationProvider } from './contexts/ApplicationContext';
 import { PluginManagerProvider } from './contexts/PluginManagerContext';
 import { ErrorBoundaryWrapper } from './contexts/ErrorBoundary';
 import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
-import SplashScreen from './SplashScreen';
+import About from './About';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -32,7 +32,7 @@ const AppWrapper: React.FC = () => {
         // Wyświetl ekran ładowania, dopóki ustawienia nie zostaną załadowane
         return (
             <ThemeWrapper>
-                <SplashScreen />
+                <About loading={true} />
             </ThemeWrapper>
         );
     }
