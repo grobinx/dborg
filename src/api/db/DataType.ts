@@ -342,7 +342,7 @@ export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType 
 }
 
 const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
-const MAX_CACHE_SIZE = 1000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadzą 100 MB
+const MAX_CACHE_SIZE = 2000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadzą 100 MB
 
 export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: number): string => {
     // Obsługa wartości null/undefined
