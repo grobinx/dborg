@@ -35,6 +35,7 @@ export const columnDataTypeClassMap: Record<ColumnBaseType | 'null', string> = {
     boolean: 'data-type-boolean',
     datetime: 'data-type-datetime',
     binary: 'data-type-binary',
+    array: 'data-type-array',
     object: 'data-type-object',
     null: 'data-type-null',
 };

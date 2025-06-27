@@ -7,6 +7,7 @@ export type ColumnBaseType =
     | 'number'
     | 'boolean'
     | 'datetime'
+    | 'array'
     | 'object'
     | 'binary';
 
@@ -15,6 +16,7 @@ const columnBaseTypes: readonly ColumnBaseType[] = [
     "number",
     "boolean",
     "datetime",
+    'array',
     "object",
     "binary"
 ];
@@ -109,17 +111,26 @@ const columnBinaryTypes: readonly ColumnBinaryType[] = [
     "image"
 ];
 
-export type ColumnDataType = ColumnStringType | ColumnNumberType | ColumnBooleanType | ColumnDateTimeType | ColumnObjectType | ColumnBinaryType;
+export type UnionDataType = 
+    ColumnStringType 
+    | ColumnNumberType 
+    | ColumnBooleanType 
+    | ColumnDateTimeType 
+    | ColumnObjectType 
+    | ColumnBinaryType;
+
+export type ColumnDataType = UnionDataType | [UnionDataType];
+
 
 export type ValuePrimitiveType =
     'string'
     | 'number'
     | 'bigint'
     | 'boolean'
-    /** obiekt w tym array */
+    | 'array'
     | 'object';
 
-export const dataTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
+export const dataTypeToGeneralType: Record<UnionDataType, UnionDataType> = {
     string: 'string',
     uuid: 'string',
     email: 'string',
@@ -152,7 +163,7 @@ export const dataTypeToGeneralType: Record<ColumnDataType, ColumnDataType> = {
     image: 'binary',
 }
 
-export const dataTypeToBaseType: Record<ColumnDataType, ColumnBaseType> = {
+export const dataTypeToBaseType: Record<UnionDataType, ColumnBaseType> = {
     string: 'string',
     uuid: 'string',
     email: 'string',
@@ -193,14 +204,26 @@ export const resolvePrimitiveType = (value: any): ValuePrimitiveType | null => {
         case 'bigint': return 'bigint';
         case 'boolean': return 'boolean';
         case 'function':
-        case 'object': return 'object';
+        case 'object': return Array.isArray(value) ? 'array' : 'object';
         case 'undefined': return null;
         default: return null;
     }
 }
 
 export const toBaseType = (dataType: ColumnDataType): ColumnBaseType => {
+    if (Array.isArray(dataType)) {
+        return 'array';
+    }
     return dataTypeToBaseType[dataType];
+}
+
+export const areTypesEqual = (dataType1: ColumnDataType, dataType2: ColumnDataType): boolean => {
+    // Obsługa tablic jednoelementowych
+    const resolvedType1 = Array.isArray(dataType1) ? dataType1[0] : dataType1;
+    const resolvedType2 = Array.isArray(dataType2) ? dataType2[0] : dataType2;
+
+    // Porównanie typów
+    return resolvedType1 === resolvedType2;
 }
 
 /**
@@ -313,7 +336,7 @@ export const resolveDataTypeFromString = (value: string | null | undefined): Col
  * jakiejś puli wartości w danej kolumnie.
  * Korzysta z mapy subTypeToGeneralType, aby sprowadzić subtypy do ogólnych typów.
  */
-export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType {
+export function getMostGeneralType(dataTypes: UnionDataType[]): UnionDataType {
     if (!dataTypes.length) return 'string'; // Jeśli brak subtypów, zwróć 'string'
 
     // Mapuj subtypy do typów ogólnych
@@ -326,7 +349,7 @@ export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType 
     }
 
     // Priorytet typów ogólnych: najbardziej precyzyjne do najbardziej ogólnych
-    const priority: ColumnDataType[] = [
+    const priority: UnionDataType[] = [
         'string', 'decimal', 'number', 'datetime', 'duration', 'boolean', 'object', 'binary'
     ];
 
@@ -342,7 +365,7 @@ export function getMostGeneralType(dataTypes: ColumnDataType[]): ColumnDataType 
 }
 
 const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
-const MAX_CACHE_SIZE = 2000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadzą 100 MB
+const MAX_CACHE_SIZE = 2000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadą 100 MB
 
 export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: number): string => {
     // Obsługa wartości null/undefined
@@ -354,13 +377,15 @@ export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: 
         value = value.substring(0, maxLength);
     }
 
+    dataType = Array.isArray(dataType) ? dataType[0] : dataType; // Obsługa tablicy typów
+
     // Obsługa tablic
     if (Array.isArray(value)) {
         let formattedArray = '[';
         let currentLength = formattedArray.length;
 
         for (let i = 0; i < value.length; i++) {
-            const itemString = valueToString(value[i], dataType, maxLength);
+            const itemString = valueToString(value[i], Array.isArray(dataType) ? dataType[0] : dataType, maxLength);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
             if (maxLength !== undefined && currentLength > maxLength) {

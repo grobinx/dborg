@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
-import { ColumnBaseType, ColumnDataType, generateHash } from "../../../../../src/api/db";
+import { ColumnBaseType, ColumnDataType, generateHash, areTypesEqual } from "../../../../../src/api/db";
 
 interface UseColumnsState {
     current: ColumnDefinition[];
@@ -71,7 +71,7 @@ function restoreColumnsLayout(
         return layout.map((savedCol: any) => {
             const orig = initialColumns.find(
                 (col) =>
-                    col.key === savedCol.key && col.dataType === savedCol.dataType
+                    col.key === savedCol.key && areTypesEqual(col.dataType, savedCol.dataType)
             );
             return orig
                 ? { ...orig, width: savedCol.width ?? orig.width }
@@ -137,6 +137,15 @@ export const useColumnsState = (
 
     // Zapisuj układ przy każdej zmianie columnsState
     useEffect(() => {
+        let und = false;
+        columnsState.filter(col => {
+            if (!col) {
+                und = true;
+            }
+        });
+        if (und) {
+            console.log(columnsState);
+        }
         if (
             isSameColumnsSet(
                 columnsState.map(col => ({ key: col.key, dataType: col.dataType })),

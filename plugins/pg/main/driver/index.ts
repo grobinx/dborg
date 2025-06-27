@@ -63,6 +63,7 @@ export enum pgTypes {
     VARBIT_ARRAY = 1563,
     VARCHAR_ARRAY = 1015,
     XML_ARRAY = 143,
+    ANY_ARRAY = 2277,
 }
 
 pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
@@ -161,51 +162,53 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.VARBIT:
             return 'string';
         case pgTypes.BIT_ARRAY:
-            return 'string';
+            return ['string'];
         case pgTypes.BOOL_ARRAY:
-            return 'boolean';
+            return ['boolean'];
         case pgTypes.BPCHAR_ARRAY:
         case pgTypes.CHAR_ARRAY:
         case pgTypes.NAME_ARRAY:
         case pgTypes.TEXT_ARRAY:
         case pgTypes.VARCHAR_ARRAY:
-            return 'string';
+            return ['string'];
         case pgTypes.BYTEA_ARRAY:
-            return 'binary';
+            return ['binary'];
         case pgTypes.DATE_ARRAY:
-            return 'date';
+            return ['date'];
         case pgTypes.FLOAT4_ARRAY:
         case pgTypes.FLOAT8_ARRAY:
         case pgTypes.MONEY_ARRAY:
-            return 'number';
+            return ['number'];
         case pgTypes.INT2_ARRAY:
         case pgTypes.INT4_ARRAY:
-            return 'int';
+            return ['int'];
         case pgTypes.INT8_ARRAY:
         case pgTypes.OID_ARRAY:
-            return 'bigint';
+            return ['bigint'];
         case pgTypes.INTERVAL_ARRAY:
-            return 'duration';
+            return ['duration'];
         case pgTypes.JSON_ARRAY:
         case pgTypes.JSONB_ARRAY:
-            return 'json';
+            return ['json'];
         case pgTypes.NUMERIC_ARRAY:
-            return 'decimal';
+            return ['decimal'];
         case pgTypes.POINT_ARRAY:
-            return 'geometry';
+            return ['geometry'];
         case pgTypes.REF_CURSOR_ARRAY:
-            return 'string';
+            return ['string'];
         case pgTypes.TIME_ARRAY:
-            return 'time';
+            return ['time'];
         case pgTypes.TIMESTAMP_ARRAY:
         case pgTypes.TIMESTAMPTZ_ARRAY:
         case pgTypes.TIMETZ_ARRAY:
-            return 'datetime';
+            return ['datetime'];
         case pgTypes.VARBIT_ARRAY:
         case pgTypes.BIT_ARRAY:
-            return 'string';
+            return ['string'];
         case pgTypes.XML_ARRAY:
-            return 'xml';
+            return ['xml'];
+        case pgTypes.ANY_ARRAY:
+            return ['string'];
     }
     return 'string';
 }
