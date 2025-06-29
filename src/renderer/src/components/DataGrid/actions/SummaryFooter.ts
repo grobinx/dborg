@@ -11,7 +11,7 @@ export const SummaryFooter = (): ActionDescriptor<DataGridActionContext<any>> =>
         keybindings: ["Ctrl+K", "Ctrl+S"],
         label: t(id, "Summary footer"),
         contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
+        contextMenuOrder: 5,
         run: (context) => {
             context.openCommandPalette("&", "");
         },
