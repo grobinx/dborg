@@ -18,3 +18,4 @@ export * from "./SummaryFooter";
 export * from "./SummaryFooterGroup";
 export * from "./ToggleShowRowNumberColumn";
 export * from "./ResetColumnsLayout";
+export * from "./ToggleGroupColumn";

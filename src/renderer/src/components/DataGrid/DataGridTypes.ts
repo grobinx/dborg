@@ -133,17 +133,17 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
 };
 
 export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
-    sum: ["number", "boolean", "string"],
-    avg: ["number", "boolean", "string", "datetime"],
+    sum: ["number", "boolean"],
+    avg: ["number", "boolean", "datetime"],
     min: ["number", "boolean", "string", "datetime"],
     max: ["number", "boolean", "string", "datetime"],
     unique: ["number", "boolean", "string", "object", "datetime"],
-    median: ["number", "boolean", "string", "datetime"],
+    median: ["number", "boolean", "datetime"],
     mode: ["number", "boolean", "string", "datetime"],
-    stdDev: ["number", "boolean", "string"],
+    stdDev: ["number", "boolean"],
     range: ["number", "boolean", "string", "datetime"],
     count: ["number", "boolean", "string", "object"],
-    sumOfSquares: ["number", "boolean", "string"],
+    sumOfSquares: ["number", "boolean"],
     emptyCount: ["boolean", "string", "object", "datetime"],
     variance: ["number"],
     skewness: ["number"],
@@ -206,6 +206,9 @@ export interface DataGridActionContext<T extends object> {
     actionManager: () => ActionManager<DataGridActionContext<T>> | null;
     setUserData: (key: string, value: any) => void;
     getUserData: (key: string) => any;
+    toggleGroupColumn: () => void;
+    isGroupedColumn: () => boolean;
+    clearGrouping: () => void;
 }
 
 export interface DataGridContext<T extends object> {

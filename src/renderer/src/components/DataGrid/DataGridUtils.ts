@@ -3,6 +3,8 @@ import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataG
 import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 
+export const footerCaptionHeightFactor = 0.7;
+
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 
@@ -12,7 +14,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
             return nullValue || "NULL";
         }
         if (React.isValidElement(value)) {
-            return value; 
+            return value;
         }
         let str = api.valueToString(value, column.dataType ?? 'string', maxLength);
         if (typeof str === 'string' && /[\r\n]/.test(str)) {
@@ -104,7 +106,7 @@ export const scrollToCell = (
 
     // Oblicz pozycję w pionie
     const rowTop = Math.max(0, rowIndex * rowHeight); // Ograniczenie do minimum 0
-    const rowBottom = Math.min(container.scrollHeight, rowTop + rowHeight + (footerVisible ? (rowHeight * 2) : 0)); // Ograniczenie do maksymalnej wysokości
+    const rowBottom = Math.min(container.scrollHeight, rowTop + rowHeight + (footerVisible ? ((rowHeight * footerCaptionHeightFactor) + rowHeight) : 0)); // Ograniczenie do maksymalnej wysokości
 
     const visibleHeight = container.offsetHeight - scrollbarHeight; // Widoczna wysokość kontenera (bez paska przewijania)
 
@@ -143,7 +145,8 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
 export const calculateSummary = (
     data: object[],
     columnsState: ColumnDefinition[],
-    operation: Record<string, SummaryOperation | null> | null
+    operation: Record<string, SummaryOperation | null> | null,
+    aggNotSummared?: boolean,
 ): Record<string, ColumnDataValueType> => {
     const summary: Record<string, ColumnDataValueType> = {};
 
@@ -151,12 +154,21 @@ export const calculateSummary = (
         const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
 
         if (!columnOperation) {
-            summary[col.key] = null; // Skip if no operation is defined for the column
+            if (aggNotSummared) {
+                summary[col.key] = Array.from(new Set(
+                    data
+                        .map((row) => row[col.key])
+                        .filter((value) => value !== null && value !== undefined)
+                ));
+            }
+            else {
+                summary[col.key] = null;
+            }
             return;
         }
-        
+
         const baseType = api.toBaseType(col.dataType);
-        const values = data.map((row) => row[col.key]);
+        const values = data.filter(row => !Array.isArray(row[col.key])).map((row) => row[col.key]);
 
         if (baseType === 'number') {
             const numericValues = values.map((value) => Decimal(value));
@@ -180,7 +192,7 @@ export const calculateSummary = (
                         : null;
                     break;
                 case "unique":
-                    summary[col.key] = new Set(numericValues).size;
+                    summary[col.key] = new Set(numericValues.toString()).size;
                     break;
                 case "median":
                     summary[col.key] = numericValues.length > 0 ? calculateMedian(numericValues) : null;
@@ -297,14 +309,6 @@ export const calculateSummary = (
             const stringValues = values.filter((value) => typeof value === "string") as string[];
             const lengths = stringValues.map((value) => value.length);
             switch (columnOperation) {
-                case "sum":
-                    summary[col.key] = lengths.reduce((acc, len) => acc + len, 0);
-                    break;
-                case "avg":
-                    summary[col.key] = lengths.length > 0
-                        ? lengths.reduce((acc, len) => acc + len, 0) / lengths.length
-                        : null;
-                    break;
                 case "min":
                     summary[col.key] = stringValues.length > 0
                         ? stringValues.reduce((a, b) => (a < b ? a : b))

@@ -383,9 +383,10 @@ export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: 
     if (Array.isArray(value)) {
         let formattedArray = '[';
         let currentLength = formattedArray.length;
+        const dt = Array.isArray(dataType) ? dataType[0] : dataType; // Typ elementów tablicy
 
         for (let i = 0; i < value.length; i++) {
-            const itemString = valueToString(value[i], Array.isArray(dataType) ? dataType[0] : dataType, maxLength);
+            const itemString = valueToString(value[i], dt, maxLength);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
             if (maxLength !== undefined && currentLength > maxLength) {

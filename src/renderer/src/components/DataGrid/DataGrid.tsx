@@ -7,7 +7,7 @@ import * as actions from "./actions";
 import { columnDataTypeClassMap, ColumnDataValueType, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
-import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, scrollToCell } from "./DataGridUtils";
+import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
 import LoadingOverlay from "../useful/LoadingOverlay";
@@ -18,6 +18,7 @@ import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
 import { ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { useColumnsGroup } from "./useColumnsGroup";
 
 export type DataGridMode = "defined" | "data";
 
@@ -162,6 +163,7 @@ const StyledHeaderCellContent = styled('div', {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 2,
 });
 
 const StyledSortIconContainer = styled('div', {
@@ -419,18 +421,25 @@ export const DataGrid = <T extends object>({
     const [fontFamily, setFontFamily] = useState<string>("inherit");
     const [fontSize, setFontSize] = useState<number>(16);
     const [userData, setUserData] = useState<Record<string, any>>({});
+    const groupingColumns = useColumnsGroup();
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
     useEffect(() => {
         setDataState(data);
-        setSummaryRow({});
         setSelectedRows([]);
         setSelectedCell(null);
-        setSummaryOperation(null);
-        setFooterVisible(false);
-        searchState.resetSearch();
-    }, [columns, data])
+    }, [data]);
+
+    useEffect(() => {
+        if (columnsState.layoutChanged) {
+            setSummaryRow({});
+            setSummaryOperation(null);
+            setFooterVisible(false);
+            groupingColumns.clearColumns();
+            searchState.resetSearch();
+        }
+    }, [columnsState.layoutChanged]);
 
     useEffect(() => {
         let resultSet: T[] = [...(dataState || [])];
@@ -465,6 +474,8 @@ export const DataGrid = <T extends object>({
             });
         }
 
+        resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
+
         // Sortowanie na podstawie sortDirection i sortOrder
         const sortedColumns = columnsState.current
             .filter((col) => col.sortDirection !== null) // Uwzględnij tylko kolumny z sortDirection
@@ -489,7 +500,7 @@ export const DataGrid = <T extends object>({
         }
 
         setFilteredDataState(resultSet);
-    }, [dataState, searchState.current, columnsState.stateChanged]);
+    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, summaryOperation]);
 
     useEffect(() => {
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
@@ -746,6 +757,17 @@ export const DataGrid = <T extends object>({
         getUserData(key) {
             return userData[key];
         },
+        toggleGroupColumn() {
+            const columnKey = columnsState.current[selectedCell?.column ?? 0]?.key;
+            groupingColumns.toggleColumn(columnKey);
+        },
+        isGroupedColumn: () => {
+            const columnKey = columnsState.current[selectedCell?.column ?? 0]?.key;
+            return groupingColumns.isInGroup(columnKey);
+        },
+        clearGrouping: () => {
+            groupingColumns.clearColumns();
+        },
     }
 
     useEffect(() => {
@@ -803,6 +825,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.SwitchColumnSort());
             actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());
             actionManager.current.registerAction(actions.ResetColumnsLayout());
+            actionManager.current.registerAction(actions.ToggleGroupColumn());
 
             actionManager.current.registerAction(actions.OpenCommandPalette());
             actionManager.current.registerAction(actions.GotoColumn());
@@ -1044,6 +1067,7 @@ export const DataGrid = <T extends object>({
                                 >
                                     {col.label}
                                 </span>
+                                {groupingColumns.isInGroup(col.key) && <span className="group-icon" style={{ fontSize: "0.8em", color: "gray" }}>🔗</span>}
                                 {col.sortDirection && (
                                     <StyledSortIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
@@ -1126,7 +1150,7 @@ export const DataGrid = <T extends object>({
                 </StyledRowsContainer>
                 {footerVisible && (
                     <StyledFooter
-                        style={{ width: columnsState.totalWidth, height: rowHeight * 2 }}
+                        style={{ width: columnsState.totalWidth, height: (rowHeight * 0.7) + rowHeight }}
                         className="DataGrid-footer"
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
@@ -1147,7 +1171,7 @@ export const DataGrid = <T extends object>({
                                             fontSize: "0.8em",
                                             color: "gray",
                                         }}
-                                        rowHeight={rowHeight}
+                                        rowHeight={rowHeight * footerCaptionHeightFactor}
                                         paddingX={cellPaddingX}
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
@@ -1159,7 +1183,7 @@ export const DataGrid = <T extends object>({
                                         style={{
                                             width: col.width || 150,
                                             left: columnsState.columnLeft(startColumn + colIndex),
-                                            top: rowHeight + 1,
+                                            top: (rowHeight * footerCaptionHeightFactor),
                                         }}
                                         rowHeight={rowHeight}
                                         paddingX={cellPaddingX}
