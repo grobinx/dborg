@@ -226,6 +226,13 @@ export const areTypesEqual = (dataType1: ColumnDataType, dataType2: ColumnDataTy
     return resolvedType1 === resolvedType2;
 }
 
+export const typeToString = (dataType: ColumnDataType): string => {
+    if (Array.isArray(dataType)) {
+        return `[${dataType[0]}]`;
+    }
+    return dataType;
+}
+
 /**
  * Funkcję można wykorzystać do
  * - sprawdzania typu dla baz danych zwracających ciągi znaków, np. sqlite

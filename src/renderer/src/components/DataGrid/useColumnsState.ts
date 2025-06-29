@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
-import { ColumnBaseType, ColumnDataType, generateHash, areTypesEqual } from "../../../../../src/api/db";
+import { ColumnBaseType, ColumnDataType, generateHash, areTypesEqual, typeToString } from "../../../../../src/api/db";
 
 interface UseColumnsState {
     current: ColumnDefinition[];
@@ -25,7 +25,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): 
         .sort((a, b) => {
             return (a.key || "").localeCompare(b.key || "");
         })
-        .map((col) => `${col.key}:${col.dataType}`)
+        .map((col) => `${col.key}:${typeToString(col.dataType)}`)
         .join("|");
     return "datagrid-layout-" + generateHash(keyString + (autoSaveId ? "|" + autoSaveId : ""));
 }
@@ -82,13 +82,13 @@ function restoreColumnsLayout(
     }
 }
 
-function isSameColumnsSet(
-    a: { key: string; dataType: ColumnDataType | ColumnBaseType | undefined }[],
-    b: { key: string; dataType: ColumnDataType | ColumnBaseType | undefined }[]
+export function isSameColumnsSet(
+    a: { key: string; dataType: ColumnDataType }[],
+    b: { key: string; dataType: ColumnDataType }[]
 ): boolean {
     if (a.length !== b.length) return false;
-    const aSet = new Set(a.map(col => `${col.key}:${col.dataType}`));
-    const bSet = new Set(b.map(col => `${col.key}:${col.dataType}`));
+    const aSet = new Set(a.map(col => `${col.key}:${typeToString(col.dataType)}`));
+    const bSet = new Set(b.map(col => `${col.key}:${typeToString(col.dataType)}`));
     if (aSet.size !== bSet.size) return false;
     for (const item of aSet) {
         if (!bSet.has(item)) return false;

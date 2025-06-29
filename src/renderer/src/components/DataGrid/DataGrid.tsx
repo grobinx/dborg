@@ -12,12 +12,12 @@ import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
 import LoadingOverlay from "../useful/LoadingOverlay";
 import useRowSelection from "./useRowSelection";
-import { useColumnsState } from "./useColumnsState";
+import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
-import { ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { areTypesEqual, ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
 
 export type DataGridMode = "defined" | "data";
@@ -422,6 +422,7 @@ export const DataGrid = <T extends object>({
     const [fontSize, setFontSize] = useState<number>(16);
     const [userData, setUserData] = useState<Record<string, any>>({});
     const groupingColumns = useColumnsGroup();
+    const columnsRef = useRef<ColumnDefinition[]>(columns);
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
@@ -432,14 +433,19 @@ export const DataGrid = <T extends object>({
     }, [data]);
 
     useEffect(() => {
-        if (columnsState.layoutChanged) {
+        // Sprawdź, czy zmieniły się kolumny
+        if (!isSameColumnsSet(
+            columns.map(col => ({ key: col.key, dataType: col.dataType })),
+            columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
+        )) {
+            columnsRef.current = columns;
             setSummaryRow({});
             setSummaryOperation(null);
             setFooterVisible(false);
             groupingColumns.clearColumns();
             searchState.resetSearch();
         }
-    }, [columnsState.layoutChanged]);
+    }, [columns]);
 
     useEffect(() => {
         let resultSet: T[] = [...(dataState || [])];
