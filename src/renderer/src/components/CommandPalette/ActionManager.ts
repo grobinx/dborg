@@ -1,3 +1,4 @@
+import { C } from "react-router/dist/development/route-data-H2S3hwhf";
 import { KeyboardEvent, keyboardEventToKeybinding, normalizeKeybinding } from "./KeyBinding"; // Import funkcji normalizującej
 
 export type ActionGroupMode =
@@ -32,6 +33,12 @@ export interface ActionGroupOptionDescription<T> {
      * @returns 
      */
     selected?: (context: T) => boolean;
+    /**
+     * Funkcja powinna zwrócić true/false, czy akcja jest aktualnie wyłączona.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @returns 
+     */
+    disabled?: (context: T) => boolean;
 }
 
 export interface ActionGroupDescriptor<T = any> {

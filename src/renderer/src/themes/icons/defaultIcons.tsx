@@ -74,6 +74,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
             SelectDatabaseSchema: (props) => <IconWrapper {...props} className="select-database-schema"><MuiIcons.FactCheckOutlined fontSize="inherit" /></IconWrapper>,
             RefreshMetadata: (props) => <IconWrapper {...props} className="refresh-metadata"><RefreshMetadata fontSize="inherit" /></IconWrapper>,
+            Not: (props) => <IconWrapper {...props} className="not"><MuiIcons.PriorityHighOutlined fontSize="inherit" /></IconWrapper>,
+            Filter: (props) => <IconWrapper {...props} className="filter"><MuiIcons.FilterAltOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

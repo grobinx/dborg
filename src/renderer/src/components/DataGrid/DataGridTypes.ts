@@ -196,6 +196,7 @@ export interface DataGridActionContext<T extends object> {
     isSearchCaseSensitive: () => boolean;
     setSearchExclude: (exclude: boolean) => void;
     isSearchExclude: () => boolean;
+    getSearchText: () => string;
     resetSorting: () => void;
     getSummaryFooterOperation: () => SummaryOperation | null;
     setSummaryFooterOperation: (operation: SummaryOperation | null) => void;

@@ -15,6 +15,7 @@ interface CommandPaletteProps {
     onClose: () => void;
     parentRef?: React.RefObject<HTMLElement | null>;
     prefix?: string;
+    searchText?: string;
 }
 
 const CommandPaletteContainer = styled(Paper)(({ theme }) => ({
@@ -106,10 +107,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     getContext,
     parentRef,
     prefix,
+    searchText: initSearchText,
 }) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const [searchText, setSearchText] = useState('');
+    const [searchText, setSearchText] = useState(initSearchText ?? '');
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [selectedGroup, setSelectedGroup] = useState<ActionGroupDescriptor | null>(null); // Zmieniono na przechowywanie całej grupy
     const containerRef = useRef<HTMLDivElement>(null);
@@ -170,7 +172,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         if (open) {
             // Ustaw prefix w polu tekstowym przy otwarciu okna
             setSelectedIndex(null);
-            setSearchText(prefix ?? '>');
+            setSearchText((prefix ?? '>') + (initSearchText ?? ''));
             inputRef.current?.focus();
         }
     }, [open]);
@@ -431,12 +433,15 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     <InputAdornment position="end">
                                         {selectedGroup.options.map((option) => (
                                             <Tooltip key={option.id} title={option.label}>
-                                                <ToolButton
-                                                    onClick={() => handleOptionClick(option)}
-                                                    selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
-                                                >
-                                                    {resolveIcon(theme, option.icon)}
-                                                </ToolButton>
+                                                <span>
+                                                    <ToolButton
+                                                        onClick={() => handleOptionClick(option)}
+                                                        selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
+                                                        disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
+                                                    >
+                                                        {resolveIcon(theme, option.icon)}
+                                                    </ToolButton>
+                                                </span>
                                             </Tooltip>
                                         ))}
                                     </InputAdornment>

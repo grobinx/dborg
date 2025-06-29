@@ -695,9 +695,10 @@ export const DataGrid = <T extends object>({
             }
             return null;
         },
-        openCommandPalette: (prefix, _query) => {
+        openCommandPalette: (prefix, query) => {
             setCommandPalettePrefix(prefix);
             setOpenCommandPalette(true);
+            searchState.current.text = query ?? "";
         },
         closeCommandPalette: () => setOpenCommandPalette(false),
         moveColumn: (from, to) => columnsState.moveColumn(from, to),
@@ -714,6 +715,7 @@ export const DataGrid = <T extends object>({
         isSearchCaseSensitive: () => searchState.current.caseSensitive, // Zwrócenie wartości caseSensitiveQuery
         setSearchExclude: (exclude) => searchState.setExclude(exclude), // Ustawienie excludeQuery
         isSearchExclude: () => searchState.current.exclude, // Zwrócenie wartości excludeQuery
+        getSearchText: () => searchState.current.text ?? "", // Zwrócenie queryData
         sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex),
         resetSorting: () => columnsState.resetSorting(),
         getSummaryFooterOperation: () => {
@@ -817,6 +819,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerActionGroup(actions.GotoColumnGroup());
             actionManager.current.registerActionGroup(actions.SearchDataGroup());
             actionManager.current.registerActionGroup(actions.SummaryFooterGroup());
+            actionManager.current.registerActionGroup(actions.FilterColumnDataGroup());
 
             actionManager.current.registerAction(actions.IncreaseFontSize());
             actionManager.current.registerAction(actions.DecreaseFontSize());
@@ -837,6 +840,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.GotoColumn());
             actionManager.current.registerAction(actions.SearchData());
             actionManager.current.registerAction(actions.SummaryFooter());
+            actionManager.current.registerAction(actions.FilterColumnData());
         }
 
         if (onMount) {
@@ -1037,6 +1041,7 @@ export const DataGrid = <T extends object>({
                     getContext={() => dataGridActionContext}
                     parentRef={containerRef}
                     prefix={commandPalettePrefix}
+                    searchText={searchState.current.text ?? ""}
                 />
                 <StyledHeader
                     className="DataGrid-header"
