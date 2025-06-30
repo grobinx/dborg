@@ -698,7 +698,9 @@ export const DataGrid = <T extends object>({
         openCommandPalette: (prefix, query) => {
             setCommandPalettePrefix(prefix);
             setOpenCommandPalette(true);
-            searchState.current.text = query ?? "";
+            if (prefix === "*") {
+                searchState.current.text = query ?? "";
+            }
         },
         closeCommandPalette: () => setOpenCommandPalette(false),
         moveColumn: (from, to) => columnsState.moveColumn(from, to),
@@ -1041,7 +1043,7 @@ export const DataGrid = <T extends object>({
                     getContext={() => dataGridActionContext}
                     parentRef={containerRef}
                     prefix={commandPalettePrefix}
-                    searchText={searchState.current.text ?? ""}
+                    searchText={commandPalettePrefix === "*" ? searchState.current.text ?? "" : ""}
                 />
                 <StyledHeader
                     className="DataGrid-header"
@@ -1126,7 +1128,13 @@ export const DataGrid = <T extends object>({
                                         dataType = "null";
                                     }
 
-                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value, displayMaxLengh);
+                                    let formattedValue: React.ReactNode = columnDataFormatter(
+                                        row[col.key],
+                                        col,
+                                        settings.data_grid.null_value, {
+                                        maxLength: displayMaxLengh,
+                                        display: (searchState.current.text ?? '').trim() === ''
+                                    });
                                     if (typeof formattedValue === "string") {
                                         formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                     }

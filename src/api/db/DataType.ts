@@ -374,6 +374,7 @@ export function getMostGeneralType(dataTypes: UnionDataType[]): UnionDataType {
 export interface ValueToStringOptions {
     maxLength?: number; // Maksymalna długość sformatowanej wartości, domyślnie undefined
     display?: boolean; // Czy służy wyświetleniu, domyślnie true
+    thousandsSeparator?: boolean; // Czy używać separatorów tysięcy, domyślnie true
 }
 
 const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
@@ -385,10 +386,10 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
         return '';
     }
 
-    options = Object.assign({ display: true }, options); 
+    options = Object.assign({ display: true, thousandsSeparator: true }, options); 
     const { maxLength, display } = options;
 
-    if (display && maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
+    if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
     }
 
@@ -404,7 +405,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
             const itemString = valueToString(value[i], dt, options);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
-            if (display && maxLength !== undefined && currentLength > maxLength) {
+            if (maxLength !== undefined && currentLength > maxLength) {
                 formattedArray += '...'; // Dodaj wielokropek, jeśli przekroczono limit
                 break;
             }
@@ -474,8 +475,8 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 };
 
 // Funkcja pomocnicza do formatowania liczb
-const formatNumber = (value: any, dataType: ColumnDataType, options?: ValueToStringOptions): string => {
-    if (!options?.display) {
+const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringOptions): string => {
+    if (!options.display || !options.thousandsSeparator) {
         return value.toString();
     }
     if (dataType === 'decimal') {
@@ -490,7 +491,7 @@ const formatNumber = (value: any, dataType: ColumnDataType, options?: ValueToStr
 };
 
 // Funkcja pomocnicza do formatowania wartości boolean
-const formatBoolean = (value: any, _dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
+const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     if (typeof value === 'boolean') {
         return value ? 'true' : 'false';
     }
@@ -498,7 +499,7 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options?: ValueTo
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
-const formatDateTime = (value: any, dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
+const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     const dateTime = value instanceof Date
         ? DateTime.fromJSDate(value)
         : typeof value === 'number' || typeof value === 'bigint'
@@ -522,7 +523,7 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options?: ValueTo
 };
 
 // Funkcja pomocnicza do formatowania obiektów
-const formatObject = (value: any, dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
+const formatObject = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     if (dataType === 'json') {
         return JSON.stringify(value);
     }
@@ -533,7 +534,7 @@ const formatObject = (value: any, dataType: ColumnDataType, _options?: ValueToSt
 };
 
 // Funkcja pomocnicza do formatowania danych binarnych
-const formatBinary = (value: any, _dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
+const formatBinary = (value: any, _dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     return value instanceof Blob ? URL.createObjectURL(value) : String(value);
 };
 

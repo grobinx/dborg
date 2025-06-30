@@ -9,7 +9,7 @@ export const displayMaxLengh = 1000;
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 
-export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string, maxLength: number) => {
+export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string, options: api.ValueToStringOptions) => {
     const nullFormatter = (value: any) => {
         if (value === null || value === undefined) {
             return nullValue || "NULL";
@@ -17,7 +17,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (React.isValidElement(value)) {
             return value;
         }
-        let str = api.valueToString(value, column.dataType ?? 'string', { maxLength });
+        let str = api.valueToString(value, column.dataType ?? 'string', options);
         if (typeof str === 'string' && /[\r\n]/.test(str)) {
             str = str.replace(/[\r\n]+/g, " ");
         }
