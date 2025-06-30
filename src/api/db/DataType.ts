@@ -434,7 +434,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 
     switch (baseType) {
         case 'string':
-            formattedValue = String(value);
+            formattedValue = display ? String(value) : `'${String(value)}'`;
             break;
 
         case 'number':
@@ -446,7 +446,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
             break;
 
         case 'datetime':
-            formattedValue = formatDateTime(value, dataType, options);
+            formattedValue = display ? formatDateTime(value, dataType, options) : `'${formatDateTime(value, dataType, options)}'`;
             break;
 
         case 'object':
