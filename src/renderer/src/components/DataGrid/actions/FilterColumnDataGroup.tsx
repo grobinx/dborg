@@ -47,7 +47,6 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             else if (filter.active) {
                 context.filterActive(false);
             }
-            const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
 
             if (searchText !== oldSearchText || setFilter) {
                 // Resetuj poprzedni timeout przy każdej zmianie
