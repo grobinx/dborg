@@ -156,11 +156,14 @@ export const calculateSummary = (
 
         if (!columnOperation) {
             if (aggNotSummared) {
-                summary[col.key] = Array.from(new Set(
-                    data
-                        .map((row) => row[col.key])
-                        .filter((value) => value !== null && value !== undefined)
-                ));
+                summary[col.key] = [
+                    ...new Map(
+                        data
+                            .map(row => row[col.key])
+                            .filter(v => v != null)
+                            .map(value => [typeof value === 'object' ? JSON.stringify(value) : value, value]) // Klucz: zserializowana wartość, Wartość: oryginalny obiekt
+                    ).values()
+                ];
             }
             else {
                 summary[col.key] = null;

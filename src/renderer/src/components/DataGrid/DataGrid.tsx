@@ -1080,7 +1080,11 @@ export const DataGrid = <T extends object>({
                                 >
                                     {col.label}
                                 </span>
-                                {groupingColumns.isInGroup(col.key) && <span className="group-icon" style={{ fontSize: "0.8em", color: "gray" }}>🔗</span>}
+                                {groupingColumns.isInGroup(col.key) && (
+                                    <StyledSortIconContainer>
+                                        <span className="group-icon">[]</span>
+                                    </StyledSortIconContainer>
+                                )}
                                 {col.sortDirection && (
                                     <StyledSortIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
@@ -1123,8 +1127,11 @@ export const DataGrid = <T extends object>({
                                 {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                                     const absoluteColIndex = startColumn + colIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
-                                    let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType ?? 'string');
+                                    let dataType: ColumnBaseType | "null" = toBaseType(col.dataType ?? 'string');
                                     if (row[col.key] === undefined || row[col.key] === null) {
+                                        dataType = "null";
+                                    }
+                                    if (!groupingColumns.isInGroup(col.key) && (!summaryOperation || (summaryOperation[col.key] ?? null) === null) && Array.isArray(row[col.key])) {
                                         dataType = "null";
                                     }
 

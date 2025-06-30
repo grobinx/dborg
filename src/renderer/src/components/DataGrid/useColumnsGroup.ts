@@ -39,7 +39,7 @@ export const useColumnsGroup = (): ColumnsGroup => {
         const groupedResultSet: Record<string, { rows: T[]; summary: Record<string, any> }> = {};
 
         data.forEach((row) => {
-            const groupKey = columns.map((col) => row[col]).join('|'); // Klucz grupy
+            const groupKey = columns.map((col) => row[col].toString()).join('|'); // Klucz grupy
             if (!groupedResultSet[groupKey]) {
                 groupedResultSet[groupKey] = { rows: [], summary: {} };
             }
