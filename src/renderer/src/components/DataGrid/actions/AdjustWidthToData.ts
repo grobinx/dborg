@@ -13,7 +13,7 @@ export const AdjustWidthToData = (): ActionDescriptor<DataGridActionContext<any>
         keybindings: ["Ctrl+I"],
         label: t(AdjustWidthToData_ID, "Adjust columns width to data"),
         icon: "AdjustWidth",
-        contextMenuGroupId: "column-layout",
+        contextMenuGroupId: "layout",
         contextMenuOrder: 1,
         run: (context) => {
             const { start } = context.getVisibleRows();

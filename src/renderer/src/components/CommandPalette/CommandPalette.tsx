@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, Tooltip } from '@mui/material'; // Import komponentu Button
+import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, Tooltip, ButtonGroup } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
 import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
 import { splitKeybinding } from './KeyBinding';
@@ -58,8 +58,11 @@ const KeybindingContainer = styled('span')({
 export const highlightText = (text: string, query: string, theme: Theme) => {
     if (!query || query.trim() === '') return text;
 
-    // Rozdziel query na części oddzielone spacją
-    const queryParts = query.split(' ').filter(Boolean); // Usuń puste elementy
+    // Funkcja pomocnicza do escapowania znaków specjalnych w wyrażeniu regularnym
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Rozdziel query na części oddzielone spacją i escapuj znaki specjalne
+    const queryParts = query.split(' ').filter(Boolean).map(escapeRegExp);
 
     // Funkcja pomocnicza do sprawdzania, czy część tekstu pasuje do dowolnej części query
     const matchQuery = (part: string) => {
@@ -250,6 +253,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
+            if (selectedGroup && selectedGroup.onCancel && getContext) {
+                selectedGroup.onCancel(getContext());
+            }
             handleClose();
         }
 
@@ -356,14 +362,20 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             }, {} as Record<string, ActionDescriptor<any>[]>);
 
             const sortedGroups = Object.entries(grouped)
-                .sort(([_groupA, actionsA], [_groupB, actionsB]) => {
-                    const orderA = actionsA[0]?.contextMenuOrder || 0; // Pobierz contextMenuOrder z pierwszej akcji w grupie
-                    const orderB = actionsB[0]?.contextMenuOrder || 0;
-                    return orderA - orderB;
+                .sort(([groupA], [groupB]) => {
+                    if (groupA === "layout") return -1; // "layout" na początku
+                    if (groupB === "layout") return 1;
+                    if (groupA === "commandPalette") return 1; // "commandPalette" na końcu
+                    if (groupB === "commandPalette") return -1;
+                    return groupA.localeCompare(groupB); // Pozostałe grupy alfabetycznie
                 })
                 .map(([groupId, actions]) => ({
                     groupId,
-                    actions: actions.sort((a, b) => a.label.localeCompare(b.label)), // Sortowanie akcji w grupie alfabetycznie
+                    actions: actions.sort((a, b) => {
+                        const orderA = a.contextMenuOrder || 0;
+                        const orderB = b.contextMenuOrder || 0;
+                        return orderA - orderB || a.label.localeCompare(b.label); // Sortowanie po contextMenuOrder, a potem po label
+                    }),
                 }));
 
             if (isMounted) setGroupedContextMenuActions(sortedGroups);
@@ -431,19 +443,21 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                             input: {
                                 endAdornment: selectedGroup?.options?.length ? (
                                     <InputAdornment position="end">
-                                        {selectedGroup.options.map((option) => (
-                                            <Tooltip key={option.id} title={option.label}>
-                                                <span>
-                                                    <ToolButton
-                                                        onClick={() => handleOptionClick(option)}
-                                                        selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
-                                                        disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
-                                                    >
-                                                        {resolveIcon(theme, option.icon)}
-                                                    </ToolButton>
-                                                </span>
-                                            </Tooltip>
-                                        ))}
+                                        <ButtonGroup>
+                                            {selectedGroup.options.map((option) => (
+                                                <Tooltip key={option.id} title={option.label}>
+                                                    <span>
+                                                        <ToolButton
+                                                            onClick={() => handleOptionClick(option)}
+                                                            selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
+                                                            disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
+                                                        >
+                                                            {resolveIcon(theme, option.icon)}
+                                                        </ToolButton>
+                                                    </span>
+                                                </Tooltip>
+                                            ))}
+                                        </ButtonGroup>
                                     </InputAdornment>
                                 ) : null,
                             },

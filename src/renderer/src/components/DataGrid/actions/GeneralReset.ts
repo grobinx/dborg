@@ -16,6 +16,7 @@ export const GeneralReset = (): ActionDescriptor<DataGridActionContext<any>> => 
             context.resetSorting();
             context.clearSummary();
             context.clearGrouping();
+            context.clearFilters();
         },
     };
 }

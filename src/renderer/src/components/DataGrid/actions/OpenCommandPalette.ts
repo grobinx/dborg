@@ -11,7 +11,7 @@ export const OpenCommandPalette = (): ActionDescriptor<DataGridActionContext<any
         keybindings: ["F1"],
         label: t(id, "Open command palette"),
         contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
+        contextMenuOrder: 1,
         run: (context) => {
             context.openCommandPalette(">", "");
         },

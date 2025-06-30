@@ -19,6 +19,7 @@ import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
 import { areTypesEqual, ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
+import { useColumnFilterState } from "./useColumnsFilterState";
 
 export type DataGridMode = "defined" | "data";
 
@@ -423,6 +424,7 @@ export const DataGrid = <T extends object>({
     const [userData, setUserData] = useState<Record<string, any>>({});
     const groupingColumns = useColumnsGroup();
     const columnsRef = useRef<ColumnDefinition[]>(columns);
+    const filterColumns = useColumnFilterState();
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
@@ -444,11 +446,14 @@ export const DataGrid = <T extends object>({
             setFooterVisible(false);
             groupingColumns.clearColumns();
             searchState.resetSearch();
+            filterColumns.clearFilters();
         }
     }, [columns]);
 
     useEffect(() => {
         let resultSet: T[] = [...(dataState || [])];
+
+        resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
         // Filtrowanie na podstawie queryData, wholeWordQuery i caseSensitiveQuery
         if (searchState.current.text) {
@@ -506,7 +511,7 @@ export const DataGrid = <T extends object>({
         }
 
         setFilteredDataState(resultSet);
-    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, summaryOperation]);
+    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, summaryOperation, filterColumns.filters]);
 
     useEffect(() => {
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
@@ -768,15 +773,40 @@ export const DataGrid = <T extends object>({
             return userData[key];
         },
         toggleGroupColumn() {
-            const columnKey = columnsState.current[selectedCell?.column ?? 0]?.key;
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             groupingColumns.toggleColumn(columnKey);
         },
         isGroupedColumn: () => {
-            const columnKey = columnsState.current[selectedCell?.column ?? 0]?.key;
+            if (!selectedCell) return false;
+            const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             return groupingColumns.isInGroup(columnKey);
         },
         clearGrouping: () => {
             groupingColumns.clearColumns();
+        },
+        setFilter: (operator, not, values) => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            filterColumns.setFilter(columnKey, operator, not, values);
+        },
+        getFilter: () => {
+            if (!selectedCell) return null;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            return filterColumns.getFilter(columnKey);
+        },
+        clearFilter: () => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            filterColumns.clearFilter(columnKey);
+        },
+        clearFilters: () => {
+            filterColumns.clearFilters();
+        },
+        filterActive: (set) => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            return filterColumns.filterActive(columnKey, set);
         },
     }
 
@@ -1080,6 +1110,11 @@ export const DataGrid = <T extends object>({
                                 >
                                     {col.label}
                                 </span>
+                                {(filterColumns.getFilter(col.key, true) !== null) && (
+                                    <StyledSortIconContainer>
+                                        <theme.icons.Filter />
+                                    </StyledSortIconContainer>
+                                )}
                                 {groupingColumns.isInGroup(col.key) && (
                                     <StyledSortIconContainer>
                                         <span className="group-icon">[]</span>

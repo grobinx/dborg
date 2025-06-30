@@ -11,7 +11,7 @@ export const GotoColumn = (): ActionDescriptor<DataGridActionContext<any>> => {
         keybindings: ["Ctrl+E"],
         label: t(id, "Go to column"),
         contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
+        contextMenuOrder: 4,
         run: (context) => {
             context.openCommandPalette("@", "");
         },

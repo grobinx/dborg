@@ -10,7 +10,7 @@ export const ToggleShowRowNumberColumn = (): ActionDescriptor<DataGridActionCont
     return {
         id: id,
         label: t(id, "Show/Hide row number column"),
-        contextMenuGroupId: "column-layout",
+        contextMenuGroupId: "layout",
         contextMenuOrder: 2,
         run: (context) => {
             context.setShowRowNumberColumn(!context.isShowRowNumberColumn());

@@ -12,7 +12,7 @@ export const FilterColumnData = (): ActionDescriptor<DataGridActionContext<any>>
         label: t(FilterColumnData_ID, "Filter column data"),
         icon: "Filter",
         contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
+        contextMenuOrder: 3,
         run: (context) => {
             context.openCommandPalette("?", '');
         },

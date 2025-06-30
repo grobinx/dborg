@@ -386,7 +386,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
         return '';
     }
 
-    options = Object.assign({ display: true, thousandsSeparator: true }, options); 
+    options = Object.assign({ display: true, thousandsSeparator: true }, options);
     const { maxLength, display } = options;
 
     if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
@@ -553,4 +553,57 @@ function formatDecimalWithThousandsSeparator(value: Decimal): string {
 export const generateHash = (value: any): string => {
     const stringifiedValue = typeof value === 'string' ? value : JSON.stringify(value);
     return SparkMD5.hash(stringifiedValue);
+};
+
+export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDataType): number => {
+    const baseType = toBaseType(dataType);
+
+    switch (baseType) {
+        case 'string':
+            return String(value1).localeCompare(String(value2));
+
+        case 'number':
+            try {
+                const num1 = new Decimal(value1);
+                const num2 = new Decimal(value2);
+                return num1.lessThan(num2) ? -1 : num1.greaterThan(num2) ? 1 : 0;
+            } catch (e) {
+                return 0;
+            }
+
+        case 'boolean':
+            try {
+                const bool1 = Boolean(value1);
+                const bool2 = Boolean(value2);
+                return bool1 === bool2 ? 0 : bool1 ? 1 : -1;
+            } catch (e) {
+                return 0;
+            }
+
+        case 'datetime':
+            try {
+                const dateTime1 = value1 instanceof Date
+                    ? DateTime.fromJSDate(value1)
+                    : DateTime.fromISO(String(value1));
+                const dateTime2 = value2 instanceof Date
+                    ? DateTime.fromJSDate(value2)
+                    : DateTime.fromISO(String(value2));
+                return dateTime1.toMillis() < dateTime2.toMillis() ? -1 : dateTime1.toMillis() > dateTime2.toMillis() ? 1 : 0;
+            } catch (e) {
+                return 0;
+            }
+
+        case 'object':
+            const str1 = JSON.stringify(value1);
+            const str2 = JSON.stringify(value2);
+            return str1.localeCompare(str2);
+
+        case 'binary':
+            const bin1 = value1 instanceof Blob ? value1.size : String(value1).length;
+            const bin2 = value2 instanceof Blob ? value2.size : String(value2).length;
+            return bin1 < bin2 ? -1 : bin1 > bin2 ? 1 : 0;
+
+        default:
+            return String(value1).localeCompare(String(value2));
+    }
 };

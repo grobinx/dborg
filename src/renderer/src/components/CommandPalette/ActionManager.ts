@@ -72,6 +72,13 @@ export interface ActionGroupDescriptor<T = any> {
     actions: (context: T, searchText?: string) => ActionDescriptor<T>[] | Promise<ActionDescriptor<T>[]>;
 
     /**
+     * Funkcja, która zostanie wywołana, gdy użytkownik anuluje grupę akcji.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @returns 
+     */
+    onCancel?: (context: T) => void;
+
+    /**
      * Tryb grupy akcji.
      * Określa, czy akcje w tej grupie mają być wyświetlane jako akcje (actions) czy jako filtry (filter).
      * w trybie 'actions' akcje są wyświetlane jako przyciski akcji i fitrowane wg labeli.
@@ -141,7 +148,7 @@ export interface ActionDescriptor<T> {
     /**
      * Grupa menu kontekstowego, w której akcja powinna się pojawić.
      */
-    contextMenuGroupId?: "commandPalette" | string;
+    contextMenuGroupId?: "commandPalette" | "layout" | string;
 
     /**
      * Kolejność w grupie menu kontekstowego.

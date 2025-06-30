@@ -68,17 +68,6 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                     run: (context) => context.setSummaryFooterOperation("max"),
                 },
                 {
-                    operation: "unique",
-                    id: "dataGrid.actions.summaryFooter.unique",
-                    label: t("dataGrid.actions.summaryFooter.unique", "Distinct count (Unique)"),
-                    secondaryLabel: t(
-                        "dataGrid.actions.summaryFooter.uniqueDescription",
-                        "Counts the number of unique values in the column."
-                    ),
-                    selected: summaryFooterOperation === "unique",
-                    run: (context) => context.setSummaryFooterOperation("unique"),
-                },
-                {
                     operation: "median",
                     id: "dataGrid.actions.summaryFooter.median",
                     label: t("dataGrid.actions.summaryFooter.median", "Median"),
@@ -88,6 +77,28 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                     ),
                     selected: summaryFooterOperation === "median",
                     run: (context) => context.setSummaryFooterOperation("median"),
+                },
+                {
+                    operation: "count",
+                    id: "dataGrid.actions.summaryFooter.count",
+                    label: t("dataGrid.actions.summaryFooter.count", "Count (not empty)"),
+                    secondaryLabel: t(
+                        "dataGrid.actions.summaryFooter.countDescription",
+                        "Counts the total number of values in the column."
+                    ),
+                    selected: summaryFooterOperation === "count",
+                    run: (context) => context.setSummaryFooterOperation("count"),
+                },
+                {
+                    operation: "unique",
+                    id: "dataGrid.actions.summaryFooter.unique",
+                    label: t("dataGrid.actions.summaryFooter.unique", "Distinct count (Unique)"),
+                    secondaryLabel: t(
+                        "dataGrid.actions.summaryFooter.uniqueDescription",
+                        "Counts the number of unique values in the column."
+                    ),
+                    selected: summaryFooterOperation === "unique",
+                    run: (context) => context.setSummaryFooterOperation("unique"),
                 },
                 {
                     operation: "mode",
@@ -121,17 +132,6 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                     ),
                     selected: summaryFooterOperation === "range",
                     run: (context) => context.setSummaryFooterOperation("range"),
-                },
-                {
-                    operation: "count",
-                    id: "dataGrid.actions.summaryFooter.count",
-                    label: t("dataGrid.actions.summaryFooter.count", "Count (not empty)"),
-                    secondaryLabel: t(
-                        "dataGrid.actions.summaryFooter.countDescription",
-                        "Counts the total number of values in the column."
-                    ),
-                    selected: summaryFooterOperation === "count",
-                    run: (context) => context.setSummaryFooterOperation("count"),
                 },
                 {
                     operation: "truePercentage",

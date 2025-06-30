@@ -19,6 +19,13 @@ import { CaseSensitive } from "./svg/CaseSensitive";
 import { AddTabRight } from "./svg/AddTabRight";
 import { NotEqual } from "./svg/NotEqual";
 import { RefreshMetadata } from "./svg/RefreshMetadata";
+import { Equal } from "./svg/Equal";
+import { GreaterThan } from "./svg/GreaterThen";
+import { LessThan } from "./svg/LessThen";
+import { Tilde } from "@renderer/themes/icons/svg/Tilde";
+import { Null } from "./svg/Null";
+import { ElementOf } from "./svg/ElementOf";
+import { Not } from "./svg/Not";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -74,8 +81,14 @@ const icons = (_palette: Palette): ThemeOptions => {
             Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
             SelectDatabaseSchema: (props) => <IconWrapper {...props} className="select-database-schema"><MuiIcons.FactCheckOutlined fontSize="inherit" /></IconWrapper>,
             RefreshMetadata: (props) => <IconWrapper {...props} className="refresh-metadata"><RefreshMetadata fontSize="inherit" /></IconWrapper>,
-            Not: (props) => <IconWrapper {...props} className="not"><MuiIcons.PriorityHighOutlined fontSize="inherit" /></IconWrapper>,
+            Not: (props) => <IconWrapper {...props} className="not"><Not fontSize="inherit" /></IconWrapper>,
             Filter: (props) => <IconWrapper {...props} className="filter"><MuiIcons.FilterAltOutlined fontSize="inherit" /></IconWrapper>,
+            Equal: (props) => <IconWrapper {...props} className="equal"><Equal fontSize="inherit" /></IconWrapper>,
+            GreaterThan: (props) => <IconWrapper {...props} className="greater-than"><GreaterThan fontSize="inherit" /></IconWrapper>,
+            LessThan: (props) => <IconWrapper {...props} className="less-than"><LessThan fontSize="inherit" /></IconWrapper>,
+            SuchLike: (props) => <IconWrapper {...props} className="such-like"><Tilde fontSize="inherit" /></IconWrapper>,
+            Null: (props) => <IconWrapper {...props} className="null"><Null fontSize="inherit" /></IconWrapper>,
+            ElementOf: (props) => <IconWrapper {...props} className="element-of"><ElementOf fontSize="inherit" /></IconWrapper>,
         }
     }
 }

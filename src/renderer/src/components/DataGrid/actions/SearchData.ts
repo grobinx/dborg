@@ -12,7 +12,7 @@ export const SearchData = (): ActionDescriptor<DataGridActionContext<any>> => {
         label: t(SearchData_ID, "Search data"),
         icon: "Search",
         contextMenuGroupId: "commandPalette",
-        contextMenuOrder: 999,
+        contextMenuOrder: 2,
         run: (context) => {
             context.openCommandPalette("*", context.getSearchText());
         },

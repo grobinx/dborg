@@ -1,6 +1,7 @@
 import React from "react";
 import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
 import { ColumnBaseType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "../../../../../src/api/db";
+import { ColumnFilter, ColumnsFilterOperator } from "./useColumnsFilterState";
 
 export interface DataGridInfoMessage {
     /**
@@ -113,7 +114,7 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
     mode: "Mode",
     stdDev: "Standard Deviation",
     range: "Range",
-    count: "Count (not empty)",
+    count: "Count",
     truePercentage: "% True",
     minLength: "Minimum Length",
     maxLength: "Maximum Length",
@@ -210,6 +211,11 @@ export interface DataGridActionContext<T extends object> {
     toggleGroupColumn: () => void;
     isGroupedColumn: () => boolean;
     clearGrouping: () => void;
+    setFilter: (operator: ColumnsFilterOperator, not: boolean, values: string[]) => void;
+    getFilter: () => ColumnFilter | null;
+    clearFilter: () => void;
+    clearFilters: () => void;
+    filterActive: (set?: boolean) => boolean | undefined;
 }
 
 export interface DataGridContext<T extends object> {
