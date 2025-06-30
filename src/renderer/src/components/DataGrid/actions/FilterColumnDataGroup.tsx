@@ -27,7 +27,10 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
         getSearchText: (context) => {
             const filter = context.getFilter();
             if (!filter) return '';
-            return filter.values.join(' ');
+            return (filter.values ?? []).join(' ');
+        },
+        onOpen: (context) => {
+            oldSearchText = '';
         },
         actions: (context, searchText) => {
             let filter = context.getFilter();
@@ -40,6 +43,9 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                     values: [],
                     active: false
                 };
+            }
+            else if (filter.active) {
+                context.filterActive(false);
             }
             const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
 

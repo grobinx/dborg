@@ -36,10 +36,23 @@ export function useColumnFilterState() {
     const [filters, setFilters] = useState<ColumnFilterState>({});
 
     const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
-        setFilters((prev) => ({
-            ...prev,
-            [key]: { operator, not, values: values, active: prev[key]?.active ?? false },
-        }));
+        setFilters((prev) => {
+            const existingFilter = prev[key];
+            const isDifferent =
+                !existingFilter ||
+                existingFilter.operator !== operator ||
+                existingFilter.not !== not ||
+                JSON.stringify(existingFilter.values) !== JSON.stringify(values);
+
+            if (!isDifferent) {
+                return prev; // Jeśli filtr się nie różni, zwróć poprzedni stan
+            }
+
+            return {
+                ...prev,
+                [key]: { operator, not, values, active: existingFilter?.active ?? false },
+            };
+        });
     };
 
     const getFilter = (key: string, active?: boolean) => {
@@ -49,6 +62,7 @@ export function useColumnFilterState() {
     };
 
     const clearFilter = (key: string) => {
+        if (!filters[key]) return;
         setFilters((prev) => {
             const { [key]: _, ...rest } = prev;
             return rest;
@@ -56,11 +70,12 @@ export function useColumnFilterState() {
     };
 
     const clearFilters = () => {
+        if (Object.keys(filters).length === 0) return;
         setFilters({});
     };
 
     const filterActive = (key: string, set?: boolean): boolean => {
-        if (set !== undefined) {
+        if (set !== undefined && filters[key]?.active !== set) {
             setFilters((prev) => ({
                 ...prev,
                 [key]: { ...prev[key], active: set },

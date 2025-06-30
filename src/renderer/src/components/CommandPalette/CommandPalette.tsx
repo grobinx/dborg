@@ -175,7 +175,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         if (open && manager) {
             // Ustaw prefix w polu tekstowym przy otwarciu okna
             setSelectedIndex(null);
-            let newSearchText = initSearchText;
+            let newSearchText = initSearchText ?? '';
             const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix: pfx }) =>
                 pfx === prefix
             );
@@ -187,7 +187,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     matchingGroup.onOpen(getContext());
                 }
             }
-            setSearchText((prefix ?? '>') + (newSearchText));
+            setSearchText(prev => prev !== (prefix ?? '>') + (newSearchText) ? (prefix ?? '>') + (newSearchText) : prev);
             inputRef.current?.focus();
         }
     }, [open, manager]);
@@ -200,7 +200,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         );
 
         if (matchingGroup) {
-            setSelectedGroup(matchingGroup); // Ustaw całą grupę
+            setSelectedGroup(prev => prev !== matchingGroup ? matchingGroup : prev); // Ustaw całą grupę
         } else {
             setSelectedGroup(null);
         }

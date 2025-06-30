@@ -13,10 +13,10 @@ export function Not(props: SVGProps<SVGSVGElement>) {
             <text
                 x="50%"
                 y="50%"
-                dominant-baseline="middle"
-                text-anchor="middle"
-                font-size="22"
-                font-family="Arial, sans-serif"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fontSize="24"
+                fontFamily="Arial, sans-serif"
                 fill="currentColor" // Ustawienie koloru dziedziczonego od rodzica
             >
                 !
