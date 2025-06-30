@@ -7,7 +7,7 @@ import * as actions from "./actions";
 import { columnDataTypeClassMap, ColumnDataValueType, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
-import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
+import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
 import LoadingOverlay from "../useful/LoadingOverlay";
@@ -1126,7 +1126,7 @@ export const DataGrid = <T extends object>({
                                         dataType = "null";
                                     }
 
-                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value, settings.data_grid.max_value_length);
+                                    let formattedValue: React.ReactNode = columnDataFormatter(row[col.key], col, settings.data_grid.null_value, displayMaxLengh);
                                     if (typeof formattedValue === "string") {
                                         formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                     }

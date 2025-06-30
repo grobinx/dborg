@@ -4,6 +4,7 @@ import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 
 export const footerCaptionHeightFactor = 0.7;
+export const displayMaxLengh = 1000;
 
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
@@ -16,7 +17,7 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (React.isValidElement(value)) {
             return value;
         }
-        let str = api.valueToString(value, column.dataType ?? 'string', maxLength);
+        let str = api.valueToString(value, column.dataType ?? 'string', { maxLength });
         if (typeof str === 'string' && /[\r\n]/.test(str)) {
             str = str.replace(/[\r\n]+/g, " ");
         }
@@ -171,7 +172,7 @@ export const calculateSummary = (
         const values = data.filter(row => !Array.isArray(row[col.key])).map((row) => row[col.key]);
 
         if (baseType === 'number') {
-            const numericValues = values.map((value) => Decimal(value));
+            const numericValues = values.filter(Boolean).map((value) => Decimal(value));
             switch (columnOperation) {
                 case "sum":
                     summary[col.key] = numericValues.reduce((acc, val) => acc.add(val), Decimal(0));

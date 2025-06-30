@@ -111,12 +111,12 @@ const columnBinaryTypes: readonly ColumnBinaryType[] = [
     "image"
 ];
 
-export type UnionDataType = 
-    ColumnStringType 
-    | ColumnNumberType 
-    | ColumnBooleanType 
-    | ColumnDateTimeType 
-    | ColumnObjectType 
+export type UnionDataType =
+    ColumnStringType
+    | ColumnNumberType
+    | ColumnBooleanType
+    | ColumnDateTimeType
+    | ColumnObjectType
     | ColumnBinaryType;
 
 export type ColumnDataType = UnionDataType | [UnionDataType];
@@ -371,14 +371,21 @@ export function getMostGeneralType(dataTypes: UnionDataType[]): UnionDataType {
     return 'string';
 }
 
+export interface ValueToStringOptions {
+    maxLength?: number; // Maksymalna długość sformatowanej wartości, domyślnie undefined
+    display?: boolean; // Czy służy wyświetleniu, domyślnie true
+}
+
 const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
 const MAX_CACHE_SIZE = 2000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadą 100 MB
 
-export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: number): string => {
+export const valueToString = (value: any, dataType: ColumnDataType, options?: ValueToStringOptions): string => {
     // Obsługa wartości null/undefined
     if (value === null || value === undefined) {
         return '';
     }
+
+    const { maxLength, display = true } = options ?? {};
 
     if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
@@ -393,7 +400,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: 
         const dt = Array.isArray(dataType) ? dataType[0] : dataType; // Typ elementów tablicy
 
         for (let i = 0; i < value.length; i++) {
-            const itemString = valueToString(value[i], dt, maxLength);
+            const itemString = valueToString(value[i], dt, options);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
             if (maxLength !== undefined && currentLength > maxLength) {
@@ -408,15 +415,17 @@ export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: 
         return formattedArray;
     }
 
-    // Generowanie klucza dla cache
-    const cacheKey = `${generateHash(value)}-${dataType}`;
-    if (cache.has(cacheKey)) {
-        const cachedValue = cache.get(cacheKey)!;
-        cache.delete(cacheKey); // Usuń klucz z obecnej pozycji
-        cache.set(cacheKey, cachedValue); // Dodaj klucz na koniec
-        return cachedValue;
+    let cacheKey: string | undefined;
+    if (display) {
+        // Generowanie klucza dla cache
+        cacheKey = `${generateHash(value)}-${dataType}`;
+        if (cache.has(cacheKey)) {
+            const cachedValue = cache.get(cacheKey)!;
+            cache.delete(cacheKey); // Usuń klucz z obecnej pozycji
+            cache.set(cacheKey, cachedValue); // Dodaj klucz na koniec
+            return cachedValue;
+        }
     }
-
 
     // Obsługa typów bazowych
     const baseType = toBaseType(dataType);
@@ -428,41 +437,46 @@ export const valueToString = (value: any, dataType: ColumnDataType, maxLength?: 
             break;
 
         case 'number':
-            formattedValue = formatNumber(value, dataType);
+            formattedValue = formatNumber(value, dataType, options);
             break;
 
         case 'boolean':
-            formattedValue = formatBoolean(value, dataType);
+            formattedValue = formatBoolean(value, dataType, options);
             break;
 
         case 'datetime':
-            formattedValue = formatDateTime(value, dataType);
+            formattedValue = formatDateTime(value, dataType, options);
             break;
 
         case 'object':
-            formattedValue = formatObject(value, dataType);
+            formattedValue = formatObject(value, dataType, options);
             break;
 
         case 'binary':
-            formattedValue = formatBinary(value);
+            formattedValue = formatBinary(value, dataType, options);
             break;
 
         default:
             formattedValue = String(value);
     }
 
-    // Dodanie do cache
-    cache.set(cacheKey, formattedValue);
-    if (cache.size > MAX_CACHE_SIZE) {
-        const oldestKey = cache.keys().next().value;
-        cache.delete(oldestKey!);
+    if (display && cacheKey) {
+        // Dodanie do cache
+        cache.set(cacheKey, formattedValue);
+        if (cache.size > MAX_CACHE_SIZE) {
+            const oldestKey = cache.keys().next().value;
+            cache.delete(oldestKey!);
+        }
     }
 
     return formattedValue;
 };
 
 // Funkcja pomocnicza do formatowania liczb
-const formatNumber = (value: any, dataType: ColumnDataType): string => {
+const formatNumber = (value: any, dataType: ColumnDataType, options?: ValueToStringOptions): string => {
+    if (!options?.display) {
+        return value.toString();
+    }
     if (dataType === 'decimal') {
         return value instanceof Decimal
             ? formatDecimalWithThousandsSeparator(value)
@@ -475,7 +489,7 @@ const formatNumber = (value: any, dataType: ColumnDataType): string => {
 };
 
 // Funkcja pomocnicza do formatowania wartości boolean
-const formatBoolean = (value: any, dataType: ColumnDataType): string => {
+const formatBoolean = (value: any, _dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
     if (typeof value === 'boolean') {
         return value ? 'true' : 'false';
     }
@@ -483,7 +497,7 @@ const formatBoolean = (value: any, dataType: ColumnDataType): string => {
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
-const formatDateTime = (value: any, dataType: ColumnDataType): string => {
+const formatDateTime = (value: any, dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
     const dateTime = value instanceof Date
         ? DateTime.fromJSDate(value)
         : typeof value === 'number' || typeof value === 'bigint'
@@ -507,7 +521,7 @@ const formatDateTime = (value: any, dataType: ColumnDataType): string => {
 };
 
 // Funkcja pomocnicza do formatowania obiektów
-const formatObject = (value: any, dataType: ColumnDataType): string => {
+const formatObject = (value: any, dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
     if (dataType === 'json') {
         return JSON.stringify(value);
     }
@@ -518,7 +532,7 @@ const formatObject = (value: any, dataType: ColumnDataType): string => {
 };
 
 // Funkcja pomocnicza do formatowania danych binarnych
-const formatBinary = (value: any): string => {
+const formatBinary = (value: any, _dataType: ColumnDataType, _options?: ValueToStringOptions): string => {
     return value instanceof Blob ? URL.createObjectURL(value) : String(value);
 };
 

@@ -19,7 +19,7 @@ export const CopyValueToClipboard = (): ActionDescriptor<DataGridActionContext<a
             const column = context.getColumn();
             if (value !== null && value !== undefined && column) {
                 if (typeof value === "object") {
-                    const valueString = valueToString(value, column.dataType);
+                    const valueString = valueToString(value, column.dataType, { display: false });
                     navigator.clipboard.writeText(valueString);
                 } else {
                     navigator.clipboard.writeText(value.toString());
