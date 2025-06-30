@@ -387,7 +387,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 
     const { maxLength, display = true } = options ?? {};
 
-    if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
+    if (display && maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
     }
 
@@ -403,7 +403,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
             const itemString = valueToString(value[i], dt, options);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
-            if (maxLength !== undefined && currentLength > maxLength) {
+            if (display && maxLength !== undefined && currentLength > maxLength) {
                 formattedArray += '...'; // Dodaj wielokropek, jeśli przekroczono limit
                 break;
             }
