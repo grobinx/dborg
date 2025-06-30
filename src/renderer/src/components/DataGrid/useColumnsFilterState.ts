@@ -38,7 +38,7 @@ export function useColumnFilterState() {
     const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
         setFilters((prev) => ({
             ...prev,
-            [key]: { operator, not, values: values, active: false },
+            [key]: { operator, not, values: values, active: prev[key]?.active ?? false },
         }));
     };
 
@@ -60,10 +60,10 @@ export function useColumnFilterState() {
     };
 
     const filterActive = (key: string, set?: boolean): boolean => {
-        if (set) {
+        if (set !== undefined) {
             setFilters((prev) => ({
                 ...prev,
-                [key]: { ...prev[key], active: true },
+                [key]: { ...prev[key], active: set },
             }));
         }
         return filters[key]?.active ?? false;

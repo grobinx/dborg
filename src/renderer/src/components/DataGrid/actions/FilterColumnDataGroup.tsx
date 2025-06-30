@@ -24,6 +24,11 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
         label: t(id, "? Filter column data"),
         mode: "filter",
         position: "bottom",
+        getSearchText: (context) => {
+            const filter = context.getFilter();
+            if (!filter) return '';
+            return filter.values.join(' ');
+        },
         actions: (context, searchText) => {
             let filter = context.getFilter();
             let setFilter: boolean = false;

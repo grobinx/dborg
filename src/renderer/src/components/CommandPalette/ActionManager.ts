@@ -60,6 +60,10 @@ export interface ActionGroupDescriptor<T = any> {
      */
     prefix: string;
 
+    getSearchText?: (context: T) => string;
+
+    onOpen?: (context: T) => void;
+
     /**
      * Dostawca akcji, który zwraca tablicę akcji związanych z tą grupą.
      * Używane do dynamicznego ładowania akcji w zależności od kontekstu.

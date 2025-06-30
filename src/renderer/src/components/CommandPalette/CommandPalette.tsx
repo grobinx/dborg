@@ -172,13 +172,25 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
 
     useEffect(() => {
-        if (open) {
+        if (open && manager) {
             // Ustaw prefix w polu tekstowym przy otwarciu okna
             setSelectedIndex(null);
-            setSearchText((prefix ?? '>') + (initSearchText ?? ''));
+            let newSearchText = initSearchText;
+            const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix: pfx }) =>
+                pfx === prefix
+            );
+            if (matchingGroup) {
+                if (matchingGroup.getSearchText && getContext) {
+                    newSearchText = matchingGroup.getSearchText(getContext());
+                }
+                if (matchingGroup.onOpen && getContext) {
+                    matchingGroup.onOpen(getContext());
+                }
+            }
+            setSearchText((prefix ?? '>') + (newSearchText));
             inputRef.current?.focus();
         }
-    }, [open]);
+    }, [open, manager]);
 
     useEffect(() => {
         if (!open || !manager) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
