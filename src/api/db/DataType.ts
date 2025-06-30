@@ -385,7 +385,8 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
         return '';
     }
 
-    const { maxLength, display = true } = options ?? {};
+    options = Object.assign({ display: true }, options); 
+    const { maxLength, display } = options;
 
     if (display && maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
