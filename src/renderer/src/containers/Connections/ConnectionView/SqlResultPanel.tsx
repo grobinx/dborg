@@ -47,6 +47,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [boxHeight, setBoxHeight] = useState<string>("100%");
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
     const [queryDuration, setQueryDuration] = useState<number | null>(null);
+    const [fetchDuration, setFetchDuration] = useState<number | null>(null);
     const [updatedCount, setUpdatedCount] = useState<number | null>(null);
     const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
     const cancelLoading = useRef(false);
@@ -96,6 +97,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             setExecuting(true);
             setRowsFetched(null);
             setQueryDuration(null);
+            setFetchDuration(null);
             const rows: QueryResultRow[] = [];
             let cursor: IDatabaseSessionCursor | undefined;
             try {
@@ -108,6 +110,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     }
                 }
                 const fetchedRows = await cursor.fetch();
+                const fetchTime = Date.now();
                 cancelExecution.current = null;
                 const info = await cursor.getCursorInfo();
                 rows.push(...fetchedRows);
@@ -121,6 +124,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 }
                 lastQuery.current = query;
                 setQueryDuration(info.duration ?? null);
+                setFetchDuration(Date.now() - fetchTime);
                 setColumns(queryToDataGridColumns(info.columns ?? []))
                 setRows(rows);
                 if (cellPosition) {
@@ -313,14 +317,19 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                             {queryDuration !== null
                                 ? t(
                                     "query-duration",
-                                    "Duration {{duration}}",
+                                    "Duration {{duration}}, fetch {{fetch}}",
                                     {
                                         duration: Duration.fromMillis(queryDuration)
                                             .shiftTo("hour", "minutes", "seconds")
+                                            .normalize()
                                             .toHuman({ unitDisplay: "narrow" }),
+                                        fetch: Duration.fromMillis(fetchDuration ?? 0)
+                                            .shiftTo("minutes", "seconds")
+                                            .normalize()
+                                            .toHuman({ unitDisplay: "narrow" })
                                     }
                                 )
-                                : t("no-query", "No Query")}
+                                : executing ? t("executing---", "Executing...") : t("no-query", "No Query")}
                         </StatusBarButton>,
                         updatedCount !== null && (
                             <StatusBarButton key="command-updated">
