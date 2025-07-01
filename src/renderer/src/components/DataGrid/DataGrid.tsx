@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useImperativeHandle } from "react"; // Dodaj import useMemo
-import { Box, darken, lighten, styled, Tooltip, useTheme } from "@mui/material";
+import { Box, darken, lighten, Stack, styled, Tooltip, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -1110,6 +1110,7 @@ export const DataGrid = <T extends object>({
                                 >
                                     {col.label}
                                 </span>
+                                <Stack flexGrow={1} />
                                 {(filterColumns.getFilter(col.key, true) !== null) && (
                                     <StyledSortIconContainer
                                         onClick={(event) => {
@@ -1196,7 +1197,7 @@ export const DataGrid = <T extends object>({
                                         col,
                                         settings.data_grid.null_value, {
                                         maxLength: displayMaxLengh,
-                                        display: (searchState.current.text ?? '').trim() === ''
+                                        //display: (searchState.current.text ?? '').trim() === ''
                                     });
                                     if (typeof formattedValue === "string") {
                                         formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);

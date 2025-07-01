@@ -513,11 +513,17 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToS
         return dateTime.toFormat('HH:mm:ss') ?? '';
     }
     if (dataType === 'duration') {
-        const duration = Duration.fromObject(value);
-        if (duration.as('hours') >= 24) {
-            return duration.toFormat("yyyy-MM-dd hh:mm:ss") ?? '';
+        let duration: Duration | undefined;
+        if (typeof value === 'number' || typeof value === 'bigint') {
+            duration = Duration.fromMillis(Number(value));
         }
-        return duration.toFormat('hh:mm:ss') ?? '';
+        else {
+            duration = Duration.fromObject(value);
+        }
+        if (duration.as('hours') >= 24) {
+            return duration.toFormat("yyyy-MM-dd hh:mm:ss SSS") ?? '';
+        }
+        return duration.toFormat('hh:mm:ss SSS') ?? '';
     }
     return dateTime.toSQL() ?? '';
 };

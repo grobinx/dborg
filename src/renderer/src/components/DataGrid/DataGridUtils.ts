@@ -2,6 +2,7 @@ import React from "react";
 import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
+import { DateTime } from "luxon";
 
 export const footerCaptionHeightFactor = 0.7;
 export const displayMaxLengh = 1000;
@@ -384,13 +385,19 @@ export const calculateSummary = (
                     summary[col.key] = null;
             }
         } else if (baseType === "datetime") {
-            const dateValues = values.filter((value) => value instanceof Date) as Date[];
+            const dateValues = values
+                .map(value => {
+                    if (value instanceof Date) return DateTime.fromJSDate(value);
+                    if (typeof value === "number" || typeof value === "bigint") return DateTime.fromMillis(Number(value));
+                    return null;
+                })
+                .filter((value): value is DateTime => value !== null);
             switch (columnOperation) {
                 case "min":
-                    summary[col.key] = dateValues.length > 0 ? new Date(Math.min(...dateValues.map((date) => date.getTime()))) : null;
+                    summary[col.key] = dateValues.length > 0 ? Math.min(...dateValues.map((date) => date.toMillis())) : null;
                     break;
                 case "max":
-                    summary[col.key] = dateValues.length > 0 ? new Date(Math.max(...dateValues.map((date) => date.getTime()))) : null;
+                    summary[col.key] = dateValues.length > 0 ? Math.max(...dateValues.map((date) => date.toMillis())) : null;
                     break;
                 case "count":
                     summary[col.key] = dateValues.length;
@@ -400,28 +407,28 @@ export const calculateSummary = (
                     break;
                 case "range":
                     if (dateValues.length > 0) {
-                        const minDate = new Date(Math.min(...dateValues.map((date) => date.getTime())));
-                        const maxDate = new Date(Math.max(...dateValues.map((date) => date.getTime())));
-                        summary[col.key] = maxDate.getTime() - minDate.getTime(); // Różnica w milisekundach
+                        const minDate = DateTime.fromMillis(Math.min(...dateValues.map((date) => date.toMillis())));
+                        const maxDate = DateTime.fromMillis(Math.max(...dateValues.map((date) => date.toMillis())));
+                        summary[col.key] = maxDate.toMillis() - minDate.toMillis(); // Różnica w milisekundach
                     } else {
                         summary[col.key] = null;
                     }
                     break;
                 case "unique":
-                    summary[col.key] = new Set(dateValues.map((date) => date.getTime())).size;
+                    summary[col.key] = new Set(dateValues.map((date) => date.toMillis())).size;
                     break;
                 case "mode":
-                    summary[col.key] = dateValues.length > 0 ? calculateMode(dateValues.map((date) => new Decimal(date.getTime()))) : null;
+                    summary[col.key] = dateValues.length > 0 ? calculateMode(dateValues.map((date) => new Decimal(date.toMillis()))) : null;
                     break;
                 case "median":
                     summary[col.key] = dateValues.length > 0
-                        ? new Date(calculateMedian(dateValues.map((date) => new Decimal(date.getTime())))!)
+                        ? calculateMedian(dateValues.map((date) => new Decimal(date.toMillis())))!
                         : null;
                     break;
                 case "avg":
                     if (dateValues.length > 0) {
-                        const avgTime = dateValues.reduce((acc, date) => acc + date.getTime(), 0) / dateValues.length;
-                        summary[col.key] = new Date(avgTime);
+                        const avgTime = dateValues.reduce((acc, date) => acc + date.toMillis(), 0) / dateValues.length;
+                        summary[col.key] = avgTime;
                     } else {
                         summary[col.key] = null;
                     }

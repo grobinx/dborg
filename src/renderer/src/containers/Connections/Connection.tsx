@@ -20,7 +20,6 @@ import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveTabS
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
-import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import ActionsBar from "../ViewSlots/ActionsBar";
 
 const StyledConnection = styled(Stack, {

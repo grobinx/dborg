@@ -27,7 +27,7 @@ import { DriverSummaryProps } from "@renderer/containers/SchemaAssistant/DriverS
 import { SchemaSummaryProps } from "@renderer/containers/SchemaAssistant/SchemaSummary/SchemaSummar";
 import { SchemaBookProps, SchemaListProps } from "@renderer/containers/SchemaBook";
 import { NotificationToastListProps } from "@renderer/components/notifications/NotificationToastList";
-import { NotificationAdminListProps } from "@renderer/components/notifications/NotificationAdminList";
+import { NotificationAdminPanelProps } from "@renderer/components/ToolPanels/NotificationAdminPanel";
 import { TabsPanelProps } from "@renderer/components/TabsPanel/TabsPanel";
 import { TabPanelProps } from "@renderer/components/TabsPanel/TabPanel";
 import { ToolButtonProps } from "@renderer/components/ToolButton";
@@ -106,7 +106,7 @@ declare module "@mui/material/styles" {
         SchemaBook: "root";
         SchemaList: "root" | "content" | "title";
         NotificationToastList: "root" | "paper" | "alert";
-        NotificationAdminList: "root";
+        NotificationAdminPanel: "root";
         TabsPanel: "root" | "header" | "content";
         TabPanel: "content" | "button" | "label" | "buttons";
         UnboundBadge: "root";
@@ -133,7 +133,7 @@ declare module "@mui/material/styles" {
         SchemaBook: Partial<SchemaBookProps>;
         SchemaList: Partial<SchemaListProps>;
         NotificationToastList: Partial<NotificationToastListProps>;
-        NotificationAdminList: Partial<NotificationAdminListProps>;
+        NotificationAdminPanel: Partial<NotificationAdminPanelProps>;
         TabsPanel: Partial<TabsPanelProps>;
         TabPanel: Partial<TabPanelProps>;
         TabPanelLabel: Partial<TabPanelLabelProps>;
@@ -238,10 +238,10 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['NotificationToastList'];
             //variants?: ComponentsVariants['NotificationToastList'];
         };
-        NotificationAdminList?: {
-            defaultProps?: ComponentsPropsList['NotificationAdminList'];
-            styleOverrides?: ComponentsOverrides<Theme>['NotificationAdminList'];
-            //variants?: ComponentsVariants['NotificationAdminList'];
+        NotificationAdminPanel?: {
+            defaultProps?: ComponentsPropsList['NotificationAdminPanel'];
+            styleOverrides?: ComponentsOverrides<Theme>['NotificationAdminPanel'];
+            //variants?: ComponentsVariants['NotificationAdminPanel'];
         };
         TabsPanel?: {
             defaultProps?: ComponentsPropsList['TabsPanel'];

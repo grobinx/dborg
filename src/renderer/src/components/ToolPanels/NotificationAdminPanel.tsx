@@ -25,8 +25,8 @@ import ToolTextField from "../ToolTextField";
 
 const SEARCH_NOTIFICATIONS = "search-notifications";
 
-const StyledNotificationAdminList = styled(List, {
-    name: "NotificationAdminList",
+const StyledNotificationAdminPanel = styled(List, {
+    name: "NotificationAdminPanel",
     slot: "root",
 })(({ /*theme*/ }) => ({
     // Add styles for the list container if needed
@@ -34,7 +34,7 @@ const StyledNotificationAdminList = styled(List, {
     overflowY: "auto",
 }));
 
-export interface NotificationAdminListProps extends React.ComponentProps<typeof List> {
+export interface NotificationAdminPanelProps extends React.ComponentProps<typeof List> {
     slotProps?: {
         item?: React.ComponentProps<typeof ListItem>;
         itemIcon?: React.ComponentProps<typeof ListItemIcon>;
@@ -44,11 +44,11 @@ export interface NotificationAdminListProps extends React.ComponentProps<typeof 
     tabsItemID?: string;
 }
 
-interface NotificationAdminListOwnProps extends NotificationAdminListProps { }
+interface NotificationAdminListOwnProps extends NotificationAdminPanelProps { }
 
-const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) => {
+const NotificationAdminPanel: React.FC<NotificationAdminListOwnProps> = (props) => {
     const { notifications, removeNotification } = useNotificationAdmin();
-    const { slotProps, tabsItemID, ...other } = useThemeProps({ name: "NotificationAdminList", props: props });
+    const { slotProps, tabsItemID, ...other } = useThemeProps({ name: "NotificationAdminPanel", props: props });
     const theme = useTheme();
     const [selectedNotificationId, setSelectedNotificationId] = React.useState<string | null>(null);
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
@@ -119,10 +119,10 @@ const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) =
         return () => {
             unsubscribe(SEARCH_NOTIFICATIONS, handleSearchNotifications);
         };
-    }, [subscribe, unsubscribe]);
+    }, []);
 
     return (
-        <StyledNotificationAdminList className="NotificationAdminList-root" disablePadding {...other}>
+        <StyledNotificationAdminPanel className="NotificationAdminPanel-root" disablePadding {...other}>
             {Object.entries(groupedNotifications).map(([source, group]) => (
                 <React.Fragment key={source}>
                     <ListItem
@@ -131,7 +131,7 @@ const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) =
                         disableGutters
                         onClick={() => toggleGroup(source)}
                         {...slotProps?.item}
-                        className="NotificationAdminList-group-header"
+                        className="NotificationAdminPanel-group-header"
                     >
                         {expandedGroups[source] ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                         <ListItemText
@@ -159,7 +159,7 @@ const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) =
                                     disableGutters
                                     {...slotProps?.item}
                                     onClick={() => handleSelect(notification.id)}
-                                    className={"NotificationAdminList-group-item" + (notification.id === selectedNotificationId ? " Mui-selected" : "")} // Add class for selected item
+                                    className={"NotificationAdminPanel-group-item" + (notification.id === selectedNotificationId ? " Mui-selected" : "")} // Add class for selected item
                                 >
                                     <ListItemIcon
                                         {...slotProps?.itemIcon}
@@ -185,7 +185,7 @@ const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) =
                                                 key={key}
                                                 disablePadding
                                                 disableGutters
-                                                className="NotificationAdminList-reason-item"
+                                                className="NotificationAdminPanel-reason-item"
                                                 {...slotProps?.item}
                                             >
                                                 <ListItemText
@@ -205,11 +205,11 @@ const NotificationAdminList: React.FC<NotificationAdminListOwnProps> = (props) =
                     </Collapse>
                 </React.Fragment>
             ))}
-        </StyledNotificationAdminList>
+        </StyledNotificationAdminPanel>
     );
 };
 
-export const NotificationAdminListButtons: React.FC = () => {
+export const NotificationAdminPanelButtons: React.FC = () => {
     const { notifications, removeNotification } = useNotificationAdmin();
     const theme = useTheme();
     const { t } = useTranslation();
@@ -236,7 +236,7 @@ export const NotificationAdminListButtons: React.FC = () => {
     </TabPanelButtons>;
 }
 
-export const NotificationAdminListLabel: React.FC = () => {
+export const NotificationAdminPanelLabel: React.FC = () => {
     const { notifications } = useNotificationAdmin();
 
     return <TabPanelLabel>
@@ -249,4 +249,4 @@ export const NotificationAdminListLabel: React.FC = () => {
     </TabPanelLabel>;
 }
 
-export default NotificationAdminList;
+export default NotificationAdminPanel;

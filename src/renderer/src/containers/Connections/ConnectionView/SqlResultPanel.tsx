@@ -21,6 +21,7 @@ import { useFocus } from "@renderer/hooks/useFocus";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
 import ToolTextField from "@renderer/components/ToolTextField";
 import { ToolLabel } from "@renderer/components/ToolLabel";
+import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 const SQL_RESULT_SET_MAX_FETCH_SIZE = "sqlResult:setMaxFetchSize";
@@ -57,6 +58,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const cancelLoading = useRef(false);
     const cancelExecution = useRef<() => void>(null);
     const [maxFetchSize, setMaxFetchSize] = useState<string | undefined>(undefined);
+    const { addQueryToHistory } = useQueryHistory();
 
     useEffect(() => {
         if (session.info.driver.maxFetchSizeProperty && session.info.driver.properties[session.info.driver.maxFetchSizeProperty]) {
@@ -113,6 +115,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             const rows: QueryResultRow[] = [];
             let cursor: IDatabaseSessionCursor | undefined;
             try {
+                const startTime = Date.now();
                 cursor = await session.open(query!, undefined, maxFetchSize ? Number(maxFetchSize) : undefined);
                 if (session.info.driver.implements.includes("cancel")) {
                     cancelExecution.current = () => {
@@ -122,7 +125,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     }
                 }
                 const fetchedRows = await cursor.fetch();
-                const fetchTime = Date.now();
+                let fetchTime = Date.now();
                 cancelExecution.current = null;
                 const info = await cursor.getCursorInfo();
                 rows.push(...fetchedRows);
@@ -136,7 +139,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 }
                 lastQuery.current = query;
                 setQueryDuration(info.duration ?? null);
-                setFetchDuration(Date.now() - fetchTime);
+                fetchTime = Date.now() - fetchTime; 
+                setFetchDuration(fetchTime);
                 setColumns(queryToDataGridColumns(info.columns ?? []))
                 setRows(rows);
                 if (cellPosition) {
@@ -147,10 +151,26 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         }
                     }, 10);
                 }
+                addQueryToHistory({
+                    query: query!,
+                    schema: session.schema.sch_name,
+                    executionTime: info.duration,
+                    fetchTime: fetchTime,
+                    rows: rows.length,
+                    startTime: startTime,
+                });
             } catch (error) {
                 addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
                 setColumns([]);
                 setRows([]);
+                addQueryToHistory({
+                    query: query!,
+                    schema: session.schema.sch_name,
+                    error: (typeof error === "object" && error !== null && "message" in error)
+                        ? (error as { message: string }).message
+                        : String(error),
+                    startTime: Date.now(),
+                });
             } finally {
                 setExecuting(false);
                 setRowsFetched(null);
@@ -183,8 +203,23 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 lastQuery.current = query;
                 setQueryDuration(result.duration ?? null);
                 setUpdatedCount(result.updateCount ?? null);
+                addQueryToHistory({
+                    query: query!,
+                    schema: session.schema.sch_name,
+                    executionTime: result.duration,
+                    rows: result.updateCount ?? undefined,
+                    startTime: Date.now(),
+                });
             } catch (error) {
                 addNotification("error", "Error executing command", { reason: error, source: session.schema.sch_name });
+                addQueryToHistory({
+                    query: query!,
+                    schema: session.schema.sch_name,
+                    error: (typeof error === "object" && error !== null && "message" in error)
+                        ? (error as { message: string }).message
+                        : String(error),
+                    startTime: Date.now(),
+                });
             }
             finally {
                 setExecuting(false);

@@ -6,7 +6,7 @@ import StatusBar, { StatusBarButton } from "./StatusBar";
 import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
 import { useSettings } from '@renderer/contexts/SettingsContext';
-import NotificationAdminList, { NotificationAdminListButtons, NotificationAdminListLabel } from '@renderer/components/notifications/NotificationAdminList';
+import NotificationAdminPanel, { NotificationAdminPanelButtons, NotificationAdminPanelLabel } from '@renderer/components/ToolPanels/NotificationAdminPanel';
 import TabsPanel from '../components/TabsPanel/TabsPanel';
 import TabPanel from '../components/TabsPanel/TabPanel';
 import ToolButton from '../components/ToolButton';
@@ -18,6 +18,7 @@ import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
 import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
 import TabPanelLabel from '@renderer/components/TabsPanel/TabPanelLabel';
+import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -176,9 +177,15 @@ const App: React.FC = () => {
                         <TabsPanel className="ToolsPanel" itemID="tools-tabs-panel">
                             <TabPanel
                                 itemID="notifications"
-                                label={<NotificationAdminListLabel />}
-                                buttons={<NotificationAdminListButtons />}
-                                content={<NotificationAdminList />}
+                                label={<NotificationAdminPanelLabel />}
+                                buttons={<NotificationAdminPanelButtons />}
+                                content={<NotificationAdminPanel />}
+                            />
+                            <TabPanel
+                                itemID="query-history"
+                                label={<QueryHistoryPanelLabel />}
+                                buttons={<QueryHistoryPanelButtons />}
+                                content={<QueryHistoryPanel />}
                             />
                             <TabPanel
                                 itemID="logs"

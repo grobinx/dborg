@@ -16,6 +16,7 @@ import { PluginManagerProvider } from './contexts/PluginManagerContext';
 import { ErrorBoundaryWrapper } from './contexts/ErrorBoundary';
 import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
 import About from './About';
+import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -49,7 +50,9 @@ const AppWrapper: React.FC = () => {
                                 <SchemaConnectionManager />
                                 <PluginManagerProvider>
                                     <ApplicationProvider>
-                                        <App />
+                                        <QueryHistoryProvider>
+                                            <App />
+                                        </QueryHistoryProvider>
                                     </ApplicationProvider>
                                 </PluginManagerProvider>
                             </DialogsProvider>

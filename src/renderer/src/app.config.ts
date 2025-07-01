@@ -1,5 +1,5 @@
 import { TSettings } from "src/api/settings";
-import "./components/notifications/NotificationAdminList";
+import "./components/ToolPanels/NotificationAdminPanel";
 import { SETTINGS_NAMES } from "./contexts/SettingsContext";
 
 export interface AppSettings extends TSettings {

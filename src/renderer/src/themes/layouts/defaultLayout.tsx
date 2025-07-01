@@ -677,7 +677,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     }
                 }
             },
-            NotificationAdminList: {
+            NotificationAdminPanel: {
                 defaultProps: {
                     sx: {
                         paddingY: 2,
@@ -696,10 +696,10 @@ const layout = (palette: Palette): ThemeOptions => {
                                 "&:hover": {
                                     backgroundColor: palette.action.hover,
                                 },
-                                '&.NotificationAdminList-group-item': {
+                                '&.NotificationAdminPanel-group-item': {
                                     paddingLeft: 28,
                                 },
-                                '&.NotificationAdminList-reason-item': {
+                                '&.NotificationAdminPanel-reason-item': {
                                     paddingLeft: 48,
                                 },
                                 transition: "background-color 0.3s ease",
