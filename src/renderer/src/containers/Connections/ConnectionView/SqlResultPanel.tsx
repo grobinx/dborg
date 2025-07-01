@@ -19,6 +19,8 @@ import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditor
 import { QueryResultRow } from "src/api/db";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
+import ToolTextField from "@renderer/components/ToolTextField";
+import { ToolLabel } from "@renderer/components/ToolLabel";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -101,7 +103,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             const rows: QueryResultRow[] = [];
             let cursor: IDatabaseSessionCursor | undefined;
             try {
-                cursor = await session.open(query!);
+                cursor = await session.open(query!, undefined,);
                 if (session.info.driver.implements.includes("cancel")) {
                     cancelExecution.current = () => {
                         if (cursor) {
@@ -431,6 +433,11 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
 
     return (
         <TabPanelButtons>
+            <ToolLabel label="Fetch" />
+            <ToolTextField
+                placeholder="Enter fetch count"
+                style={{ width: 6 * 10 }}
+            />
         </TabPanelButtons>
     );
 };

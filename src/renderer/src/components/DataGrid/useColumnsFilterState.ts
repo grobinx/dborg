@@ -150,7 +150,9 @@ export function useColumnFilterState() {
     };
 }
 
-export function filterToString(operator: ColumnsFilterOperator, not: boolean, values: string[]): string {
+export function filterToString(filter: ColumnFilter): string;
+export function filterToString(operator: ColumnsFilterOperator, not: boolean, values: string[]): string;
+export function filterToString(arg1: ColumnFilter | ColumnsFilterOperator, arg2?: boolean, arg3?: string[]): string {
     const operatorDescriptions: Record<ColumnsFilterOperator, string> = {
         equal: "=",
         greaterThan: ">",
@@ -161,6 +163,20 @@ export function filterToString(operator: ColumnsFilterOperator, not: boolean, va
         between: "between",
         isNull: "is null",
     };
+
+    let operator: ColumnsFilterOperator;
+    let not: boolean;
+    let values: string[];
+
+    if (typeof arg1 === "string") {
+        operator = arg1;
+        not = arg2 ?? false;
+        values = arg3 ?? [];
+    } else {
+        operator = arg1.operator;
+        not = arg1.not ?? false;
+        values = arg1.values ?? [];
+    }
 
     let description = operatorDescriptions[operator] || "unknown operator";
 

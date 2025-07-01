@@ -196,7 +196,7 @@ export const calculateSummary = (
                         : null;
                     break;
                 case "unique":
-                    summary[col.key] = new Set(numericValues.toString()).size;
+                    summary[col.key] = new Set(numericValues.map(value => value.toString())).size;
                     break;
                 case "median":
                     summary[col.key] = numericValues.length > 0 ? calculateMedian(numericValues) : null;

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useImperativeHandle } from "react"; // Dodaj import useMemo
-import { Box, darken, lighten, styled, useTheme } from "@mui/material";
+import { Box, darken, lighten, styled, Tooltip, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -19,7 +19,7 @@ import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
 import { areTypesEqual, ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
-import { useColumnFilterState } from "./useColumnsFilterState";
+import { filterToString, useColumnFilterState } from "./useColumnsFilterState";
 
 export type DataGridMode = "defined" | "data";
 
@@ -1111,13 +1111,34 @@ export const DataGrid = <T extends object>({
                                     {col.label}
                                 </span>
                                 {(filterColumns.getFilter(col.key, true) !== null) && (
-                                    <StyledSortIconContainer>
-                                        <theme.icons.Filter />
+                                    <StyledSortIconContainer
+                                        onClick={(event) => {
+                                            filterColumns.filterActive(col.key, false)
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        <Tooltip
+                                            title={t("filter-description", 'Filter {{column}} {{filter}}', {
+                                                column: col.label,
+                                                filter: filterToString(filterColumns.getFilter(col.key, true)!)
+                                            })}
+                                        >
+                                            <theme.icons.Filter />
+                                        </Tooltip>
                                     </StyledSortIconContainer>
                                 )}
                                 {groupingColumns.isInGroup(col.key) && (
-                                    <StyledSortIconContainer>
-                                        <span className="group-icon">[]</span>
+                                    <StyledSortIconContainer
+                                        onClick={(event) => {
+                                            groupingColumns.toggleColumn(col.key);
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        <Tooltip
+                                            title={t("grouped-column", "Grouped column")}
+                                        >
+                                            <span className="group-icon">[]</span>
+                                        </Tooltip>
                                     </StyledSortIconContainer>
                                 )}
                                 {col.sortDirection && (
@@ -1215,6 +1236,7 @@ export const DataGrid = <T extends object>({
                         className="DataGrid-footer"
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
+                            const absoluteColIndex = startColumn + colIndex;
                             let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType);
                             let operationLabel = "";
                             if (summaryOperation && summaryOperation?.[col.key] !== null) {
@@ -1236,6 +1258,10 @@ export const DataGrid = <T extends object>({
                                         paddingX={cellPaddingX}
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
+                                        onClick={() => {
+                                            handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
+                                            actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
+                                        }}
                                     >
                                         {operationLabel}
                                     </StyledFooterCell>
