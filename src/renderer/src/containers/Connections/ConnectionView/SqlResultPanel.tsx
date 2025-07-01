@@ -23,6 +23,8 @@ import ToolTextField from "@renderer/components/ToolTextField";
 import { ToolLabel } from "@renderer/components/ToolLabel";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
+const SQL_RESULT_SET_MAX_FETCH_SIZE = "sqlResult:setMaxFetchSize";
+const SQL_RESULT_GET_MAX_FETCH_SIZE = "sqlResult:getMaxFetchSize";
 
 interface SqlResultContentProps {
     session: IDatabaseSession;
@@ -54,6 +56,14 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const dataGridRef = useRef<DataGridActionContext<any> | null>(null);
     const cancelLoading = useRef(false);
     const cancelExecution = useRef<() => void>(null);
+    const [maxFetchSize, setMaxFetchSize] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (session.info.driver.maxFetchSizeProperty && session.info.driver.properties[session.info.driver.maxFetchSizeProperty]) {
+            const maxFetchSize = session.info.driver.properties[session.info.driver.maxFetchSizeProperty];
+            sendMessage(SQL_RESULT_SET_MAX_FETCH_SIZE, { to: itemID, maxFetchSize });
+        }
+    }, [session, itemID]);
 
     const onMountHandle = (context: DataGridContext<any>) => {
         context.addAction({
@@ -103,7 +113,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             const rows: QueryResultRow[] = [];
             let cursor: IDatabaseSessionCursor | undefined;
             try {
-                cursor = await session.open(query!, undefined,);
+                cursor = await session.open(query!, undefined, maxFetchSize ? Number(maxFetchSize) : undefined);
                 if (session.info.driver.implements.includes("cancel")) {
                     cancelExecution.current = () => {
                         if (cursor) {
@@ -251,15 +261,33 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             }
         };
 
+        const handleSetMaxFetchSize = (message: { to: string, maxFetchSize: string | undefined }) => {
+            if (message.to !== itemID) {
+                return;
+            }
+            setMaxFetchSize(message.maxFetchSize);
+        };
+
+        const handleGetMaxFetchSize = (message: { to: string }) => {
+            if (message.to !== itemID) {
+                return;
+            }
+            return maxFetchSize;
+        };
+
         subscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
         subscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
         subscribe(Messages.TAB_PANEL_CLICK, handleTabPanelClick);
         subscribe(Messages.TAB_PANEL_CHANGED, handleSwitchTabMessage);
+        subscribe(SQL_RESULT_SET_MAX_FETCH_SIZE, handleSetMaxFetchSize);
+        subscribe(SQL_RESULT_GET_MAX_FETCH_SIZE, handleGetMaxFetchSize);
         return () => {
             unsubscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
             unsubscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
             unsubscribe(Messages.TAB_PANEL_CLICK, handleTabPanelClick);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleSwitchTabMessage);
+            unsubscribe(SQL_RESULT_SET_MAX_FETCH_SIZE, handleSetMaxFetchSize);
+            unsubscribe(SQL_RESULT_GET_MAX_FETCH_SIZE, handleGetMaxFetchSize);
         };
     }, [tabsItemID, itemID, active, executing]);
 
@@ -430,13 +458,34 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const { t } = useTranslation();
     const theme = useTheme();
+    const { sendMessage } = useMessages();
+    const [maxFetchSize, setMaxFetchSize] = React.useState<string>("");
+
+    React.useEffect(() => {
+        const fetchMaxFetchSize = async () => {
+            const result = await sendMessage(SQL_RESULT_GET_MAX_FETCH_SIZE, { to: itemID });
+            setMaxFetchSize(result ?? "");
+        };
+
+        fetchMaxFetchSize();
+    }, [itemID]);
 
     return (
         <TabPanelButtons>
-            <ToolLabel label="Fetch" />
+            <ToolLabel label={t("Fetch", "Fetch")} />
             <ToolTextField
-                placeholder="Enter fetch count"
                 style={{ width: 6 * 10 }}
+                value={maxFetchSize}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    setMaxFetchSize(value); // Aktualizuj lokalny stan
+                    sendMessage(SQL_RESULT_SET_MAX_FETCH_SIZE, { to: itemID, maxFetchSize: value !== "" ? value : undefined });
+                }}
+                onKeyDown={(e) => {
+                    if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                        e.preventDefault(); // Zablokuj wprowadzanie znaków innych niż cyfry
+                    }
+                }}
             />
         </TabPanelButtons>
     );

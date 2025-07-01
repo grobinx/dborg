@@ -120,7 +120,7 @@ export type PropertyType = 'string' | "password" | 'number' | 'boolean' | "file"
  * Specjal property flags.
  * * pool - is pool logical property
  */
-export type PropertyFlag = 'pool';
+export type PropertyFlag = 'pool' | "max-fetch-size";
 export type PropertyFlags = PropertyFlag[];
 
 /**
@@ -479,6 +479,7 @@ export interface DriverInfo {
     implements: ConnectionImplementsMethods;
     passwordProperty?: string;
     poolProperty?: string;
+    maxFetchSizeProperty?: string;
 }
 
 /**

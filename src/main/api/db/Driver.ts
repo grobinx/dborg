@@ -203,6 +203,7 @@ export abstract class Driver implements api.Driver {
             implements: this.getImplementsMethods(),
             passwordProperty: properties.flatMap(group => group.properties).find(property => property.type === "password")?.name,
             poolProperty: properties.flatMap(group => group.properties).find(property => property.flags?.includes("pool"))?.name,
+            maxFetchSizeProperty: properties.flatMap(group => group.properties).find(property => property.flags?.includes("max-fetch-size"))?.name,
         }
     }
 

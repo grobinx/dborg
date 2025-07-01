@@ -512,7 +512,7 @@ export class Driver extends driver.Driver {
                 title: "Driver settings",
                 properties: [
                     { name: driver_fetch_record_count, title: "Fetch record count", type: "number", description: `Set the number of records fetch by the cursor, default ${driver_fetch_record_count_default}` },
-                    { name: driver_max_statement_rows, title: "Max statement rows", type: "number", description: `Set the number of records retrieved by the cursor at all, default ${driver_max_statement_rows_default}` },
+                    { name: driver_max_statement_rows, title: "Max statement rows", type: "number", description: `Set the number of records retrieved by the cursor at all, default ${driver_max_statement_rows_default}`, flags: ["max-fetch-size"] },
                 ]
             }
         ];
