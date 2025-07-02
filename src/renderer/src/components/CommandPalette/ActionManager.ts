@@ -20,6 +20,10 @@ export interface ActionGroupOptionDescription<T> {
      */
     label?: string;
     /**
+     * Skrót klawiszowy przypisany do akcji opcji.
+     */
+    keybinding?: string;
+    /**
      * Kod do wykonania akcji.
      * @param context Obiekt, na którym akcja ma być wykon
      * @param args 

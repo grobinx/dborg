@@ -39,7 +39,7 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...othe
                 ? (
                     <span style={{ display: "inline", whiteSpace: "nowrap" }}>
                         <span>{resolvedAction.label}</span>
-                        {renderKeybindings(resolvedAction.keybindings)}
+                        {renderKeybindings(resolvedAction.keybindings, true)}
                     </span>
                 )
                 : resolvedAction.label

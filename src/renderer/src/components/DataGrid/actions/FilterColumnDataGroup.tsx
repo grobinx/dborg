@@ -84,6 +84,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: notId,
                 icon: 'Not',
                 label: t(notId, "Not"),
+                keybinding: 'Ctrl+1',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -99,6 +100,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: equalsId,
                 icon: 'Equal',
                 label: t(equalsId, "Equals, [<] Less then or equals, [>] Greater then or equals, [<][>] Between"),
+                keybinding: 'Ctrl+=',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -124,6 +126,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: lessId,
                 icon: 'LessThan',
                 label: t(lessId, "Less than, [=] Less then or Equals, [=][>] Between, [~] Ends with"),
+                keybinding: 'Ctrl+,',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -149,6 +152,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: greaterThanId,
                 icon: 'GreaterThan',
                 label: t(greaterThanId, "Greater than, [=] Greater than or Equals, [=][>] Between, [~] Starts with"),
+                keybinding: 'Ctrl+.',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -174,6 +178,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: likeId,
                 icon: 'SuchLike',
                 label: t(likeId, "Like, [>] Starts with, [<] Ends with"),
+                keybinding: 'Ctrl+`',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -199,6 +204,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 id: nullId,
                 icon: 'Null',
                 label: t(nullId, "Null"),
+                keybinding: 'Ctrl+0',
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;

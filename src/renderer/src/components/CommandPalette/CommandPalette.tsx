@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, Tooltip, ButtonGroup } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
 import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
-import { splitKeybinding } from './KeyBinding';
+import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
 import { resolveIcon } from '@renderer/themes/icons';
 import ToolButton from '../ToolButton';
@@ -46,13 +46,15 @@ const Key = styled('span')(({ theme }) => ({
     textAlign: 'center',
 }));
 
-const KeybindingContainer = styled('span')({
+const KeybindingContainer = styled('span', {
+    shouldForwardProp: (prop) => prop !== 'alone',
+})<{ alone?: boolean }>(({ alone }) => ({
     display: 'flex',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: alone ? '0px' : '16px', // Ustaw marginLeft na 16px, jeśli alone jest true
     gap: '2px',
     fontSize: '0.7em',
-});
+}));
 
 // Helper function to highlight matching text
 export const highlightText = (text: string, query: string, theme: Theme) => {
@@ -84,9 +86,9 @@ export const highlightText = (text: string, query: string, theme: Theme) => {
     );
 };
 
-export function renderKeybindings(keybindings: string[]) {
+export function renderKeybindings(keybindings: string[], alone: boolean = false) {
     return (
-        <KeybindingContainer>
+        <KeybindingContainer alone={alone}>
             {keybindings.map((keybinding, bindingIdx, bindingArray) => (
                 <React.Fragment key={bindingIdx}>
                     {splitKeybinding(keybinding).map((key, idx, array) => (
@@ -323,6 +325,17 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 }
             }
         }
+
+        if (selectedGroup?.options?.length) {
+            selectedGroup.options.some(option => {
+                if (option.keybinding && isKeybindingMatch(normalizeKeybinding(option.keybinding), event)) {
+                    event.preventDefault();
+                    handleOptionClick(option);
+                    return true;
+                }
+                return false;
+            });
+        }
     };
 
     useEffect(() => {
@@ -457,7 +470,17 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     <InputAdornment position="end">
                                         <ButtonGroup>
                                             {selectedGroup.options.map((option) => (
-                                                <Tooltip key={option.id} title={option.label}>
+                                                <Tooltip
+                                                    key={option.id}
+                                                    title={
+                                                        <>
+                                                            {option.label}
+                                                            {option.keybinding && (
+                                                                renderKeybindings([option.keybinding], true)
+                                                            )}
+                                                        </>
+                                                    }
+                                                >
                                                     <span>
                                                         <ToolButton
                                                             onClick={() => handleOptionClick(option)}
