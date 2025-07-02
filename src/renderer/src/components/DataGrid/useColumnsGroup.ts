@@ -36,26 +36,33 @@ export const useColumnsGroup = (): ColumnsGroup => {
             return data;
         }
 
-        const groupedResultSet: Record<string, { rows: T[]; summary: Record<string, any> }> = {};
+        // Użycie Map zamiast obiektu
+        const groupedResultSet = new Map<string, { rows: T[]; summary: Record<string, any> }>();
 
         data.forEach((row) => {
-            const groupKey = columns.map((col) => row[col].toString()).join('|'); // Klucz grupy
-            if (!groupedResultSet[groupKey]) {
-                groupedResultSet[groupKey] = { rows: [], summary: {} };
+            // Budowanie klucza grupy raz
+            const groupKey = columns.map((col) => row[col]?.toString() ?? '').join('|');
+
+            if (!groupedResultSet.has(groupKey)) {
+                groupedResultSet.set(groupKey, { rows: [], summary: {} });
             }
-            groupedResultSet[groupKey].rows.push(row);
+
+            groupedResultSet.get(groupKey)!.rows.push(row);
         });
 
-        // Oblicz podsumowanie dla każdej grupy
-        Object.keys(groupedResultSet).forEach((groupKey) => {
-            const groupRows = groupedResultSet[groupKey].rows;
-            groupedResultSet[groupKey].summary = calculateSummary(groupRows, columnsState, summaryOperation, true);
+        // Oblicz podsumowanie dla każdej grupy w jednej iteracji
+        groupedResultSet.forEach((group) => {
+            const groupRows = group.rows;
+            group.summary = calculateSummary(groupRows, columnsState, summaryOperation, true);
+
+            // Dodanie wartości pierwszego wiersza dla kolumn grupujących
             columns.forEach((col) => {
-                groupedResultSet[groupKey].summary[col] = groupRows[0][col];
+                group.summary[col] = groupRows[0][col];
             });
         });
 
-        return Object.values(groupedResultSet).map((group) => group.summary) as T[];
+        // Zwrócenie wyników jako tablica
+        return Array.from(groupedResultSet.values()).map((group) => group.summary) as T[];
     };
 
     return {

@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import { DateTime, Duration } from "luxon";
 import SparkMD5 from 'spark-md5';
+import { LRUCache } from 'lru-cache';
 
 export type ColumnBaseType =
     'string'
@@ -377,8 +378,7 @@ export interface ValueToStringOptions {
     thousandsSeparator?: boolean; // Czy używać separatorów tysięcy, domyślnie true
 }
 
-const cache = new Map<string, string>(); // Cache dla sformatowanych wartości
-const MAX_CACHE_SIZE = 2000; // Maksymalna liczba elementów w cache, przy założeniu że każda będzie miała po 100 000 bajtów, razem dadą 100 MB
+const cache = new LRUCache<string, string>({ max: 10000 }); // Cache dla sformatowanych wartości
 
 export const valueToString = (value: any, dataType: ColumnDataType, options?: ValueToStringOptions): string => {
     // Obsługa wartości null/undefined
@@ -397,34 +397,31 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 
     // Obsługa tablic
     if (Array.isArray(value)) {
-        let formattedArray = '[';
-        let currentLength = formattedArray.length;
         const dt = Array.isArray(dataType) ? dataType[0] : dataType; // Typ elementów tablicy
+        const formattedArray: string[] = [];
+        let currentLength = 0;
 
         for (let i = 0; i < value.length; i++) {
             const itemString = valueToString(value[i], dt, options);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
             if (maxLength !== undefined && currentLength > maxLength) {
-                formattedArray += '...'; // Dodaj wielokropek, jeśli przekroczono limit
+                formattedArray.push('...');
                 break;
             }
 
-            formattedArray += (i > 0 ? ', ' : '') + itemString;
+            formattedArray.push(itemString);
         }
 
-        formattedArray += ']';
-        return formattedArray;
+        return `[${formattedArray.join(', ')}]`;
     }
 
     let cacheKey: string | undefined;
     if (display) {
         // Generowanie klucza dla cache
         cacheKey = `${generateHash(value)}-${dataType}`;
-        if (cache.has(cacheKey)) {
-            const cachedValue = cache.get(cacheKey)!;
-            cache.delete(cacheKey); // Usuń klucz z obecnej pozycji
-            cache.set(cacheKey, cachedValue); // Dodaj klucz na koniec
+        const cachedValue = cache.get(cacheKey);
+        if (cachedValue) {
             return cachedValue;
         }
     }
@@ -465,10 +462,6 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
     if (display && cacheKey) {
         // Dodanie do cache
         cache.set(cacheKey, formattedValue);
-        if (cache.size > MAX_CACHE_SIZE) {
-            const oldestKey = cache.keys().next().value;
-            cache.delete(oldestKey!);
-        }
     }
 
     return formattedValue;
@@ -479,13 +472,13 @@ const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStri
     if (!options.display || !options.thousandsSeparator) {
         return value.toString();
     }
-    if (dataType === 'decimal') {
-        return value instanceof Decimal
-            ? formatDecimalWithThousandsSeparator(value)
-            : formatDecimalWithThousandsSeparator(new Decimal(value));
-    }
-    if (dataType === 'money') {
-        return Number(value).toLocaleString(undefined, { style: 'currency' });
+    switch (dataType) {
+        case 'decimal':
+            return value instanceof Decimal
+                ? formatDecimalWithThousandsSeparator(value)
+                : formatDecimalWithThousandsSeparator(new Decimal(value));
+        case 'money':
+            return Number(value).toLocaleString(undefined, { style: 'currency' });
     }
     return value.toString();
 };
@@ -500,32 +493,31 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToS
 
 // Funkcja pomocnicza do formatowania daty/czasu
 const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    const dateTime = value instanceof Date
-        ? DateTime.fromJSDate(value)
-        : typeof value === 'number' || typeof value === 'bigint'
-            ? DateTime.fromMillis(Number(value))
-            : DateTime.fromObject(value);
+    const dateTime = (() => {
+        if (value instanceof Date) return DateTime.fromJSDate(value);
+        if (typeof value === 'number' || typeof value === 'bigint') return DateTime.fromMillis(Number(value));
+        return DateTime.fromObject(value);
+    })();
 
-    if (dataType === 'date') {
-        return dateTime.toISODate() ?? '';
+    switch (dataType) {
+        case 'date':
+            return dateTime.toISODate() ?? '';
+
+        case 'time':
+            return dateTime.toFormat('HH:mm:ss') ?? '';
+
+        case 'duration':
+            const duration = typeof value === 'number' || typeof value === 'bigint'
+                ? Duration.fromMillis(Number(value))
+                : Duration.fromObject(value);
+
+            return duration.as('hours') >= 24
+                ? duration.toFormat("yyyy-MM-dd hh:mm:ss SSS") ?? ''
+                : duration.toFormat('hh:mm:ss SSS') ?? '';
+
+        default:
+            return dateTime.toSQL() ?? '';
     }
-    if (dataType === 'time') {
-        return dateTime.toFormat('HH:mm:ss') ?? '';
-    }
-    if (dataType === 'duration') {
-        let duration: Duration | undefined;
-        if (typeof value === 'number' || typeof value === 'bigint') {
-            duration = Duration.fromMillis(Number(value));
-        }
-        else {
-            duration = Duration.fromObject(value);
-        }
-        if (duration.as('hours') >= 24) {
-            return duration.toFormat("yyyy-MM-dd hh:mm:ss SSS") ?? '';
-        }
-        return duration.toFormat('hh:mm:ss SSS') ?? '';
-    }
-    return dateTime.toSQL() ?? '';
 };
 
 // Funkcja pomocnicza do formatowania obiektów
@@ -544,13 +536,14 @@ const formatBinary = (value: any, _dataType: ColumnDataType, _options: ValueToSt
     return value instanceof Blob ? URL.createObjectURL(value) : String(value);
 };
 
+const sample = (1000000.1).toLocaleString();
+const match = sample.match(/1(.?)000(.?)000(.?)1/);
+const thousandSeparator = match ? match[1] : ",";
+const decimalSeparator = match ? match[3] : ".";
+
 // Funkcja pomocnicza do formatowania liczb z separatorami
 function formatDecimalWithThousandsSeparator(value: Decimal): string {
     const [intPart, fracPart] = value.toString().split(".");
-    const sample = (1000000.1).toLocaleString();
-    const match = sample.match(/1(.?)000(.?)000(.?)1/);
-    const thousandSeparator = match ? match[1] : ",";
-    const decimalSeparator = match ? match[3] : ".";
     const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
     return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
 }
