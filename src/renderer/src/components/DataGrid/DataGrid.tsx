@@ -455,6 +455,8 @@ export const DataGrid = <T extends object>({
 
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
+        resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
+
         // Filtrowanie na podstawie queryData, wholeWordQuery i caseSensitiveQuery
         if (searchState.current.text) {
             const queryParts = searchState.current.caseSensitive
@@ -484,8 +486,6 @@ export const DataGrid = <T extends object>({
                 return searchState.current.exclude ? !matchesQuery : matchesQuery;
             });
         }
-
-        resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
 
         // Sortowanie na podstawie sortDirection i sortOrder
         const sortedColumns = columnsState.current
