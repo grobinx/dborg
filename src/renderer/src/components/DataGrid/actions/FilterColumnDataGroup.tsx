@@ -12,7 +12,6 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
     const lessId = "dataGrid.group.filterColumn.actions.Less";
     const greaterThanId = "dataGrid.group.filterColumn.actions.GreaterThan";
     const likeId = "dataGrid.group.filterColumn.actions.Like";
-    const inId = "dataGrid.group.filterColumn.actions.In";
     const nullId = "dataGrid.group.filterColumn.actions.Null";
 
     let queryTimeout: NodeJS.Timeout | null = null;
@@ -99,7 +98,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: equalsId,
                 icon: 'Equal',
-                label: t(equalsId, "Equals, Less then or equals, Between"),
+                label: t(equalsId, "Equals, [<] Less then or equals, [>] Greater then or equals, [<][>] Between"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -124,7 +123,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: lessId,
                 icon: 'LessThan',
-                label: t(lessId, "Less than, Less then or Equals, Between, Ends with"),
+                label: t(lessId, "Less than, [=] Less then or Equals, [=][>] Between, [~] Ends with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -149,7 +148,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: greaterThanId,
                 icon: 'GreaterThan',
-                label: t(greaterThanId, "Greater than, Greater than or Equals, Between, Starts with"),
+                label: t(greaterThanId, "Greater than, [=] Greater than or Equals, [=][>] Between, [~] Starts with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
@@ -174,7 +173,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: likeId,
                 icon: 'SuchLike',
-                label: t(likeId, "Like, Starts with, Ends with"),
+                label: t(likeId, "Like, [>] Starts with, [<] Ends with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
