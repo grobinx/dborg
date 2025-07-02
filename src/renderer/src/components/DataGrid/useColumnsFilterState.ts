@@ -3,7 +3,7 @@ import { ColumnDefinition } from "./DataGridTypes";
 import { compareValuesByType } from "../../../../../src/api/db";
 
 export type ColumnsFilterOperator =
-    | 'equal'
+    | 'equals'
     | 'greaterThan'
     | 'greaterThanOrEqual'
     | 'lessThan'
@@ -11,6 +11,8 @@ export type ColumnsFilterOperator =
     | 'like'
     | 'between'
     | 'isNull'
+    | 'startsWith'
+    | 'endsWith'
     ;
 
 export interface SimpleOperators {
@@ -19,6 +21,19 @@ export interface SimpleOperators {
     greaterThan: boolean,
     like: boolean,
     isNull: boolean,
+};
+
+export const mapSimpleOperators: Record<ColumnsFilterOperator, SimpleOperators> = {
+    equals: { equals: true, lessThan: false, greaterThan: false, like: false, isNull: false },
+    greaterThan: { equals: false, lessThan: false, greaterThan: true, like: false, isNull: false },
+    greaterThanOrEqual: { equals: true, lessThan: false, greaterThan: true, like: false, isNull: false },
+    lessThan: { equals: false, lessThan: true, greaterThan: false, like: false, isNull: false },
+    lessThanOrEqual: { equals: true, lessThan: true, greaterThan: false, like: false, isNull: false },
+    like: { equals: false, lessThan: false, greaterThan: false, like: true, isNull: false },
+    between: { equals: true, lessThan: true, greaterThan: true, like: false, isNull: false },
+    isNull: { equals: false, lessThan: false, greaterThan: false, like: false, isNull: true },
+    startsWith: { equals: false, lessThan: false, greaterThan: true, like: true, isNull: false },
+    endsWith: { equals: false, lessThan: true, greaterThan: false, like: true, isNull: false },
 };
 
 export interface ColumnFilter {
@@ -101,7 +116,7 @@ export function useColumnFilterState() {
 
                 let result = false;
                 switch (filter.operator) {
-                    case 'equal':
+                    case 'equals':
                         result = filter.values.some(val => compare(rowValue, val) === 0);
                         break;
                     case 'greaterThan':
@@ -131,6 +146,16 @@ export function useColumnFilterState() {
                     case 'isNull':
                         result = rowValue == null;
                         break;
+                    case 'startsWith':
+                        result = filter.values.some(val =>
+                            String(rowValue ?? '').toLowerCase().startsWith(String(val).toLowerCase())
+                        );
+                        break;
+                    case 'endsWith':
+                        result = filter.values.some(val =>
+                            String(rowValue ?? '').toLowerCase().endsWith(String(val).toLowerCase())
+                        );
+                        break;
                     default:
                         result = true;
                 }
@@ -154,7 +179,7 @@ export function filterToString(filter: ColumnFilter): string;
 export function filterToString(operator: ColumnsFilterOperator, not: boolean, values: string[]): string;
 export function filterToString(arg1: ColumnFilter | ColumnsFilterOperator, arg2?: boolean, arg3?: string[]): string {
     const operatorDescriptions: Record<ColumnsFilterOperator, string> = {
-        equal: "=",
+        equals: "=",
         greaterThan: ">",
         greaterThanOrEqual: ">=",
         lessThan: "<",
@@ -162,6 +187,8 @@ export function filterToString(arg1: ColumnFilter | ColumnsFilterOperator, arg2?
         like: "like",
         between: "between",
         isNull: "is null",
+        startsWith: "starts with",
+        endsWith: "ends with",
     };
 
     let operator: ColumnsFilterOperator;
@@ -196,75 +223,59 @@ export function filterToString(arg1: ColumnFilter | ColumnsFilterOperator, arg2?
 }
 
 export function convertToSimpleOperators(operator: ColumnsFilterOperator): SimpleOperators {
-    const simpleOperators: SimpleOperators = {
-        equals: false,
-        lessThan: false,
-        greaterThan: false,
-        like: false,
-        isNull: false,
+    return {
+        ...mapSimpleOperators[operator] || {
+            equals: true,
+            lessThan: false,
+            greaterThan: false,
+            like: false,
+            isNull: false,
+        }
     };
-
-    switch (operator) {
-        case 'equal':
-            simpleOperators.equals = true;
-            break;
-        case 'greaterThan':
-            simpleOperators.greaterThan = true;
-            break;
-        case 'greaterThanOrEqual':
-            simpleOperators.greaterThan = true;
-            simpleOperators.equals = true; // Złożony operator => (większy równy)
-            break;
-        case 'lessThan':
-            simpleOperators.lessThan = true;
-            break;
-        case 'lessThanOrEqual':
-            simpleOperators.lessThan = true;
-            simpleOperators.equals = true; // Złożony operator =< (mniejszy równy)
-            break;
-        case 'like':
-            simpleOperators.like = true;
-            break;
-        case 'between':
-            simpleOperators.greaterThan = true;
-            simpleOperators.lessThan = true;
-            simpleOperators.equals = true; // Złożony operator =<> (between)
-            break;
-        case 'isNull':
-            simpleOperators.isNull = true;
-            break;
-        default:
-            break;
-    }
-
-    return simpleOperators;
 }
 
-export function convertToColumnsFilterOperator(simpleOperators: SimpleOperators): ColumnsFilterOperator | null {
-    if (simpleOperators.equals && simpleOperators.lessThan && simpleOperators.greaterThan) {
-        return 'between'; // Złożony operator =<> (between)
+export function convertToColumnsFilterOperator(simpleOperators: SimpleOperators): ColumnsFilterOperator {
+    const operatorEntries = Object.entries(mapSimpleOperators);
+
+    for (const [operator, mappedSimpleOperators] of operatorEntries) {
+        if (
+            mappedSimpleOperators.equals === simpleOperators.equals &&
+            mappedSimpleOperators.lessThan === simpleOperators.lessThan &&
+            mappedSimpleOperators.greaterThan === simpleOperators.greaterThan &&
+            mappedSimpleOperators.like === simpleOperators.like &&
+            mappedSimpleOperators.isNull === simpleOperators.isNull
+        ) {
+            return operator as ColumnsFilterOperator;
+        }
     }
-    if (simpleOperators.equals && simpleOperators.greaterThan) {
-        return 'greaterThanOrEqual'; // Złożony operator => (większy równy)
-    }
-    if (simpleOperators.equals && simpleOperators.lessThan) {
-        return 'lessThanOrEqual'; // Złożony operator =< (mniejszy równy)
-    }
-    if (simpleOperators.greaterThan) {
-        return 'greaterThan'; // Prosty operator >
-    }
-    if (simpleOperators.lessThan) {
-        return 'lessThan'; // Prosty operator <
-    }
-    if (simpleOperators.equals) {
-        return 'equal'; // Prosty operator =
-    }
-    if (simpleOperators.like) {
-        return 'like'; // Operator zawierania
-    }
-    if (simpleOperators.isNull) {
-        return 'isNull'; // Operator sprawdzania null
-    }
-    return null; // Jeśli brak dopasowania
+
+    return 'equals'; // Jeśli brak dopasowania
 }
 
+export function validateSimpleOperators(simpleOperators: SimpleOperators): boolean {
+    const operatorEntries = Object.entries(mapSimpleOperators);
+
+    // Sprawdź, czy istnieje dopasowanie w mapSimpleOperators
+    return operatorEntries.some(([_, mappedSimpleOperators]) => {
+        return (
+            mappedSimpleOperators.equals === simpleOperators.equals &&
+            mappedSimpleOperators.lessThan === simpleOperators.lessThan &&
+            mappedSimpleOperators.greaterThan === simpleOperators.greaterThan &&
+            mappedSimpleOperators.like === simpleOperators.like &&
+            mappedSimpleOperators.isNull === simpleOperators.isNull
+        );
+    });
+}
+
+export function resetSimpleOperators(operators: Partial<SimpleOperators>): SimpleOperators {
+    return {
+        ...{
+            equals: false,
+            lessThan: false,
+            greaterThan: false,
+            like: false,
+            isNull: false,
+        } as SimpleOperators,
+        ...operators
+    };
+}

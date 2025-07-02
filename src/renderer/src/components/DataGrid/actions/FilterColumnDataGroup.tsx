@@ -1,7 +1,7 @@
 import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
-import { convertToColumnsFilterOperator, convertToSimpleOperators, filterToString, SimpleOperators } from "../useColumnsFilterState";
+import { convertToColumnsFilterOperator, convertToSimpleOperators, filterToString, resetSimpleOperators, SimpleOperators, validateSimpleOperators } from "../useColumnsFilterState";
 
 export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
@@ -38,7 +38,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             if (!filter) {
                 setFilter = true;
                 filter = {
-                    operator: 'equal',
+                    operator: 'equals',
                     not: false,
                     values: [],
                     active: false
@@ -99,15 +99,14 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: equalsId,
                 icon: 'Equal',
-                label: t(equalsId, "Equals"),
+                label: t(equalsId, "Equals, Less then or equals, Between"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
-                    const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
+                    let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.equals = !operators.equals;
-                    if (operators.equals) {
-                        operators.like = false;
-                        operators.isNull = false;
+                    if (operators.equals && !validateSimpleOperators(operators)) {
+                        operators = resetSimpleOperators({equals: true});
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators) ?? 'equal',
@@ -125,19 +124,17 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: lessId,
                 icon: 'LessThan',
-                label: t(lessId, "Less than"),
+                label: t(lessId, "Less than, Less then or Equals, Between, Ends with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
-                    const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
+                    let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.lessThan = !operators.lessThan;
-                    if (operators.lessThan) {
-                        operators.like = false;
-                        operators.isNull = false;
-                        operators.greaterThan = operators.equals === false ? false : operators.greaterThan;
+                    if (operators.lessThan && !validateSimpleOperators(operators)) {
+                        operators = resetSimpleOperators({lessThan: true});
                     }
                     context.setFilter(
-                        convertToColumnsFilterOperator(operators) ?? 'equal',
+                        convertToColumnsFilterOperator(operators),
                         filter.not ?? false,
                         filter.values ?? []
                     );
@@ -152,19 +149,17 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: greaterThanId,
                 icon: 'GreaterThan',
-                label: t(greaterThanId, "Greater than"),
+                label: t(greaterThanId, "Greater than, Greater than or Equals, Between, Starts with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
-                    const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
+                    let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.greaterThan = !operators.greaterThan;
-                    if (operators.greaterThan) {
-                        operators.like = false;
-                        operators.isNull = false;
-                        operators.lessThan = operators.equals === false ? false : operators.lessThan;
+                    if (operators.greaterThan && !validateSimpleOperators(operators)) {
+                        operators = resetSimpleOperators({greaterThan: true});
                     }
                     context.setFilter(
-                        convertToColumnsFilterOperator(operators) ?? 'equal',
+                        convertToColumnsFilterOperator(operators),
                         filter.not ?? false,
                         filter.values ?? []
                     );
@@ -179,20 +174,17 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             {
                 id: likeId,
                 icon: 'SuchLike',
-                label: t(likeId, "Like"),
+                label: t(likeId, "Like, Starts with, Ends with"),
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
-                    const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
+                    let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.like = !operators.like;
-                    if (operators.like) {
-                        operators.equals = false;
-                        operators.isNull = false;
-                        operators.lessThan = false;
-                        operators.greaterThan = false;
+                    if (operators.like && !validateSimpleOperators(operators)) {
+                        operators = resetSimpleOperators({like: true});
                     }
                     context.setFilter(
-                        convertToColumnsFilterOperator(operators) ?? 'equal',
+                        convertToColumnsFilterOperator(operators),
                         filter.not ?? false,
                         filter.values ?? []
                     );
@@ -211,16 +203,13 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
                 run: (context) => {
                     const filter = context.getFilter();
                     if (!filter) return;
-                    const operators: SimpleOperators = convertToSimpleOperators(filter.operator);
+                    let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.isNull = !operators.isNull;
-                    if (operators.isNull) {
-                        operators.like = false;
-                        operators.equals = false;
-                        operators.lessThan = false;
-                        operators.greaterThan = false;
+                    if (operators.isNull && !validateSimpleOperators(operators)) {
+                        operators = resetSimpleOperators({isNull: true});
                     }
                     context.setFilter(
-                        'isNull',
+                        convertToColumnsFilterOperator(operators),
                         filter.not ?? false,
                         filter.values ?? []
                     );
