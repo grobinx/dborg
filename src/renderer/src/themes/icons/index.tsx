@@ -125,6 +125,7 @@ export interface ThemeIcons {
     SuchLike: IconWrapperFC;
     Null: IconWrapperFC;
     ElementOf: IconWrapperFC;
+    QueryHistory: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode)) => {

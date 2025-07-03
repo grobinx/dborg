@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const MAX_HISTORY_SIZE = 100; // Maksymalna liczba wpisów w historii
 
@@ -36,6 +36,16 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const clearQueryHistory = () => {
         setQueryHistory([]); // Czyść historię zapytań
     };
+
+    // Co minutę usuń wpisy starsze niż godzina
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const oneHourAgo = Date.now() - 60 * 60 * 1000;
+            setQueryHistory((prev) => prev.filter((entry) => entry.startTime >= oneHourAgo));
+        }, 60 * 1000); // Uruchamiaj co minutę
+
+        return () => clearInterval(interval); // Wyczyść interval po odmontowaniu komponentu
+    }, []);
 
     return (
         <QueryHistoryContext.Provider value={{ queryHistory, addQueryToHistory, clearQueryHistory }}>

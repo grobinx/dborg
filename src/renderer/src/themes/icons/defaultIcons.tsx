@@ -26,6 +26,7 @@ import { Tilde } from "@renderer/themes/icons/svg/Tilde";
 import { Null } from "./svg/Null";
 import { ElementOf } from "./svg/ElementOf";
 import { Not } from "./svg/Not";
+import { QueryHistory } from "./svg/QueryHistory";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -89,6 +90,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             SuchLike: (props) => <IconWrapper {...props} className="such-like"><Tilde fontSize="inherit" /></IconWrapper>,
             Null: (props) => <IconWrapper {...props} className="null"><Null fontSize="inherit" /></IconWrapper>,
             ElementOf: (props) => <IconWrapper {...props} className="element-of"><ElementOf fontSize="inherit" /></IconWrapper>,
+            QueryHistory: (props) => <IconWrapper {...props} className="query-history"><QueryHistory fontSize="inherit" /></IconWrapper>,
         }
     }
 }

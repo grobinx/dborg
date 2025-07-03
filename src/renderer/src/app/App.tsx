@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Box, Stack, Typography, useTheme } from '@mui/material';
+import { Stack, Typography, useTheme } from '@mui/material';
 import MenuBar from "./MenuBar";
 import SideBar from "./SideBar";
 import StatusBar, { StatusBarButton } from "./StatusBar";
+import '@renderer/components/ToolPanels/QueryHistoryStatusButton';
 import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
 import { useSettings } from '@renderer/contexts/SettingsContext';
@@ -45,7 +46,13 @@ function useWindowDimensions(): Size {
     return windowDimensions;
 }
 
-export const appStatusBarButtons: Map<string, React.FC> = new Map();
+export const appStatusBarButtons: {
+    static: Map<string, React.FC>;
+    hided: Map<string, React.FC>;
+} = {
+    static: new Map(),
+    hided: new Map(),
+};
 
 const App: React.FC = () => {
     const theme = useTheme();
@@ -225,9 +232,8 @@ const App: React.FC = () => {
                             <theme.icons.Hint />
                             <span>{notificationCounts.success + notificationCounts.hint}</span>
                         </StatusBarButton>,
-                        ...Array.from(appStatusBarButtons.values()).map((Button, index) => (
-                            <Button key={index} />
-                        ))
+                        ...Array.from(appStatusBarButtons.static.values()).map((Button, index) => (<Button key={index} />)),
+                        ...Array.from(appStatusBarButtons.hided.values()).map((Button, index) => (<Button key={index} />)),
                     ],
                 }}
             />
