@@ -1278,7 +1278,7 @@ export const DataGrid = <T extends object>({
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
                                     >
-                                        {valueToString(summaryRow[col.key], col.dataType)}
+                                        {valueToString(summaryRow[col.key], col.dataType, {display: true, maxLength: displayMaxLengh})}
                                     </StyledFooterCell>
                                 </React.Fragment>
                             );

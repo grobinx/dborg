@@ -271,6 +271,12 @@ export const calculateSummary = (
                         ? Decimal(numericValues.length).div(numericValues.reduce((acc, val) => acc.add(Decimal(1).div(val)), Decimal(0)))
                         : null;
                     break;
+                case "agg":
+                    summary[col.key] = numericValues;
+                    break;
+                case "uniqueAgg":
+                    summary[col.key] = [...new Set(numericValues.map(value => value.toString()))];
+                    break;
                 default:
                     summary[col.key] = null;
             }
@@ -307,11 +313,17 @@ export const calculateSummary = (
                 case "mode":
                     summary[col.key] = booleanValues.length > 0 ? calculateMode(booleanValues) : null;
                     break;
+                case "agg":
+                    summary[col.key] = booleanValues;
+                    break;
+                case "uniqueAgg":
+                    summary[col.key] = [...new Set(booleanValues)];
+                    break;
                 default:
                     summary[col.key] = null;
             }
         } else if (baseType === "string") {
-            const stringValues = values.filter((value) => typeof value === "string") as string[];
+            const stringValues = values.map((value) => (value !== null && value !== undefined) ? value.toString() : null) as string[];
             const lengths = stringValues.map((value) => value.length);
             switch (columnOperation) {
                 case "min":
@@ -381,6 +393,12 @@ export const calculateSummary = (
                         }, stringValues[0] || "");
                     }
                     break;
+                case "agg":
+                    summary[col.key] = stringValues;
+                    break;
+                case "uniqueAgg":
+                    summary[col.key] = [...new Set(stringValues)];
+                    break;
                 default:
                     summary[col.key] = null;
             }
@@ -433,6 +451,12 @@ export const calculateSummary = (
                         summary[col.key] = null;
                     }
                     break;
+                case "agg":
+                    summary[col.key] = dateValues.map(date => date.toMillis());
+                    break;
+                case "uniqueAgg":
+                    summary[col.key] = [...new Set(dateValues.map(date => date.toMillis()))];
+                    break;
                 default:
                     summary[col.key] = null;
             }
@@ -446,6 +470,12 @@ export const calculateSummary = (
                     break;
                 case "emptyCount":
                     summary[col.key] = values.filter((value) => value == null).length;
+                    break;
+                case "agg":
+                    summary[col.key] = values;
+                    break;
+                case "uniqueAgg":
+                    summary[col.key] = [...new Set(values.filter((value) => value != null).map(value => typeof value === 'object' ? JSON.stringify(value) : value))];
                     break;
                 default:
                     summary[col.key] = null;

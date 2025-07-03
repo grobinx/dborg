@@ -309,6 +309,28 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                     selected: () => summaryFooterOperation === "longestCommonPrefix",
                     run: (context) => context.setSummaryFooterOperation("longestCommonPrefix"),
                 },
+                {
+                    operation: "agg",
+                    id: "dataGrid.actions.summaryFooter.agg",
+                    label: t("dataGrid.actions.summaryFooter.agg", "Aggregate"),
+                    secondaryLabel: t(
+                        "dataGrid.actions.summaryFooter.aggDescription",
+                        "Performs an aggregate operation on the column, allowing for custom aggregation logic."
+                    ),
+                    selected: () => summaryFooterOperation === "agg",
+                    run: (context) => context.setSummaryFooterOperation("agg"),
+                },
+                {
+                    operation: "uniqueAgg",
+                    id: "dataGrid.actions.summaryFooter.uniqueAgg",
+                    label: t("dataGrid.actions.summaryFooter.uniqueAgg", "Unique Aggregate"),
+                    secondaryLabel: t(
+                        "dataGrid.actions.summaryFooter.uniqueAggDescription",
+                        "Performs an aggregate operation on unique values in the column."
+                    ),
+                    selected: () => summaryFooterOperation === "uniqueAgg",
+                    run: (context) => context.setSummaryFooterOperation("uniqueAgg"),
+                }
             );
 
             actions = actions.filter((action) => isOperationSupported(action.operation));

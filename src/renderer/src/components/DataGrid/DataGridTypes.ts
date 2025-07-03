@@ -102,7 +102,7 @@ export type SummaryOperation =
     "skewness" | "kurtosis" | "iqr" | "sumOfAbsoluteDifferences" |
     "geometricMean" | "harmonicMean" |
     "mostFrequentCharacter" | "mostFrequentWord" | "avgWordLength" |
-    "longestCommonPrefix";
+    "longestCommonPrefix" | "agg" | "uniqueAgg";
 
 export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
     sum: "Sum",
@@ -131,6 +131,8 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
     mostFrequentWord: "Most Frequent Word",
     avgWordLength: "Average Word Length",
     longestCommonPrefix: "Longest Common Prefix",
+    agg: "Aggregate",
+    uniqueAgg: "Unique Aggregate"
 };
 
 export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
@@ -160,6 +162,8 @@ export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
     mostFrequentWord: ["string"],
     avgWordLength: ["string"],
     longestCommonPrefix: ["string"],
+    agg: ["number", "boolean", "string", "object", "datetime"],
+    uniqueAgg: ["number", "boolean", "string", "object", "datetime"]
 };
 
 export interface DataGridActionContext<T extends object> {
