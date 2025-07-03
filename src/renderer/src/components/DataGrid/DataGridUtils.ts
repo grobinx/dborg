@@ -5,7 +5,7 @@ import Decimal from "decimal.js";
 import { DateTime } from "luxon";
 
 export const footerCaptionHeightFactor = 0.7;
-export const displayMaxLengh = 1000;
+export const displayMaxLengh = 300;
 
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');

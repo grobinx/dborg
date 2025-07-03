@@ -493,18 +493,18 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToS
 
 // Funkcja pomocnicza do formatowania daty/czasu
 const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    const dateTime = (() => {
+    const dateTime = () => {
         if (value instanceof Date) return DateTime.fromJSDate(value);
         if (typeof value === 'number' || typeof value === 'bigint') return DateTime.fromMillis(Number(value));
         return DateTime.fromObject(value);
-    })();
+    };
 
     switch (dataType) {
         case 'date':
-            return dateTime.toISODate() ?? '';
+            return dateTime().toISODate() ?? '';
 
         case 'time':
-            return dateTime.toFormat('HH:mm:ss') ?? '';
+            return dateTime().toFormat('HH:mm:ss') ?? '';
 
         case 'duration':
             const duration = typeof value === 'number' || typeof value === 'bigint'
@@ -516,7 +516,7 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToS
                 : duration.toFormat('hh:mm:ss SSS') ?? '';
 
         default:
-            return dateTime.toSQL() ?? '';
+            return dateTime().toSQL() ?? '';
     }
 };
 
