@@ -466,11 +466,11 @@ export const DataGrid = <T extends object>({
             resultSet = resultSet.filter((row) => {
                 const matchesQuery = queryParts.every((part) =>
                     Object.values(row).some((value) => {
-                        const cellValue = searchState.current.caseSensitive
-                            ? value?.toString() // Bez konwersji na małe litery
-                            : value?.toString().toLowerCase();
+                        if (value === null || value === undefined) return false; // Jeśli wartość jest null/undefined, pomiń
 
-                        if (!cellValue) return false; // Jeśli wartość jest null/undefined, pomiń
+                        const cellValue = searchState.current.caseSensitive
+                            ? value.toString() // Bez konwersji na małe litery
+                            : value.toString().toLowerCase();
 
                         if (searchState.current.wholeWord) {
                             // Podziel cellValue na wyrazy i sprawdź, czy part jest jednym z nich
