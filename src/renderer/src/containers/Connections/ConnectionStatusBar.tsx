@@ -159,8 +159,8 @@ const ConnectionStatusBar: React.FC = () => {
 };
 
 Promise.resolve().then(() => {
-    if (!appStatusBarButtons.hided.has("ConnectionStatusBar")) {
-        appStatusBarButtons.hided.set("ConnectionStatusBar", ConnectionStatusBar);
+    if (!appStatusBarButtons.hidden.has("ConnectionStatusBar")) {
+        appStatusBarButtons.hidden.set("ConnectionStatusBar", ConnectionStatusBar);
     }
 });
 

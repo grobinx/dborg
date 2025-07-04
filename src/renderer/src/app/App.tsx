@@ -48,10 +48,10 @@ function useWindowDimensions(): Size {
 
 export const appStatusBarButtons: {
     static: Map<string, React.FC>;
-    hided: Map<string, React.FC>;
+    hidden: Map<string, React.FC>;
 } = {
     static: new Map(),
-    hided: new Map(),
+    hidden: new Map(),
 };
 
 const App: React.FC = () => {
@@ -233,7 +233,7 @@ const App: React.FC = () => {
                             <span>{notificationCounts.success + notificationCounts.hint}</span>
                         </StatusBarButton>,
                         ...Array.from(appStatusBarButtons.static.values()).map((Button, index) => (<Button key={index} />)),
-                        ...Array.from(appStatusBarButtons.hided.values()).map((Button, index) => (<Button key={index} />)),
+                        ...Array.from(appStatusBarButtons.hidden.values()).map((Button, index) => (<Button key={index} />)),
                     ],
                 }}
             />

@@ -213,8 +213,8 @@ const MetadataCollctorStatusBar: React.FC = () => {
 };
 
 Promise.resolve().then(() => {
-    if (!appStatusBarButtons.hided.has("MetadataCollctorStatusBar")) {
-        appStatusBarButtons.hided.set("MetadataCollctorStatusBar", MetadataCollctorStatusBar);
+    if (!appStatusBarButtons.hidden.has("MetadataCollctorStatusBar")) {
+        appStatusBarButtons.hidden.set("MetadataCollctorStatusBar", MetadataCollctorStatusBar);
     }
 });
 
