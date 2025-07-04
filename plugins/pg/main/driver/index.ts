@@ -161,8 +161,6 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pg.types.builtins.BIT:
         case pg.types.builtins.VARBIT:
             return 'string';
-        case pgTypes.BIT_ARRAY:
-            return ['string'];
         case pgTypes.BOOL_ARRAY:
             return ['boolean'];
         case pgTypes.BPCHAR_ARRAY:
