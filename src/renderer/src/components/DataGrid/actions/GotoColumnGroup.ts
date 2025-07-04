@@ -22,6 +22,10 @@ export const GotoColumnGroup = (): ActionGroupDescriptor<DataGridActionContext<a
                             const { row } = context.getPosition() || { row: 0 };
                             context.setPosition({ row, column: index });
                         },
+                        selected: () => {
+                            const column = context.getColumn();
+                            return !!column && column.key === col.key;
+                        }
                     });
                 }
             }

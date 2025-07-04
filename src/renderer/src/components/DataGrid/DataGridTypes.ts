@@ -84,6 +84,11 @@ export interface ColumnDefinition {
      */
     sortOrder?: number;
     /**
+     * Czy kolumna jest ukryta.
+     * Jeśli jest ukryta, nie będzie wyświetlana w tabeli.
+     */
+    hidden?: boolean;
+    /**
      * Funkcja formatująca wartość w kolumnie.
      * Jeśli została podana, będzie wywołana, niezależnie od typu danych.
      * @param value Wartość, która ma być sformatowana.
@@ -220,6 +225,11 @@ export interface DataGridActionContext<T extends object> {
     clearFilter: () => void;
     clearFilters: () => void;
     filterActive: (set?: boolean) => boolean | undefined;
+    toggleHideColumn: () => void;
+    isColumnHidden: () => boolean;
+    toggleShowHiddenColumns: () => void;
+    isShowHiddenColumns: () => boolean;
+    resetHiddenColumns: () => void;
 }
 
 export interface DataGridContext<T extends object> {

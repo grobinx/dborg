@@ -233,7 +233,7 @@ const App: React.FC = () => {
                             <span>{notificationCounts.success + notificationCounts.hint}</span>
                         </StatusBarButton>,
                         ...Array.from(appStatusBarButtons.static.values()).map((Button, index) => (<Button key={index} />)),
-                        ...Array.from(appStatusBarButtons.hidden.values()).map((Button, index) => (<Button key={index} />)),
+                        ...Array.from(appStatusBarButtons.hidden.values()).map((Button, index) => (<Button key={999 + index} />)),
                     ],
                 }}
             />

@@ -21,3 +21,5 @@ export * from "./ResetColumnsLayout";
 export * from "./ToggleGroupColumn";
 export * from "./FilterColumnDataGroup";
 export * from "./FilterColumnData";
+export * from "./ToggleHideColumn";
+export * from "./ToggleShowHiddenColumns";

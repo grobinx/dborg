@@ -17,6 +17,7 @@ export const GeneralReset = (): ActionDescriptor<DataGridActionContext<any>> => 
             context.clearSummary();
             context.clearGrouping();
             context.clearFilters();
+            context.resetHiddenColumns();
         },
     };
 }

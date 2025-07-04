@@ -10,7 +10,7 @@ export const ToggleGroupColumn = (): ActionDescriptor<DataGridActionContext<any>
     return {
         id: id,
         label: t(id, "Toggle group column"),
-        keybindings: ["Ctrl+K", "Ctrl+G"],
+        keybindings: ["Ctrl+G"],
         contextMenuGroupId: "data",
         contextMenuOrder: 1,
         run: (context) => {

@@ -447,6 +447,7 @@ export const DataGrid = <T extends object>({
             groupingColumns.clearColumns();
             searchState.resetSearch();
             filterColumns.clearFilters();
+            columnsState.resetHiddenColumns();
         }
     }, [columns]);
 
@@ -455,7 +456,9 @@ export const DataGrid = <T extends object>({
 
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
-        resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
+        if (mode === "data") {
+            resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
+        }
 
         // Filtrowanie na podstawie queryData, wholeWordQuery i caseSensitiveQuery
         if (searchState.current.text) {
@@ -579,12 +582,13 @@ export const DataGrid = <T extends object>({
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
     useEffect(() => {
         if (filteredDataState.length > 0) {
+            const selected = updateSelectedCell(selectedCell);
             if (containerRef.current) {
                 scrollToCell(
                     containerRef.current,
-                    selectedCell?.row ?? 0,
-                    selectedCell?.column ?? 0,
-                    columnsState.columnLeft(selectedCell?.column ?? 0),
+                    selected?.row ?? 0,
+                    selected?.column ?? 0,
+                    columnsState.columnLeft(selected?.column ?? 0),
                     rowHeight,
                     columnsState.current,
                     footerVisible);
@@ -773,12 +777,12 @@ export const DataGrid = <T extends object>({
             return userData[key];
         },
         toggleGroupColumn() {
-            if (!selectedCell) return;
+            if (!selectedCell || mode !== "data") return;
             const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             groupingColumns.toggleColumn(columnKey);
         },
         isGroupedColumn: () => {
-            if (!selectedCell) return false;
+            if (!selectedCell || mode !== "data") return false;
             const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             return groupingColumns.isInGroup(columnKey);
         },
@@ -808,6 +812,22 @@ export const DataGrid = <T extends object>({
             const columnKey = columnsState.current[selectedCell.column]?.key;
             return filterColumns.filterActive(columnKey, set);
         },
+        toggleHideColumn: () => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            columnsState.toggleHidden(columnKey);
+        },
+        isColumnHidden: () => {
+            if (!selectedCell) return false;
+            return columnsState.current[selectedCell.column]?.hidden || false;
+        },
+        toggleShowHiddenColumns: () => {
+            columnsState.toggleShowHiddenColumns();
+        },
+        isShowHiddenColumns: () => columnsState.showHiddenColumns,
+        resetHiddenColumns: () => {
+            columnsState.resetHiddenColumns();
+        }
     }
 
     useEffect(() => {
@@ -866,7 +886,11 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.SwitchColumnSort());
             actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());
             actionManager.current.registerAction(actions.ResetColumnsLayout());
-            actionManager.current.registerAction(actions.ToggleGroupColumn());
+            actionManager.current.registerAction(actions.ToggleShowHiddenColumns());
+            actionManager.current.registerAction(actions.ToggleHideColumn());
+            if (mode === "data") {
+                actionManager.current.registerAction(actions.ToggleGroupColumn());
+            }
 
             actionManager.current.registerAction(actions.OpenCommandPalette());
             actionManager.current.registerAction(actions.GotoColumn());
@@ -1142,6 +1166,20 @@ export const DataGrid = <T extends object>({
                                         </Tooltip>
                                     </StyledSortIconContainer>
                                 )}
+                                {columnsState.showHiddenColumns && (
+                                    <StyledSortIconContainer
+                                        onClick={(event) => {
+                                            columnsState.toggleHidden(col.key);
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        <Tooltip
+                                            title={t("toggle-hidden", "Toggle hidden")}
+                                        >
+                                            {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                        </Tooltip>
+                                    </StyledSortIconContainer>
+                                )}
                                 {col.sortDirection && (
                                     <StyledSortIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
@@ -1278,7 +1316,7 @@ export const DataGrid = <T extends object>({
                                         paddingY={cellPaddingY}
                                         dataType={dataType}
                                     >
-                                        {valueToString(summaryRow[col.key], col.dataType, {display: true, maxLength: displayMaxLengh})}
+                                        {valueToString(summaryRow[col.key], col.dataType, { display: true, maxLength: displayMaxLengh })}
                                     </StyledFooterCell>
                                 </React.Fragment>
                             );

@@ -10,12 +10,16 @@ interface UseColumnsState {
     /** zmienił się kolumny, typ danych lub sortDirection */
     stateChanged: boolean;
     layoutChanged: boolean;
+    showHiddenColumns: boolean;
     sortColumn: (columnIndex: number) => void;
     resetColumns: () => void;
     moveColumn: (fromIndex: number, toIndex: number) => void;
     updateColumn: (columnIndex: number, updatedValues: Partial<ColumnDefinition>) => void;
     resetSorting: () => void;
     columnLeft: (columnIndex: number) => number;
+    toggleHidden: (columnKey: string) => void;
+    toggleShowHiddenColumns: () => void;
+    resetHiddenColumns: () => void;
 }
 
 // Pomocnicza funkcja do generowania klucza układu
@@ -36,6 +40,7 @@ function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession:
         key: col.key,
         dataType: col.dataType,
         width: col.width,
+        hidden: col.hidden,
     }));
     const toStore = {
         layout,
@@ -74,7 +79,7 @@ function restoreColumnsLayout(
                     col.key === savedCol.key && areTypesEqual(col.dataType, savedCol.dataType)
             );
             return orig
-                ? { ...orig, width: savedCol.width ?? orig.width }
+                ? { ...orig, width: savedCol.width ?? orig.width, hidden: savedCol.hidden ?? orig.hidden }
                 : orig!;
         });
     } catch {
@@ -134,18 +139,18 @@ export const useColumnsState = (
     const prevColumnsStateRef = useRef<ColumnDefinition[]>(columnsState);
     const [stateChanged, setstateChanged] = useState(false);
     const [layoutChanged, setLayoutChanged] = useState(false);
+    const [showHiddenColumns, setShowHiddenColumns] = useState(false);
+    const [displayColumns, setDisplayColumns] = useState<ColumnDefinition[]>(() =>
+        columnsState.filter(col => !col.hidden || showHiddenColumns)
+    );
+
+    // Funkcja do przełączania trybu pokazywania ukrytych kolumn
+    const toggleShowHiddenColumns = () => {
+        setShowHiddenColumns(prev => !prev);
+    };
 
     // Zapisuj układ przy każdej zmianie columnsState
     useEffect(() => {
-        let und = false;
-        columnsState.filter(col => {
-            if (!col) {
-                und = true;
-            }
-        });
-        if (und) {
-            console.log(columnsState);
-        }
         if (
             isSameColumnsSet(
                 columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
@@ -178,11 +183,6 @@ export const useColumnsState = (
         prevColumnsStateRef.current = columnsState;
     }, [columnsState]);
 
-    useEffect(() => {
-        const newTotalWidth = columnsState.reduce((sum, col) => sum + (col.width || 150), 0);
-        setTotalWidth(newTotalWidth);
-    }, [columnsState]);
-
     // Synchronizuj columnsState z initialColumns, jeśli zestaw kolumn się zmienił
     useEffect(() => {
         // Jeśli zestaw kolumn się zmienił (nie tylko kolejność/szerokość), zresetuj columnsState
@@ -190,15 +190,26 @@ export const useColumnsState = (
             columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
             initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data"));
+            setColumnsState(
+                restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
+            );
             setLayoutChanged(true);
-        }
-        else {
+        } else {
             setLayoutChanged(false);
         }
-    }, [initialColumns, layoutKey, mode]);
+    }, [initialColumns, layoutKey, mode, showHiddenColumns]);
 
-    // Funkcje operacyjne na kolumnach
+    useEffect(() => {
+        const newDisplayColumns = columnsState.filter(col => !col.hidden || showHiddenColumns);
+        setDisplayColumns(newDisplayColumns);
+    }, [showHiddenColumns, columnsState]);
+
+    useEffect(() => {
+        const newTotalWidth = displayColumns.reduce((sum, col) => sum + (col.width || 150), 0);
+        setTotalWidth(newTotalWidth);
+    }, [displayColumns]);
+
+    // Funkcja do sortowania kolumny
     const sortColumn = (columnIndex: number) => {
         setColumnsState((prevColumns) =>
             produce(prevColumns, (draft) => {
@@ -234,6 +245,26 @@ export const useColumnsState = (
         );
     };
 
+    // Funkcja do ukrywania/odkrywania kolumn
+    const toggleHidden = (columnKey: string) => {
+        setColumnsState(prevColumns => {
+            return prevColumns.map(col => {
+                if (col.key === columnKey) {
+                    return { ...col, hidden: !col.hidden };
+                }
+                return col;
+            });
+        });
+    };
+
+    const resetHiddenColumns = () => {
+        setColumnsState(prevColumns => {
+            return prevColumns.map(col => {
+                return { ...col, hidden: false };
+            });
+        });
+    };
+
     // Funkcja do resetowania stanu kolumn
     const resetColumns = () => {
         setColumnsState(initialColumns);
@@ -242,8 +273,8 @@ export const useColumnsState = (
     // Funkcja do przenoszenia kolumn
     const moveColumn = (fromIndex: number, toIndex: number) => {
         if (fromIndex !== toIndex) {
-            setColumnsState((prevColumns) =>
-                produce(prevColumns, (draft) => {
+            setColumnsState(prevColumns =>
+                produce(prevColumns, draft => {
                     const [movedColumn] = draft.splice(fromIndex, 1);
                     draft.splice(toIndex, 0, movedColumn);
                 })
@@ -253,8 +284,8 @@ export const useColumnsState = (
 
     // Funkcja do częściowej aktualizacji kolumny
     const updateColumn = (columnIndex: number, updatedValues: Partial<ColumnDefinition>) => {
-        setColumnsState((prevColumns) =>
-            produce(prevColumns, (draft) => {
+        setColumnsState(prevColumns =>
+            produce(prevColumns, draft => {
                 draft[columnIndex] = { ...draft[columnIndex], ...updatedValues };
             })
         );
@@ -262,9 +293,9 @@ export const useColumnsState = (
 
     // Funkcja do resetowania sortowania
     const resetSorting = () => {
-        setColumnsState((prevColumns) =>
-            produce(prevColumns, (draft) => {
-                draft.forEach((column) => {
+        setColumnsState(prevColumns =>
+            produce(prevColumns, draft => {
+                draft.forEach(column => {
                     column.sortDirection = undefined;
                     column.sortOrder = undefined;
                 });
@@ -280,26 +311,30 @@ export const useColumnsState = (
                 return cache.get(columnIndex)!;
             }
 
-            const left = columnsState
+            const left = displayColumns
                 .slice(0, columnIndex)
                 .reduce((sum, col) => sum + (col.width || 150), 0);
 
             cache.set(columnIndex, left);
             return left;
         };
-    }, [columnsState]);
+    }, [displayColumns]);
 
     return {
-        current: columnsState,
+        current: displayColumns,
         totalWidth,
         stateChanged,
         layoutChanged,
+        showHiddenColumns,
         sortColumn,
         resetColumns,
         moveColumn,
         updateColumn,
         resetSorting,
         columnLeft,
+        toggleHidden,
+        toggleShowHiddenColumns,
+        resetHiddenColumns,
     };
 };
 
