@@ -40,8 +40,6 @@ export const columnDataTypeClassMap: Record<ColumnBaseType | 'null', string> = {
     object: 'data-type-object',
     null: 'data-type-null',
 };
-export type ColumnDataValueType = string | bigint | number | boolean | any[] | Date | object | null;
-
 export interface TableCellPosition {
     row: number;
     column: number;

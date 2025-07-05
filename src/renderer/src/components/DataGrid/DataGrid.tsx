@@ -4,7 +4,7 @@ import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import * as actions from "./actions";
-import { columnDataTypeClassMap, ColumnDataValueType, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
+import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
 import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
@@ -412,7 +412,7 @@ export const DataGrid = <T extends object>({
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
     const [filteredDataState, setFilteredDataState] = useState<T[]>([]);
-    const [summaryRow, setSummaryRow] = useState<Record<string, ColumnDataValueType>>({});
+    const [summaryRow, setSummaryRow] = useState<Record<string, any>>({});
     const [summaryOperation, setSummaryOperation] = useState<Record<string, SummaryOperation | null> | null>(null);
     const [footerVisible, setFooterVisible] = useState(false); // Dodaj stan dla StyledFooter
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
@@ -447,7 +447,7 @@ export const DataGrid = <T extends object>({
             groupingColumns.clearColumns();
             searchState.resetSearch();
             filterColumns.clearFilters();
-            columnsState.resetHiddenColumns();
+            //columnsState.resetHiddenColumns();
         }
     }, [columns]);
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { ColumnDataValueType, ColumnDefinition, SummaryOperation } from "./DataGridTypes";
+import { ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 import { DateTime } from "luxon";
@@ -149,8 +149,8 @@ export const calculateSummary = (
     columnsState: ColumnDefinition[],
     operation: Record<string, SummaryOperation | null> | null,
     aggNotSummared?: boolean,
-): Record<string, ColumnDataValueType> => {
-    const summary: Record<string, ColumnDataValueType> = {};
+): Record<string, any> => {
+    const summary: Record<string, any> = {};
 
     columnsState.forEach((col) => {
         const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
