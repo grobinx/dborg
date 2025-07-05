@@ -41,6 +41,9 @@ function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession:
         dataType: col.dataType,
         width: col.width,
         hidden: col.hidden,
+        sortDirection: col.sortDirection,
+        sortOrder: col.sortOrder,
+        label: useSession ? col.label : undefined,
     }));
     const toStore = {
         layout,
@@ -79,7 +82,13 @@ function restoreColumnsLayout(
                     col.key === savedCol.key && areTypesEqual(col.dataType, savedCol.dataType)
             );
             const result = orig
-                ? { ...orig, width: savedCol.width ?? orig.width, hidden: savedCol.hidden ?? orig.hidden }
+                ? { ...orig, 
+                    width: savedCol.width ?? orig.width, 
+                    hidden: savedCol.hidden ?? orig.hidden,
+                    sortDirection: savedCol.sortDirection ?? orig.sortDirection,
+                    sortOrder: savedCol.sortOrder ?? orig.sortOrder,
+                    label: savedCol.label ?? orig.label,
+                }
                 : orig!;
             console.log(savedCol, result);
             return result;
