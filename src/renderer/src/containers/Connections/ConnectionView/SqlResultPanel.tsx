@@ -517,7 +517,7 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                     sendMessage(SQL_RESULT_SET_MAX_FETCH_SIZE, { to: itemID, maxFetchSize: value !== "" ? value : undefined });
                 }}
                 onKeyDown={(e) => {
-                    if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                    if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab") {
                         e.preventDefault(); // Zablokuj wprowadzanie znaków innych niż cyfry
                     }
                 }}
