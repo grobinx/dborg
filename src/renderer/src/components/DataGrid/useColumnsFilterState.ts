@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ColumnDefinition } from "./DataGridTypes";
 import { compareValuesByType } from "../../../../../src/api/db";
 
@@ -61,6 +61,7 @@ interface ColumnFilterState {
 
 export function useColumnFilterState() {
     const [filters, setFilters] = useState<ColumnFilterState>({});
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
     const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
         setFilters((prev) => {
@@ -176,8 +177,14 @@ export function useColumnFilterState() {
         });
     }
 
+    useEffect(() => {
+        const active = Object.entries(filters).filter(([_, filter]) => filter.active).map(([key]) => key);
+        setActiveFilters(active);
+    }, [filters]);
+
     return {
         filters,
+        activeFilters,
         setFilter,
         getFilter,
         filterData,

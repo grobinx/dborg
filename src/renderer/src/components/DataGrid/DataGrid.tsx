@@ -537,7 +537,7 @@ export const DataGrid = <T extends object>({
         }
 
         setFilteredDataState(resultSet);
-    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, filterColumns.filters]);
+    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, filterColumns.activeFilters]);
 
     useEffect(() => {
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
