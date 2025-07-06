@@ -19,7 +19,7 @@ import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
 import { areTypesEqual, ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
-import { filterToString, useColumnFilterState } from "./useColumnsFilterState";
+import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 
 export type DataGridMode = "defined" | "data";
 
@@ -407,7 +407,33 @@ export const DataGrid = <T extends object>({
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
-    const columnsState = useColumnsState(columns, mode, autoSaveId);
+
+    const onSaveColumnsState = () => {
+        return {
+            filters: filterColumns.filters,
+            grouping: groupingColumns.columns,
+        };
+    };
+
+    const onRestoreColumnsState = (data: Record<string, any>) => {
+        filterColumns.clearFilters();
+        if (data.filters) {
+            Object.entries(data.filters).forEach(([key, filter]) => {
+                if (isColumnFilter(filter)) {
+                    filterColumns.setFilter(key, filter.operator, filter.not, filter.values);
+                    filterColumns.filterActive(key, filter.active);
+                }
+            });
+        }
+        groupingColumns.clearColumns();
+        if (data.grouping && Array.isArray(data.grouping)) {
+            data.grouping.forEach((grouping: string) => {
+                groupingColumns.toggleColumn(grouping);
+            });
+        }
+    };
+
+    const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
@@ -441,9 +467,9 @@ export const DataGrid = <T extends object>({
         )) {
             columnsRef.current = columns;
             setSummaryRow({});
-            groupingColumns.clearColumns();
+            //groupingColumns.clearColumns();
             searchState.resetSearch();
-            filterColumns.clearFilters();
+            //filterColumns.clearFilters();
             //columnsState.resetHiddenColumns();
         }
     }, [columns]);
@@ -529,6 +555,10 @@ export const DataGrid = <T extends object>({
             setSummaryRow(calculateSummary(dataForSummary, columnsState.current));
         }
     }, [filteredDataState, selectedRows, columnsState.stateChanged]);
+
+    useEffect(() => {
+        columnsState.saveColumnsLayout();
+    }, [filterColumns.filters, groupingColumns.columns]);
 
     useEffect(() => {
         if (onChange) {

@@ -12,6 +12,7 @@ interface UseColumnsState {
     layoutChanged: boolean;
     showHiddenColumns: boolean;
     anySummarized: boolean;
+    saveColumnsLayout: () => void;
     sortColumn: (columnIndex: number) => void;
     resetColumns: () => void;
     moveColumn: (fromIndex: number, toIndex: number) => void;
@@ -38,7 +39,7 @@ function getColumnsLayoutKey(columns: ColumnDefinition[], autoSaveId?: string): 
 }
 
 // Zapisz tylko szerokość, kolejność i datę modyfikacji
-function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession: boolean) {
+function storeColumnsLayout(columns: ColumnDefinition[], key: string, useSession: boolean, onSave?: () => Record<string, any>) {
     const layout = columns.map((col) => ({
         key: col.key,
         dataType: col.dataType,
@@ -52,6 +53,7 @@ function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession:
     const toStore = {
         layout,
         modified: new Date().toISOString(),
+        data: onSave ? onSave() : {}
     };
     const storage = useSession ? sessionStorage : localStorage;
     storage.setItem(key, JSON.stringify(toStore));
@@ -61,7 +63,8 @@ function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession:
 function restoreColumnsLayout(
     initialColumns: ColumnDefinition[],
     key: string,
-    useSession: boolean
+    useSession: boolean,
+    onRestore?: (data: Record<string, any>) => void,
 ): ColumnDefinition[] {
     const storage = useSession ? sessionStorage : localStorage;
     const saved = storage.getItem(key);
@@ -76,7 +79,15 @@ function restoreColumnsLayout(
                 layout.map((col: any) => ({ key: col.key, dataType: col.dataType }))
             )
         ) {
+            if (onRestore) {
+                onRestore({});
+            }
             return initialColumns;
+        }
+        else {
+            if (onRestore) {
+                onRestore(parsed.data ?? {});
+            }
         }
 
         // Odtwórz kolejność i typ kolumny
@@ -143,11 +154,13 @@ function cleanupOldColumnLayouts() {
 export const useColumnsState = (
     initialColumns: ColumnDefinition[],
     mode: DataGridMode,
-    autoSaveId?: string
+    autoSaveId?: string,
+    onSave?: () => Record<string, any>,
+    onRestore?: (data: Record<string, any>) => void
 ): UseColumnsState => {
     const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
-        restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
+        restoreColumnsLayout(initialColumns, layoutKey, mode === "data", onRestore)
     );
     const [totalWidth, setTotalWidth] = useState(() =>
         columnsState.reduce((sum, col) => sum + (col.width || 150), 0)
@@ -177,7 +190,7 @@ export const useColumnsState = (
             )
         ) {
             if (columnsState.length > 0) {
-                saveColumnsLayout(columnsState, layoutKey, mode === "data");
+                storeColumnsLayout(columnsState, layoutKey, mode === "data", onSave);
             }
         }
     }, [columnsState, layoutKey, initialColumns, mode]);
@@ -213,7 +226,7 @@ export const useColumnsState = (
             columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
             initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data"));
+            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data", onRestore));
             setLayoutChanged(true);
         } else {
             setLayoutChanged(false);
@@ -312,6 +325,10 @@ export const useColumnsState = (
         );
     };
 
+    const saveColumnsLayout = () => {
+        storeColumnsLayout(columnsState, layoutKey, mode === "data", onSave);
+    };
+
     // Funkcja do resetowania sortowania
     const resetSorting = () => {
         setColumnsState(prevColumns =>
@@ -369,6 +386,7 @@ export const useColumnsState = (
         layoutChanged,
         showHiddenColumns,
         anySummarized,
+        saveColumnsLayout,
         sortColumn,
         resetColumns,
         moveColumn,

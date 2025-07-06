@@ -43,6 +43,18 @@ export interface ColumnFilter {
     values: string[];
 }
 
+export function isColumnFilter(filter: any): filter is ColumnFilter {
+    return (
+        typeof filter === 'object' &&
+        'operator' in filter &&
+        'not' in filter &&
+        'values' in filter &&
+        Array.isArray(filter.values) &&
+        typeof filter.operator === 'string' &&
+        typeof filter.not === 'boolean'
+    );
+}
+
 interface ColumnFilterState {
     [key: string]: ColumnFilter;
 }
