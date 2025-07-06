@@ -17,7 +17,7 @@ import { DatabasesMetadata, DatabaseMetadata, SchemaMetadata, RelationMetadata, 
  * /indexes [<schema>.]<relation> - wyświetla indeksy w tabeli
  * /constraints [<schema>.]<relation> - wyświetla ograniczenia w tabeli
  * /foreign keys [<schema>.]<relation> - wyświetla klucze obce w tabeli
- * /primary keys [<schema>.]<relation> - wyświetla klucze główne w tabeli
+ * /primary key [<schema>.]<relation> - wyświetla klucze główne w tabeli
  * <table> - wyświetla kolumny w tabeli
  * <schema> - wyświetla relacje w schemacie
  * <schema>.<table> - wyświetla kolumny w tabeli
@@ -58,8 +58,8 @@ export class MetadataCommandProcessor {
                 }
                 break;
             case "primary":
-                if (args[0]?.toLowerCase() === "keys") {
-                    return MetadataCommandProcessor.getPrimaryKeys(metadata, args[1]);
+                if (args[0]?.toLowerCase() === "key") {
+                    return MetadataCommandProcessor.getPrimaryKey(metadata, args[1]);
                 }
                 break;
             default:
@@ -356,12 +356,13 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getPrimaryKeys(metadata: DatabasesMetadata, relationName?: string): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getPrimaryKey(metadata: DatabasesMetadata, relationName?: string): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "primaryKey", label: "Primary Key", dataType: "string" },
+            { key: "columns", label: "Columns", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -375,6 +376,7 @@ export class MetadataCommandProcessor {
                                 schema: schema.name,
                                 relation: relation.name,
                                 primaryKey: relation.primaryKey.name,
+                                columns: relation.primaryKey.columns.join(", "),
                             });
                         }
                     }
