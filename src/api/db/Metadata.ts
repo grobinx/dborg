@@ -269,6 +269,9 @@ export interface RelationMetadata {
     /** List of columns in the relation */
     columns: ColumnMetadata[];
 
+    /** List of constraints on the relation */
+    constraints?: ConstraintMetadata[];
+
     /** List of columns in the primary key */
     primaryKey?: PrimaryKeyMetadata;
 
@@ -441,6 +444,26 @@ export interface PrimaryKeyMetadata {
 
     /** Description of the primary key */
     description?: string;
+
+    /** Custom data */
+    data?: Record<string, any>;
+}
+
+export interface ConstraintMetadata {
+    /** Unique identifier of the object */
+    id: string;
+
+    /** Constraint name */
+    name: string;
+
+    /** Description of the constraint */
+    description?: string;
+
+    /** Type of the constraint (e.g., CHECK, UNIQUE) */
+    type: string;
+
+    /** Expression defining the constraint */
+    expression?: string;
 
     /** Custom data */
     data?: Record<string, any>;
