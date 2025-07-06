@@ -7,7 +7,7 @@ interface ColumnsGroup {
     toggleColumn: (column: string) => void;
     clearColumns: () => void;
     isInGroup: (column: string) => boolean;
-    groupData<T extends object>(data: T[], columnsState: ColumnDefinition[], summaryOperation: Record<string, SummaryOperation | null> | null): T[]
+    groupData<T extends object>(data: T[], columnsState: ColumnDefinition[]): T[]
 }
 
 export const useColumnsGroup = (): ColumnsGroup => {
@@ -30,7 +30,6 @@ export const useColumnsGroup = (): ColumnsGroup => {
     const groupData = <T extends object>(
         data: T[],
         columnsState: ColumnDefinition[],
-        summaryOperation: Record<string, SummaryOperation | null> | null
     ): T[] => {
         if (columns.length === 0 || data.length === 0) {
             return data;
@@ -53,7 +52,7 @@ export const useColumnsGroup = (): ColumnsGroup => {
         // Oblicz podsumowanie dla każdej grupy w jednej iteracji
         groupedResultSet.forEach((group) => {
             const groupRows = group.rows;
-            group.summary = calculateSummary(groupRows, columnsState, summaryOperation, true);
+            group.summary = calculateSummary(groupRows, columnsState, true);
 
             // Dodanie wartości pierwszego wiersza dla kolumn grupujących
             columns.forEach((col) => {

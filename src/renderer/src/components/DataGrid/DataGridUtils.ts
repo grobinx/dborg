@@ -147,15 +147,12 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
 export const calculateSummary = (
     data: object[],
     columnsState: ColumnDefinition[],
-    operation: Record<string, SummaryOperation | null> | null,
     aggNotSummared?: boolean,
 ): Record<string, any> => {
     const summary: Record<string, any> = {};
 
     columnsState.forEach((col) => {
-        const columnOperation = operation?.[col.key]; // Safely access operation[col.key]
-
-        if (!columnOperation) {
+        if (!col.summary) {
             if (aggNotSummared) {
                 summary[col.key] = [
                     ...new Map(
@@ -177,7 +174,7 @@ export const calculateSummary = (
 
         if (baseType === 'number') {
             const numericValues = values.filter(Boolean).map((value) => Decimal(value));
-            switch (columnOperation) {
+            switch (col.summary) {
                 case "sum":
                     summary[col.key] = numericValues.reduce((acc, val) => acc.add(val), Decimal(0));
                     break;
@@ -283,7 +280,7 @@ export const calculateSummary = (
         } else if (baseType === "boolean") {
             const booleanValues = values.filter((value) => typeof value === "boolean") as boolean[];
             const trueCount = booleanValues.filter((value) => value === true).length;
-            switch (columnOperation) {
+            switch (col.summary) {
                 case "sum":
                     summary[col.key] = trueCount;
                     break;
@@ -325,7 +322,7 @@ export const calculateSummary = (
         } else if (baseType === "string") {
             const stringValues = values.map((value) => (value !== null && value !== undefined) ? value.toString() : null) as string[];
             const lengths = stringValues.map((value) => value.length);
-            switch (columnOperation) {
+            switch (col.summary) {
                 case "min":
                     summary[col.key] = stringValues.length > 0
                         ? stringValues.reduce((a, b) => (a < b ? a : b))
@@ -410,7 +407,7 @@ export const calculateSummary = (
                     return null;
                 })
                 .filter((value): value is DateTime => value !== null);
-            switch (columnOperation) {
+            switch (col.summary) {
                 case "min":
                     summary[col.key] = dateValues.length > 0 ? Math.min(...dateValues.map((date) => date.toMillis())) : null;
                     break;
@@ -461,7 +458,7 @@ export const calculateSummary = (
                     summary[col.key] = null;
             }
         } else {
-            switch (columnOperation) {
+            switch (col.summary) {
                 case "unique":
                     summary[col.key] = new Set(values.filter((value) => value != null)).size;
                     break;

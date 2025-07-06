@@ -167,7 +167,7 @@ const StyledHeaderCellContent = styled('div', {
     gap: 2,
 });
 
-const StyledSortIconContainer = styled('div', {
+const StyledIconContainer = styled('div', {
     name: "DataGrid",
     slot: "sortIconContainer",
 })({
@@ -286,6 +286,7 @@ const StyledFooter = styled('div', {
     position: "sticky",
     bottom: 0,
     display: "flex",
+    flexDirection: "column",
     zIndex: 3,
     backgroundColor: theme.palette.background.table.footer,
     color: theme.palette.table.contrastText,
@@ -413,8 +414,6 @@ export const DataGrid = <T extends object>({
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
     const [filteredDataState, setFilteredDataState] = useState<T[]>([]);
     const [summaryRow, setSummaryRow] = useState<Record<string, any>>({});
-    const [summaryOperation, setSummaryOperation] = useState<Record<string, SummaryOperation | null> | null>(null);
-    const [footerVisible, setFooterVisible] = useState(false); // Dodaj stan dla StyledFooter
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
     const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber); // Dodano stan
     const previousStatusRef = useRef<DataGridStatus | null>(null);
@@ -442,8 +441,6 @@ export const DataGrid = <T extends object>({
         )) {
             columnsRef.current = columns;
             setSummaryRow({});
-            setSummaryOperation(null);
-            setFooterVisible(false);
             groupingColumns.clearColumns();
             searchState.resetSearch();
             filterColumns.clearFilters();
@@ -457,7 +454,7 @@ export const DataGrid = <T extends object>({
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
         if (mode === "data") {
-            resultSet = groupingColumns.groupData(resultSet, columnsState.current, summaryOperation);
+            resultSet = groupingColumns.groupData(resultSet, columnsState.current);
         }
 
         // Filtrowanie na podstawie queryData, wholeWordQuery i caseSensitiveQuery
@@ -514,7 +511,7 @@ export const DataGrid = <T extends object>({
         }
 
         setFilteredDataState(resultSet);
-    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, summaryOperation, filterColumns.filters]);
+    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, filterColumns.filters]);
 
     useEffect(() => {
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
@@ -524,14 +521,14 @@ export const DataGrid = <T extends object>({
     }, [filteredDataState]);
 
     useEffect(() => {
-        if (footerVisible) {
+        if (columnsState.anySummarized) {
             const dataForSummary = selectedRows.length > 0
                 ? selectedRows.map((rowIndex) => filteredDataState[rowIndex]) // Dane tylko z zaznaczonych wierszy
                 : filteredDataState; // Wszystkie dane, jeśli brak zaznaczenia
 
-            setSummaryRow(calculateSummary(dataForSummary, columnsState.current, summaryOperation));
+            setSummaryRow(calculateSummary(dataForSummary, columnsState.current));
         }
-    }, [filteredDataState, selectedRows, columnsState.stateChanged, footerVisible, summaryOperation]);
+    }, [filteredDataState, selectedRows, columnsState.stateChanged]);
 
     useEffect(() => {
         if (onChange) {
@@ -542,7 +539,7 @@ export const DataGrid = <T extends object>({
                 const newStatus: DataGridStatus = {
                     isActive: !!active || isFocused || openCommandPalette,
                     isLoading: !!loading,
-                    isSummaryVisible: footerVisible,
+                    isSummaryVisible: columnsState.anySummarized,
                     isRowNumberVisible: showRowNumberColumn,
                     columnCount: columnsState.current.length,
                     rowCount: filteredDataState.length,
@@ -568,7 +565,6 @@ export const DataGrid = <T extends object>({
         filteredDataState,
         selectedCell,
         loading,
-        footerVisible,
         showRowNumberColumn,
         columnsState.current,
         selectedRows,
@@ -591,7 +587,7 @@ export const DataGrid = <T extends object>({
                     columnsState.columnLeft(selected?.column ?? 0),
                     rowHeight,
                     columnsState.current,
-                    footerVisible);
+                    columnsState.anySummarized);
             }
         } else {
             updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
@@ -669,7 +665,7 @@ export const DataGrid = <T extends object>({
         setPosition: ({ row, column }) => {
             const position = updateSelectedCell({ row, column });
             if (containerRef.current && position) {
-                scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, footerVisible);
+                scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, columnsState.anySummarized);
             }
         },
         getRowHeight: () => rowHeight,
@@ -677,7 +673,7 @@ export const DataGrid = <T extends object>({
             setRowHeight(height); // Funkcja do zmiany rowHeight
             if (containerRef.current && selectedCell) {
                 const { row, column } = selectedCell;
-                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, footerVisible);
+                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized);
             }
         },
         getColumnWidth: () => columnsState.current[selectedCell?.column ?? 0]?.width || null,
@@ -729,31 +725,21 @@ export const DataGrid = <T extends object>({
         getSearchText: () => searchState.current.text ?? "", // Zwrócenie queryData
         sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex),
         resetSorting: () => columnsState.resetSorting(),
-        getSummaryFooterOperation: () => {
-            if (summaryOperation) {
-                const column = columnsState.current[selectedCell?.column ?? 0];
-                return summaryOperation[column.key] || null; // Zwrócenie operacji dla wybranej kolumny
-            }
-            return null;
+        getSummaryOperation: () => {
+            if (!selectedCell) return;
+            const column = columnsState.current[selectedCell?.column];
+            return column?.summary;
         },
-        setSummaryFooterOperation: (operation) => {
-            setSummaryOperation((prev) => {
-                const columnKey = columnsState.current[selectedCell?.column ?? 0]?.key;
-
-                if (!columnKey) return prev;
-
-                const updatedOperation = {
-                    ...prev,
-                    [columnKey]: prev?.[columnKey] === operation ? null : operation, // Wyczyść operację, jeśli jest taka sama
-                };
-
-                // Sprawdź, czy wszystkie operacje są puste
-                const allOperationsEmpty = Object.values(updatedOperation).every((op) => op === null);
-
-                setFooterVisible(!allOperationsEmpty); // Ukryj stopkę tylko, jeśli wszystkie operacje są puste
-
-                return updatedOperation;
-            });
+        setSummaryOperation: (operation) => {
+            if (!selectedCell) return;
+            const column = columnsState.current[selectedCell?.column];
+            if (column) {
+                if (column.summary === operation) {
+                    columnsState.setSummary(column.key);
+                } else {
+                    columnsState.setSummary(column.key, operation);
+                }
+            }
         },
         setShowRowNumberColumn: (show) => {
             setShowRowNumberColumn(show); // Ustawienie stanu dla kolumny z numerami wierszy
@@ -763,8 +749,7 @@ export const DataGrid = <T extends object>({
         },
         isShowRowNumberColumn: () => showRowNumberColumn, // Zwrócenie stanu dla kolumny z numerami wierszy
         clearSummary: () => {
-            setSummaryOperation(null); // Wyczyść operacje
-            setFooterVisible(false); // Ukryj stopkę
+            columnsState.resetSummary();
         },
         resetColumnsLayout: () => {
             columnsState.resetColumns();
@@ -949,7 +934,7 @@ export const DataGrid = <T extends object>({
         const position = updateSelectedCell({ row: rowIndex, column: columnIndex });
 
         if (containerRef.current && position) {
-            scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, footerVisible);
+            scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, columnsState.anySummarized);
         }
     };
 
@@ -1009,7 +994,7 @@ export const DataGrid = <T extends object>({
             columnsState.columnLeft(0),
             rowHeight,
             columnsState.current,
-            footerVisible
+            columnsState.anySummarized
         );
     };
 
@@ -1136,7 +1121,7 @@ export const DataGrid = <T extends object>({
                                 </span>
                                 <Stack flexGrow={1} />
                                 {(filterColumns.getFilter(col.key, true) !== null) && (
-                                    <StyledSortIconContainer
+                                    <StyledIconContainer
                                         onClick={(event) => {
                                             filterColumns.filterActive(col.key, false)
                                             event.stopPropagation();
@@ -1150,10 +1135,10 @@ export const DataGrid = <T extends object>({
                                         >
                                             <theme.icons.Filter />
                                         </Tooltip>
-                                    </StyledSortIconContainer>
+                                    </StyledIconContainer>
                                 )}
                                 {groupingColumns.isInGroup(col.key) && (
-                                    <StyledSortIconContainer
+                                    <StyledIconContainer
                                         onClick={(event) => {
                                             groupingColumns.toggleColumn(col.key);
                                             event.stopPropagation();
@@ -1164,10 +1149,10 @@ export const DataGrid = <T extends object>({
                                         >
                                             <span className="group-icon">[]</span>
                                         </Tooltip>
-                                    </StyledSortIconContainer>
+                                    </StyledIconContainer>
                                 )}
                                 {columnsState.showHiddenColumns && (
-                                    <StyledSortIconContainer
+                                    <StyledIconContainer
                                         onClick={(event) => {
                                             columnsState.toggleHidden(col.key);
                                             event.stopPropagation();
@@ -1178,13 +1163,13 @@ export const DataGrid = <T extends object>({
                                         >
                                             {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
                                         </Tooltip>
-                                    </StyledSortIconContainer>
+                                    </StyledIconContainer>
                                 )}
                                 {col.sortDirection && (
-                                    <StyledSortIconContainer>
+                                    <StyledIconContainer>
                                         <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
                                         {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
-                                    </StyledSortIconContainer>
+                                    </StyledIconContainer>
                                 )}
                             </StyledHeaderCellContent>
                             {(col.resizable ?? columnsResizable) && (
@@ -1226,7 +1211,7 @@ export const DataGrid = <T extends object>({
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         dataType = "null";
                                     }
-                                    if (!groupingColumns.isInGroup(col.key) && (!summaryOperation || (summaryOperation[col.key] ?? null) === null) && Array.isArray(row[col.key])) {
+                                    if (!groupingColumns.isInGroup(col.key) && (!col.summary) && Array.isArray(row[col.key])) {
                                         dataType = "null";
                                     }
 
@@ -1269,7 +1254,7 @@ export const DataGrid = <T extends object>({
                         );
                     })}
                 </StyledRowsContainer>
-                {footerVisible && (
+                {columnsState.anySummarized && (
                     <StyledFooter
                         style={{ width: columnsState.totalWidth, height: (rowHeight * 0.7) + rowHeight }}
                         className="DataGrid-footer"
@@ -1278,8 +1263,8 @@ export const DataGrid = <T extends object>({
                             const absoluteColIndex = startColumn + colIndex;
                             let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType);
                             let operationLabel = "";
-                            if (summaryOperation && summaryOperation?.[col.key] !== null) {
-                                operationLabel = summaryOperationDisplayMap[summaryOperation[col.key]!] || "";
+                            if (col.summary) {
+                                operationLabel = summaryOperationDisplayMap[col.summary] || "";
                             }
 
                             return (
@@ -1302,7 +1287,23 @@ export const DataGrid = <T extends object>({
                                             actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
                                         }}
                                     >
-                                        {operationLabel}
+                                        <StyledHeaderCellContent className="DataGrid-footerCellContent">
+                                            {operationLabel}
+                                            {(col.summary !== undefined) &&
+                                                <StyledIconContainer
+                                                    onClick={(event) => {
+                                                        columnsState.setSummary(col.key);
+                                                        event.stopPropagation();
+                                                    }}
+                                                >
+                                                    <Tooltip
+                                                        title={t("summary-off", "Toggle summary off")}
+                                                    >
+                                                        <theme.icons.Close />
+                                                    </Tooltip>
+                                                </StyledIconContainer>
+                                            }
+                                        </StyledHeaderCellContent>
                                     </StyledFooterCell>
                                     <StyledFooterCell
                                         className={`DataGrid-footerCell ${columnDataTypeClassMap[dataType] || ""}`}

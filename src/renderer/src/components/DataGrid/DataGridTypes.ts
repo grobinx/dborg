@@ -87,6 +87,10 @@ export interface ColumnDefinition {
      */
     hidden?: boolean;
     /**
+     * Operacja podsumowująca, która ma być wykonana na tej kolumnie.
+     */
+    summary?: SummaryOperation;
+    /**
      * Funkcja formatująca wartość w kolumnie.
      * Jeśli została podana, będzie wywołana, niezależnie od typu danych.
      * @param value Wartość, która ma być sformatowana.
@@ -206,8 +210,8 @@ export interface DataGridActionContext<T extends object> {
     isSearchExclude: () => boolean;
     getSearchText: () => string;
     resetSorting: () => void;
-    getSummaryFooterOperation: () => SummaryOperation | null;
-    setSummaryFooterOperation: (operation: SummaryOperation | null) => void;
+    getSummaryOperation: () => SummaryOperation | undefined;
+    setSummaryOperation: (operation: SummaryOperation | undefined) => void;
     setShowRowNumberColumn: (show: boolean) => void;
     isShowRowNumberColumn: () => boolean;
     clearSummary: () => void;

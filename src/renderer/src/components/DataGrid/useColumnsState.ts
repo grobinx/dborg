@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
-import { ColumnDefinition } from "./DataGridTypes";
+import { ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
 import { ColumnDataType, generateHash, areTypesEqual, typeToString } from "../../../../../src/api/db";
 
@@ -11,6 +11,7 @@ interface UseColumnsState {
     stateChanged: boolean;
     layoutChanged: boolean;
     showHiddenColumns: boolean;
+    anySummarized: boolean;
     sortColumn: (columnIndex: number) => void;
     resetColumns: () => void;
     moveColumn: (fromIndex: number, toIndex: number) => void;
@@ -20,6 +21,8 @@ interface UseColumnsState {
     toggleHidden: (columnKey: string) => void;
     toggleShowHiddenColumns: () => void;
     resetHiddenColumns: () => void;
+    setSummary: (columnKey: string, operation?: SummaryOperation) => void;
+    resetSummary: () => void;
 }
 
 // Pomocnicza funkcja do generowania klucza układu
@@ -44,6 +47,7 @@ function saveColumnsLayout(columns: ColumnDefinition[], key: string, useSession:
         sortDirection: col.sortDirection,
         sortOrder: col.sortOrder,
         label: useSession ? col.label : undefined,
+        summary: col.summary,
     }));
     const toStore = {
         layout,
@@ -82,15 +86,16 @@ function restoreColumnsLayout(
                     col.key === savedCol.key && areTypesEqual(col.dataType, savedCol.dataType)
             );
             const result = orig
-                ? { ...orig, 
-                    width: savedCol.width ?? orig.width, 
+                ? {
+                    ...orig,
+                    width: savedCol.width ?? orig.width,
                     hidden: savedCol.hidden ?? orig.hidden,
                     sortDirection: savedCol.sortDirection ?? orig.sortDirection,
                     sortOrder: savedCol.sortOrder ?? orig.sortOrder,
                     label: savedCol.label ?? orig.label,
+                    summary: savedCol.summary ?? orig.summary,
                 }
                 : orig!;
-            console.log(savedCol, result);
             return result;
         });
     } catch {
@@ -154,6 +159,9 @@ export const useColumnsState = (
     const [displayColumns, setDisplayColumns] = useState<ColumnDefinition[]>(() =>
         columnsState.filter(col => !col.hidden || showHiddenColumns)
     );
+    const [anySummarized, setAnySummarized] = useState(
+        columnsState.some(col => col.summary !== undefined)
+    );
 
     // Funkcja do przełączania trybu pokazywania ukrytych kolumn
     const toggleShowHiddenColumns = () => {
@@ -183,7 +191,8 @@ export const useColumnsState = (
             return (
                 col.key !== prevCol?.key ||
                 col.dataType !== prevCol?.dataType ||
-                col.sortDirection !== prevCol?.sortDirection
+                col.sortDirection !== prevCol?.sortDirection ||
+                col.summary !== prevCol?.summary
             );
         });
 
@@ -192,6 +201,9 @@ export const useColumnsState = (
         }
 
         prevColumnsStateRef.current = columnsState;
+        setAnySummarized(
+            columnsState.some(col => col.summary !== undefined)
+        );
     }, [columnsState]);
 
     // Synchronizuj columnsState z initialColumns, jeśli zestaw kolumn się zmienił
@@ -201,9 +213,7 @@ export const useColumnsState = (
             columnsState.map(col => ({ key: col.key, dataType: col.dataType })),
             initialColumns.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            setColumnsState(
-                restoreColumnsLayout(initialColumns, layoutKey, mode === "data")
-            );
+            setColumnsState(restoreColumnsLayout(initialColumns, layoutKey, mode === "data"));
             setLayoutChanged(true);
         } else {
             setLayoutChanged(false);
@@ -331,12 +341,34 @@ export const useColumnsState = (
         };
     }, [displayColumns]);
 
+    const setSummary = (columnKey: string, operation?: SummaryOperation) => {
+        setColumnsState(prevColumns =>
+            produce(prevColumns, draft => {
+                const column = draft.find(col => col.key === columnKey);
+                if (column) {
+                    column.summary = operation;
+                }
+            })
+        );
+    }
+
+    const resetSummary = () => {
+        setColumnsState(prevColumns =>
+            produce(prevColumns, draft => {
+                draft.forEach(col => {
+                    col.summary = undefined;
+                });
+            })
+        );
+    };
+
     return {
         current: displayColumns,
         totalWidth,
         stateChanged,
         layoutChanged,
         showHiddenColumns,
+        anySummarized,
         sortColumn,
         resetColumns,
         moveColumn,
@@ -346,6 +378,8 @@ export const useColumnsState = (
         toggleHidden,
         toggleShowHiddenColumns,
         resetHiddenColumns,
+        setSummary,
+        resetSummary,
     };
 };
 

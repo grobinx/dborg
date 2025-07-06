@@ -11,9 +11,9 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
         id: id,
         prefix: "&",
         label: t(id, "& Summary footer"),
-        actions: (context) => {
+        actions: (context: DataGridActionContext<any>) => {
             let actions: (ActionDescriptor<any> & { operation: SummaryOperation })[] = [];
-            const summaryFooterOperation = context.getSummaryFooterOperation();
+            const summaryFooterOperation = context.getSummaryOperation();
             const column = context.getColumn();
             const baseType = toBaseType(column?.dataType ?? "string");
 
@@ -32,7 +32,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the total sum of all numeric values in the column or string lenght."
                     ),
                     selected: () => summaryFooterOperation === "sum",
-                    run: (context) => context.setSummaryFooterOperation("sum"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("sum"),
                 },
                 {
                     operation: "avg",
@@ -43,7 +43,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the average (mean) of all numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "avg",
-                    run: (context) => context.setSummaryFooterOperation("avg"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("avg"),
                 },
                 {
                     operation: "min",
@@ -54,7 +54,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the smallest value in the column."
                     ),
                     selected: () => summaryFooterOperation === "min",
-                    run: (context) => context.setSummaryFooterOperation("min"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("min"),
                 },
                 {
                     operation: "max",
@@ -65,7 +65,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the largest value in the column."
                     ),
                     selected: () => summaryFooterOperation === "max",
-                    run: (context) => context.setSummaryFooterOperation("max"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("max"),
                 },
                 {
                     operation: "median",
@@ -76,7 +76,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the median value in the column."
                     ),
                     selected: () => summaryFooterOperation === "median",
-                    run: (context) => context.setSummaryFooterOperation("median"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("median"),
                 },
                 {
                     operation: "count",
@@ -87,7 +87,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Counts the total number of values in the column."
                     ),
                     selected: () => summaryFooterOperation === "count",
-                    run: (context) => context.setSummaryFooterOperation("count"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("count"),
                 },
                 {
                     operation: "unique",
@@ -98,7 +98,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Counts the number of unique values in the column."
                     ),
                     selected: () => summaryFooterOperation === "unique",
-                    run: (context) => context.setSummaryFooterOperation("unique"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("unique"),
                 },
                 {
                     operation: "mode",
@@ -109,7 +109,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the most frequently occurring value in the column."
                     ),
                     selected: () => summaryFooterOperation === "mode",
-                    run: (context) => context.setSummaryFooterOperation("mode"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("mode"),
                 },
                 {
                     operation: "stdDev",
@@ -120,7 +120,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the standard deviation of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "stdDev",
-                    run: (context) => context.setSummaryFooterOperation("stdDev"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("stdDev"),
                 },
                 {
                     operation: "range",
@@ -131,7 +131,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the difference between the maximum and minimum values in the column."
                     ),
                     selected: () => summaryFooterOperation === "range",
-                    run: (context) => context.setSummaryFooterOperation("range"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("range"),
                 },
                 {
                     operation: "truePercentage",
@@ -142,7 +142,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the percentage of 'true' values in the column."
                     ),
                     selected: () => summaryFooterOperation === "truePercentage",
-                    run: (context) => context.setSummaryFooterOperation("truePercentage"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("truePercentage"),
                 },
                 {
                     operation: "minLength",
@@ -153,7 +153,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the shortest string length in the column."
                     ),
                     selected: () => summaryFooterOperation === "minLength",
-                    run: (context) => context.setSummaryFooterOperation("minLength"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("minLength"),
                 },
                 {
                     operation: "maxLength",
@@ -164,7 +164,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the longest string length in the column."
                     ),
                     selected: () => summaryFooterOperation === "maxLength",
-                    run: (context) => context.setSummaryFooterOperation("maxLength"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("maxLength"),
                 },
                 {
                     operation: "sumOfSquares",
@@ -175,7 +175,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the sum of squares of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "sumOfSquares",
-                    run: (context) => context.setSummaryFooterOperation("sumOfSquares"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("sumOfSquares"),
                 },
                 {
                     operation: "emptyCount",
@@ -186,7 +186,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Counts the number of empty or null values in the column."
                     ),
                     selected: () => summaryFooterOperation === "emptyCount",
-                    run: (context) => context.setSummaryFooterOperation("emptyCount"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("emptyCount"),
                 },
                 {
                     operation: "variance",
@@ -197,7 +197,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the variance of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "variance",
-                    run: (context) => context.setSummaryFooterOperation("variance"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("variance"),
                 },
                 {
                     operation: "skewness",
@@ -208,7 +208,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the skewness of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "skewness",
-                    run: (context) => context.setSummaryFooterOperation("skewness"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("skewness"),
                 },
                 {
                     operation: "kurtosis",
@@ -219,7 +219,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the kurtosis of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "kurtosis",
-                    run: (context) => context.setSummaryFooterOperation("kurtosis"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("kurtosis"),
                 },
                 {
                     operation: "iqr",
@@ -230,7 +230,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the interquartile range (IQR) of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "iqr",
-                    run: (context) => context.setSummaryFooterOperation("iqr"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("iqr"),
                 },
                 {
                     operation: "sumOfAbsoluteDifferences",
@@ -241,7 +241,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the sum of absolute differences from the mean for numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "sumOfAbsoluteDifferences",
-                    run: (context) => context.setSummaryFooterOperation("sumOfAbsoluteDifferences"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("sumOfAbsoluteDifferences"),
                 },
                 {
                     operation: "geometricMean",
@@ -252,7 +252,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the geometric mean of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "geometricMean",
-                    run: (context) => context.setSummaryFooterOperation("geometricMean"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("geometricMean"),
                 },
                 {
                     operation: "harmonicMean",
@@ -263,7 +263,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the harmonic mean of numeric values in the column."
                     ),
                     selected: () => summaryFooterOperation === "harmonicMean",
-                    run: (context) => context.setSummaryFooterOperation("harmonicMean"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("harmonicMean"),
                 },
                 {
                     operation: "mostFrequentCharacter",
@@ -274,7 +274,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the most frequently occurring character in the column."
                     ),
                     selected: () => summaryFooterOperation === "mostFrequentCharacter",
-                    run: (context) => context.setSummaryFooterOperation("mostFrequentCharacter"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("mostFrequentCharacter"),
                 },
                 {
                     operation: "mostFrequentWord",
@@ -285,7 +285,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the most frequently occurring word in the column."
                     ),
                     selected: () => summaryFooterOperation === "mostFrequentWord",
-                    run: (context) => context.setSummaryFooterOperation("mostFrequentWord"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("mostFrequentWord"),
                 },
                 {
                     operation: "avgWordLength",
@@ -296,7 +296,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Calculates the average length of words in the column."
                     ),
                     selected: () => summaryFooterOperation === "avgWordLength",
-                    run: (context) => context.setSummaryFooterOperation("avgWordLength"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("avgWordLength"),
                 },
                 {
                     operation: "longestCommonPrefix",
@@ -307,7 +307,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Finds the longest common prefix among strings in the column."
                     ),
                     selected: () => summaryFooterOperation === "longestCommonPrefix",
-                    run: (context) => context.setSummaryFooterOperation("longestCommonPrefix"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("longestCommonPrefix"),
                 },
                 {
                     operation: "agg",
@@ -318,7 +318,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Performs an aggregate operation on the column, allowing for custom aggregation logic."
                     ),
                     selected: () => summaryFooterOperation === "agg",
-                    run: (context) => context.setSummaryFooterOperation("agg"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("agg"),
                 },
                 {
                     operation: "uniqueAgg",
@@ -329,7 +329,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
                         "Performs an aggregate operation on unique values in the column."
                     ),
                     selected: () => summaryFooterOperation === "uniqueAgg",
-                    run: (context) => context.setSummaryFooterOperation("uniqueAgg"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation("uniqueAgg"),
                 }
             );
 
