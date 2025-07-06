@@ -108,7 +108,7 @@ export function useColumnFilterState() {
                 if (!filter.active) return true;
 
                 const column = columns.find(col => col.key === key);
-                if (!column || filter.values.length === 0) return true;
+                if (!column || (filter.values.length === 0 && filter.operator !== "isNull")) return true;
 
                 const rowValue = (row as any)[key];
                 const dataType = column.dataType;
@@ -144,7 +144,7 @@ export function useColumnFilterState() {
                         }
                         break;
                     case 'isNull':
-                        result = rowValue == null;
+                        result = rowValue === null || rowValue === undefined;
                         break;
                     case 'startsWith':
                         result = filter.values.some(val =>
