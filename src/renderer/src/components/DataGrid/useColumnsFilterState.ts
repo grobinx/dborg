@@ -184,7 +184,15 @@ export function useColumnFilterState() {
                 newActiveFilters[key] = filter;
             }
         });
-        setActiveFilters(newActiveFilters);
+        setActiveFilters(prev => {
+            const prevKeys = Object.keys(prev);
+            const newKeys = Object.keys(newActiveFilters);
+            const sameKeys = prevKeys.length === newKeys.length && prevKeys.every(key => newKeys.includes(key));
+            if (sameKeys) {
+                return prev;
+            }
+            return newActiveFilters;
+        });
     }, [filters]);
 
     return {
