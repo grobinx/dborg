@@ -61,7 +61,7 @@ interface ColumnFilterState {
 
 export function useColumnFilterState() {
     const [filters, setFilters] = useState<ColumnFilterState>({});
-    const [activeFilters, setActiveFilters] = useState<string[]>([]);
+    const [activeFilters, setActiveFilters] = useState<ColumnFilterState>({});
 
     const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
         setFilters((prev) => {
@@ -178,8 +178,13 @@ export function useColumnFilterState() {
     }
 
     useEffect(() => {
-        const active = Object.entries(filters).filter(([_, filter]) => filter.active).map(([key]) => key);
-        setActiveFilters(active);
+        const newActiveFilters: ColumnFilterState = {};
+        Object.entries(filters).forEach(([key, filter]) => {
+            if (filter.active) {
+                newActiveFilters[key] = filter;
+            }
+        });
+        setActiveFilters(newActiveFilters);
     }, [filters]);
 
     return {
