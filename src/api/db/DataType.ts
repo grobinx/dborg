@@ -418,8 +418,9 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 
     let cacheKey: string | undefined;
     if (display) {
-        // Generowanie klucza dla cache
-        cacheKey = `${generateHash(value)}-${dataType}`;
+        cacheKey = (typeof value === 'string' && value.length < 200) || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint'
+            ? `${value}-${dataType}`
+            : `${generateHash(value)}-${dataType}`;
         const cachedValue = cache.get(cacheKey);
         if (cachedValue) {
             return cachedValue;
@@ -432,7 +433,11 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
 
     switch (baseType) {
         case 'string':
-            formattedValue = display ? String(value) : `'${String(value)}'`;
+            if (typeof value === 'string') {
+                formattedValue = display ? value : `'${value}'`;
+            } else {
+                formattedValue = display ? String(value) : `'${String(value)}'`;
+            }
             break;
 
         case 'number':
