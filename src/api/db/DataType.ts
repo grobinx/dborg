@@ -405,7 +405,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, options?: Va
             const itemString = valueToString(value[i], dt, options);
             currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
 
-            if (maxLength !== undefined && currentLength > maxLength) {
+            if (maxLength !== undefined && currentLength > maxLength && i > 0) {
                 formattedArray.push('...');
                 break;
             }

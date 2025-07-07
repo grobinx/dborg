@@ -5,7 +5,7 @@ export const version: Version = {
     major: 1,
     minor: 0,
     release: 0,
-    build: 108,
+    build: 110,
 
     toString: function () {
         return `${this.major}.${this.minor}.${this.release}.${this.build}`;
@@ -14,6 +14,6 @@ export const version: Version = {
 
 export const dborgReleaseName: string = "Quantum Banana";
 export const dborgDuration: string = "2024-2025";
-export const dborgDate: string = "2025-07-06 20:42:58";
+export const dborgDate: string = "2025-07-07 10:53:27";
 
 export const DBORG_DATABASE_DRIVER = "sqlite3";
