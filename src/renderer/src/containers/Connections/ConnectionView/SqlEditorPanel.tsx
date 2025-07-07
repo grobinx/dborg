@@ -22,7 +22,7 @@ import { CloseSqlEditorTab } from "./editor/actions/CloseSqlEditorTab";
 import { MenuReopenSqlEditorTab } from "./editor/actions/MenuReopenSqlEditorTab";
 import { DatabaseMetadata, DatabasesMetadata } from "src/api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { analyzeQueryFragment, getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
+import { getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
 import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
@@ -273,33 +273,33 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
 
         // Dodanie polecenia do listy poleceń edytora
         editor.addAction(ExecuteQueryAction(t, (query: string) => {
-            if (!query || query.trim() === "") {
+            if ((query ?? "").trim() === "") {
                 return;
             }
-            if (query.trim().startsWith("/")) {
-                if (session.metadata) {
-                    const result = MetadataCommandProcessor.processCommand(query, session.metadata);
-                    if (result) {
-                        sendMessage(SQL_EDITOR_SHOW_STRUCTURE, {
-                            to: session.info.uniqueId,
-                            from: itemID,
-                            data: result.rows,
-                            columns: result.columns,
-                        });
-                    }
-                }
-                else {
-                    addNotification("hint", t("no-metadata", "No metadata available"), { source: "SqlEditorContent", });
+
+            let result: {
+                columns: ColumnDefinition[];
+                rows: any[];
+            } | null = null;
+
+            if (session.metadata) {
+                result = MetadataCommandProcessor.processCommand(query, session.metadata);
+                if (result) {
+                    sendMessage(SQL_EDITOR_SHOW_STRUCTURE, {
+                        to: session.info.uniqueId,
+                        from: itemID,
+                        data: result.rows,
+                        columns: result.columns,
+                    });
+                    return;
                 }
             }
-            else {
-                sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                    to: session.info.uniqueId,
-                    from: itemID,
-                    query: query,
-                });
-            }
-            //const analysisResult = analyzeQueryFragment(query);
+
+            sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
+                to: session.info.uniqueId,
+                from: itemID,
+                query: query,
+            });
         }));
         editor.addAction(SelectCurrentCommand(t));
         editor.addAction(AddSqlEditorTab(t, () => { sendMessage(SQL_EDITOR_ADD, { tabsItemID }); }));

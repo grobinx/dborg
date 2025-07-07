@@ -197,48 +197,6 @@ export const getStringTypeAroundCursor = (
     return null; // Kursor nie znajduje się w żadnym ciągu znaków
 };
 
-export interface QueryAnalysisResult {
-    type: "relation or schema" | "schema.relation" | undefined;
-    schema?: string;
-    object: string;
-}
-
-export const analyzeQueryFragment = (fragment: string): QueryAnalysisResult => {
-    // Usuń białe znaki z początku i końca
-    const cleanedFragment = fragment.trim();
-
-    // Wyrażenie regularne do dopasowania: "schema"."object", schema."object", "schema".object, lub schema.object
-    const regex = /^(?:"([^"]+)"\.|"([a-zA-Z_][a-zA-Z0-9_]*)"\.|([a-zA-Z_][a-zA-Z0-9_]*)\.)?(?:"([^"]+)"|([a-zA-Z_][a-zA-Z0-9_]*))$/;
-
-    const match = cleanedFragment.match(regex);
-
-    if (match) {
-        const schema = match[1] || match[2] || match[3]; // Schemat może być w cudzysłowie lub bez
-        const object = match[4] || match[5]; // Obiekt może być w cudzysłowie lub bez
-
-        if (schema && object) {
-            // Dopasowanie schema.object
-            return {
-                type: "schema.relation",
-                schema,
-                object,
-            };
-        } else if (object) {
-            // Dopasowanie tylko object
-            return {
-                type: "relation or schema",
-                object,
-            };
-        }
-    }
-
-    // Jeśli fragment nie pasuje do wzorca, traktujemy go jako nieznany
-    return {
-        type: undefined,
-        object: cleanedFragment,
-    };
-};
-
 /**
  * Sprawdza, czy dane słowo jest aliasem tabeli w fragmencie SQL i zwraca nazwę tabeli.
  * @param fragment Fragment SQL do analizy.
