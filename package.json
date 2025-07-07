@@ -1,15 +1,15 @@
 {
-  "name": "dborg-2",
+  "name": "orbada",
   "version": "1.0.0",
-  "description": "DBORG - Database Organizer",
+  "description": "ORBADA - Database Organizer",
   "main": "./out/main/index.js",
   "author": "Andrzej Kałuża",
   "homepage": "https://github.com/grobinx/dborg",
   "license": "GPL-3.0-only",
-  "productName": "DBORG",
+  "productName": "orbada",
   "build": {
-    "productName": "DBORG",
-    "appId": "dborg-2"
+    "productName": "orbada",
+    "appId": "orbada"
   },
   "scripts": {
     "format": "prettier --write .",

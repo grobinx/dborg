@@ -32,7 +32,7 @@ function Versions(): React.ReactNode {
             //divider={<Divider orientation="vertical" flexItem />}
             justifyContent="center"
         >
-            <Item>DBorg v{consts.version.toString()}</Item>
+            <Item>ORBADA v{consts.version.toString()}</Item>
             <Item>Electron v{versions.electron}</Item>
             <Item>Chromium v{versions.chrome}</Item>
             <Item>Node v{versions.node}</Item>

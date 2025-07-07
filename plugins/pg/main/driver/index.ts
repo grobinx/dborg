@@ -31,7 +31,7 @@ const driver_fetch_record_count_default = 100;
 const driver_max_statement_rows = "driver:max_statement_rows";
 const driver_max_statement_rows_default = 1000;
 
-const application_name_default = "DBorg for PostgreSQL";
+const application_name_default = "ORBADA for PostgreSQL";
 
 // Only array types from the original enum are included below
 export enum pgTypes {
@@ -662,7 +662,7 @@ export class Driver extends driver.Driver {
     }
 
     getDescription(): string | undefined {
-        return "DBorg driver for PostgreSQL database";
+        return "ORBADA driver for PostgreSQL database";
     }
 
     getIcon(): string | undefined {

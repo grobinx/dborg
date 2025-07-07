@@ -473,7 +473,7 @@ export class Driver extends driver.Driver {
     }
 
     getDescription(): string | undefined {
-        return "DBorg driver for SQLite (3) database";
+        return "ORBADA driver for SQLite (3) database";
     }
 
     getIcon(): string | undefined {

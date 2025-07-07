@@ -26,10 +26,10 @@ export class Internal implements InternalConnection {
 
     checkConnection(): void {
         if (!this.connection) {
-            throw Error("DBorg internal database not initialized!");
+            throw Error("ORBADA internal database not initialized!");
         }
         if (!this.connection.isConnected()) {
-            throw Error("DBorg internal database closed!");
+            throw Error("ORBADA internal database closed!");
         }
     }
 
@@ -72,7 +72,7 @@ export async function init(): Promise<void> {
 
     const driver = Driver.getDriver(consts.DBORG_DATABASE_DRIVER);
     if (!driver) {
-        throw Error(`Can't find database driver (${consts.DBORG_DATABASE_DRIVER}) for DBorg internal database!`);
+        throw Error(`Can't find database driver (${consts.DBORG_DATABASE_DRIVER}) for ORBADA internal database!`);
     }
 
     internal.setConnection(await driver!.connect({

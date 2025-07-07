@@ -103,7 +103,7 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
                 <img src={logo} className="LogoIcon" />
             </WindowControlButton>
             <MenuBarTitle className="MenuBar-title" variant='body1'>
-                {t('dborg-title', 'Database Organizer') + (subTitle ? " - " + subTitle : "")}
+                {t('dborg-title', 'ORBADA - Database Organizer') + (subTitle ? " - " + subTitle : "")}
             </MenuBarTitle>
             {other.children}
             <ZoomState />

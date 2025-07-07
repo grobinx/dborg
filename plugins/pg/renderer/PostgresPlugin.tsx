@@ -17,12 +17,12 @@ import { sendMessage } from "@renderer/contexts/MessageContext";
 import { SQL_EDITOR_EXECUTE_QUERY } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 import { SETTINGS_NAMES } from "@renderer/contexts/SettingsContext";
 
-export const PLUGIN_ID = "dborg-postgres-plugin"; // Unique identifier for the plugin
+export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
 const PostgresPlugin: Plugin = {
     id: PLUGIN_ID, // Unique identifier for the plugin
-    name: "PostgreSQL Plugin for DBorg", // Name of the plugin
-    description: "A plugin to integrate PostgreSQL database functionality into DBorg.", // Description of the plugin
+    name: "PostgreSQL Plugin for ORBADA", // Name of the plugin
+    description: "A plugin to integrate PostgreSQL database functionality into ORBADA.", // Description of the plugin
     version: "1.0.0", // Version of the plugin
     categories: ["database"], // Categories the plugin belongs to
     icon: logo, // Icon for the plugin
@@ -239,7 +239,7 @@ const PostgresPlugin: Plugin = {
                                     return (
                                         <div>
                                             <h1>Views</h1>
-                                            <p>This is a PostgreSQL plugin for DBorg.</p>
+                                            <p>This is a PostgreSQL plugin for ORBADA.</p>
                                             <p>{session.schema.sch_name}</p>
                                         </div>
                                     );
