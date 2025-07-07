@@ -1,21 +1,25 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { DatabasesMetadata, DatabaseMetadata, SchemaMetadata, RelationMetadata, ColumnMetadata } from "src/api/db/Metadata";
+import { DatabasesMetadata, DatabaseMetadata, SchemaMetadata, RelationMetadata, ColumnMetadata, RelationKind, RelationType, RoutineType } from "src/api/db/Metadata";
 
 /**
  * Polecenia
- * /databases - wyświetla bazy danych
- * /schemas - wyświetla schematy w aktywnej bazie danych
- * /relations - wyświetla relacje w schematach w aktywnej bazie danych
- * /relations <schema> - wyświetla relacje w konkretnym schemacie
- * /tables - wyświetla tabele w schematach w aktywnej bazie danych
- * /tables <schema> - wyświetla tabele w konkretnym schemacie
- * /views - wyświetla widoki w schematach w aktywnej bazie danych
- * /views <schema> - wyświetla widoki w konkretnym schemacie
- * /routines - wyświetla procedury i funkcje w schematach w aktywnej bazie danych
- * /routines <schema> - wyświetla procedury i funkcje w konkretnym schemacie
- * /columns [<schema>.]<relation> - wyświetla kolumny w tabeli
- * /indexes [<schema>.]<relation> - wyświetla indeksy w tabeli
- * /constraints [<schema>.]<relation> - wyświetla ograniczenia w tabeli
+ * /databases | /d - wyświetla bazy danych
+ * /schemas | /s - wyświetla schematy w aktywnej bazie danych
+ * /relations | /r - wyświetla relacje w domyślnych schematach w aktywnej bazie danych
+ * /relations | /r <schema> - wyświetla relacje w konkretnym schemacie
+ * /tables | /t - wyświetla tabele w domyślnych schematach w aktywnej bazie danych
+ * /tables | /t <schema> - wyświetla tabele w konkretnym schemacie
+ * /views | /v - wyświetla widoki w domyślnych schematach w aktywnej bazie danych
+ * /views | /v <schema> - wyświetla widoki w konkretnym schemacie
+ * /routines | /r - wyświetla procedury i funkcje w domyślnych schematach w aktywnej bazie danych
+ * /routines | /r <schema> - wyświetla procedury i funkcje w konkretnym schemacie
+ * /functions | /f - wyświetla funkcje w domyślnych schematach w aktywnej bazie danych
+ * /functions | /f <schema> - wyświetla funkcje w konkretnym schemacie
+ * /procedures | /p - wyświetla procedury w domyślnych schematach w aktywnej bazie danych
+ * /procedures | /p <schema> - wyświetla procedury w konkretnym schemacie
+ * /columns | /c [<schema>.]<relation> - wyświetla kolumny w tabeli
+ * /indexes | /i [<schema>.]<relation> - wyświetla indeksy w tabeli
+ * /constraints | /co [<schema>.]<relation> - wyświetla ograniczenia w tabeli
  * /foreign keys [<schema>.]<relation> - wyświetla klucze obce w tabeli
  * /primary key [<schema>.]<relation> - wyświetla klucze główne w tabeli
  * <table> - wyświetla kolumny w tabeli
@@ -34,22 +38,37 @@ export class MetadataCommandProcessor {
         const args = parts.slice(1); // Argumenty polecenia
 
         switch (mainCommand) {
+            case "d":
             case "databases":
                 return MetadataCommandProcessor.getDatabases(metadata);
+            case "s":
             case "schemas":
                 return MetadataCommandProcessor.getSchemas(metadata);
+            case "rel":
             case "relations":
                 return MetadataCommandProcessor.getRelations(metadata, args[0]);
+            case "t":
             case "tables":
-                return MetadataCommandProcessor.getTables(metadata, args[0]);
+                return MetadataCommandProcessor.getRelations(metadata, args[0], "table");
+            case "v":
             case "views":
-                return MetadataCommandProcessor.getViews(metadata, args[0]);
+                return MetadataCommandProcessor.getRelations(metadata, args[0], "view");
+            case "r":
             case "routines":
                 return MetadataCommandProcessor.getRoutines(metadata, args[0]);
+            case "f":
+            case "functions":
+                return MetadataCommandProcessor.getRoutines(metadata, args[0], "function");
+            case "p":
+            case "procedures":
+                return MetadataCommandProcessor.getRoutines(metadata, args[0], "procedure");
+            case "c":
             case "columns":
                 return MetadataCommandProcessor.getColumns(metadata, args[0]);
+            case "i":
             case "indexes":
                 return MetadataCommandProcessor.getIndexes(metadata, args[0]);
+            case "co":
             case "constraints":
                 return MetadataCommandProcessor.getConstraints(metadata, args[0]);
             case "foreign":
@@ -95,6 +114,7 @@ export class MetadataCommandProcessor {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
             { key: "description", label: "Description", dataType: "string" },
         ];
 
@@ -104,7 +124,8 @@ export class MetadataCommandProcessor {
                 rows.push({
                     database: dbName,
                     schema: schema.name,
-                    description: schema.description || "",
+                    owner: schema.owner,
+                    description: schema.description,
                 });
             }
         }
@@ -112,13 +133,15 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getRelations(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRelations(metadata: DatabasesMetadata, schemaName?: string, type?: RelationType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "type", label: "Type", dataType: "string" },
             { key: "kind", label: "Kind", dataType: "string" }, 
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -126,12 +149,17 @@ export class MetadataCommandProcessor {
             for (const schema of Object.values(dbMetadata.schemas)) {
                 if (!schemaName || schema.name.toLowerCase() === schemaName.toLowerCase()) {
                     for (const relation of Object.values(schema.relations)) {
+                        if (type && relation.type !== type) {
+                            continue;
+                        }
                         rows.push({
                             database: dbName,
                             schema: schema.name,
+                            owner: relation.owner,
                             relation: relation.name,
                             type: relation.type,
                             kind: relation.kind,
+                            description: relation.description,
                         });
                     }
                 }
@@ -141,67 +169,15 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getTables(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRoutines(metadata: DatabasesMetadata, schemaName?: string, type?: RoutineType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
-            { key: "table", label: "Table", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        for (const [dbName, dbMetadata] of Object.entries(metadata)) {
-            for (const schema of Object.values(dbMetadata.schemas)) {
-                if (!schemaName || schema.name.toLowerCase() === schemaName.toLowerCase()) {
-                    for (const relation of Object.values(schema.relations)) {
-                        if (relation.type === "table") {
-                            rows.push({
-                                database: dbName,
-                                schema: schema.name,
-                                table: relation.name,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getViews(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "view", label: "View", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        for (const [dbName, dbMetadata] of Object.entries(metadata)) {
-            for (const schema of Object.values(dbMetadata.schemas)) {
-                if (!schemaName || schema.name.toLowerCase() === schemaName.toLowerCase()) {
-                    for (const relation of Object.values(schema.relations)) {
-                        if (relation.type === "view") {
-                            rows.push({
-                                database: dbName,
-                                schema: schema.name,
-                                view: relation.name,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getRoutines(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
             { key: "overload", label: "Overload", dataType: "number" },
             { key: "routine", label: "Routine", dataType: "string" },
-            { key: "type", label: "Type", dataType: "string" }, // 'function' or 'procedure'
+            { key: "type", label: "Type", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -211,12 +187,17 @@ export class MetadataCommandProcessor {
                     if (schema.routines) {
                         for (const routines of Object.values(schema.routines)) {
                             for (const [index, routine] of routines.entries()) {
+                                if (type && routine.type !== type) {
+                                    continue;
+                                }
                                 rows.push({
                                     database: dbName,
                                     schema: schema.name,
+                                    owner: routine.owner,
                                     overload: index + 1,
                                     routine: routine.name,
                                     type: routine.type,
+                                    description: routine.description,
                                 });
                             }
                         }
@@ -237,6 +218,7 @@ export class MetadataCommandProcessor {
             { key: "dataType", label: "Data Type", dataType: "string" },
             { key: "nullable", label: "Nullable", dataType: "boolean" },
             { key: "defaultValue", label: "Default Value", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -252,7 +234,8 @@ export class MetadataCommandProcessor {
                                 column: column.name,
                                 dataType: column.dataType,
                                 nullable: column.nullable,
-                                defaultValue: column.defaultValue || "",
+                                defaultValue: column.defaultValue,
+                                description: column.description,
                             });
                         }
                     }
@@ -270,6 +253,7 @@ export class MetadataCommandProcessor {
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "index", label: "Index", dataType: "string" },
             { key: "columns", label: "Columns", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -283,7 +267,8 @@ export class MetadataCommandProcessor {
                                 schema: schema.name,
                                 relation: relation.name,
                                 index: index.name,
-                                columns: index.columns.join(", "),
+                                columns: index.columns,
+                                description: index.description,
                             });
                         }
                     }
@@ -301,6 +286,7 @@ export class MetadataCommandProcessor {
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "constraint", label: "Constraint", dataType: "string" },
             { key: "type", label: "Type", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -315,6 +301,7 @@ export class MetadataCommandProcessor {
                                 relation: relation.name,
                                 constraint: constraint.name,
                                 type: constraint.type,
+                                description: constraint.description,
                             });
                         }
                     }
@@ -332,6 +319,8 @@ export class MetadataCommandProcessor {
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "foreignKey", label: "Foreign Key", dataType: "string" },
             { key: "referencedTable", label: "Referenced Table", dataType: "string" },
+            { key: "columns", label: "Columns", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -346,6 +335,8 @@ export class MetadataCommandProcessor {
                                 relation: relation.name,
                                 foreignKey: foreignKey.name,
                                 referencedTable: foreignKey.referencedTable,
+                                columns: foreignKey.column,
+                                description: foreignKey.description,
                             });
                         }
                     }
@@ -363,6 +354,7 @@ export class MetadataCommandProcessor {
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "primaryKey", label: "Primary Key", dataType: "string" },
             { key: "columns", label: "Columns", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
         ];
 
         const rows: any[] = [];
@@ -377,6 +369,7 @@ export class MetadataCommandProcessor {
                                 relation: relation.name,
                                 primaryKey: relation.primaryKey.name,
                                 columns: relation.primaryKey.columns.join(", "),
+                                description: relation.primaryKey.description,
                             });
                         }
                     }
@@ -439,7 +432,7 @@ export class MetadataCommandProcessor {
                             column: column.name,
                             dataType: column.dataType,
                             nullable: column.nullable,
-                            defaultValue: column.defaultValue || "",
+                            defaultValue: column.defaultValue,
                         });
                     }
                 }

@@ -24,6 +24,7 @@ import { DatabaseMetadata, DatabasesMetadata } from "src/api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { analyzeQueryFragment, getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
+import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
@@ -275,53 +276,30 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             if (!query || query.trim() === "") {
                 return;
             }
-            const analysisResult = analyzeQueryFragment(query);
-            if (analysisResult.type === undefined) {
+            if (query.trim().startsWith("/")) {
+                if (session.metadata) {
+                    const result = MetadataCommandProcessor.processCommand(query, session.metadata);
+                    if (result) {
+                        sendMessage(SQL_EDITOR_SHOW_STRUCTURE, {
+                            to: session.info.uniqueId,
+                            from: itemID,
+                            data: result.rows,
+                            columns: result.columns,
+                        });
+                    }
+                }
+                else {
+                    addNotification("hint", t("no-metadata", "No metadata available"), { source: "SqlEditorContent", });
+                }
+            }
+            else {
                 sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
                     to: session.info.uniqueId,
                     from: itemID,
                     query: query,
                 });
             }
-            else if (databaseMetadataRef.current) {
-                const { type, schema, object } = analysisResult;
-                if (type === "relation or schema") {
-                    if (databaseMetadataRef.current.schemas[object]) {
-                        const tables = Object.values(databaseMetadataRef.current.schemas[object].relations).map((relation) => ({
-                            name: relation.name,
-                            type: relation.type,
-                            kind: relation.kind,
-                            description: relation.description,
-                            owner: relation.owner,
-                            select: relation.permissions?.select,
-                            insert: relation.permissions?.insert,
-                            update: relation.permissions?.update,
-                            delete: relation.permissions?.delete,
-                            columns: relation.columns.length,
-                        }));
-                        sendMessage(SQL_EDITOR_SHOW_STRUCTURE, {
-                            to: session.info.uniqueId,
-                            from: itemID,
-                            data: tables,
-                            columns: [
-                                { key: "name", label: t("relation-name", "Relation name"), dataType: "string" },
-                                { key: "type", label: t("type", "Type"), dataType: "string" },
-                                { key: "kind", label: t("kind", "Kind"), dataType: "string" },
-                                { key: "description", label: t("description", "Description"), dataType: "string" },
-                                { key: "owner", label: t("owner", "Owner"), dataType: "string" },
-                                { key: "select", label: t("can-select", "Select"), dataType: "boolean" },
-                                { key: "insert", label: t("can-insert", "Insert"), dataType: "boolean" },
-                                { key: "update", label: t("can-update", "Update"), dataType: "boolean" },
-                                { key: "delete", label: t("can-delete", "Delete"), dataType: "boolean" },
-                                { key: "columns", label: t("columns", "Columns"), dataType: "number" },
-                            ] as ColumnDefinition[],
-                        });
-                    }
-                    else {
-
-                    }
-                }
-            }
+            //const analysisResult = analyzeQueryFragment(query);
         }));
         editor.addAction(SelectCurrentCommand(t));
         editor.addAction(AddSqlEditorTab(t, () => { sendMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
