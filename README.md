@@ -1,4 +1,4 @@
-# # <img src="resources/dborg.png" alt="Orbada logo" width="48" height="48"> orbada (ipa: ɔrˈba.da)
+# <img src="resources/dborg.png" alt="Orbada logo" width="48" height="48"> orbada (ipa: ɔrˈba.da)
 
 > **Note:** This application is under development and is not intended for production use. It may contain bugs and incomplete features.
 
