@@ -230,8 +230,8 @@ export class MetadataCommandProcessor {
         const rows: any[] = [
             { command: "/databases | /d", description: "Displays databases" },
             { command: "/schemas | /s", description: "Displays schemas in the active database" },
-            { command: "/relations | /r", description: "Displays relations in the schemas in the active database" },
-            { command: "/relations | /r <schema>", description: "Displays relations in a specific schema" },
+            { command: "/relations | /rel", description: "Displays relations in the schemas in the active database" },
+            { command: "/relations | /rel <schema>", description: "Displays relations in a specific schema" },
             { command: "/tables | /t", description: "Displays tables in the schemas in the active database" },
             { command: "/tables | /t <schema>", description: "Displays tables in a specific schema" },
             { command: "/views | /v", description: "Displays views in the schemas in the active database" },
