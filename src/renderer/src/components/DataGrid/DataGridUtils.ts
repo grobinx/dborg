@@ -43,7 +43,11 @@ export const calculateTextWidth = (text: string, fontSize: number, font: string 
     return textMetrics.width; // Zwróć szerokość tekstu
 }
 
-export const calculateVisibleColumns = (scrollLeft: number, containerWidth: number, columns: ColumnDefinition[]) => {
+export const calculateVisibleColumns = (
+    scrollLeft: number,
+    containerWidth: number,
+    columns: ColumnDefinition[]
+) => {
     let currentWidth = 0;
     let startColumn = 0;
     let endColumn = columns.length;
@@ -63,8 +67,8 @@ export const calculateVisibleColumns = (scrollLeft: number, containerWidth: numb
     for (let i = startColumn; i < columns.length; i++) {
         const colWidth = columns[i].width || 150;
         currentWidth += colWidth;
-        if (currentWidth > containerWidth + scrollLeft) {
-            endColumn = i + 1; // Dodajemy +1, aby uwzględnić ostatnią widoczną kolumnę
+        if (currentWidth + scrollLeft > containerWidth + scrollLeft) {
+            endColumn = i +1; // Poprawka: nie dodajemy +1, aby uwzględnić ostatnią widoczną kolumnę
             break;
         }
     }
@@ -88,7 +92,6 @@ export const calculateVisibleRows = (
 
     return { startRow, endRow };
 };
-
 
 export const scrollToCell = (
     container: HTMLDivElement,

@@ -544,7 +544,7 @@ export const DataGrid = <T extends object>({
         if (selectedCell?.row !== undefined && selectedCell.row >= filteredDataState.length) {
             updateSelectedCell(filteredDataState.length > 0 ? { row: filteredDataState.length - 1, column: selectedCell.column ?? 0 } : null);
         }
-    }, [filteredDataState]);
+    }, [filteredDataState.length, selectedCell?.row]);
 
     useEffect(() => {
         if (columnsState.anySummarized) {
@@ -622,7 +622,7 @@ export const DataGrid = <T extends object>({
         } else {
             updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
         }
-    }, [filteredDataState, rowHeight, columnsState.current]);
+    }, [filteredDataState.length, rowHeight, columnsState.current]);
 
     const totalHeight = filteredDataState.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
@@ -662,9 +662,12 @@ export const DataGrid = <T extends object>({
             setSelectedCell(null);
             return null;
         }
-        setSelectedCell((prev) =>
-            prev?.row === row && prev?.column === column ? prev : { row, column }
-        );
+
+        if (selectedCell?.row === row && selectedCell?.column === column) {
+            return selectedCell;
+        }
+
+        setSelectedCell({ row, column });
         return { row, column };
     };
 
