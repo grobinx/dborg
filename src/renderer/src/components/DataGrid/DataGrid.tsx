@@ -17,7 +17,7 @@ import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
-import { areTypesEqual, ColumnBaseType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { areTypesEqual, ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 
@@ -515,7 +515,7 @@ export const DataGrid = <T extends object>({
 
         // Sortowanie na podstawie sortDirection i sortOrder
         const sortedColumns = columnsState.current
-            .filter((col) => col.sortDirection !== null) // Uwzględnij tylko kolumny z sortDirection
+            .filter((col) => col.sortDirection) // Uwzględnij tylko kolumny z sortDirection
             .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); // Posortuj według sortOrder
 
         if (sortedColumns.length > 0) {
@@ -526,10 +526,9 @@ export const DataGrid = <T extends object>({
 
                     if (valueA === valueB) continue; // Jeśli wartości są równe, przejdź do następnej kolumny
 
-                    if (col.sortDirection === "asc") {
-                        return valueA > valueB ? 1 : -1;
-                    } else if (col.sortDirection === "desc") {
-                        return valueA < valueB ? 1 : -1;
+                    const comparisonResult = compareValuesByType(valueA, valueB, col.dataType);
+                    if (comparisonResult !== 0) {
+                        return col.sortDirection === "asc" ? comparisonResult : -comparisonResult;
                     }
                 }
                 return 0; // Jeśli wszystkie wartości są równe, nie zmieniaj kolejności

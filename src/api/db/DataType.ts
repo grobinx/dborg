@@ -564,7 +564,9 @@ export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDa
 
     switch (baseType) {
         case 'string':
-            return String(value1).localeCompare(String(value2));
+            return (typeof value1 === "string" ? value1 : String(value1)).localeCompare(
+                typeof value2 === "string" ? value2 : String(value2)
+            );
 
         case 'number':
             try {
