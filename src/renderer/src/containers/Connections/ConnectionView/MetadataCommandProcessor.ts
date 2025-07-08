@@ -27,6 +27,8 @@ import { DatabasesMetadata, DatabaseMetadata, SchemaMetadata, RelationMetadata, 
  * <table> - wyświetla kolumny w tabeli
  * <schema> - wyświetla relacje w schemacie
  * <schema>.<table> - wyświetla kolumny w tabeli
+ * <routine> - wyświetla argumenty procedury lub funkcji
+ * <schema>.<routine> - wyświetla argumenty procedury lub funkcji
  */
 
 export type ObjectType = "relation" | "routine" | "schema" | null;
@@ -71,6 +73,8 @@ export class MetadataCommandProcessor {
         }
 
         switch (mainCommand) {
+            case "help":
+                return MCP.getHelp(metadata);
             case "d":
             case "databases":
                 return MCP.getDatabases(metadata);
@@ -215,6 +219,43 @@ export class MetadataCommandProcessor {
 
     private static getConnectedDatabases(metadata: DatabasesMetadata): DatabaseMetadata[] {
         return Object.values(metadata).filter(db => db.connected);
+    }
+
+    private static getHelp(metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
+        const columns: ColumnDefinition[] = [
+            { key: "command", label: "Command", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
+        ];
+
+        const rows: any[] = [
+            { command: "/databases | /d", description: "Displays databases" },
+            { command: "/schemas | /s", description: "Displays schemas in the active database" },
+            { command: "/relations | /r", description: "Displays relations in the schemas in the active database" },
+            { command: "/relations | /r <schema>", description: "Displays relations in a specific schema" },
+            { command: "/tables | /t", description: "Displays tables in the schemas in the active database" },
+            { command: "/tables | /t <schema>", description: "Displays tables in a specific schema" },
+            { command: "/views | /v", description: "Displays views in the schemas in the active database" },
+            { command: "/views | /v <schema>", description: "Displays views in a specific schema" },
+            { command: "/routines | /r", description: "Displays procedures and functions in the schemas in the active database" },
+            { command: "/routines | /r <schema>", description: "Displays procedures and functions in a specific schema" },
+            { command: "/arguments | /a [<schema>.]<routine>", description: "Displays arguments of a procedure or function" },
+            { command: "/functions | /f", description: "Displays functions in the schemas in the active database" },
+            { command: "/functions | /f <schema>", description: "Displays functions in a specific schema" },
+            { command: "/procedures | /p", description: "Displays procedures in the schemas in the active database" },
+            { command: "/procedures | /p <schema>", description: "Displays procedures in a specific schema" },
+            { command: "/columns | /c [<schema>.]<relation>", description: "Displays columns in a table" },
+            { command: "/indexes | /i [<schema>.]<relation>", description: "Displays indexes in a table" },
+            { command: "/constraints | /co [<schema>.]<relation>", description: "Displays constraints in a table" },
+            { command: "/foreign keys [<schema>.]<relation>", description: "Displays foreign keys in a table" },
+            { command: "/primary key [<schema>.]<relation>", description: "Displays primary keys in a table" },
+            { command: "<table>", description: "Displays columns in a table" },
+            { command: "<schema>", description: "Displays relations in a schema" },
+            { command: "<schema>.<table>", description: "Displays columns in a table" },
+            { command: "<routine>", description: "Displays arguments of a procedure or function" },
+            { command: "<schema>.<routine>", description: "Displays arguments of a procedure or function" },
+        ];
+
+        return { columns, rows };
     }
 
     private static getSchemas(metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
