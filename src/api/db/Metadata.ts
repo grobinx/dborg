@@ -449,6 +449,8 @@ export interface PrimaryKeyMetadata {
     data?: Record<string, any>;
 }
 
+export type ConstraintType = "check" | "unique" | "primary key" | "foreign key" | "trigger" | "exclude" | "not null" | string;
+
 export interface ConstraintMetadata {
     /** Unique identifier of the object */
     id: string;
@@ -460,7 +462,7 @@ export interface ConstraintMetadata {
     description?: string;
 
     /** Type of the constraint (e.g., CHECK, UNIQUE) */
-    type: string;
+    type: ConstraintType;
 
     /** Expression defining the constraint */
     expression?: string;

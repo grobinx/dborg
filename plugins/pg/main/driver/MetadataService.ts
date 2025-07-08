@@ -38,6 +38,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             await this.updateForeignKeys(progress, schemaName, objectName);
             await this.updateIndexes(progress, schemaName, objectName);
             await this.updatePrimaryKeys(progress, schemaName, objectName);
+            await this.updateConstrauints(progress, schemaName, objectName);
             await this.updateTypes(progress, schemaName, objectName);
             await this.updateSequence(progress, schemaName, objectName);
         }
@@ -54,6 +55,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateForeignKeys(progress);
         await this.updateIndexes(progress);
         await this.updatePrimaryKeys(progress);
+        await this.updateConstrauints(progress);
         await this.updateTypes(progress);
         await this.updateSequence(progress);
 
@@ -185,7 +187,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("tables" +(schemaName ? (" of " +schemaName) : ""));
+            progress("tables" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select c.oid as id, n.nspname schema_name, c.relname as name, d.description,
@@ -271,11 +273,11 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("routines" +(schemaName ? (" of " +schemaName) : ""));
+            progress("routines" + (schemaName ? (" of " + schemaName) : ""));
         }
 
         const v11OrHigher = this.version?.major !== undefined && this.version.major >= 11;
-        
+
         const { rows } = await this.client!.query(
             `select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, f.proname as name,
                     ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
@@ -421,7 +423,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("foreign keys" +(schemaName ? (" of " +schemaName) : ""));
+            progress("foreign keys" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select
@@ -481,7 +483,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("indexes" +(schemaName ? (" of " +schemaName) : ""));
+            progress("indexes" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select i.schema_name, i.relation_name,
@@ -543,7 +545,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("primary keys" +(schemaName ? (" of " +schemaName) : ""));
+            progress("primary keys" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select
@@ -572,9 +574,84 @@ export class MetadataCollector implements api.IMetadataCollector {
             [schemaName, name]
         );
 
-        for (const row of rows as { schema_name: string; relation_name: string; primaryKey: api.PrimaryKeyMetadata}[]) {
+        for (const row of rows as { schema_name: string; relation_name: string; primaryKey: api.PrimaryKeyMetadata }[]) {
             if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
                 database.schemas[row.schema_name].relations[row.relation_name].primaryKey = row.primaryKey;
+            }
+        }
+    }
+
+    async updateConstrauints(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+        const database = this.connectedDatabase();
+        if (progress) {
+            progress("constraints" + (schemaName ? (" of " + schemaName) : ""));
+        }
+        const { rows } = await this.client!.query(
+            `select 
+                c.schema_name,
+                c.relation_name,
+                json_agg(json_build_object(
+                    'id', c.id,
+                    'name', c.name,
+                    'description', c.description,
+                    'type', c.type,
+                    'expression', c.expression
+                )) as constraints
+            from (
+                select
+                    n.nspname as schema_name,
+                    ct.relname as relation_name,
+                    con.oid as id,
+                    con.conname as name,
+                    pg_catalog.obj_description(con.oid, 'pg_constraint') as description,
+                    case con.contype
+                        when 'c' then 'check'
+                        when 'u' then 'unique'
+                        when 'f' then 'foreign key'
+                        when 'p' then 'primary key'
+                        when 't' then 'trigger' 
+                        when 'x' then 'exclude'
+                        else con.contype::varchar
+                    end as type,
+                    pg_get_constraintdef(con.oid) as expression
+                from
+                    pg_constraint con
+                    join pg_class ct on con.conrelid = ct.oid
+                    join pg_namespace n on ct.relnamespace = n.oid
+                where
+                    n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    and (n.nspname = $1 or $1 is null)
+                    and (ct.relname = $2 or $2 is null)
+                union all
+                select 
+                    ns.nspname as schema_name,
+                    c.relname as relation_name,
+                    a.attrelid as id,
+                    null::text as name,
+                    null::text as description,
+                    'not null' as type,
+                    a.attname || ' IS NOT NULL' as expression
+                from 
+                    pg_catalog.pg_namespace ns
+                    join pg_catalog.pg_class c on ns.oid = c.relnamespace
+                    join pg_catalog.pg_attribute a on c.oid = a.attrelid
+                where 
+                    a.attnum > 0
+                    and not a.attisdropped
+                    and a.attnotnull
+                    and (ns.nspname = $1 or $1 is null)
+                    and (c.relname = $2 or $2 is null)
+            ) c
+            group by
+                c.schema_name, c.relation_name
+            order by
+                c.schema_name, c.relation_name`,
+            [schemaName, name]
+        );
+
+        for (const row of rows as { schema_name: string; relation_name: string; constraints: api.ConstraintMetadata[] }[]) {
+            if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
+                database.schemas[row.schema_name].relations[row.relation_name].constraints = row.constraints;
             }
         }
     }
@@ -583,7 +660,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("types" +(schemaName ? (" of " +schemaName) : ""));
+            progress("types" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select
@@ -693,7 +770,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("sequences" +(schemaName ? (" of " +schemaName) : ""));
+            progress("sequences" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `select

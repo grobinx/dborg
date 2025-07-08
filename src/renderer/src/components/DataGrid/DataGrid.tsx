@@ -407,6 +407,8 @@ export const DataGrid = <T extends object>({
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
+    const filterColumns = useColumnFilterState();
+    const groupingColumns = useColumnsGroup();
 
     const onSaveColumnsState = () => {
         return {
@@ -447,9 +449,7 @@ export const DataGrid = <T extends object>({
     const [fontFamily, setFontFamily] = useState<string>("inherit");
     const [fontSize, setFontSize] = useState<number>(16);
     const [userData, setUserData] = useState<Record<string, any>>({});
-    const groupingColumns = useColumnsGroup();
     const columnsRef = useRef<ColumnDefinition[]>(columns);
-    const filterColumns = useColumnFilterState();
 
     useImperativeHandle(ref, () => dataGridActionContext);
 

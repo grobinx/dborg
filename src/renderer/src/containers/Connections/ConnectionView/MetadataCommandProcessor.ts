@@ -310,7 +310,7 @@ export class MetadataCommandProcessor {
                                 routine: routine.name,
                                 type: routine.type,
                                 kind: routine.kind,
-                                arguments: routine.arguments.length,
+                                arguments: routine?.arguments?.length ?? 0,
                                 description: routine.description,
                             });
                         }
@@ -477,6 +477,7 @@ export class MetadataCommandProcessor {
             { key: "relation", label: "Relation", dataType: "string" },
             { key: "constraint", label: "Constraint", dataType: "string" },
             { key: "type", label: "Type", dataType: "string" },
+            { key: "expression", label: "Expression", dataType: "string" },
             { key: "description", label: "Description", dataType: "string" },
         ];
 
@@ -498,6 +499,7 @@ export class MetadataCommandProcessor {
                                 relation: relation.name,
                                 constraint: constraint.name,
                                 type: constraint.type,
+                                expression: constraint.expression,
                                 description: constraint.description,
                             });
                         }

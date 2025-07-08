@@ -11,6 +11,25 @@ function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogPr
     const { slotProps } = useThemeProps({ name: "Dialog", props: payload });
     const [password, setPassword] = React.useState('');
     const { t } = useTranslation();
+    const textFieldRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        if (open) {
+            const timeout = setTimeout(() => {
+                if (textFieldRef.current) {
+                    textFieldRef.current.focus();
+                }
+            }, 0); // Opóźnienie na pełne zamontowanie dialogu
+            return () => clearTimeout(timeout);
+        }
+        return;
+    }, [open]);
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === "Enter" && password !== "") {
+            onClose(password);
+        }
+    };
 
     return (
         <Dialog open={open} onClose={() => onClose(null)}>
@@ -18,17 +37,18 @@ function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogPr
 
             <DialogContent>
                 <TextField
-                    autoFocus
+                    inputRef={textFieldRef}
                     label={t("password", "Password")}
                     type="password"
                     fullWidth
                     value={password}
                     onChange={(event) => setPassword(event.currentTarget.value)}
+                    onKeyDown={handleKeyDown} // Obsługa klawisza Enter
                     {...slotProps?.textField}
                 />
             </DialogContent>
 
-            <DialogActions>  {/* Added slotProps for actions */}
+            <DialogActions>
                 <Button onClick={() => onClose(null)} {...slotProps?.button}>
                     {t("cancel", "Cancel")}
                 </Button>
