@@ -1224,6 +1224,7 @@ export const DataGrid = <T extends object>({
                         const absoluteRowIndex = Math.max(startRow - overscanRowCount, 0) + rowIndex;
                         const isRowSelected = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
+                        let columnLeft = columnsState.columnLeft(startColumn);
 
                         return (
                             <StyledRow
@@ -1256,7 +1257,7 @@ export const DataGrid = <T extends object>({
                                         formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                     }
 
-                                    return (
+                                    const result = (
                                         <StyledCell
                                             key={colIndex}
                                             className={
@@ -1267,7 +1268,7 @@ export const DataGrid = <T extends object>({
                                             }
                                             style={{
                                                 width: col.width || 150,
-                                                left: columnsState.columnLeft(absoluteColIndex),
+                                                left: columnLeft,
                                             }}
                                             onClick={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
                                             rowHeight={rowHeight}
@@ -1279,6 +1280,10 @@ export const DataGrid = <T extends object>({
                                             {formattedValue}
                                         </StyledCell>
                                     );
+
+                                    columnLeft += col.width || 150;
+
+                                    return result;
                                 })}
                             </StyledRow>
                         );

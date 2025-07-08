@@ -378,22 +378,11 @@ export const useColumnsState = (
         );
     };
 
-    const columnLeft = useMemo(() => {
-        const cache = new Map<number, number>();
-
-        return (displayColumnIndex: number) => {
-            if (cache.has(displayColumnIndex)) {
-                return cache.get(displayColumnIndex)!;
-            }
-
-            const left = displayColumns
-                .slice(0, displayColumnIndex)
-                .reduce((sum, col) => sum + (col.width || 150), 0);
-
-            cache.set(displayColumnIndex, left);
-            return left;
-        };
-    }, [displayColumns]);
+    const columnLeft = (displayColumnIndex: number): number => {
+        return displayColumns
+            .slice(0, displayColumnIndex)
+            .reduce((sum, col) => sum + (col.width || 150), 0);
+    };
 
     const setSummary = (columnKey: string, operation?: SummaryOperation) => {
         setColumnsState(prevColumns =>
