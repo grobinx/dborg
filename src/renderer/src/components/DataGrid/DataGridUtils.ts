@@ -67,8 +67,8 @@ export const calculateVisibleColumns = (
     for (let i = startColumn; i < columns.length; i++) {
         const colWidth = columns[i].width || 150;
         currentWidth += colWidth;
-        if (currentWidth + scrollLeft > containerWidth + scrollLeft) {
-            endColumn = i +1; // Poprawka: nie dodajemy +1, aby uwzględnić ostatnią widoczną kolumnę
+        if (currentWidth >= containerWidth) {
+            endColumn = i + 1; // Poprawka: dodajemy +1, aby uwzględnić ostatnią widoczną kolumnę
             break;
         }
     }
