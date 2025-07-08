@@ -379,7 +379,7 @@ export type NullsPosition = "first" | "last";
 /** Structure describing an index column */
 export interface IndexColumnMetadata {
     /** Column name in the index */
-    column: string;
+    name: string;
 
     /** Sort order (e.g., ASC, DESC) */
     order?: SortOrder;

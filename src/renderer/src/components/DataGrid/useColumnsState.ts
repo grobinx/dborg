@@ -13,12 +13,12 @@ interface UseColumnsState {
     showHiddenColumns: boolean;
     anySummarized: boolean;
     saveColumnsLayout: () => void;
-    sortColumn: (columnIndex: number) => void;
+    sortColumn: (displayColumnIndex: number) => void;
     resetColumns: () => void;
-    moveColumn: (fromIndex: number, toIndex: number) => void;
-    updateColumn: (columnIndex: number, updatedValues: Partial<ColumnDefinition>) => void;
+    moveColumn: (fromDiplayIndex: number, toDisplayIndex: number) => void;
+    updateColumn: (displayIndex: number, updatedValues: Partial<ColumnDefinition>) => void;
     resetSorting: () => void;
-    columnLeft: (columnIndex: number) => number;
+    columnLeft: (displayColumnIndex: number) => number;
     toggleHidden: (columnKey: string) => void;
     toggleShowHiddenColumns: () => void;
     resetHiddenColumns: () => void;
@@ -68,7 +68,14 @@ function restoreColumnsLayout(
 ): ColumnDefinition[] {
     const storage = useSession ? sessionStorage : localStorage;
     const saved = storage.getItem(key);
-    if (!saved) return initialColumns;
+
+    if (!saved) {
+        if (onRestore) {
+            onRestore({});
+        }
+        return initialColumns;
+    }
+
     try {
         const parsed = JSON.parse(saved);
         const layout = parsed.layout ?? parsed; // dla kompatybilności wstecznej
@@ -244,11 +251,18 @@ export const useColumnsState = (
     }, [displayColumns]);
 
     // Funkcja do sortowania kolumny
-    const sortColumn = (columnIndex: number) => {
+    const sortColumn = (displayColumnIndex: number) => {
         setColumnsState((prevColumns) =>
             produce(prevColumns, (draft) => {
-                const column = draft[columnIndex];
+                // Pobierz klucz kolumny z displayColumns
+                const columnKey = displayColumns[displayColumnIndex]?.key;
+                if (!columnKey) return; // Jeśli klucz nie istnieje, zakończ
 
+                // Znajdź kolumnę w columnsState na podstawie klucza
+                const column = draft.find(col => col.key === columnKey);
+                if (!column) return; // Jeśli kolumna nie istnieje, zakończ
+
+                // Zmień sortDirection
                 column.sortDirection =
                     column.sortDirection === undefined
                         ? "asc"
@@ -256,18 +270,20 @@ export const useColumnsState = (
                             ? "desc"
                             : undefined;
 
+                // Zmień sortOrder
                 if (column.sortDirection === undefined) {
                     column.sortOrder = undefined;
                 } else if (column.sortOrder === undefined) {
                     const maxSortOrder = Math.max(
                         ...draft
-                            .filter((_, index) => index !== columnIndex)
+                            .filter((col) => col.sortOrder !== undefined && col.key !== columnKey)
                             .map((col) => col.sortOrder ?? 0),
                         0
                     );
                     column.sortOrder = maxSortOrder + 1;
                 }
 
+                // Aktualizuj sortOrder dla wszystkich kolumn
                 const sortedColumns = draft
                     .filter((col) => col.sortOrder !== undefined)
                     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
@@ -305,22 +321,43 @@ export const useColumnsState = (
     };
 
     // Funkcja do przenoszenia kolumn
-    const moveColumn = (fromIndex: number, toIndex: number) => {
-        if (fromIndex !== toIndex) {
-            setColumnsState(prevColumns =>
-                produce(prevColumns, draft => {
-                    const [movedColumn] = draft.splice(fromIndex, 1);
-                    draft.splice(toIndex, 0, movedColumn);
-                })
-            );
-        }
+    const moveColumn = (fromDisplayIndex: number, toDisplayIndex: number) => {
+        setColumnsState(prevColumns =>
+            produce(prevColumns, draft => {
+                // Pobierz klucze kolumn z displayColumns
+                const fromKey = displayColumns[fromDisplayIndex]?.key;
+                const toKey = displayColumns[toDisplayIndex]?.key;
+
+                // Sprawdź, czy klucze istnieją
+                if (!fromKey || !toKey) return;
+
+                // Znajdź indeksy w columnsState na podstawie kluczy
+                const fromIndex = draft.findIndex(col => col.key === fromKey);
+                const toIndex = draft.findIndex(col => col.key === toKey);
+
+                // Sprawdź, czy indeksy są poprawne
+                if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+                // Przenieś kolumnę w columnsState
+                const [movedColumn] = draft.splice(fromIndex, 1);
+                draft.splice(toIndex, 0, movedColumn);
+            })
+        );
     };
 
     // Funkcja do częściowej aktualizacji kolumny
-    const updateColumn = (columnIndex: number, updatedValues: Partial<ColumnDefinition>) => {
-        setColumnsState(prevColumns =>
+    const updateColumn = (displayIndex: number, updatedValues: Partial<ColumnDefinition>) => {
+        setColumnsState(prevColumns => 
             produce(prevColumns, draft => {
-                draft[columnIndex] = { ...draft[columnIndex], ...updatedValues };
+                // Pobierz klucz kolumny z displayColumns
+                const columnKey = displayColumns[displayIndex]?.key;
+                if (!columnKey) return; // Jeśli klucz nie istnieje, zakończ
+
+                // Znajdź kolumnę w columnsState na podstawie klucza
+                const column = draft.find(col => col.key === columnKey);
+                if (column) {
+                    Object.assign(column, updatedValues); // Zaktualizuj właściwości kolumny
+                }
             })
         );
     };
@@ -344,16 +381,16 @@ export const useColumnsState = (
     const columnLeft = useMemo(() => {
         const cache = new Map<number, number>();
 
-        return (columnIndex: number) => {
-            if (cache.has(columnIndex)) {
-                return cache.get(columnIndex)!;
+        return (displayColumnIndex: number) => {
+            if (cache.has(displayColumnIndex)) {
+                return cache.get(displayColumnIndex)!;
             }
 
             const left = displayColumns
-                .slice(0, columnIndex)
+                .slice(0, displayColumnIndex)
                 .reduce((sum, col) => sum + (col.width || 150), 0);
 
-            cache.set(columnIndex, left);
+            cache.set(displayColumnIndex, left);
             return left;
         };
     }, [displayColumns]);

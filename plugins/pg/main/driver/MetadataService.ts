@@ -501,7 +501,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ci.relname as name,
                     pg_catalog.obj_description(ix.indexrelid, 'pg_class') as description,
                     json_agg(json_build_object(
-                        'column', a.attname,
+                        'name', a.attname,
                         'order', case ix.indoption[array_position(ix.indkey, a.attnum) - 1] & 1
                             when 1 then 'desc'
                             else 'asc'

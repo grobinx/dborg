@@ -244,10 +244,11 @@ export class MetadataCommandProcessor {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
-            { key: "owner", label: "Owner", dataType: "string" },
             { key: "relation", label: "Relation", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
             { key: "type", label: "Type", dataType: "string" },
             { key: "kind", label: "Kind", dataType: "string" },
+            { key: "columns", label: "Columns", dataType: "number" },
             { key: "description", label: "Description", dataType: "string" },
         ];
 
@@ -267,6 +268,7 @@ export class MetadataCommandProcessor {
                         relation: relation.name,
                         type: relation.type,
                         kind: relation.kind,
+                        columns: Object.keys(relation.columns).length,
                         description: relation.description,
                     });
                 }
@@ -285,6 +287,7 @@ export class MetadataCommandProcessor {
             { key: "routine", label: "Routine", dataType: "string" },
             { key: "type", label: "Type", dataType: "string" },
             { key: "kind", label: "Kind", dataType: "string" },
+            { key: "arguments", label: "Arguments", dataType: "number" },
             { key: "description", label: "Description", dataType: "string" },
         ];
 
@@ -307,6 +310,7 @@ export class MetadataCommandProcessor {
                                 routine: routine.name,
                                 type: routine.type,
                                 kind: routine.kind,
+                                arguments: routine.arguments.length,
                                 description: routine.description,
                             });
                         }
@@ -454,7 +458,7 @@ export class MetadataCommandProcessor {
                                 schema: schema.name,
                                 relation: relation.name,
                                 index: index.name,
-                                columns: index.columns,
+                                columns: index.columns.map(col => col.name).join(", "),
                                 description: index.description,
                             });
                         }
