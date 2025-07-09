@@ -17,6 +17,7 @@ import { ErrorBoundaryWrapper } from './contexts/ErrorBoundary';
 import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
 import About from './About';
 import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
+import { ConsoleProvider } from './contexts/ConsoleContext';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -66,8 +67,10 @@ const AppWrapper: React.FC = () => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
-        <SettingsProvider>
-            <AppWrapper />
-        </SettingsProvider>
+        <ConsoleProvider>
+            <SettingsProvider>
+                <AppWrapper />
+            </SettingsProvider>
+        </ConsoleProvider>
     </React.StrictMode>
 );

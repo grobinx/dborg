@@ -20,6 +20,7 @@ import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/Spli
 import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
 import TabPanelLabel from '@renderer/components/TabsPanel/TabPanelLabel';
 import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
+import { ConsoleLogsPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from '@renderer/components/ToolPanels/ConsoleLogsPanel';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -195,20 +196,10 @@ const App: React.FC = () => {
                                 content={<QueryHistoryPanel />}
                             />
                             <TabPanel
-                                itemID="logs"
-                                label="Logs"
-                                content={
-                                    <TabPanelLabel p={2}>
-                                        <Typography variant="h6">Logs</Typography>
-                                        <Typography variant="body2">Here you can see application logs.</Typography>
-                                    </TabPanelLabel>
-                                }
-                                buttons={
-                                    <TabPanelButtons>
-                                        <ToolButton>Clear Logs</ToolButton>
-                                        <ToolButton>Export Logs</ToolButton>
-                                    </TabPanelButtons>
-                                }
+                                itemID="console-logs"
+                                label={<ConsoleLogsPanelLabel />}
+                                buttons={<ConsoleLogsPanelButtons />}
+                                content={<ConsoleLogsPanel />}
                             />
                         </TabsPanel>
                     </SplitPanel>
