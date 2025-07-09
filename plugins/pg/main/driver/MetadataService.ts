@@ -302,8 +302,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     left join pg_catalog.pg_type t on f.prorettype = t.oid
                     left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
                 where (n.nspname = $1 or $1 is null)
-                and (f.proname = $2 or $2 is null)
-                and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    and (f.proname = $2 or $2 is null)
+                    and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 ${v11OrHigher ? "and f.prokind in ('a', 'w', 'f', 'p')" : ""}
               order by schema_name, name`,
             [schemaName, name]
@@ -463,8 +463,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 con.contype = 'f'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 and inh.inhrelid is null
-                and n.nspname = 'akaluza'
-                and cl.relname = 'ap_tasks'
+                and (n.nspname = $1 or $1 is null)
+                and (cl.relname = $2 or $2 is null)
             group by
                 n.nspname, cl.relname
             order by

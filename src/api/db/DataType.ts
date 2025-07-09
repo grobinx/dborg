@@ -10,7 +10,9 @@ export type ColumnBaseType =
     | 'datetime'
     | 'array'
     | 'object'
-    | 'binary';
+    | 'binary'
+    // specjal type error for error caching and handling
+    | "error";
 
 const columnBaseTypes: readonly ColumnBaseType[] = [
     "string",

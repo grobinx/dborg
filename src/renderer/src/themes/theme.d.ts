@@ -44,9 +44,9 @@ export interface PaletteColorExtend extends PaletteColor {
     icon: string,
 }
 
-export type DataTypeColors = {
+export type DataTypeColors = Partial<{
     [key in ColumnBaseType | 'null']: string;
-};
+}>;
 
 export type PaletteColorOptionsExtend = PaletteColorOptions & {
     icon?: string,

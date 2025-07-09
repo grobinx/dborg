@@ -39,6 +39,7 @@ export const columnDataTypeClassMap: Record<ColumnBaseType | 'null', string> = {
     array: 'data-type-array',
     object: 'data-type-object',
     null: 'data-type-null',
+    error: 'data-type-error',
 };
 export interface TableCellPosition {
     row: number;

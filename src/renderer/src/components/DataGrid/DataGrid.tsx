@@ -1263,7 +1263,7 @@ export const DataGrid = <T extends object>({
                                     }
                                     catch (error: Error | any) {
                                         formattedValue = "{error}";
-                                        dataType = "null";
+                                        dataType = "error";
                                     }
 
                                     const result = (

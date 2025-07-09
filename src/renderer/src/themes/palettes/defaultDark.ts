@@ -49,6 +49,8 @@ const palette = createPalette({
         object: colors.grey[100],
         binary: colors.grey[100],
         null: colors.grey[600],
+        error: colors.red[300],
+        array: undefined, // colors.blue[200],
     },
     text: {
         primary: '#f0f0f0',
