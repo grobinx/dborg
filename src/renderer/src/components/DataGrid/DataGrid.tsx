@@ -1247,15 +1247,23 @@ export const DataGrid = <T extends object>({
                                         dataType = "null";
                                     }
 
-                                    let formattedValue: React.ReactNode = columnDataFormatter(
-                                        row[col.key],
-                                        col,
-                                        settings.data_grid.null_value, {
-                                        maxLength: displayMaxLengh,
-                                        //display: (searchState.current.text ?? '').trim() === ''
-                                    });
-                                    if (typeof formattedValue === "string") {
-                                        formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                    let formattedValue: React.ReactNode;
+
+                                    try {
+                                        formattedValue = columnDataFormatter(
+                                            row[col.key],
+                                            col,
+                                            settings.data_grid.null_value, {
+                                            maxLength: displayMaxLengh,
+                                            //display: (searchState.current.text ?? '').trim() === ''
+                                        });
+                                        if (typeof formattedValue === "string") {
+                                            formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                        }
+                                    }
+                                    catch (error: Error | any) {
+                                        formattedValue = "{error}";
+                                        dataType = "null";
                                     }
 
                                     const result = (
