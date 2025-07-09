@@ -1,12 +1,36 @@
+import { Palette } from '@mui/material';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
+export type LogLevel = keyof typeof console;
+
 interface LogEntry {
-    level: string; // Typ logu (np. log, warn, error, time, group, itp.)
+    level: LogLevel;
     message: any[];
 }
 
 interface ConsoleContextValue {
     logs: LogEntry[];
+}
+
+export const LOG_LEVEL_COLORS: Partial<Record<LogLevel, string>> = {
+    log: 'info', // Czarny
+    warn: 'warning', // Pomarańczowy
+    error: 'error', // Czerwony
+    info: 'info', // Niebieski
+    debug: 'gray', // Zielony
+    clear: 'gray', // Szary
+    time: 'purple', // Fioletowy
+    assert: 'orangeRed', // Pomarańczowo-czerwony
+    trace: 'brown', // Brązowy
+    count: 'mediumSeaGreen', // Zielony morski
+};
+
+export function getLogLevelColor(level: LogLevel, palette: Palette): string {
+    const colorKey = LOG_LEVEL_COLORS[level] || 'info';
+    if (colorKey && palette[colorKey as keyof Palette]) {
+        return palette[colorKey as keyof Palette]['main'] as string;
+    }
+    return colorKey;
 }
 
 export const MAX_CONSOLE_LOGS = 1000; // Maksymalna liczba logów do przechowywania
@@ -21,9 +45,12 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     useEffect(() => {
         const originalConsole = { ...console };
 
-        const logHandler = (level: string, ...args: any[]) => {
+        const logHandler = (level: LogLevel, ...args: any[]) => {
             logQueue.current.push({ level, message: args });
-            originalConsole[level]?.(...args); // Wywołaj oryginalny console, jeśli istnieje
+            const fn = (originalConsole as any)[level] as ((...args: any[]) => void) | undefined;
+            if (typeof fn === "function") {
+                fn(...args);
+            }
         };
 
         // Obsługa console.clear

@@ -4,7 +4,7 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import Tooltip from "@mui/material/Tooltip";
 import ToolButton from "../ToolButton";
-import { useConsole } from "@renderer/contexts/ConsoleContext";
+import { getLogLevelColor, useConsole } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import List from "@mui/material/List";
@@ -22,10 +22,10 @@ const StyledConsoleLogPanel = styled(List, {
     overflowY: "auto",
 }));
 
-
 export const ConsoleLogsPanel: React.FC<TabPanelContentProps> = () => {
     const { logs } = useConsole();
     const { t } = useTranslation();
+    const theme = useTheme();
 
     return (
         <TabPanelContent>
@@ -39,12 +39,7 @@ export const ConsoleLogsPanel: React.FC<TabPanelContentProps> = () => {
                     >
                         <ListItemText
                             primary={
-                                <Typography variant="subtitle2" color="textSecondary">
-                                    {t("level", "Level")}: {log.level.toUpperCase()}
-                                </Typography>
-                            }
-                            secondary={
-                                <Typography variant="body2" color="textPrimary">
+                                <Typography variant="subtitle2" color={getLogLevelColor(log.level, theme.palette)}>
                                     {Array.isArray(log.message) ? log.message.join(" ") : String(log.message)}
                                 </Typography>
                             }
