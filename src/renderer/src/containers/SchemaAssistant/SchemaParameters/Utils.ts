@@ -1,4 +1,4 @@
-import { Properties, PropertyInfo, PropertyType } from "src/api/db";
+import { Properties, PropertyInfo, PropertyType } from "../../../../../api/db";
 
 export function textFieldWidth(type: PropertyType | "schema-pattern", title: string): string | undefined {
     switch (type) {

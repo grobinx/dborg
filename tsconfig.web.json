@@ -7,7 +7,7 @@
     "src/preload/*.d.ts",
     "src/api/**/*",
     "plugins/*/renderer/**/*",
-    "plugins/*/common/**/*",
+    "plugins/*/common/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -18,6 +18,7 @@
         "src/renderer/src/*"
       ]
     },
-    "noUnusedLocals": false
+    "noUnusedLocals": false,
+    "lib": ["es2021", "dom"] // Dodano 'es2021', aby obsługiwać replaceAll
   }
 }

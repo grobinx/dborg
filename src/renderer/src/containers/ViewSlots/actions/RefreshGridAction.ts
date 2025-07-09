@@ -1,6 +1,6 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
-import i18next, { TFunction } from "i18next";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import i18next from "i18next";
 
 export const RefreshGridAction_ID = "dataGrid.gridSlot.actions.refresh";
 

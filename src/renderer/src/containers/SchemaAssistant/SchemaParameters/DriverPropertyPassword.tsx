@@ -1,6 +1,6 @@
 import { Box, IconButton, InputAdornment, MenuItem, TextField, TextFieldProps, Tooltip, useTheme } from '@mui/material';
 import React from 'react';
-import { PropertyInfo } from 'src/api/db';
+import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import ToolButton from '@renderer/components/ToolButton';

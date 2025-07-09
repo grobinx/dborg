@@ -1,6 +1,5 @@
 import * as monaco from "monaco-editor";
 import { TFunction } from "i18next";
-import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
 
 export function CloseSqlEditorTab(
     t: TFunction<"translation", undefined>,
