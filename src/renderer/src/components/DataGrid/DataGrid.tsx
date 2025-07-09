@@ -1041,7 +1041,7 @@ export const DataGrid = <T extends object>({
         };
     }, [resizingColumn]);
 
-    const content = () => (
+    const content = (
         <StyledTable className="DataGrid-table">
             {/* Kolumna z numerami wierszy */}
             {showRowNumberColumn && (
@@ -1372,5 +1372,5 @@ export const DataGrid = <T extends object>({
         </StyledTable>
     );
 
-    return content();
+    return content;
 };

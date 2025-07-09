@@ -63,10 +63,16 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         // Obsługa console.time
         console.time = (label: string) => {
-            setTimers((prevTimers) => ({
-                ...prevTimers,
-                [label]: performance.now(),
-            }));
+            setTimers((prevTimers) => {
+                if (prevTimers[label] !== undefined) {
+                    logHandler('warn', `Timer "${label}" already exists`);
+                    return prevTimers; // Nie nadpisuj istniejącego timera
+                }
+                return {
+                    ...prevTimers,
+                    [label]: performance.now(),
+                };
+            });
         };
 
         // Obsługa console.timeEnd
