@@ -105,6 +105,44 @@ export const selectFragmentAroundCursor = (editor: monaco.editor.IStandaloneCode
 export const findFragmentBounds = (model: monaco.editor.ITextModel, currentLine: number) => {
     const lineCount = model.getLineCount();
 
+    // Jeśli bieżąca linia jest pusta, zdecyduj, czy szukać powyżej, poniżej, czy w bieżącej linii
+    if (model.getLineContent(currentLine).trim() === "") {
+        let aboveLine = currentLine - 1;
+        let belowLine = currentLine + 1;
+
+        // Szukaj najbliższego niepustego zapytania powyżej
+        while (aboveLine > 0 && model.getLineContent(aboveLine).trim() === "") {
+            aboveLine--;
+        }
+
+        // Szukaj najbliższego niepustego zapytania poniżej
+        while (belowLine <= lineCount && model.getLineContent(belowLine).trim() === "") {
+            belowLine++;
+        }
+
+        // Jeśli znaleziono zapytanie powyżej i poniżej, wybierz bliższe
+        if (aboveLine > 0 && belowLine <= lineCount) {
+            const distanceAbove = currentLine - aboveLine;
+            const distanceBelow = belowLine - currentLine;
+
+            if (distanceAbove <= distanceBelow) {
+                return findFragmentBounds(model, aboveLine);
+            } else {
+                return findFragmentBounds(model, belowLine);
+            }
+        }
+
+        // Jeśli znaleziono tylko zapytanie powyżej
+        if (aboveLine > 0) {
+            return findFragmentBounds(model, aboveLine);
+        }
+
+        // Jeśli znaleziono tylko zapytanie poniżej
+        if (belowLine <= lineCount) {
+            return findFragmentBounds(model, belowLine);
+        }
+    }
+
     // Znajdź górną granicę (pierwsza pusta linia powyżej kursora)
     let startLine = currentLine;
     while (startLine > 1 && model.getLineContent(startLine - 1).trim() !== "") {
