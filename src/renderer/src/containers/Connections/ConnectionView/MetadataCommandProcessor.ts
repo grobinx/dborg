@@ -221,7 +221,7 @@ export class MetadataCommandProcessor {
         return Object.values(metadata).filter(db => db.connected);
     }
 
-    private static getHelp(metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getHelp(_metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "command", label: "Command", dataType: "string" },
             { key: "description", label: "Description", dataType: "string" },
@@ -543,6 +543,54 @@ export class MetadataCommandProcessor {
                                 expression: constraint.expression,
                                 description: constraint.description,
                             });
+                        }
+                        if (relation.indexes) {
+                            for (const index of Object.values(relation.indexes).filter(index => index.unique)) {
+                                rows.push({
+                                    database: database.name,
+                                    schema: schema.name,
+                                    relation: relation.name,
+                                    constraint: index.name,
+                                    type: "unique",
+                                    expression: `UNIQUE (${index.columns.map(col => col.name).join(", ")})`,
+                                    description: index.description,
+                                });
+                            }
+                        }
+                        if (relation.primaryKey) {
+                            rows.push({
+                                database: database.name,
+                                schema: schema.name,
+                                relation: relation.name,
+                                constraint: relation.primaryKey.name,
+                                type: "primary key",
+                                expression: `PRIMARY KEY (${relation.primaryKey.columns.join(", ")})`,
+                                description: relation.primaryKey.description,
+                            });
+                        }
+                        if (relation.foreignKeys) {
+                            for (const foreignKey of Object.values(relation.foreignKeys)) {
+                                rows.push({
+                                    database: database.name,
+                                    schema: schema.name,
+                                    relation: relation.name,
+                                    constraint: foreignKey.name,
+                                    type: "foreign key",
+                                    expression: `FOREIGN KEY (${foreignKey.column.join(", ")}) REFERENCES ${foreignKey.referencedTable}(${foreignKey.referencedColumn.join(", ")})`,
+                                    description: foreignKey.description,
+                                });
+                            }
+                        }
+                        for (const column of Object.values(relation.columns).filter(column => !column.nullable)) {
+                                rows.push({
+                                    database: database.name,
+                                    schema: schema.name,
+                                    relation: relation.name,
+                                    constraint: undefined,
+                                    type: "not null",
+                                    expression: `${column.name} IS NOT NULL`,
+                                    description: column.description,
+                                });
                         }
                     }
                 }

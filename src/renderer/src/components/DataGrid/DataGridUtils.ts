@@ -63,12 +63,12 @@ export const calculateVisibleColumns = (
     }
 
     // Oblicz endColumn
-    currentWidth = 0;
+    currentWidth -= scrollLeft;
     for (let i = startColumn; i < columns.length; i++) {
         const colWidth = columns[i].width || 150;
         currentWidth += colWidth;
-        if (currentWidth > containerWidth + colWidth) {
-            endColumn = i + 1;
+        if (currentWidth > containerWidth) {
+            endColumn = i +1;
             break;
         }
     }

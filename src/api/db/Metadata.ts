@@ -349,7 +349,7 @@ export interface ForeignKeyMetadata {
     name: string;
 
     /** Column name in the relation */
-    column: string;
+    column: string[];
 
     /** Description of the foreign key */
     description?: string;
@@ -361,7 +361,7 @@ export interface ForeignKeyMetadata {
     referencedTable: string;
 
     /** Name of the referenced column */
-    referencedColumn: string;
+    referencedColumn: string[];
 
     /** Action on update (e.g., CASCADE, SET NULL) */
     onUpdate?: ForeignKeyAction;

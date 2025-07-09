@@ -38,7 +38,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             await this.updateForeignKeys(progress, schemaName, objectName);
             await this.updateIndexes(progress, schemaName, objectName);
             await this.updatePrimaryKeys(progress, schemaName, objectName);
-            await this.updateConstrauints(progress, schemaName, objectName);
+            await this.updateConstraints(progress, schemaName, objectName);
             await this.updateTypes(progress, schemaName, objectName);
             await this.updateSequence(progress, schemaName, objectName);
         }
@@ -55,7 +55,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateForeignKeys(progress);
         await this.updateIndexes(progress);
         await this.updatePrimaryKeys(progress);
-        await this.updateConstrauints(progress);
+        await this.updateConstraints(progress);
         await this.updateTypes(progress);
         await this.updateSequence(progress);
 
@@ -432,10 +432,10 @@ export class MetadataCollector implements api.IMetadataCollector {
                 json_agg(json_build_object(
                     'id', con.oid,
                     'name', con.conname,
-                    'column', a.attname,
+                    'column', array(select a.attname from pg_attribute a where a.attnum = any(con.conkey) and a.attrelid = cl.oid),
                     'referencedSchema', rn.nspname,
                     'referencedTable', rcl.relname,
-                    'referencedColumn', ra.attname,
+                    'referencedColumn', array(select ra.attname from pg_attribute ra where ra.attnum = any(con.confkey) and ra.attrelid = rcl.oid),
                     'onUpdate', case con.confupdtype
                         when 'a' then 'no action'
                         when 'r' then 'restrict'
@@ -456,15 +456,15 @@ export class MetadataCollector implements api.IMetadataCollector {
                 pg_constraint con
                 join pg_class cl on con.conrelid = cl.oid
                 join pg_namespace n on cl.relnamespace = n.oid
-                join pg_attribute a on a.attnum = any(con.conkey) and a.attrelid = cl.oid
                 join pg_class rcl on con.confrelid = rcl.oid
                 join pg_namespace rn on rcl.relnamespace = rn.oid
-                join pg_attribute ra on ra.attnum = any(con.confkey) and ra.attrelid = rcl.oid
+                left join pg_catalog.pg_inherits inh on cl.oid = inh.inhrelid
             where
                 con.contype = 'f'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
-                and (n.nspname = $1 or $1 is null)
-                and (cl.relname = $2 or $2 is null)
+                and inh.inhrelid is null
+                and n.nspname = 'akaluza'
+                and cl.relname = 'ap_tasks'
             group by
                 n.nspname, cl.relname
             order by
@@ -521,8 +521,10 @@ export class MetadataCollector implements api.IMetadataCollector {
                     join pg_class ct on ix.indrelid = ct.oid
                     join pg_namespace n on ct.relnamespace = n.oid
                     left join pg_attribute a on a.attnum = any(ix.indkey) and a.attrelid = ct.oid
+                    left join pg_catalog.pg_inherits inh on ct.oid = inh.inhrelid
                 where
                     n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    and inh.inhrelid is null
                     and (n.nspname = $1 or $1 is null)
                     and (ct.relname = $2 or $2 is null)
                 group by
@@ -562,9 +564,11 @@ export class MetadataCollector implements api.IMetadataCollector {
                 join pg_class cl on con.conrelid = cl.oid
                 join pg_namespace n on cl.relnamespace = n.oid
                 join pg_attribute a on a.attnum = any(con.conkey) and a.attrelid = cl.oid
+                left join pg_catalog.pg_inherits inh on cl.oid = inh.inhrelid
             where
                 con.contype = 'p'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                and inh.inhrelid is null
                 and (n.nspname = $1 or $1 is null)
                 and (cl.relname = $2 or $2 is null)
             group by
@@ -581,11 +585,12 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
-    async updateConstrauints(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+    async updateConstraints(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
         const database = this.connectedDatabase();
         if (progress) {
             progress("constraints" + (schemaName ? (" of " + schemaName) : ""));
         }
+        // only constraints that are not primary keys, foreign keys or (unique) indexes
         const { rows } = await this.client!.query(
             `select 
                 c.schema_name,
@@ -606,9 +611,6 @@ export class MetadataCollector implements api.IMetadataCollector {
                     pg_catalog.obj_description(con.oid, 'pg_constraint') as description,
                     case con.contype
                         when 'c' then 'check'
-                        when 'u' then 'unique'
-                        when 'f' then 'foreign key'
-                        when 'p' then 'primary key'
                         when 't' then 'trigger' 
                         when 'x' then 'exclude'
                         else con.contype::varchar
@@ -618,29 +620,13 @@ export class MetadataCollector implements api.IMetadataCollector {
                     pg_constraint con
                     join pg_class ct on con.conrelid = ct.oid
                     join pg_namespace n on ct.relnamespace = n.oid
+                    left join pg_catalog.pg_inherits inh on ct.oid = inh.inhrelid
                 where
                     n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    and con.contype not in ('p', 'f', 'u') 
+                    and inh.inhrelid is null
                     and (n.nspname = $1 or $1 is null)
                     and (ct.relname = $2 or $2 is null)
-                union all
-                select 
-                    ns.nspname as schema_name,
-                    c.relname as relation_name,
-                    a.attrelid as id,
-                    null::text as name,
-                    null::text as description,
-                    'not null' as type,
-                    a.attname || ' IS NOT NULL' as expression
-                from 
-                    pg_catalog.pg_namespace ns
-                    join pg_catalog.pg_class c on ns.oid = c.relnamespace
-                    join pg_catalog.pg_attribute a on c.oid = a.attrelid
-                where 
-                    a.attnum > 0
-                    and not a.attisdropped
-                    and a.attnotnull
-                    and (ns.nspname = $1 or $1 is null)
-                    and (c.relname = $2 or $2 is null)
             ) c
             group by
                 c.schema_name, c.relation_name

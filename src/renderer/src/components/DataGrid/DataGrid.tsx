@@ -1041,7 +1041,7 @@ export const DataGrid = <T extends object>({
         };
     }, [resizingColumn]);
 
-    return (
+    const content = () => (
         <StyledTable className="DataGrid-table">
             {/* Kolumna z numerami wierszy */}
             {showRowNumberColumn && (
@@ -1092,7 +1092,6 @@ export const DataGrid = <T extends object>({
                 />
             )}
 
-            {/* Główna tabela */}
             <StyledTableContainer
                 ref={containerRef}
                 className="DataGrid-tableContainer"
@@ -1244,7 +1243,7 @@ export const DataGrid = <T extends object>({
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         dataType = "null";
                                     }
-                                    if (!groupingColumns.isInGroup(col.key) && (!col.summary) && Array.isArray(row[col.key])) {
+                                    if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(row[col.key])) {
                                         dataType = "null";
                                     }
 
@@ -1364,4 +1363,6 @@ export const DataGrid = <T extends object>({
             </StyledTableContainer>
         </StyledTable>
     );
+
+    return content();
 };
