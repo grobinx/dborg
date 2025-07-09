@@ -100,7 +100,7 @@ export async function init(): Promise<void> {
         await internal.execute(sql, [uuidv7(), "last-start", null]);
     }
 
-    if (Number(lastVersion.build ?? 0) <= 0) {
+    if (Number(lastVersion.release ?? 0) <= 0) {
         await internal.execute(
             "create table schemas (\n" +
             "  sch_id varchar primary key, \n" +
@@ -125,11 +125,12 @@ export async function init(): Promise<void> {
             "  drv_version varchar\n" +
             ")"
         );
-    }
-
-    if (Number(lastVersion.build ?? 0) < 6) {
         await internal.execute("alter table schemas add column sch_db_version varchar");
         await internal.execute("alter table schemas add column sch_script varchar");
+    }
+    
+    if (Number(lastVersion.release ?? 0) < 2) {
+        // ... next changes
     }
     
     const exclude: string[] = [];

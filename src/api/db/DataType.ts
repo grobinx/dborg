@@ -501,6 +501,13 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToS
     const dateTime = () => {
         if (value instanceof Date) return DateTime.fromJSDate(value);
         if (typeof value === 'number' || typeof value === 'bigint') return DateTime.fromMillis(Number(value));
+        if (typeof value === 'string') {
+            // Sprawdzenie, czy wartość jest w formacie ISO
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/.test(value)) {
+                return DateTime.fromISO(value);
+            }
+            return DateTime.fromSQL(value);
+        }
         return DateTime.fromObject(value);
     };
 
