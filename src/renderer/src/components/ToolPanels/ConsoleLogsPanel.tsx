@@ -13,6 +13,9 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
 import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
+import { useMessages } from "@renderer/contexts/MessageContext";
+
+const CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME = "consoleLog-toggle-show-item-time";
 
 function formatLogDetails(log: LogEntry | undefined): string | null {
     if (!log) return null;
@@ -77,15 +80,33 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
+    const [showTime, setShowTime] = React.useState(false);
+    const { subscribe, unsubscribe } = useMessages();
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
     };
 
+    useEffect(() => {
+        const toggleShowTimeHandler = () => {
+            setShowTime((prev) => !prev);
+        };
+
+        subscribe(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME, toggleShowTimeHandler);
+
+        return () => {
+            unsubscribe(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME, toggleShowTimeHandler);
+        };
+    }, []);
+
     // Przewijanie do ostatniego elementu po zmianie logów
     useEffect(() => {
-        if (listRef.current && logs.length > 0) {
-            listRef.current.scrollToItem(logs.length - 1, "end");
+        if (logs.length > 0) {
+            setTimeout(() => {
+                if (listRef.current && panelVisible) {
+                    listRef.current.scrollToItem(logs.length - 1, "end");
+                }
+            }, 100);
         }
     }, [logs, panelVisible]);
 
@@ -106,19 +127,28 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                 <ListItemText
                     slotProps={{ primary: { variant: "body2", sx: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } } }}
                     sx={{ color: getLogLevelColor(log.level, theme.palette), m: 0, px: 8 }}
-                    primary={Array.isArray(log.message) ? log.message.map(value => {
-                        if (typeof value === "object") {
-                            if (value !== null && "name" in value && "message" in value) {
-                                return `${value.name}: ${value.message}`;
-                            }
-                            else {
-                                return JSON.stringify(value);
-                            }
-                        }
-                        else {
-                            return value;
-                        }
-                    }).join(" ") : String(log.message)}
+                    primary={
+                        <>
+                            {showTime && log.time && (
+                                <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
+                                    {new Date(log.time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 })}
+                                </span>
+                            )}
+                            {Array.isArray(log.message) ? log.message.map(value => {
+                                if (typeof value === "object") {
+                                    if (value !== null && "name" in value && "message" in value) {
+                                        return `${value.name}: ${value.message}`;
+                                    }
+                                    else {
+                                        return JSON.stringify(value);
+                                    }
+                                }
+                                else {
+                                    return value;
+                                }
+                            }).join(" ") : String(log.message)}
+                        </>
+                    }
                     {...slotProps?.itemText}
                 />
             </ListItem>
@@ -148,7 +178,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                         </AutoSizer>
                     </SplitPanel>
                     <Splitter />
-                    <SplitPanel defaultSize={15} >
+                    <SplitPanel defaultSize={25} >
                         {selectedItem ? (
                             <div style={{ padding: 8, fontFamily: "monospace", fontSize: "0.8em", overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
                                 {formatLogDetails(logs.find(l => l.id === selectedItem))}
@@ -175,8 +205,10 @@ export const ConsoleLogsPanelLabel: React.FC = () => {
 
 export const ConsoleLogsPanelButtons: React.FC = () => {
     const { logs, logLevels, setLogLevels } = useConsole();
+    const [showTime, setShowTime] = React.useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
+    const { emit } = useMessages();
 
     // Obsługa zmiany zaznaczenia
     const handleLogLevelChange = (event: SelectChangeEvent<LogLevel[]>) => {
@@ -203,6 +235,19 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
 
     return (
         <TabPanelButtons>
+            <Tooltip title={t("show-item-time", "Show item time")}>
+                <span>
+                    <ToolButton
+                        selected={showTime}
+                        onClick={() => {
+                            setShowTime(prev => !prev);
+                            emit(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME);
+                        }}
+                    >
+                        <theme.icons.Clock />
+                    </ToolButton>
+                </span>
+            </Tooltip>
             <ToolSelect
                 multiple
                 displayEmpty
