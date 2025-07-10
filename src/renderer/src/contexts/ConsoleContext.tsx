@@ -3,13 +3,38 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 
 export type LogLevel = keyof typeof console;
 
-interface LogEntry {
+export interface LogEntry {
     level: LogLevel;
     message: any[];
 }
 
+export interface LogLevelEntry {
+    level: LogLevel;
+    logged: boolean;
+}
+
+export const DefaultLogLevels: LogLevelEntry[] = [
+    { level: "error", logged: true },
+    { level: "log", logged: true },
+    { level: "info", logged: true },
+    { level: "warn", logged: true },
+    { level: "debug", logged: false },
+    { level: "clear", logged: false },
+    { level: "time", logged: false },
+    { level: "assert", logged: false },
+    { level: "trace", logged: false },
+    { level: "count", logged: false },
+    { level: "countReset", logged: false },
+    { level: "group", logged: false },
+    { level: "groupCollapsed", logged: false },
+    { level: "groupEnd", logged: false },
+    { level: "table", logged: false },
+]
+
 interface ConsoleContextValue {
     logs: LogEntry[];
+    logLevels: LogLevelEntry[];
+    setLogLevels: (levels: LogLevel[]) => void;
 }
 
 export const LOG_LEVEL_COLORS: Partial<Record<LogLevel, string>> = {
@@ -20,7 +45,7 @@ export const LOG_LEVEL_COLORS: Partial<Record<LogLevel, string>> = {
     debug: 'gray', // Zielony
     clear: 'gray', // Szary
     time: 'purple', // Fioletowy
-    assert: 'orangeRed', // Pomarańczowo-czerwony
+    assert: 'error', // Czerwony
     trace: 'brown', // Brązowy
     count: 'mediumSeaGreen', // Zielony morski
 };
@@ -41,31 +66,39 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const logQueue = useRef<LogEntry[]>([]); // Kolejka logów
     const [timers, setTimers] = useState<Record<string, number>>({}); // Przechowywanie czasów dla console.time
+    const [logLevels, setLogLevels] = useState<LogLevelEntry[]>(DefaultLogLevels);
+    const [loggedLevels, setLoggedLevels] = useState<LogLevel[]>(DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level));
+    const originalConsole = useRef({ ...console });
+    const logHandlerRef = useRef<((level: LogLevel, ...args: any[]) => void) | null>(null);
 
-    useEffect(() => {
-        const originalConsole = { ...console };
-
-        const logHandler = (level: LogLevel, ...args: any[]) => {
+    logHandlerRef.current = (level: LogLevel, ...args: any[]) => {
+        if (loggedLevels.includes(level)) {
             logQueue.current.push({ level, message: args });
             const fn = (originalConsole as any)[level] as ((...args: any[]) => void) | undefined;
             if (typeof fn === "function") {
                 fn(...args);
             }
-        };
+        }
+    };
 
+    useEffect(() => {
+        setLoggedLevels(logLevels.filter(entry => entry.logged).map(entry => entry.level));
+    }, [logLevels]);
+
+    useEffect(() => {
         // Obsługa console.clear
         console.clear = () => {
             logQueue.current = []; // Wyczyść kolejkę
             setLogs([]); // Wyczyść logi w stanie
-            logHandler('clear', 'Console cleared'); // Dodaj wpis o czyszczeniu konsoli
-            originalConsole.clear(); // Wywołaj oryginalną metodę console.clear
+            logHandlerRef.current!('clear', 'Console cleared'); // Dodaj wpis o czyszczeniu konsoli
+            originalConsole.current.clear(); // Wywołaj oryginalną metodę console.clear
         };
 
         // Obsługa console.time
         console.time = (label: string) => {
             setTimers((prevTimers) => {
                 if (prevTimers[label] !== undefined) {
-                    logHandler('warn', `Timer "${label}" already exists`);
+                    logHandlerRef.current!('warn', `Timer "${label}" already exists`);
                     return prevTimers; // Nie nadpisuj istniejącego timera
                 }
                 return {
@@ -81,11 +114,11 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const startTime = prevTimers[label];
                 if (startTime !== undefined) {
                     const duration = performance.now() - startTime;
-                    logHandler('time', `${label}: ${duration.toFixed(2)}ms`);
+                    logHandlerRef.current!('time', `${label}: ${duration.toFixed(2)}ms`);
                     const { [label]: _, ...rest } = prevTimers; // Usuń timer po zakończeniu
                     return rest;
                 }
-                logHandler('warn', `Timer "${label}" does not exist`);
+                logHandlerRef.current!('warn', `Timer "${label}" does not exist`);
                 return prevTimers;
             });
         };
@@ -95,67 +128,67 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const startTime = timers[label];
             if (startTime !== undefined) {
                 const duration = performance.now() - startTime;
-                logHandler('time', `${label}: ${duration.toFixed(2)}ms`, ...args);
+                logHandlerRef.current!('time', `${label}: ${duration.toFixed(2)}ms`, ...args);
             } else {
-                logHandler('warn', `Timer "${label}" does not exist`);
+                logHandlerRef.current!('warn', `Timer "${label}" does not exist`);
             }
         };
 
         // Obsługa console.group
         console.group = (label: string) => {
-            logHandler('group', `Group: ${label}`);
+            logHandlerRef.current!('group', `Group: ${label}`);
         };
 
         // Obsługa console.groupCollapsed
         console.groupCollapsed = (label: string) => {
-            logHandler('groupCollapsed', `Group (collapsed): ${label}`);
+            logHandlerRef.current!('groupCollapsed', `Group (collapsed): ${label}`);
         };
 
         // Obsługa console.groupEnd
         console.groupEnd = () => {
-            logHandler('groupEnd', 'Group End');
+            logHandlerRef.current!('groupEnd', 'Group End');
         };
 
         // Obsługa console.table
         console.table = (data: any) => {
-            logHandler('table', data);
+            logHandlerRef.current!('table', data);
         };
 
         // Obsługa console.assert
         console.assert = (condition: boolean, ...args: any[]) => {
             if (!condition) {
-                logHandler('assert', 'Assertion failed:', ...args);
+                logHandlerRef.current!('assert', 'Assertion failed:', ...args);
             }
         };
 
         // Obsługa console.trace
         console.trace = (...args: any[]) => {
-            logHandler('trace', 'Trace:', ...args);
+            logHandlerRef.current!('trace', 'Trace:', ...args);
         };
 
         // Obsługa console.count
         const counters: Record<string, number> = {};
         console.count = (label: string = 'default') => {
             counters[label] = (counters[label] || 0) + 1;
-            logHandler('count', `${label}: ${counters[label]}`);
+            logHandlerRef.current!('count', `${label}: ${counters[label]}`);
         };
 
         // Obsługa console.countReset
         console.countReset = (label: string = 'default') => {
             if (counters[label]) {
                 counters[label] = 0;
-                logHandler('countReset', `${label} counter reset`);
+                logHandlerRef.current!('countReset', `${label} counter reset`);
             } else {
-                logHandler('warn', `Counter "${label}" does not exist`);
+                logHandlerRef.current!('warn', `Counter "${label}" does not exist`);
             }
         };
 
         // Obsługa podstawowych metod console
-        console.log = (...args: any[]) => logHandler('log', ...args);
-        console.warn = (...args: any[]) => logHandler('warn', ...args);
-        console.error = (...args: any[]) => logHandler('error', ...args);
-        console.info = (...args: any[]) => logHandler('info', ...args);
-        console.debug = (...args: any[]) => logHandler('debug', ...args);
+        console.log = (...args: any[]) => logHandlerRef.current!('log', ...args);
+        console.warn = (...args: any[]) => logHandlerRef.current!('warn', ...args);
+        console.error = (...args: any[]) => logHandlerRef.current!('error', ...args);
+        console.info = (...args: any[]) => logHandlerRef.current!('info', ...args);
+        console.debug = (...args: any[]) => logHandlerRef.current!('debug', ...args);
 
         return () => {
             // Przywróć oryginalny obiekt console po odmontowaniu
@@ -184,9 +217,18 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return () => clearInterval(interval);
     }, []);
 
+    // Funkcja do ustawiania poziomów logowania
+    const setLogLevelsHandle = (levels: LogLevel[]) => {
+        setLogLevels(prev => {
+            return prev.map(entry => ({
+                ...entry,
+                logged: levels.includes(entry.level),
+            }));
+        });
+    };
 
     return (
-        <ConsoleContext.Provider value={{ logs }}>
+        <ConsoleContext.Provider value={{ logs, logLevels, setLogLevels: setLogLevelsHandle }}>
             {children}
         </ConsoleContext.Provider>
     );

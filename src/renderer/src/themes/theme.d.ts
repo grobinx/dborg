@@ -37,6 +37,7 @@ import { UnboundBadgeProps } from "@renderer/components/UnboundBadge";
 import { ColumnDataType } from "@renderer/components/DataGrid/DataGridTypes";
 import { ToolTextFieldProps } from "@renderer/components/ToolTextField";
 import { ColumnBaseType } from "src/api/db";
+import { ToolSelectProps } from "@renderer/components/useful/ToolSelect";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -112,6 +113,7 @@ declare module "@mui/material/styles" {
         UnboundBadge: "root";
         SplitPanel: "group" | "panel" | "splitter";
         ToolTextField: "root";
+        ToolSelect: "root";
     }
 
     interface ComponentsPropsList {
@@ -140,6 +142,7 @@ declare module "@mui/material/styles" {
         TabPanelButtons: Partial<TabPanelButtonsProps>;
         ToolButton: Partial<ToolButtonProps>;
         ToolTextField: Partial<ToolTextFieldProps>;
+        ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeProps>;
     }
     interface Components {
@@ -272,6 +275,11 @@ declare module "@mui/material/styles" {
             defaultProps?: ComponentsPropsList['ToolTextField'];
             styleOverrides?: ComponentsOverrides<Theme>['ToolTextField'];
             //variants?: ComponentsVariants['ToolTextField'];
+        };
+        ToolSelect?: {
+            defaultProps?: ComponentsPropsList['ToolSelect'];
+            styleOverrides?: ComponentsOverrides<Theme>['ToolSelect'];
+            //variants?: ComponentsVariants['ToolSelect'];
         };
         UnboundBadge?: {
             defaultProps?: ComponentsPropsList['UnboundBadge'];

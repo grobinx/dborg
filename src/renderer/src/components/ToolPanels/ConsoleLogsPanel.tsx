@@ -4,14 +4,14 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import Tooltip from "@mui/material/Tooltip";
 import ToolButton from "../ToolButton";
-import { getLogLevelColor, useConsole } from "@renderer/contexts/ConsoleContext";
+import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
-import TabPanelContent, { TabPanelContentOwnProps, TabPanelContentProps } from "../TabsPanel/TabPanelContent";
-import { List, ListItem, ListItemText, ListItemIcon } from "@mui/material";
+import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
+import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider } from "@mui/material";
 import { useIsVisible } from "@renderer/hooks/useIsVisible";
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
-import { ColumnDataType, resolvePrimitiveType, valueToString } from "../../../../../src/api/db";
+import ToolSelect from "../useful/ToolSelect";
 
 const StyledConsoleLogPanel = styled(FixedSizeList, {
     name: "ConsoleLogPanel",
@@ -115,12 +115,71 @@ export const ConsoleLogsPanelLabel: React.FC = () => {
 };
 
 export const ConsoleLogsPanelButtons: React.FC = () => {
-    const { logs } = useConsole();
+    const { logs, logLevels, setLogLevels } = useConsole();
     const theme = useTheme();
     const { t } = useTranslation();
 
+    // Obsługa zmiany zaznaczenia
+    const handleLogLevelChange = (event: SelectChangeEvent<LogLevel[]>) => {
+        if (
+            Array.isArray(event.target.value) &&
+            (event.target.value.filter(entry => typeof entry === "string") as string[]).includes("default")
+        ) {
+            setLogLevels(DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]);
+        }
+        else if (
+            Array.isArray(event.target.value) &&
+            (event.target.value.filter(entry => typeof entry === "string") as string[]).includes("all")
+        ) {
+            setLogLevels(DefaultLogLevels.map(entry => entry.level) as LogLevel[]);
+        }
+        else {
+            if (Array.isArray(event.target.value)) {
+                setLogLevels(event.target.value as LogLevel[]);
+            } else {
+                setLogLevels([event.target.value as LogLevel]);
+            }
+        }
+    };
+
     return (
         <TabPanelButtons>
+            <ToolSelect
+                multiple
+                displayEmpty
+                value={logLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]}
+                onChange={handleLogLevelChange}
+                renderValue={(selected) => {
+                    const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
+                    const selectedLogLevels = selected.length && selected.every(lvl => defaultLogLevels.includes(lvl));
+                    if (selectedLogLevels) {
+                        return t("default-log-levels", "Default log levels");
+                    }
+                    else if (selected.length === DefaultLogLevels.length) {
+                        return t("all-log-levels", "All log levels");
+                    }
+                    else if (selected.length === 0) {
+                        return t("select-log-levels", "Select log levels");
+                    }
+                    return selected.join(", ");
+                }}
+            >
+                <MenuItem key="default" value="default">
+                    {t("default-log-levels", "Default log levels")}
+                </MenuItem>
+                <MenuItem key="all" value="all">
+                    {t("all-log-levels", "All log levels")}
+                </MenuItem>
+                <Divider />
+                {logLevels.map((level) => (
+                    <MenuItem key={level.level} value={level.level}>
+                        <ListItemIcon>
+                            {level.logged ? <theme.icons.Check /> : null}
+                        </ListItemIcon>
+                        {level.level}
+                    </MenuItem>
+                ))}
+            </ToolSelect>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <span>
                     <ToolButton

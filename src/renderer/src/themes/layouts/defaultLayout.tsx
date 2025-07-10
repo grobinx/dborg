@@ -642,6 +642,19 @@ const layout = (palette: Palette): ThemeOptions => {
                     }
                 }
             },
+            ToolSelect: {
+                defaultProps: {
+                    variant: "outlined",
+                    size: "small",
+                    sx: {
+                        '& .MuiSelect-select': {
+                            fontSize: "0.8rem",
+                            paddingX: 4,
+                            paddingY: 0,
+                        }
+                    }
+                }
+            },
             TabPanelLabel: {
                 defaultProps: {
                     sx: {

@@ -91,6 +91,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Null: (props) => <IconWrapper {...props} className="null"><Null fontSize="inherit" /></IconWrapper>,
             ElementOf: (props) => <IconWrapper {...props} className="element-of"><ElementOf fontSize="inherit" /></IconWrapper>,
             QueryHistory: (props) => <IconWrapper {...props} className="query-history"><QueryHistory fontSize="inherit" /></IconWrapper>,
+            Check: (props) => <IconWrapper {...props} className="check"><MuiIcons.Check fontSize="inherit" /></IconWrapper>
         }
     }
 }
