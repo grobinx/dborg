@@ -453,7 +453,10 @@ export const DataGrid = <T extends object>({
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
+    console.count("DataGrid render");
+
     useEffect(() => {
+        console.debug("DataGrid mounted");
         setDataState(data);
         setSelectedRows([]);
         setSelectedCell(null);
@@ -461,6 +464,7 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         // Sprawdź, czy zmieniły się kolumny
+        console.debug("Columns changed");
         if (!isSameColumnsSet(
             columns.map(col => ({ key: col.key, dataType: col.dataType })),
             columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
@@ -475,6 +479,7 @@ export const DataGrid = <T extends object>({
     }, [columns]);
 
     useEffect(() => {
+        console.debug("DataGrid filtering");
         let resultSet: T[] = [...(dataState || [])];
 
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
@@ -539,6 +544,7 @@ export const DataGrid = <T extends object>({
     }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, filterColumns.activeFilters]);
 
     useEffect(() => {
+        console.debug("DataGrid row correction");
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
         if (selectedCell?.row !== undefined && selectedCell.row >= filteredDataState.length) {
             updateSelectedCell(filteredDataState.length > 0 ? { row: filteredDataState.length - 1, column: selectedCell.column ?? 0 } : null);
@@ -546,6 +552,7 @@ export const DataGrid = <T extends object>({
     }, [filteredDataState.length, selectedCell?.row]);
 
     useEffect(() => {
+        console.debug("DataGrid summary");
         if (columnsState.anySummarized) {
             const dataForSummary = selectedRows.length > 0
                 ? selectedRows.map((rowIndex) => filteredDataState[rowIndex]) // Dane tylko z zaznaczonych wierszy
@@ -556,10 +563,12 @@ export const DataGrid = <T extends object>({
     }, [filteredDataState, selectedRows, columnsState.stateChanged]);
 
     useEffect(() => {
+        console.debug("DataGrid save columns layout");
         columnsState.saveColumnsLayout();
     }, [filterColumns.filters, groupingColumns.columns]);
 
     useEffect(() => {
+        console.debug("DataGrid update status bar");
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined ?
@@ -606,6 +615,7 @@ export const DataGrid = <T extends object>({
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
     useEffect(() => {
+        console.debug("DataGrid set initial selected cell");
         if (filteredDataState.length > 0) {
             const selected = updateSelectedCell(selectedCell);
             if (containerRef.current) {
@@ -621,13 +631,14 @@ export const DataGrid = <T extends object>({
         } else {
             updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
         }
-    }, [filteredDataState.length, rowHeight, columnsState.current]);
+    }, [filteredDataState.length, rowHeight, columnsState.current, selectedCell]);
 
     const totalHeight = filteredDataState.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
 
     useEffect(() => {
+        console.debug("DataGrid update font");
         if (containerRef.current) {
             const style = window.getComputedStyle(containerRef.current);
             setFontFamily(style.fontFamily || "inherit");
@@ -636,6 +647,7 @@ export const DataGrid = <T extends object>({
     }, [rowHeight, mode]);
 
     useEffect(() => {
+        console.debug("DataGrid row click");
         if (onRowClick) {
             if (selectedCell?.row !== undefined) {
                 onRowClick(filteredDataState[selectedCell.row]);
@@ -671,6 +683,7 @@ export const DataGrid = <T extends object>({
     };
 
     useEffect(() => {
+        console.debug("DataGrid adjust row number column width");
         if (containerRef.current) {
             const maxRowNumber = filteredDataState.length; // Maksymalny numer wiersza
             const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
@@ -848,6 +861,7 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
+        console.debug("DataGrid adjust width to data");
         if (mode === "data" && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
             actionManager.current.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
             setAdjustWidthExecuted(true);
@@ -856,12 +870,14 @@ export const DataGrid = <T extends object>({
 
     // Resetuj stan przy zmianie dataState
     useEffect(() => {
+        console.debug("DataGrid reset adjust width executed");
         if (mode === "data" && columnsState.layoutChanged) {
             setAdjustWidthExecuted(false);
         }
     }, [dataState, columnsState.layoutChanged]);
 
     useEffect(() => {
+        console.debug("DataGrid mount effect");
         const container = containerRef.current;
 
         // Obserwator rozmiaru kontenera
@@ -1031,6 +1047,7 @@ export const DataGrid = <T extends object>({
     };
 
     useEffect(() => {
+        console.debug("DataGrid mouse move and up listeners");
         if (resizingColumn !== null) {
             window.addEventListener("mousemove", handleMouseMove);
             window.addEventListener("mouseup", handleMouseUp);

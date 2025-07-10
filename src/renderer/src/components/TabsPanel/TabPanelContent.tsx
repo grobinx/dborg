@@ -14,7 +14,7 @@ const StyledTabPanelContent = styled(Stack, {
 export interface TabPanelContentProps extends React.ComponentProps<typeof StyledTabPanelContent> {
 }
 
-interface TabPanelContentOwnProps extends TabPanelContentProps {
+export interface TabPanelContentOwnProps extends TabPanelContentProps {
     tabsItemID?: string;
     children?: React.ReactNode;
     ref?: React.Ref<HTMLDivElement>;

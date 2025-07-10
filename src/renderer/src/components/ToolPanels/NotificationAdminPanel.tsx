@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { DateTime } from "luxon";
 import ToolTextField from "../ToolTextField";
+import { useIsVisible } from "@renderer/hooks/useIsVisible";
 
 const SEARCH_NOTIFICATIONS = "search-notifications";
 
@@ -54,6 +55,7 @@ const NotificationAdminPanel: React.FC<NotificationAdminListOwnProps> = (props) 
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = React.useState("");
     const { subscribe, unsubscribe } = useMessages();
+    const [panelRef, panelVisible] = useIsVisible<HTMLUListElement>();
 
     const handleSelect = (id: string) => {
         setSelectedNotificationId((prev) => (prev === id ? null : id)); // Toggle selection
@@ -122,89 +124,91 @@ const NotificationAdminPanel: React.FC<NotificationAdminListOwnProps> = (props) 
     }, []);
 
     return (
-        <StyledNotificationAdminPanel className="NotificationAdminPanel-root" disablePadding {...other}>
-            {Object.entries(groupedNotifications).map(([source, group]) => (
-                <React.Fragment key={source}>
-                    <ListItem
-                        key={source}
-                        disablePadding
-                        disableGutters
-                        onClick={() => toggleGroup(source)}
-                        {...slotProps?.item}
-                        className="NotificationAdminPanel-group-header"
-                    >
-                        {expandedGroups[source] ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
-                        <ListItemText
-                            primary={source}
-                            {...slotProps?.itemText}
-                        />
-                        <div style={{ flexGrow: 1 }} />
-                        <Button
-                            onClick={(e) => {
-                                e.stopPropagation(); // Prevent toggling the group when clicking the button
-                                removeGroupNotifications(source);
-                            }}
-                            {...slotProps?.itemButton}
+        <StyledNotificationAdminPanel className="NotificationAdminPanel-root" ref={panelRef} disablePadding {...other}>
+            {panelVisible && (
+                Object.entries(groupedNotifications).map(([source, group]) => (
+                    <React.Fragment key={source}>
+                        <ListItem
+                            key={source}
+                            disablePadding
+                            disableGutters
+                            onClick={() => toggleGroup(source)}
+                            {...slotProps?.item}
+                            className="NotificationAdminPanel-group-header"
                         >
-                            <theme.icons.Close />
-                        </Button>
-                    </ListItem>
-                    {/* Grouped Notifications */}
-                    <Collapse in={expandedGroups[source]} timeout="auto" unmountOnExit>
-                        {group.map((notification) => (
-                            <React.Fragment key={notification.id}>
-                                <ListItem
-                                    key={notification.id}
-                                    disablePadding
-                                    disableGutters
-                                    {...slotProps?.item}
-                                    onClick={() => handleSelect(notification.id)}
-                                    className={"NotificationAdminPanel-group-item" + (notification.id === selectedNotificationId ? " Mui-selected" : "")} // Add class for selected item
-                                >
-                                    <ListItemIcon
-                                        {...slotProps?.itemIcon}
-                                        sx={{ ...slotProps?.itemIcon?.sx, color: getIconColor(notification.type) }} // Apply dynamic color
+                            {expandedGroups[source] ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
+                            <ListItemText
+                                primary={source}
+                                {...slotProps?.itemText}
+                            />
+                            <div style={{ flexGrow: 1 }} />
+                            <Button
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Prevent toggling the group when clicking the button
+                                    removeGroupNotifications(source);
+                                }}
+                                {...slotProps?.itemButton}
+                            >
+                                <theme.icons.Close />
+                            </Button>
+                        </ListItem>
+                        {/* Grouped Notifications */}
+                        <Collapse in={expandedGroups[source]} timeout="auto" unmountOnExit>
+                            {group.map((notification) => (
+                                <React.Fragment key={notification.id}>
+                                    <ListItem
+                                        key={notification.id}
+                                        disablePadding
+                                        disableGutters
+                                        {...slotProps?.item}
+                                        onClick={() => handleSelect(notification.id)}
+                                        className={"NotificationAdminPanel-group-item" + (notification.id === selectedNotificationId ? " Mui-selected" : "")} // Add class for selected item
                                     >
-                                        {theme.icons[alertIconMap[notification.type]]()}
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        style={{ flexDirection: "column" }}
-                                        primary={notification.message + (notification.time ? " (" + DateTime.fromMillis(notification.time).toRelative() + ")" : "")}
-                                        {...slotProps?.itemText}
-                                    />
-                                    {notification.reason ? (notification.id === selectedNotificationId ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />) : null}
-                                    <div style={{ flexGrow: 1 }} />
-                                    <Button onClick={() => removeNotification(notification.id)} {...slotProps?.itemButton}>
-                                        <theme.icons.Close />
-                                    </Button>
-                                </ListItem>
-                                {notification.reason ? (
-                                    <Collapse in={notification.id === selectedNotificationId} timeout="auto" unmountOnExit>
-                                        {Object.getOwnPropertyNames(notification.reason).map((key) => (
-                                            <ListItem
-                                                key={key}
-                                                disablePadding
-                                                disableGutters
-                                                className="NotificationAdminPanel-reason-item"
-                                                {...slotProps?.item}
-                                            >
-                                                <ListItemText
-                                                    secondary={
-                                                        <React.Fragment>
-                                                            <strong>{key}:</strong> {String((notification.reason as Record<string, unknown>)[key])}
-                                                        </React.Fragment>
-                                                    }
-                                                    {...slotProps?.itemText}
-                                                />
-                                            </ListItem>
-                                        ))}
-                                    </Collapse>
-                                ) : null}
-                            </React.Fragment>
-                        ))}
-                    </Collapse>
-                </React.Fragment>
-            ))}
+                                        <ListItemIcon
+                                            {...slotProps?.itemIcon}
+                                            sx={{ ...slotProps?.itemIcon?.sx, color: getIconColor(notification.type) }} // Apply dynamic color
+                                        >
+                                            {theme.icons[alertIconMap[notification.type]]()}
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            style={{ flexDirection: "column" }}
+                                            primary={notification.message + (notification.time ? " (" + DateTime.fromMillis(notification.time).toRelative() + ")" : "")}
+                                            {...slotProps?.itemText}
+                                        />
+                                        {notification.reason ? (notification.id === selectedNotificationId ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />) : null}
+                                        <div style={{ flexGrow: 1 }} />
+                                        <Button onClick={() => removeNotification(notification.id)} {...slotProps?.itemButton}>
+                                            <theme.icons.Close />
+                                        </Button>
+                                    </ListItem>
+                                    {notification.reason ? (
+                                        <Collapse in={notification.id === selectedNotificationId} timeout="auto" unmountOnExit>
+                                            {Object.getOwnPropertyNames(notification.reason).map((key) => (
+                                                <ListItem
+                                                    key={key}
+                                                    disablePadding
+                                                    disableGutters
+                                                    className="NotificationAdminPanel-reason-item"
+                                                    {...slotProps?.item}
+                                                >
+                                                    <ListItemText
+                                                        secondary={
+                                                            <React.Fragment>
+                                                                <strong>{key}:</strong> {String((notification.reason as Record<string, unknown>)[key])}
+                                                            </React.Fragment>
+                                                        }
+                                                        {...slotProps?.itemText}
+                                                    />
+                                                </ListItem>
+                                            ))}
+                                        </Collapse>
+                                    ) : null}
+                                </React.Fragment>
+                            ))}
+                        </Collapse>
+                    </React.Fragment>
+                ))
+            )}
         </StyledNotificationAdminPanel>
     );
 };

@@ -11,18 +11,22 @@ import { ColumnDefinition } from "../DataGrid/DataGridTypes";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import { DataGrid } from "../DataGrid/DataGrid";
+import { useIsVisible } from "@renderer/hooks/useIsVisible";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
     const { t } = useTranslation();
     const { subscribe, unsubscribe } = useMessages();
+    const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
 
     // Kolumny dla DataGrid
     const columns: ColumnDefinition[] = [
         { key: "schema", label: t("schema", "Schema"), dataType: "string", width: 200 },
-        { key: "query", label: t("query", "Query"), dataType: "string", width: 300, formatter: (value) => {
-            return String(value).replace(/\s+/g, " ").trim();
-        }},
+        {
+            key: "query", label: t("query", "Query"), dataType: "string", width: 300, formatter: (value) => {
+                return String(value).replace(/\s+/g, " ").trim();
+            }
+        },
         { key: "executionTime", label: t("execution-time", "Execution Time"), dataType: "duration", width: 130 },
         { key: "fetchTime", label: t("fetch-time", "Fetch Time"), dataType: "duration", width: 130 },
         { key: "rows", label: t("rows", "Rows"), dataType: "number", width: 100 },
@@ -31,12 +35,14 @@ export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     ];
 
     return (
-        <TabPanelContent className="QueryHistoryPanel-root">
-            <DataGrid
-                data={queryHistory.map((entry, index) => ({ id: index, ...entry }))}
-                columns={columns}
-                autoSaveId="query-history-grid"
-            />
+        <TabPanelContent className="QueryHistoryPanel-root" ref={panelRef}>
+            {panelVisible && (
+                <DataGrid
+                    data={queryHistory.map((entry, index) => ({ id: index, ...entry }))}
+                    columns={columns}
+                    autoSaveId="query-history-grid"
+                />
+            )}
         </TabPanelContent>
     );
 };
