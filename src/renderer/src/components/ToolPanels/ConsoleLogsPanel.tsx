@@ -4,7 +4,7 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import Tooltip from "@mui/material/Tooltip";
 import ToolButton from "../ToolButton";
-import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels } from "@renderer/contexts/ConsoleContext";
+import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
 import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider } from "@mui/material";
@@ -12,6 +12,44 @@ import { useIsVisible } from "@renderer/hooks/useIsVisible";
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
 import ToolSelect from "../useful/ToolSelect";
+import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
+
+function formatLogDetails(log: LogEntry | undefined): string | null {
+    if (!log) return null;
+
+    const formatValue = (value: any): string => {
+        if (typeof value === "string") return value;
+        if (value instanceof Error) return `${value.name}: ${value.message}\n${value.stack ?? ""}`;
+        if (Array.isArray(value)) return value.map(formatValue).join("\n");
+        if (typeof value === "object" && value !== null) {
+            if ("name" in value && "message" in value) {
+                return [
+                    `name: ${value.name}`,
+                    `message: ${value.message}`,
+                    value.stack ? `stack: ${value.stack}` : null,
+                    ...Object.entries(value)
+                        .filter(([k]) => !["name", "message", "stack"].includes(k))
+                        .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)}`)
+                ].filter(Boolean).join("\n");
+            }
+            try {
+                return JSON.stringify(value, null, 2);
+            } catch {
+                return String(value);
+            }
+        }
+        return String(value);
+    };
+
+    let result: string = "";
+    if (Array.isArray(log.message)) {
+        result = log.message.map(formatValue).join("\n");
+    } else {
+        result = formatValue(log.message);
+    }
+
+    return `level: ${log.level}\ntime: ${log.time ? new Date(log.time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 }) : ""}\n${result}`;
+}
 
 const StyledConsoleLogPanel = styled(FixedSizeList, {
     name: "ConsoleLogPanel",
@@ -20,7 +58,7 @@ const StyledConsoleLogPanel = styled(FixedSizeList, {
     // Add styles for the list container if needed
 }));
 
-export interface ConsoleLogProps extends TabPanelContentOwnProps {
+export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
     slotProps?: {
         list?: React.ComponentProps<typeof FixedSizeList>;
         item?: React.ComponentProps<typeof ListItem>;
@@ -31,15 +69,18 @@ export interface ConsoleLogProps extends TabPanelContentOwnProps {
     overscanCount?: number; // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
 }
 
-export const ConsoleLogsPanel: React.FC<ConsoleLogProps> = (props) => {
-    const { slotProps, itemSize, overscanCount, ...other } = useThemeProps({ name: "ConsoleLogsPanel", props: props });
+export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
+    const { slotProps, itemSize, overscanCount, ...other } = useThemeProps({ name: "ConsoleLogPanel", props: props });
     const { logs } = useConsole();
     const { t } = useTranslation();
     const theme = useTheme();
     const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
-
-    // Referencja do FixedSizeList
+    const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
+
+    const handleSelectItem = (id: string) => {
+        setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
+    };
 
     // Przewijanie do ostatniego elementu po zmianie logów
     useEffect(() => {
@@ -53,11 +94,13 @@ export const ConsoleLogsPanel: React.FC<ConsoleLogProps> = (props) => {
         const log = logs[index];
         return (
             <ListItem
-                key={index}
+                key={log.id}
                 style={style} // Ważne: styl przekazywany przez react-window
                 alignItems="flex-start"
                 disablePadding
                 disableGutters
+                onClick={() => handleSelectItem(log.id)}
+                className={`ConsoleLogPanel-item${selectedItem === log.id ? " Mui-selected" : ""}`}
                 {...slotProps?.item}
             >
                 <ListItemText
@@ -85,22 +128,38 @@ export const ConsoleLogsPanel: React.FC<ConsoleLogProps> = (props) => {
     return (
         <TabPanelContent ref={panelRef} style={{ alignItems: "flex-start" }} {...other}>
             {panelVisible && (
-                <AutoSizer>
-                    {({ height, width }) => (
-                        <StyledConsoleLogPanel
-                            className="ConsoleLogPanel-root"
-                            ref={listRef} // Przypisanie referencji
-                            height={height}
-                            width={width}
-                            itemSize={itemSize ?? 20} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
-                            itemCount={logs.length}
-                            overscanCount={overscanCount ?? 2} // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
-                            {...slotProps?.list}
-                        >
-                            {renderRow}
-                        </StyledConsoleLogPanel>
-                    )}
-                </AutoSizer>
+                <SplitPanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
+                    <SplitPanel>
+                        <AutoSizer>
+                            {({ height, width }) => (
+                                <StyledConsoleLogPanel
+                                    className="ConsoleLogPanel-root"
+                                    ref={listRef} // Przypisanie referencji
+                                    height={height}
+                                    width={width}
+                                    itemSize={itemSize ?? 20} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
+                                    itemCount={logs.length}
+                                    overscanCount={overscanCount ?? 2} // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
+                                    {...slotProps?.list}
+                                >
+                                    {renderRow}
+                                </StyledConsoleLogPanel>
+                            )}
+                        </AutoSizer>
+                    </SplitPanel>
+                    <Splitter />
+                    <SplitPanel defaultSize={15} >
+                        {selectedItem ? (
+                            <div style={{ padding: 8, fontFamily: "monospace", fontSize: "0.8em", overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                                {formatLogDetails(logs.find(l => l.id === selectedItem))}
+                            </div>
+                        ) : (
+                            <div style={{ padding: 8, color: "#888", fontStyle: "italic" }}>
+                                {t("consoleLogs-no-selection", "Select a log entry to view details")}
+                            </div>
+                        )}
+                    </SplitPanel>
+                </SplitPanelGroup>
             )}
         </TabPanelContent>
     );
@@ -194,4 +253,4 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     );
 };
 
-export default ConsoleLogsPanel;
+export default ConsoleLogPanel;

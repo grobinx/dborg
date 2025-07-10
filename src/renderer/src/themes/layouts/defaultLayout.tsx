@@ -755,6 +755,26 @@ const layout = (palette: Palette): ThemeOptions => {
                     }
                 },
             },
+            ConsoleLogPanel: {
+                defaultProps: {
+                    sx: {
+                        padding: 2,
+                    },
+                    slotProps: {
+                        item: {
+                            sx: {
+                                cursor: "pointer",
+                                '&.Mui-selected': {
+                                    backgroundColor: palette.action.selected
+                                },
+                                "&:hover": {
+                                    backgroundColor: palette.action.hover,
+                                },
+                            }
+                        },
+                    },
+                }
+            },
             SplitPanel: {
                 styleOverrides: {
                     splitter: {

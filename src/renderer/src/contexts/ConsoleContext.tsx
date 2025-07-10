@@ -1,9 +1,12 @@
 import { Palette } from '@mui/material';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { uuidv7 } from 'uuidv7';
 
 export type LogLevel = keyof typeof console;
 
 export interface LogEntry {
+    id: string;
+    time: number;
     level: LogLevel;
     message: any[];
 }
@@ -73,8 +76,8 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     logHandlerRef.current = (level: LogLevel, ...args: any[]) => {
         if (loggedLevels.includes(level)) {
-            logQueue.current.push({ level, message: args });
-            const fn = (originalConsole as any)[level] as ((...args: any[]) => void) | undefined;
+            logQueue.current.push({ id: uuidv7(), time: performance.now(), level, message: args });
+            const fn = (originalConsole.current as any)[level] as ((...args: any[]) => void) | undefined;
             if (typeof fn === "function") {
                 fn(...args);
             }

@@ -38,6 +38,7 @@ import { ColumnDataType } from "@renderer/components/DataGrid/DataGridTypes";
 import { ToolTextFieldProps } from "@renderer/components/ToolTextField";
 import { ColumnBaseType } from "src/api/db";
 import { ToolSelectProps } from "@renderer/components/useful/ToolSelect";
+import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLogsPanel";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -114,6 +115,7 @@ declare module "@mui/material/styles" {
         SplitPanel: "group" | "panel" | "splitter";
         ToolTextField: "root";
         ToolSelect: "root";
+        ConsoleLogPanel: "root";
     }
 
     interface ComponentsPropsList {
@@ -144,6 +146,7 @@ declare module "@mui/material/styles" {
         ToolTextField: Partial<ToolTextFieldProps>;
         ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeProps>;
+        ConsoleLogPanel: Partial<ConsoleLogPanelProps>;
     }
     interface Components {
         MenuBar?: {
@@ -288,6 +291,11 @@ declare module "@mui/material/styles" {
         };
         SplitPanel?: {
             styleOverrides?: ComponentsOverrides<Theme>['SplitPanel'];
+        };
+        ConsoleLogPanel?: {
+            defaultProps?: ComponentsPropsList['ConsoleLogPanel'];
+            styleOverrides?: ComponentsOverrides<Theme>['ConsoleLogPanel'];
+            //variants?: ComponentsVariants['ConsoleLogPanel'];
         };
     }
     
