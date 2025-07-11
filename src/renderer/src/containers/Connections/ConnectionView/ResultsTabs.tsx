@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { TabsPanel } from "@renderer/components/TabsPanel/TabsPanel";
 import { Tooltip, useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import { SqlResultContent, SqlResultLabel, SqlResultButtons } from "./SqlResultPanel";
-import { UseListenersType } from "@renderer/hooks/useListeners";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
@@ -26,9 +25,9 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
     const [resultsTabs, setResultsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
     const { subscribe, unsubscribe, sendMessage } = useMessages();
 
-    const tabsItemID = useMemo(() => resultsTabsId(session), [session]);
+    const tabsItemID = resultsTabsId(session);
 
-    const handleAddSqlResult = useCallback(() => {
+    const handleAddSqlResult = () => {
         const newResultId = uuidv7();
         const newResultTab = (
             <TabPanel
@@ -40,7 +39,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
             />
         );
         setResultsTabs((prevTabs) => [...prevTabs, newResultTab]);
-    }, [session]);
+    };
 
     useEffect(() => {
         const newResultId = uuidv7();

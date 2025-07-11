@@ -19,7 +19,7 @@ const MessageContext = React.createContext<MessageContextProps | undefined>(unde
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const listeners = React.useRef<Map<string, Set<MessageHandler>>>(new Map());
 
-    const subscribe = React.useCallback(<Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) : () => void => {
+    const subscribe = <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) : () => void => {
         if (!listeners.current.has(message)) {
             listeners.current.set(message, new Set());
         }
@@ -27,9 +27,9 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return () => {
             unsubscribe(message, handler);
         }
-    }, []);
+    };
 
-    const unsubscribe = React.useCallback(<Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => {
+    const unsubscribe = <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => {
         const handlers = listeners.current.get(message);
         if (handlers) {
             handlers.delete(handler);
@@ -37,9 +37,9 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 listeners.current.delete(message);
             }
         }
-    }, []);
+    };
 
-    const sendMessage = React.useCallback(async <Args extends any[], R = any>(message: string, ...args: Args): Promise<R | undefined> => {
+    const sendMessage = async <Args extends any[], R = any>(message: string, ...args: Args): Promise<R | undefined> => {
         const handlers = listeners.current.get(message);
         if (!handlers || handlers.size === 0) return undefined;
 
@@ -52,13 +52,13 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
             }
         }
         return results[0];
-    }, []);
+    };
 
-    const queueMessage = React.useCallback((message: string, ...args: any[]) => {
+    const queueMessage = (message: string, ...args: any[]) => {
         setTimeout(() => {
             sendMessage(message, ...args);
         }, 10);
-    }, []);
+    };
 
     React.useEffect(() => {
         setBusFunctions(sendMessage, queueMessage);

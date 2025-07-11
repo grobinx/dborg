@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Divider, Menu, MenuItem, Stack, StackProps, useTheme, useThemeProps } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import ContainerButton, { Placement } from "./ContainerButton";
@@ -58,19 +58,19 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         setHorizontal(["left", "right"].includes(placement ?? "left"));
     }, [placement]);
 
-    const handleToogleExpand = useCallback(() => {
-        setExpanded((prev) => {
-            updateSessionStorage(Store_siedBarExpanded, JSON.stringify(expanded));
-            return !prev;
-        });
-    }, []);
-
     useEffect(() => {
+        const handleToogleExpand = () => {
+            setExpanded((prev) => {
+                updateSessionStorage(Store_siedBarExpanded, JSON.stringify(expanded));
+                return !prev;
+            });
+        };
+
         subscribe(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND, handleToogleExpand);
         return () => {
             unsubscribe(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND, handleToogleExpand);
         };
-    }, [handleToogleExpand, subscribe, unsubscribe]);
+    }, []);
 
     const renderViewButtons = (views: View[]) => {
         return ([
@@ -108,7 +108,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         <SideBarRoot
             {...others}
             direction={horizontal ? "column" : "row"}
-            className={(className ?? "") + " SideBar-root" +" placement-" +placement}
+            className={(className ?? "") + " SideBar-root" + " placement-" + placement}
             onContextMenu={handleSideBarContextMenu}
             aria-hidden={!isFocused ? true : false}
             onFocus={handleFocus}

@@ -9,7 +9,7 @@ export interface LogEntry {
     time: number;
     level: LogLevel;
     message: any[];
-    stack?: string;
+    stack?: string[];
 }
 
 export interface LogLevelEntry {
@@ -66,6 +66,12 @@ export const MAX_CONSOLE_LOGS = 1000; // Maksymalna liczba logów do przechowywa
 
 const ConsoleContext = createContext<ConsoleContextValue | undefined>(undefined);
 
+function removeUnnecessaryLines(stack: string | undefined): string[] | undefined {
+    if (!stack) return;
+    const lines = stack.split('\n');
+    return lines.filter(line => !line.startsWith('Error') && !line.includes('ConsoleContext.tsx')).map(line => line.trim());
+}
+
 export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const logQueue = useRef<LogEntry[]>([]); // Kolejka logów
@@ -82,8 +88,10 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 time: Date.now(), 
                 level, 
                 message: args,
-                stack: ["error", "warning", "trace"].includes(level) ? new Error().stack : undefined
-             });
+                stack: ["error", "warn", "trace", "debug"].includes(level)
+                    ? removeUnnecessaryLines(new Error().stack)
+                    : undefined
+            });
             const fn = (originalConsole.current as any)[level] as ((...args: any[]) => void) | undefined;
             if (typeof fn === "function") {
                 fn(...args);

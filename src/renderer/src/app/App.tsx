@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Stack, useTheme } from '@mui/material';
+import { Stack, Tooltip, useTheme } from '@mui/material';
 import MenuBar from "./MenuBar";
 import SideBar from "./SideBar";
 import StatusBar from "./StatusBar";
@@ -16,6 +16,9 @@ import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
 import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
 import { ConsoleLogPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from '@renderer/components/ToolPanels/ConsoleLogsPanel';
+import TabPanelButtons from '@renderer/components/TabsPanel/TabPanelButtons';
+import ToolButton from '@renderer/components/ToolButton';
+import { useTranslation } from 'react-i18next';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -52,6 +55,7 @@ export const appStatusBarButtons: {
 
 const App: React.FC = () => {
     const theme = useTheme();
+    const { t } = useTranslation();
     const { height } = useWindowDimensions();
     const [settings, setSettings] = useSettings("app");
     const [placement, setPlacement] = React.useState<Placement>((settings.placement ?? "left") as Placement);
@@ -63,36 +67,12 @@ const App: React.FC = () => {
     const [sideBarHeight, setSideBarHeight] = React.useState(0);
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
     const { containers, selectedContainer, selectedView } = useContainers();
-    const { emit } = useMessages();
+    const { emit, subscribe, unsubscribe } = useMessages();
     const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
 
     const menuBarRef = React.useRef<HTMLDivElement>(null);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const sideBarRef = React.useRef<HTMLDivElement>(null);
-
-    const { subscribe, unsubscribe } = useMessages();
-
-    const handleToggleToolsTabsPanelMessage = React.useCallback((tabsItemID: string, itemID: string) => {
-        setToolsTabsPanelVisible((prev) => {
-            if (tabsItemID && itemID) {
-                emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
-                if (lastToolItemRef.current && lastToolItemRef.current.itemID !== itemID) {
-                    lastToolItemRef.current = { tabsItemID, itemID };
-                    return prev;
-                }
-                lastToolItemRef.current = { tabsItemID, itemID };
-            }
-            else {
-                lastToolItemRef.current = null;
-            }
-            return !prev;
-        });
-    }, []);
-
-    const handlePlacementChange = React.useCallback((newPlacement: Placement) => {
-        setPlacement(newPlacement);
-        setSettings("placement", newPlacement);
-    }, [setSettings, setPlacement]);
 
     React.useEffect(() => {
         window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(toolsTabsPanelVisible));
@@ -110,6 +90,28 @@ const App: React.FC = () => {
 
     // Register and unregister message handlers
     React.useEffect(() => {
+        const handleToggleToolsTabsPanelMessage = (tabsItemID: string, itemID: string) => {
+            setToolsTabsPanelVisible((prev) => {
+                if (tabsItemID && itemID) {
+                    emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
+                    if (lastToolItemRef.current && lastToolItemRef.current.itemID !== itemID) {
+                        lastToolItemRef.current = { tabsItemID, itemID };
+                        return prev;
+                    }
+                    lastToolItemRef.current = { tabsItemID, itemID };
+                }
+                else {
+                    lastToolItemRef.current = null;
+                }
+                return !prev;
+            });
+        };
+
+        const handlePlacementChange = (newPlacement: Placement) => {
+            setPlacement(newPlacement);
+            setSettings("placement", newPlacement);
+        };
+
         subscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
         subscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
 
@@ -117,12 +119,7 @@ const App: React.FC = () => {
             unsubscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
             unsubscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
         };
-    }, [
-        subscribe,
-        unsubscribe,
-        handleToggleToolsTabsPanelMessage,
-        handlePlacementChange,
-    ]);
+    }, []);
 
     // Adjust middle height based on window and sidebar dimensions
     React.useEffect(() => {
@@ -159,13 +156,16 @@ const App: React.FC = () => {
     React.useEffect(() => {
         if (!sideBarRef.current) return;
         const resizeObserver = new ResizeObserver(() => {
-            if (sideBarRef.current && sideBarRef.current.offsetHeight !== sideBarHeight) {
-                setSideBarHeight(sideBarRef.current.offsetHeight);
-            }
+            setSideBarHeight(prev => {
+                if (sideBarRef.current) {
+                    return sideBarRef.current.offsetHeight;
+                }
+                return prev;
+            });
         });
         resizeObserver.observe(sideBarRef.current);
         return () => resizeObserver.disconnect();
-    }, [sideBarHeight]);
+    }, []);
 
     return (
         <div>
@@ -191,7 +191,21 @@ const App: React.FC = () => {
                     </SplitPanel>
                     <Splitter hidden={!toolsTabsPanelVisible} />
                     <SplitPanel defaultSize={20} hidden={!toolsTabsPanelVisible}>
-                        <TabsPanel className="ToolsPanel" itemID="tools-tabs-panel">
+                        <TabsPanel
+                            className="ToolsPanel"
+                            itemID="tools-tabs-panel"
+                            buttons={
+                                <TabPanelButtons>
+                                    <Tooltip title={t("hide-tools-panel", "Hide Tools Panel")}>
+                                        <ToolButton
+                                            onClick={() => setToolsTabsPanelVisible(!toolsTabsPanelVisible)}
+                                        >
+                                            <theme.icons.ExpandMore />
+                                        </ToolButton>
+                                    </Tooltip>
+                                </TabPanelButtons>
+                            }
+                        >
                             <TabPanel
                                 itemID="logs"
                                 label={<ConsoleLogsPanelLabel />}

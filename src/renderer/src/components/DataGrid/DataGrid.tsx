@@ -659,6 +659,7 @@ export const DataGrid = <T extends object>({
     }, [filteredDataState, selectedCell?.row]);
 
     const updateSelectedCell = (cell: TableCellPosition | null): TableCellPosition | null => {
+        console.debug("DataGrid update selected cell", cell);
         if (!cell) {
             setSelectedCell(null);
             return null;

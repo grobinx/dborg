@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 interface ScrollState {
     scrollTop: number;
@@ -8,12 +8,12 @@ interface ScrollState {
 export const useScrollSync = (ref: React.RefObject<HTMLDivElement | null>, disabled?: boolean) => {
     const [scrollState, setScrollState] = useState<ScrollState>({ scrollTop: 0, scrollLeft: 0 });
 
-    const handleScroll = useCallback(() => {
+    const handleScroll = () => {
         if (disabled || !ref.current) return;
 
         const { scrollTop, scrollLeft } = ref.current;
         setScrollState({ scrollTop, scrollLeft });
-    }, [disabled, ref]);
+    };
 
     useEffect(() => {
         const container = ref.current;
