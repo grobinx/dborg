@@ -772,6 +772,15 @@ const layout = (palette: Palette): ThemeOptions => {
                                 },
                             }
                         },
+                        details: {
+                            sx: {
+                                "&.no-selection": {
+                                    color: palette.text.disabled,
+                                    fontStyle: "italic",
+                                    textAlign: "center",
+                                },
+                            }
+                        },
                     },
                 }
             },

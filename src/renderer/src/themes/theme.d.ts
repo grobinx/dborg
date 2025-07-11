@@ -115,7 +115,7 @@ declare module "@mui/material/styles" {
         SplitPanel: "group" | "panel" | "splitter";
         ToolTextField: "root";
         ToolSelect: "root";
-        ConsoleLogPanel: "root";
+        ConsoleLogPanel: "root" | "details";
     }
 
     interface ComponentsPropsList {

@@ -14,8 +14,17 @@ import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic si
 import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
+import { create } from "zustand";
 
-const CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME = "consoleLog-toggle-show-item-time";
+interface ConsoleLogState {
+    showTime: boolean;
+    toggleShowTime: () => void;
+}
+
+export const useConsoleLogStore = create<ConsoleLogState>((set) => ({
+    showTime: false,
+    toggleShowTime: () => set((state) => ({ showTime: !state.showTime })),
+}));
 
 function formatLogDetails(log: LogEntry | undefined): string | null {
     if (!log) return null;
@@ -25,7 +34,7 @@ function formatLogDetails(log: LogEntry | undefined): string | null {
         if (value instanceof Error) return `${value.name}: ${value.message}\n${value.stack ?? ""}`;
         if (Array.isArray(value)) return value.map(formatValue).join("\n");
         if (typeof value === "object" && value !== null) {
-            if ("name" in value && "message" in value) {
+            if (("stack" in value || "name" in value) && "message" in value) {
                 return [
                     `name: ${value.name}`,
                     `message: ${value.message}`,
@@ -61,12 +70,27 @@ const StyledConsoleLogPanel = styled(FixedSizeList, {
     // Add styles for the list container if needed
 }));
 
+const StyledConsoleLogDetailsPanel = styled('div', {
+    name: "ConsoleLogPanel",
+    slot: "details",
+})(({ /*theme*/ }) => ({
+    height: "100%",
+    width: "100%",
+    padding: 8, 
+    fontFamily: "monospace", 
+    fontSize: "0.8em", 
+    overflow: "auto",
+    whiteSpace: "pre-wrap", 
+    wordBreak: "break-all"
+}));
+
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
     slotProps?: {
         list?: React.ComponentProps<typeof FixedSizeList>;
         item?: React.ComponentProps<typeof ListItem>;
         itemIcon?: React.ComponentProps<typeof ListItemIcon>;
         itemText?: React.ComponentProps<typeof ListItemText>;
+        details?: React.ComponentProps<typeof StyledConsoleLogDetailsPanel>;
     };
     itemSize?: number; // Wysokość pojedynczego elementu listy
     overscanCount?: number; // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
@@ -80,24 +104,11 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const [showTime, setShowTime] = React.useState(false);
-    const { subscribe, unsubscribe } = useMessages();
+    const showTime = useConsoleLogStore(state => state.showTime);
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
     };
-
-    useEffect(() => {
-        const toggleShowTimeHandler = () => {
-            setShowTime((prev) => !prev);
-        };
-
-        subscribe(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME, toggleShowTimeHandler);
-
-        return () => {
-            unsubscribe(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME, toggleShowTimeHandler);
-        };
-    }, []);
 
     // Przewijanie do ostatniego elementu po zmianie logów
     useEffect(() => {
@@ -180,13 +191,13 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                     <Splitter />
                     <SplitPanel defaultSize={25} >
                         {selectedItem ? (
-                            <div style={{ padding: 8, fontFamily: "monospace", fontSize: "0.8em", overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                            <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details" {...slotProps?.details}>
                                 {formatLogDetails(logs.find(l => l.id === selectedItem))}
-                            </div>
+                            </StyledConsoleLogDetailsPanel>
                         ) : (
-                            <div style={{ padding: 8, color: "#888", fontStyle: "italic" }}>
+                            <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details no-selection" {...slotProps?.details}>
                                 {t("consoleLogs-no-selection", "Select a log entry to view details")}
-                            </div>
+                            </StyledConsoleLogDetailsPanel>
                         )}
                     </SplitPanel>
                 </SplitPanelGroup>
@@ -205,9 +216,9 @@ export const ConsoleLogsPanelLabel: React.FC = () => {
 
 export const ConsoleLogsPanelButtons: React.FC = () => {
     const { logs, logLevels, setLogLevels } = useConsole();
-    const [showTime, setShowTime] = React.useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
+    const { showTime, toggleShowTime } = useConsoleLogStore();
     const { emit } = useMessages();
 
     // Obsługa zmiany zaznaczenia
@@ -240,8 +251,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     <ToolButton
                         selected={showTime}
                         onClick={() => {
-                            setShowTime(prev => !prev);
-                            emit(CONSOLE_LOG_TOGGLE_SHOW_ITEM_TIME);
+                            toggleShowTime();
                         }}
                     >
                         <theme.icons.Clock />
