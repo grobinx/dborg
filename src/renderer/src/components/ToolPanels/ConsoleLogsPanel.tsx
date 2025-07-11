@@ -13,9 +13,9 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
 import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
-import { useMessages } from "@renderer/contexts/MessageContext";
 import { create } from "zustand";
 import ToolTextField from "../ToolTextField";
+import i18next from "i18next";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -32,6 +32,7 @@ export const useConsoleLogStore = create<ConsoleLogState>((set) => ({
 }));
 
 function formatLogDetails(log: LogEntry | undefined): string | null {
+    const t = i18next.t.bind(i18next);
     if (!log) return null;
 
     const formatValue = (value: any): string => {
@@ -65,7 +66,19 @@ function formatLogDetails(log: LogEntry | undefined): string | null {
         result = formatValue(log.message);
     }
 
-    return `level: ${log.level}\ntime: ${log.time ? new Date(log.time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 }) : ""}\n${result}`;
+    return t(
+        "console-entry-details", 
+        'level: {{level}}, time: {{time}}\n{{details}}',
+        {
+            level: log.level,
+            time: formatTime(log.time),
+            details: result,
+        }
+    );
+}
+
+function formatTime(time: number): string {
+    return new Date(time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 });
 }
 
 let searchTimeoutId: NodeJS.Timeout | undefined = undefined;
@@ -163,7 +176,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                         <>
                             {showTime && log.time && (
                                 <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
-                                    {new Date(log.time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 })}
+                                    {formatTime(log.time)}
                                 </span>
                             )}
                             {Array.isArray(log.message) ? log.message.map(value => {
