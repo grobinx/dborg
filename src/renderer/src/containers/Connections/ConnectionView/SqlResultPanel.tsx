@@ -508,7 +508,7 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const { t } = useTranslation();
     const theme = useTheme();
-    const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize);
+    const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize ?? '');
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
 
     return (
