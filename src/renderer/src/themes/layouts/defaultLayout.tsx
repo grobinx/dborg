@@ -667,7 +667,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     unmountOnHide: true,
                 }
             },
-            NotificationToastList: {
+            ToastList: {
                 defaultProps: {
                     slotProps: {
                         alert: {
@@ -689,71 +689,6 @@ const layout = (palette: Palette): ThemeOptions => {
                         bottom: 32,
                     }
                 }
-            },
-            NotificationAdminPanel: {
-                defaultProps: {
-                    sx: {
-                        paddingY: 2,
-                    },
-                    slotProps: {
-                        item: {
-                            sx: {
-                                gap: 4,
-                                paddingX: 6,
-                                paddingY: 4,
-                                cursor: "pointer",
-                                backgroundColor: "transparent",
-                                '&.Mui-selected': {
-                                    backgroundColor: palette.action.selected
-                                },
-                                "&:hover": {
-                                    backgroundColor: palette.action.hover,
-                                },
-                                '&.NotificationAdminPanel-group-item': {
-                                    paddingLeft: 28,
-                                },
-                                '&.NotificationAdminPanel-reason-item': {
-                                    paddingLeft: 48,
-                                },
-                                transition: "background-color 0.3s ease",
-                            }
-                        },
-                        itemIcon: {
-                            sx: {
-                                minWidth: 0,
-                            }
-                        },
-                        itemText: {
-                            sx: {
-                                margin: 0,
-                                lineHeight: 1.2,
-                                '& .MuiTypography-root': {
-                                    lineHeight: "inherit",
-                                },
-                                display: "flex",
-                                flexGrow: 0,
-                            },
-                            slotProps: {
-                                primary: {
-                                    variant: "body2",
-                                },
-                            }
-                        },
-                        itemButton: {
-                            size: "small",
-                            variant: "text",
-                            sx: {
-                                padding: 2,
-                                minWidth: 0,
-                                lineHeight: 1.2,
-                                borderRadius: 1,
-                                '& .IconWrapper-root': {
-                                    fontSize: "1.2em",
-                                },
-                            }
-                        }
-                    }
-                },
             },
             ConsoleLogPanel: {
                 defaultProps: {

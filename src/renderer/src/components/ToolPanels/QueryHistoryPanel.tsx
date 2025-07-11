@@ -16,7 +16,6 @@ import { useIsVisible } from "@renderer/hooks/useIsVisible";
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
     const { t } = useTranslation();
-    const { subscribe, unsubscribe } = useMessages();
     const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
 
     // Kolumny dla DataGrid

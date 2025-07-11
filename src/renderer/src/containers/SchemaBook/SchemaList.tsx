@@ -14,7 +14,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionInfo } from "src/api/db";
 import { IconWrapperProps } from "@renderer/themes/icons";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
@@ -82,7 +82,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { t } = useTranslation();
     const [connectionList, setConnectionList] = React.useState<ConnectionInfo[] | null>();
     const [search, setSearch] = React.useState('');
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const [selectedItem, setSelectedItem] = React.useState('');
     const { sendMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
@@ -119,7 +119,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             setConnectionList(await connections.list());
         }
         catch (error) {
-            addNotification(
+            addToast(
                 "error",
                 t("connection-list-load-error", "Failed to load connection list!"),
                 {
@@ -147,7 +147,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 const schemas = await sendMessage(Messages.FETCH_SCHEMAS) as Schema[];
                 setData(connectionStatus(schemas));
             } catch (error) {
-                addNotification(
+                addToast(
                     "error",
                     t("schema-list-load-error", "Failed to load schema list!"),
                     {
@@ -248,7 +248,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await sendMessage(Messages.SCHEMA_DELETE, id);
         } catch (error) {
-            addNotification(
+            addToast(
                 "error",
                 t("schema-delete-error", "Failed to delete the connection schema!"),
                 {
@@ -257,7 +257,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 }
             );
         }
-    }, [sendMessage, addNotification, t, t_connectionSchema]);
+    }, [t_connectionSchema]);
 
     // Function to handle testing the schema connection
     const handleTestConnection = React.useCallback((schema: Schema) => {
@@ -266,7 +266,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             .finally(() => {
                 setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
             });
-    }, [sendMessage]);
+    }, []);
 
     const handleConnect = React.useCallback((schemaId: string) => {
         let timeoutId: NodeJS.Timeout;
@@ -276,7 +276,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             try {
                 await sendMessage(Messages.SCHEMA_CONNECT, schemaId) as api.ConnectionInfo;
             } catch (error) {
-                addNotification(
+                addToast(
                     "error",
                     t("schema-connection-error", "Failed to connect to {{name}}!", { name: schemaName ?? schemaId }),
                     {
@@ -296,7 +296,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, delay);
 
         connect();
-    }, [data, sendMessage, refreshConnectionList, connectionStatus, addNotification, t, t_connectionSchema]);
+    }, [data, refreshConnectionList, connectionStatus, t_connectionSchema]);
 
     const handleConnectSuccess = React.useCallback((connection: ConnectionInfo) => {
         if (connection) {

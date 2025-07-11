@@ -26,8 +26,7 @@ import { SchemaParametersProps } from "@renderer/containers/SchemaAssistant/Sche
 import { DriverSummaryProps } from "@renderer/containers/SchemaAssistant/DriverSelect/DriverSummary";
 import { SchemaSummaryProps } from "@renderer/containers/SchemaAssistant/SchemaSummary/SchemaSummar";
 import { SchemaBookProps, SchemaListProps } from "@renderer/containers/SchemaBook";
-import { NotificationToastListProps } from "@renderer/components/notifications/NotificationToastList";
-import { NotificationAdminPanelProps } from "@renderer/components/ToolPanels/NotificationAdminPanel";
+import { ToastListProps } from "@renderer/components/notifications/ToastList";
 import { TabsPanelProps } from "@renderer/components/TabsPanel/TabsPanel";
 import { TabPanelProps } from "@renderer/components/TabsPanel/TabPanel";
 import { ToolButtonProps } from "@renderer/components/ToolButton";
@@ -107,8 +106,7 @@ declare module "@mui/material/styles" {
         SchemaSummary: "root" | "driver" | "schema";
         SchemaBook: "root";
         SchemaList: "root" | "content" | "title";
-        NotificationToastList: "root" | "paper" | "alert";
-        NotificationAdminPanel: "root";
+        ToastList: "root" | "paper" | "alert";
         TabsPanel: "root" | "header" | "content";
         TabPanel: "content" | "button" | "label" | "buttons";
         UnboundBadge: "root";
@@ -136,8 +134,7 @@ declare module "@mui/material/styles" {
         SchemaSummary: Partial<SchemaSummaryProps>;
         SchemaBook: Partial<SchemaBookProps>;
         SchemaList: Partial<SchemaListProps>;
-        NotificationToastList: Partial<NotificationToastListProps>;
-        NotificationAdminPanel: Partial<NotificationAdminPanelProps>;
+        ToastList: Partial<ToastListProps>;
         TabsPanel: Partial<TabsPanelProps>;
         TabPanel: Partial<TabPanelProps>;
         TabPanelLabel: Partial<TabPanelLabelProps>;
@@ -239,15 +236,10 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['SchemaList'];
             //variants?: ComponentsVariants['DriverSummary'];
         };
-        NotificationToastList?: {
-            defaultProps?: ComponentsPropsList['NotificationToastList'];
-            styleOverrides?: ComponentsOverrides<Theme>['NotificationToastList'];
-            //variants?: ComponentsVariants['NotificationToastList'];
-        };
-        NotificationAdminPanel?: {
-            defaultProps?: ComponentsPropsList['NotificationAdminPanel'];
-            styleOverrides?: ComponentsOverrides<Theme>['NotificationAdminPanel'];
-            //variants?: ComponentsVariants['NotificationAdminPanel'];
+        ToastList?: {
+            defaultProps?: ComponentsPropsList['ToastList'];
+            styleOverrides?: ComponentsOverrides<Theme>['ToastList'];
+            //variants?: ComponentsVariants['ToastList'];
         };
         TabsPanel?: {
             defaultProps?: ComponentsPropsList['TabsPanel'];

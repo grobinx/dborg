@@ -16,6 +16,10 @@ import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
 import ToolTextField from "../ToolTextField";
 import i18next from "i18next";
+import * as Messages from '../../app/Messages';
+import { StatusBarButton } from "@renderer/app/StatusBar";
+import { useMessages } from "@renderer/contexts/MessageContext";
+import { appStatusBarButtons } from "@renderer/app/App";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -67,7 +71,7 @@ function formatLogDetails(log: LogEntry | undefined): string | null {
     }
 
     return t(
-        "console-entry-details", 
+        "console-entry-details",
         'level: {{level}}, time: {{time}}\n{{details}}',
         {
             level: log.level,
@@ -283,7 +287,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             <ToolTextField
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("consoleLogs-search-placeholder", "Search logs...")}
+                placeholder={t("search---", "Search...")}
                 slotProps={{
                     input: {
                         startAdornment: (
@@ -354,4 +358,53 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     );
 };
 
-export default ConsoleLogPanel;
+export const ConsoleLogsStatusBarButtons: React.FC = () => {
+    const theme = useTheme();
+    const { emit } = useMessages();
+    const { logs } = useConsole();
+    const [notificationCounts, setNotificationCounts] = React.useState({
+        error: logs.filter(log => log.level === 'error').length,
+        warning: logs.filter(log => log.level === 'warn').length,
+        info: logs.filter(log => log.level === 'info').length,
+    });
+
+    React.useEffect(() => {
+        setNotificationCounts(prev => {
+            const counts = {
+                error: logs.filter(log => log.level === 'error').length,
+                warning: logs.filter(log => log.level === 'warn').length,
+                info: logs.filter(log => log.level === 'info').length,
+            };
+            if (prev.error !== counts.error || prev.warning !== counts.warning || prev.info !== counts.info) {
+                return counts;
+            }
+            return prev;
+        });
+    }, [logs]);
+
+    return (
+        <StatusBarButton
+            key="notifications"
+            onClick={() => {
+                emit(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "logs");
+            }}
+        >
+            <theme.icons.Error />
+            <span>{notificationCounts.error}</span>
+            <theme.icons.Warning />
+            <span>{notificationCounts.warning}</span>
+            <theme.icons.Hint />
+            <span>{notificationCounts.info}</span>
+        </StatusBarButton>
+    )
+}
+
+Promise.resolve().then(() => {
+    if (!appStatusBarButtons.static.has("ConsoleLogsStatusBarButtons")) {
+        const newMap = new Map<string, React.FC>([
+            ["ConsoleLogsStatusBarButtons", ConsoleLogsStatusBarButtons],
+            ...appStatusBarButtons.static, 
+        ]);
+        appStatusBarButtons.static = newMap;
+    }
+});

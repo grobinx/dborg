@@ -9,7 +9,7 @@ import SchemaParameters, { SchemaParametersRef } from "./SchemaParameters";
 import { SchemaParametersType } from "./SchemaParameters/SchemaTypes";
 import SchemaSummary from "./SchemaSummary/SchemaSummar";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import { ContainerType, useContainers } from "@renderer/contexts/ApplicationContext";
@@ -84,7 +84,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const [saveing, setSaving] = React.useState(false);
     const [testing, setTesting] = React.useState(false);
     const { drivers } = useDatabase();
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const schemaRef = React.useRef<SchemaParametersRef>(null);
     const [search, setSearch] = React.useState('');
     const { sendMessage, subscribe, unsubscribe } = useMessages();
@@ -133,7 +133,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             setAssistantMode("edit");
         }
         catch (error) {
-            addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
+            addToast("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
         }
     }, []);
 
@@ -154,7 +154,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             setAssistantMode("clone");
         }
         catch (error) {
-            addNotification("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
+            addToast("error", t("schema-load-error", "An error occurred while loading the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
         }
     }, []);
 
@@ -184,7 +184,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const saveSchema = (schema: SchemaParametersType) => {
         const save = async () => {
             if (!schema.schemaName) {
-                addNotification("warning", t("schema-name-required", "Schema name is required."), { source: t("schema-assistant", "Schema assistant") });
+                addToast("warning", t("schema-name-required", "Schema name is required."), { source: t("schema-assistant", "Schema assistant") });
                 return;
             }
             if (schema) {
@@ -224,7 +224,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                     setActiveStep(activeStep + 1);
                 }
                 catch (error) {
-                    addNotification("error", t("schema-save-error", "An error occurred while saving the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
+                    addToast("error", t("schema-save-error", "An error occurred while saving the schema."), { source: t("schema-assistant", "Schema assistant"), reason: error });
                 }
             }
         }
@@ -246,7 +246,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 await sendMessage(Messages.SCHEMA_TEST_CONNECTION, schema.driverUniqueId, schema.usePassword, schema.properties, schema.schemaName);
             }
             catch (error) {
-                addNotification("error",
+                addToast("error",
                     t("schema-test-error", "An error occurred while testing the schema connection \"{{name}}\".", { name: schema.schemaName }),
                     {
                         source: t("schema-assistant", "Schema assistant"), reason: error,

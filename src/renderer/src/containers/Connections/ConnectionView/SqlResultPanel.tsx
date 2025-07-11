@@ -9,7 +9,7 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Duration } from "luxon";
@@ -73,7 +73,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const lastQuery = useRef<string | null>(null);
     const [executing, setExecuting] = React.useState<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
     const statusBarRef = useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = useState<string>("100%");
@@ -193,7 +193,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     startTime: startTime,
                 });
             } catch (error) {
-                addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
+                addToast("error", "Error executing query", { reason: error, source: session.schema.sch_name });
                 setColumns([]);
                 setRows([]);
                 addQueryToHistory({
@@ -211,7 +211,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     try {
                         await cursor.close();
                     } catch (error) {
-                        addNotification("error", "Error executing query", { reason: error, source: session.schema.sch_name });
+                        addToast("error", "Error executing query", { reason: error, source: session.schema.sch_name });
                     }
                 }
             }
@@ -244,7 +244,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     startTime: Date.now(),
                 });
             } catch (error) {
-                addNotification("error", "Error executing command", { reason: error, source: session.schema.sch_name });
+                addToast("error", "Error executing command", { reason: error, source: session.schema.sch_name });
                 addQueryToHistory({
                     query: query!,
                     schema: session.schema.sch_name,

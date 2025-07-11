@@ -11,7 +11,7 @@ import {
     resolveRecordsFactory
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
@@ -29,7 +29,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [refresh, setRefresh] = React.useState(false);
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
@@ -55,7 +55,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     }, 10);
                 }
             } catch (error) {
-                addNotification("error", t("refresh-failed", "Refresh failed"), {
+                addToast("error", t("refresh-failed", "Refresh failed"), {
                     reason: error,
                     source: "GridSlot",
                 });

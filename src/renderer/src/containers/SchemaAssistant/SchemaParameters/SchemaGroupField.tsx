@@ -3,7 +3,7 @@ import React from 'react';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
-import { useNotification } from '@renderer/contexts/NotificationContext';
+import { useToast } from '@renderer/contexts/ToastContext';
 import ToolButton from '@renderer/components/ToolButton';
 
 interface SchemaGroupFieldProps {
@@ -32,7 +32,7 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
     const { internal } = useDatabase();
     const [groupList, setGroupList] = React.useState<GrupNameType[]>([]);
     const [loadingGroups, setLoadingGroups] = React.useState(false);
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
 
     const i18n_schemaGroup = t("schema-group", "Schema group");
 
@@ -53,7 +53,7 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
             }
         }
         catch (error) {
-            addNotification("error", (error as Error).message, { source: "SchemaAssistant", reason: error } )
+            addToast("error", (error as Error).message, { source: "SchemaAssistant", reason: error } )
         }
         if (result.length) {
             result.push({ value: "-" });

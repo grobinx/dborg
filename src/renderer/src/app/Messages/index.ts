@@ -4,7 +4,7 @@ import { SchemaRecord } from "../SchemaConnectionManager";
 /**
  * Toggle the visibility of the tools panel.
  */
-export const TOGGLE_TOOOLS_TABS_PANEL = "toggle-tools-tabs-panel";
+export const TOGGLE_TOOLS_TABS_PANEL = "toggle-tools-tabs-panel";
 
 /**
  * Switch to a specific tab in the tools panel.

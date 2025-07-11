@@ -17,8 +17,7 @@ const QueryHistoryStatusButton: React.FC = () => {
             key="query-history-status-button"
             toolTip={t("queryHistory-status-button-tooltip", "Query History")}
             onClick={() => {
-                sendMessage(Messages.TOGGLE_TOOOLS_TABS_PANEL);
-                sendMessage(Messages.SWITCH_PANEL_TAB, "tools-tabs-panel", "query-history");
+                sendMessage(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "query-history");
             }}
         >
             <theme.icons.QueryHistory />

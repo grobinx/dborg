@@ -11,7 +11,7 @@ import DatabaseSession, { IDatabaseSession } from './DatabaseSession';
 import { usePluginManager } from './PluginManagerContext';
 import { uuidv7 } from 'uuidv7';
 import { RefreshMetadata, TabPanelChangedMessage } from '@renderer/app/Messages';
-import { useNotification } from './NotificationContext';
+import { useToast } from './ToastContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
 import About from '@renderer/About';
@@ -98,7 +98,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const theme = useTheme();
     const { t } = useTranslation();
     const { sendMessage, subscribe, unsubscribe } = useMessages();
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
 
     const initialContainersRef = React.useRef<SpecificContainer[]>([
         {
@@ -239,7 +239,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.uniqueId,
                     error: error.message,
                 } as Messages.SessionGetMetadataError);
-                addNotification("error", "Error loading metadata", {
+                addToast("error", "Error loading metadata", {
                     reason: error,
                     source: session.schema.sch_name,
                 });

@@ -1,4 +1,4 @@
-import { useNotificationAdmin } from "../../contexts/NotificationContext";
+import { useToastAdmin } from "../../contexts/ToastContext";
 import { Paper, Alert, Zoom, Collapse, Grow, Fade, Slide, useTheme } from "@mui/material";
 import { AppSettings } from "@renderer/app.config";
 import { useSettings } from "@renderer/contexts/SettingsContext";
@@ -32,8 +32,8 @@ const transitionMap = {
 };
 
 // Styled TransitionGroup component
-const NotificationToastListRoot = styled(TransitionGroup, {
-    name: "NotificationToastList",
+const StyledToastListRoot = styled(TransitionGroup, {
+    name: "ToastList",
     slot: "root",
 })(({ /*theme*/ }) => ({
     position: "fixed",
@@ -48,19 +48,19 @@ const NotificationToastListRoot = styled(TransitionGroup, {
 
 // Styled Paper component extending MUI's Paper
 const StyledPaper = styled(Paper, {
-    name: "NotificationToastList",
+    name: "ToastList",
     slot: "paper",
 })(({ /*theme*/ }) => ({
 }));
 
 // Styled Alert component extending MUI's Alert
 const StyledAlert = styled(Alert, {
-    name: "NotificationToastList",
+    name: "ToastList",
     slot: "alert",
 })(({ /*theme*/ }) => ({
 }));
 
-export interface NotificationToastListProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ToastListProps extends React.HTMLAttributes<HTMLDivElement> {
     slotProps?: {
         paper?: React.ComponentProps<typeof Paper>;
         alert?: React.ComponentProps<typeof Alert>;
@@ -77,14 +77,14 @@ export interface NotificationToastListProps extends React.HTMLAttributes<HTMLDiv
     };
 }
 
-const NotificationToastList: React.FC<NotificationToastListProps> = (props) => {
-    const { notifications, dispatchNotification, showedNotification } = useNotificationAdmin();
+const ToastList: React.FC<ToastListProps> = (props) => {
+    const { toasts, dispatchToast, showedToast } = useToastAdmin();
     const [settings] = useSettings<AppSettings>("app");
     const theme = useTheme();
 
     // Use theme props to allow customization via slotProps
     const { slotProps, ...rootProps } = useThemeProps({
-        name: "NotificationToastList",
+        name: "ToastList",
         props: props,
     });
 
@@ -93,28 +93,27 @@ const NotificationToastList: React.FC<NotificationToastListProps> = (props) => {
     const TransitionComponent = transitionMap[transitionComponent ?? "Zoom"] ?? Zoom;
 
     return (
-        <NotificationToastListRoot
-            className={"NotificationToastList-root"}
-            {...rootProps} // Pass slotProps for NotificationToastListRoot
+        <StyledToastListRoot
+            className={"ToastList-root"}
+            {...rootProps}
         >
-            {notifications
-                .filter(({ close, toast }) => !close && toast)
+            {toasts
                 .sort((a, b) => a.posted - b.posted) // Sort by oldest first
                 .slice(0, settings.max_toast) // Take the oldest up to the max_toast limit
                 .map(({ id, type, message, shown, reason }) => {
                     if (!shown) {
-                        Promise.resolve().then(() => showedNotification(id)); // Mark as shown
+                        Promise.resolve().then(() => showedToast(id)); // Mark as shown
                     }
                     return (
                         <TransitionComponent key={id} {...transitionProps} {...transtionSlotProps?.[(transitionComponent ?? "zoom")?.toLowerCase()]}>
                             <StyledPaper
                                 {...slotProps?.paper}
-                                className={"NotificationToastList-paper"}
+                                className={"ToastList-paper"}
                             >
                                 <StyledAlert
                                     icon={theme.icons[alertIconMap[type]]()}
                                     severity={alertSeverityMap[type]}
-                                    onClose={() => dispatchNotification(id)}
+                                    onClose={() => dispatchToast(id)}
                                     {...slotProps?.alert} // Pass slotProps for Alert
                                 >
                                     {type === "error" && (
@@ -135,8 +134,8 @@ const NotificationToastList: React.FC<NotificationToastListProps> = (props) => {
                     );
                 })
             }
-        </NotificationToastListRoot>
+        </StyledToastListRoot>
     );
 };
 
-export default NotificationToastList;
+export default ToastList;

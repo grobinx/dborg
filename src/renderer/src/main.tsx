@@ -6,10 +6,10 @@ import './app.config';
 import { DialogsProvider } from '@toolpad/core';
 import { DatabaseProvider } from './contexts/DatabaseContext';
 import { SettingsContext, SettingsProvider } from './contexts/SettingsContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { MessageProvider } from './contexts/MessageContext';
 import SchemaConnectionManager from './app/SchemaConnectionManager';
-import NotificationToastList from './components/notifications/NotificationToastList';
+import ToastList from './components/notifications/ToastList';
 import ThemeWrapper from './themes/ThemeWrapper';
 import { ApplicationProvider } from './contexts/ApplicationContext';
 import { PluginManagerProvider } from './contexts/PluginManagerContext';
@@ -40,14 +40,14 @@ const AppWrapper: React.FC = () => {
     }
 
     return (
-        <NotificationProvider>
+        <ToastProvider>
             <ErrorBoundaryWrapper>
                 <GlobalErrorHandler />
                 <MessageProvider>
                     <DatabaseProvider>
                         <ThemeWrapper>
                             <DialogsProvider>
-                                <NotificationToastList />
+                                <ToastList />
                                 <SchemaConnectionManager />
                                 <PluginManagerProvider>
                                     <ApplicationProvider>
@@ -61,7 +61,7 @@ const AppWrapper: React.FC = () => {
                     </DatabaseProvider>
                 </MessageProvider>
             </ErrorBoundaryWrapper>
-        </NotificationProvider>
+        </ToastProvider>
     );
 };
 

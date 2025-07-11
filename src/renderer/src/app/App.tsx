@@ -1,24 +1,19 @@
 import * as React from 'react';
-import { Stack, Typography, useTheme } from '@mui/material';
+import { Stack, useTheme } from '@mui/material';
 import MenuBar from "./MenuBar";
 import SideBar from "./SideBar";
-import StatusBar, { StatusBarButton } from "./StatusBar";
+import StatusBar from "./StatusBar";
 import '@renderer/components/ToolPanels/QueryHistoryStatusButton';
 import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
 import { useSettings } from '@renderer/contexts/SettingsContext';
-import NotificationAdminPanel, { NotificationAdminPanelButtons, NotificationAdminPanelLabel } from '@renderer/components/ToolPanels/NotificationAdminPanel';
 import TabsPanel from '../components/TabsPanel/TabsPanel';
 import TabPanel from '../components/TabsPanel/TabPanel';
-import ToolButton from '../components/ToolButton';
 import { useMessages } from '@renderer/contexts/MessageContext';
 import * as Messages from './Messages';
-import TabPanelButtons from '../components/TabsPanel/TabPanelButtons';
 import { useContainers } from '@renderer/contexts/ApplicationContext';
 import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
-import { useNotificationAdmin } from '@renderer/contexts/NotificationContext';
-import TabPanelLabel from '@renderer/components/TabsPanel/TabPanelLabel';
 import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
 import { ConsoleLogPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from '@renderer/components/ToolPanels/ConsoleLogsPanel';
 
@@ -60,7 +55,7 @@ const App: React.FC = () => {
     const { height } = useWindowDimensions();
     const [settings, setSettings] = useSettings("app");
     const [placement, setPlacement] = React.useState<Placement>((settings.placement ?? "left") as Placement);
-    const [toolsTabsPanelVisible, setToolsTabsPanelVisible] = React.useState(() => {
+    const [toolsTabsPanelVisible, setToolsTabsPanelVisible] = React.useState<boolean>(() => {
         const storedValue = window.sessionStorage.getItem(App_toolsTabsPanelVisible);
         return storedValue !== null ? JSON.parse(storedValue) : false;
     });
@@ -68,8 +63,8 @@ const App: React.FC = () => {
     const [sideBarHeight, setSideBarHeight] = React.useState(0);
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
     const { containers, selectedContainer, selectedView } = useContainers();
-    const { notificationCounts } = useNotificationAdmin();
-    const { sendMessage } = useMessages();
+    const { emit } = useMessages();
+    const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
 
     const menuBarRef = React.useRef<HTMLDivElement>(null);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
@@ -77,9 +72,19 @@ const App: React.FC = () => {
 
     const { subscribe, unsubscribe } = useMessages();
 
-    const handleToggleToolsTabsPanelMessage = React.useCallback(() => {
+    const handleToggleToolsTabsPanelMessage = React.useCallback((tabsItemID: string, itemID: string) => {
         setToolsTabsPanelVisible((prev) => {
-            window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(!prev));
+            if (tabsItemID && itemID) {
+                emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
+                if (lastToolItemRef.current && lastToolItemRef.current.itemID !== itemID) {
+                    lastToolItemRef.current = { tabsItemID, itemID };
+                    return prev;
+                }
+                lastToolItemRef.current = { tabsItemID, itemID };
+            }
+            else {
+                lastToolItemRef.current = null;
+            }
             return !prev;
         });
     }, []);
@@ -88,6 +93,10 @@ const App: React.FC = () => {
         setPlacement(newPlacement);
         setSettings("placement", newPlacement);
     }, [setSettings, setPlacement]);
+
+    React.useEffect(() => {
+        window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(toolsTabsPanelVisible));
+    }, [toolsTabsPanelVisible]);
 
     React.useEffect(() => {
         const directionMap: Record<Placement, 'row' | 'row-reverse' | 'column' | 'column-reverse'> = {
@@ -101,11 +110,11 @@ const App: React.FC = () => {
 
     // Register and unregister message handlers
     React.useEffect(() => {
-        subscribe(Messages.TOGGLE_TOOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
+        subscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
         subscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
 
         return () => {
-            unsubscribe(Messages.TOGGLE_TOOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
+            unsubscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
             unsubscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
         };
     }, [
@@ -184,22 +193,16 @@ const App: React.FC = () => {
                     <SplitPanel defaultSize={20} hidden={!toolsTabsPanelVisible}>
                         <TabsPanel className="ToolsPanel" itemID="tools-tabs-panel">
                             <TabPanel
-                                itemID="notifications"
-                                label={<NotificationAdminPanelLabel />}
-                                buttons={<NotificationAdminPanelButtons />}
-                                content={<NotificationAdminPanel />}
+                                itemID="logs"
+                                label={<ConsoleLogsPanelLabel />}
+                                buttons={<ConsoleLogsPanelButtons />}
+                                content={<ConsoleLogPanel />}
                             />
                             <TabPanel
                                 itemID="query-history"
                                 label={<QueryHistoryPanelLabel />}
                                 buttons={<QueryHistoryPanelButtons />}
                                 content={<QueryHistoryPanel />}
-                            />
-                            <TabPanel
-                                itemID="console-logs"
-                                label={<ConsoleLogsPanelLabel />}
-                                buttons={<ConsoleLogsPanelButtons />}
-                                content={<ConsoleLogPanel />}
                             />
                         </TabsPanel>
                     </SplitPanel>
@@ -209,20 +212,6 @@ const App: React.FC = () => {
                 ref={statusBarRef}
                 buttons={{
                     first: [
-                        <StatusBarButton
-                            key="notifications"
-                            onClick={() => {
-                                sendMessage(Messages.TOGGLE_TOOOLS_TABS_PANEL);
-                                sendMessage(Messages.SWITCH_PANEL_TAB, "tools-tabs-panel", "notifications");
-                            }}
-                        >
-                            <theme.icons.Error />
-                            <span>{notificationCounts.error}</span>
-                            <theme.icons.Warning />
-                            <span>{notificationCounts.warning}</span>
-                            <theme.icons.Hint />
-                            <span>{notificationCounts.success + notificationCounts.hint}</span>
-                        </StatusBarButton>,
                         ...Array.from(appStatusBarButtons.static.values()).map((Button, index) => (<Button key={index} />)),
                         ...Array.from(appStatusBarButtons.hidden.values()).map((Button, index) => (<Button key={999 + index} />)),
                     ],

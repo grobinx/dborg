@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PropertiesInfo } from 'src/api/db';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { textFieldWidth } from './Utils';
-import { useNotification } from '@renderer/contexts/NotificationContext';
+import { useToast } from '@renderer/contexts/ToastContext';
 import ToolButton from '@renderer/components/ToolButton';
 import ColorPicker from '@renderer/components/useful/ColorPicker';
 
@@ -31,7 +31,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const { internal } = useDatabase();
     const [loadedPatterns, setLoadedPatterns] = React.useState<string[]>();
     const [colorPickerAnchoreEl, setColorPickerAnchoreEl] = React.useState<null | HTMLElement>(null);
@@ -84,7 +84,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                     result.push(row.sch_pattern as string);
                 }
             } catch (error) {
-                addNotification("error", (error as Error).message, { source: "SchemaAssistant", reason: error });
+                addToast("error", (error as Error).message, { source: "SchemaAssistant", reason: error });
             }
             setLoadedPatterns(result);
         };

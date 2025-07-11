@@ -9,7 +9,7 @@ import { Properties } from "src/api/db";
 import * as api from "../../../../api/db";
 import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 
 // Define the schema structure
 export interface SchemaRecord {
@@ -31,7 +31,7 @@ export interface SchemaRecord {
 const SchemaConnectionManager: React.FC = () => {
     const { subscribe, unsubscribe, sendMessage } = useMessages();
     const { internal, drivers, connections } = useDatabase();
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const dialogs = useDialogs();
     const { t } = useTranslation();
 
@@ -187,14 +187,14 @@ const SchemaConnectionManager: React.FC = () => {
             const connection = await drivers.connect(driverUniqueId, properties);
             await connections.close(connection.uniqueId);
 
-            addNotification("success", t("schema-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }), {
+            addToast("success", t("schema-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }), {
                 source: t_connectionSchemaManager,
             });
 
             return true;
         }
         catch (error) {
-            addNotification("error",
+            addToast("error",
                 t("schema-test-error", "An error occurred while testing the connection to \"{{name}}\".", { name: schemaName }),
                 {
                     source: t_connectionSchemaManager, reason: error,

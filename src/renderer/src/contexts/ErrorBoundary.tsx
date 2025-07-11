@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNotification } from './NotificationContext';
+import { useToast } from './ToastContext';
 
 interface ErrorBoundaryProps {
     onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
@@ -18,18 +18,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
 }
 
 export const ErrorBoundaryWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { addNotification } = useNotification();
 
     const handleError = (error: Error) => {
-        addNotification(
-            'error',
-            `Error: ${error.message}`,
-            {
-                reason: error,
-                source: 'ErrorBoundary',
-                toast: false,
-            }
-        );
+        console.error("Error caught in ErrorBoundary:", error);
     };
 
     return <ErrorBoundary onError={handleError}>{children}</ErrorBoundary>;

@@ -10,7 +10,7 @@ import ToolButton from "@renderer/components/ToolButton";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
-import { useNotification } from "@renderer/contexts/NotificationContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useDialogs } from "@toolpad/core";
 import { SelectCurrentCommand } from "./editor/actions/SelectCurrentCommand";
@@ -40,7 +40,7 @@ interface SqlEditorContentProps {
 
 export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const { session, tabsItemID, itemID, editorContentManager } = props;
-    const { addNotification } = useNotification();
+    const { addToast } = useToast();
     const { t } = useTranslation();
     const firstLineRef = useRef<string>("");
     const contentLoadedRef = useRef(false);
@@ -247,7 +247,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                     }
                 }
             }).catch((error) => {
-                addNotification(
+                addToast(
                     "error", t("error-loading-editor-content", "Error loading editor content"),
                     {
                         reason: error,
