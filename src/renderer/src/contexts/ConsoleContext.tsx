@@ -76,7 +76,7 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     logHandlerRef.current = (level: LogLevel, ...args: any[]) => {
         if (loggedLevels.includes(level)) {
-            logQueue.current.push({ id: uuidv7(), time: performance.now(), level, message: args });
+            logQueue.current.push({ id: uuidv7(), time: Date.now(), level, message: args });
             const fn = (originalConsole.current as any)[level] as ((...args: any[]) => void) | undefined;
             if (typeof fn === "function") {
                 fn(...args);

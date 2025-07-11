@@ -15,15 +15,20 @@ import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { create } from "zustand";
+import ToolTextField from "../ToolTextField";
 
 interface ConsoleLogState {
     showTime: boolean;
+    search: string;
     toggleShowTime: () => void;
+    setSearch: (search: string) => void;
 }
 
 export const useConsoleLogStore = create<ConsoleLogState>((set) => ({
     showTime: false,
+    search: "",
     toggleShowTime: () => set((state) => ({ showTime: !state.showTime })),
+    setSearch: (search: string) => set(() => ({ search: search })),
 }));
 
 function formatLogDetails(log: LogEntry | undefined): string | null {
@@ -63,6 +68,8 @@ function formatLogDetails(log: LogEntry | undefined): string | null {
     return `level: ${log.level}\ntime: ${log.time ? new Date(log.time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 }) : ""}\n${result}`;
 }
 
+let searchTimeoutId: NodeJS.Timeout | undefined = undefined;
+
 const StyledConsoleLogPanel = styled(FixedSizeList, {
     name: "ConsoleLogPanel",
     slot: "root",
@@ -76,11 +83,11 @@ const StyledConsoleLogDetailsPanel = styled('div', {
 })(({ /*theme*/ }) => ({
     height: "100%",
     width: "100%",
-    padding: 8, 
-    fontFamily: "monospace", 
-    fontSize: "0.8em", 
+    padding: 8,
+    fontFamily: "monospace",
+    fontSize: "0.8em",
     overflow: "auto",
-    whiteSpace: "pre-wrap", 
+    whiteSpace: "pre-wrap",
     wordBreak: "break-all"
 }));
 
@@ -105,25 +112,39 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
     const showTime = useConsoleLogStore(state => state.showTime);
+    const search = useConsoleLogStore(state => state.search);
+    const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
     };
 
+    useEffect(() => {
+        if ((search ?? "").trim() === "") {
+            setDisplayLogs(logs);
+        }
+        else {
+            clearTimeout(searchTimeoutId);
+            searchTimeoutId = setTimeout(() => {
+                setDisplayLogs(logs.filter(entry => formatLogDetails(entry)?.toLowerCase().includes(search.toLowerCase())));
+            }, 250);
+        }
+    }, [logs, search]);
+
     // Przewijanie do ostatniego elementu po zmianie logów
     useEffect(() => {
-        if (logs.length > 0) {
+        if (displayLogs.length > 0) {
             setTimeout(() => {
                 if (listRef.current && panelVisible) {
-                    listRef.current.scrollToItem(logs.length - 1, "end");
+                    listRef.current.scrollToItem(displayLogs.length - 1, "end");
                 }
             }, 100);
         }
-    }, [logs, panelVisible]);
+    }, [displayLogs, panelVisible]);
 
     // Render pojedynczego elementu listy
     const renderRow = ({ index, style }: ListChildComponentProps) => {
-        const log = logs[index];
+        const log = displayLogs[index];
         return (
             <ListItem
                 key={log.id}
@@ -179,7 +200,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                                     height={height}
                                     width={width}
                                     itemSize={itemSize ?? 20} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
-                                    itemCount={logs.length}
+                                    itemCount={displayLogs.length}
                                     overscanCount={overscanCount ?? 2} // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
                                     {...slotProps?.list}
                                 >
@@ -192,7 +213,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                     <SplitPanel defaultSize={25} >
                         {selectedItem ? (
                             <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details" {...slotProps?.details}>
-                                {formatLogDetails(logs.find(l => l.id === selectedItem))}
+                                {formatLogDetails(displayLogs.find(l => l.id === selectedItem))}
                             </StyledConsoleLogDetailsPanel>
                         ) : (
                             <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details no-selection" {...slotProps?.details}>
@@ -219,7 +240,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { showTime, toggleShowTime } = useConsoleLogStore();
-    const { emit } = useMessages();
+    const { search, setSearch } = useConsoleLogStore();
 
     // Obsługa zmiany zaznaczenia
     const handleLogLevelChange = (event: SelectChangeEvent<LogLevel[]>) => {
@@ -246,6 +267,18 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
 
     return (
         <TabPanelButtons>
+            <ToolTextField
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("consoleLogs-search-placeholder", "Search logs...")}
+                slotProps={{
+                    input: {
+                        startAdornment: (
+                            <theme.icons.Search />
+                        ),
+                    }
+                }}
+            />
             <Tooltip title={t("show-item-time", "Show item time")}>
                 <span>
                     <ToolButton
