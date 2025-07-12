@@ -399,6 +399,7 @@ export class ActionManager<T> {
             return [];
         }
 
+        console.debug("ActionManager.getRegisteredActions");
         const actionGroup = Array.from(this.actionGroups.values()).find(group => group.prefix === prefix);
 
         if (!actionGroup) {
@@ -406,19 +407,6 @@ export class ActionManager<T> {
         }
 
         let actions: ActionDescriptor<T>[] = await actionGroup.actions(context!, query);
-
-        if ((actionGroup.mode ?? 'actions') === 'actions' && query && query !== '') {
-            // Rozdziel query na fragmenty oddzielone spacją
-            const queryParts = query.toLocaleLowerCase().split(' ').filter(Boolean);
-
-            actions = actions.filter((command) => {
-                // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
-                return queryParts.every((part) =>
-                    command.label.toLocaleLowerCase().includes(part) ||
-                    (command.secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
-                );
-            });
-        }
 
         if ((actionGroup.mode ?? 'actions') === 'actions' && actionGroup.id === 'default') {
             actions = actions.sort((a, b) => {

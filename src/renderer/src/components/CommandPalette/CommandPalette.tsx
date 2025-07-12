@@ -210,25 +210,61 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     // Always calculate filteredCommands, even if the component is not open
     const [filteredCommands, setFilteredCommands] = useState<ActionDescriptor<any>[]>([]);
+    const cachedActions = useRef<Record<string, ActionDescriptor<any>[]>>({});
 
     useEffect(() => {
-        let isMounted = true;
+        if (!open) {
+            cachedActions.current = {}; // Wyczyść pamięć podręczną po zamknięciu
+        }
+    }, [open]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const signal = controller.signal;
+
         const fetchCommands = async () => {
             if (!open || !manager) {
-                if (isMounted) setFilteredCommands([]);
+                setFilteredCommands([]);
                 return;
             }
+
             // Usuń prefix z searchQuery, jeśli istnieje
             const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
                 ? searchText.slice((selectedGroup?.prefix || '').length).trim()
                 : searchText;
 
-            const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContext?.(), queryWithoutPrefix);
-            if (isMounted) setFilteredCommands(actions);
+            if (selectedGroup && (selectedGroup?.mode ?? "actions") === "actions") {
+                // Tryb "actions": pobierz akcje tylko raz na zmianę `open`
+                if (!cachedActions.current[selectedGroup.prefix || ""]) {
+                    const actions = await manager.getRegisteredActions(selectedGroup.prefix, getContext?.());
+                    cachedActions.current[selectedGroup.prefix || ""] = actions; // Zapisz w pamięci podręcznej
+                }
+                if (!signal.aborted) {
+                    // Rozdziel query na fragmenty oddzielone spacją
+                    const queryParts = queryWithoutPrefix.toLocaleLowerCase().split(' ').filter(Boolean);
+
+                    const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
+                        // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
+                        return queryParts.every((part) =>
+                            command.label.toLocaleLowerCase().includes(part) ||
+                            (command.secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
+                        );
+                    });
+                    setFilteredCommands(actions);
+                }
+            } else {
+                // Tryb "filter": pobierz akcje za każdym razem
+                const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContext?.(), queryWithoutPrefix);
+                if (!signal.aborted) {
+                    setFilteredCommands(actions);
+                }
+            }
         };
+
         fetchCommands();
+
         return () => {
-            isMounted = false;
+            controller.abort();
         };
     }, [open, manager, searchText, selectedGroup, getContext]);
 
