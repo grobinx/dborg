@@ -7,7 +7,7 @@ import ToolButton from "../ToolButton";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
-import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider } from "@mui/material";
+import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab } from "@mui/material";
 import { useIsVisible } from "@renderer/hooks/useIsVisible";
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
@@ -20,6 +20,9 @@ import * as Messages from '../../app/Messages';
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { appStatusBarButtons } from "@renderer/app/App";
+import TabsPanel from "../TabsPanel/TabsPanel";
+import TabPanel from "../TabsPanel/TabPanel";
+import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -35,56 +38,6 @@ export const useConsoleLogStore = create<ConsoleLogState>((set) => ({
     setSearch: (search: string) => set(() => ({ search: search })),
 }));
 
-function formatLogDetails(log: LogEntry | undefined): string | null {
-    const t = i18next.t.bind(i18next);
-    if (!log) return null;
-
-    const formatValue = (value: any): string => {
-        if (typeof value === "string") return value;
-        if (value instanceof Error) return `${value.name}: ${value.message}\n${value.stack ?? ""}`;
-        if (Array.isArray(value)) return value.map(formatValue).join("\n");
-        if (typeof value === "object" && value !== null) {
-            if (("stack" in value || "name" in value) && "message" in value) {
-                return [
-                    `name: ${value.name}`,
-                    `message: ${value.message}`,
-                    value.stack ? `stack: ${value.stack}` : null,
-                    ...Object.entries(value)
-                        .filter(([k]) => !["name", "message", "stack"].includes(k))
-                        .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)}`)
-                ].filter(Boolean).join("\n");
-            }
-            try {
-                return JSON.stringify(value, null, 2);
-            } catch {
-                return String(value);
-            }
-        }
-        return String(value);
-    };
-
-    let result: string = "";
-    if (Array.isArray(log.message)) {
-        result = log.message.map(formatValue).join("\n");
-    } else {
-        result = formatValue(log.message);
-    }
-
-    return t(
-        "console-entry-details",
-        'level: {{level}}, time: {{time}}\n{{details}}',
-        {
-            level: log.level,
-            time: formatTime(log.time),
-            details: result,
-        }
-    );
-}
-
-function formatTime(time: number): string {
-    return new Date(time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 });
-}
-
 let searchTimeoutId: NodeJS.Timeout | undefined = undefined;
 
 const StyledConsoleLogPanel = styled(FixedSizeList, {
@@ -92,20 +45,6 @@ const StyledConsoleLogPanel = styled(FixedSizeList, {
     slot: "root",
 })(({ /*theme*/ }) => ({
     // Add styles for the list container if needed
-}));
-
-const StyledConsoleLogDetailsPanel = styled('div', {
-    name: "ConsoleLogPanel",
-    slot: "details",
-})(({ /*theme*/ }) => ({
-    height: "100%",
-    width: "100%",
-    padding: 8,
-    fontFamily: "monospace",
-    fontSize: "0.8em",
-    overflow: "auto",
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-all"
 }));
 
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
@@ -228,15 +167,26 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                     </SplitPanel>
                     <Splitter />
                     <SplitPanel defaultSize={25} >
-                        {selectedItem ? (
-                            <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details" {...slotProps?.details}>
-                                {formatLogDetails(displayLogs.find(l => l.id === selectedItem))}
-                            </StyledConsoleLogDetailsPanel>
-                        ) : (
-                            <StyledConsoleLogDetailsPanel className="ConsoleLogPanel-details no-selection" {...slotProps?.details}>
-                                {t("consoleLogs-no-selection", "Select a log entry to view details")}
-                            </StyledConsoleLogDetailsPanel>
-                        )}
+                        <TabsPanel itemID='log-item-details-tabs'>
+                            <TabPanel
+                                itemID='log-details'
+                                label={<ConsoleLogDetailsLabel />}
+                                content={<ConsoleLogDetailsContent
+                                    item={displayLogs.find(l => l.id === selectedItem)}
+                                    {...slotProps?.details}
+                                />}
+                                buttons={<ConsoleLogDetailsButtons />}
+                            />
+                            <TabPanel
+                                itemID='log-stacktrace'
+                                label={<ConsoleLogStackTraceLabel />}
+                                content={<ConsoleLogStackTraceContent
+                                    stack={displayLogs.find(l => l.id === selectedItem)?.stack}
+                                    {...slotProps?.details}
+                                />}
+                                buttons={<ConsoleLogStackTraceButtons />}
+                            />
+                        </TabsPanel>
                     </SplitPanel>
                 </SplitPanelGroup>
             )}
@@ -245,9 +195,11 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
 };
 
 export const ConsoleLogsPanelLabel: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <TabPanelLabel>
-            <span>Console Logs</span>
+            <span>{t("console-logs", "Console Logs")}</span>
         </TabPanelLabel>
     );
 };
@@ -403,7 +355,7 @@ Promise.resolve().then(() => {
     if (!appStatusBarButtons.static.has("ConsoleLogsStatusBarButtons")) {
         const newMap = new Map<string, React.FC>([
             ["ConsoleLogsStatusBarButtons", ConsoleLogsStatusBarButtons],
-            ...appStatusBarButtons.static, 
+            ...appStatusBarButtons.static,
         ]);
         appStatusBarButtons.static = newMap;
     }

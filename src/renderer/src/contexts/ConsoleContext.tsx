@@ -154,12 +154,12 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         // Obsługa console.group
         console.group = (label: string) => {
-            logHandlerRef.current!('group', `Group: ${label}`);
+            logHandlerRef.current!('group', 'Group', label);
         };
 
         // Obsługa console.groupCollapsed
         console.groupCollapsed = (label: string) => {
-            logHandlerRef.current!('groupCollapsed', `Group (collapsed): ${label}`);
+            logHandlerRef.current!('groupCollapsed', 'Group (collapsed)', label);
         };
 
         // Obsługa console.groupEnd
@@ -175,27 +175,27 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Obsługa console.assert
         console.assert = (condition: boolean, ...args: any[]) => {
             if (!condition) {
-                logHandlerRef.current!('assert', 'Assertion failed:', ...args);
+                logHandlerRef.current!('assert', 'Assertion failed', ...args);
             }
         };
 
         // Obsługa console.trace
         console.trace = (...args: any[]) => {
-            logHandlerRef.current!('trace', 'Trace:', ...args);
+            logHandlerRef.current!('trace', 'Trace', ...args);
         };
 
         // Obsługa console.count
         const counters: Record<string, number> = {};
         console.count = (label: string = 'default') => {
             counters[label] = (counters[label] || 0) + 1;
-            logHandlerRef.current!('count', `${label}: ${counters[label]}`);
+            logHandlerRef.current!('count', label, counters[label]);
         };
 
         // Obsługa console.countReset
         console.countReset = (label: string = 'default') => {
             if (counters[label]) {
                 counters[label] = 0;
-                logHandlerRef.current!('countReset', `${label} counter reset`);
+                logHandlerRef.current!('countReset', label, 'counter reset');
             } else {
                 logHandlerRef.current!('warn', `Counter "${label}" does not exist`);
             }
