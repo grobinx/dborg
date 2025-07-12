@@ -42,18 +42,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
         const fetchRows = async () => {
             setLoading(true);
             try {
-                let position: TableCellPosition | null = null;
-                if (dataGridRef && dataGridRef.current && dataGridRef.current.isFocused()) {
-                    position = dataGridRef.current.getPosition();
-                }
                 setRows(await resolveRecordsFactory(slot.rows, refreshSlot) ?? []);
                 setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
-                if (position) {
-                    setTimeout(() => {
-                        dataGridRef!.current!.setPosition(position);
-                        dataGridRef!.current!.focus();
-                    }, 10);
-                }
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), {
                     reason: error,

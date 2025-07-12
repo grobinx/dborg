@@ -23,6 +23,7 @@ import ToolTextField from "@renderer/components/ToolTextField";
 import { ToolLabel } from "@renderer/components/ToolLabel";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
+import { AdjustWidthToData_ID } from "@renderer/components/DataGrid/actions";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -134,10 +135,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
     React.useEffect(() => {
         const fetchData = async () => {
-            let cellPosition: TableCellPosition | null = null;
-            if (query === lastQuery.current && dataGridRef.current && dataGridRef.current.isFocused()) {
-                cellPosition = dataGridRef.current.getPosition();
-            }
             let time = Date.now();
             cancelLoading.current = false;
             setUpdatedCount(null);
@@ -176,14 +173,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setFetchDuration(fetchTime);
                 setColumns(queryToDataGridColumns(info.columns ?? []))
                 setRows(rows);
-                if (cellPosition) {
-                    setTimeout(() => {
-                        if (dataGridRef.current) {
-                            dataGridRef.current.setPosition(cellPosition);
-                            dataGridRef.current.focus();
-                        }
-                    }, 10);
-                }
                 addQueryToHistory({
                     query: query!,
                     schema: session.schema.sch_name,

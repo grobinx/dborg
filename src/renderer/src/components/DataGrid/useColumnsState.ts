@@ -64,14 +64,14 @@ function restoreColumnsLayout(
     initialColumns: ColumnDefinition[],
     key: string,
     useSession: boolean,
-    onRestore?: (data: Record<string, any>) => void,
+    onRestore?: (data: Record<string, any> | null) => void,
 ): ColumnDefinition[] {
     const storage = useSession ? sessionStorage : localStorage;
     const saved = storage.getItem(key);
 
     if (!saved) {
         if (onRestore) {
-            onRestore({});
+            onRestore(null);
         }
         return initialColumns;
     }
@@ -87,7 +87,7 @@ function restoreColumnsLayout(
             )
         ) {
             if (onRestore) {
-                onRestore({});
+                onRestore(null);
             }
             return initialColumns;
         }
@@ -163,7 +163,7 @@ export const useColumnsState = (
     mode: DataGridMode,
     autoSaveId?: string,
     onSave?: () => Record<string, any>,
-    onRestore?: (data: Record<string, any>) => void
+    onRestore?: (data: Record<string, any> | null) => void
 ): UseColumnsState => {
     const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>

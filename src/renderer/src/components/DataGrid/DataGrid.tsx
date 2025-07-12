@@ -417,9 +417,9 @@ export const DataGrid = <T extends object>({
         };
     };
 
-    const onRestoreColumnsState = (data: Record<string, any>) => {
+    const onRestoreColumnsState = (data: Record<string, any> | null) => {
         filterColumns.clearFilters();
-        if (data.filters) {
+        if (data?.filters) {
             Object.entries(data.filters).forEach(([key, filter]) => {
                 if (isColumnFilter(filter)) {
                     filterColumns.setFilter(key, filter.operator, filter.not, filter.values);
@@ -428,10 +428,15 @@ export const DataGrid = <T extends object>({
             });
         }
         groupingColumns.clearColumns();
-        if (data.grouping && Array.isArray(data.grouping)) {
+        if (data?.grouping && Array.isArray(data.grouping)) {
             data.grouping.forEach((grouping: string) => {
                 groupingColumns.toggleColumn(grouping);
             });
+        }
+        if (!data) {
+            setTimeout(() => {
+                setAdjustWidthExecuted(true); // Wymuś ponowne przeliczenie szerokości kolumn
+            }, 100);
         }
     };
 
@@ -459,7 +464,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid mounted");
         setDataState(data);
         setSelectedRows([]);
-        setSelectedCell(null);
+        //setSelectedCell(null);
     }, [data]);
 
     useEffect(() => {
@@ -475,6 +480,7 @@ export const DataGrid = <T extends object>({
             searchState.resetSearch();
             //filterColumns.clearFilters();
             //columnsState.resetHiddenColumns();
+            setSelectedCell({ row: 0, column: 0 });
         }
     }, [columns]);
 
@@ -684,14 +690,16 @@ export const DataGrid = <T extends object>({
     };
 
     useEffect(() => {
-        console.debug("DataGrid adjust row number column width");
-        if (containerRef.current) {
-            const maxRowNumber = filteredDataState.length; // Maksymalny numer wiersza
-            const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
-            const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily) ?? 40, 40);
-            setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2); // Minimalna szerokość to 50px
+        if (showRowNumberColumn) {
+            console.debug("DataGrid adjust row number column width");
+            if (containerRef.current) {
+                const maxRowNumber = filteredDataState.length; // Maksymalny numer wiersza
+                const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
+                const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily) ?? 40, 40);
+                setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2); // Minimalna szerokość to 50px
+            }
         }
-    }, [filteredDataState.length, fontSize, fontFamily]);
+    }, [filteredDataState.length, fontSize, showRowNumberColumn]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -862,20 +870,12 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
-        console.debug("DataGrid adjust width to data");
-        if (mode === "data" && !adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
+        if (mode === "data" && adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
+            console.debug("DataGrid adjust width to data");
             actionManager.current.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
-            setAdjustWidthExecuted(true);
+            setAdjustWidthExecuted(false); // Resetuj flagę po wykonaniu akcji
         }
-    }, [adjustWidthExecuted, actionManager.current, filteredDataState, mode]);
-
-    // Resetuj stan przy zmianie dataState
-    useEffect(() => {
-        console.debug("DataGrid reset adjust width executed");
-        if (mode === "data" && columnsState.layoutChanged) {
-            setAdjustWidthExecuted(false);
-        }
-    }, [dataState, columnsState.layoutChanged]);
+    }, [adjustWidthExecuted, actionManager.current, filteredDataState.length, mode, startRow]);
 
     useEffect(() => {
         console.debug("DataGrid mount effect");
