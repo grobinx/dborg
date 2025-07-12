@@ -25,11 +25,19 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
 import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
+import { useTabs } from "@renderer/components/TabsPanel/useTabs";
+import { use } from "i18next";
+import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
 export const SQL_EDITOR_SHOW_STRUCTURE = "sql-editor:show-structure";
+
+export const SQL_EDITOR_FOCUS = "sql-editor:focus";
+export interface SqlEditorFocusMessage {
+    sessionId: string;
+}
 
 interface SqlEditorContentProps {
     session: IDatabaseSession;
@@ -45,27 +53,24 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const firstLineRef = useRef<string>("");
     const contentLoadedRef = useRef(false);
     const [editorInstance, setEditorInstance] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const updateCursorPositionRef = useRef<() => void>(() => { }); // Referencja na funkcję
     const updateEditorContentRef = useRef<() => void>(() => { }); // Referencja na funkcję
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, sendMessage } = useMessages();
     const databaseMetadataRef = React.useRef<DatabaseMetadata | null>(null);
     const hoverProviderRef = useRef<monaco.IDisposable | null>(null);
     const editorFocusedRef = useRef(false);
     const currentFragmentRef = useRef<string | null>(null);
     const currentSqlAstRef = useRef<AstComponent[] | null>(null);
+    const { tabIsActiveRef } = useTabs(tabsItemID, itemID, () => {
+        if (editorInstance) {
+            editorInstance.focus();
+        }
+    });
 
     useEffect(() => {
-        const handleTabPanelClick = (message: TabPanelClickMessage) => {
-            if (message.itemID === itemID && editorInstance) {
-                editorInstance.focus();
-            }
-        }
-        // Subskrybuj zdarzenie kliknięcia w zakładkę
-        subscribe(TAB_PANEL_CLICK, handleTabPanelClick);
-        return () => {
-            unsubscribe(TAB_PANEL_CLICK, handleTabPanelClick);
-        };
-    }, [itemID, editorInstance]);
+        editorInstanceRef.current = editorInstance;
+    }, [editorInstance]);
 
     const addHoverProvider = () => {
         if (hoverProviderRef.current || !editorFocusedRef.current) {
@@ -170,9 +175,15 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         }
         initMetadata();
 
-        subscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
+        const unsubscribeGetMetadataSuccess = subscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
+        const unsubscribeFocus = subscribe(SQL_EDITOR_FOCUS, (message: SqlEditorFocusMessage) => {
+            if (message.sessionId === session.info.uniqueId && editorInstanceRef.current && tabIsActiveRef.current) {
+                editorInstanceRef.current.focus();
+            }
+        });
         return () => {
-            unsubscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
+            unsubscribeGetMetadataSuccess();
+            unsubscribeFocus();
         };
     }, [session]);
 
@@ -305,6 +316,9 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         editor.addAction(AddSqlEditorTab(t, () => { sendMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
         editor.addAction(CloseSqlEditorTab(t, () => { sendMessage(SQL_EDITOR_CLOSE, itemID); }));
         editor.addAction(MenuReopenSqlEditorTab(t, () => { sendMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
+            sendMessage(SQL_RESULT_FOCUS, { sessionId: session.info.uniqueId });
+        });
 
         // Nasłuchiwanie zmian w pozycji kursora
         editor.onDidChangeCursorPosition((_e: monaco.editor.ICursorPositionChangedEvent) => {
@@ -404,20 +418,10 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const theme = useTheme();
     const [label, setLabel] = React.useState<string>("SQL Editor");
-    const [tabsLength, setTabsLength] = React.useState<number | null>(null); // Domyślnie 1 zakładka
-    const [active, setActive] = React.useState(false);
+    const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, sendMessage } = useMessages();
 
     React.useEffect(() => {
-        const handleTabPanelChangedMessage = (message: TabPanelChangedMessage) => {
-            if (tabsItemID === message.tabsItemID) {
-                const newActive = message.itemID === itemID;
-                if (newActive !== active) {
-                    setActive(newActive);
-                }
-            }
-        };
-
         const handleFirstLineChanged = (data: { isComment: boolean; content: string; itemID?: string }) => {
             if (itemID !== data.itemID) {
                 return; // Sprawdź, czy itemID się zgadza
@@ -430,22 +434,11 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             }
         };
 
-        const handleTabsLengthChange = (message: TabPanelLengthMessage) => {
-            if (tabsItemID !== message.tabsItemID) {
-                return; // Sprawdź, czy tabsItemID się zgadza
-            }
-            setTabsLength(message.length);
-        };
-
-        subscribe(Messages.TAB_PANEL_CHANGED, handleTabPanelChangedMessage);
         subscribe(SQL_EDITOR_FIRST_LINE_CHANGED, handleFirstLineChanged);
-        subscribe(TAB_PANEL_LENGTH, handleTabsLengthChange);
         return () => {
-            unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabPanelChangedMessage);
             unsubscribe(SQL_EDITOR_FIRST_LINE_CHANGED, handleFirstLineChanged);
-            unsubscribe(TAB_PANEL_LENGTH, handleTabsLengthChange);
         };
-    }, [tabsItemID, itemID, active]);
+    }, [tabsItemID, itemID]);
 
     return (
         <TabPanelLabel>
@@ -455,7 +448,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
                 color="error"
                 onClick={() => sendMessage(SQL_EDITOR_CLOSE, itemID)}
                 size="small"
-                disabled={!active || (tabsLength ?? 0) <= 1}
+                disabled={!tabIsActive || tabsCount <= 1}
             >
                 <theme.icons.Close />
             </ToolButton>

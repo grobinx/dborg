@@ -15,17 +15,21 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Duration } from "luxon";
 import { TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "@renderer/app/Messages";
 import { SQL_RESULT_CLOSE } from "./ResultsTabs";
-import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
+import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_FOCUS, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
 import { QueryResultRow } from "src/api/db";
-import { useFocus } from "@renderer/hooks/useFocus";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
 import ToolTextField from "@renderer/components/ToolTextField";
 import { ToolLabel } from "@renderer/components/ToolLabel";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
-import { AdjustWidthToData_ID } from "@renderer/components/DataGrid/actions";
+import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
+
+export const SQL_RESULT_FOCUS = "sql-result:focus";
+export interface SqlResultFocusMessage {
+    sessionId: string;
+}
 
 interface SqlResultState {
     tabs: {
@@ -69,10 +73,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const { subscribe, unsubscribe, sendMessage } = useMessages();
     const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
     const [rows, setRows] = React.useState<object[] | null>(null);
-    const [active, setActive] = React.useState(false);
     const [query, setQuery] = React.useState<string | null>(null);
     const lastQuery = useRef<string | null>(null);
     const [executing, setExecuting] = React.useState<boolean | null>(null);
+    const executingRef = useRef<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
     const { addToast } = useToast();
     const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
@@ -89,6 +93,15 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
     const removeTabState = useSqlResultStore((state) => state.removeState);
     const { addQueryToHistory } = useQueryHistory();
+    const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID, () => {
+        if (dataGridRef.current) {
+            dataGridRef.current.focus();
+        }
+    });
+
+    useEffect(() => {
+        executingRef.current = executing;
+    }, [executing]);
 
     useEffect(() => {
         if (session.info.driver.maxFetchSizeProperty && session.info.driver.properties[session.info.driver.maxFetchSizeProperty]) {
@@ -102,6 +115,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     }, [session, itemID]);
 
     const onMountHandle = (context: DataGridContext<any>) => {
+        context.addCommand("Ctrl+Tab", () => {
+            sendMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.uniqueId });
+        });
         context.addAction({
             id: "refresh-query",
             label: t("refresh-query", "Refresh query"),
@@ -279,28 +295,11 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     }, [executing, itemID, session.info.uniqueId]);
 
     React.useEffect(() => {
-        const handleSwitchTabMessage = (message: TabPanelChangedMessage) => {
-            if (tabsItemID === message.tabsItemID) {
-                const newActive = message.itemID === itemID;
-                if (newActive !== active) {
-                    setActive(newActive);
-                    if (active && dataGridRef.current) {
-                        dataGridRef.current.focus(); // Ustaw fokus na DataGrid
-                    }
-                }
-            }
-        };
-        const handleTabPanelClick = (message: TabPanelClickMessage) => {
-            if (message.itemID === itemID && dataGridRef.current) {
-                dataGridRef.current.focus();
-            }
-        }
-
         const handleSqlExecute = (message: { to: string, from: string, query: string }) => {
-            if (message.to !== session.info.uniqueId || executing) {
+            if (message.to !== session.info.uniqueId || executingRef.current) {
                 return;
             }
-            if (active) {
+            if (tabIsActiveRef.current) {
                 setQuery(message.query);
                 setForceQueryExecution((prev) => !prev); // Wymuszenie odświeżenia
             }
@@ -310,7 +309,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             if (message.to !== session.info.uniqueId) {
                 return;
             }
-            if (active) {
+            if (tabIsActiveRef.current) {
                 setQuery(null);
                 setQueryDuration(null);
                 setColumns(message.columns);
@@ -318,17 +317,19 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             }
         };
 
-        subscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
-        subscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
-        subscribe(Messages.TAB_PANEL_CLICK, handleTabPanelClick);
-        subscribe(Messages.TAB_PANEL_CHANGED, handleSwitchTabMessage);
+        const unsubscribeExecuteQuery = subscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
+        const unsubscribeShowStructure = subscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
+        const unsubscribeResultFocus = subscribe(SQL_RESULT_FOCUS, (message: SqlResultFocusMessage) => {
+            if (message.sessionId === session.info.uniqueId) {
+                dataGridRef.current?.focus();
+            }
+        });
         return () => {
-            unsubscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
-            unsubscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
-            unsubscribe(Messages.TAB_PANEL_CLICK, handleTabPanelClick);
-            unsubscribe(Messages.TAB_PANEL_CHANGED, handleSwitchTabMessage);
+            unsubscribeExecuteQuery();
+            unsubscribeShowStructure();
+            unsubscribeResultFocus();
         };
-    }, [tabsItemID, itemID, active, executing]);
+    }, [tabsItemID, itemID]);
 
     return (
         <Stack
@@ -367,7 +368,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                             }
                             : undefined
                     }
-                    active={active}
+                    active={tabIsActive}
                     onChange={(status) => setDataGridStatus(status)}
                     onMount={onMountHandle}
                     ref={dataGridRef}
@@ -420,52 +421,28 @@ interface SqlResultLabelProps {
 export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const theme = useTheme();
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, sendMessage } = useMessages();
     const [label, setLabel] = useState<string>("Result");
-    const [tabsLength, setTabsLength] = React.useState<number | null>(null); // Domyślnie 1 zakładka
-    const [active, setActive] = React.useState(false);
+    const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID);
     const [executing, setExecuting] = React.useState(false); // Dodano stan dla wykonywania zapytania
     const [highlight, setHighlight] = React.useState(false); // Stan dla zmiany koloru
 
     React.useEffect(() => {
-        const handleTabPanelChangedMessage = (message: TabPanelChangedMessage) => {
-            if (tabsItemID === message.tabsItemID) {
-                const newActive = message.itemID === itemID;
-                if (newActive !== active) {
-                    setActive(newActive);
-                    if (newActive) {
-                        setHighlight(false); // Resetuj kolor, gdy zakładka staje się aktywna
-                    }
-                }
-            }
-        };
-
-        const handleTabsLengthChange = (message: TabPanelLengthMessage) => {
-            if (tabsItemID !== message.tabsItemID) {
-                return; // Sprawdź, czy tabsItemID się zgadza
-            }
-            setTabsLength(message.length);
-        };
-
         const handleQueryExecuting = (message: { to: string, status: boolean }) => {
             if (message.to !== itemID) {
                 return; // Ignoruj wiadomości, które nie są skierowane do tego elementu
             }
             setExecuting(message.status); // Aktualizuj stan wykonywania zapytania
-            if (!message.status && !active) {
+            if (!message.status && !tabIsActiveRef.current) {
                 setHighlight(true); // Ustaw kolor, gdy zapytanie zakończy się i zakładka nie jest aktywna
             }
         };
 
-        subscribe(Messages.TAB_PANEL_CHANGED, handleTabPanelChangedMessage);
-        subscribe(TAB_PANEL_LENGTH, handleTabsLengthChange);
-        subscribe(SQL_RESULT_SQL_QUERY_EXECUTING, handleQueryExecuting);
+        const unsubscribeQueryExecuting = subscribe(SQL_RESULT_SQL_QUERY_EXECUTING, handleQueryExecuting);
         return () => {
-            unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabPanelChangedMessage);
-            unsubscribe(TAB_PANEL_LENGTH, handleTabsLengthChange);
-            unsubscribe(SQL_RESULT_SQL_QUERY_EXECUTING, handleQueryExecuting);
+            unsubscribeQueryExecuting();
         };
-    }, [tabsItemID, itemID, active]);
+    }, [tabsItemID, itemID]);
 
     return (
         <TabPanelLabel>
@@ -479,7 +456,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
                 color="error"
                 onClick={() => sendMessage(SQL_RESULT_CLOSE, itemID)}
                 size="small"
-                disabled={!active || /* (tabsLength ?? 0) <= 1 ||  */executing}
+                disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
             >
                 <theme.icons.Close />
             </ToolButton>
