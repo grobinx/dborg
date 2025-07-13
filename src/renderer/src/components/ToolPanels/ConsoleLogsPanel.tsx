@@ -8,7 +8,7 @@ import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } fr
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
 import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab } from "@mui/material";
-import { useIsVisible } from "@renderer/hooks/useIsVisible";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
 import ToolSelect from "../useful/ToolSelect";
@@ -64,7 +64,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const { logs } = useConsole();
     const { t } = useTranslation();
     const theme = useTheme();
-    const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
+    const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
     const showTime = useConsoleLogStore(state => state.showTime);

@@ -11,12 +11,12 @@ import { ColumnDefinition } from "../DataGrid/DataGridTypes";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import { DataGrid } from "../DataGrid/DataGrid";
-import { useIsVisible } from "@renderer/hooks/useIsVisible";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
     const { t } = useTranslation();
-    const [panelRef, panelVisible] = useIsVisible<HTMLDivElement>();
+    const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
 
     // Kolumny dla DataGrid
     const columns: ColumnDefinition[] = [

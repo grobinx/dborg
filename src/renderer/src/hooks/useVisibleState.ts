@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export const useIsVisible = <T extends HTMLElement>(
+export const useVisibleState = <T extends HTMLElement>(
     options?: IntersectionObserverInit
 ): [React.RefObject<T | null>, boolean] => {
     const [isVisible, setIsVisible] = useState(false);
