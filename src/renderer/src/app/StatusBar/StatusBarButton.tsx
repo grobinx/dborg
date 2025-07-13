@@ -11,8 +11,20 @@ type StatusBarOption = {
 
 interface StatusBarButtonOwnProps extends StatusBarButtonProps {
     toolTip?: string;
+    /**
+     * List of options to choose from.
+     * Each option can be a simple value or an object with label and value.
+     */
     options?: (StatusBarOption | number | string | boolean | bigint)[]; // Lista opcji do wyboru
+    /**
+     * Currently selected option value.
+     * If options are provided, this should match one of the option values.
+     */
     optionSelected?: number | string | boolean | bigint; // Opcjonalnie wybrana opcja
+    /**
+     * This function is called when an option is selected from the menu.
+     * @param value Value of the selected option.
+     */
     onOptionSelect?: (value: any) => void; // Funkcja wywoływana po wyborze opcji
 }
 
