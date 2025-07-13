@@ -5,7 +5,14 @@ export interface StatusBarButtonProps extends ButtonProps {
 }
 
 type StatusBarOption = {
+    /**
+     * Label of the option.
+     */
     label: React.ReactNode; // Element React, który będzie wyświetlany jako etykieta opcji
+    /**
+     * Value of the option.
+     * This value will be passed to the onOptionSelect function when the option is selected.
+     */
     value: number | string | boolean | bigint; // Wartość opcji, która będzie przekazywana do funkcji onOptionSelect
 }
 
@@ -28,7 +35,7 @@ interface StatusBarButtonOwnProps extends StatusBarButtonProps {
     onOptionSelect?: (value: any) => void; // Funkcja wywoływana po wyborze opcji
 }
 
-function optionIsComposite(options: any): options is StatusBarOption {
+function isStatusBarOption(options: any): options is StatusBarOption {
     return typeof options === "object" && options !== null && "label" in options && "value" in options;
 }
 
@@ -42,6 +49,11 @@ const StatusBarButtonRoot = styled(Button, {
     },
 }));
 
+/**
+ * StatusBarButton component for the status bar.
+ * @param props Props for the button.
+ * @returns StatusBarButton component.
+ */
 const StatusBarButton: React.FC<StatusBarButtonOwnProps> = (props) => {
     const { toolTip, className, options, optionSelected, onOptionSelect, ...other } = useThemeProps({ name: "StatusBarButton", props });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -89,11 +101,11 @@ const StatusBarButton: React.FC<StatusBarButtonOwnProps> = (props) => {
                         <MenuItem
                             key={index}
                             onClick={() => handleOptionSelect(
-                                optionIsComposite(option) ? option.value : option
+                                isStatusBarOption(option) ? option.value : option
                             )}
-                            selected={optionIsComposite(option) ? option.value === optionSelected : option === optionSelected}
+                            selected={isStatusBarOption(option) ? option.value === optionSelected : option === optionSelected}
                         >
-                            {optionIsComposite(option) ? option.label : option}
+                            {isStatusBarOption(option) ? option.label : option}
                         </MenuItem>
                     ))}
                 </Menu>

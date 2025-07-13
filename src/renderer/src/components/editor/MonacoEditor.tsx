@@ -58,7 +58,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         setEditorInstance(editor);
 
         // Aktualizacja pozycji kursora
-        editor.onDidChangeCursorPosition((e) => {
+        editor.onDidChangeCursorPosition((_e) => {
             const position = editor.getPosition();
             if (position) {
                 setCursorPosition({ line: position.lineNumber, column: position.column });
