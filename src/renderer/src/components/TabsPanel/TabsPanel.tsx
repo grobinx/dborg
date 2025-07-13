@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, Box, Tabs, Tab, useThemeProps, AppBar, Stack } from "@mui/material";
+import { styled, Box, Tabs, Tab, useThemeProps, AppBar, Stack, Menu, MenuItem } from "@mui/material";
 import TabPanel from "./TabPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB, TAB_PANEL_CHANGED, TAB_PANEL_CLICK, TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "../../app/Messages";
@@ -15,7 +15,7 @@ export interface TabStructure {
 export interface TabsActionContext {
     activeTabID: string | undefined;
     getCount: () => number;
-    getTab: (tabID: string) => TabStructure | undefined;
+    getTab: (tabID: string | number) => TabStructure | undefined;
     setActiveTab: (tabID: string) => void;
 }
 
@@ -73,15 +73,16 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const [tabsMap, setTabsMap] = React.useState<Map<string, TabStructure>>(new Map());
     const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
     const sourceDragIndexRef = React.useRef<number | null>(null);
-    const commandManager = React.useRef<CommandManager<TabsActionContext>>(new CommandManager<TabsActionContext>());
 
     const headerRef = React.useRef<HTMLDivElement>(null);
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
 
     const tabsActionContext: TabsActionContext = {
         activeTabID: tabs[activeTab]?.props.itemID,
-        getCount: () => tabs.length,
-        getTab: (tabID) => tabsMap.get(tabID),
+        getCount: () => tabsMap.size,
+        getTab: (tabID) => {
+            return typeof tabID === "string" ? tabsMap.get(tabID) : tabsMap.get(tabs[tabID].props.itemID!);
+        },
         setActiveTab: (tabID) => {
             const index = tabs.findIndex((tab) => tab.props.itemID === tabID);
             if (index !== -1) {
@@ -196,7 +197,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                 observer.unobserve(headerRef.current);
             }
         };
-    }, [headerRef.current, tabPosition]);
+    }, [tabPosition]);
 
     const handleDragStart = (event: React.DragEvent, sourceIndex: number) => {
         sourceDragIndexRef.current = sourceIndex;
