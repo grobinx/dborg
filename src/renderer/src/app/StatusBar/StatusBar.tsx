@@ -28,7 +28,7 @@ const StatusBar: React.FC<StatusBarOwnProps> = (props) => {
             className={(className ?? "") + " StatusBar-root"}
             ref={ref}
         >
-            {buttons?.first}
+            {buttons?.first || other.children}
             <Box flexGrow={1} />
             {buttons?.last}
         </StatusBarRoot>

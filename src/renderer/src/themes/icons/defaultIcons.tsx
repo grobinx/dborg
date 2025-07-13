@@ -28,6 +28,8 @@ import { ElementOf } from "./svg/ElementOf";
 import { Not } from "./svg/Not";
 import { QueryHistory } from "./svg/QueryHistory";
 import { ResetSearch } from "./svg/ResetSearch";
+import { Editable } from "./svg/Editable";
+import { ReadOnlyEditor } from "./svg/ReadOnlyEditor";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -95,6 +97,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             QueryHistory: (props) => <IconWrapper {...props} className="query-history"><QueryHistory fontSize="inherit" /></IconWrapper>,
             Check: (props) => <IconWrapper {...props} className="check"><MuiIcons.Check fontSize="inherit" /></IconWrapper>,
             Clock: (props) => <IconWrapper {...props} className="clock"><MuiIcons.AccessTimeOutlined fontSize="inherit" /></IconWrapper>,
+            EditableEditor: (props) => <IconWrapper {...props} className="editable-editor"><Editable fontSize="inherit" /></IconWrapper>,
+            ReadOnlyEditor: (props) => <IconWrapper {...props} className="read-only-editor"><ReadOnlyEditor fontSize="inherit" /></IconWrapper>,
         }
     }
 }
