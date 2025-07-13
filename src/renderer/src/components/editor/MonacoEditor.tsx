@@ -13,7 +13,6 @@ import { ToLowerCaseAction } from "./actions/ToLowerCase";
 import { ToUpperCaseAction } from "./actions/ToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
-import AutoSizer from "react-virtualized-auto-sizer";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 self.MonacoEnvironment = {

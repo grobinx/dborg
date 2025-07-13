@@ -1,6 +1,5 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { Database } from "sqlite3";
-import { DatabasesMetadata, DatabaseMetadata, SchemaMetadata, RelationMetadata, ColumnMetadata, RelationKind, RelationType, RoutineType } from "src/api/db/Metadata";
+import { DatabasesMetadata, DatabaseMetadata, RelationType, RoutineType } from "src/api/db/Metadata";
 
 /**
  * Polecenia
