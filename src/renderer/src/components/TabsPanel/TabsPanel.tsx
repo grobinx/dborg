@@ -3,11 +3,20 @@ import { styled, Box, Tabs, Tab, useThemeProps, AppBar, Stack } from "@mui/mater
 import TabPanel from "./TabPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB, TAB_PANEL_CHANGED, TAB_PANEL_CLICK, TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "../../app/Messages";
+import { CommandManager } from "../CommandPalette/CommandManager";
 
 export interface TabStructure {
+    itemID: string;
     label: React.ReactNode;
     content: React.ReactNode;
-    buttons: React.ReactNode;
+    buttons?: React.ReactNode;
+}
+
+export interface TabsActionContext {
+    activeTabID: string | undefined;
+    getCount: () => number;
+    getTab: (tabID: string) => TabStructure | undefined;
+    setActiveTab: (tabID: string) => void;
 }
 
 // Styled TabsPanel root container
@@ -61,12 +70,25 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const [activeTab, setActiveTab] = React.useState(0);
     const [contentHeight, setContentHeight] = React.useState<string | number>("auto");
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
-    const [contents, setContents] = React.useState<Map<string, React.ReactNode>>(new Map());
+    const [tabsMap, setTabsMap] = React.useState<Map<string, TabStructure>>(new Map());
     const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
     const sourceDragIndexRef = React.useRef<number | null>(null);
+    const commandManager = React.useRef<CommandManager<TabsActionContext>>(new CommandManager<TabsActionContext>());
 
     const headerRef = React.useRef<HTMLDivElement>(null);
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
+
+    const tabsActionContext: TabsActionContext = {
+        activeTabID: tabs[activeTab]?.props.itemID,
+        getCount: () => tabs.length,
+        getTab: (tabID) => tabsMap.get(tabID),
+        setActiveTab: (tabID) => {
+            const index = tabs.findIndex((tab) => tab.props.itemID === tabID);
+            if (index !== -1) {
+                setActiveTab(index);
+            }
+        }
+    };
 
     const handleWheel = (event: React.WheelEvent) => {
         if (tabsListRef.current) {
@@ -87,7 +109,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
         setTabs(validatedTabs);
 
-        const contentsMap = new Map<string, React.ReactNode>();
+        const tabsStructures = new Map<string, TabStructure>();
         validatedTabs.forEach((tab) => {
             const itemID = tab.props.itemID;
             let content = tab.props.content;
@@ -97,9 +119,28 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                     { itemID: tab.props.itemID, tabsItemID: other.itemID }
                 );
             }
-            contentsMap.set(itemID!, content);
+            let label = tab.props.label;
+            if (React.isValidElement(label)) {
+                label = React.cloneElement(
+                    label as React.ReactElement<{ itemID: string, tabsItemID: string }>,
+                    { itemID: tab.props.itemID, tabsItemID: other.itemID }
+                );
+            }
+            let buttons = tab.props.buttons;
+            if (React.isValidElement(buttons)) {
+                buttons = React.cloneElement(
+                    buttons as React.ReactElement<{ itemID: string, tabsItemID: string }>,
+                    { itemID: tab.props.itemID, tabsItemID: other.itemID }
+                );
+            }
+            tabsStructures.set(itemID!, {
+                itemID: itemID!,
+                label: label,
+                content: content,
+                buttons: buttons
+            });
         });
-        setContents(contentsMap);
+        setTabsMap(tabsStructures);
     }, [children]);
 
     React.useEffect(() => {
@@ -235,13 +276,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                             itemID={tab.props.itemID}
                             key={tab.props.itemID}
                             aria-label="Tab"
-                            label={
-                                React.isValidElement(tab.props.label)
-                                    ? React.cloneElement(
-                                        tab.props.label as React.ReactElement<{ itemID: string, tabsItemID: string }>,
-                                        { itemID: tab.props.itemID, tabsItemID: other.itemID }
-                                    ) : tab.props.label ?? tab.props.itemID
-                            }
+                            label={tabsMap.get(tab.props.itemID!)?.label ?? ""}
                             onClick={() => handleTabClick(index)}
                             draggable={onMove !== undefined}
                             onDragStart={(event) => handleDragStart(event, index)}
@@ -251,11 +286,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                     ))}
                 </Tabs>
                 <Box flexGrow={1} />
-                {React.isValidElement(tabs[activeTab]?.props.buttons)
-                    ? React.cloneElement(
-                        tabs[activeTab].props.buttons as React.ReactElement<{ itemID: string, tabsItemID: string }>,
-                        { itemID: tabs[activeTab].props.itemID, tabsItemID: other.itemID }
-                    ) : tabs[activeTab]?.props.buttons}
+                {tabsMap.get(tabs[activeTab]?.props.itemID!)?.buttons}
             </AppBar>
         </StyledTabsHeader>
     );
@@ -277,7 +308,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                         }}
                         hidden={activeTab !== index}
                     >
-                        {contents.get(tab.props.itemID!) ?? null}
+                        {tabsMap.get(tab.props.itemID!)?.content ?? null}
                     </Box>
                 ))}
             </StyledTabsContent>

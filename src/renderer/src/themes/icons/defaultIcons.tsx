@@ -27,6 +27,7 @@ import { Null } from "./svg/Null";
 import { ElementOf } from "./svg/ElementOf";
 import { Not } from "./svg/Not";
 import { QueryHistory } from "./svg/QueryHistory";
+import { ResetSearch } from "./svg/ResetSearch";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -80,6 +81,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             AddTab: (props) => <IconWrapper {...props} className="add-tab"><AddTabRight fontSize="inherit" /></IconWrapper>,
             ExcludeText: (props) => <IconWrapper {...props} className="exclude-text"><NotEqual fontSize="inherit" /></IconWrapper>,
             Search: (props) => <IconWrapper {...props} className="search"><MuiIcons.SearchOutlined fontSize="inherit" /></IconWrapper>,
+            ResetSearch: (props) => <IconWrapper {...props} className="reset-search"><ResetSearch fontSize="inherit" /></IconWrapper>,
             SelectDatabaseSchema: (props) => <IconWrapper {...props} className="select-database-schema"><MuiIcons.FactCheckOutlined fontSize="inherit" /></IconWrapper>,
             RefreshMetadata: (props) => <IconWrapper {...props} className="refresh-metadata"><RefreshMetadata fontSize="inherit" /></IconWrapper>,
             Not: (props) => <IconWrapper {...props} className="not"><Not fontSize="inherit" /></IconWrapper>,

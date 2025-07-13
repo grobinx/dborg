@@ -8,8 +8,8 @@ export const GeneralReset = (): ActionDescriptor<DataGridActionContext<any>> => 
 
     return {
         id: id,
-        keybindings: ["Escape"],
-        label: t(id, "Reset filter, sorting and summary"),
+        keybindings: ["Shift+Escape"],
+        label: t(id, "Reset all, filter, sort, grouping, summary"),
         icon: "Reset",
         run: (context) => {
             context.setSearchText();

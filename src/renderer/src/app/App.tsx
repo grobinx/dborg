@@ -92,18 +92,24 @@ const App: React.FC = () => {
     React.useEffect(() => {
         const handleToggleToolsTabsPanelMessage = (tabsItemID: string, itemID: string) => {
             setToolsTabsPanelVisible((prev) => {
-                if (tabsItemID && itemID) {
-                    emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
-                    if (lastToolItemRef.current && lastToolItemRef.current.itemID !== itemID) {
+                if (prev) {
+                    // Zakładki są widoczne
+                    if (lastToolItemRef.current?.tabsItemID === tabsItemID && lastToolItemRef.current?.itemID === itemID) {
+                        // Jeśli przełączamy się na tę samą zakładkę, ukryj zakładki
+                        lastToolItemRef.current = null;
+                        return false;
+                    } else {
+                        // Jeśli przełączamy się na inną zakładkę, przełącz na wybraną
+                        emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
                         lastToolItemRef.current = { tabsItemID, itemID };
-                        return prev;
+                        return true;
                     }
+                } else {
+                    // Zakładki są ukryte, pokaż zakładki i przełącz na wybraną
+                    emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
                     lastToolItemRef.current = { tabsItemID, itemID };
+                    return true;
                 }
-                else {
-                    lastToolItemRef.current = null;
-                }
-                return !prev;
             });
         };
 
@@ -119,7 +125,7 @@ const App: React.FC = () => {
             unsubscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
             unsubscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
         };
-    }, []);
+    }, [emit, setSettings]);
 
     // Adjust middle height based on window and sidebar dimensions
     React.useEffect(() => {
@@ -198,7 +204,10 @@ const App: React.FC = () => {
                                 <TabPanelButtons>
                                     <Tooltip title={t("hide-tools-panel", "Hide Tools Panel")}>
                                         <ToolButton
-                                            onClick={() => setToolsTabsPanelVisible(!toolsTabsPanelVisible)}
+                                            onClick={() => {
+                                                setToolsTabsPanelVisible(!toolsTabsPanelVisible);
+                                                lastToolItemRef.current = null;
+                                            }}
                                         >
                                             <theme.icons.ExpandMore />
                                         </ToolButton>

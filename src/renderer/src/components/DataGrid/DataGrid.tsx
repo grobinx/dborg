@@ -916,6 +916,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.ResetFontSize(initialRowHeight));
             actionManager.current.registerAction(actions.CopyValueToClipboard());
             actionManager.current.registerAction(actions.GeneralReset());
+            actionManager.current.registerAction(actions.SearchReset());
             actionManager.current.registerAction(actions.AdjustWidthToData());
             actionManager.current.registerAction(actions.SwitchColumnSort());
             actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());

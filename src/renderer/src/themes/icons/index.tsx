@@ -115,6 +115,7 @@ export interface ThemeIcons {
     AddTab: IconWrapperFC;
     ExcludeText: IconWrapperFC;
     Search: IconWrapperFC;
+    ResetSearch: IconWrapperFC;
     SelectDatabaseSchema: IconWrapperFC;
     RefreshMetadata: IconWrapperFC;
     Not: IconWrapperFC;

@@ -23,3 +23,4 @@ export * from "./FilterColumnDataGroup";
 export * from "./FilterColumnData";
 export * from "./ToggleHideColumn";
 export * from "./ToggleShowHiddenColumns";
+export * from "./SearchReset";
