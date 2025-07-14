@@ -75,10 +75,50 @@ interface SettingTypeBase {
      * A unique key for the setting.
      */
     key: string;
+    /**
+     * The title of the setting, displayed in the UI.
+     * This should be a user-friendly name that describes the setting.
+     */
     title: string;
-    required?: boolean;
-    validate?: (value: any) => boolean;
+    /**
+     * A description of the setting, displayed in the UI.
+     * This should provide additional context or instructions for the user.
+     */
     description?: string;
+    /**
+     * Tags for the setting, used for filtering.
+     */
+    tags?: string[];
+    /**
+    * Does the setting relate to experimental functionality.
+    * If true, the setting is experimental and may not be fully stable.
+    */
+    experimental?: boolean;
+    /**
+     * Does the setting relate to advanced functionality.
+     */
+    advanced?: boolean;
+    /**
+     * Settings are required.
+     */
+    required?: boolean;
+    /**
+    * Whether the setting is disabled.
+    * If true, the setting is disabled and cannot be changed by the user.
+    * You can make this dependent on the values of other settings by passing a function.
+    */
+    disabled?: boolean | ((values: Record<string, any>) => boolean);
+    /**
+     * Whether the setting is administrated.
+     * If true, the setting is administrated and cannot be changed by the user.
+     */
+    administrated?: boolean | (() => boolean);
+    /**
+     * A function to validate the value of the setting.
+     * It should return a string with an error message if the value is invalid,
+     * or true if the value is valid.
+     */
+    validate?: (value: any) => string | boolean;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {
