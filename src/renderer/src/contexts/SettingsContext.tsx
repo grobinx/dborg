@@ -1,3 +1,5 @@
+import { AppSettings } from "@renderer/app.config";
+import definitions, { SettingsDefinitions } from "@renderer/components/settings/SettingsDefinitions";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
 
@@ -14,6 +16,7 @@ interface SettingsContextType {
     getSettings: <T extends TSettings>(name: string) => T | undefined;
     settings: Record<string, TSettings>;
     isLoading: boolean;
+    definitions: SettingsDefinitions;
 }
 
 // Domyślna wartość kontekstu
@@ -22,6 +25,7 @@ export const SettingsContext = createContext<SettingsContextType>({
     getSettings: () => undefined,
     settings: {},
     isLoading: false,
+    definitions: definitions,
 });
 
 // Mechanizm debouncing dla zapisu ustawień
@@ -160,7 +164,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             } catch (error) {
                 console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
             }
-        }, 500); // Opóźnienie zapisu (500 ms)
+        }, (settings["app"] as AppSettings).settings.store_timeout);
     };
 
     // Funkcja do pobierania ustawień z typem generycznym
@@ -187,7 +191,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ updateSettings, getSettings, settings, isLoading }}>
+        <SettingsContext.Provider value={{ updateSettings, getSettings, settings, isLoading, definitions }}>
             {children}
         </SettingsContext.Provider>
     );

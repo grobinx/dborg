@@ -2,14 +2,22 @@ import { TSettings } from "src/api/settings";
 import { SETTINGS_NAMES } from "./contexts/SettingsContext";
 
 export interface AppSettings extends TSettings {
-    /**
-     * Maximum number of toast notifications
-     */
-    max_toast: number;
-    /**
-     * Timeout for storing settings in milliseconds
-     */
-    store_settings_timeout: number;
+    toast: {
+        /**
+         * Maximum number of toast notifications
+         */
+        max: number;
+        /**
+         * Timeout for toast in milliseconds
+         */
+        timeout: number;
+    };
+    settings: {
+        /**
+         * Timeout for storing settings in milliseconds
+         */
+        store_timeout: number;
+    };
 }
 
 export interface DborgSettings extends TSettings {
@@ -30,13 +38,19 @@ export interface ApplicationSettings extends TSettings {
     ui: UiSettings;
 }
 
-const max_toast = 5;
-const store_settings_timeout = 1000; // 1 second
+const toast_max = 5;
+const settings_store_timeout = 1000; // 1 second
+const toast_timeout = 5000; // 5 seconds
 
 export const default_settings: ApplicationSettings = {
     app: {
-        max_toast,
-        store_settings_timeout,
+        toast: {
+            max: toast_max,
+            timeout: toast_timeout,
+        },
+        settings: {
+            store_timeout: settings_store_timeout,
+        },
     },
     dborg: {
         data_grid: {

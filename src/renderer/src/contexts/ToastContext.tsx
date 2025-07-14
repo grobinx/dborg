@@ -56,8 +56,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                 shown: false,
                 timeout: typeof options?.timeout === "number"
                     ? options.timeout
-                    : typeof settings.notification_timeout === "number"
-                        ? settings.notification_timeout
+                    : typeof settings.toast.timeout === "number"
+                        ? settings.toast.timeout
                         : undefined,
                 source: options?.source,
                 reason: options?.reason,
