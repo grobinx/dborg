@@ -80,8 +80,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
     const { addToast } = useToast();
     const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
-    const statusBarRef = useRef<HTMLDivElement>(null);
-    const [boxHeight, setBoxHeight] = useState<string>("100%");
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
     const [queryDuration, setQueryDuration] = useState<number | null>(null);
     const [fetchDuration, setFetchDuration] = useState<number | null>(null);
@@ -128,26 +126,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             },
         });
     };
-
-    useEffect(() => {
-        const observer = new ResizeObserver(() => {
-            if (statusBarRef.current) {
-                const statusBarHeight = statusBarRef.current.offsetHeight;
-                setBoxHeight(`calc(100% - ${statusBarHeight}px)`);
-            }
-        });
-
-        if (statusBarRef.current) {
-            observer.observe(statusBarRef.current);
-        }
-
-        return () => {
-            if (statusBarRef.current) {
-                observer.unobserve(statusBarRef.current);
-            }
-            observer.disconnect();
-        };
-    }, []);
 
     React.useEffect(() => {
         const fetchData = async () => {
@@ -342,8 +320,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         >
             <Box
                 sx={{
-                    width: "100%",
-                    height: boxHeight, // Dynamiczna wysokość Box
+                    flex: 1, // Editor zajmuje pozostałą przestrzeń
+                    overflow: "hidden",
                 }}
             >
                 <DataGrid
@@ -376,7 +354,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 />
             </Box>
             <DataGridStatusBar
-                ref={statusBarRef}
                 status={dataGridStatus}
                 style={{
                     zIndex: 3,
