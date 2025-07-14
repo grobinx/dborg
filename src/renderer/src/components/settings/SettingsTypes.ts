@@ -108,7 +108,7 @@ interface SettingTypeBase {
     * You can make this dependent on the values of other settings by passing a function.
     */
     disabled?: boolean | ((values: Record<string, any>) => boolean);
-    /**
+    /**,
      * Whether the setting is administrated.
      * If true, the setting is administrated and cannot be changed by the user.
      */
@@ -119,6 +119,11 @@ interface SettingTypeBase {
      * or true if the value is valid.
      */
     validate?: (value: any) => string | boolean;
+    /**
+     * Called when the setting value changes.
+     * @param newValue The new value of the setting.
+     */
+    onChange?: (newValue: any) => void;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {
