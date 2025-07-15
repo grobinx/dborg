@@ -23,6 +23,8 @@ import { DatabasesMetadata, DatabaseMetadata, RelationType, RoutineType } from "
  * /constraints | /co [<schema>.]<relation> - wyświetla ograniczenia w tabeli
  * /foreign keys [<schema>.]<relation> - wyświetla klucze obce w tabeli
  * /primary key [<schema>.]<relation> - wyświetla klucze główne w tabeli
+ * /types | /ty - wyświetla typy danych w aktywnej bazie danych
+ * /types | /ty <schema> - wyświetla typy danych w konkretnym schemacie
  * <table> - wyświetla kolumny w tabeli
  * <schema> - wyświetla relacje w schemacie
  * <schema>.<table> - wyświetla kolumny w tabeli
@@ -120,6 +122,9 @@ export class MetadataCommandProcessor {
                     return MCP.getPrimaryKey(metadata, args[1]);
                 }
                 break;
+            case "ty":
+            case "types":
+                return MCP.getTypes(metadata, args[0]);
         }
 
         return null; // Jeśli polecenie nie pasuje do żadnego case
@@ -247,6 +252,8 @@ export class MetadataCommandProcessor {
             { command: "/constraints | /co [<schema>.]<relation>", description: "Displays constraints in a table" },
             { command: "/foreign keys [<schema>.]<relation>", description: "Displays foreign keys in a table" },
             { command: "/primary key [<schema>.]<relation>", description: "Displays primary keys in a table" },
+            { command: "/types | /ty", description: "Displays data types in the active database" },
+            { command: "/types | /ty <schema>", description: "Displays data types in a specific schema" },
             { command: "<table>", description: "Displays columns in a table" },
             { command: "<schema>", description: "Displays relations in a schema" },
             { command: "<schema>.<table>", description: "Displays columns in a table" },
@@ -672,6 +679,37 @@ export class MetadataCommandProcessor {
                             });
                         }
                     }
+                }
+            }
+        }
+
+        return { columns, rows };
+    }
+
+    private static getTypes(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
+        const columns: ColumnDefinition[] = [
+            { key: "database", label: "Database", dataType: "string" },
+            { key: "schema", label: "Schema", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
+            { key: "kind", label: "Kind", dataType: "string" },
+            { key: "type", label: "Type", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
+        ];
+
+        const rows: any[] = [];
+        const [resolvedSchemaName] = MCP.resolveObjectName(metadata, schemaName);
+
+        for (const database of MCP.getConnectedDatabases(metadata)) {
+            for (const schema of Object.values(database.schemas).filter(schema => !resolvedSchemaName || MCP.nameEquals({ quoted: resolvedSchemaName.quoted, name: schema.name }, resolvedSchemaName))) {
+                for (const type of Object.values(schema.types || {})) {
+                    rows.push({
+                        database: database.name,
+                        schema: schema.name,
+                        owner: type.owner,
+                        kind: type.kind,
+                        type: type.name,
+                        description: type.description,
+                    });
                 }
             }
         }
