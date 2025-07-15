@@ -143,6 +143,15 @@ export const summaryOperationDisplayMap: Record<SummaryOperation, string> = {
     uniqueAgg: "Unique Aggregate"
 };
 
+export const summaryOperationToBaseTypeMap: Partial<Record<SummaryOperation, ColumnDataType>> = {
+    unique: "number",
+    count: "number",
+    minLength: "number",
+    maxLength: "number",
+    emptyCount: "number",
+    avgWordLength: "number",
+};
+
 export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
     sum: ["number", "boolean"],
     avg: ["number", "boolean", "datetime"],
@@ -153,7 +162,7 @@ export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
     mode: ["number", "boolean", "string", "datetime"],
     stdDev: ["number", "boolean"],
     range: ["number", "boolean", "string", "datetime"],
-    count: ["number", "boolean", "string", "object"],
+    count: ["number", "boolean", "string", "object", "datetime"],
     sumOfSquares: ["number", "boolean"],
     emptyCount: ["boolean", "string", "object", "datetime"],
     variance: ["number"],

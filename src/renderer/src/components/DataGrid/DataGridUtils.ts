@@ -10,7 +10,13 @@ export const displayMaxLengh = 300;
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
 
-export const columnDataFormatter = (value: any, column: ColumnDefinition, nullValue: string, options: api.ValueToStringOptions) => {
+export const columnDataFormatter = (
+    value: any, 
+    dataType: api.ColumnDataType, 
+    formatter: ((value: any) => React.ReactNode) | undefined,
+    nullValue: string, 
+    options: api.ValueToStringOptions
+) => {
     const nullFormatter = (value: any) => {
         if (value === null || value === undefined) {
             return nullValue || "NULL";
@@ -18,15 +24,15 @@ export const columnDataFormatter = (value: any, column: ColumnDefinition, nullVa
         if (React.isValidElement(value)) {
             return value;
         }
-        let str = api.valueToString(value, column.dataType ?? 'string', options);
+        let str = api.valueToString(value, dataType ?? 'string', options);
         if (typeof str === 'string' && /[\r\n]/.test(str)) {
             str = str.replace(/[\r\n]+/g, " ");
         }
         return str;
     };
 
-    if (column.formatter) {
-        const formattedValue = column.formatter(value);
+    if (formatter) {
+        const formattedValue = formatter(value);
         return nullFormatter(formattedValue);
     }
 
@@ -324,7 +330,7 @@ export const calculateSummary = (
             }
         } else if (baseType === "string") {
             const stringValues = values.map((value) => (value !== null && value !== undefined) ? value.toString() : null) as string[];
-            const lengths = stringValues.map((value) => value.length);
+            const lengths = stringValues.map((value) => value?.length ?? 0);
             switch (col.summary) {
                 case "min":
                     summary[col.key] = stringValues.length > 0

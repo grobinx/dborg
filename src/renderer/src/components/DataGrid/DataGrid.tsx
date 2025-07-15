@@ -4,7 +4,7 @@ import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import * as actions from "./actions";
-import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, TableCellPosition } from "./DataGridTypes";
+import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { useSettings } from "@renderer/contexts/SettingsContext";
 import { DborgSettings } from "@renderer/app.config";
 import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
@@ -537,7 +537,11 @@ export const DataGrid = <T extends object>({
 
                     if (valueA === valueB) continue; // Jeśli wartości są równe, przejdź do następnej kolumny
 
-                    const comparisonResult = compareValuesByType(valueA, valueB, col.dataType);
+                    const comparisonResult = compareValuesByType(
+                        valueA, valueB,
+                        col.summary !== undefined
+                            ? (summaryOperationToBaseTypeMap[col.summary] ?? col.dataType)
+                            : col.dataType);
                     if (comparisonResult !== 0) {
                         return col.sortDirection === "asc" ? comparisonResult : -comparisonResult;
                     }
@@ -1258,12 +1262,13 @@ export const DataGrid = <T extends object>({
                                 {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                                     const absoluteColIndex = startColumn + colIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
-                                    let dataType: ColumnBaseType | "null" = toBaseType(col.dataType ?? 'string');
+                                    const columnDataType = (col.summary && groupingColumns.columns.length ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType ?? 'string';
+                                    let styleDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
                                     if (row[col.key] === undefined || row[col.key] === null) {
-                                        dataType = "null";
+                                        styleDataType = "null";
                                     }
                                     if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(row[col.key])) {
-                                        dataType = "null";
+                                        styleDataType = "null";
                                     }
 
                                     let formattedValue: React.ReactNode;
@@ -1271,7 +1276,8 @@ export const DataGrid = <T extends object>({
                                     try {
                                         formattedValue = columnDataFormatter(
                                             row[col.key],
-                                            col,
+                                            columnDataType,
+                                            col.formatter,
                                             settings.data_grid.null_value, {
                                             maxLength: displayMaxLengh,
                                             //display: (searchState.current.text ?? '').trim() === ''
@@ -1282,7 +1288,7 @@ export const DataGrid = <T extends object>({
                                     }
                                     catch (error: Error | any) {
                                         formattedValue = "{error}";
-                                        dataType = "error";
+                                        styleDataType = "error";
                                     }
 
                                     const result = (
@@ -1292,7 +1298,7 @@ export const DataGrid = <T extends object>({
                                                 "DataGrid-cell" +
                                                 (isCellSelected ? " Mui-selected" : "") +
                                                 (isCellSelected && isFocused ? " Mui-focused" : "") +
-                                                (" " + columnDataTypeClassMap[dataType] || "")
+                                                (" " + columnDataTypeClassMap[styleDataType] || "")
                                             }
                                             style={{
                                                 width: col.width || 150,
@@ -1302,7 +1308,7 @@ export const DataGrid = <T extends object>({
                                             rowHeight={rowHeight}
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
-                                            dataType={dataType}
+                                            dataType={styleDataType}
                                             colorsEnabled={mode === "defined" ? settings.data_grid.colors_enabled : true}
                                         >
                                             {formattedValue}
@@ -1324,7 +1330,7 @@ export const DataGrid = <T extends object>({
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                             const absoluteColIndex = startColumn + colIndex;
-                            let dataType: ColumnBaseType | 'null' = toBaseType(col.dataType);
+                            let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
                             let operationLabel = "";
                             if (col.summary) {
                                 operationLabel = summaryOperationDisplayMap[col.summary] || "";
@@ -1333,7 +1339,7 @@ export const DataGrid = <T extends object>({
                             return (
                                 <React.Fragment key={colIndex}>
                                     <StyledFooterCell
-                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[dataType] || ""}`}
+                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[styleDataType] || ""}`}
                                         style={{
                                             width: col.width || 150,
                                             left: columnsState.columnLeft(startColumn + colIndex),
@@ -1344,7 +1350,7 @@ export const DataGrid = <T extends object>({
                                         rowHeight={rowHeight * footerCaptionHeightFactor}
                                         paddingX={cellPaddingX}
                                         paddingY={cellPaddingY}
-                                        dataType={dataType}
+                                        dataType={styleDataType}
                                         onClick={() => {
                                             handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
                                             actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
@@ -1369,7 +1375,7 @@ export const DataGrid = <T extends object>({
                                         </StyledHeaderCellContent>
                                     </StyledFooterCell>
                                     <StyledFooterCell
-                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[dataType] || ""}`}
+                                        className={`DataGrid-footerCell ${columnDataTypeClassMap[styleDataType] || ""}`}
                                         style={{
                                             width: col.width || 150,
                                             left: columnsState.columnLeft(startColumn + colIndex),
@@ -1378,9 +1384,9 @@ export const DataGrid = <T extends object>({
                                         rowHeight={rowHeight}
                                         paddingX={cellPaddingX}
                                         paddingY={cellPaddingY}
-                                        dataType={dataType}
+                                        dataType={styleDataType}
                                     >
-                                        {valueToString(summaryRow[col.key], col.dataType, { display: true, maxLength: displayMaxLengh })}
+                                        {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
                                     </StyledFooterCell>
                                 </React.Fragment>
                             );

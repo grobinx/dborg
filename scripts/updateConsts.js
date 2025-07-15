@@ -34,7 +34,7 @@ function updatePackageJsonVersion() {
     // Wczytaj zawartość pliku consts.ts
     const fileContent = fs.readFileSync(constsPath, 'utf8');
 
-    // Pobierz wartości major, minor, release i build z consts.ts
+    // Pobierz wartości major, minor, release z consts.ts
     const majorMatch = fileContent.match(/major:\s*(\d+)/);
     const minorMatch = fileContent.match(/minor:\s*(\d+)/);
     const releaseMatch = fileContent.match(/release:\s*(\d+)/);
@@ -53,6 +53,12 @@ function updatePackageJsonVersion() {
 
     // Wczytaj package.json
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+    // Sprawdź, czy wersja się różni
+    if (packageJson.version === version) {
+        console.log(`Wersja w package.json (${packageJson.version}) jest już aktualna.`);
+        return;
+    }
 
     // Zaktualizuj wersję w package.json
     packageJson.version = version;

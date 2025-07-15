@@ -160,6 +160,7 @@ export interface SettingTypePattern extends SettingTypeBase {
      * e.g. { "_": /\d/ }
      */
     replacement: Record<string, RegExp>;
+    defaultValue?: string;
 }
 
 export interface SettingTypePassword extends SettingTypeStringBase {
@@ -266,8 +267,7 @@ export type SettingTypeUnion =
 
 /**
  * Represents a settings group in the application.
- * Not directly related to a specific structure in the settings file.
- * It is a group of settings that are somehow related to each other.
+ * Directly related to a specific structure in the settings file.
  */
 export interface SettingsGroup {
     /**
@@ -277,8 +277,13 @@ export interface SettingsGroup {
     title: string;
     description?: string;
     settings: SettingTypeUnion[];
+    groups?: SettingsGroup[];
 }
 
+/**
+ * Represents a collection of settings in the application.
+ * Directly related to a settings file name in %HOME%/.dborg/settings catalog.
+ */
 export interface SettingsCollection {
     /**
      * A unique key for the settings collection.
@@ -288,5 +293,6 @@ export interface SettingsCollection {
     key: string;
     title: string;
     description?: string;
-    groups: SettingsGroup[];
+    groups?: SettingsGroup[];
+    settings?: SettingTypeUnion[];
 }
