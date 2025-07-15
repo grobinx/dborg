@@ -15,6 +15,7 @@ import { useToast } from './ToastContext';
 import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
 import About from '@renderer/About';
+import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -64,6 +65,7 @@ interface ConnectionListContainer extends IContainer {
 
 interface SettingsContainer extends IContainer {
     type: "settings";
+    views: View[]; // Add views property to match usage
 }
 
 interface PluginsContainer extends IContainer {
@@ -155,7 +157,23 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             icon: <theme.icons.Settings />,
             label: t("settings", "Settings"),
             section: "last",
-            container: () => <About />
+            container: ({ children }) => <Box>{children}</Box>,
+            views: [
+                {
+                    type: "rendered",
+                    id: "about",
+                    icon: <theme.icons.Info />,
+                    label: t("about", "About"),
+                    render: () => <About />,
+                },
+                {
+                    type: "rendered",
+                    id: "settings",
+                    icon: <theme.icons.Settings />,
+                    label: t("application-settings", "Application settings"),
+                    render: () => <EditableSettings />,
+                },
+            ]
         },
     ]);
 
@@ -212,7 +230,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setViews(null);
             setSelectedView(null);
         }
-    }, [sessionViewState, plugins]);
+    }, [sessionViewState, plugins, sessionViewState]);
 
     const initMetadata = (session: IDatabaseSession, force?: boolean) => {
         if (!session.info.driver.implements.includes("metadata")) {

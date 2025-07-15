@@ -1,5 +1,5 @@
 import { AppSettings } from "@renderer/app.config";
-import definitions, { EditableSettingsRegistry } from "@renderer/components/settings/SettingsDefinitions";
+import definitions, { EditableSettingsRegistry } from "@renderer/components/settings/EditableSettingsRegistry";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
 

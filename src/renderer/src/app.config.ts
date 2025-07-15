@@ -1,6 +1,6 @@
 import { TSettings } from "src/api/settings";
 import { SETTINGS_NAMES } from "./contexts/SettingsContext";
-import editableSettingsRegistry from "./components/settings/SettingsDefinitions";
+import editableSettingsRegistry from "./components/settings/EditableSettingsRegistry";
 import i18next from "i18next";
 
 export interface AppSettings extends TSettings {
