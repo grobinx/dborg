@@ -24,7 +24,7 @@ export type RegistrationFunctionContext = {
     registerSetting: (collectionKey: string, groupKey: string | undefined, setting: SettingTypeUnion) => void;
 };
 
-export class SettingsDefinitions {
+export class EditableSettingsRegistry {
     private collections: SettingsCollection[] = [];
 
     private registrationFunctions: ((context: RegistrationFunctionContext) => void)[] = []; // Przechowuje funkcje rejestrujące
@@ -119,4 +119,4 @@ export class SettingsDefinitions {
     }
 }
 
-export default new SettingsDefinitions();
+export default new EditableSettingsRegistry();

@@ -1,5 +1,5 @@
 import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
-import i18next, { TFunction } from "i18next";
+import i18next from "i18next";
 import { ColumnDefinition, DataGridActionContext } from "../DataGridTypes";
 import { valueToString } from "../../../../../../src/api/db";
 import { displayMaxLengh } from "../DataGridUtils";

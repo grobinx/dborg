@@ -1,5 +1,5 @@
 import { AppSettings } from "@renderer/app.config";
-import definitions, { SettingsDefinitions } from "@renderer/components/settings/SettingsDefinitions";
+import definitions, { EditableSettingsRegistry } from "@renderer/components/settings/SettingsDefinitions";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
 
@@ -16,7 +16,7 @@ interface SettingsContextType {
     getSettings: <T extends TSettings>(name: string) => T | undefined;
     settings: Record<string, TSettings>;
     isLoading: boolean;
-    definitions: SettingsDefinitions;
+    definitions: EditableSettingsRegistry;
 }
 
 // Domyślna wartość kontekstu
