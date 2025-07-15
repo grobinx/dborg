@@ -277,6 +277,10 @@ export interface SettingsGroup {
     title: string;
     description?: string;
     settings: SettingTypeUnion[];
+    /**
+     * Optional sub-groups within this group.
+     * This allows for nested settings structures.
+     */
     groups?: SettingsGroup[];
 }
 
@@ -294,5 +298,9 @@ export interface SettingsCollection {
     title: string;
     description?: string;
     groups?: SettingsGroup[];
+    /**
+     * Optional settings directly related to this collection (root).
+     * These settings are not part of any specific group.
+     */
     settings?: SettingTypeUnion[];
 }
