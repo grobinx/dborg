@@ -117,13 +117,16 @@ interface SettingTypeBase {
      * A function to validate the value of the setting.
      * It should return a string with an error message if the value is invalid,
      * or true if the value is valid.
+     * @param value - the current value of the setting
+     * @param values - all values of the settings
      */
-    validate?: (value: any) => string | boolean;
+    validate?: (value: any, values: Record<string, any>) => string | boolean;
     /**
-     * Called when the setting value changes.
-     * @param newValue The new value of the setting.
+     * This is dynamic desciption used in the UI to show the effect of the setting.
+     * @param value - the current value of the setting
+     * @param values - all values of the settings
      */
-    onChange?: (newValue: any) => void;
+    effect?: (values: Record<string, any>) => string;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {
