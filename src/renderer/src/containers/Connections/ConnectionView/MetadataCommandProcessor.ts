@@ -300,11 +300,14 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName] = MCP.resolveObjectName(metadata, typedSchemaName);
+        const [schemaName, objectName] = MCP.resolveObjectName(metadata, typedSchemaName);
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
             for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
                 for (const relation of Object.values(schema.relations)) {
+                    if (objectName && !MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
+                        continue;
+                    }
                     if (type && relation.type !== type) {
                         continue;
                     }
@@ -339,13 +342,16 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName] = MCP.resolveObjectName(metadata, typedSchemaName);
+        const [schemaName, objectName] = MCP.resolveObjectName(metadata, typedSchemaName);
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
             for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
                 if (schema.routines) {
                     for (const routines of Object.values(schema.routines)) {
                         for (const [index, routine] of routines.entries()) {
+                            if (objectName && !MCP.nameEquals({ quoted: objectName.quoted, name: routine.name }, objectName)) {
+                                continue;
+                            }
                             if (type && routine.type !== type) {
                                 continue;
                             }
@@ -588,15 +594,15 @@ export class MetadataCommandProcessor {
                             }
                         }
                         for (const column of Object.values(relation.columns).filter(column => !column.nullable)) {
-                                rows.push({
-                                    database: database.name,
-                                    schema: schema.name,
-                                    relation: relation.name,
-                                    constraint: undefined,
-                                    type: "not null",
-                                    expression: `${column.name} IS NOT NULL`,
-                                    description: column.description,
-                                });
+                            rows.push({
+                                database: database.name,
+                                schema: schema.name,
+                                relation: relation.name,
+                                constraint: undefined,
+                                type: "not null",
+                                expression: `${column.name} IS NOT NULL`,
+                                description: column.description,
+                            });
                         }
                     }
                 }
