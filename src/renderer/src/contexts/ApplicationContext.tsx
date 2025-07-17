@@ -296,31 +296,33 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }, [containers, selectedContainer]);
 
     const handleSwitchView = React.useCallback((viewId: string) => {
-        if (views && selectedSession) {
-            const sessionId = selectedSession.info.uniqueId;
-
+        if (views) {
             // Sprawdź, czy kliknięto na już wybrany widok
             if (selectedView?.id === viewId) {
-                setSelectedView(null);
-                setSessionViewState(prev => ({
-                    ...prev,
-                    [sessionId]: {
-                        views: prev[sessionId]?.views || views,
-                        selectedViewId: null, // Odznacz widok
-                    },
-                }));
+                setSelectedView(prev => selectedContainer?.type === "connections" ? null : prev);
+                if (selectedSession) {
+                    setSessionViewState(prev => ({
+                        ...prev,
+                        [selectedSession.info.uniqueId]: {
+                            views: prev[selectedSession.info.uniqueId]?.views || views,
+                            selectedViewId: null, // Odznacz widok
+                        },
+                    }));
+                }
                 return;
             }
 
             // Ustaw nowy widok
-            setSelectedView(views.find(v => v.id === viewId) || null);
-            setSessionViewState(prev => ({
-                ...prev,
-                [sessionId]: {
-                    views: prev[sessionId]?.views || views,
-                    selectedViewId: viewId,
-                },
-            }));
+            setSelectedView(prev => views.find(v => v.id === viewId) || null);
+            if (selectedSession) {
+                setSessionViewState(prev => ({
+                    ...prev,
+                    [selectedSession.info.uniqueId]: {
+                        views: prev[selectedSession.info.uniqueId]?.views || views,
+                        selectedViewId: viewId,
+                    },
+                }));
+            }
         }
     }, [views, selectedSession, selectedView]);
 

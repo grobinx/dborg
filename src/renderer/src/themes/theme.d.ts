@@ -72,6 +72,7 @@ declare module "@mui/material/styles" {
             container: string;
             footer: string;
         };
+        tooltip: string;
     }
 
     interface Palette {

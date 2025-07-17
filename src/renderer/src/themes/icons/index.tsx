@@ -11,7 +11,7 @@ export interface IconWrapperProps extends React.HTMLAttributes<HTMLDivElement> {
 interface IconWrapperOwnProps extends IconWrapperProps {
 }
 
-export const IconWrapperRoot = styled('div', {
+export const IconWrapperRoot = styled('span', {
     name: 'IconWrapper', // The component name
     slot: 'root', // The slot name
 })(() => ({

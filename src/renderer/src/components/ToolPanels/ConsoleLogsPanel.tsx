@@ -23,6 +23,7 @@ import { appStatusBarButtons } from "@renderer/app/App";
 import TabsPanel from "../TabsPanel/TabsPanel";
 import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
+import { markdown } from "../useful/MarkdownTransform";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -335,19 +336,32 @@ export const ConsoleLogsStatusBarButtons: React.FC = () => {
     }, [logs]);
 
     return (
-        <StatusBarButton
-            key="notifications"
-            onClick={() => {
-                emit(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "logs");
+        <Tooltip
+            slotProps={{
+                //popper: { open: true, },
+                tooltip: { style: { opacity: 1, backgroundColor: theme.palette.background.tooltip, borderRadius: 6 } },
+                arrow: { style: { color: theme.palette.background.tooltip } },
             }}
+            title={markdown([
+                "Console Logs",
+                ["::icon:Error:: ::color:error::Errors::", String(notificationCounts.error)],
+                ["::icon:Warning:: ::color:warning::Warnings::", String(notificationCounts.warning)],
+            ])}
         >
-            <theme.icons.Error />
-            <span>{notificationCounts.error}</span>
-            <theme.icons.Warning />
-            <span>{notificationCounts.warning}</span>
-            <theme.icons.Hint />
-            <span>{notificationCounts.info}</span>
-        </StatusBarButton>
+            <StatusBarButton
+                key="notifications"
+                onClick={() => {
+                    emit(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "logs");
+                }}
+            >
+                <theme.icons.Error />
+                <span key="error">{notificationCounts.error}</span>
+                <theme.icons.Warning />
+                <span key="warning">{notificationCounts.warning}</span>
+                <theme.icons.Hint />
+                <span key="info">{notificationCounts.info}</span>
+            </StatusBarButton>
+        </Tooltip>
     )
 }
 

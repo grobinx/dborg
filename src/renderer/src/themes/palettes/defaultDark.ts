@@ -40,6 +40,7 @@ const palette = createPalette({
             container: darken(colors.blueGrey[900], 0.2),
             footer: colors.brown[900],
         },
+        tooltip: colors.blueGrey[800],
     },
     dataType: {
         boolean: colors.purple[200],
