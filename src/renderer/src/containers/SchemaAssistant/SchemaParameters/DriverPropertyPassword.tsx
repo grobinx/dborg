@@ -1,9 +1,10 @@
-import { Box, IconButton, InputAdornment, MenuItem, TextField, TextFieldProps, Tooltip, useTheme } from '@mui/material';
+import { Box, IconButton, InputAdornment, MenuItem, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import ToolButton from '@renderer/components/ToolButton';
+import Tooltip from '@renderer/components/Tooltip';
 
 export type SchemaUsePasswordType = "ask" | "save" | "empty" | undefined;
 

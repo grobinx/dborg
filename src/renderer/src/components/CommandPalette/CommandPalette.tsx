@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, Tooltip, ButtonGroup } from '@mui/material'; // Import komponentu Button
+import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, ButtonGroup } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
 import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
 import { resolveIcon } from '@renderer/themes/icons';
 import ToolButton from '../ToolButton';
+import Tooltip from '../Tooltip';
 
 interface CommandPaletteProps {
     manager: ActionManager<any>;

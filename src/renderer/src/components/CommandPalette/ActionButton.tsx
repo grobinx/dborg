@@ -1,8 +1,9 @@
-import { Tooltip, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import ToolButton, { ToolButtonProps } from "../ToolButton"; // Zakładam, że ToolButton jest w katalogu nadrzędnym
 import { ActionDescriptor, ActionManager } from "./ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
 import { renderKeybindings } from "./CommandPalette";
+import Tooltip from "../Tooltip";
 
 interface ActionButtonProps<T> extends Omit<ToolButtonProps, "action"> {
     actionManager?: ActionManager<T>; // Menedżer akcji

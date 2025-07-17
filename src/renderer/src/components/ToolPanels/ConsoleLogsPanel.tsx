@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from "react";
 import { styled, useTheme, useThemeProps } from "@mui/material/styles";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import Tooltip from "@mui/material/Tooltip";
 import ToolButton from "../ToolButton";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
@@ -24,6 +23,7 @@ import TabsPanel from "../TabsPanel/TabsPanel";
 import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
 import { markdown } from "../useful/MarkdownTransform";
+import Tooltip from "../Tooltip";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -337,16 +337,11 @@ export const ConsoleLogsStatusBarButtons: React.FC = () => {
 
     return (
         <Tooltip
-            slotProps={{
-                //popper: { open: true, },
-                tooltip: { style: { opacity: 1, backgroundColor: theme.palette.background.tooltip, borderRadius: 6 } },
-                arrow: { style: { color: theme.palette.background.tooltip } },
-            }}
-            title={markdown([
+            title={[
                 "Console Logs",
                 ["::icon:Error:: ::color:error::Errors::", String(notificationCounts.error)],
                 ["::icon:Warning:: ::color:warning::Warnings::", String(notificationCounts.warning)],
-            ])}
+            ]}
         >
             <StatusBarButton
                 key="notifications"

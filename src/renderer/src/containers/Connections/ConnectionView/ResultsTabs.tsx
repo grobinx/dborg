@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TabsPanel } from "@renderer/components/TabsPanel/TabsPanel";
-import { Tooltip, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import { SqlResultContent, SqlResultLabel, SqlResultButtons } from "./SqlResultPanel";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
@@ -8,6 +8,7 @@ import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPa
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { uuidv7 } from "uuidv7";
 import { useMessages } from "@renderer/contexts/MessageContext";
+import Tooltip from "@renderer/components/Tooltip";
 
 export const SQL_RESULT_CLOSE = "sql-result:close";
 

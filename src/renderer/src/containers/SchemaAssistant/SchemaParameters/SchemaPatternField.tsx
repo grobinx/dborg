@@ -1,4 +1,4 @@
-import { Box, IconButton, InputAdornment, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, MenuProps, TextField, TextFieldProps, Tooltip, useTheme } from '@mui/material';
+import { Box, IconButton, InputAdornment, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, MenuProps, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PropertiesInfo } from 'src/api/db';
@@ -7,6 +7,7 @@ import { textFieldWidth } from './Utils';
 import { useToast } from '@renderer/contexts/ToastContext';
 import ToolButton from '@renderer/components/ToolButton';
 import ColorPicker from '@renderer/components/useful/ColorPicker';
+import Tooltip from '@renderer/components/Tooltip';
 
 interface SchemaPatternFieldProps {
     properties: PropertiesInfo,

@@ -1,4 +1,5 @@
-import { Button, ButtonProps, Menu, MenuItem, styled, Tooltip, useThemeProps } from "@mui/material";
+import { Button, ButtonProps, Menu, MenuItem, styled, useThemeProps } from "@mui/material";
+import Tooltip from "@renderer/components/Tooltip";
 import React, { useState } from "react";
 
 export interface StatusBarButtonProps extends ButtonProps {

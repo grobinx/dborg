@@ -134,7 +134,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
         return (
             <Typography
                 component="span"
-                variant="subtitle2"
+                variant="caption"
                 alignItems="center"
                 display="flex"
                 gap={2}

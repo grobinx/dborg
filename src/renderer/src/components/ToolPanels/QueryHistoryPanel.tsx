@@ -4,7 +4,6 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import ToolTextField from "../ToolTextField";
 import ToolButton from "../ToolButton";
-import Tooltip from "@mui/material/Tooltip";
 import { useQueryHistory } from "@renderer/contexts/QueryHistoryContext";
 import { useTranslation } from "react-i18next";
 import { ColumnDefinition } from "../DataGrid/DataGridTypes";
@@ -12,6 +11,7 @@ import { useMessages } from "@renderer/contexts/MessageContext";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import { DataGrid } from "../DataGrid/DataGrid";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import Tooltip from "../Tooltip";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();

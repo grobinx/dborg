@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Stack, styled, Tooltip, useTheme, useThemeProps, Badge, Box } from "@mui/material"; // Importuj Badge z Material-UI
+import { Stack, styled, useTheme, useThemeProps, Badge, Box } from "@mui/material"; // Importuj Badge z Material-UI
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import ToolButton from "@renderer/components/ToolButton";
@@ -21,6 +21,7 @@ import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPa
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
 import ActionsBar from "../ViewSlots/ActionsBar";
+import Tooltip from "@renderer/components/Tooltip";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",

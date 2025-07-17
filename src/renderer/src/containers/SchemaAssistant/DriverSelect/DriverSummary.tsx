@@ -1,11 +1,12 @@
 import React from "react";
-import { Box, Stack, StackProps, styled, Typography, TypographyProps, useThemeProps, useTheme, Tooltip } from "@mui/material";
+import { Box, Stack, StackProps, styled, Typography, TypographyProps, useThemeProps, useTheme } from "@mui/material";
 import { IconWrapper, IconWrapperProps, IconWrapperSize } from "@renderer/themes/icons";
 import { DriverInfo } from "src/api/db";
 import { useTranslation } from "react-i18next";
 import { useDialogs } from "@toolpad/core";
 import DriverInfoDialog from "@renderer/dialogs/DriverInfoDialog";
 import ToolButton from "@renderer/components/ToolButton";
+import Tooltip from "@renderer/components/Tooltip";
 
 const iconSizes: Record<IconWrapperSize, number> = {
     small: 32,

@@ -1,4 +1,5 @@
-import { Button, ButtonProps, styled, Tooltip, useThemeProps } from "@mui/material";
+import { Button, ButtonProps, styled, useThemeProps } from "@mui/material";
+import Tooltip from "@renderer/components/Tooltip";
 import React from "react";
 
 export interface WindowControlButtonProps extends ButtonProps {

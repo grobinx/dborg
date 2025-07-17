@@ -1,6 +1,6 @@
 import {
     Typography, ListItem, ListItemButton, ListItemText, useThemeProps,
-    Box, List, styled, StackProps, Stack, useTheme, Tooltip, ListItemIcon, BoxProps,
+    Box, List, styled, StackProps, Stack, useTheme, ListItemIcon, BoxProps,
     ListItemButtonProps, ListItemIconProps, ListItemTextProps,
     ListProps,
     ListItemProps,
@@ -21,6 +21,7 @@ import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
 import ToolButton from "@renderer/components/ToolButton";
 import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
+import Tooltip from "@renderer/components/Tooltip";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 

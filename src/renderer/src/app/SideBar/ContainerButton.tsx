@@ -1,4 +1,5 @@
-import { Button, ButtonProps, Collapse, styled, Tooltip, Typography, useThemeProps } from "@mui/material";
+import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps } from "@mui/material";
+import Tooltip from "@renderer/components/Tooltip";
 import React, { ReactElement, ReactNode } from "react";
 
 export type Placement = "top" | "bottom" | "left" | "right";

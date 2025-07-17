@@ -1,8 +1,9 @@
-import { Box, styled, Tooltip, useTheme, Zoom } from "@mui/material";
+import { Box, styled, useTheme, Zoom } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Duration } from "luxon";
 import ToolButton from "../ToolButton";
+import Tooltip from "../Tooltip";
 
 const spinnerColorsLight = [
     "#1976d2", // niebieski

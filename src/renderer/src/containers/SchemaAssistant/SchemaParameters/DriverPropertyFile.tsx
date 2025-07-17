@@ -1,9 +1,10 @@
-import { Box, InputAdornment, TextField, TextFieldProps, Tooltip, useTheme } from '@mui/material';
+import { Box, InputAdornment, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import ToolButton from '@renderer/components/ToolButton';
+import Tooltip from '@renderer/components/Tooltip';
 
 interface DriverPropertyFileProps {
     property: PropertyInfo,

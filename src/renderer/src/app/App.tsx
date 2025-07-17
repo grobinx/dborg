@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Stack, Tooltip, useTheme } from '@mui/material';
+import { Stack, useTheme } from '@mui/material';
 import MenuBar from "./MenuBar";
 import SideBar from "./SideBar";
 import StatusBar from "./StatusBar";
@@ -19,6 +19,7 @@ import { ConsoleLogPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from 
 import TabPanelButtons from '@renderer/components/TabsPanel/TabPanelButtons';
 import ToolButton from '@renderer/components/ToolButton';
 import { useTranslation } from 'react-i18next';
+import Tooltip from '@renderer/components/Tooltip';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 

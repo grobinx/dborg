@@ -12,7 +12,12 @@ const layout = (palette: Palette): ThemeOptions => {
             },
             MuiTooltip: {
                 defaultProps: {
-                    arrow: true
+                    arrow: true,
+                    slotProps: {
+                        //popper: { open: true, },
+                        tooltip: { style: { opacity: 1, backgroundColor: palette.background.tooltip, borderRadius: 5 } },
+                        arrow: { style: { color: palette.background.tooltip } },
+                    }
                 }
             },
             MuiButton: {

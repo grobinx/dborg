@@ -4,8 +4,7 @@ import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 import { ExecuteQueryAction } from "./editor/actions/ExecuteQueryAction";
 import { useTranslation } from "react-i18next";
-import { UseListenersType } from "@renderer/hooks/useListeners";
-import { Tooltip, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
@@ -28,6 +27,7 @@ import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { use } from "i18next";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
+import Tooltip from "@renderer/components/Tooltip";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";

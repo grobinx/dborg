@@ -1,10 +1,11 @@
-import { Box, Divider, InputAdornment, ListItem, ListItemButton, ListItemText, Menu, MenuProps, TextField, TextFieldProps, Tooltip, useTheme } from '@mui/material';
+import { Box, Divider, InputAdornment, ListItem, ListItemButton, ListItemText, Menu, MenuProps, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { useToast } from '@renderer/contexts/ToastContext';
 import ToolButton from '@renderer/components/ToolButton';
+import Tooltip from '@renderer/components/Tooltip';
 
 interface SchemaGroupFieldProps {
     schemaGroup: string | undefined,

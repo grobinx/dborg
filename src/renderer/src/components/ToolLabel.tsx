@@ -1,6 +1,6 @@
 import React from "react";
-import Tooltip from "@mui/material/Tooltip";
 import { styled } from "@mui/material/styles";
+import Tooltip from "./Tooltip";
 
 interface ToolLabelProps {
     label: string; // Tekst etykiety

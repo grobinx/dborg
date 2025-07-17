@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ButtonGroup, Stack, styled, Tooltip, useTheme, Menu, MenuItem } from "@mui/material";
+import { ButtonGroup, Stack, styled, useTheme, Menu, MenuItem } from "@mui/material";
 import { SqlEditorButtons, SqlEditorContent, SqlEditorLabel } from "./SqlEditorPanel";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
@@ -15,6 +15,7 @@ import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs"; // Możesz wybrać inny styl
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
+import Tooltip from "@renderer/components/Tooltip";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";

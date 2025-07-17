@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import { useTranslation } from "react-i18next";
-import { Box, Stack, Tooltip, useTheme } from "@mui/material";
+import { Box, Stack, useTheme } from "@mui/material";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import ToolButton from "@renderer/components/ToolButton";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";

@@ -1,6 +1,7 @@
-import { Button, ButtonProps, Collapse, styled, Tooltip, Typography, useThemeProps, Zoom } from "@mui/material";
+import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps, Zoom } from "@mui/material";
 import React, { ReactElement, ReactNode } from "react";
 import { Placement } from "./ContainerButton";
+import Tooltip from "@renderer/components/Tooltip";
 
 export interface ViewButtonProps extends ButtonProps {
 }

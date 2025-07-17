@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useImperativeHandle } from "react"; // Dodaj import useMemo
-import { Box, darken, lighten, Stack, styled, Tooltip, useTheme } from "@mui/material";
+import { Box, darken, lighten, Stack, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { areTypesEqual, ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
+import Tooltip from "../Tooltip";
 
 export type DataGridMode = "defined" | "data";
 
