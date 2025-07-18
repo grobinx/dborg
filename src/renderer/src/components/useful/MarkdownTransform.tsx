@@ -34,10 +34,10 @@ function markdownRules(...additionalRules: TransformationRule<ReactNode>[]): Tra
 
     const baseRules: TransformationRule<ReactNode>[] = [
         {
-            pattern: /#:(\w+):(.*):/, // Matches "#:red:some text:"
+            pattern: /#::(\w+)::(.*)::/, // Matches "#:red:some text:"
             group: 2,
             transform: (match, original) => {
-                const color = original?.match(/#:(\w+):/)?.[1];
+                const color = original?.match(/#::(\w+)::/)?.[1];
                 if (color) {
                     return <span key={counter++} style={{ color: resolveColor(color, theme)?.["light"] ?? color }}>{transformReactMatch(match)}</span>;
                 }
@@ -45,7 +45,7 @@ function markdownRules(...additionalRules: TransformationRule<ReactNode>[]): Tra
             },
         },
         {
-            pattern: /!:(\w+):/, // Matches "!:iconName:"
+            pattern: /!::(\w+)::/, // Matches "!:iconName:"
             group: 1,
             transform: (match) => <span key={counter++}>{resolveIcon(theme, match[0] as string)}</span>,
             stop: true,
@@ -159,7 +159,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
                 divider={<hr style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />}
                 gap={1}
             >
-                {text.map((item, index) => {
+                {text.map((item) => {
                     if (typeof item === 'string') {
                         // Obsługa pojedynczego ciągu znaków w tablicy
                         return (
