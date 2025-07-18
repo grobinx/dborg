@@ -55,7 +55,6 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
             title={toolTip ?? label}
             disableHoverListener={expanded}
             placement={position.toolTipPlacement}
-            arrow={true}
         >
             <ContainerButtonRoot
                 {...other}

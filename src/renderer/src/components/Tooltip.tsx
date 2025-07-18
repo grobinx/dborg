@@ -7,7 +7,6 @@ export interface TooltipProps extends Exclude<MuiTooltipProps, "title"> {
 }
 
 const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
-    const theme = useTheme();
     return (
         <MuiTooltip
             title={isValidElement(title) ? title : (title != null ? markdown(title as MarkdownString) : "")}

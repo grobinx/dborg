@@ -33,7 +33,7 @@ const palette = createPalette({
             container: lighten(colors.blueGrey[50], 0.6),
             footer: colors.brown[100],
         },
-        tooltip: colors.blueGrey[50],
+        tooltip: colors.blueGrey[800],
     },
     table: {
         main: colors.blueGrey[300],

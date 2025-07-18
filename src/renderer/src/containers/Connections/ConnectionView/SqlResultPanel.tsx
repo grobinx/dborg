@@ -23,6 +23,7 @@ import { ToolLabel } from "@renderer/components/ToolLabel";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
+import { durationToHuman } from "@renderer/common";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -366,14 +367,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                     "query-duration",
                                     "Duration {{duration}}, fetch {{fetch}}",
                                     {
-                                        duration: Duration.fromMillis(queryDuration)
-                                            .shiftTo("hour", "minutes", "seconds")
-                                            .normalize()
-                                            .toHuman({ unitDisplay: "narrow" }),
-                                        fetch: Duration.fromMillis(fetchDuration ?? 0)
-                                            .shiftTo("minutes", "seconds")
-                                            .normalize()
-                                            .toHuman({ unitDisplay: "narrow" })
+                                        duration: durationToHuman(Duration.fromMillis(queryDuration), { unitDisplay: "narrow" }),
+                                        fetch: durationToHuman(Duration.fromMillis(fetchDuration ?? 0), { unitDisplay: "narrow" })
                                     }
                                 )
                                 : executing ? t("executing---", "Executing...") : t("no-query", "No Query")}

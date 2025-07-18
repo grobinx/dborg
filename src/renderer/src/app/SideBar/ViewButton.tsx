@@ -56,7 +56,6 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                 title={toolTip ?? label}
                 disableHoverListener={expanded}
                 placement={position.toolTipPlacement}
-                arrow={true}
             >
                 <ViewButtonRoot
                     {...other}

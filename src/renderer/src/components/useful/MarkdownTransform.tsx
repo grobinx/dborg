@@ -34,18 +34,18 @@ function markdownRules(...additionalRules: TransformationRule<ReactNode>[]): Tra
 
     const baseRules: TransformationRule<ReactNode>[] = [
         {
-            pattern: /::color:(\w+)::(.*)::/, // Matches "::color:red::some text::"
+            pattern: /#:(\w+):(.*):/, // Matches "#:red:some text:"
             group: 2,
             transform: (match, original) => {
-                const color = original?.match(/::color:(\w+)::/)?.[1];
+                const color = original?.match(/#:(\w+):/)?.[1];
                 if (color) {
-                    return <span key={counter++} style={{ color: resolveColor(color, theme)?.["main"] ?? color }}>{transformReactMatch(match)}</span>;
+                    return <span key={counter++} style={{ color: resolveColor(color, theme)?.["light"] ?? color }}>{transformReactMatch(match)}</span>;
                 }
                 return null;
             },
         },
         {
-            pattern: /::icon:(\w+)::/, // Matches "::icon:iconName::"
+            pattern: /!:(\w+):/, // Matches "!:iconName:"
             group: 1,
             transform: (match) => <span key={counter++}>{resolveIcon(theme, match[0] as string)}</span>,
             stop: true,
