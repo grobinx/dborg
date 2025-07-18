@@ -70,7 +70,7 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
         }
     }
 
-    React.useEffect((): ReturnType<React.EffectCallback> => {
+    React.useEffect(() => {
         const updateState = (state: WindowState): void => {
             if (state.maximized != windowMaximized) {
                 setWindowMaximized(state.maximized);
@@ -89,7 +89,7 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
             updateState(state);
         })
         return unsubscribe;
-    })
+    }, [])
 
     return (
         <MenuBarRoot

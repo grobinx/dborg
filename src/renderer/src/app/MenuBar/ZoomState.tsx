@@ -34,29 +34,23 @@ const ZoomState: React.FC<ZoomStateOwnProps> = (props) => {
     const [windowZoom, setWindowZoom] = React.useState(100);
     const [zoomVisible, setZoomVisible] = React.useState(false);
 
-    React.useEffect((): ReturnType<React.EffectCallback> => {
-        const updateState = (state: WindowState): void => {
-            if (state.zoom != windowZoom) {
-                setWindowZoom(state.zoom);
-            }
-        }
+    React.useEffect(() => {
         const unsubscribe = window.electron.main.onState((state: WindowState): void => {
-            updateState(state);
+            setWindowZoom(state.zoom);
         });
         window.electron.main.state().then((state: WindowState) => {
-            updateState(state);
+            setWindowZoom(state.zoom);
         })
         return unsubscribe;
-    });
+    }, []);
 
-    React.useEffect((): ReturnType<React.EffectCallback> => {
+    React.useEffect(() => {
         setZoomVisible(true);
-        const intervalId = setInterval(() => {
+        const timeoutId = setTimeout(() => {
             setZoomVisible(false);
         }, delay ?? 5000);
         return () => {
-            clearInterval(intervalId);
-            setZoomVisible(false);
+            clearTimeout(timeoutId);
         }
     }, [windowZoom]);
 

@@ -67,7 +67,7 @@
     "monaco-editor": "^0.52.2",
     "node-sql-parser": "^5.3.7",
     "notistack": "^3.0.2",
-    "pattern-transformer": "^1.0.4",
+    "pattern-transformer": "^1.0.5",
     "pg": "^8.13.3",
     "pg-cursor": "^2.12.3",
     "react-bootstrap-icons": "^1.11.5",

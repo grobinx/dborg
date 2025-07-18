@@ -23,6 +23,13 @@ import Tooltip from '@renderer/components/Tooltip';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
+const directionMap: Record<Placement, 'row' | 'row-reverse' | 'column' | 'column-reverse'> = {
+    top: "column",
+    bottom: "column-reverse",
+    left: "row",
+    right: "row-reverse",
+};
+
 function getWindowDimensions(): Size {
     const { innerWidth: width, innerHeight: height } = window;
     return {
@@ -80,12 +87,6 @@ const App: React.FC = () => {
     }, [toolsTabsPanelVisible]);
 
     React.useEffect(() => {
-        const directionMap: Record<Placement, 'row' | 'row-reverse' | 'column' | 'column-reverse'> = {
-            top: "column",
-            bottom: "column-reverse",
-            left: "row",
-            right: "row-reverse",
-        };
         setStackDirection(directionMap[placement]);
     }, [placement]);
 
@@ -126,22 +127,20 @@ const App: React.FC = () => {
             unsubscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
             unsubscribe(Messages.CHANGE_SIDE_BAR_PLACEMENT, handlePlacementChange);
         };
-    }, [emit, setSettings]);
+    }, []);
 
     // Adjust middle height based on window and sidebar dimensions
     React.useEffect(() => {
         const calculateMiddleHeight = () => {
             if (!menuBarRef.current || !statusBarRef.current) return;
 
-            let _middleHeight = height - menuBarRef.current.offsetHeight - statusBarRef.current.offsetHeight;
+            let middleHeight = height - menuBarRef.current.offsetHeight - statusBarRef.current.offsetHeight;
 
             if (["top", "bottom"].includes(placement) && sideBarRef.current) {
-                _middleHeight -= sideBarHeight;
+                middleHeight -= sideBarHeight;
             }
 
-            if (middleHeight !== _middleHeight) {
-                setMiddleHeight(_middleHeight);
-            }
+            setMiddleHeight(middleHeight);
         };
 
         calculateMiddleHeight();
@@ -158,7 +157,7 @@ const App: React.FC = () => {
         return () => {
             resizeObserver.disconnect();
         };
-    }, [placement, height, sideBarHeight, middleHeight]);
+    }, [placement, height, sideBarHeight]);
 
     React.useEffect(() => {
         if (!sideBarRef.current) return;
