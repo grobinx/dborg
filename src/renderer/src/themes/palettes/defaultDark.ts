@@ -36,11 +36,11 @@ const palette = createPalette({
         menuBar: darken(colors.blueGrey[900], 0.2),
         statusBar: darken(colors.blueGrey[900], 0.5),
         table: {
-            header: darken(colors.green[900], 0.2),
+            header: darken(colors.teal[900], 0.2),
             container: darken(colors.blueGrey[900], 0.2),
             footer: colors.brown[900],
         },
-        tooltip: colors.blueGrey[800],
+        tooltip: darken(colors.blueGrey[900], 0.2),
     },
     dataType: {
         boolean: colors.purple[200],

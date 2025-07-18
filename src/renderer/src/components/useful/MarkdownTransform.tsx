@@ -123,26 +123,26 @@ function markdownRules(...additionalRules: TransformationRule<ReactNode>[]): Tra
     return [...baseRules, ...additionalRules];
 };
 
+export const TextPart = (props) => {
+    return (
+        <Typography
+            component="span"
+            variant="inherit"
+            alignItems="center"
+            display="flex"
+            gap={2}
+            {...props}
+        >
+            {props.children}
+        </Typography>
+    );
+}
+
 export const markdown = (text: MarkdownString, ...additionalRules: TransformationRule<ReactNode>[]): ReactNode => {
     const theme = useTheme();
 
     const defaultTransform: TransformFunction<ReactNode> = (match) => {
         return transformReactMatch(match);
-    }
-
-    const TextPart = (props) => {
-        return (
-            <Typography
-                component="span"
-                variant="caption"
-                alignItems="center"
-                display="flex"
-                gap={2}
-                {...props}
-            >
-                {props.children}
-            </Typography>
-        );
     }
 
     if (typeof text === 'string') {

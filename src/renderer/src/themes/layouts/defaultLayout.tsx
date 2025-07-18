@@ -15,7 +15,16 @@ const layout = (palette: Palette): ThemeOptions => {
                     arrow: false,
                     slotProps: {
                         //popper: { open: true, },
-                        tooltip: { style: { opacity: 1, backgroundColor: palette.background.tooltip, borderRadius: 5 } },
+                        tooltip: {
+                            sx: {
+                                opacity: 1,
+                                backgroundColor: palette.background.tooltip,
+                                borderRadius: 1,
+                                boxShadow: "0px 8px 10px rgba(0, 0, 0, 0.4)", 
+                                border: `1px solid ${palette.divider}`,
+                                fontSize: "0.875rem",
+                            }
+                        },
                         arrow: { style: { color: palette.background.tooltip } },
                     }
                 }
