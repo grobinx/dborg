@@ -68,8 +68,12 @@ export type SettingType =
      * A value range input (number).
      */
     | "range"
+    /**
+     * A rendered setting, which is used for custom components that render the setting in a specific way.
+     */
+    | "rendered"
 
-interface SettingTypeBase {
+export interface SettingTypeBase {
     type: SettingType;
     /**
      * A unique key for the setting.
@@ -85,6 +89,12 @@ interface SettingTypeBase {
      * This should provide additional context or instructions for the user.
      */
     description?: string;
+    /**
+     * Width of the setting in the UI.
+     * This can be a number (in pixels) or a string (e.g., "100%").
+     * If not specified, the width will be determined by the type of setting.
+     */
+    width?: number | string; 
     /**
      * Tags for the setting, used for filtering.
      */
@@ -122,7 +132,7 @@ interface SettingTypeBase {
      */
     validate?: (value: any, values: Record<string, any>) => string | boolean;
     /**
-     * This is dynamic desciption used in the UI to show the effect of the setting.
+     * This is dynamic description used in the UI to show the descriptive effect of the setting.
      * @param value - the current value of the setting
      * @param values - all values of the settings
      */
@@ -168,12 +178,10 @@ export interface SettingTypePattern extends SettingTypeBase {
 
 export interface SettingTypePassword extends SettingTypeStringBase {
     type: "password";
-    defaultValue?: string;
 }
 
 export interface SettingTypeEmail extends SettingTypeStringBase {
     type: "email";
-    defaultValue?: string;
 }
 
 export interface SettingTypeNumber extends SettingTypeBase {
@@ -248,6 +256,18 @@ export interface SettingTypeRange extends SettingTypeBase {
     defaultValue?: { start: number, end: number };
 }
 
+export interface SettingTypeRendered extends SettingTypeBase {
+    type: "rendered";
+    /**
+     * A React component that will render the setting.
+     * This allows for custom rendering of the setting.
+     * @props value - the current value of the setting
+     * @props onChange - a function to call when the value changes
+     * @props values - all values of the settings
+     */
+    render: React.FC<{ value: any; onChange: (value: any) => void; values: Record<string, any> }>;
+}
+
 export type SettingTypeUnion =
     | SettingTypeBoolean
     | SettingTypeString
@@ -266,6 +286,7 @@ export type SettingTypeUnion =
     | SettingTypeTime
     | SettingTypeDateTime
     | SettingTypeRange
+    | SettingTypeRendered
     ;
 
 /**

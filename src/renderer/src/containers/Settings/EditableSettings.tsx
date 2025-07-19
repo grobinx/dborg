@@ -1,4 +1,5 @@
 import { Box, BoxProps, styled, Typography } from "@mui/material";
+import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 
 export interface EditableSettingsProps extends BoxProps {
 }
@@ -50,7 +51,28 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     Editable Settings
                 </Typography>
             </StyledEditableSettingsTitle>
-
+            <StringSetting
+                path={["root"]}
+                setting={{
+                    type: "string",
+                    key: "some-setting",
+                    title: "**Edycja:** Jakieś ustawienie",
+                    description: "This is a string setting",
+                    required: true,
+                    experimental: true,
+                    advanced: true,
+                    minLength: 3,
+                    effect: (values) => `Jakiś efekt wartości: ${values["some-setting"]}`,
+                    validate: (value) => {
+                        if (value.length < 3) {
+                            return "Wartość musi mieć co najmniej 3 znaki";
+                        }
+                        return true;
+                    },
+                }}
+            onChange={(value) => console.log(value)}
+            values={{ "some-setting": "wartość" }}
+            />
         </StyledEditableSettingsRoot>
     );
 };

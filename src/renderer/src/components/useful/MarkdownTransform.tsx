@@ -148,7 +148,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
         return transform(text, markdownRules(...additionalRules), (match) => (
-            <TextPart key={counter++}>{transformReactMatch(match)}</TextPart>
+            <TextPart key={counter++} sx={{ whiteSpace: "pre-wrap" }}>{transformReactMatch(match)}</TextPart>
         ));
     } else if (Array.isArray(text)) {
         // Obsługa przypadku, gdy `text` jest tablicą
@@ -158,6 +158,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
                 direction="column"
                 divider={<hr style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />}
                 gap={1}
+                sx={{ whiteSpace: "pre-wrap" }}
             >
                 {text.map((item) => {
                     if (typeof item === 'string') {
