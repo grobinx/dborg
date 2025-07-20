@@ -80,6 +80,11 @@ export interface SettingTypeBase {
      */
     key: string;
     /**
+     * Optional group for categorization of settings.
+     * This will be placed before title in the UI.
+     */
+    group?: string;
+    /**
      * The title of the setting, displayed in the UI.
      * This should be a user-friendly name that describes the setting.
      */
@@ -89,6 +94,12 @@ export interface SettingTypeBase {
      * This should provide additional context or instructions for the user.
      */
     description?: string;
+    /**
+     * Default value for the setting, type depends on the setting type
+     * For example, for a string setting, this would be a string.
+     * For a boolean setting, this would be a boolean.
+     */
+    defaultValue?: any;
     /**
      * Width of the setting in the UI.
      * This can be a number (in pixels) or a string (e.g., "100%").
@@ -156,7 +167,12 @@ export interface SettingTypeString extends SettingTypeStringBase {
 
 export interface SettingTypeText extends SettingTypeStringBase {
     type: "text";
-    maxLines?: number;
+    /**
+     * Visible number of rows for the text area.
+     * Default is 4.
+     */
+    rows?: number;
+    maxRows?: number;
 }
 
 export interface SettingTypePattern extends SettingTypeBase {

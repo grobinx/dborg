@@ -22,7 +22,6 @@ import { appStatusBarButtons } from "@renderer/app/App";
 import TabsPanel from "../TabsPanel/TabsPanel";
 import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
-import { markdown } from "../useful/MarkdownTransform";
 import Tooltip from "../Tooltip";
 
 interface ConsoleLogState {

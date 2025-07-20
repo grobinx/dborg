@@ -16,6 +16,7 @@ import "../containers/Connections/MetadataCollctorStatusBar";
 import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
 import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
+import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -173,6 +174,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     label: t("application-settings", "Application settings"),
                     render: () => <EditableSettings />,
                 },
+                {
+                    type: "rendered",
+                    id: "developer-options",
+                    icon: <theme.icons.Developer />,
+                    label: t("developer-options", "Developer options"),
+                    render: () => <DeveloperOptions />,
+                },
             ]
         },
     ]);
@@ -280,7 +288,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         } else if (selectedContainer && "views" in selectedContainer) {
             if (views != selectedContainer.views) {
                 setViews(selectedContainer.views);
-                setSelectedView(selectedContainer.views[0] || null);
+                setSelectedView(
+                    selectedContainer?.type === "settings" ?
+                        selectedContainer.views.find(v => v.id === "settings") || selectedContainer.views[0]
+                        : selectedContainer.views[0] || null);
             }
         } else {
             setViews(null);
@@ -313,7 +324,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             }
 
             // Ustaw nowy widok
-            setSelectedView(prev => views.find(v => v.id === viewId) || null);
+            setSelectedView(views.find(v => v.id === viewId) || null);
             if (selectedSession) {
                 setSessionViewState(prev => ({
                     ...prev,

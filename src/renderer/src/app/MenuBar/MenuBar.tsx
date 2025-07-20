@@ -56,11 +56,10 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
     const handleWindowMaximized = (): void => {
         if (!windowMaximized) {
             window.electron.main.maximize();
-        }
-        else {
+        } else {
             window.electron.main.restore();
         }
-    }
+    };
     const handleWindowMinimized = (): void => {
         if (!windowMinimized) {
             window.electron.main.minimize();
@@ -72,24 +71,21 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
 
     React.useEffect(() => {
         const updateState = (state: WindowState): void => {
-            if (state.maximized != windowMaximized) {
-                setWindowMaximized(state.maximized);
-            }
-            if (state.minimized != windowMinimized) {
-                setWindowMinimized(state.minimized);
-            }
-            if (state.fullScreen != windowFullScreen) {
-                setWindowFullScreen(state.fullScreen);
-            }
-        }
+            setWindowMaximized(state.maximized);
+            setWindowMinimized(state.minimized);
+            setWindowFullScreen(state.fullScreen);
+        };
+
         const unsubscribe = window.electron.main.onState((state: WindowState): void => {
             updateState(state);
         });
+
         window.electron.main.state().then((state: WindowState) => {
             updateState(state);
-        })
+        });
+
         return unsubscribe;
-    }, [])
+    }, [window.electron.main.onState, window.electron.main.state]);
 
     return (
         <MenuBarRoot

@@ -99,6 +99,9 @@ const icons = (_palette: Palette): ThemeOptions => {
             Clock: (props) => <IconWrapper {...props} className="clock"><MuiIcons.AccessTimeOutlined fontSize="inherit" /></IconWrapper>,
             EditableEditor: (props) => <IconWrapper {...props} className="editable-editor"><Editable fontSize="inherit" /></IconWrapper>,
             ReadOnlyEditor: (props) => <IconWrapper {...props} className="read-only-editor"><ReadOnlyEditor fontSize="inherit" /></IconWrapper>,
+            MoreHoriz: (props) => <IconWrapper {...props} className="more-horiz"><MuiIcons.MoreHoriz fontSize="inherit" /></IconWrapper>,
+            MoreVert: (props) => <IconWrapper {...props} className="more-vert"><MuiIcons.MoreVert fontSize="inherit" /></IconWrapper>,
+            Developer: (props) => <IconWrapper {...props} className="developer"><MuiIcons.ApiOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

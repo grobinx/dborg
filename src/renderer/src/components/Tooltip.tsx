@@ -15,7 +15,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
                 isValidElement(title) ? (
                     <TextPart>{title}</TextPart>
                 ) : title != null ? (
-                    markdown(title as MarkdownString)
+                    markdown(title as MarkdownString, theme)
                 ) : (
                     ""
                 )

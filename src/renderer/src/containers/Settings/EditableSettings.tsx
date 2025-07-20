@@ -1,5 +1,6 @@
 import { Box, BoxProps, styled, Typography } from "@mui/material";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
+import React from "react";
 
 export interface EditableSettingsProps extends BoxProps {
 }
@@ -15,7 +16,6 @@ const StyledEditableSettingsRoot = styled(Box, {
     flexDirection: 'column',
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    height: "100%",
     gap: 16,
     padding: 16,
     width: "90%",
@@ -43,6 +43,7 @@ const StyledEditableSettingsContent = styled(Box, {
 
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
+    const [selected, setSelected] = React.useState(false);
 
     return (
         <StyledEditableSettingsRoot className="EditableSettings-root" {...other}>
@@ -56,22 +57,26 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                 setting={{
                     type: "string",
                     key: "some-setting",
-                    title: "**Edycja:** Jakieś ustawienie",
+                    group: "General",
+                    title: "Jakieś ustawienie",
                     description: "This is a string setting",
                     required: true,
                     experimental: true,
                     advanced: true,
                     minLength: 3,
-                    effect: (values) => `Jakiś efekt wartości: ${values["some-setting"]}`,
+                    effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                     validate: (value) => {
                         if (value.length < 3) {
-                            return "Wartość musi mieć co najmniej 3 znaki";
+                            return "Wartość musi mieć **co najmniej 3 znaki**";
                         }
                         return true;
                     },
+                    tags: ["example", "editable"],
                 }}
-            onChange={(value) => console.log(value)}
-            values={{ "some-setting": "wartość" }}
+                onChange={(value) => console.log(value)}
+                values={{ "some-setting": "wartość" }}
+                selected={selected}
+                onClick={() => setSelected(!selected)}
             />
         </StyledEditableSettingsRoot>
     );

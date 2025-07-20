@@ -1,5 +1,5 @@
 import { Error } from "@mui/icons-material";
-import { Stack, Typography, useTheme } from "@mui/material";
+import { Stack, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { resolveColor } from "@renderer/themes/utils";
 import { isTreeNode, transform, TransformationRule, TransformFunction } from "pattern-transformer";
@@ -29,8 +29,7 @@ const transformReactMatch: TransformFunction<ReactNode> = (match) => {
     });
 }
 
-function markdownRules(...additionalRules: TransformationRule<ReactNode>[]): TransformationRule<ReactNode>[] {
-    const theme = useTheme();
+function markdownRules(theme: Theme, ...additionalRules: TransformationRule<ReactNode>[]): TransformationRule<ReactNode>[] {
 
     const baseRules: TransformationRule<ReactNode>[] = [
         {
@@ -138,8 +137,7 @@ export const TextPart = (props) => {
     );
 }
 
-export const markdown = (text: MarkdownString, ...additionalRules: TransformationRule<ReactNode>[]): ReactNode => {
-    const theme = useTheme();
+export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules: TransformationRule<ReactNode>[]): ReactNode => {
 
     const defaultTransform: TransformFunction<ReactNode> = (match) => {
         return transformReactMatch(match);
@@ -147,7 +145,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
 
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return transform(text, markdownRules(...additionalRules), (match) => (
+        return transform(text, markdownRules(theme, ...additionalRules), (match) => (
             <TextPart key={counter++} sx={{ whiteSpace: "pre-wrap" }}>{transformReactMatch(match)}</TextPart>
         ));
     } else if (Array.isArray(text)) {
@@ -165,7 +163,7 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
                         // Obsługa pojedynczego ciągu znaków w tablicy
                         return (
                             <TextPart key={counter++}>
-                                {transform(item, markdownRules(...additionalRules), defaultTransform)}
+                                {transform(item, markdownRules(theme, ...additionalRules), defaultTransform)}
                             </TextPart>
                         );
                     } else if (Array.isArray(item)) {
@@ -182,13 +180,13 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
                                         key={counter++}
                                         style={{ textAlign: "left" }}
                                     >
-                                        {transform(item[0], markdownRules(...additionalRules), defaultTransform)}
+                                        {transform(item[0], markdownRules(theme, ...additionalRules), defaultTransform)}
                                     </TextPart>
                                     <TextPart
                                         key={counter++}
                                         style={{ textAlign: "right" }}
                                     >
-                                        {transform(item[1], markdownRules(...additionalRules), defaultTransform)}
+                                        {transform(item[1], markdownRules(theme, ...additionalRules), defaultTransform)}
                                     </TextPart>
                                 </Stack>
                             );
@@ -205,19 +203,19 @@ export const markdown = (text: MarkdownString, ...additionalRules: Transformatio
                                         key={counter++}
                                         style={{ textAlign: "left" }}
                                     >
-                                        {transform(item[0], markdownRules(...additionalRules), defaultTransform)}
+                                        {transform(item[0], markdownRules(theme, ...additionalRules), defaultTransform)}
                                     </TextPart>
                                     <TextPart
                                         key={counter++}
                                         style={{ textAlign: "center", flex: 1 }}
                                     >
-                                        {transform(item[1], markdownRules(...additionalRules), defaultTransform)}
+                                        {transform(item[1], markdownRules(theme, ...additionalRules), defaultTransform)}
                                     </TextPart>
                                     <TextPart
                                         key={counter++}
                                         style={{ textAlign: "right" }}
                                     >
-                                        {transform(item[2], markdownRules(...additionalRules), defaultTransform)}
+                                        {transform(item[2], markdownRules(theme, ...additionalRules), defaultTransform)}
                                     </TextPart>
                                 </Stack>
                             );

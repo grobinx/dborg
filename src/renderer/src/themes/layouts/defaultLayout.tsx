@@ -20,7 +20,7 @@ const layout = (palette: Palette): ThemeOptions => {
                                 opacity: 1,
                                 backgroundColor: palette.background.tooltip,
                                 borderRadius: 1,
-                                boxShadow: "0px 8px 10px rgba(0, 0, 0, 0.4)", 
+                                boxShadow: "0px 8px 10px rgba(0, 0, 0, 0.4)",
                                 border: `1px solid ${palette.divider}`,
                                 fontSize: "0.875rem",
                             }
@@ -166,6 +166,11 @@ const layout = (palette: Palette): ThemeOptions => {
                     sx: {
                         minWidth: 32,
                     }
+                }
+            },
+            MuiAlert: {
+                defaultProps: {
+                    variant: "filled",
                 }
             },
 
@@ -684,9 +689,6 @@ const layout = (palette: Palette): ThemeOptions => {
             ToastList: {
                 defaultProps: {
                     slotProps: {
-                        alert: {
-                            variant: "filled",
-                        },
                         transition: {
                             component: "Slide",
                             slotProps: {
@@ -752,6 +754,84 @@ const layout = (palette: Palette): ThemeOptions => {
                             backgroundColor: palette.primary.main,
                         },
                     }
+                }
+            },
+            SettingInputControl: {
+                styleOverrides: {
+                    root: {
+                        padding: 8,
+                        flexDirection: "row-reverse",
+                        '&:hover': {
+                            backgroundColor: palette.action.hover,
+                        },
+                        '&.Mui-selected': {
+                            outline: `1px solid ${palette.primary.main}`,
+                            backgroundColor: palette.action.selected,
+                        },
+                        '&:not(:hover) .menu:not(.open)': {
+                            visibility: "hidden", // Ukrycie przycisku, ale zachowanie miejsca
+                        },
+                    },
+                    internal: {
+                        gap: 4,
+                        marginLeft: 0,
+                        marginRight: 8,
+                    },
+                    label: {
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                        color: palette.text.primary,
+                        marginBottom: 4,
+                        '& .group': {
+                            fontWeight: 700,
+                            color: palette.text.secondary,
+                            marginRight: 4,
+                        },
+                        '& .required': {
+                            color: palette.error.main,
+                            margin: "0 4px",
+                        },
+                        '& .flags': {
+                            marginLeft: 8,
+                            fontSize: "0.8rem",
+                            '& em': {
+                                verticalAlign: "middle", // Wyrównanie do linii bazowej
+                            },
+                            '& em:not(:last-child)::after': {
+                                content: '"·"', // Kropka na środku
+                                margin: '0 4px', // Odstęp po bokach kropki
+                                color: palette.text.secondary, // Kolor kropki
+                            },
+                        },
+                        '& .tags': {
+                            display: "flex", // Ustawienie układu dla tagów
+                            justifyContent: "flex-end", // Wyrównanie do prawej
+                            gap: 4, // Odstęp między tagami
+                            '& .tag': {
+                                display: "inline-block", // Ustawienie jako elementy inline-block
+                                padding: "0px 8px", // Wewnętrzne odstępy
+                                fontSize: "0.75em", // Rozmiar czcionki
+                                fontWeight: 500, // Grubość czcionki
+                                color: palette.text.primary, // Kolor tekstu
+                                backgroundColor: palette.action.hover, // Tło
+                                borderRadius: 4, // Zaokrąglone rogi
+                                border: `1px solid ${palette.divider}`, // Obramowanie
+                                whiteSpace: "nowrap", // Zapobiega zawijaniu tekstu
+                                textTransform: "uppercase", // Opcjonalnie: tekst wielkimi literami
+                            },
+                        },
+                    },
+                    description: {
+                        fontSize: "0.8rem",
+                        color: palette.text.secondary,
+                    },
+                    effect: {
+                        fontSize: "0.8rem",
+                        color: palette.text.secondary,
+                        marginTop: 4,
+                    }
+                },
+                defaultProps: {
                 }
             }
         }

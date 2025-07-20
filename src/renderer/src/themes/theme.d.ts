@@ -38,6 +38,7 @@ import { ToolTextFieldProps } from "@renderer/components/ToolTextField";
 import { ColumnBaseType } from "src/api/db";
 import { ToolSelectProps } from "@renderer/components/useful/ToolSelect";
 import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLogsPanel";
+import { SettingInputControlProps } from "@renderer/components/settings/SettingInputControl";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -115,6 +116,7 @@ declare module "@mui/material/styles" {
         ToolTextField: "root";
         ToolSelect: "root";
         ConsoleLogPanel: "root" | "details";
+        SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
     }
 
     interface ComponentsPropsList {
@@ -145,6 +147,7 @@ declare module "@mui/material/styles" {
         ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeProps>;
         ConsoleLogPanel: Partial<ConsoleLogPanelProps>;
+        SettingInputControl: Partial<SettingInputControlProps>;
     }
     interface Components {
         MenuBar?: {
@@ -289,6 +292,11 @@ declare module "@mui/material/styles" {
             defaultProps?: ComponentsPropsList['ConsoleLogPanel'];
             styleOverrides?: ComponentsOverrides<Theme>['ConsoleLogPanel'];
             //variants?: ComponentsVariants['ConsoleLogPanel'];
+        };
+        SettingInputControl?: {
+            defaultProps?: ComponentsPropsList['SettingInputControl'];
+            styleOverrides?: ComponentsOverrides<Theme>['SettingInputControl'];
+            //variants?: ComponentsVariants['SettingInputControl'];
         };
     }
     
