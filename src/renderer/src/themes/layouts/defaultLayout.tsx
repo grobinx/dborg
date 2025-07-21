@@ -76,7 +76,19 @@ const layout = (palette: Palette): ThemeOptions => {
                     slotProps: {
                         input: {
                             sx: {
-                                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                                backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.5)",
+                            }
+                        }
+                    },
+                }
+            },
+            MuiSelect: {
+                defaultProps: {
+                    size: "small",
+                    slotProps: {
+                        input: {
+                            sx: {
+                                backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.5)",
                             }
                         }
                     },
@@ -471,19 +483,19 @@ const layout = (palette: Palette): ThemeOptions => {
                                     fontSize: "0.9rem",
                                     lineHeight: 1.2
                                 },
-                                '& .MuiBox-root': {
-                                    display: "flex",
-                                    flexDirection: "row",
-                                    flexWrap: "wrap",
+                                '& .item': {
+                                    // display: "flex",
+                                    // flexDirection: "row",
+                                    // flexWrap: "wrap",
                                     gap: 10,
                                     padding: 10,
                                 },
-                                '& .MuiBox-root:hover': {
+                                '& .item:hover': {
                                     background: palette.action.hover,
                                 },
                                 '& .MuiFormControl-root.MuiTextField-root': {
-                                    flexDirection: "row",
-                                    alignItems: "center",
+                                    // flexDirection: "row",
+                                    // alignItems: "center",
                                     gap: 8,
                                 },
                             }
@@ -500,15 +512,6 @@ const layout = (palette: Palette): ThemeOptions => {
                         checkBoxField: {
                             sx: {
                                 padding: 4,
-                            }
-                        },
-                        menu: {
-                            slotProps: {
-                                paper: {
-                                    sx: {
-                                        maxHeight: "45vh"
-                                    }
-                                }
                             }
                         },
                     }

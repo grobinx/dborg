@@ -1,4 +1,4 @@
-import { Box, InputAdornment, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, FormHelperText, InputAdornment, InputLabel, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
@@ -10,15 +10,10 @@ interface DriverPropertyFileProps {
     property: PropertyInfo,
     value: any,
     onChange: (field: PropertyInfo, value: string) => void,
-    slotProps: {
-        textField?: TextFieldProps,
-    },
 }
 
 const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
-    const { property, value, slotProps, onChange } = props;
-    const { slotProps: textFieldSlotProps, ...textFieldOther } = slotProps?.textField ?? {};
-    const { input: textFieldSlotPropsInput, ...textFieldSlotPropsOther } = textFieldSlotProps ?? {};
+    const { property, value, onChange } = props;
     const theme = useTheme();
     const { t } = useTranslation();
 
@@ -31,16 +26,15 @@ const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
     };
 
     return (
-        <Box>
+        <Box className="item">
+            <InputLabel>{property.title}</InputLabel>
             <TextField
-                helperText={property.description}
                 id={property.name}
-                label={property.title}
                 required={property.required}
                 value={value ?? ''}
+                sx={{ minWidth: textFieldWidth(property.type, property.title) }}
                 slotProps={{
                     input: {
-                        sx: { minWidth: textFieldWidth(property.type, property.title) },
                         endAdornment: (
                             <InputAdornment
                                 position="end"
@@ -54,15 +48,13 @@ const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
                                 </Tooltip>
                             </InputAdornment>
                         ),
-                        ...textFieldSlotPropsInput
                     },
-                    ...textFieldSlotPropsOther
                 }}
                 onChange={(event) => {
                     onChange(property, event.target.value);
                 }}
-                {...textFieldOther}
             />
+            {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
         </Box>
     );
 };

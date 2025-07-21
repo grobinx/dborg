@@ -1,4 +1,4 @@
-import { Box, IconButton, InputAdornment, MenuItem, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, FormHelperText, IconButton, InputAdornment, InputLabel, MenuItem, Stack, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
@@ -14,16 +14,11 @@ interface DriverPropertyFileProps {
     usePassword: SchemaUsePasswordType,
     onChange: (field: PropertyInfo, value: string) => void,
     onChangeUsePassword: (value: SchemaUsePasswordType) => void,
-    slotProps: {
-        textField?: TextFieldProps,
-    },
     passwordRef?: React.RefObject<HTMLInputElement | null>,
 }
 
 const DriverPropertyPassword: React.FC<DriverPropertyFileProps> = (props) => {
-    const { property, value, usePassword, slotProps, onChange, onChangeUsePassword, passwordRef } = props;
-    const { slotProps: textFieldSlotProps, ...textFieldOther } = slotProps?.textField ?? {};
-    const { input: textFieldSlotPropsInput, ...textFieldSlotPropsOther } = textFieldSlotProps ?? {};
+    const { property, value, usePassword, onChange, onChangeUsePassword, passwordRef } = props;
     const theme = useTheme();
     const [showPassword, setShowPassword] = React.useState(false);
     const { t } = useTranslation();
@@ -36,65 +31,57 @@ const DriverPropertyPassword: React.FC<DriverPropertyFileProps> = (props) => {
     const handleClickShowPassword = () => setShowPassword((show) => !show);
 
     return (
-        <Box>
-            <TextField
-                helperText={property.description}
-                id={property.name}
-                label={property.title}
-                required={property.required}
-                value={value ?? ''}
-                disabled={usePassword !== "save"}
-                type={showPassword ? 'text' : 'password'}
-                inputRef={passwordRef}
-                slotProps={{
-                    input: {
-                        sx: { minWidth: textFieldWidth(property.type, property.title) },
-                        endAdornment: (
-                            <InputAdornment
-                                position="end"
-                            >
-                                <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
-                                    <span>
-                                        <ToolButton
-                                            disabled={usePassword !== "save"}
-                                            onClick={handleClickShowPassword}
-                                            selected={showPassword}
-                                        >
-                                            {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                        </ToolButton>
-                                    </span>
-                                </Tooltip>
-                            </InputAdornment>
-                        ),
-                        ...textFieldSlotPropsInput
-                    },
-                    ...textFieldSlotPropsOther
-                }}
-                onChange={event => onChange(property, event.target.value)}
-                {...textFieldOther}
-            />
-            <TextField
-                key={"schema-use-password"}
-                label={i18n_SchemaUsePassword}
-                select
-                value={usePassword ?? "ask"}
-                onChange={event => onChangeUsePassword(event.target.value as SchemaUsePasswordType)}
-                slotProps={{
-                    input: {
-                        sx: {
-                            minWidth: textFieldWidth("string", i18n_SchemaUsePassword),
+        <Stack direction={"row"} className="item">
+            <Box>
+                <InputLabel>{property.title}</InputLabel>
+                <TextField
+                    id={property.name}
+                    required={property.required}
+                    value={value ?? ''}
+                    disabled={usePassword !== "save"}
+                    type={showPassword ? 'text' : 'password'}
+                    inputRef={passwordRef}
+                    sx={{ minWidth: textFieldWidth(property.type, property.title) }}
+                    slotProps={{
+                        input: {
+                            endAdornment: (
+                                <InputAdornment
+                                    position="end"
+                                >
+                                    <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
+                                        <span>
+                                            <ToolButton
+                                                disabled={usePassword !== "save"}
+                                                onClick={handleClickShowPassword}
+                                                selected={showPassword}
+                                            >
+                                                {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                            </ToolButton>
+                                        </span>
+                                    </Tooltip>
+                                </InputAdornment>
+                            ),
                         },
-                        ...textFieldSlotPropsInput,
-                    },
-                    ...textFieldSlotPropsOther
-                }}
-                {...textFieldOther}
-            >
-                <MenuItem key="ask" value="ask">{i18n_AskPasswordOnConnect}</MenuItem>
-                <MenuItem key="save" value="save">{i18n_SavePassword}</MenuItem>
-                <MenuItem key="empty" value="empty">{i18n_UseEmptyPassword}</MenuItem>
-            </TextField>
-        </Box>
+                    }}
+                    onChange={event => onChange(property, event.target.value)}
+                />
+                {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
+            </Box>
+            <Box>
+                <InputLabel>{i18n_SchemaUsePassword}</InputLabel>
+                <TextField
+                    key={"schema-use-password"}
+                    select
+                    value={usePassword ?? "ask"}
+                    onChange={event => onChangeUsePassword(event.target.value as SchemaUsePasswordType)}
+                    sx={{ minWidth: textFieldWidth("string", i18n_SchemaUsePassword) }}
+                >
+                    <MenuItem key="ask" value="ask">{i18n_AskPasswordOnConnect}</MenuItem>
+                    <MenuItem key="save" value="save">{i18n_SavePassword}</MenuItem>
+                    <MenuItem key="empty" value="empty">{i18n_UseEmptyPassword}</MenuItem>
+                </TextField>
+            </Box>
+        </Stack>
     );
 };
 

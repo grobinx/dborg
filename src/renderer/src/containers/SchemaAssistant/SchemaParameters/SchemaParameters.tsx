@@ -33,9 +33,7 @@ export interface SchemaParametersProps extends StackProps {
         groupName?: TypographyProps,
         groupDescription?: TypographyProps,
         groupProperties?: StackProps,
-        textField?: TextFieldProps,
         checkBoxField?: CheckboxProps,
-        menu?: Omit<MenuProps, "open">,
     },
     search?: string,
 }
@@ -182,18 +180,10 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                             schemaDriverId={driver?.uniqueId}
                             onChangePattern={value => setSchemaPattern(value)}
                             onChangeColor={value => setSchemaColor(value)}
-                            slotProps={{
-                                textField: slotProps?.textField,
-                                menu: slotProps?.menu,
-                            }}
                         />
                         <SchemaGroupField
                             schemaGroup={schemaGroup}
                             onChange={value => setSchemaGroup(value === '' ? undefined : value)}
-                            slotProps={{
-                                textField: slotProps?.textField,
-                                menu: slotProps?.menu,
-                            }}
                         />
                     </SchemaParametersProperties>
                 </SchemaParametersGroup>
@@ -222,9 +212,6 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                                             property={property}
                                             value={properties[property.name]}
                                             onChange={handlePropertyChange}
-                                            slotProps={{
-                                                textField: slotProps?.textField
-                                            }}
                                         />
                                     )
                                 }
@@ -235,9 +222,6 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                                             property={property}
                                             value={properties[property.name]}
                                             onChange={handlePropertyChange}
-                                            slotProps={{
-                                                textField: slotProps?.textField
-                                            }}
                                         />
                                     )
                                 }
@@ -260,9 +244,6 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                                                 }
                                             }}
                                             passwordRef={passwordRef}
-                                            slotProps={{
-                                                textField: slotProps?.textField
-                                            }}
                                         />
                                     )
                                 }
@@ -273,9 +254,6 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                                             property={property}
                                             value={properties[property.name]}
                                             onChange={handlePropertyChange}
-                                            slotProps={{
-                                                textField: slotProps?.textField
-                                            }}
                                         />
                                     )
                                 }

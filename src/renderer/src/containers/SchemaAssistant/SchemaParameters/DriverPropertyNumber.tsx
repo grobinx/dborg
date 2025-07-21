@@ -1,4 +1,4 @@
-import { Box, TextField, TextFieldProps } from '@mui/material';
+import { Box, FormHelperText, InputLabel, TextField, TextFieldProps } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
@@ -7,37 +7,25 @@ interface DriverPropertyNumberProps {
     property: PropertyInfo,
     value: any,
     onChange: (field: PropertyInfo, value: string) => void,
-    slotProps: {
-        textField?: TextFieldProps,
-    },
 }
 
 const DriverPropertyNumber: React.FC<DriverPropertyNumberProps> = (props) => {
-    const { property, value, slotProps, onChange } = props;
-    const { slotProps: textFieldSlotProps, ...textFieldOther } = slotProps?.textField ?? {};
-    const { input: textFieldSlotPropsInput, ...textFieldSlotPropsOther } = textFieldSlotProps ?? {};
+    const { property, value, onChange } = props;
 
     return (
-        <Box>
+        <Box className="item">
+            <InputLabel>{property.title}</InputLabel>
             <TextField
-                helperText={property.description}
                 id={property.name}
-                label={property.title}
                 required={property.required}
                 value={value ?? ''}
                 type="number"
-                slotProps={{
-                    input: {
-                        sx: { minWidth: textFieldWidth(property.type, property.title) },
-                        ...textFieldSlotPropsInput
-                    },
-                    ...textFieldSlotPropsOther
-                }}
+                sx={{ minWidth: textFieldWidth(property.type, property.title) }}
                 onChange={(event) => {
                     onChange(property, event.target.value);
                 }}
-                {...textFieldOther}
             />
+            {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
         </Box>
     );
 };

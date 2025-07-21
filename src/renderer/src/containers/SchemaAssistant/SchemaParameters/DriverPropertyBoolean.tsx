@@ -15,7 +15,7 @@ const DriverPropertyBoolean: React.FC<DriverPropertyBooleanProps> = (props) => {
     const { property, value, slotProps, onChange } = props;
 
     return (
-        <Box>
+        <Box className="item">
             <FormControl>
                 <FormControlLabel
                     control={

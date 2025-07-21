@@ -3,10 +3,10 @@ import { Properties, PropertyInfo, PropertyType } from "../../../../../api/db";
 export function textFieldWidth(type: PropertyType | "schema-pattern", title: string): string | undefined {
     switch (type) {
         case "password":
-        case "string": return '25rem';
-        case "number": return title.length <= 15 ? '10rem' : '15rem';
+        case "string": return '22rem';
+        case "number": return `${Math.ceil((title.length / 5)) *5 * 6}px !important`;
         case "file": return "30rem";
-        case "schema-pattern": return "25rem";
+        case "schema-pattern": return "22rem";
     }
     return;
 }

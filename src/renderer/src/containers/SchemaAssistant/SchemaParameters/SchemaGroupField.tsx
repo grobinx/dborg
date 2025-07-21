@@ -1,4 +1,4 @@
-import { Box, Divider, InputAdornment, ListItem, ListItemButton, ListItemText, Menu, MenuProps, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, Divider, InputAdornment, InputLabel, ListItem, ListItemButton, ListItemText, Menu, MenuProps, TextField, TextFieldProps, useTheme } from '@mui/material';
 import React from 'react';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
@@ -10,10 +10,6 @@ import Tooltip from '@renderer/components/Tooltip';
 interface SchemaGroupFieldProps {
     schemaGroup: string | undefined,
     onChange: (value: string) => void,
-    slotProps: {
-        textField?: TextFieldProps,
-        menu?: Omit<MenuProps, "open">,
-    },
 }
 
 type GrupNameType = {
@@ -22,9 +18,7 @@ type GrupNameType = {
 }
 
 const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
-    const { schemaGroup, slotProps, onChange } = props;
-    const { slotProps: textFieldSlotProps, ...textFieldOther } = slotProps?.textField ?? {};
-    const { input: textFieldSlotPropsInput, ...textFieldSlotPropsOther } = textFieldSlotProps ?? {};
+    const { schemaGroup, onChange } = props;
     const theme = useTheme();
     const { t } = useTranslation();
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -97,18 +91,16 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
     };
 
     return (
-        <Box>
+        <Box className="item">
+            <InputLabel>{i18n_schemaGroup}</InputLabel>
             <TextField
                 id="sch_group"
-                label={i18n_schemaGroup}
                 value={schemaGroup ?? ''}
                 onChange={event => onChange(event.target.value)}
                 inputRef={inputRef}
+                sx={{ minWidth: textFieldWidth("string", i18n_schemaGroup) }}
                 slotProps={{
                     input: {
-                        sx: {
-                            width: textFieldWidth("string", i18n_schemaGroup),
-                        },
                         endAdornment: (
                             <InputAdornment
                                 position="end"
@@ -125,17 +117,13 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
                                 </Tooltip>
                             </InputAdornment>
                         ),
-                        ...textFieldSlotPropsInput,
                     },
-                    ...textFieldSlotPropsOther
                 }}
-                {...textFieldOther}
             />
             <Menu
                 anchorEl={anchorEl}
                 open={openMenuGroups}
                 onClose={handleMenuClose}
-                {...slotProps?.menu}
             >
                 {groupList.map((group, index) => {
                     if (group.value === "-") {
