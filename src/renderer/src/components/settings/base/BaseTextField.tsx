@@ -1,12 +1,12 @@
 import { TextField } from "@mui/material";
-import { SettingInputProps } from "./SettingInputControl";
+import { BaseInputProps } from "./BaseInput";
 
-export interface SettingTextFieldProps extends
+export interface BaseTextFieldProps extends
     Omit<React.ComponentProps<typeof TextField>, "onChange" | "value" | "disabled" | "onClick">,
-    Partial<SettingInputProps> {
+    Partial<BaseInputProps> {
 }
 
-const SettingTextField: React.FC<SettingTextFieldProps> = (props) => {
+const BaseTextField: React.FC<BaseTextFieldProps> = (props) => {
     const { id, value, onChange, disabled, ...other } = props;
     return (
         <TextField
@@ -19,4 +19,4 @@ const SettingTextField: React.FC<SettingTextFieldProps> = (props) => {
     );
 };
 
-export default SettingTextField;
+export default BaseTextField;

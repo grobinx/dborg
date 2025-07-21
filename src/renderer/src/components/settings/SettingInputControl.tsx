@@ -3,14 +3,7 @@ import { SettingTypeBase, SettingTypeUnion } from "./SettingsTypes";
 import { markdown } from "@renderer/components/useful/MarkdownTransform";
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
-
-export interface SettingInputProps {
-    id: string;
-    value: any;
-    onChange: (value: any, valid?: boolean) => void;
-    onClick?: () => void; 
-    disabled: boolean;
-}
+import { BaseInputProps } from "./base/BaseInput";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -66,7 +59,7 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
         case "string":
             if (setting.maxLength) {
                 // Każdy znak zajmuje około 11px, dodajemy margines
-                return Math.min(setting.maxLength * 11 + 16, 600); // Maksymalna szerokość 600px
+                return Math.min(Math.floor(setting.maxLength / 10) * 10 * 11 + 16, 600); // Maksymalna szerokość 600px
             }
             return 400;
         case "text":
@@ -120,7 +113,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     onClick?: () => void;
     selected?: boolean;
     description?: boolean;
-    children?: React.ReactElement<SettingInputProps>;
+    children?: React.ReactElement<BaseInputProps>;
 }
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {

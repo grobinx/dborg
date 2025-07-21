@@ -63,6 +63,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     required: true,
                     experimental: true,
                     advanced: true,
+                    maxLength: 23,
                     minLength: 3,
                     effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                     validate: (value) => {

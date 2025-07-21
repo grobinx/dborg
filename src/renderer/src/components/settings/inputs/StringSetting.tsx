@@ -1,6 +1,6 @@
 import { SettingTypeString } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
-import SettingTextField from "../SettingTextField";
+import BaseTextField from "../base/BaseTextField";
 
 export const StringSetting: React.FC<{
     path: string[];
@@ -20,7 +20,7 @@ export const StringSetting: React.FC<{
             selected={selected}
             onClick={onClick}
         >
-            <SettingTextField
+            <BaseTextField
                 sx={{
                     width: calculateWidth(setting)
                 }}

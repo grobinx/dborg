@@ -161,7 +161,7 @@
 					"driver-fetch_record_count-title": "Liczba pobieranych rekordów",
 					"driver-fetch_record_count-description": "Ustaw liczbę rekordów pobieranych przez kursor, domyślnie 100",
 					"driver-max_statement_rows-title": "Maksymalna liczba wierszy",
-					"driver-max_statement_rows-description": "Ustaw liczbę rekordów pobieranych przez zapytanie, domyślnie 10000"
+					"driver-max_statement_rows-description": "Ustaw liczbę rekordów pobieranych przez zapytanie SQL użytkownika, domyślnie 1000"
 				}
 			}
 		}

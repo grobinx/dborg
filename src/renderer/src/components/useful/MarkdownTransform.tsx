@@ -25,7 +25,7 @@ const transformReactMatch: TransformFunction<ReactNode> = (match) => {
         if (Array.isArray(item)) {
             return item;
         }
-        return <span key={counter++}>{item.toString()}</span>;
+        return item.toString();
     });
 }
 
@@ -46,7 +46,7 @@ function markdownRules(theme: Theme, ...additionalRules: TransformationRule<Reac
         {
             pattern: /!::(\w+)::/, // Matches "!:iconName:"
             group: 1,
-            transform: (match) => <span key={counter++}>{resolveIcon(theme, match[0] as string)}</span>,
+            transform: (match) => <span key={counter++} style={{ display: "inline-flex", alignItems: "center" }}>{resolveIcon(theme, match[0] as string)}</span>,
             stop: true,
         },
         {
@@ -124,16 +124,17 @@ function markdownRules(theme: Theme, ...additionalRules: TransformationRule<Reac
 
 export const TextPart = (props) => {
     return (
-        <Typography
+        <Stack
             component="span"
             variant="inherit"
-            alignItems="center"
-            display="flex"
-            gap={2}
+            direction="row"
+            //alignItems="center"
+            //display="block"
+            //gap={2}
             {...props}
         >
             {props.children}
-        </Typography>
+        </Stack>
     );
 }
 
