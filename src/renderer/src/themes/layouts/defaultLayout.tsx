@@ -534,6 +534,7 @@ const layout = (palette: Palette): ThemeOptions => {
                         },
                         item: {
                             sx: {
+                                paddingY: 4,
                                 '& .status': {
                                     marginRight: 12,
                                     fontSize: "1.2em",
@@ -543,6 +544,11 @@ const layout = (palette: Palette): ThemeOptions => {
                                 },
                                 '& .driver': {
                                     marginTop: 6,
+                                },
+                                '&:not(:hover) :not(.Mui-selected)': {
+                                    '& .actions': {
+                                        visibility: "hidden",
+                                    }   
                                 }
                             },
                         },
@@ -550,7 +556,7 @@ const layout = (palette: Palette): ThemeOptions => {
                             sx: {
                                 gap: 8,
                                 paddingY: 0,
-                                transition: "background-color 0.3s ease",
+                                //transition: "background-color 0.3s ease",
                             }
                         },
                         itemText: {

@@ -486,7 +486,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, search, theme)}</span>}
                                                 secondary={renderSecondaryText(record)}
                                             />
-                                            <ButtonGroup>
+                                            <ButtonGroup className="actions">
                                                 <Tooltip title={t("text-connection", "Test connection")}>
                                                     <span>
                                                         <ToolButton
@@ -534,19 +534,21 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     </ToolButton>
                                                 </Tooltip>
                                             </ButtonGroup>
-                                            <Tooltip title={t("delete-schema", "Delete schema")}>
-                                                <ToolButton
-                                                    size="large"
-                                                    className="delete"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        handleDelete(record.sch_id);
-                                                    }}
-                                                    color="error"
-                                                >
-                                                    <theme.icons.Delete {...slotProps?.icon} />
-                                                </ToolButton>
-                                            </Tooltip>
+                                            <ButtonGroup className="actions">
+                                                <Tooltip title={t("delete-schema", "Delete schema")}>
+                                                    <ToolButton
+                                                        size="large"
+                                                        className="delete"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleDelete(record.sch_id);
+                                                        }}
+                                                        color="error"
+                                                    >
+                                                        <theme.icons.Delete {...slotProps?.icon} />
+                                                    </ToolButton>
+                                                </Tooltip>
+                                            </ButtonGroup>
                                         </ListItemButton>
                                     </ListItem>
                                 </React.Fragment>
