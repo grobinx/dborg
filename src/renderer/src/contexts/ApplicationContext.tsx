@@ -238,7 +238,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setViews(null);
             setSelectedView(null);
         }
-    }, [sessionViewState, plugins, sessionViewState]);
+    }, [sessionViewState, plugins]);
 
     const initMetadata = (session: IDatabaseSession, force?: boolean) => {
         if (!session.info.driver.implements.includes("metadata")) {

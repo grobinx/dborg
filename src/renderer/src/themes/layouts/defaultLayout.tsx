@@ -73,6 +73,13 @@ const layout = (palette: Palette): ThemeOptions => {
             MuiTextField: {
                 defaultProps: {
                     size: "small",
+                    slotProps: {
+                        input: {
+                            sx: {
+                                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                            }
+                        }
+                    },
                 }
             },
             MuiCheckbox: {
@@ -490,15 +497,6 @@ const layout = (palette: Palette): ThemeOptions => {
                                 alignItems: "end"
                             }
                         },
-                        textField: {
-                            size: "small",
-                            variant: "outlined",
-                            sx: {
-                                '& input[type="color"]': {
-                                    width: "1.6rem"
-                                }
-                            }
-                        },
                         checkBoxField: {
                             sx: {
                                 padding: 4,
@@ -642,8 +640,6 @@ const layout = (palette: Palette): ThemeOptions => {
             },
             ToolTextField: {
                 defaultProps: {
-                    variant: "outlined",
-                    size: "small",
                     sx: {
                         '& input': {
                             fontSize: "0.8rem",

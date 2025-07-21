@@ -1,6 +1,6 @@
 import { Box, BoxProps, styled, Typography } from "@mui/material";
+import { IconsList } from "@renderer/components/settings/developer/IconList";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
-import { IconsList } from "@renderer/themes/icons";
 import React from "react";
 
 export interface DeveloperOptionsProps extends BoxProps {
