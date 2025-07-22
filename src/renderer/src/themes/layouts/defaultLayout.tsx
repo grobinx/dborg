@@ -112,11 +112,11 @@ const layout = (palette: Palette): ThemeOptions => {
                         minHeight: 32,
                         borderRight: '1px solid',
                         borderLeft: '1px solid',
+                        borderTop: '1px solid',
                         borderColor: palette.action.disabled,
                         backgroundColor: "transparent",
                         "&.Mui-selected": {
                             backgroundColor: palette.action.selected,
-                            borderRight: '1px solid',
                             borderColor: palette.mode === "dark" ? palette.secondary.dark : palette.secondary.light,
                         }
                     },
