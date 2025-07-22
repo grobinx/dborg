@@ -4,6 +4,7 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { resolveColor } from "@renderer/themes/utils";
 import { isTreeNode, transform, TransformationRule, TransformFunction } from "pattern-transformer";
 import React, { isValidElement, ReactNode } from "react";
+import Code from "../Code";
 
 let counter: bigint = 0n;
 
@@ -109,14 +110,15 @@ function markdownRules(theme: Theme, ...additionalRules: TransformationRule<Reac
         },
         {
             pattern: /`([^`]+)`/, // Matches inline code `code`
-            transform: (match) => <code key={counter++}>${match[0] as string}</code>,
+            group: 1,
+            transform: (match) => <Code key={counter++}>{match[0] as string}</Code>,
             stop: true,
         },
-        {
-            pattern: /```([\s\S]*?)```/, // Matches code blocks ```code```
-            transform: (match) => <pre key={counter++}><code>${match[0] as string}</code></pre>,
-            stop: true,
-        },
+        // {
+        //     pattern: /```([\s\S]*?)```/, // Matches code blocks ```code```
+        //     transform: (match) => <pre key={counter++}><code>${match[0] as string}</code></pre>,
+        //     stop: true,
+        // },
     ];
 
     return [...baseRules, ...additionalRules];

@@ -68,7 +68,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                     validate: (value) => {
                         if (value.length < 3) {
-                            return "Wartość musi mieć **co najmniej 3 znaki**";
+                            return "Wartość `musi` mieć **co najmniej 3 znaki**";
                         }
                         return true;
                     },

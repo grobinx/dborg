@@ -39,6 +39,7 @@ import { ColumnBaseType } from "src/api/db";
 import { ToolSelectProps } from "@renderer/components/useful/ToolSelect";
 import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLogsPanel";
 import { SettingInputControlProps } from "@renderer/components/settings/SettingInputControl";
+import { CodeProps } from "@renderer/components/Code";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -117,6 +118,7 @@ declare module "@mui/material/styles" {
         ToolSelect: "root";
         ConsoleLogPanel: "root" | "details";
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
+        Code: "root";
     }
 
     interface ComponentsPropsList {
@@ -148,6 +150,7 @@ declare module "@mui/material/styles" {
         UnboundBadge: Partial<UnboundBadgeProps>;
         ConsoleLogPanel: Partial<ConsoleLogPanelProps>;
         SettingInputControl: Partial<SettingInputControlProps>;
+        Code: Partial<CodeProps>;
     }
     interface Components {
         MenuBar?: {
@@ -297,6 +300,11 @@ declare module "@mui/material/styles" {
             defaultProps?: ComponentsPropsList['SettingInputControl'];
             styleOverrides?: ComponentsOverrides<Theme>['SettingInputControl'];
             //variants?: ComponentsVariants['SettingInputControl'];
+        };
+        Code?: {
+            defaultProps?: ComponentsPropsList['Code'];
+            styleOverrides?: ComponentsOverrides<Theme>['Code'];
+            //variants?: ComponentsVariants['Code'];
         };
     }
     
