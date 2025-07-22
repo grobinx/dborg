@@ -132,6 +132,7 @@ export const TextPart = (props) => {
             //alignItems="center"
             //display="block"
             //gap={2}
+            component={"span"}
             sx={{ whiteSpace: "pre-wrap" }}
             {...props}
         >

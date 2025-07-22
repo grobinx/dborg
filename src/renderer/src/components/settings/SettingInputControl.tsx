@@ -55,19 +55,31 @@ const StyledSettingInputControlEffect = styled(Typography, {
 }));
 
 export const calculateWidth = (setting: SettingTypeUnion) => {
+    const defaultWidth = 400; // Default width
+    const maxWidth = 600; // Maximum width
+    const widthPerChar = 11; // Approximate width per character in pixels
+
     switch (setting.type) {
         case "string":
             if (setting.maxLength) {
                 // Każdy znak zajmuje około 11px, dodajemy margines
-                return Math.min(Math.floor(setting.maxLength / 10) * 10 * 11 + 16, 600); // Maksymalna szerokość 600px
+                return Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth); // Maksymalna szerokość 600px
             }
-            return 400;
+            return defaultWidth;
         case "text":
-            if (setting.rows) {
-                return 400;
+            if (setting.maxLength) {
+                const rows = setting.maxRows || 4; // Jeśli `maxRows` nie jest zdefiniowane, ustaw na 4
+                return Math.min(Math.floor((setting.maxLength / rows / 10) * 10 * widthPerChar + 16) * 1.25, maxWidth); // Oblicz szerokość na podstawie `maxLength` i `rows`
             }
+            return defaultWidth;
+        case "password":
+            if (setting.maxLength) {
+                // Każdy znak zajmuje około 11px, dodajemy margines
+                return Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth); // Maksymalna szerokość 600px
+            }
+            return defaultWidth;
     }
-    return;
+    return defaultWidth;
 };
 
 export const disabledControl = (
@@ -105,30 +117,47 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
     }
 }
 
+export interface InputControlContext {
+    valid: boolean;
+    setValue: (value: any) => void;
+}
+
 interface SettingInputControlOwnProps extends SettingInputControlProps {
     path: string[];
     setting: SettingTypeBase;
     values: Record<string, any>;
     onChange: (value: any, valid?: boolean) => void;
     onClick?: () => void;
+    validate?: (value: any) => string | boolean;
     selected?: boolean;
     description?: boolean;
     children?: React.ReactElement<BaseInputProps>;
+    contextRef?: React.Ref<InputControlContext>;
 }
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
-    const { children, className, path, setting, values, onChange, onClick, slotProps, selected, description, ...other } = useThemeProps({ name: 'SettingInputControl', props });
+    const {
+        children, className, path, setting, values,
+        onChange, onClick, validate, slotProps,
+        selected, description, contextRef, ...other
+    } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
     const theme = useTheme();
     const fullPath = [...path, setting.key].join('-');
     const [previousValue] = useState<any>(values[setting.key]);
     const [value, setValue] = useState(values[setting.key] ?? setting.defaultValue);
     const [validity, setValidity] = useState<string | undefined>(undefined);
+    const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
 
     // Menu state
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(menuAnchorEl);
+
+    React.useImperativeHandle(contextRef, () => ({
+        valid: valid,
+        setValue: (newValue: any) => setValue(newValue),
+    }));
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setMenuAnchorEl(event.currentTarget);
@@ -159,8 +188,12 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
+        if (value === undefined || value === null) {
+            return;
+        }
         const timeoutId = setTimeout(() => {
             let valid = true;
+
             if (typeof setting.validate === "function") {
                 const result = setting.validate(value, values);
                 if (result === false) {
@@ -175,10 +208,28 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             } else {
                 setValidity(undefined);
             }
+
+            // Jeśli valid jest true i validate zostało przekazane z góry, wywołaj je
+            if (valid && typeof validate === "function") {
+                const validateResult = validate(value);
+
+                if (validateResult === false) {
+                    valid = false;
+                    setValidity(t("invalid-value", "Invalid value"));
+                } else if (typeof validateResult === "string") {
+                    valid = false;
+                    setValidity(validateResult);
+                } else {
+                    setValidity(undefined);
+                }
+            }
+
+            setValid(valid);
             onChange(value, valid);
         }, 500);
+
         return () => clearTimeout(timeoutId);
-    }, [value, setting, values]);
+    }, [value, setting, values, validate]);
 
     const handleChange = (newValue: any) => {
         setValue(newValue);
@@ -248,25 +299,32 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         {markdown(setting.description, theme)}
                     </StyledSettingInputControlDescription>
                 )}
-                <Stack direction="row" alignItems="center">
+                <Stack direction="row">
                     <div ref={anchorElRef}>
                         {children &&
                             React.isValidElement(children) &&
                             React.cloneElement(children, {
                                 id: fullPath,
                                 value,
-                                onChange: (value: any) => handleChange(value),
+                                onChange: (value: any) => {
+                                    if (children.props.onChange) {
+                                        children.props.onChange(value);
+                                    }
+                                    handleChange(value);
+                                },
                                 disabled: disabledControl(setting, values),
                                 onClick: onClick,
                             })}
                     </div>
                     <Popper
+                        disablePortal
                         open={!!validity}
-                        anchorEl={anchorElRef.current}
+                        anchorEl={anchorElRef.current || undefined}
                         placement="bottom-start"
                         sx={{
                             width: anchorElRef.current ? `${anchorElRef.current.offsetWidth}px` : undefined,
                             minWidth: 200,
+                            zIndex: 1,
                         }}
                     >
                         <StyledSettingInputControlValidity

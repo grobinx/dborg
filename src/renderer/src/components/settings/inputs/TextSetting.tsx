@@ -1,11 +1,11 @@
-import { SettingTypeString } from "../SettingsTypes";
+import { SettingTypeText } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
-import { validateStringLength } from "./validations";
+import { validateStringLength, validateTextRows } from "./validations";
 
-export const StringSetting: React.FC<{
+export const TextSetting: React.FC<{
     path: string[];
-    setting: SettingTypeString;
+    setting: SettingTypeText;
     onChange: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
@@ -20,9 +20,15 @@ export const StringSetting: React.FC<{
             onChange={onChange}
             selected={selected}
             onClick={onClick}
-            validate={(value: string) => validateStringLength(value, setting.minLength, setting.maxLength)}
+            validate={(value: string) =>
+                validateTextRows(
+                    value, setting.minRows, setting.maxRows,
+                    () => validateStringLength(value, setting.minLength, setting.maxLength))
+            }
         >
             <BaseTextField
+                multiline
+                rows={setting.rows || 4}
                 sx={{
                     width: calculateWidth(setting)
                 }}

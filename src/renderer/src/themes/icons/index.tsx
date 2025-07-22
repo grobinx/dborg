@@ -136,6 +136,7 @@ export interface ThemeIcons {
     MoreHoriz: IconWrapperFC;
     MoreVert: IconWrapperFC;
     Developer: IconWrapperFC;
+    GeneratePassword: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode)) => {

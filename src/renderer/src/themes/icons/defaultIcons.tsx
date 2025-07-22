@@ -102,6 +102,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             MoreHoriz: (props) => <IconWrapper {...props} className="more-horiz"><MuiIcons.MoreHoriz fontSize="inherit" /></IconWrapper>,
             MoreVert: (props) => <IconWrapper {...props} className="more-vert"><MuiIcons.MoreVert fontSize="inherit" /></IconWrapper>,
             Developer: (props) => <IconWrapper {...props} className="developer"><MuiIcons.ApiOutlined fontSize="inherit" /></IconWrapper>,
+            GeneratePassword: (props) => <IconWrapper {...props} className="generate-password"><MuiIcons.VpnKey fontSize="inherit" /></IconWrapper>,
         }
     }
 }
