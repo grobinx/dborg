@@ -272,13 +272,14 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         <StyledSettingInputControlValidity
                             className="StyledSettingInputControl-validity"
                             severity="error"
+                            {...slotProps?.validity}
                         >
                             {markdown(validity!, theme)}
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>
                 {setting.effect && (
-                    <StyledSettingInputControlEffect className="StyledSettingInputControl-effect">
+                    <StyledSettingInputControlEffect className="StyledSettingInputControl-effect" {...slotProps?.effect}>
                         {markdown(setting.effect(values), theme)}
                     </StyledSettingInputControlEffect>
                 )}
