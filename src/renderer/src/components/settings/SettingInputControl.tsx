@@ -264,18 +264,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         open={!!validity}
                         anchorEl={anchorElRef.current}
                         placement="bottom-start"
-                        modifiers={[
-                            {
-                                name: "setWidth",
-                                enabled: true,
-                                phase: "beforeWrite",
-                                fn: ({ state }) => {
-                                    if (anchorElRef.current) {
-                                        state.styles.popper.width = `${anchorElRef.current.offsetWidth}px`;
-                                    }
-                                },
-                            },
-                        ]}
+                        sx={{
+                            width: anchorElRef.current ? `${anchorElRef.current.offsetWidth}px` : undefined,
+                            minWidth: 200,
+                        }}
                     >
                         <StyledSettingInputControlValidity
                             className="StyledSettingInputControl-validity"

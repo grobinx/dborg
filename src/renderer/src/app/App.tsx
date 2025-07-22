@@ -72,7 +72,6 @@ const App: React.FC = () => {
         return storedValue !== null ? JSON.parse(storedValue) : false;
     });
     const [middleHeight, setMiddleHeight] = React.useState(height - 60);
-    const [sideBarHeight, setSideBarHeight] = React.useState(0);
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
     const { containers, selectedContainer, selectedView } = useContainers();
     const { emit, subscribe, unsubscribe } = useMessages();
@@ -137,7 +136,7 @@ const App: React.FC = () => {
             let middleHeight = height - menuBarRef.current.offsetHeight - statusBarRef.current.offsetHeight;
 
             if (["top", "bottom"].includes(placement) && sideBarRef.current) {
-                middleHeight -= sideBarHeight;
+                middleHeight -= sideBarRef.current.offsetHeight;
             }
 
             setMiddleHeight(middleHeight);
@@ -157,27 +156,13 @@ const App: React.FC = () => {
         return () => {
             resizeObserver.disconnect();
         };
-    }, [placement, height, sideBarHeight]);
-
-    React.useEffect(() => {
-        if (!sideBarRef.current) return;
-        const resizeObserver = new ResizeObserver(() => {
-            setSideBarHeight(prev => {
-                if (sideBarRef.current) {
-                    return sideBarRef.current.offsetHeight;
-                }
-                return prev;
-            });
-        });
-        resizeObserver.observe(sideBarRef.current);
-        return () => resizeObserver.disconnect();
-    }, []);
+    }, [placement, height]);
 
     return (
         <div>
-            <MenuBar ref={menuBarRef} />
+            <MenuBar key="menu-bar" ref={menuBarRef} />
             <Stack direction={stackDirection}>
-                <SideBar placement={placement} ref={sideBarRef} />
+                <SideBar key="side-bar" placement={placement} ref={sideBarRef} />
                 <SplitPanelGroup direction="vertical" style={{ height: middleHeight }} autoSaveId="tools-panel">
                     <SplitPanel>
                         {containers?.map((container) => (
@@ -232,6 +217,7 @@ const App: React.FC = () => {
                 </SplitPanelGroup>
             </Stack>
             <StatusBar
+                key="status-bar"
                 ref={statusBarRef}
                 buttons={{
                     first: [

@@ -1,5 +1,5 @@
 import { Error } from "@mui/icons-material";
-import { Stack, Theme, Typography, useTheme } from "@mui/material";
+import { Box, Stack, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { resolveColor } from "@renderer/themes/utils";
 import { isTreeNode, transform, TransformationRule, TransformFunction } from "pattern-transformer";
@@ -49,26 +49,26 @@ function markdownRules(theme: Theme, ...additionalRules: TransformationRule<Reac
             transform: (match) => <span key={counter++} style={{ display: "inline-flex", alignItems: "center" }}>{resolveIcon(theme, match[0] as string)}</span>,
             stop: true,
         },
-        {
-            pattern: /^# (.*)$/m, // Matches lines starting with "# " (Markdown header level 1)
-            group: 1,
-            transform: (match) => <Typography key={counter++} variant="h1">{transformReactMatch(match)}</Typography>,
-        },
-        {
-            pattern: /^## (.*)$/m, // Matches lines starting with "## " (Markdown header level 2)
-            group: 1,
-            transform: (match) => <Typography key={counter++} variant="h2">{transformReactMatch(match)}</Typography>,
-        },
-        {
-            pattern: /^### (.*)$/m, // Matches lines starting with "### " (Markdown header level 3)
-            group: 1,
-            transform: (match) => <Typography key={counter++} variant="h3">{transformReactMatch(match)}</Typography>,
-        },
-        {
-            pattern: /^#### (.*)$/m, // Matches lines starting with "#### " (Markdown header level 4)
-            group: 1,
-            transform: (match) => <Typography key={counter++} variant="h4">{transformReactMatch(match)}</Typography>,
-        },
+        // {
+        //     pattern: /^# (.*)$/m, // Matches lines starting with "# " (Markdown header level 1)
+        //     group: 1,
+        //     transform: (match) => <Typography key={counter++} variant="h1">{transformReactMatch(match)}</Typography>,
+        // },
+        // {
+        //     pattern: /^## (.*)$/m, // Matches lines starting with "## " (Markdown header level 2)
+        //     group: 1,
+        //     transform: (match) => <Typography key={counter++} variant="h2">{transformReactMatch(match)}</Typography>,
+        // },
+        // {
+        //     pattern: /^### (.*)$/m, // Matches lines starting with "### " (Markdown header level 3)
+        //     group: 1,
+        //     transform: (match) => <Typography key={counter++} variant="h3">{transformReactMatch(match)}</Typography>,
+        // },
+        // {
+        //     pattern: /^#### (.*)$/m, // Matches lines starting with "#### " (Markdown header level 4)
+        //     group: 1,
+        //     transform: (match) => <Typography key={counter++} variant="h4">{transformReactMatch(match)}</Typography>,
+        // },
         {
             pattern: /\*\*(.*?)\*\*/, // Matches bold text enclosed in "**"
             group: 1,
@@ -124,17 +124,17 @@ function markdownRules(theme: Theme, ...additionalRules: TransformationRule<Reac
 
 export const TextPart = (props) => {
     return (
-        <Stack
-            component="span"
-            variant="inherit"
-            direction="row"
+        <Box
+            //variant="inherit"
+            //direction="row"
             //alignItems="center"
             //display="block"
             //gap={2}
+            sx={{ whiteSpace: "pre-wrap" }}
             {...props}
         >
             {props.children}
-        </Stack>
+        </Box>
     );
 }
 
@@ -146,9 +146,11 @@ export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules:
 
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return transform(text, markdownRules(theme, ...additionalRules), (match) => (
-            <TextPart key={counter++} sx={{ whiteSpace: "pre-wrap" }}>{transformReactMatch(match)}</TextPart>
-        ));
+        return (
+            <TextPart key={counter++}>
+                {transform(text, markdownRules(theme, ...additionalRules), defaultTransform)}
+            </TextPart>
+        );
     } else if (Array.isArray(text)) {
         // Obsługa przypadku, gdy `text` jest tablicą
         return (
