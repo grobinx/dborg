@@ -188,9 +188,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
-        if (value === undefined || value === null) {
-            return;
-        }
         const timeoutId = setTimeout(() => {
             let valid = true;
 

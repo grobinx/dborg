@@ -37,6 +37,7 @@
     "@monaco-editor/react": "^4.7.0-rc.0",
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
+    "@react-input/mask": "^2.0.4",
     "@toolpad/core": "^0.13.0",
     "@types/i18next": "^12.1.0",
     "@types/i18next-browser-languagedetector": "^2.0.2",

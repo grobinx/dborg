@@ -133,10 +133,9 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         description: "Enter your phone number",
                         mask: "+0 (___) ___-__-__",
                         replacement: { "_": /\d/ },
-                        defaultValue: "+0 (123) 456-78-90",
                     }}
                     onChange={(value, valid) => console.log("Value:", value, "Valid:", valid)}
-                    values={{ "phone-number": "+1 (123) 456-78-90" }}
+                    values={{ "phone-number": "+0 (123) 456-78-90" }}
                 />
             </StyledEditableSettingsContent>
         </StyledEditableSettingsRoot>
