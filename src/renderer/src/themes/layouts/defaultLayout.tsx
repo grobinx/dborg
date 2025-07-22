@@ -12,7 +12,8 @@ const layout = (palette: Palette): ThemeOptions => {
             },
             MuiTooltip: {
                 defaultProps: {
-                    arrow: false,
+                    arrow: true,
+                    enterDelay: 500,
                     slotProps: {
                         //popper: { open: true, },
                         tooltip: {
@@ -103,19 +104,15 @@ const layout = (palette: Palette): ThemeOptions => {
                 styleOverrides: {
                     root: {
                         textTransform: 'none',
-                        minHeight: 0,
                     },
                 },
                 defaultProps: {
                     sx: {
+                        height: 32,
+                        minHeight: 32,
                         borderRight: '1px solid',
                         borderLeft: '1px solid',
                         borderColor: palette.action.disabled,
-                        paddingX: 8,
-                        paddingY: 4,
-                        minHeight: "1.8rem",
-                        minWidth: 0,
-                        transition: "background-color 0.3s ease",
                         backgroundColor: "transparent",
                         "&.Mui-selected": {
                             backgroundColor: palette.action.selected,
@@ -132,12 +129,12 @@ const layout = (palette: Palette): ThemeOptions => {
                     indicatorColor: "secondary",
                     textColor: "inherit",
                     sx: {
-                        minHeight: 0,
+                        height: 32,
+                        minHeight: 32,
                     },
                     slotProps: {
                         indicator: {
                             sx: {
-                                height: 4,
                                 backgroundColor: palette.primary.main,
                             }
                         },

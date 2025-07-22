@@ -6,7 +6,6 @@ const StyledTabPanel = styled(Box, {
     name: "TabPanel",
     slot: "content",
 })(() => ({
-    height: "100%",
 }));
 
 export interface TabPanelProps extends React.ComponentProps<typeof StyledTabPanel> {
