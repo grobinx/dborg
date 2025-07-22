@@ -625,6 +625,14 @@ const layout = (palette: Palette): ThemeOptions => {
                             borderTop: '1px solid',
                             borderColor: palette.mode === "dark" ? palette.statusBar.dark : palette.statusBar.light,
                         }
+                    },
+                    header: {
+                        '&.position-top': {
+                            borderBottom: `1px solid ${palette.background.menuBar}`,
+                        },
+                        '&.position-bottom': {
+                            borderTop: `1px solid ${palette.background.menuBar}`,
+                        },
                     }
                 }
             },

@@ -236,7 +236,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const tabHeader = (
         <StyledTabsHeader
             ref={headerRef}
-            className="TabsPanel-header"
+            className={`TabsPanel-header ${tabPosition === "top" ? "position-top" : "position-bottom"}`}
             sx={{ zIndex: 3 }}
             {...slotProps?.header}
         >
@@ -293,7 +293,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     );
 
     return (
-        <StyledTabsPanel className={"TabsPanel-root " + className} {...other}>
+        <StyledTabsPanel className={`TabsPanel-root ${className ?? ''}`} {...other}>
             {tabPosition === "top" && tabHeader}
 
             <StyledTabsContent
