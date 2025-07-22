@@ -788,7 +788,7 @@ const layout = (palette: Palette): ThemeOptions => {
                         color: palette.text.primary,
                         marginBottom: 4,
                         '& .group': {
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: palette.text.secondary,
                             marginRight: 4,
                         },
