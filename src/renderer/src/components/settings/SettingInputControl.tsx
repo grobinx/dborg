@@ -4,6 +4,7 @@ import { markdown } from "@renderer/components/useful/MarkdownTransform";
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -57,8 +58,15 @@ const StyledSettingInputControlEffect = styled(Typography, {
 export const calculateWidth = (setting: SettingTypeUnion) => {
     const defaultWidth = 400; // Default width
     const maxWidth = 600; // Maximum width
-    const minWidth = 200; // Minimum width
+    const minWidth = 150; // Minimum width
     const widthPerChar = 11; // Approximate width per character in pixels
+
+    if (setting.width) {
+        if (typeof setting.width === "number") {
+            return Math.max(Math.min(setting.width, maxWidth), minWidth);
+        }
+        return setting.width;
+    }
 
     switch (setting.type) {
         case "string":
@@ -125,6 +133,7 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
 }
 
 export interface InputControlContext {
+    value: any;
     valid: boolean;
     setValue: (value: any) => void;
 }
@@ -140,13 +149,14 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     description?: boolean;
     children?: React.ReactElement<BaseInputProps>;
     contextRef?: React.Ref<InputControlContext>;
+    policy?: (() => string) | string;
 }
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
         children, className, path, setting, values,
         onChange, onClick, validate, slotProps,
-        selected, description, contextRef, ...other
+        selected, description, contextRef, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
     const theme = useTheme();
@@ -156,13 +166,13 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const [validity, setValidity] = useState<string | undefined>(undefined);
     const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
-
-    // Menu state
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(menuAnchorEl);
+    const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
 
     React.useImperativeHandle(contextRef, () => ({
-        valid: valid,
+        value,
+        valid,
         setValue: (newValue: any) => setValue(newValue),
     }));
 
@@ -303,32 +313,34 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         {markdown(setting.description, theme)}
                     </StyledSettingInputControlDescription>
                 )}
-                <Stack direction="row">
-                    <div ref={anchorElRef}>
-                        {children &&
-                            React.isValidElement(children) &&
-                            React.cloneElement(children, {
-                                id: fullPath,
-                                value,
-                                onChange: (value: any) => {
-                                    if (children.props.onChange) {
-                                        children.props.onChange(value);
-                                    }
-                                    handleChange(value);
-                                },
-                                disabled: disabledControl(setting, values),
-                                onClick: onClick,
-                            })}
-                    </div>
+                <Stack direction="row" ref={popperVisibilityRef}>
+                    <Stack direction={"row"} alignItems="center">
+                        <div ref={anchorElRef}>
+                            {children &&
+                                React.isValidElement(children) &&
+                                React.cloneElement(children, {
+                                    id: fullPath,
+                                    value,
+                                    onChange: (value: any) => {
+                                        if (children.props.onChange) {
+                                            children.props.onChange(value);
+                                        }
+                                        handleChange(value);
+                                    },
+                                    disabled: disabledControl(setting, values),
+                                    onClick: onClick,
+                                })}
+                        </div>
+                        {policy && (markdown(typeof policy === "function" ? policy() : policy, theme))}
+                    </Stack>
                     <Popper
-                        disablePortal
-                        open={!!validity}
+                        disablePortal={true}
+                        open={!!validity && isPopperVisible}
                         anchorEl={anchorElRef.current || undefined}
                         placement="bottom-start"
                         sx={{
                             width: anchorElRef.current ? `${anchorElRef.current.offsetWidth}px` : undefined,
                             minWidth: 200,
-                            zIndex: 1,
                         }}
                     >
                         <StyledSettingInputControlValidity

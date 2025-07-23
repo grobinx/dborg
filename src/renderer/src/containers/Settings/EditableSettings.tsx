@@ -1,17 +1,17 @@
-import { Box, BoxProps, styled, Typography } from "@mui/material";
+import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
 import { PasswordSetting } from "@renderer/components/settings/inputs/PasswordSetting";
 import { PatternSetting } from "@renderer/components/settings/inputs/PatternSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import React from "react";
 
-export interface EditableSettingsProps extends BoxProps {
+export interface EditableSettingsProps extends StackProps {
 }
 
 interface EditableSettingsOwnProps extends EditableSettingsProps {
 }
 
-const StyledEditableSettingsRoot = styled(Box, {
+const StyledEditableSettingsRoot = styled(Stack, {
     name: 'EditableSettings',
     slot: 'root',
 })(() => ({
@@ -29,20 +29,21 @@ const StyledEditableSettingsTitle = styled(Box, {
     display: "flex"
 }));
 
-const StyledEditableSettingsContent = styled(Box, {
+const StyledEditableSettingsContent = styled(Stack, {
     name: 'EditableSettings',
     slot: 'content',
 })(() => ({
     width: "100%",
     height: "100%",
-    overflow: "auto", // Dodaj przewijanie pionowe
+    flexGrow: 1,
+    overflowY: "auto", 
+    overflowX: "hidden",
 }));
 
-const StyledEditableSettingsList = styled(Box, {
+const StyledEditableSettingsList = styled(Stack, {
     name: 'EditableSettings',
     slot: 'list',
 })(() => ({
-    display: "flex",
     flexDirection: "column",
     gap: 8,
 }));
