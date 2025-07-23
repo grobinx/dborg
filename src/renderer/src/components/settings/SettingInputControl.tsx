@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import ToolButton from "../ToolButton";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -278,13 +279,11 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             {...other}
         >
             <div className={`menu${isMenuOpen ? ' open' : ''}`}>
-                <IconButton
-                    size="small"
-                    edge="start"
+                <ToolButton
                     onClick={handleMenuOpen}
                 >
                     <theme.icons.MoreVert />
-                </IconButton>
+                </ToolButton>
                 <Menu
                     anchorEl={menuAnchorEl}
                     open={isMenuOpen}
