@@ -320,7 +320,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     )}
                 </StyledSettingInputControlLabel>
                 {setting.description && setting.description.length > 0 && (description ?? true) && (
-                    <StyledSettingInputControlDescription className="StyledSettingInputControl-description" {...slotProps?.description}>
+                    <StyledSettingInputControlDescription className="SettingInputControl-description" {...slotProps?.description}>
                         {markdown(setting.description, theme)}
                     </StyledSettingInputControlDescription>
                 )}
@@ -355,7 +355,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         }}
                     >
                         <StyledSettingInputControlValidity
-                            className="StyledSettingInputControl-validity"
+                            className="SettingInputControl-validity"
                             severity="error"
                             {...slotProps?.validity}
                         >
@@ -364,7 +364,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     </Popper>
                 </Stack>
                 {setting.effect && (
-                    <StyledSettingInputControlEffect className="StyledSettingInputControl-effect" {...slotProps?.effect}>
+                    <StyledSettingInputControlEffect className="SettingInputControl-effect" {...slotProps?.effect}>
                         {markdown(setting.effect(values), theme)}
                     </StyledSettingInputControlEffect>
                 )}
