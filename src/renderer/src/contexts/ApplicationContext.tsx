@@ -33,7 +33,7 @@ export interface IContainer {
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
     label: string; // Title of the button
     section: SidebarSection;
-    container?: ({ children }: { children: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
+    container?: ({ children }: { children?: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
 }
 
 export type ViewType = "rendered" | "connection" | "custom"; // Define the types of views
@@ -134,7 +134,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             icon: <theme.icons.Plugins />,
             label: t("plugins", "Plugins"),
             section: "last",
-            container: ({ children }) => <Box>{children}</Box>,
+            container: ({ children }) => children,
             views: [
                 {
                     type: "rendered",
@@ -158,7 +158,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             icon: <theme.icons.Settings />,
             label: t("settings", "Settings"),
             section: "last",
-            container: ({ children }) => <Box>{children}</Box>,
+            container: ({ children }) => children,
             views: [
                 {
                     type: "rendered",

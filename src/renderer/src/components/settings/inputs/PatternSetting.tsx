@@ -12,7 +12,7 @@ export const PatternSetting: React.FC<{
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const inputRef = useMask({ mask: setting.mask, replacement: setting.replacement });
+    const inputRef = useMask({ mask: setting.mask, replacement: setting.replacement, showMask: true });
 
     return (
         <SettingInputControl
@@ -27,6 +27,12 @@ export const PatternSetting: React.FC<{
             <BaseTextField
                 sx={{
                     width: calculateWidth(setting),
+                    fontFamily: "monospace",
+                }}
+                slotProps={{
+                    input: {
+                        style: { fontFamily: "monospace", fontSize: "0.9em" },
+                    },
                 }}
                 inputRef={inputRef}
             />

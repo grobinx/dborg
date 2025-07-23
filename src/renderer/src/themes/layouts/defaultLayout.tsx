@@ -788,7 +788,7 @@ const layout = (palette: Palette): ThemeOptions => {
                         marginRight: 8,
                     },
                     label: {
-                        fontSize: "0.9rem",
+                        //fontSize: "0.9rem",
                         fontWeight: 600,
                         color: palette.text.primary,
                         marginBottom: 4,
@@ -803,7 +803,7 @@ const layout = (palette: Palette): ThemeOptions => {
                         },
                         '& .flags': {
                             marginLeft: 8,
-                            fontSize: "0.8rem",
+                            fontSize: "0.9em",
                             '& em': {
                                 verticalAlign: "middle", // Wyrównanie do linii bazowej
                             },
@@ -832,11 +832,11 @@ const layout = (palette: Palette): ThemeOptions => {
                         },
                     },
                     description: {
-                        fontSize: "0.8rem",
+                        fontSize: "0.9rem",
                         color: palette.text.secondary,
                     },
                     effect: {
-                        fontSize: "0.8rem",
+                        fontSize: "0.9rem",
                         color: palette.text.secondary,
                         marginTop: 4,
                     }

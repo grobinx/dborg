@@ -57,25 +57,32 @@ const StyledSettingInputControlEffect = styled(Typography, {
 export const calculateWidth = (setting: SettingTypeUnion) => {
     const defaultWidth = 400; // Default width
     const maxWidth = 600; // Maximum width
+    const minWidth = 200; // Minimum width
     const widthPerChar = 11; // Approximate width per character in pixels
 
     switch (setting.type) {
         case "string":
             if (setting.maxLength) {
                 // Każdy znak zajmuje około 11px, dodajemy margines
-                return Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth); // Maksymalna szerokość 600px
+                return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
             return defaultWidth;
         case "text":
             if (setting.maxLength) {
                 const rows = setting.maxRows || 4; // Jeśli `maxRows` nie jest zdefiniowane, ustaw na 4
-                return Math.min(Math.floor((setting.maxLength / rows / 10) * 10 * widthPerChar + 16) * 1.25, maxWidth); // Oblicz szerokość na podstawie `maxLength` i `rows`
+                return Math.max(Math.min(Math.floor((setting.maxLength / rows / 10) * 10 * widthPerChar + 16) * 1.25, maxWidth), minWidth); // Oblicz szerokość na podstawie `maxLength` i `rows`
             }
             return defaultWidth;
         case "password":
             if (setting.maxLength) {
                 // Każdy znak zajmuje około 11px, dodajemy margines
-                return Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth); // Maksymalna szerokość 600px
+                return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
+            }
+            return defaultWidth;
+        case "pattern":
+            if (setting.mask) {
+                // Każdy znak maski zajmuje około 11px, dodajemy margines
+                return Math.max(Math.min(setting.mask.length * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
             return defaultWidth;
     }
