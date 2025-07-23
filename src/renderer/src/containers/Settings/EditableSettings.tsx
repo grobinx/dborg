@@ -135,7 +135,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             specialChars: "!@#$%^&*()_+[]{}|;:',.<>?/",
                             noSpaces: true,
                             canGenerate: true,
-                            effect: (values) => `Jakiś efekt wartości hasła`,
+                            effect: (_values) => `Jakiś efekt wartości hasła`,
                             tags: ["example", "editable"],
                         }}
                         onChange={(value) => setValues((prev) => ({ ...prev, "some-password-setting": value }))}
@@ -152,7 +152,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             mask: "+0 (___) ___-__-__",
                             replacement: { "_": /\d/ },
                         }}
-                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "phone-number": value }))}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "phone-number": value }))}
                         values={values}
                     />
                     <EmailSetting
@@ -164,7 +164,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             title: "Email Address",
                             description: "Enter your email address",
                         }}
-                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "email": value }))}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "email": value }))}
                         values={values}
                     />
                     <RangeSetting
@@ -181,7 +181,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             minDistance: 200,
                             effect: (values) => `Jakiś efekt wartości zakresu wieku : ${values["age-range"][0]} - ${values["age-range"][1]}`,
                         }}
-                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "age-range": value }))}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "age-range": value }))}
                         values={values}
                     />
                 </StyledEditableSettingsList>
