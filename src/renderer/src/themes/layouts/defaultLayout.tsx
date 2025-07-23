@@ -769,6 +769,8 @@ const layout = (palette: Palette): ThemeOptions => {
             SettingInputControl: {
                 styleOverrides: {
                     root: {
+                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
+                        margin: 1,
                         padding: 8,
                         flexDirection: "row-reverse",
                         '&:hover': {
@@ -786,6 +788,44 @@ const layout = (palette: Palette): ThemeOptions => {
                         gap: 4,
                         marginLeft: 0,
                         marginRight: 8,
+                    },
+                    input: {
+                        gap: 8,
+                        '& .policy': {
+                            display: "flex",
+                            flexDirection: "row",
+                            height: "100%",
+                            fontSize: "0.7em",
+                            alignItems: "end",
+                            '& .IconWrapper-root': {
+                                marginLeft: 4,
+                                border: `1px solid ${palette.divider}`,
+                                borderRadius: 2,
+                                padding: 4,
+                                fontSize: "1.8em",
+                                '&:hover': {
+                                    backgroundColor: palette.action.hover,
+                                    cursor: "default",
+                                },
+                            }
+                        },
+                        '& .slider': {
+                            '& .slider-value': {
+                                fontSize: "0.9rem",
+                                color: palette.text.primary,
+                                padding: 4,
+                                border: `1px solid ${palette.divider}`,
+                                borderRadius: 2,
+                                width: 50,
+                                textAlign: "center",
+                            },
+                            '& .slider-value.start': {
+                                marginRight: 16,
+                            },
+                            '& .slider-value.end': {
+                                marginLeft: 16,
+                            },
+                        },
                     },
                     label: {
                         //fontSize: "0.9rem",
@@ -818,6 +858,7 @@ const layout = (palette: Palette): ThemeOptions => {
                             justifyContent: "flex-end", // Wyrównanie do prawej
                             gap: 4, // Odstęp między tagami
                             '& .tag': {
+                                alignContent: "center", // Wyrównanie tekstu w tagach
                                 display: "inline-block", // Ustawienie jako elementy inline-block
                                 padding: "0px 8px", // Wewnętrzne odstępy
                                 fontSize: "0.75em", // Rozmiar czcionki

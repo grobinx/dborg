@@ -1,7 +1,8 @@
 import { SettingTypeText } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength, validateTextRows } from "./validations";
+import React from "react";
 
 export const TextSetting: React.FC<{
     path: string[];
@@ -11,9 +12,11 @@ export const TextSetting: React.FC<{
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
+    const contextRef = React.useRef<InputControlContext>(null);
 
     return (
         <SettingInputControl
+            contextRef={contextRef}
             path={path}
             setting={setting}
             values={values}
@@ -25,6 +28,13 @@ export const TextSetting: React.FC<{
                     value, setting.minRows, setting.maxRows,
                     () => validateStringLength(value, setting.minLength, setting.maxLength))
             }
+            policy={() => {
+                const policy = [
+                    setting.maxLength ? `${contextRef.current?.value.length} / ${setting.maxLength}` : undefined,
+                    setting.maxRows ? `${(contextRef.current?.value.length ? contextRef.current?.value.split('\n').length : 0)} / ${setting.maxRows}` : undefined,
+                ];
+                return policy.filter(Boolean).join(", ");
+            }}
         >
             <BaseTextField
                 multiline

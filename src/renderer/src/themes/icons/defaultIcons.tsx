@@ -30,6 +30,11 @@ import { QueryHistory } from "./svg/QueryHistory";
 import { ResetSearch } from "./svg/ResetSearch";
 import { Editable } from "./svg/Editable";
 import { ReadOnlyEditor } from "./svg/ReadOnlyEditor";
+import { Digit } from "./svg/Digit";
+import { SpecialChar } from "./svg/SpecialChar";
+import { SpaceOff } from "./svg/SpaceOff";
+import { UpperLetter } from "./svg/UpperLetter";
+import { LowerLetter } from "./svg/LowerLetter";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -103,6 +108,11 @@ const icons = (_palette: Palette): ThemeOptions => {
             MoreVert: (props) => <IconWrapper {...props} className="more-vert"><MuiIcons.MoreVert fontSize="inherit" /></IconWrapper>,
             Developer: (props) => <IconWrapper {...props} className="developer"><MuiIcons.ApiOutlined fontSize="inherit" /></IconWrapper>,
             GeneratePassword: (props) => <IconWrapper {...props} className="generate-password"><MuiIcons.VpnKey fontSize="inherit" /></IconWrapper>,
+            Digit: (props) => <IconWrapper {...props} className="digit"><Digit fontSize="inherit" /></IconWrapper>,
+            SpecialChar: (props) => <IconWrapper {...props} className="special-char"><SpecialChar fontSize="inherit" /></IconWrapper>,
+            NoSpaces: (props) => <IconWrapper {...props} className="space-off"><SpaceOff fontSize="inherit" /></IconWrapper>,
+            UpperLetter: (props) => <IconWrapper {...props} className="upper-letter"><UpperLetter fontSize="inherit" /></IconWrapper>,
+            LowerLetter: (props) => <IconWrapper {...props} className="lower-letter"><LowerLetter fontSize="inherit" /></IconWrapper>,
         }
     }
 }

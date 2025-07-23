@@ -55,9 +55,17 @@ const StyledSettingInputControlEffect = styled(Typography, {
     display: "flex",
 }));
 
+const StyledSettingInputControlInput = styled(Stack, {
+    name: "SettingInputControl", // The component name
+    slot: "input", // The slot name
+})(() => ({
+    flexDirection: "row",
+    alignItems: "center",
+}));
+
 export const calculateWidth = (setting: SettingTypeUnion) => {
-    const defaultWidth = 400; // Default width
-    const maxWidth = 600; // Maximum width
+    const defaultWidth = 300; // Default width
+    const maxWidth = 500; // Maximum width
     const minWidth = 150; // Minimum width
     const widthPerChar = 11; // Approximate width per character in pixels
 
@@ -93,6 +101,8 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
                 return Math.max(Math.min(setting.mask.length * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
             return defaultWidth;
+        case "range":
+            return maxWidth;
     }
     return defaultWidth;
 };
@@ -129,6 +139,7 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
         description?: React.ComponentProps<typeof StyledSettingInputControlDescription>;
         validity?: React.ComponentProps<typeof StyledSettingInputControlValidity>;
         effect?: React.ComponentProps<typeof StyledSettingInputControlEffect>;
+        input?: React.ComponentProps<typeof StyledSettingInputControlInput>;
     }
 }
 
@@ -325,25 +336,25 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     </StyledSettingInputControlDescription>
                 )}
                 <Stack direction="row" ref={popperVisibilityRef}>
-                    <Stack direction={"row"} alignItems="center">
+                    <StyledSettingInputControlInput className="SettingInputControl-input" {...slotProps?.input}>
                         <div ref={anchorElRef}>
                             {children &&
                                 React.isValidElement(children) &&
                                 React.cloneElement(children, {
                                     id: fullPath,
                                     value,
-                                    onChange: (value: any) => {
-                                        if (children.props.onChange) {
-                                            children.props.onChange(value);
-                                        }
+                                    onChange: (value: any, ...args: any[]) => {
                                         handleChange(value);
+                                        if (children.props.onChange) {
+                                            children.props.onChange(value, ...args);
+                                        }
                                     },
                                     disabled: disabledControl(setting, values),
                                     onClick: onClick,
                                 })}
                         </div>
-                        {policyContent && (typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent)}
-                    </Stack>
+                        {policyContent && (<div className="policy">{typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent}</div>)}
+                    </StyledSettingInputControlInput>
                     <Popper
                         disablePortal={true}
                         open={!!validity && isPopperVisible}

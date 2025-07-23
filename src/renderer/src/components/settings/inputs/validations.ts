@@ -21,9 +21,7 @@ export function validateTextRows(value: string, minRows?: number, maxRows?: numb
 }
 
 export function validatePassword(
-    value: string, 
-    minLength?: number, 
-    maxLength?: number,
+    value: string,
     atLeastOneLowercase?: boolean,
     atLeastOneUppercase?: boolean,
     atLeastOneDigit?: boolean,
@@ -32,12 +30,6 @@ export function validatePassword(
     noSpaces?: boolean,
     next?: () => string | boolean
 ): string | boolean {
-    if (minLength && value.length < minLength) {
-        return t("password-min-length", "Password must have at least {{minLength}} characters", { minLength });
-    }
-    if (maxLength && value.length > maxLength) {
-        return t("password-max-length", "Password cannot exceed {{maxLength}} characters", { maxLength });
-    }
     if (atLeastOneLowercase && !/[a-z]/.test(value)) {
         return t("password-at-least-one-lowercase", "Password must contain at least one lowercase letter");
     }
@@ -54,6 +46,17 @@ export function validatePassword(
     }
     if (noSpaces && value.includes(" ")) {
         return t("password-no-spaces", "Password cannot contain spaces");
+    }
+    return next ? next() : true;
+}
+
+export function validateEmail(
+    value: string,
+    next?: () => string | boolean
+): string | boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (value.trim() !== "" && !emailRegex.test(value)) {
+        return t("email-invalid", "Invalid email address");
     }
     return next ? next() : true;
 }

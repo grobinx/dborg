@@ -23,10 +23,11 @@ export const PasswordSetting: React.FC<{
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const validate = (value: string) => {
         return validatePassword(
-            value, setting.minLength, setting.maxLength,
+            value,
             setting.atLeastOneLowercase, setting.atLeastOneUppercase,
             setting.atLeastOneDigit, setting.atLeastOneSpecialChar,
-            setting.specialChars, setting.noSpaces
+            setting.specialChars, setting.noSpaces,
+            () => validateStringLength(value, setting.minLength, setting.maxLength)
         );
     };
     const generatePassword = () => {
@@ -72,6 +73,42 @@ export const PasswordSetting: React.FC<{
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validate(value)}
+            policy={() => {
+                const policy = [
+                    setting.atLeastOneUppercase && (
+                        <Tooltip title={t("policy-uppercase", "At least one uppercase letter")} key="uppercase">
+                            <theme.icons.UpperLetter />
+                        </Tooltip>
+                    ),
+                    setting.atLeastOneLowercase && (
+                        <Tooltip title={t("policy-lowercase", "At least one lowercase letter")} key="lowercase">
+                            <theme.icons.LowerLetter />
+                        </Tooltip>
+                    ),
+                    setting.atLeastOneDigit && (
+                        <Tooltip title={t("policy-digit", "At least one digit")} key="digit">
+                            <theme.icons.Digit />
+                        </Tooltip>
+                    ),
+                    setting.atLeastOneSpecialChar && (
+                        <Tooltip
+                            title={t(
+                                "policy-special-char",
+                                `At least one special character (${setting.specialChars || "!@#$%^&*()_+-=[]{}|;':\",.<>?/"})`
+                            )}
+                            key="special-char"
+                        >
+                            <theme.icons.SpecialChar />
+                        </Tooltip>
+                    ),
+                    setting.noSpaces && (
+                        <Tooltip title={t("policy-no-spaces", "No spaces allowed")} key="no-spaces">
+                            <theme.icons.NoSpaces />
+                        </Tooltip>
+                    ),
+                ];
+                return policy.filter(Boolean);
+            }}
         >
             <BaseTextField
                 type={showPassword ? "text" : "password"}

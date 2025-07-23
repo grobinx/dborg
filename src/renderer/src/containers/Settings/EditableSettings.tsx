@@ -1,6 +1,8 @@
 import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
+import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
 import { PasswordSetting } from "@renderer/components/settings/inputs/PasswordSetting";
 import { PatternSetting } from "@renderer/components/settings/inputs/PatternSetting";
+import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import React from "react";
@@ -45,12 +47,21 @@ const StyledEditableSettingsList = styled(Stack, {
     slot: 'list',
 })(() => ({
     flexDirection: "column",
+    padding: 8,
     gap: 8,
 }));
 
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
     const [selected, setSelected] = React.useState(false);
+    const [values, setValues] = React.useState<Record<string, any>>({
+        "some-setting": "wartość",
+        "some-text-setting": "To jest przykładowa wartość tekstowa",
+        "some-password-setting": "PrzykładoweHasło123!",
+        "phone-number": "+0 (123) 456-78-90",
+        "email": "example@example.com",
+        "age-range": [25, 50]
+    });
 
     return (
         <StyledEditableSettingsRoot
@@ -79,8 +90,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => console.log(value)}
-                        values={{ "some-setting": "wartość" }}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-setting": value }))}
+                        values={values}
                         selected={selected}
                         onClick={() => setSelected(!selected)}
                     />
@@ -101,8 +112,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości tekstowej: **${values["some-text-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => console.log(value)}
-                        values={{ "some-text-setting": "To jest przykładowa wartość tekstowa" }}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-text-setting": value }))}
+                        values={values}
                     />
                     <PasswordSetting
                         path={["root"]}
@@ -127,8 +138,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości hasła`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => console.log(value)}
-                        values={{ "some-password-setting": "PrzykładoweHasło123!" }}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-password-setting": value }))}
+                        values={values}
                     />
                     <PatternSetting
                         path={["root"]}
@@ -141,8 +152,37 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             mask: "+0 (___) ___-__-__",
                             replacement: { "_": /\d/ },
                         }}
-                        onChange={(value, valid) => console.log("Value:", value, "Valid:", valid)}
-                        values={{ "phone-number": "+0 (123) 456-78-90" }}
+                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "phone-number": value }))}
+                        values={values}
+                    />
+                    <EmailSetting
+                        path={["root"]}
+                        setting={{
+                            type: "email",
+                            key: "email",
+                            group: "General",
+                            title: "Email Address",
+                            description: "Enter your email address",
+                        }}
+                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "email": value }))}
+                        values={values}
+                    />
+                    <RangeSetting
+                        path={["root"]}
+                        setting={{
+                            type: "range",
+                            key: "age-range",
+                            group: "General",
+                            title: "Age Range",
+                            description: "Select your age range",
+                            min: 0,
+                            max: 1000,
+                            step: 10,
+                            minDistance: 200,
+                            effect: (values) => `Jakiś efekt wartości zakresu wieku : ${values["age-range"][0]} - ${values["age-range"][1]}`,
+                        }}
+                        onChange={(value, valid) => setValues((prev) => ({ ...prev, "age-range": value }))}
+                        values={values}
                     />
                 </StyledEditableSettingsList>
             </StyledEditableSettingsContent>

@@ -1,12 +1,12 @@
-import { SettingTypeString } from "../SettingsTypes";
+import { SettingTypeEmail } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
-import { validateStringLength } from "./validations";
+import { validateEmail, validateStringLength } from "./validations";
 import React from "react";
 
-export const StringSetting: React.FC<{
+export const EmailSetting: React.FC<{
     path: string[];
-    setting: SettingTypeString;
+    setting: SettingTypeEmail;
     onChange: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
@@ -23,10 +23,15 @@ export const StringSetting: React.FC<{
             onChange={onChange}
             selected={selected}
             onClick={onClick}
-            validate={(value: string) => validateStringLength(value, setting.minLength, setting.maxLength)}
+            validate={(value: string) => 
+                validateEmail(
+                    value,
+                    () => validateStringLength(value, setting.minLength, setting.maxLength)
+                )}
             policy={() => setting.maxLength ? `${contextRef.current?.value.length} / ${setting.maxLength}` : undefined}
         >
             <BaseTextField
+                type="email"
                 sx={{
                     width: calculateWidth(setting)
                 }}

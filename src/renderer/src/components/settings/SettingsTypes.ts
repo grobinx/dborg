@@ -312,7 +312,8 @@ export interface SettingTypeRange extends SettingTypeBase {
     min: number;
     max: number;
     step?: number;
-    defaultValue?: { start: number, end: number };
+    minDistance?: number;
+    defaultValue?: [number, number];
 }
 
 export interface SettingTypeRendered extends SettingTypeBase {

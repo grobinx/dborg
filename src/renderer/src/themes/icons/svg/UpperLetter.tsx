@@ -1,7 +1,7 @@
 import { SVGProps } from "react";
 
-export function Not(props: SVGProps<SVGSVGElement>) {
-    return (
+export function UpperLetter(props: SVGProps<SVGSVGElement>) {
+  return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -19,7 +19,7 @@ export function Not(props: SVGProps<SVGSVGElement>) {
                 fontFamily="Arial, sans-serif"
                 fill="currentColor" // Ustawienie koloru dziedziczonego od rodzica
             >
-                !
+                A
             </text>
         </svg>
     );
