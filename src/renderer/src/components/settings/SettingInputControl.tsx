@@ -149,7 +149,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     description?: boolean;
     children?: React.ReactElement<BaseInputProps>;
     contextRef?: React.Ref<InputControlContext>;
-    policy?: (() => string) | string;
+    policy?: (() => React.ReactNode) | React.ReactNode;
 }
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
@@ -169,6 +169,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(menuAnchorEl);
     const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
+    const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
 
     React.useImperativeHandle(contextRef, () => ({
         value,
@@ -244,6 +245,16 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
 
         return () => clearTimeout(timeoutId);
     }, [value, setting, values, validate]);
+
+    useEffect(() => {
+        if (typeof policy === "function") {
+            setPolicyContent(policy());
+        } else if (typeof policy === "string") {
+            setPolicyContent(policy);
+        } else {
+            setPolicyContent(undefined);
+        }
+    }, [value, policy]);
 
     const handleChange = (newValue: any) => {
         setValue(newValue);
@@ -331,7 +342,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                                     onClick: onClick,
                                 })}
                         </div>
-                        {policy && (markdown(typeof policy === "function" ? policy() : policy, theme))}
+                        {policyContent && (typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent)}
                     </Stack>
                     <Popper
                         disablePortal={true}
