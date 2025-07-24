@@ -1,5 +1,6 @@
 import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
+import { NumberSetting } from "@renderer/components/settings/inputs/NumberSetting";
 import { PasswordSetting } from "@renderer/components/settings/inputs/PasswordSetting";
 import { PatternSetting } from "@renderer/components/settings/inputs/PatternSetting";
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
@@ -60,7 +61,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
         "some-password-setting": "PrzykładoweHasło123!",
         "phone-number": "+0 (123) 456-78-90",
         "email": "example@example.com",
-        "age-range": [25, 450]
+        "age-range": [25, 450],
+        //"age": 25,
     });
 
     return (
@@ -85,8 +87,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             required: true,
                             experimental: true,
                             advanced: true,
-                            maxLength: 23,
-                            minLength: 3,
+                            //maxLength: 23,
+                            //minLength: 3,
                             effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
@@ -182,6 +184,23 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości zakresu wieku : ${values["age-range"][0]} - ${values["age-range"][1]}`,
                         }}
                         onChange={(value) => setValues((prev) => ({ ...prev, "age-range": value }))}
+                        values={values}
+                    />
+                    <NumberSetting
+                        path={["root"]}
+                        setting={{
+                            type: "number",
+                            key: "age",
+                            group: "General",
+                            title: "Age",
+                            description: "Select your age",
+                            required: true,
+                            //min: 0,
+                            max: 1000,
+                            defaultValue: 25,
+                            effect: (values) => `Jakiś efekt wartości wieku : ${values["age"]}`,
+                        }}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "age": value }))}
                         values={values}
                     />
                 </StyledEditableSettingsList>

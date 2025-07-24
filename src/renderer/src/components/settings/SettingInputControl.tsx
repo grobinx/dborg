@@ -104,6 +104,8 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
             return defaultWidth;
         case "range":
             return maxWidth;
+        case "number":
+            return 200;
     }
     return defaultWidth;
 };
@@ -220,8 +222,28 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             let valid = true;
+            const isEmpty = value === undefined || value === null || value === "";
 
-            if (typeof setting.validate === "function") {
+            if (setting.required && isEmpty) {
+                valid = false;
+                setValidity(t("required-field", "This field is required"));
+            } else if (!isEmpty) {
+                if ((setting.type === "string" || setting.type === "text") && typeof value !== "string") {
+                    valid = false;
+                    setValidity(t("invalid-type", "Invalid type, expected string"));
+                } else if (setting.type === "number" && typeof value !== "number") {
+                    valid = false;
+                    setValidity(t("invalid-type", "Invalid type, expected number"));
+                } else if (setting.type === "boolean" && typeof value !== "boolean") {
+                    valid = false;
+                    setValidity(t("invalid-type", "Invalid type, expected boolean"));
+                } else if (setting.type === "array" && !Array.isArray(value)) {
+                    valid = false;
+                    setValidity(t("invalid-type", "Invalid type, expected array"));
+                }
+            }
+
+            if (valid && typeof setting.validate === "function") {
                 const result = setting.validate(value, values);
                 if (result === false) {
                     valid = false;
@@ -232,8 +254,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 } else {
                     setValidity(undefined);
                 }
-            } else {
-                setValidity(undefined);
             }
 
             // Jeśli valid jest true i validate zostało przekazane z góry, wywołaj je
@@ -249,6 +269,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 } else {
                     setValidity(undefined);
                 }
+            }
+
+            if (valid) {
+                setValidity(undefined);
             }
 
             setValid(valid);
@@ -286,7 +310,13 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             onClick={onClick}
             {...other}
         >
-            <div className={`menu${isMenuOpen ? ' open' : ''}`}>
+            <div className={[
+                "change-indicator",
+            ].filter(Boolean).join(' ')}></div>
+            <div className={[
+                'menu',
+                isMenuOpen ? 'open' : undefined,
+            ].filter(Boolean).join(' ')}>
                 <ToolButton
                     onClick={handleMenuOpen}
                 >
@@ -297,17 +327,17 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     open={isMenuOpen}
                     onClose={handleMenuClose}
                 >
-                    <MenuItem onClick={handleResetSetting}>
+                    <MenuItem key="reset-setting" onClick={handleResetSetting}>
                         {t("reset-setting", "Reset setting")}
                     </MenuItem>
-                    <MenuItem onClick={handleRestoreDefaults} disabled={setting.defaultValue === undefined}>
+                    <MenuItem key="restore-defaults" onClick={handleRestoreDefaults} disabled={setting.defaultValue === undefined}>
                         {t("restore-setting-defaults", "Restore defaults")}
                     </MenuItem>
                     <Divider />
-                    <MenuItem onClick={handleCopyPath}>
+                    <MenuItem key="copy-path" onClick={handleCopyPath}>
                         {t("copy-setting-path", "Copy path ID")}
                     </MenuItem>
-                    <MenuItem onClick={handleCopySetting}>
+                    <MenuItem key="copy-setting" onClick={handleCopySetting}>
                         {t("copy-setting", "Copy setting")}
                     </MenuItem>
                 </Menu>
@@ -315,20 +345,20 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             <StyledSettingInputControlInternal className="SettingInputControl-internal">
                 <StyledSettingInputControlLabel className="SettingInputControl-label" {...slotProps?.label}>
                     {setting.group && (
-                        <span className="group">
+                        <span key="group" className="group">
                             {setting.group}:
                         </span>
                     )}
-                    {<span className="title">{setting.title}</span>}
+                    {<span key="title" className="title">{setting.title}</span>}
                     {setting.required && (<span className="required" style={{ color: theme.palette.error.main }}>*</span>)}
-                    <span className="flags">
+                    <span key="flags" className="flags">
                         {setting.advanced && (<em className="flag advanced">{t('advanced', "Advanced")}</em>)}
                         {setting.experimental && (<em className="flag experimental">{t('experimental', "Experimental")}</em>)}
                         {setting.administrated && (<em className="flag administrated">{t('administrated', "Administrated")}</em>)}
                     </span>
-                    <span style={{ flexGrow: 1 }} />
+                    <span key="spacer" style={{ flexGrow: 1 }} />
                     {setting.tags && setting.tags.length > 0 && (
-                        <span className="tags">
+                        <span key="tags" className="tags">
                             {setting.tags.map((tag, index) => (
                                 <span key={index} className="tag">
                                     {tag}
@@ -349,7 +379,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                                 React.isValidElement(children) &&
                                 React.cloneElement(children, {
                                     id: fullPath,
-                                    value,
+                                    value: value ?? "",
                                     onChange: (value: any, ...args: any[]) => {
                                         handleChange(value);
                                         if (children.props.onChange) {
@@ -360,7 +390,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                                     onClick: onClick,
                                 })}
                         </div>
-                        {policyContent && (<div className="policy">{typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent}</div>)}
+                        {policyContent && (<div key="policy" className="policy">{typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent}</div>)}
                     </StyledSettingInputControlInput>
                     <Popper
                         disablePortal={true}

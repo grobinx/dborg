@@ -77,17 +77,17 @@ export const PasswordSetting: React.FC<{
                 const policy = [
                     setting.atLeastOneUppercase && (
                         <Tooltip title={t("policy-uppercase", "At least one uppercase letter")} key="uppercase">
-                            <div className="block"><theme.icons.UpperLetter /></div>
+                            <div key="uppercase-icon" className="block"><theme.icons.UpperLetter /></div>
                         </Tooltip>
                     ),
                     setting.atLeastOneLowercase && (
                         <Tooltip title={t("policy-lowercase", "At least one lowercase letter")} key="lowercase">
-                            <div className="block"><theme.icons.LowerLetter /></div>
+                            <div key="lowercase-icon" className="block"><theme.icons.LowerLetter /></div>
                         </Tooltip>
                     ),
                     setting.atLeastOneDigit && (
                         <Tooltip title={t("policy-digit", "At least one digit")} key="digit">
-                            <div className="block"><theme.icons.Digit /></div>
+                            <div key="digit-icon" className="block"><theme.icons.Digit /></div>
                         </Tooltip>
                     ),
                     setting.atLeastOneSpecialChar && (
@@ -98,12 +98,12 @@ export const PasswordSetting: React.FC<{
                             )}
                             key="special-char"
                         >
-                            <div className="block"><theme.icons.SpecialChar /></div>
+                            <div key="special-char-icon" className="block"><theme.icons.SpecialChar /></div>
                         </Tooltip>
                     ),
                     setting.noSpaces && (
                         <Tooltip title={t("policy-no-spaces", "No spaces allowed")} key="no-spaces">
-                            <div className="block"><theme.icons.NoSpaces /></div>
+                            <div key="no-spaces-icon" className="block"><theme.icons.NoSpaces /></div>
                         </Tooltip>
                     ),
                 ];

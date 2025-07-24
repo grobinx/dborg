@@ -24,7 +24,7 @@ export const RangeSetting: React.FC<{
             }
         }
         contextRef.current?.setValue(value);
-    }; ``
+    };
 
     return (
         <SettingInputControl

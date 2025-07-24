@@ -1,4 +1,4 @@
-import { darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
+import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 
 const layout = (palette: Palette): ThemeOptions => {
     return {
@@ -774,13 +774,25 @@ const layout = (palette: Palette): ThemeOptions => {
                         backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
                         margin: 1,
                         padding: 8,
-                        flexDirection: "row-reverse",
+                        flexDirection: "row",
                         '&:hover': {
                             backgroundColor: palette.action.hover,
                         },
                         '&.Mui-selected': {
-                            outline: `1px solid ${palette.primary.main}`,
+                            outline: `1px solid ${palette.secondary.main}`,
                             backgroundColor: palette.action.selected,
+                        },
+                        '& .menu': {
+                            order: 1,
+                        },
+                        '& .change-indicator': {
+                            width: 2,
+                            height: "100%",
+                            marginRight: 8,
+                            alignSelf: "center",
+                        },
+                        '&.changed > .change-indicator': {
+                            backgroundColor: alpha(palette.warning.main, 0.3),
                         },
                         '&:not(:hover) .menu:not(.open)': {
                             visibility: "hidden", // Ukrycie przycisku, ale zachowanie miejsca
@@ -790,10 +802,6 @@ const layout = (palette: Palette): ThemeOptions => {
                         gap: 4,
                         marginLeft: 0,
                         marginRight: 8,
-                        padding: 4,
-                        '.changed &': {
-                            outline: `2px solid ${palette.warning.main}`,
-                        }
                     },
                     input: {
                         gap: 8,
@@ -804,6 +812,7 @@ const layout = (palette: Palette): ThemeOptions => {
                             fontSize: "0.7em",
                             alignItems: "end",
                             '& .block': {
+                                lineHeight: 1,
                                 marginLeft: 4,
                                 border: `1px solid ${palette.divider}`,
                                 borderRadius: 2,
