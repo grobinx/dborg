@@ -1,4 +1,4 @@
-import { Alert, Box, Divider, FormControl, IconButton, Menu, MenuItem, Popover, Popper, Stack, styled, Typography, useTheme, useThemeProps } from "@mui/material";
+import { Alert, Box, Divider, FormControl, IconButton, Menu, MenuItem, Popover, Popper, Stack, styled, Tooltip, Typography, useTheme, useThemeProps } from "@mui/material";
 import { SettingTypeBase, SettingTypeUnion } from "./SettingsTypes";
 import { markdown } from "@renderer/components/useful/MarkdownTransform";
 import { useTranslation } from "react-i18next";
@@ -175,8 +175,8 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const fullPath = [...path, setting.key].join('-');
-    const [previousValue] = useState<any>(values[setting.key]);
     const [value, setValue] = useState(values[setting.key] ?? setting.defaultValue);
+    const [previousValue] = useState<any>(value);
     const [validity, setValidity] = useState<string | undefined>(undefined);
     const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
@@ -298,6 +298,9 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
         setValue(newValue);
     };
 
+    const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
+    const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
+
     return (
         <StyledSettingInputControlRoot
             className={[
@@ -305,14 +308,20 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 `${setting.type}-setting`,
                 className ?? '',
                 selected ? 'Mui-selected' : '',
-                JSON.stringify(previousValue) !== JSON.stringify(value) ? 'changed' : '',
+                changed ? 'changed' : '',
+                isDefault ? 'default' : '',
             ].filter(Boolean).join(' ')}
             onClick={onClick}
             {...other}
         >
-            <div className={[
-                "change-indicator",
-            ].filter(Boolean).join(' ')}></div>
+            <Tooltip
+                title={changed ? t("value-changed", "Value has changed") : isDefault ? t("default-value", "Value is default") : ""}
+                placement="top"
+            >
+                <div className={[
+                    "indicator",
+                ].filter(Boolean).join(' ')}></div>
+            </Tooltip>
             <div className={[
                 'menu',
                 isMenuOpen ? 'open' : undefined,

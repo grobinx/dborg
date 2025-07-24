@@ -785,14 +785,17 @@ const layout = (palette: Palette): ThemeOptions => {
                         '& .menu': {
                             order: 1,
                         },
-                        '& .change-indicator': {
-                            width: 2,
+                        '& .indicator': {
+                            width: 3,
                             height: "100%",
                             marginRight: 8,
                             alignSelf: "center",
                         },
-                        '&.changed > .change-indicator': {
+                        '&.changed > .indicator': {
                             backgroundColor: alpha(palette.warning.main, 0.3),
+                        },
+                        '&.default > .indicator': {
+                            backgroundColor: alpha(palette.primary.main, 0.3),
                         },
                         '&:not(:hover) .menu:not(.open)': {
                             visibility: "hidden", // Ukrycie przycisku, ale zachowanie miejsca
