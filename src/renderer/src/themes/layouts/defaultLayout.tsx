@@ -77,6 +77,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     slotProps: {
                         input: {
                             sx: {
+                                borderRadius: 1,
                                 backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.5)",
                             }
                         }
@@ -89,6 +90,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     slotProps: {
                         input: {
                             sx: {
+                                borderRadius: 1,
                                 backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.5)",
                             }
                         }
@@ -788,6 +790,10 @@ const layout = (palette: Palette): ThemeOptions => {
                         gap: 4,
                         marginLeft: 0,
                         marginRight: 8,
+                        padding: 4,
+                        '.changed &': {
+                            outline: `2px solid ${palette.warning.main}`,
+                        }
                     },
                     input: {
                         gap: 8,

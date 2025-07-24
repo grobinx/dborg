@@ -276,7 +276,13 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
 
     return (
         <StyledSettingInputControlRoot
-            className={`SettingInputControl-root ${setting.type}-setting ${className ?? ''} ${selected ? 'Mui-selected' : ''}`}
+            className={[
+                'SettingInputControl-root',
+                `${setting.type}-setting`,
+                className ?? '',
+                selected ? 'Mui-selected' : '',
+                JSON.stringify(previousValue) !== JSON.stringify(value) ? 'changed' : '',
+            ].filter(Boolean).join(' ')}
             onClick={onClick}
             {...other}
         >
