@@ -1,3 +1,4 @@
+import React from "react";
 
 export type SettingType = 
     /**
@@ -69,6 +70,10 @@ export type SettingType =
      */
     | "range"
     /**
+     * An array input.
+     */
+    | "array"
+    /**
      * A rendered setting, which is used for custom components that render the setting in a specific way.
      */
     | "rendered"
@@ -92,8 +97,10 @@ export interface SettingTypeBase {
     /**
      * A description of the setting, displayed in the UI.
      * This should provide additional context or instructions for the user.
+     * It can be a string or a React node for more complex content.
+     * String descriptions will be rendered as markdown.
      */
-    description?: string;
+    description?: React.ReactNode;
     /**
      * Default value for the setting, type depends on the setting type
      * For example, for a string setting, this would be a string.
@@ -138,16 +145,19 @@ export interface SettingTypeBase {
      * A function to validate the value of the setting.
      * It should return a string with an error message if the value is invalid,
      * or true if the value is valid.
+     * String will be rendered as markdown.
      * @param value - the current value of the setting
      * @param values - all values of the settings
      */
     validate?: (value: any, values: Record<string, any>) => string | boolean;
     /**
      * This is dynamic description used in the UI to show the descriptive effect of the setting.
+     * Return value can be a string or a React node for more complex content.
+     * String will be rendered as markdown.
      * @param value - the current value of the setting
      * @param values - all values of the settings
      */
-    effect?: (values: Record<string, any>) => string;
+    effect?: (values: Record<string, any>) => React.ReactNode;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {
@@ -252,9 +262,9 @@ export interface SettingTypeNumber extends SettingTypeBase {
 }
 
 export interface SelectOption {
-    label: string;
+    label: React.ReactNode;
     value: string | number | bigint | boolean;
-    description?: string;
+    description?: React.ReactNode;
 }
 
 export interface SettingTypeSelectBase extends SettingTypeBase {
@@ -316,6 +326,16 @@ export interface SettingTypeRange extends SettingTypeBase {
     defaultValue?: [number, number];
 }
 
+export interface SettingTypeArray extends SettingTypeBase {
+    type: "array";
+    /**
+     * Type of items in the array
+     * Default is "string"
+     */
+    itemType?: Extract<SettingType, "string" | "number" | "email" | "filePath" | "directoryPath" | "color">;
+    defaultValue?: string[]; // Default value for the array
+}
+
 export interface SettingTypeRendered extends SettingTypeBase {
     type: "rendered";
     /**
@@ -347,6 +367,7 @@ export type SettingTypeUnion =
     | SettingTypeDateTime
     | SettingTypeRange
     | SettingTypeRendered
+    | SettingTypeArray
     ;
 
 /**

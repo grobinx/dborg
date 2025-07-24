@@ -30,10 +30,10 @@ export const TextSetting: React.FC<{
             }
             policy={() => {
                 const policy = [
-                    setting.maxLength ? `${contextRef.current?.value.length} / ${setting.maxLength}` : undefined,
-                    setting.maxRows ? `${(contextRef.current?.value.length ? contextRef.current?.value.split('\n').length : 0)} / ${setting.maxRows}` : undefined,
+                    setting.maxLength ? <div className="block">{`${contextRef.current?.value.length} / ${setting.maxLength}`}</div> : undefined,
+                    setting.maxRows ? <div className="block">{`${(contextRef.current?.value.length ? contextRef.current?.value.split('\n').length : 0)} / ${setting.maxRows}`}</div> : undefined,
                 ];
-                return policy.filter(Boolean).join(", ");
+                return policy.filter(Boolean);
             }}
         >
             <BaseTextField

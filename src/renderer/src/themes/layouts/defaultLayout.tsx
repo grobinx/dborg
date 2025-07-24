@@ -797,12 +797,11 @@ const layout = (palette: Palette): ThemeOptions => {
                             height: "100%",
                             fontSize: "0.7em",
                             alignItems: "end",
-                            '& .IconWrapper-root': {
+                            '& .block': {
                                 marginLeft: 4,
                                 border: `1px solid ${palette.divider}`,
                                 borderRadius: 2,
                                 padding: 4,
-                                fontSize: "1.8em",
                                 '&:hover': {
                                     backgroundColor: palette.action.hover,
                                     cursor: "default",

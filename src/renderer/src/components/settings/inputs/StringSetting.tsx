@@ -3,6 +3,7 @@ import SettingInputControl, { calculateWidth, InputControlContext } from "../Set
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
+import { Tooltip } from "@mui/material";
 
 export const StringSetting: React.FC<{
     path: string[];
@@ -24,7 +25,18 @@ export const StringSetting: React.FC<{
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validateStringLength(value, setting.minLength, setting.maxLength)}
-            policy={() => setting.maxLength ? `${contextRef.current?.value.length} / ${setting.maxLength}` : undefined}
+            policy={() => {
+                return (
+                    <Tooltip
+                        title={'Min ≥ Current / Max'}
+                    >
+                        <div className="block">
+                            {setting.minLength && `${setting.minLength} ≥ `}
+                            {setting.maxLength && `${contextRef.current?.value.length} / ${setting.maxLength}`}
+                        </div>
+                    </Tooltip>
+                );
+            }}
         >
             <BaseTextField
                 sx={{

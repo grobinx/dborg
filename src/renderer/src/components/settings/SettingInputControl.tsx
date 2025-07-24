@@ -252,7 +252,9 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
-            onChange(value, valid);
+            if (value !== values[setting.key]) {
+                onChange(value, valid);
+            }
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -329,9 +331,9 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         </span>
                     )}
                 </StyledSettingInputControlLabel>
-                {setting.description && setting.description.length > 0 && (description ?? true) && (
+                {setting.description && (description ?? true) && (
                     <StyledSettingInputControlDescription className="SettingInputControl-description" {...slotProps?.description}>
-                        {markdown(setting.description, theme)}
+                        {typeof setting.description === "string" ? markdown(setting.description, theme) : setting.description}
                     </StyledSettingInputControlDescription>
                 )}
                 <Stack direction="row" ref={popperVisibilityRef}>
@@ -373,11 +375,14 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>
-                {setting.effect && (
-                    <StyledSettingInputControlEffect className="SettingInputControl-effect" {...slotProps?.effect}>
-                        {markdown(setting.effect(values), theme)}
-                    </StyledSettingInputControlEffect>
-                )}
+                {setting.effect && (() => {
+                    const effect = setting.effect(values);
+                    return (
+                        <StyledSettingInputControlEffect className="SettingInputControl-effect" {...slotProps?.effect}>
+                            {typeof effect === "string" ? markdown(effect, theme) : effect}
+                        </StyledSettingInputControlEffect>
+                    )
+                })()}
             </StyledSettingInputControlInternal>
         </StyledSettingInputControlRoot>
     );

@@ -60,7 +60,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
         "some-password-setting": "PrzykładoweHasło123!",
         "phone-number": "+0 (123) 456-78-90",
         "email": "example@example.com",
-        "age-range": [25, 50]
+        "age-range": [25, 450]
     });
 
     return (

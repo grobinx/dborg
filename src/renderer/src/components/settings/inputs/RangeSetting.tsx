@@ -2,6 +2,7 @@ import { SettingTypeRange, SettingTypeString } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
 import React from "react";
 import BaseSlider from "../base/BaseSlider";
+import { Tooltip } from "@mui/material";
 
 export const RangeSetting: React.FC<{
     path: string[];
@@ -23,7 +24,7 @@ export const RangeSetting: React.FC<{
             }
         }
         contextRef.current?.setValue(value);
-    };
+    }; ``
 
     return (
         <SettingInputControl
@@ -34,6 +35,25 @@ export const RangeSetting: React.FC<{
             onChange={onChange}
             selected={selected}
             onClick={onClick}
+            policy={() => {
+                if (setting.minDistance) {
+                    return (
+                        <Tooltip
+                            title={'Min ≥ Step [: Min Distance] ≤ Max'}
+                        >
+                            <div className="block">
+                                {setting.min}
+                                {" ≥ "}
+                                {setting.step ?? 1}
+                                {setting.minDistance && ` : ${setting.minDistance}`}
+                                {" ≤ "}
+                                {setting.max}
+                            </div>
+                        </Tooltip>
+                    );
+                }
+                return `${setting.min} ≥ ${setting.minDistance ?? 0} ≤ ${setting.max} :${setting.step}`;
+            }}
         >
             <BaseSlider
                 width={calculateWidth(setting)}
