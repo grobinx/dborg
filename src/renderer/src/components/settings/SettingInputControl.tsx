@@ -175,8 +175,8 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const fullPath = [...path, setting.key].join('-');
+    const [previousValue] = useState<any>(values[setting.key]);
     const [value, setValue] = useState(values[setting.key] ?? setting.defaultValue);
-    const [previousValue] = useState<any>(value);
     const [validity, setValidity] = useState<string | undefined>(undefined);
     const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
