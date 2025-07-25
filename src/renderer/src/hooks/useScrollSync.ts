@@ -8,14 +8,14 @@ interface ScrollState {
 export const useScrollSync = (ref: React.RefObject<HTMLDivElement | null>, disabled?: boolean) => {
     const [scrollState, setScrollState] = useState<ScrollState>({ scrollTop: 0, scrollLeft: 0 });
 
-    const handleScroll = useCallback(() => {
-        if (disabled || !ref.current) return;
-
-        const { scrollTop, scrollLeft } = ref.current;
-        setScrollState({ scrollTop, scrollLeft });
-    }, []);
-
     useEffect(() => {
+        const handleScroll = () => {
+            if (disabled || !ref.current) return;
+
+            const { scrollTop, scrollLeft } = ref.current;
+            setScrollState({ scrollTop, scrollLeft });
+        };
+
         const container = ref.current;
         if (!container) return;
 
@@ -24,7 +24,7 @@ export const useScrollSync = (ref: React.RefObject<HTMLDivElement | null>, disab
         return () => {
             container.removeEventListener("scroll", handleScroll);
         };
-    }, [ref, handleScroll]);
+    }, [ref, disabled]);
 
     return scrollState;
 };

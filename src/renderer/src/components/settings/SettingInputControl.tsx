@@ -210,7 +210,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleCopyPath = () => {
-        navigator.clipboard.writeText(fullPath);
+        navigator.clipboard.writeText([...path, setting.key].join('.'));
         handleMenuClose();
     };
 
