@@ -222,7 +222,7 @@ const StyledRow = styled("div", {
             darken(theme.palette.background.table.container, 0.05),
     },
     "&:hover": {
-        backgroundColor: theme.palette.action.hover, // Kolor tła przy najechaniu myszką
+        backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Kolor tła przy najechaniu myszką
     },
     "&.Mui-selected": {
         backgroundColor: theme.palette.action.selected, // Kolor tła dla zaznaczonego wiersza
@@ -267,7 +267,7 @@ const StyledCell = styled("div", {
                 borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
             },
             "&:hover": {
-                backgroundColor: theme.palette.action.hover, // Efekt hover
+                backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Efekt hover
             },
         };
     }
@@ -669,7 +669,7 @@ export const DataGrid = <T extends object>({
         }
     }, [filteredDataState, selectedCell?.row]);
 
-    const updateSelectedCell = (cell: TableCellPosition | null): TableCellPosition | null => {
+    const updateSelectedCell = React.useCallback((cell: TableCellPosition | null): TableCellPosition | null => {
         console.debug("DataGrid update selected cell", cell);
         if (!cell) {
             setSelectedCell(null);
@@ -686,13 +686,9 @@ export const DataGrid = <T extends object>({
             return null;
         }
 
-        if (selectedCell?.row === row && selectedCell?.column === column) {
-            return selectedCell;
-        }
-
-        setSelectedCell({ row, column });
+        setSelectedCell(prev => (prev?.row !== row || prev?.column !== column ? { row, column } : prev));
         return { row, column };
-    };
+    }, [filteredDataState.length, columnsState.current.length]);
 
     useEffect(() => {
         if (showRowNumberColumn) {
