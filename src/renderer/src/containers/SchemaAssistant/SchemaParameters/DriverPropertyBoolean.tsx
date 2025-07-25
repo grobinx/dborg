@@ -1,4 +1,4 @@
-import { Box, Checkbox, CheckboxProps, FormControl, FormControlLabel, FormHelperText } from '@mui/material';
+import { Box, Checkbox, CheckboxProps, FormControl, FormControlLabel, FormHelperText, Typography } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 
@@ -16,23 +16,21 @@ const DriverPropertyBoolean: React.FC<DriverPropertyBooleanProps> = (props) => {
 
     return (
         <Box className="item">
-            <FormControl>
-                <FormControlLabel
-                    control={
-                        <Checkbox size='small'
-                            id={property.name}
-                            required={property.required}
-                            checked={value ?? false}
-                            onChange={(event) => onChange(property, event.target.checked ? "true" : "false")}
-                            {...slotProps?.checkBoxField}
-                        />
-                    }
-                    label={property.title}
-                />
-                <FormHelperText>
-                    {property.description}
-                </FormHelperText>
-            </FormControl>
+            <FormControlLabel
+                control={
+                    <Checkbox size='small'
+                        id={property.name}
+                        required={property.required}
+                        checked={value ?? false}
+                        onChange={(event) => onChange(property, event.target.checked ? "true" : "false")}
+                        {...slotProps?.checkBoxField}
+                    />
+                }
+                label={property.title}
+            />
+            <Typography variant="description">
+                {property.description}
+            </Typography>
         </Box>
     );
 };

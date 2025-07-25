@@ -352,7 +352,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 </Menu>
             </div>
             <StyledSettingInputControlInternal className="SettingInputControl-internal">
-                <StyledSettingInputControlLabel className="SettingInputControl-label" {...slotProps?.label}>
+                <StyledSettingInputControlLabel variant="label" className="SettingInputControl-label" {...slotProps?.label}>
                     {setting.group && (
                         <span key="group" className="group">
                             {setting.group}:
@@ -377,7 +377,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     )}
                 </StyledSettingInputControlLabel>
                 {setting.description && (description ?? true) && (
-                    <StyledSettingInputControlDescription className="SettingInputControl-description" {...slotProps?.description}>
+                    <StyledSettingInputControlDescription variant="description" className="SettingInputControl-description" {...slotProps?.description}>
                         {typeof setting.description === "string" ? markdown(setting.description, theme) : setting.description}
                     </StyledSettingInputControlDescription>
                 )}
@@ -423,7 +423,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 {setting.effect && (() => {
                     const effect = setting.effect(values);
                     return (
-                        <StyledSettingInputControlEffect className="SettingInputControl-effect" {...slotProps?.effect}>
+                        <StyledSettingInputControlEffect variant="description" className="SettingInputControl-effect" {...slotProps?.effect}>
                             {typeof effect === "string" ? markdown(effect, theme) : effect}
                         </StyledSettingInputControlEffect>
                     )

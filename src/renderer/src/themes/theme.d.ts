@@ -55,7 +55,29 @@ export type PaletteColorOptionsExtend = PaletteColorOptions & {
     icon?: string,
 }
 
+declare module '@mui/material/Typography' {
+    interface TypographyPropsVariantOverrides {
+        label: true;
+        description: true;
+    }
+}
+
 declare module "@mui/material/styles" {
+
+    interface TypographyVariants {
+        label: React.CSSProperties;
+        description: React.CSSProperties;
+    }
+
+    // allow configuration using `createTheme()`
+    interface TypographyVariantsOptions {
+        label?: React.CSSProperties;
+        description?: React.CSSProperties;
+    }
+
+    interface TypographyOptions {
+        monospaceFontFamily?: string;
+    }
 
     interface ThemeOptions {
         icons?: ThemeIcons
@@ -169,8 +191,8 @@ declare module "@mui/material/styles" {
             //variants?: ComponentsVariants['Status'];
         };
         StatusBarButton?: {
-            defaultProps?: ComponentsPropsList['StatusBarButton']; 
-            styleOverrides?: ComponentsOverrides<Theme>['StatusBarButton']; 
+            defaultProps?: ComponentsPropsList['StatusBarButton'];
+            styleOverrides?: ComponentsOverrides<Theme>['StatusBarButton'];
             //variants?: ComponentsVariants['StatusBarButton']; 
         };
         WindowControlButton?: {
@@ -307,5 +329,5 @@ declare module "@mui/material/styles" {
             //variants?: ComponentsVariants['Code'];
         };
     }
-    
+
 }

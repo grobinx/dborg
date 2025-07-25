@@ -134,70 +134,72 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
     }, [properties]);
 
     return (
-        <Stack direction={"row"} className="item">
-            <Box>
-                <InputLabel>{i18n_SchemaName}</InputLabel>
-                <TextField
-                    key={"pattern"}
-                    id="sch_pattern"
-                    required={true}
-                    value={schemaPattern}
-                    onChange={event => { onChangePattern(event.target.value); }}
-                    inputRef={inputRef}
-                    autoFocus
-                    sx={{ width: textFieldWidth("schema-pattern", i18n_SchemaName) }}
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment
-                                    position="end"
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <Tooltip title={t("add-property-as-pattern", "Add property as pattern")}>
-                                        <ToolButton onClick={handleMenuOpen}>
-                                            <theme.icons.AddPropertyTextField />
-                                        </ToolButton>
-                                    </Tooltip>
-                                    <Tooltip title={t("pick-a-color-or-clear-shift", "Pick a color or clear with [Shift]")}>
-                                        <ToolButton onClick={handleColorPickerOpen}>
-                                            <div
-                                                style={{
-                                                    width: '18px',
-                                                    height: '18px',
-                                                    backgroundColor: schemaColor ?? '#000000', // Ustawienie koloru
-                                                    border: '1px solid #ccc', // Opcjonalna ramka
-                                                    borderRadius: '4px', // Opcjonalne zaokrąglenie
-                                                }}
-                                            />
-                                        </ToolButton>
-                                    </Tooltip>
-                                    <ColorPicker
-                                        value={schemaColor ?? "#000000"}
-                                        onChange={onChangeColor}
-                                        anchorEl={colorPickerAnchoreEl}
-                                        onClose={handleColorPickerClose}
-                                    />
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
-                />
-            </Box>
-            <Box>
-                <InputLabel>{i18n_VisibleName + " (r/o)"}</InputLabel>
-                <TextField
-                    key={"name"}
-                    value={schemaName}
-                    sx={{ width: textFieldWidth("string", i18n_VisibleName) }}
-                    slotProps={{
-                        input: {
-                            sx: {
-                                color: schemaColor
+        <Stack className="item">
+            <Stack direction={"row"} gap={8}>
+                <Box>
+                    <InputLabel>{i18n_SchemaName}</InputLabel>
+                    <TextField
+                        key={"pattern"}
+                        id="sch_pattern"
+                        required={true}
+                        value={schemaPattern}
+                        onChange={event => { onChangePattern(event.target.value); }}
+                        inputRef={inputRef}
+                        autoFocus
+                        sx={{ width: textFieldWidth("schema-pattern", i18n_SchemaName) }}
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment
+                                        position="end"
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <Tooltip title={t("add-property-as-pattern", "Add property as pattern")}>
+                                            <ToolButton onClick={handleMenuOpen}>
+                                                <theme.icons.AddPropertyTextField />
+                                            </ToolButton>
+                                        </Tooltip>
+                                        <Tooltip title={t("pick-a-color-or-clear-shift", "Pick a color or clear with [Shift]")}>
+                                            <ToolButton onClick={handleColorPickerOpen}>
+                                                <div
+                                                    style={{
+                                                        width: '18px',
+                                                        height: '18px',
+                                                        backgroundColor: schemaColor ?? '#000000', // Ustawienie koloru
+                                                        border: '1px solid #ccc', // Opcjonalna ramka
+                                                        borderRadius: '4px', // Opcjonalne zaokrąglenie
+                                                    }}
+                                                />
+                                            </ToolButton>
+                                        </Tooltip>
+                                        <ColorPicker
+                                            value={schemaColor ?? "#000000"}
+                                            onChange={onChangeColor}
+                                            anchorEl={colorPickerAnchoreEl}
+                                            onClose={handleColorPickerClose}
+                                        />
+                                    </InputAdornment>
+                                ),
                             },
-                        },
-                    }}
-                />
-            </Box>
+                        }}
+                    />
+                </Box>
+                <Box>
+                    <InputLabel>{i18n_VisibleName + " (r/o)"}</InputLabel>
+                    <TextField
+                        key={"name"}
+                        value={schemaName}
+                        sx={{ width: textFieldWidth("string", i18n_VisibleName) }}
+                        slotProps={{
+                            input: {
+                                sx: {
+                                    color: schemaColor
+                                },
+                            },
+                        }}
+                    />
+                </Box>
+            </Stack>
             <Menu
                 anchorEl={anchorEl}
                 open={openMenu}

@@ -1,4 +1,4 @@
-import { Box, FormHelperText, IconButton, InputAdornment, InputLabel, MenuItem, Stack, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, FormHelperText, IconButton, InputAdornment, InputLabel, MenuItem, Stack, TextField, TextFieldProps, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
@@ -32,55 +32,57 @@ const DriverPropertyPassword: React.FC<DriverPropertyFileProps> = (props) => {
 
     return (
         <Stack direction={"row"} className="item">
-            <Box>
-                <InputLabel>{property.title}</InputLabel>
-                <TextField
-                    id={property.name}
-                    required={property.required}
-                    value={value ?? ''}
-                    disabled={usePassword !== "save"}
-                    type={showPassword ? 'text' : 'password'}
-                    inputRef={passwordRef}
-                    sx={{ minWidth: textFieldWidth(property.type, property.title) }}
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment
-                                    position="end"
-                                >
-                                    <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
-                                        <span>
-                                            <ToolButton
-                                                disabled={usePassword !== "save"}
-                                                onClick={handleClickShowPassword}
-                                                selected={showPassword}
-                                            >
-                                                {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                            </ToolButton>
-                                        </span>
-                                    </Tooltip>
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
-                    onChange={event => onChange(property, event.target.value)}
-                />
-                {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
-            </Box>
-            <Box>
-                <InputLabel>{i18n_SchemaUsePassword}</InputLabel>
-                <TextField
-                    key={"schema-use-password"}
-                    select
-                    value={usePassword ?? "ask"}
-                    onChange={event => onChangeUsePassword(event.target.value as SchemaUsePasswordType)}
-                    sx={{ minWidth: textFieldWidth("string", i18n_SchemaUsePassword) }}
-                >
-                    <MenuItem key="ask" value="ask">{i18n_AskPasswordOnConnect}</MenuItem>
-                    <MenuItem key="save" value="save">{i18n_SavePassword}</MenuItem>
-                    <MenuItem key="empty" value="empty">{i18n_UseEmptyPassword}</MenuItem>
-                </TextField>
-            </Box>
+            <Stack direction={"row"} gap={8}>
+                <Box>
+                    <InputLabel>{property.title}</InputLabel>
+                    <TextField
+                        id={property.name}
+                        required={property.required}
+                        value={value ?? ''}
+                        disabled={usePassword !== "save"}
+                        type={showPassword ? 'text' : 'password'}
+                        inputRef={passwordRef}
+                        sx={{ width: textFieldWidth(property.type, property.title) }}
+                        slotProps={{
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment
+                                        position="end"
+                                    >
+                                        <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
+                                            <span>
+                                                <ToolButton
+                                                    disabled={usePassword !== "save"}
+                                                    onClick={handleClickShowPassword}
+                                                    selected={showPassword}
+                                                >
+                                                    {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                                </ToolButton>
+                                            </span>
+                                        </Tooltip>
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                        onChange={event => onChange(property, event.target.value)}
+                    />
+                    {property.description && (<Typography variant="description">{property.description}</Typography>)}
+                </Box>
+                <Box>
+                    <InputLabel>{i18n_SchemaUsePassword}</InputLabel>
+                    <TextField
+                        key={"schema-use-password"}
+                        select
+                        value={usePassword ?? "ask"}
+                        onChange={event => onChangeUsePassword(event.target.value as SchemaUsePasswordType)}
+                        sx={{ width: textFieldWidth("string", i18n_SchemaUsePassword) }}
+                    >
+                        <MenuItem key="ask" value="ask">{i18n_AskPasswordOnConnect}</MenuItem>
+                        <MenuItem key="save" value="save">{i18n_SavePassword}</MenuItem>
+                        <MenuItem key="empty" value="empty">{i18n_UseEmptyPassword}</MenuItem>
+                    </TextField>
+                </Box>
+            </Stack>
         </Stack>
     );
 };

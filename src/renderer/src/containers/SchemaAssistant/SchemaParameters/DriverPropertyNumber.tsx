@@ -1,4 +1,4 @@
-import { Box, FormHelperText, InputLabel, TextField, TextFieldProps } from '@mui/material';
+import { Box, FormHelperText, InputLabel, TextField, TextFieldProps, Typography } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
@@ -20,12 +20,12 @@ const DriverPropertyNumber: React.FC<DriverPropertyNumberProps> = (props) => {
                 required={property.required}
                 value={value ?? ''}
                 type="number"
-                sx={{ minWidth: textFieldWidth(property.type, property.title) }}
+                sx={{ width: textFieldWidth(property.type, property.title) }}
                 onChange={(event) => {
                     onChange(property, event.target.value);
                 }}
             />
-            {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
+            {property.description && (<Typography variant="description">{property.description}</Typography>)}
         </Box>
     );
 };

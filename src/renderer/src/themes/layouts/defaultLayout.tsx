@@ -1,13 +1,32 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
+import root from "./root";
 
 const layout = (palette: Palette): ThemeOptions => {
     return {
+        typography: {
+            label: {
+                fontSize: "1rem",
+                lineHeight: 1.5,
+                fontWeight: 400,
+                fontFamily: (root.typography as any).fontFamily,
+            },
+            description: {
+                fontSize: "0.9rem",
+                lineHeight: 1.4,
+                fontWeight: 400,
+                fontFamily: (root.typography as any).fontFamily,
+            },
+            button: {
+                textTransform: 'none',
+            }
+        },
         components: {
             MuiTypography: {
-                styleOverrides: {
-                    button: {
-                        textTransform: 'none',
-                    }
+                defaultProps: {
+                    variantMapping: {
+                        label: 'label',
+                        description: 'p',
+                    },
                 }
             },
             MuiTooltip: {
@@ -483,10 +502,10 @@ const layout = (palette: Palette): ThemeOptions => {
                                     lineHeight: 1.2
                                 },
                                 '& .item': {
-                                    // display: "flex",
-                                    // flexDirection: "row",
-                                    // flexWrap: "wrap",
-                                    gap: 10,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    //flexWrap: "wrap",
+                                    gap: 4,
                                     padding: 10,
                                 },
                                 '& .item:hover': {
@@ -845,12 +864,9 @@ const layout = (palette: Palette): ThemeOptions => {
                         },
                     },
                     label: {
-                        //fontSize: "0.9rem",
-                        fontWeight: 600,
                         color: palette.text.primary,
                         marginBottom: 4,
                         '& .group': {
-                            fontWeight: 600,
                             color: palette.text.secondary,
                             marginRight: 4,
                         },
@@ -890,11 +906,9 @@ const layout = (palette: Palette): ThemeOptions => {
                         },
                     },
                     description: {
-                        fontSize: "0.9rem",
                         color: palette.text.secondary,
                     },
                     effect: {
-                        fontSize: "0.9rem",
                         color: palette.text.secondary,
                         marginTop: 4,
                     }

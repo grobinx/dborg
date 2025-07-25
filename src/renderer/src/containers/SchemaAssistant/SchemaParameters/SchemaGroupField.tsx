@@ -98,7 +98,7 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
                 value={schemaGroup ?? ''}
                 onChange={event => onChange(event.target.value)}
                 inputRef={inputRef}
-                sx={{ minWidth: textFieldWidth("string", i18n_schemaGroup) }}
+                sx={{ width: textFieldWidth("string", i18n_schemaGroup) }}
                 slotProps={{
                     input: {
                         endAdornment: (

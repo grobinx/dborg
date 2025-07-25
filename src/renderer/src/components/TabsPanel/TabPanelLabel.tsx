@@ -1,10 +1,11 @@
 import React from 'react';
-import { Stack, styled, useThemeProps } from '@mui/material';
+import { Stack, styled, Typography, useThemeProps } from '@mui/material';
 
-const StyledTabPanelLabel = styled(Stack, {
+const StyledTabPanelLabel = styled(Typography, {
     name: "TabPanel",
     slot: "label",
 })(({ /*theme*/ }) => ({
+    display: "flex",
     flexDirection: "row",
     alignItems: "center",
 }));
@@ -21,7 +22,7 @@ interface TabPanelLabelOwnProps extends TabPanelLabelProps {
 const TabPanelLabel: React.FC<TabPanelLabelOwnProps> = (props) => {
     const { children, tabsItemID, ref, ...other } = useThemeProps({ name: "TabPanelLabel", props: props, });
 
-    return <StyledTabPanelLabel className='TabPanel-label' ref={ref} {...other}>
+    return <StyledTabPanelLabel variant="label" className='TabPanel-label' ref={ref} {...other}>
         {children}
     </StyledTabPanelLabel>;
 };

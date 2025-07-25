@@ -4,7 +4,7 @@ export function textFieldWidth(type: PropertyType | "schema-pattern", title: str
     switch (type) {
         case "password":
         case "string": return '22rem';
-        case "number": return `${Math.ceil((title.length / 5)) *5 * 6}px !important`;
+        case "number": return `${Math.max(Math.ceil((title.length / 5)) *5 * 6, 100)}px !important`;
         case "file": return "30rem";
         case "schema-pattern": return "22rem";
     }

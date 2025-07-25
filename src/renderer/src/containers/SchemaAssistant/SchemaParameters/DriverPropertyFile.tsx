@@ -1,4 +1,4 @@
-import { Box, FormHelperText, InputAdornment, InputLabel, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, FormHelperText, InputAdornment, InputLabel, TextField, TextFieldProps, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
@@ -32,7 +32,7 @@ const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
                 id={property.name}
                 required={property.required}
                 value={value ?? ''}
-                sx={{ minWidth: textFieldWidth(property.type, property.title) }}
+                sx={{ width: textFieldWidth(property.type, property.title) }}
                 slotProps={{
                     input: {
                         endAdornment: (
@@ -54,7 +54,7 @@ const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
                     onChange(property, event.target.value);
                 }}
             />
-            {property.description && (<FormHelperText>{property.description}</FormHelperText>)}
+            {property.description && (<Typography variant="description">{property.description}</Typography>)}
         </Box>
     );
 };

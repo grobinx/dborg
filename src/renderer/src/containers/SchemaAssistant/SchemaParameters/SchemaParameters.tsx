@@ -199,7 +199,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                             {group.title}
                         </Typography>
                         {group.description &&
-                            <Typography variant="subtitle1" {...slotProps?.groupDescription}>
+                            <Typography variant="description" {...slotProps?.groupDescription}>
                                 {group.description}
                             </Typography>
                         }
