@@ -24,7 +24,7 @@ export function resultsTabsId(session: IDatabaseSession): string {
 const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {
     const theme = useTheme();
     const [resultsTabs, setResultsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, unsubscribe } = useMessages();
 
     const tabsItemID = resultsTabsId(session);
 

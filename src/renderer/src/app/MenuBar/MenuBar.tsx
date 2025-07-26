@@ -48,7 +48,7 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
     const [windowMaximized, setWindowMaximized] = React.useState(false);
     const [windowMinimized, setWindowMinimized] = React.useState(false);
     const [windowFullScreen, setWindowFullScreen] = React.useState(false);
-    const { sendMessage } = useMessages();
+    const { queueMessage } = useMessages();
 
     const handleCloseWindow = (): void => {
         window.electron.main.close();
@@ -93,7 +93,7 @@ const MenuBar: React.FC<MenuBarOwnProps> = (props) => {
             className={(className ?? "") + " MenuBar-root"}
         >
             <WindowControlButton
-                onClick={() => sendMessage(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND)}
+                onClick={() => queueMessage(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND)}
                 className="LogoWindowControlButton"
             >
                 <img src={logo} className="LogoIcon" />

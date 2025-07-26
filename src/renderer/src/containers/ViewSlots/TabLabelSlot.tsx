@@ -26,7 +26,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {

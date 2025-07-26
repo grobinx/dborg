@@ -86,7 +86,7 @@ editableSettingsRegistry.register((context) => {
                 {
                     key: 'max',
                     type: 'number',
-                    title: t('maximum-toasts', 'Maximum Toasts'),
+                    label: t('maximum-toasts', 'Maximum Toasts'),
                     description: t('maximum-toasts-description', 'Maximum number of toast notifications to display at once.'),
                     defaultValue: toast_max,
                     min: 1,
@@ -96,7 +96,7 @@ editableSettingsRegistry.register((context) => {
                 {
                     key: 'timeout',
                     type: 'number',
-                    title: t('toast-timeout', 'Toast Timeout'),
+                    label: t('toast-timeout', 'Toast Timeout'),
                     description: t('toast-timeout-description', 'Timeout for each toast notification in milliseconds.'),
                     defaultValue: toast_timeout,
                     min: 1000,
@@ -119,14 +119,14 @@ editableSettingsRegistry.register((context) => {
                 {
                     key: 'null_value',
                     type: 'string',
-                    title: t('null-value-representation', 'Null Value Representation'),
+                    label: t('null-value-representation', 'Null Value Representation'),
                     description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
                     defaultValue: data_grid_null_value,
                 },
                 {
                     key: 'colors_enabled',
                     type: 'boolean',
-                    title: t('enable-colors', 'Enable Colors'),
+                    label: t('enable-colors', 'Enable Colors'),
                     description: t('enable-colors-description', 'Enable or disable color coding in the data grid.'),
                     defaultValue: data_grid_colors_enabled,
                 },

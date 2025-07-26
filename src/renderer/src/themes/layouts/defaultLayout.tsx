@@ -139,6 +139,9 @@ const layout = (palette: Palette): ThemeOptions => {
                         "&.Mui-selected": {
                             backgroundColor: palette.action.selected,
                             borderColor: palette.mode === "dark" ? palette.secondary.dark : palette.secondary.light,
+                        },
+                        '& label': {
+                            cursor: "pointer",
                         }
                     },
                 },
@@ -739,9 +742,6 @@ const layout = (palette: Palette): ThemeOptions => {
             },
             ConsoleLogPanel: {
                 defaultProps: {
-                    sx: {
-                        padding: 2,
-                    },
                     slotProps: {
                         item: {
                             sx: {
@@ -805,10 +805,11 @@ const layout = (palette: Palette): ThemeOptions => {
                             order: 1,
                         },
                         '& .indicator': {
-                            width: 3,
+                            width: 4,
                             height: "100%",
                             marginRight: 8,
                             alignSelf: "center",
+                            borderRadius: 2,
                         },
                         '&.changed > .indicator': {
                             backgroundColor: alpha(palette.warning.main, 0.3),

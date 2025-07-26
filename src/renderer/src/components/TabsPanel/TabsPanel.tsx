@@ -65,7 +65,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         children, buttons, slotProps, className, tabPosition = "top", 
         onMove, ...other
     } = useThemeProps({ name: "TabsPanel", props: props });
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { queueMessage, subscribe, unsubscribe } = useMessages();
 
     const [activeTab, setActiveTab] = React.useState(0);
     const [contentHeight, setContentHeight] = React.useState<string | number>("auto");
@@ -148,20 +148,20 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         if (activeTab >= tabs.length) {
             setActiveTab(Math.max(0, tabs.length - 1));
         }
-        sendMessage(TAB_PANEL_LENGTH, { tabsItemID: other.itemID, length: tabs.length } as TabPanelLengthMessage);
+        queueMessage(TAB_PANEL_LENGTH, { tabsItemID: other.itemID, length: tabs.length } as TabPanelLengthMessage);
     }, [tabs.length]);
 
     React.useEffect(() => {
         if (activeTab !== null && activeTab < tabs.length) {
             const selectedTab = tabs[activeTab];
             if (React.isValidElement(selectedTab)) {
-                sendMessage(TAB_PANEL_CHANGED, { tabsItemID: other.itemID, itemID: selectedTab.props.itemID } as TabPanelChangedMessage);
+                queueMessage(TAB_PANEL_CHANGED, { tabsItemID: other.itemID, itemID: selectedTab.props.itemID } as TabPanelChangedMessage);
             }
         }
     }, [activeTab, tabs, other.itemID]);
 
     const handleTabClick = (index: number) => {
-        sendMessage(TAB_PANEL_CLICK, { itemID: tabs[index].props.itemID, tabsItemID: other.itemID } as TabPanelClickMessage);
+        queueMessage(TAB_PANEL_CLICK, { itemID: tabs[index].props.itemID, tabsItemID: other.itemID } as TabPanelClickMessage);
     };
 
     React.useEffect(() => {

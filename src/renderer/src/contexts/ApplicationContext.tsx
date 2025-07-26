@@ -100,7 +100,7 @@ const ApplicationContext = createContext<ApplicationState | undefined>(undefined
 export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { addToast } = useToast();
 
     const initialContainersRef = React.useRef<SpecificContainer[]>([
@@ -245,23 +245,23 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             return;
         }
         setTimeout(() => {
-            sendMessage(Messages.SESSION_GET_METADATA_START, {
+            queueMessage(Messages.SESSION_GET_METADATA_START, {
                 connectionId: session.info.uniqueId,
                 schema: session.schema,
             } as Messages.SessionGetMetadataStart);
             session.getMetadata((current) => {
-                sendMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
+                queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
                     connectionId: session.info.uniqueId,
                     progress: current,
                 } as Messages.SessionGetMetadataProgress);
             }, force).then((metadata: api.DatabasesMetadata) => {
                 session.metadata = metadata;
-                sendMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
+                queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
                     connectionId: session.info.uniqueId,
                     metadata: metadata,
                 } as Messages.SessionGetMetadataSuccess);
             }).catch((error) => {
-                sendMessage(Messages.SESSION_GET_METADATA_ERROR, {
+                queueMessage(Messages.SESSION_GET_METADATA_ERROR, {
                     connectionId: session.info.uniqueId,
                     error: error.message,
                 } as Messages.SessionGetMetadataError);
@@ -270,7 +270,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     source: session.schema.sch_name,
                 });
             }).finally(() => {
-                sendMessage(Messages.SESSION_GET_METADATA_END, {
+                queueMessage(Messages.SESSION_GET_METADATA_END, {
                     connectionId: session.info.uniqueId,
                 } as Messages.SessionGetMetadataEnd);
             });
@@ -339,13 +339,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const handleEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
-            sendMessage(Messages.SET_SCHEMA_ID, schemaId);
+            queueMessage(Messages.SET_SCHEMA_ID, schemaId);
         });
     }, []);
 
     const handleCloneEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
-            sendMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
+            queueMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
         });
     }, []);
 

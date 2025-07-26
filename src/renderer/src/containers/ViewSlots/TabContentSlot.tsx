@@ -30,7 +30,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [refresh, setRefresh] = React.useState(false);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {

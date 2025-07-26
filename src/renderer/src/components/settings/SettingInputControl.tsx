@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import ToolButton from "../ToolButton";
+import clsx from "@renderer/utils/clsx";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -65,7 +66,8 @@ const StyledSettingInputControlInput = styled(Stack, {
 }));
 
 export const calculateWidth = (setting: SettingTypeUnion) => {
-    const defaultWidth = 300; // Default width
+    const defaultTextWidth = 300; // Default width
+    const defaultNumberWidth = 200;
     const maxWidth = 500; // Maximum width
     const minWidth = 150; // Minimum width
     const widthPerChar = 11; // Approximate width per character in pixels
@@ -83,31 +85,34 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
                 // Każdy znak zajmuje około 11px, dodajemy margines
                 return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
-            return defaultWidth;
+            return defaultTextWidth;
         case "text":
             if (setting.maxLength) {
                 const rows = setting.maxRows || 4; // Jeśli `maxRows` nie jest zdefiniowane, ustaw na 4
                 return Math.max(Math.min(Math.floor((setting.maxLength / rows / 10) * 10 * widthPerChar + 16) * 1.25, maxWidth), minWidth); // Oblicz szerokość na podstawie `maxLength` i `rows`
             }
-            return defaultWidth;
+            return defaultTextWidth;
         case "password":
             if (setting.maxLength) {
                 // Każdy znak zajmuje około 11px, dodajemy margines
                 return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
-            return defaultWidth;
+            return defaultTextWidth;
         case "pattern":
             if (setting.mask) {
                 // Każdy znak maski zajmuje około 11px, dodajemy margines
                 return Math.max(Math.min(setting.mask.length * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
             }
-            return defaultWidth;
+            return defaultTextWidth;
         case "range":
             return maxWidth;
         case "number":
-            return 200;
+            if (setting.max) {
+                return Math.max(Math.min((setting.max.toString().length) * widthPerChar + 16, maxWidth), minWidth);
+            }
+            return defaultNumberWidth;
     }
-    return defaultWidth;
+    return defaultTextWidth;
 };
 
 export const disabledControl = (
@@ -303,19 +308,22 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
 
     return (
         <StyledSettingInputControlRoot
-            className={[
+            className={clsx(
                 'SettingInputControl-root',
                 `${setting.type}-setting`,
-                className ?? '',
-                selected ? 'Mui-selected' : '',
-                changed ? 'changed' : '',
-                isDefault ? 'default' : '',
-            ].filter(Boolean).join(' ')}
+                className,
+                selected && 'Mui-selected',
+                changed && 'changed',
+                isDefault && 'default',
+            )}
             onClick={onClick}
             {...other}
         >
             <Tooltip
-                title={changed ? t("value-changed", "Value has changed") : isDefault ? t("default-value", "Value is default") : ""}
+                title={[
+                    isDefault ? t("default-value", "Value is default") : undefined,
+                    changed ? t("value-changed", "Value has changed") : undefined
+                ].filter(Boolean).join(` ${t("and", "and")} `)}
                 placement="top"
             >
                 <div className={[
@@ -358,7 +366,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                             {setting.group}:
                         </span>
                     )}
-                    {<span key="title" className="title">{setting.title}</span>}
+                    {<span key="title" className="title">{setting.label}</span>}
                     {setting.required && (<span className="required" style={{ color: theme.palette.error.main }}>*</span>)}
                     <span key="flags" className="flags">
                         {setting.advanced && (<em className="flag advanced">{t('advanced', "Advanced")}</em>)}

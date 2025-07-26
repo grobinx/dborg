@@ -164,7 +164,7 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
 export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { queueMessage, subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
 
     React.useEffect(() => {
@@ -197,7 +197,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                 < Tooltip title={t("refresh-metadata", "Refresh metadata")}>
                     <span>
                         <ToolButton
-                            onClick={() => sendMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
+                            onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
                             disabled={gettingMetadata}
                         >
                             <theme.icons.RefreshMetadata />
@@ -208,7 +208,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             <Tooltip title={t("disconnect", "Close connection")}>
                 <span>
                     <ToolButton
-                        onClick={() => sendMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
+                        onClick={() => queueMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
                     >
                         <theme.icons.Disconnected />
                     </ToolButton>

@@ -10,14 +10,14 @@ const QueryHistoryStatusButton: React.FC = () => {
     const { t } = useTranslation();
     const theme = useTheme();
     const { queryHistory } = useQueryHistory();
-    const { sendMessage } = useMessages();
+    const { queueMessage } = useMessages();
 
     return (
         <StatusBarButton
             key="query-history-status-button"
             toolTip={t("queryHistory-status-button-tooltip", "Query History")}
             onClick={() => {
-                sendMessage(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "query-history");
+                queueMessage(Messages.TOGGLE_TOOLS_TABS_PANEL, "tools-tabs-panel", "query-history");
             }}
         >
             <theme.icons.QueryHistory />

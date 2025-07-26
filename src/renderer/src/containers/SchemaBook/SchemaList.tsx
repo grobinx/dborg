@@ -85,7 +85,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [search, setSearch] = React.useState('');
     const { addToast } = useToast();
     const [selectedItem, setSelectedItem] = React.useState('');
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
 
@@ -443,7 +443,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         size="large"
                         className="refresh"
                         onClick={() => {
-                            sendMessage(Messages.RELOAD_SCHEMAS);
+                            queueMessage(Messages.RELOAD_SCHEMAS);
                         }}
                     >
                         <theme.icons.Refresh {...slotProps?.icon} />
@@ -513,7 +513,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         className="edit"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
-                                                            sendMessage(Messages.EDIT_SCHEMA, record.sch_id);
+                                                            queueMessage(Messages.EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
                                                     >
@@ -526,7 +526,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         className="clone"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
-                                                            sendMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
+                                                            queueMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
                                                     >

@@ -71,7 +71,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const { session, itemID, tabsItemID, hidden } = props;
     const theme = useTheme();
     const { t } = useTranslation();
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, queueMessage } = useMessages();
     const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
     const [rows, setRows] = React.useState<object[] | null>(null);
     const [query, setQuery] = React.useState<string | null>(null);
@@ -115,7 +115,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
     const onMountHandle = (context: DataGridContext<any>) => {
         context.addCommand("Ctrl+Tab", () => {
-            sendMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.uniqueId });
+            queueMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.uniqueId });
         });
         context.addAction({
             id: "refresh-query",
@@ -269,8 +269,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         if (executing === null) {
             return;
         }
-        sendMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: itemID, from: itemID, status: executing });
-        sendMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: session.info.uniqueId, from: itemID, status: executing });
+        queueMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: itemID, from: itemID, status: executing });
+        queueMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: session.info.uniqueId, from: itemID, status: executing });
     }, [executing, itemID, session.info.uniqueId]);
 
     React.useEffect(() => {
@@ -393,7 +393,7 @@ interface SqlResultLabelProps {
 export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const theme = useTheme();
-    const { subscribe, sendMessage } = useMessages();
+    const { subscribe, queueMessage } = useMessages();
     const [label, setLabel] = useState<string>("Result");
     const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID);
     const [executing, setExecuting] = React.useState(false); // Dodano stan dla wykonywania zapytania
@@ -426,7 +426,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
             <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{label}</span>
             <ToolButton
                 color="error"
-                onClick={() => sendMessage(SQL_RESULT_CLOSE, itemID)}
+                onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
                 size="small"
                 disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
             >

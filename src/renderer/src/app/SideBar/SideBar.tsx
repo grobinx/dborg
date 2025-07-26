@@ -43,7 +43,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
     const [horizontal, setHorizontal] = React.useState(false);
     const { t } = useTranslation();
     const [isFocused, setIsFocused] = React.useState(false);
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { queueMessage, subscribe, unsubscribe } = useMessages();
     const { containers, selectedContainer, views, selectedView } = useContainers();
     const [expanded, setExpanded] = React.useState(window.sessionStorage.getItem(Store_siedBarExpanded) === "true" || false);
     const [contextMenu, setContextMenu] = React.useState<{ mouseX: number, mouseY: number } | null>(null);
@@ -79,7 +79,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                     key={id}
                     itemID={id}
                     selected={selectedView?.id === id}
-                    onClick={() => sendMessage(Messages.SWITCH_VIEW, id)}
+                    onClick={() => queueMessage(Messages.SWITCH_VIEW, id)}
                     icon={resolveIcon(theme, icon)}
                     label={label}
                     expanded={expanded}
@@ -97,9 +97,9 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
 
     const handleSideBarContextMenuClose = (itemID?: Placement | "expand") => {
         if (itemID === "expand") {
-            sendMessage(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND);
+            queueMessage(Messages.SIDE_BAR_BUTTON_TOGGLE_EXPAND);
         } else if (itemID) {
-            sendMessage(Messages.CHANGE_SIDE_BAR_PLACEMENT, itemID);
+            queueMessage(Messages.CHANGE_SIDE_BAR_PLACEMENT, itemID);
         }
         setContextMenu(null);
     };
@@ -120,7 +120,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         key={container.type}
                         itemID={container.type}
                         selected={selectedContainer?.type === container.type}
-                        onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
+                        onClick={() => queueMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
                         icon={resolveIcon(theme, container.icon)}
@@ -145,7 +145,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         key={container.type}
                         itemID={container.type}
                         selected={selectedContainer?.type === container.type}
-                        onClick={() => sendMessage(Messages.SWITCH_CONTAINER, container.type)}
+                        onClick={() => queueMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
                         placement={placement}
                         icon={resolveIcon(theme, container.icon)}

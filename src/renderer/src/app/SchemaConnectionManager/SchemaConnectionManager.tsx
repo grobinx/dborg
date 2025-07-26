@@ -29,7 +29,7 @@ export interface SchemaRecord {
 }
 
 const SchemaConnectionManager: React.FC = () => {
-    const { subscribe, unsubscribe, sendMessage } = useMessages();
+    const { subscribe, unsubscribe, queueMessage } = useMessages();
     const { internal, drivers, connections } = useDatabase();
     const { addToast } = useToast();
     const dialogs = useDialogs();
@@ -88,7 +88,7 @@ const SchemaConnectionManager: React.FC = () => {
     const reloadSchemas = useCallback(async () => {
         setSchemasLoaded(false); // Zresetuj flagę załadowania
         await fetchSchemas(); // Ponownie załaduj schematy
-        sendMessage(Messages.RELOAD_SCHEMAS_SUCCESS); 
+        queueMessage(Messages.RELOAD_SCHEMAS_SUCCESS); 
     }, [fetchSchemas]);
 
     const passwordPrompt = useCallback(async (
@@ -136,7 +136,7 @@ const SchemaConnectionManager: React.FC = () => {
         }
 
         const schema = await fetchSchema(schemaId);
-        sendMessage(Messages.SCHEMA_CONNECT_INFO, schema);
+        queueMessage(Messages.SCHEMA_CONNECT_INFO, schema);
         const driverId = schema.sch_drv_unique_id as string;
         const properties = schema.sch_properties;
         const usePassword = schema.sch_use_password as SchemaUsePasswordType;
@@ -144,7 +144,7 @@ const SchemaConnectionManager: React.FC = () => {
 
         const passwordHandled = await passwordPrompt(usePassword, passwordProperty, properties);
         if (!passwordHandled) {
-            sendMessage(Messages.SCHEMA_CONNECT_CANCEL, schema);
+            queueMessage(Messages.SCHEMA_CONNECT_CANCEL, schema);
             return;
         }
 
@@ -153,7 +153,7 @@ const SchemaConnectionManager: React.FC = () => {
             connection = await drivers.connect(driverId, properties);
         }
         catch (error) {
-            sendMessage(Messages.SCHEMA_CONNECT_ERROR, error, schema);
+            queueMessage(Messages.SCHEMA_CONNECT_ERROR, error, schema);
             throw error;
         }
         schema.sch_last_selected = DateTime.now().toSQL();
@@ -167,13 +167,13 @@ const SchemaConnectionManager: React.FC = () => {
             " where sch_id = ?",
             [schema.sch_last_selected, schema.sch_db_version, schemaId]
         );
-        sendMessage(Messages.SCHEMA_CONNECT_SUCCESS, connection);
+        queueMessage(Messages.SCHEMA_CONNECT_SUCCESS, connection);
         return connection;
     }, [fetchSchema, drivers, internal, connections, dialogs, t, passwordPrompt, checkExistingConnection]);
 
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         await connections.close(uniqueId);
-        sendMessage(Messages.SCHEMA_DISCONNECT_SUCCESS, uniqueId);
+        queueMessage(Messages.SCHEMA_DISCONNECT_SUCCESS, uniqueId);
     }, [connections]);
 
     const testConnection = useCallback(async (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => {
@@ -212,7 +212,7 @@ const SchemaConnectionManager: React.FC = () => {
         )) {
             await internal.execute("delete from schemas where sch_id = ?", [schemaId]);
             setSchemas((prev) => prev.filter((s) => s.sch_id !== schemaId)); // Usuń schemat z listy
-            sendMessage(Messages.SCHEMA_DELETE_SUCCESS, schema.sch_id);
+            queueMessage(Messages.SCHEMA_DELETE_SUCCESS, schema.sch_id);
             return true;
         }
         return false;
@@ -296,7 +296,7 @@ const SchemaConnectionManager: React.FC = () => {
             ]
         );
         setSchemas((prev) => [...prev, newSchema]); // Dodaj nowy schemat do listy
-        sendMessage(Messages.SCHEMA_CREATE_SUCCESS, newSchema);
+        queueMessage(Messages.SCHEMA_CREATE_SUCCESS, newSchema);
         return uniqueId;
     }, [internal, checkSchemaExists, passwordRetention]);
 
@@ -344,7 +344,7 @@ const SchemaConnectionManager: React.FC = () => {
         setSchemas((prev) =>
             prev.map((s) => (s.sch_id === updatedSchema.sch_id ? updatedSchema : s)) // Zaktualizuj schemat w liście
         );
-        sendMessage(Messages.SCHEMA_UPDATE_SUCCESS, updatedSchema);
+        queueMessage(Messages.SCHEMA_UPDATE_SUCCESS, updatedSchema);
         return true;
     }, [internal, checkSchemaExists, passwordRetention, schemas]);
 

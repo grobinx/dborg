@@ -51,7 +51,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     const tabsItemID = useMemo(() => editorsTabsId(session), [session]);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [closedEditors, setClosedEditors] = useState<EditorState[]>([]);
-    const { sendMessage, subscribe, unsubscribe, queueMessage } = useMessages();
+    const { subscribe, unsubscribe, queueMessage } = useMessages();
 
     useEffect(() => {
         const initializeTabs = async () => {
@@ -199,7 +199,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     };
 
     const handleSelectEditor = (editorId: string) => {
-        sendMessage(SQL_EDITOR_ADD, { tabsItemID, editorId });
+        queueMessage(SQL_EDITOR_ADD, { tabsItemID, editorId });
         handleMenuClose();
     };
 
@@ -212,7 +212,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                         <span>
                             <ToolButton
                                 color="success"
-                                onClick={() => sendMessage(SQL_EDITOR_ADD, { tabsItemID })}
+                                onClick={() => queueMessage(SQL_EDITOR_ADD, { tabsItemID })}
                             >
                                 <theme.icons.AddTab />
                             </ToolButton>
@@ -223,7 +223,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                             <ToolButton
                                 ref={menuButtonRef} // Przypisanie referencji do ToolButton
                                 color="primary"
-                                onClick={() => sendMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID })}
+                                onClick={() => queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID })}
                             >
                                 <theme.icons.ExpandMore />
                             </ToolButton>

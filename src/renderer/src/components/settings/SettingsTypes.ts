@@ -93,7 +93,7 @@ export interface SettingTypeBase {
      * The title of the setting, displayed in the UI.
      * This should be a user-friendly name that describes the setting.
      */
-    title: string;
+    label: string;
     /**
      * A description of the setting, displayed in the UI.
      * This should provide additional context or instructions for the user.

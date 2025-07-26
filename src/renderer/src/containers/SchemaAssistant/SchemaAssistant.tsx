@@ -87,7 +87,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { addToast } = useToast();
     const schemaRef = React.useRef<SchemaParametersRef>(null);
     const [search, setSearch] = React.useState('');
-    const { sendMessage, subscribe, unsubscribe } = useMessages();
+    const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
 
@@ -104,7 +104,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
 
     const handleSwitchContainerMessage = React.useCallback((container: ContainerType) => {
         if (container === selectedContainer?.type && container === "new-connection") {
-            sendMessage(Messages.SET_SCHEMA_ID, undefined);
+            queueMessage(Messages.SET_SCHEMA_ID, undefined);
         }
     }, [selectedContainer]);
 
@@ -159,7 +159,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     }, []);
 
     const handleEndEditSchemaMessage = React.useCallback(() => {
-        sendMessage(Messages.SWITCH_CONTAINER, "connection-list");
+        queueMessage(Messages.SWITCH_CONTAINER, "connection-list");
     }, []);
 
     // Register and unregister message handlers
@@ -331,14 +331,14 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 {(activeStep === 2) && ([
                     < Button
                         {...slotProps?.button}
-                        onClick={() => schemaParams.uniqueId && sendMessage(Messages.SCHEMA_CONNECT, schemaParams.uniqueId)}
+                        onClick={() => schemaParams.uniqueId && queueMessage(Messages.SCHEMA_CONNECT, schemaParams.uniqueId)}
                         key="connect"
                     >
                         {t("connect", "Connect")}
                     </Button>,
                     < Button
                         {...slotProps?.button}
-                        onClick={() => schemaParams.uniqueId && sendMessage(Messages.END_EDIT_SCHEMA)}
+                        onClick={() => schemaParams.uniqueId && queueMessage(Messages.END_EDIT_SCHEMA)}
                         key="finish"
                     >
                         {t("finish", "Finish")}
