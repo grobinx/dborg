@@ -227,6 +227,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
+        if (value === values[setting.key]) {
+            return;
+        }
+
         const timeoutId = setTimeout(() => {
             let valid = true;
             const isEmpty = value === undefined || value === null || value === "";
@@ -283,9 +287,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
-            if (value !== values[setting.key]) {
-                onChange(value, valid);
-            }
+            onChange(value, valid);
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -308,6 +310,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
 
+    console.count(`SettingInputControl render: ${setting.key}`);
     return (
         <StyledSettingInputControlRoot
             className={clsx(
