@@ -94,7 +94,10 @@ export const PasswordSetting: React.FC<{
                         <Tooltip
                             title={t(
                                 "policy-special-char",
-                                `At least one special character (${setting.specialChars || "!@#$%^&*()_+-=[]{}|;':\",.<>?/"})`
+                                'At least one special character ({{specialChars}})',
+                                {
+                                    specialChars: setting.specialChars || "!@#$%^&*()_+-=[]{}|;':\",.<>?/"
+                                }
                             )}
                             key="special-char"
                         >

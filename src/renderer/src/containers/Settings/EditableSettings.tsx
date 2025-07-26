@@ -94,11 +94,12 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues((prev) => ({ ...prev, "some-setting": value }))}
+                        onChange={(value) => setValues((prev) => { prev["some-setting"] = value; return prev; }) }
                         values={values}
                         selected={selected}
                         onClick={() => setSelected(!selected)}
                     />
+                    {/*
                     <TextSetting
                         path={["root"]}
                         setting={{
@@ -217,6 +218,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         onChange={(value) => setValues((prev) => ({ ...prev, "color": value }))}
                         values={values}
                     />
+                     */}
                 </StyledEditableSettingsList>
             </StyledEditableSettingsContent>
         </StyledEditableSettingsRoot>

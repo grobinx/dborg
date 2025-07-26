@@ -1,5 +1,5 @@
 import { SettingTypeString } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl, InputControlContext } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
@@ -14,14 +14,17 @@ export const StringSetting: React.FC<{
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
     const contextRef = React.useRef<InputControlContext>(null);
+    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
 
     return (
         <SettingInputControl
             path={path}
             setting={setting}
             contextRef={contextRef}
-            values={values}
+            value={value}
+            setValue={(value?: any) => setValue(value ?? "")}
             onChange={onChange}
+            values={values}
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validateStringLength(value, setting.minLength, setting.maxLength)}
@@ -42,9 +45,16 @@ export const StringSetting: React.FC<{
             }}
         >
             <BaseTextField
+                id={[...path, setting.key].join("-")}
                 sx={{
                     width: calculateWidth(setting)
                 }}
+                value={value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setValue(e.target.value);
+                }}
+                disabled={disabledControl(setting, values)}
+                onClick={onClick}
             />
         </SettingInputControl>
     );

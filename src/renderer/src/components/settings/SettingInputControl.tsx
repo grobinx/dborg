@@ -156,16 +156,18 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
 export interface InputControlContext {
     value: any;
     valid: boolean;
-    setValue: (value: any) => void;
+    //setValue: (value: any) => void;
 }
 
 interface SettingInputControlOwnProps extends SettingInputControlProps {
     path: string[];
     setting: SettingTypeBase;
+    value?: any;
+    setValue?: (value: any) => void;
     values: Record<string, any>;
-    onChange: (value: any, valid?: boolean) => void;
+    onChange?: (value: any, valid?: boolean) => void;
     onClick?: () => void;
-    validate?: (value: any) => string | boolean;
+    validate?: (value?: any) => string | boolean;
     selected?: boolean;
     description?: boolean;
     children?: React.ReactElement<BaseInputProps>;
@@ -175,15 +177,13 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
-        children, className, path, setting, values,
+        children, className, path, setting, value, setValue, values,
         onChange, onClick, validate, slotProps,
         selected, description, contextRef, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
     const theme = useTheme();
-    const fullPath = [...path, setting.key].join('-');
-    const [previousValue] = useState<any>(values[setting.key]);
-    const [value, setValue] = useState(values[setting.key] ?? setting.defaultValue);
+    const [previousValue] = useState<any>(value);
     const [validity, setValidity] = useState<string | undefined>(undefined);
     const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
@@ -191,11 +191,20 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const isMenuOpen = Boolean(menuAnchorEl);
     const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
+    
+    const getEffectContent = (values: Record<string, any>) => {
+        const effect = setting.effect?.(values);
+        if (effect) {
+            return typeof effect === "string" ? markdown(effect, theme) : effect;
+        }
+        return undefined;
+    };
+    const [effectContent, setEffectContent] = useState<React.ReactNode>(getEffectContent(values));
 
     React.useImperativeHandle(contextRef, () => ({
         value,
         valid,
-        setValue: (newValue: any) => setValue(newValue),
+        //setValue: (newValue: any) => setValue(newValue),
     }));
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -207,12 +216,12 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleRestoreDefaults = () => {
-        setValue(setting.defaultValue);
+        setValue?.(setting.defaultValue);
         handleMenuClose();
     };
 
     const handleResetSetting = () => {
-        setValue(previousValue);
+        setValue?.(previousValue);
         handleMenuClose();
     };
 
@@ -227,10 +236,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
-        if (value === values[setting.key]) {
-            return;
-        }
-
         const timeoutId = setTimeout(() => {
             let valid = true;
             const isEmpty = value === undefined || value === null || value === "";
@@ -287,9 +292,8 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
-            if (value !== values[setting.key]) {
-                onChange(value, valid);
-            }
+            onChange?.(value, valid);
+            setEffectContent(getEffectContent(values));
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -395,20 +399,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 <Stack direction="row" ref={popperVisibilityRef}>
                     <StyledSettingInputControlInput className="SettingInputControl-input" {...slotProps?.input}>
                         <div ref={anchorElRef}>
-                            {children &&
-                                React.isValidElement(children) &&
-                                React.cloneElement(children, {
-                                    id: fullPath,
-                                    value: value ?? "",
-                                    onChange: (e: any, value: any, ...args: any[]) => {
-                                        setValue(value);
-                                        if (children.props.onChange) {
-                                            children.props.onChange(e, value, ...args);
-                                        }
-                                    },
-                                    disabled: disabledControl(setting, values),
-                                    onClick: onClick,
-                                })}
+                            {children}
                         </div>
                         {policyContent && (<div key="policy" className="policy">{typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent}</div>)}
                     </StyledSettingInputControlInput>
@@ -431,14 +422,11 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>
-                {setting.effect && (() => {
-                    const effect = setting.effect(values);
-                    return (
-                        <StyledSettingInputControlEffect variant="description" className="SettingInputControl-effect" {...slotProps?.effect}>
-                            {typeof effect === "string" ? markdown(effect, theme) : effect}
-                        </StyledSettingInputControlEffect>
-                    )
-                })()}
+                {effectContent && (
+                    <StyledSettingInputControlEffect variant="description" className="SettingInputControl-effect" {...slotProps?.effect}>
+                        {effectContent}
+                    </StyledSettingInputControlEffect>
+                )}
             </StyledSettingInputControlInternal>
         </StyledSettingInputControlRoot>
     );
