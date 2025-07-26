@@ -1,4 +1,5 @@
 import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
+import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
 import { NumberSetting } from "@renderer/components/settings/inputs/NumberSetting";
 import { PasswordSetting } from "@renderer/components/settings/inputs/PasswordSetting";
@@ -63,6 +64,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
         "email": "example@example.com",
         "age-range": [25, 450],
         //"age": 25,
+        "color": "#ff0000",
     });
 
     return (
@@ -201,6 +203,18 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości wieku : ${values["age"]}`,
                         }}
                         onChange={(value) => setValues((prev) => ({ ...prev, "age": value }))}
+                        values={values}
+                    />
+                    <ColorSetting
+                        path={["root"]}
+                        setting={{
+                            type: "color",
+                            key: "color",
+                            group: "General",
+                            label: "Color",
+                            description: "Select a color",
+                        }}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "color": value }))}
                         values={values}
                     />
                 </StyledEditableSettingsList>

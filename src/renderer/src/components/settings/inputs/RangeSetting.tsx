@@ -14,7 +14,7 @@ export const RangeSetting: React.FC<{
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
     const contextRef = React.useRef<InputControlContext>(null);
 
-    const handleChange = (newValue: number[], activeThumb: number) => {
+    const handleChange = (_e, newValue: number[], activeThumb: number) => {
         let value: [number, number] = newValue as [number, number];
         if (contextRef.current) {
             if (activeThumb === 0) {

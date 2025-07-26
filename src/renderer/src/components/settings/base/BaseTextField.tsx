@@ -12,7 +12,7 @@ const BaseTextField: React.FC<BaseTextFieldProps> = (props) => {
         <TextField
             id={id}
             value={value}
-            onChange={(e) => onChange?.(e.target.value)}
+            onChange={(e) => onChange?.(e, e.target.value)}
             disabled={disabled}
             {...other}
         />

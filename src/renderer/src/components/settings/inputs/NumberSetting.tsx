@@ -57,7 +57,7 @@ export const NumberSetting: React.FC<{
                         step: setting.step || 1,
                     }
                 }}
-                onChange={(value) => handleChange(value)}
+                onChange={(_e, value) => handleChange(value)}
             />
         </SettingInputControl>
     );

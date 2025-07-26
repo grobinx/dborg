@@ -1,4 +1,5 @@
 import React from "react";
+import { ColorPickerType } from "../useful/ColorPicker";
 
 export type SettingType = 
     /**
@@ -288,6 +289,7 @@ export interface SettingTypeJson extends SettingTypeBase {
 
 export interface SettingTypeColor extends SettingTypeBase {
     type: "color";
+    picker?: ColorPickerType;
     defaultValue?: string; // Hex color code
 }
 

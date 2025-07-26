@@ -23,9 +23,9 @@ const BaseSlider: React.FC<BaseSliderProps> = (props) => {
             <Slider
                 id={id}
                 value={value}
-                onChange={(_event: Event, newValue: number | number[], activeThumb: number) => {
+                onChange={(e: Event, newValue: number | number[], activeThumb: number) => {
                     if (Array.isArray(newValue)) {
-                        onChange?.(newValue, activeThumb);
+                        onChange?.(e, newValue, activeThumb);
                     }
                 }}
                 disabled={disabled}

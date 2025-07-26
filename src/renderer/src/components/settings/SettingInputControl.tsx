@@ -111,6 +111,8 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
                 return Math.max(Math.min((setting.max.toString().length) * widthPerChar + 16, maxWidth), minWidth);
             }
             return defaultNumberWidth;
+        case "color":
+            return defaultTextWidth;
     }
     return defaultTextWidth;
 };
@@ -397,10 +399,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                                 React.cloneElement(children, {
                                     id: fullPath,
                                     value: value ?? "",
-                                    onChange: (value: any, ...args: any[]) => {
+                                    onChange: (e: any, value: any, ...args: any[]) => {
                                         handleChange(value);
                                         if (children.props.onChange) {
-                                            children.props.onChange(value, ...args);
+                                            children.props.onChange(e, value, ...args);
                                         }
                                     },
                                     disabled: disabledControl(setting, values),

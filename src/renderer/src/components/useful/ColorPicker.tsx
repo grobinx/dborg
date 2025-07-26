@@ -1,15 +1,25 @@
 import React, { useRef } from "react";
-import { BlockPicker, SwatchesPicker } from "react-color";
+import { BlockPicker, ChromePicker, CompactPicker, GithubPicker, MaterialPicker, PhotoshopPicker, SketchPicker, SwatchesPicker, TwitterPicker } from "react-color";
 import { Popover } from "@mui/material";
+import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
+
+export type ColorPickerType = "block" | "swatches" | "compact" | "material" | "sketch" | "twitter" | "gitchub" | "chrome" | "photoshop";
 
 interface ColorPickerProps {
     value: string;
     onChange: (color: string) => void;
     anchorEl: HTMLElement | null;
     onClose: () => void;
+    picker?: ColorPickerType;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, anchorEl, onClose }) => {
+const ColorPicker: React.FC<ColorPickerProps> = ({ 
+    value, 
+    onChange, 
+    anchorEl, 
+    onClose,
+    picker = "swatches"
+}) => {
     const open = Boolean(anchorEl);
 
     return (
@@ -33,10 +43,60 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, anchorEl, on
                 },
             }}
         >
-            <SwatchesPicker
-                color={value}
-                onChangeComplete={(color) => onChange(color.hex)}
-            />
+            {picker === "block" && (
+                <BlockPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "swatches" && (
+                <SwatchesPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "compact" && (
+                <CompactPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "material" && (
+                <MaterialPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "sketch" && (
+                <SketchPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "twitter" && (
+                <TwitterPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "gitchub" && (
+                <GithubPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "chrome" && (
+                <ChromePicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
+            {picker === "photoshop" && (
+                <PhotoshopPicker
+                    color={value}
+                    onChangeComplete={(color) => onChange(color.hex)}
+                />
+            )}
         </Popover>
     );
 };
