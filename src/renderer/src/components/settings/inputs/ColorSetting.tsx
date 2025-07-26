@@ -63,6 +63,18 @@ export const ColorSetting: React.FC<{
                 onInputChange={(_e, newValue) => {
                     contextRef.current?.setValue(newValue);
                 }}
+                slotProps={{
+                    clearIndicator: {
+                        style: {
+                            borderRadius: '4px',
+                        }
+                    },
+                    popupIndicator: {
+                        style: {
+                            borderRadius: '4px',
+                        }
+                    },
+                }}
                 renderInput={(params) => {
                     const { InputProps, ...otherParams } = params;
                     const { endAdornment, ...inputProps } = InputProps;
