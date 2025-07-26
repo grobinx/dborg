@@ -113,6 +113,7 @@ export const ColorSetting: React.FC<{
                                                     onChange={onChangeColor}
                                                     anchorEl={colorPickerAnchoreEl}
                                                     onClose={handleColorPickerClose}
+                                                    picker={setting.picker}
                                                 />
                                             </InputAdornment>
                                             {endAdornment}
