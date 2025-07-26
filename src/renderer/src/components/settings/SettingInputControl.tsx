@@ -287,7 +287,9 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
-            onChange(value, valid);
+            if (value !== values[setting.key]) {
+                onChange(value, valid);
+            }
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -302,10 +304,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             setPolicyContent(undefined);
         }
     }, [value, policy]);
-
-    const handleChange = (newValue: any) => {
-        setValue(newValue);
-    };
 
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
@@ -403,7 +401,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                                     id: fullPath,
                                     value: value ?? "",
                                     onChange: (e: any, value: any, ...args: any[]) => {
-                                        handleChange(value);
+                                        setValue(value);
                                         if (children.props.onChange) {
                                             children.props.onChange(e, value, ...args);
                                         }

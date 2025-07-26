@@ -94,7 +94,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues((prev) => { prev["some-setting"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-setting": value }))}
                         values={values}
                         selected={selected}
                         onClick={() => setSelected(!selected)}
@@ -116,7 +116,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (values) => `Jakiś efekt wartości tekstowej: **${values["some-text-setting"]}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues((prev) => { prev["some-text-setting"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-text-setting": value }))}
                         values={values}
                     />
                     <PasswordSetting
@@ -142,7 +142,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: (_values) => `Jakiś efekt wartości hasła`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues((prev) => { prev["some-password-setting"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "some-password-setting": value }))}
                         values={values}
                     />
                     <PatternSetting
@@ -156,7 +156,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             mask: "+0 (___) ___-__-__",
                             replacement: { "_": /\d/ },
                         }}
-                        onChange={(value) => setValues((prev) => { prev["phone-number"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "phone-number": value }))}
                         values={values}
                     />
                     <EmailSetting
@@ -168,7 +168,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             label: "Email Address",
                             description: "Enter your email address",
                         }}
-                        onChange={(value) => setValues((prev) => { prev["email"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "email": value }))}
                         values={values}
                     />
                     <RangeSetting
@@ -185,7 +185,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             minDistance: 200,
                             effect: (values) => `Jakiś efekt wartości zakresu wieku : ${values["age-range"][0]} - ${values["age-range"][1]}`,
                         }}
-                        onChange={(value) => setValues((prev) => { prev["age-range"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "age-range": value }))}
                         values={values}
                     />
                     <NumberSetting
@@ -202,7 +202,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             defaultValue: 25,
                             effect: (values) => `Jakiś efekt wartości wieku : ${values["age"]}`,
                         }}
-                        onChange={(value) => setValues((prev) => { prev["age"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "age": value }))}
                         values={values}
                     />
                     <ColorSetting
@@ -214,7 +214,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             label: "Color",
                             description: "Select a color",
                         }}
-                        onChange={(value) => setValues((prev) => { prev["color"] = value; return prev; })}
+                        onChange={(value) => setValues((prev) => ({ ...prev, "color": value }))}
                         values={values}
                     />
                 </StyledEditableSettingsList>
