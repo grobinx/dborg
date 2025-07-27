@@ -1,5 +1,5 @@
 import { SettingTypeString } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, disabledControl, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
@@ -8,7 +8,7 @@ import { Tooltip } from "@mui/material";
 export const StringSetting: React.FC<{
     path: string[];
     setting: SettingTypeString;
-    onChange: (value: string, valid?: boolean) => void;
+    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
     selected?: boolean;
@@ -47,7 +47,7 @@ export const StringSetting: React.FC<{
                 sx={{
                     width: calculateWidth(setting)
                 }}
-                value={value}
+                value={value ?? ""}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);
                 }}

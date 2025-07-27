@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 export const PasswordSetting: React.FC<{
     path: string[];
     setting: SettingTypePassword;
-    onChange: (value: string, valid?: boolean) => void;
+    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
     selected?: boolean;

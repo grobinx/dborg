@@ -1,6 +1,6 @@
 import React from "react";
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
-import { useSettings } from "../contexts/SettingsContext";
+import { useSetting } from "../contexts/SettingsContext";
 import defaultDarkPalette from '../themes/palettes/defaultDark';
 import defaultLightPalette from '../themes/palettes/defaultLight';
 import defaultLayout from '../themes/layouts/defaultLayout';
@@ -9,7 +9,7 @@ import rootLayout from '../themes/layouts/root';
 import { UiSettings } from "@renderer/app.config";
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [ui] = useSettings<UiSettings>("ui");
+    const [uiTheme] = useSetting("ui", "theme", "system");
 
     const prefersDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
@@ -37,11 +37,11 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
     const [theme, setTheme] = React.useState(() => {
         const { themeLight, themeDark } = createThemes();
-        return ui.theme === "system"
+        return uiTheme === "system"
             ? prefersDarkMode
                 ? themeDark
                 : themeLight
-            : ui.theme === "light"
+            : uiTheme === "light"
             ? themeLight
             : themeDark;
     });
@@ -49,15 +49,15 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     React.useEffect(() => {
         const { themeLight, themeDark } = createThemes();
         const selectedTheme =
-            ui.theme === "system"
+            uiTheme === "system"
                 ? prefersDarkMode
                     ? themeDark
                     : themeLight
-                : ui.theme === "light"
+                : uiTheme === "light"
                 ? themeLight
                 : themeDark;
         setTheme(selectedTheme);
-    }, [ui.theme, prefersDarkMode, createThemes]);
+    }, [uiTheme, prefersDarkMode, createThemes]);
 
     return (
         <ThemeProvider theme={theme}>

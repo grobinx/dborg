@@ -1,5 +1,5 @@
 import { SettingTypeNumber, SettingTypeString } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
@@ -8,22 +8,19 @@ import { Tooltip } from "@mui/material";
 export const NumberSetting: React.FC<{
     path: string[];
     setting: SettingTypeNumber;
-    onChange: (value: string, valid?: boolean) => void;
+    onChange?: (value: number | undefined, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const contextRef = React.useRef<InputControlContext>(null);
-
-    const handleChange = (value: string) => {
-        contextRef.current?.setValue(!!value ? Number(value) : undefined);
-    };
+    const [value, setValue] = React.useState<number | undefined>(Number(values[setting.key]) ?? setting.defaultValue);
 
     return (
         <SettingInputControl
             path={path}
             setting={setting}
-            contextRef={contextRef}
+            value={value}
+            setValue={(value?: any) => setValue(value)}
             values={values}
             onChange={onChange}
             selected={selected}
@@ -46,6 +43,7 @@ export const NumberSetting: React.FC<{
             }}
         >
             <BaseTextField
+                id={[...path, setting.key].join("-")}
                 type="number"
                 sx={{
                     width: calculateWidth(setting)
@@ -57,7 +55,12 @@ export const NumberSetting: React.FC<{
                         step: setting.step || 1,
                     }
                 }}
-                onChange={(_e, value) => handleChange(value)}
+                value={value ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setValue(!!e.target.value ? Number(e.target.value) : undefined);
+                }}
+                disabled={disabledControl(setting, values)}
+                onClick={onClick}
             />
         </SettingInputControl>
     );

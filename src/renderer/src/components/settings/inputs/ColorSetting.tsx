@@ -12,7 +12,7 @@ import { htmlColors } from "@renderer/utils/colors";
 export const ColorSetting: React.FC<{
     path: string[];
     setting: SettingTypeColor;
-    onChange: (value: string, valid?: boolean) => void;
+    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
     selected?: boolean;

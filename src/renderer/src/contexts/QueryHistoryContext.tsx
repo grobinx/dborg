@@ -41,7 +41,12 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     useEffect(() => {
         const interval = setInterval(() => {
             const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            setQueryHistory((prev) => prev.filter((entry) => entry.startTime >= oneHourAgo));
+            setQueryHistory((prev) => {
+                if (prev.some((entry) => entry.startTime >= oneHourAgo)) {
+                    return prev.filter((entry) => entry.startTime >= oneHourAgo);
+                }
+                return prev;
+            });
         }, 60 * 1000); // Uruchamiaj co minutę
 
         return () => clearInterval(interval); // Wyczyść interval po odmontowaniu komponentu

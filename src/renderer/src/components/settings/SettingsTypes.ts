@@ -159,6 +159,14 @@ export interface SettingTypeBase {
      * @param values - all values of the settings
      */
     effect?: (values: Record<string, any>) => React.ReactNode;
+    /**
+     * A function that is called when the value of the setting changes.
+     * This can be used to perform additional actions when the setting value changes.
+     * @param value - the current value of the setting
+     * @param values - all values of the settings
+     * @returns 
+     */
+    changed?: (value: any, values: Record<string, any>) => void;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {

@@ -57,7 +57,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const queueMessage = (message: string, ...args: any[]) => {
         setTimeout(() => {
             sendMessage(message, ...args);
-        }, 10);
+        }, 0);
     };
 
     React.useEffect(() => {

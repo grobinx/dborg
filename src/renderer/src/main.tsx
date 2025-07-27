@@ -28,7 +28,7 @@ const AppWrapper: React.FC = () => {
             // Ustawienie pauzy na false po załadowaniu ustawień
             setPause(false);
         }, 2000);
-    }, [settingsContext.isLoading]);
+    }, [settingsContext?.isLoading]);
 
     if (!settingsContext || settingsContext.isLoading || pause) {
         // Wyświetl ekran ładowania, dopóki ustawienia nie zostaną załadowane

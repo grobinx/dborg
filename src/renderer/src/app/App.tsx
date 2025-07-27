@@ -6,7 +6,7 @@ import StatusBar from "./StatusBar";
 import '@renderer/components/ToolPanels/QueryHistoryStatusButton';
 import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
-import { useSettings } from '@renderer/contexts/SettingsContext';
+import { useSetting, useSettings } from '@renderer/contexts/SettingsContext';
 import TabsPanel from '../components/TabsPanel/TabsPanel';
 import TabPanel from '../components/TabsPanel/TabPanel';
 import { useMessages } from '@renderer/contexts/MessageContext';
@@ -65,8 +65,7 @@ const App: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { height } = useWindowDimensions();
-    const [settings, setSettings] = useSettings("app");
-    const [placement, setPlacement] = React.useState<Placement>((settings.placement ?? "left") as Placement);
+    const [placement, setPlacement] = useSetting<Placement>("app", "placement", "left");
     const [toolsTabsPanelVisible, setToolsTabsPanelVisible] = React.useState<boolean>(() => {
         const storedValue = window.sessionStorage.getItem(App_toolsTabsPanelVisible);
         return storedValue !== null ? JSON.parse(storedValue) : false;
@@ -116,7 +115,6 @@ const App: React.FC = () => {
 
         const handlePlacementChange = (newPlacement: Placement) => {
             setPlacement(newPlacement);
-            setSettings("placement", newPlacement);
         };
 
         subscribe(Messages.TOGGLE_TOOLS_TABS_PANEL, handleToggleToolsTabsPanelMessage);
@@ -161,10 +159,10 @@ const App: React.FC = () => {
     return (
         <div>
             <MenuBar key="menu-bar" ref={menuBarRef} />
-            <Stack direction={stackDirection}>
+            <Stack key="stack-direction" direction={stackDirection}>
                 <SideBar key="side-bar" placement={placement} ref={sideBarRef} />
-                <SplitPanelGroup direction="vertical" style={{ height: middleHeight }} autoSaveId="tools-panel">
-                    <SplitPanel>
+                <SplitPanelGroup key="split-group" direction="vertical" style={{ height: middleHeight }} autoSaveId="tools-panel">
+                    <SplitPanel key="split-main-panel">
                         {containers?.map((container) => {
                             if (["new-connection", "connection-list", "connections"].includes(container.type)) {
                                 return (
@@ -191,8 +189,8 @@ const App: React.FC = () => {
                             );
                         })}
                     </SplitPanel>
-                    <Splitter hidden={!toolsTabsPanelVisible} />
-                    <SplitPanel defaultSize={20} hidden={!toolsTabsPanelVisible}>
+                    <Splitter key="splitter" hidden={!toolsTabsPanelVisible} />
+                    <SplitPanel key="split-tools-panel" defaultSize={20} hidden={!toolsTabsPanelVisible}>
                         <TabsPanel
                             className="ToolsPanel"
                             itemID="tools-tabs-panel"

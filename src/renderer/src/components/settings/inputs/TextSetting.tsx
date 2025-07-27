@@ -1,5 +1,5 @@
 import { SettingTypeText } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, disabledControl, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength, validateTextRows } from "./validations";
 import React from "react";
@@ -7,7 +7,7 @@ import React from "react";
 export const TextSetting: React.FC<{
     path: string[];
     setting: SettingTypeText;
-    onChange: (value: string, valid?: boolean) => void;
+    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
     values: Record<string, any>;
     selected?: boolean;

@@ -1,7 +1,7 @@
 import { useToastAdmin } from "../../contexts/ToastContext";
 import { Paper, Alert, Zoom, Collapse, Grow, Fade, Slide, useTheme } from "@mui/material";
-import { AppSettings } from "@renderer/app.config";
-import { useSettings } from "@renderer/contexts/SettingsContext";
+import { toast_max } from "@renderer/app.config";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 import { TransitionGroup } from "react-transition-group";
 import { styled, useThemeProps } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
@@ -79,7 +79,7 @@ export interface ToastListProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const ToastList: React.FC<ToastListProps> = (props) => {
     const { toasts, dispatchToast, showedToast } = useToastAdmin();
-    const [settings] = useSettings<AppSettings>("app");
+    const [toastMax] = useSetting("app", "toast.max", toast_max);
     const theme = useTheme();
 
     // Use theme props to allow customization via slotProps
@@ -99,7 +99,7 @@ const ToastList: React.FC<ToastListProps> = (props) => {
         >
             {toasts
                 .sort((a, b) => a.posted - b.posted) // Sort by oldest first
-                .slice(0, settings.toast.max) // Take the oldest up to the max_toast limit
+                .slice(0, toastMax) // Take the oldest up to the max_toast limit
                 .map(({ id, type, message, shown, reason }) => {
                     if (!shown) {
                         Promise.resolve().then(() => showedToast(id)); // Mark as shown

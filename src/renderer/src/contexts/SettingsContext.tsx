@@ -1,7 +1,9 @@
 import { AppSettings } from "@renderer/app.config";
 import definitions, { EditableSettingsRegistry } from "@renderer/components/settings/EditableSettingsRegistry";
+import { group } from "console";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
+import { produce } from "immer";
 
 // Globalna zmienna przechowująca listę nazw ustawień oraz ich domyślne wartości
 export const SETTINGS_NAMES: Record<string, TSettings> = {
@@ -13,20 +15,14 @@ export const SETTINGS_NAMES: Record<string, TSettings> = {
 // Typ dla kontekstu ustawień
 interface SettingsContextType {
     updateSettings: <T extends TSettings>(name: string, newSettings: T) => Promise<void>;
-    getSettings: <T extends TSettings>(name: string) => T | undefined;
+    setSetting: <T = string>(group: string, key: string, value: T) => void;
     settings: Record<string, TSettings>;
     isLoading: boolean;
     definitions: EditableSettingsRegistry;
 }
 
 // Domyślna wartość kontekstu
-export const SettingsContext = createContext<SettingsContextType>({
-    updateSettings: async () => {},
-    getSettings: () => undefined,
-    settings: {},
-    isLoading: false,
-    definitions: definitions,
-});
+export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 // Mechanizm debouncing dla zapisu ustawień
 const debounceMap: Record<string, NodeJS.Timeout> = {};
@@ -71,15 +67,15 @@ const debounceMap: Record<string, NodeJS.Timeout> = {};
  *     );
  * };
  *
- * @param name Nazwa grupy ustawień, dla której chcemy uzyskać dostęp.
+ * @param settingsName Nazwa grupy ustawień, dla której chcemy uzyskać dostęp.
  * @returns Tablica zawierająca:
  * - Obiekt ustawień dla określonej grupy.
  * - Funkcję do aktualizacji ustawień (pojedynczego klucza lub całą strukturę).
  */
 export const useSettings = <T extends TSettings>(
-    name: string
+    settingsName: string,
 ): readonly [
-    T, 
+    T,
     (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => void
 ] => {
     const context = useContext(SettingsContext);
@@ -92,7 +88,7 @@ export const useSettings = <T extends TSettings>(
         /**
          * Pobierz ustawienia dla określonej grupy.
          */
-        (context.settings[name] || {}) as T,
+        (context.settings[settingsName] || {}) as T,
         /**
          * Zaktualizuj ustawienia dla określonej grupy.
          * Jeśli przekazano klucz i wartość, aktualizuje tylko ten klucz.
@@ -101,7 +97,7 @@ export const useSettings = <T extends TSettings>(
          * @param value Nowa wartość dla klucza (opcjonalne, używane tylko przy aktualizacji pojedynczego klucza).
          */
         (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => {
-            const currentSettings = context.settings[name] || {};
+            const currentSettings = context.settings[settingsName] || {};
             let updatedSettings: T;
 
             if (typeof keyOrStructure === "object") {
@@ -118,9 +114,32 @@ export const useSettings = <T extends TSettings>(
                 } as T;
             }
 
-            context.updateSettings<T>(name, updatedSettings);
+            context.updateSettings<T>(settingsName, updatedSettings);
         },
     ];
+};
+
+export const useSetting = <T = string>(
+    group: string,
+    key: string,
+    defaultValue: T
+): [T, (value: T) => void] => {
+    const context = useContext(SettingsContext);
+
+    if (!context) {
+        throw new Error("useSetting must be used within a SettingsProvider");
+    }
+
+    // Wyciągnij wartość ustawienia i użyj useMemo, aby stabilizować referencję
+    const value =  (context.settings[group]?.[key] ?? defaultValue) as T;
+    const setValue = React.useCallback(
+        (newValue: T) => {
+            context.setSetting(group, key, newValue);
+        },
+        [context, group, key]
+    );
+
+    return [value, setValue];
 };
 
 // Provider kontekstu ustawień
@@ -144,14 +163,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(loadedSettings);
     };
 
-    // Funkcja do zmiany ustawień z debouncing
-    const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
-        // Aktualizuj lokalne ustawienia
-        setSettings((prev) => ({
-            ...prev,
-            [name]: newSettings,
-        }));
-
+    const storeGroups = (name: string, newSettings: TSettings) => {
         // Debouncing zapisu na dysku
         if (debounceMap[name]) {
             clearTimeout(debounceMap[name]);
@@ -167,9 +179,36 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }, (settings["app"] as AppSettings).settings.store_timeout);
     };
 
-    // Funkcja do pobierania ustawień z typem generycznym
-    const getSettings = <T extends TSettings>(name: string): T | undefined => {
-        return settings[name] as T | undefined;
+    // Funkcja do zmiany ustawień z debouncing
+    const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
+        // Aktualizuj lokalne ustawienia
+        setSettings((prev) => ({
+            ...prev,
+            [name]: newSettings,
+        }));
+
+        storeGroups(name, newSettings);
+    };
+
+    const setSetting = <T = string>(group: string, key: string, value: T): void => {
+        setSettings((prev) =>
+            produce(prev, (draft) => {
+                if (!draft[group]) {
+                    draft[group] = {}; // Upewnij się, że grupa istnieje
+                }
+
+                // Porównaj starą i nową wartość
+                if (draft[group][key] !== value) {
+                    draft[group][key] = value; // Zaktualizuj tylko, jeśli wartość się zmieniła
+                }
+            })
+        );
+
+        // Wywołaj storeGroups, aby zapisać zmiany na dysku
+        storeGroups(group, {
+            ...settings[group],
+            [key]: value,
+        });
     };
 
     // Inicjalizacja ustawień podczas montowania komponentu
@@ -191,7 +230,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ updateSettings, getSettings, settings, isLoading, definitions }}>
+        <SettingsContext.Provider
+            value={{
+                updateSettings,
+                settings,
+                isLoading,
+                definitions,
+                setSetting
+            }}
+        >
             {children}
         </SettingsContext.Provider>
     );

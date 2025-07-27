@@ -153,12 +153,6 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
     }
 }
 
-export interface InputControlContext {
-    value: any;
-    valid: boolean;
-    //setValue: (value: any) => void;
-}
-
 interface SettingInputControlOwnProps extends SettingInputControlProps {
     path: string[];
     setting: SettingTypeBase;
@@ -171,7 +165,6 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     selected?: boolean;
     description?: boolean;
     children?: React.ReactElement<BaseInputProps>;
-    contextRef?: React.Ref<InputControlContext>;
     policy?: (() => React.ReactNode) | React.ReactNode;
 }
 
@@ -179,7 +172,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
         children, className, path, setting, value, setValue, values,
         onChange, onClick, validate, slotProps,
-        selected, description, contextRef, policy, ...other
+        selected, description, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
     const theme = useTheme();
@@ -191,7 +184,8 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const isMenuOpen = Boolean(menuAnchorEl);
     const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
-    
+    const [refresh, setRefresh] = useState<boolean>(false);
+
     const getEffectContent = (values: Record<string, any>) => {
         const effect = setting.effect?.(values);
         if (effect) {
@@ -200,12 +194,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
         return undefined;
     };
     const [effectContent, setEffectContent] = useState<React.ReactNode>(getEffectContent(values));
-
-    React.useImperativeHandle(contextRef, () => ({
-        value,
-        valid,
-        //setValue: (newValue: any) => setValue(newValue),
-    }));
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setMenuAnchorEl(event.currentTarget);
@@ -236,6 +224,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
+        if (JSON.stringify(value) === JSON.stringify(values[setting.key])) {
+            return;
+        }
+
         const timeoutId = setTimeout(() => {
             let valid = true;
             const isEmpty = value === undefined || value === null || value === "";
@@ -292,12 +284,17 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
+            setting.changed?.(value, values);
             onChange?.(value, valid);
-            setEffectContent(getEffectContent(values));
+            setRefresh((prev) => !prev); 
         }, 500);
 
         return () => clearTimeout(timeoutId);
     }, [value, setting, values, validate]);
+
+    useEffect(() => {
+        setEffectContent(getEffectContent(values));
+    }, [values[setting.key], refresh]);
 
     useEffect(() => {
         if (typeof policy === "function") {
@@ -311,6 +308,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
 
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
+    const isDisabled = disabledControl(setting, values);
 
     console.count(`SettingInputControl render: ${setting.key}`);
     return (
@@ -351,10 +349,16 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     open={isMenuOpen}
                     onClose={handleMenuClose}
                 >
-                    <MenuItem key="reset-setting" onClick={handleResetSetting}>
+                    <MenuItem key="reset-setting"
+                        onClick={handleResetSetting}
+                        disabled={isDisabled}
+                    >
                         {t("reset-setting", "Reset setting")}
                     </MenuItem>
-                    <MenuItem key="restore-defaults" onClick={handleRestoreDefaults} disabled={setting.defaultValue === undefined}>
+                    <MenuItem key="restore-defaults"
+                        onClick={handleRestoreDefaults}
+                        disabled={setting.defaultValue === undefined || isDisabled}
+                    >
                         {t("restore-setting-defaults", "Restore defaults")}
                     </MenuItem>
                     <Divider />

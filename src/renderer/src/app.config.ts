@@ -20,6 +20,9 @@ export interface AppSettings extends TSettings {
          */
         store_timeout: number;
     };
+    placement?: 'left' | 'right' | 'top' | 'bottom';
+    "toast.max"?: number;
+    "toast.timeout"?: number;
 }
 
 export interface DborgSettings extends TSettings {
@@ -40,9 +43,9 @@ export interface ApplicationSettings extends TSettings {
     ui: UiSettings;
 }
 
-const toast_max = 5;
+export const toast_max = 5;
 const settings_store_timeout = 1000; // 1 second
-const toast_timeout = 5000; // 5 seconds
+export const toast_timeout = 5000; // 5 seconds
 const data_grid_null_value = '{null}';
 const data_grid_colors_enabled = true;
 
