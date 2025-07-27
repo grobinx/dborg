@@ -13,14 +13,12 @@ export const StringSetting: React.FC<{
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const contextRef = React.useRef<InputControlContext>(null);
     const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
 
     return (
         <SettingInputControl
             path={path}
             setting={setting}
-            contextRef={contextRef}
             value={value}
             setValue={(value?: any) => setValue(value ?? "")}
             onChange={onChange}
@@ -38,7 +36,7 @@ export const StringSetting: React.FC<{
                     >
                         <div className="block">
                             {setting.minLength && `${setting.minLength} ≥ `}
-                            {setting.maxLength && `${contextRef.current?.value.length} / ${setting.maxLength}`}
+                            {setting.maxLength && `${value.length} / ${setting.maxLength}`}
                         </div>
                     </Tooltip>
                 );

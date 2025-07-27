@@ -1,5 +1,5 @@
 import { SettingTypePassword } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl, InputControlContext } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validatePassword, validateStringLength, validateTextRows } from "./validations";
 import { InputAdornment, Tooltip, useTheme } from "@mui/material";
@@ -18,7 +18,7 @@ export const PasswordSetting: React.FC<{
     const [showPassword, setShowPassword] = React.useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
-    const contextRef = React.useRef<InputControlContext>(null);
+    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const validate = (value: string) => {
@@ -38,7 +38,7 @@ export const PasswordSetting: React.FC<{
             ...((setting.atLeastOneDigit ?? true) ? "0123456789" : ""),
             ...((setting.atLeastOneSpecialChar ?? true) ? (setting.specialChars || "!@#$%^&*()_+-=[]{}|;:,.<>?") : "")
         ].join("");
-        
+
         let password = "";
         let guard = 0;
         do {
@@ -53,23 +53,17 @@ export const PasswordSetting: React.FC<{
             }
         } while (validate(password) !== true);
 
-        if (contextRef.current) {
-            contextRef.current.setValue(password);
-        }
+        setValue(password);
     }
 
     return (
         <SettingInputControl
-            contextRef={contextRef}
             path={path}
             setting={setting}
             values={values}
-            onChange={(value: string) => {
-                if (typeof setting.hash === "function") {
-                    value = setting.hash(value);
-                }
-                onChange(value);
-            }}
+            value={value}
+            setValue={(value?: any) => setValue(value ?? "")}
+            onChange={onChange}
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validate(value)}
@@ -114,6 +108,7 @@ export const PasswordSetting: React.FC<{
             }}
         >
             <BaseTextField
+                id={[...path, setting.key].join("-")}
                 type={showPassword ? "text" : "password"}
                 sx={{
                     width: calculateWidth(setting)
@@ -149,6 +144,16 @@ export const PasswordSetting: React.FC<{
                         ),
                     },
                 }}
+                value={value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    let newValue = e.target.value;
+                    if (typeof setting.hash === "function") {
+                        newValue = setting.hash(newValue);
+                    }
+                    setValue(newValue);
+                }}
+                disabled={disabledControl(setting, values)}
+                onClick={onClick}
             />
         </SettingInputControl>
     );

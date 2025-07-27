@@ -99,7 +99,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         selected={selected}
                         onClick={() => setSelected(!selected)}
                     />
-                    {/*
                     <TextSetting
                         path={["root"]}
                         setting={{
@@ -140,17 +139,18 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             specialChars: "!@#$%^&*()_+[]{}|;:',.<>?/",
                             noSpaces: true,
                             canGenerate: true,
-                            effect: (_values) => `Jakiś efekt wartości hasła`,
+                            effect: (_values) => `Jakiś efekt wartości hasła ${_values["some-password-setting"]}`,
                             tags: ["example", "editable"],
                         }}
                         onChange={(value) => setValues((prev) => ({ ...prev, "some-password-setting": value }))}
                         values={values}
                     />
+                    {/*
                     <PatternSetting
                         path={["root"]}
                         setting={{
                             type: "pattern",
-                            key: "phone-number",
+                            key: "phone-number",    
                             group: "General",
                             label: "Phone Number",
                             description: "Enter your phone number",

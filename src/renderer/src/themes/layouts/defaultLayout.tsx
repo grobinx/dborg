@@ -129,6 +129,8 @@ const layout = (palette: Palette): ThemeOptions => {
                 },
                 defaultProps: {
                     sx: {
+                        padding: "2px 8px",
+                        minWidth: 0,
                         height: 32,
                         minHeight: 32,
                         borderRight: '1px solid',

@@ -1,5 +1,5 @@
 import { SettingTypeText } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, InputControlContext } from "../SettingInputControl";
+import SettingInputControl, { calculateWidth, disabledControl, InputControlContext } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validateStringLength, validateTextRows } from "./validations";
 import React from "react";
@@ -12,13 +12,14 @@ export const TextSetting: React.FC<{
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const contextRef = React.useRef<InputControlContext>(null);
+    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
 
     return (
         <SettingInputControl
-            contextRef={contextRef}
             path={path}
             setting={setting}
+            value={value}
+            setValue={(value?: any) => setValue(value ?? "")}
             values={values}
             onChange={onChange}
             selected={selected}
@@ -30,13 +31,20 @@ export const TextSetting: React.FC<{
             }
             policy={() => {
                 const policy = [
-                    setting.maxLength ? <div key="max-length" className="block">{`${contextRef.current?.value.length} / ${setting.maxLength}`}</div> : undefined,
-                    setting.maxRows ? <div key="max-rows" className="block">{`${(contextRef.current?.value.length ? contextRef.current?.value.split('\n').length : 0)} / ${setting.maxRows}`}</div> : undefined,
+                    setting.maxLength ? <div key="max-length" className="block">{`${value.length} / ${setting.maxLength}`}</div> : undefined,
+                    setting.maxRows ? <div key="max-rows" className="block">{`${(value.length ? value.split('\n').length : 0)} / ${setting.maxRows}`}</div> : undefined,
                 ];
                 return policy.filter(Boolean);
             }}
         >
             <BaseTextField
+                id={[...path, setting.key].join("-")}
+                value={value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setValue(e.target.value);
+                }}
+                disabled={disabledControl(setting, values)}
+                onClick={onClick}
                 multiline
                 rows={setting.rows || 4}
                 sx={{
