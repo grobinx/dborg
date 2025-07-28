@@ -22,7 +22,7 @@ export const StringSetting: React.FC<{
         <SettingInputControl
             setting={setting}
             value={value}
-            setValue={(value?: any) => setValue(value ?? "")}
+            setValue={(value?: any) => setValue(value)}
             onStore={(value: string) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}

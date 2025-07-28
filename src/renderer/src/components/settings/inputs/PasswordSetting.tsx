@@ -59,7 +59,7 @@ export const PasswordSetting: React.FC<{
         <SettingInputControl
             setting={setting}
             value={value}
-            setValue={(value?: any) => setValue(value ?? "")}
+            setValue={(value?: any) => setValue(value)}
             onStore={(value: string) => setSettingValue(typeof setting.hash === "function" ? setting.hash(value) : value)}
             selected={selected}
             onClick={onClick}

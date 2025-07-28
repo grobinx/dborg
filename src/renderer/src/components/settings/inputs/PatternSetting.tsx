@@ -18,8 +18,8 @@ export const PatternSetting: React.FC<{
         <SettingInputControl
             setting={setting}
             value={value}
+            setValue={(value?: any) => setValue(value)}
             onStore={(value: string) => setSettingValue(value)}
-            setValue={(value?: any) => setValue(value ?? "")}
             selected={selected}
             onClick={onClick}
         >

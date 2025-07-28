@@ -208,20 +208,16 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: () => `Jakiś efekt wartości zakresu wieku : ${getSetting("test", "age-range")[0]} - ${getSetting("test", "age-range")[1]}`,
                         }}
                     />
-                    {/*
                     <ColorSetting
-                        path={["root"]}
                         setting={{
                             type: "color",
+                            storageGroup: "test",
                             key: "color",
-                            group: "General",
+                            category: "General",
                             label: "Color",
                             description: "Select a color",
                         }}
-                        onChange={(value) => setValues((prev) => ({ ...prev, "color": value }))}
-                        values={values}
                     />
-                     */}
                 </StyledEditableSettingsList>
             </StyledEditableSettingsContent>
         </StyledEditableSettingsRoot>
