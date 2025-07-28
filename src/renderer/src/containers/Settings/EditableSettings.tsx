@@ -7,7 +7,7 @@ import { PatternSetting } from "@renderer/components/settings/inputs/PatternSett
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
-import { getSetting, setSetting, settingsGroups, useSetting, useSettings } from "@renderer/contexts/SettingsContext";
+import { getSetting, setSetting, settingsGroups } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
 export interface EditableSettingsProps extends StackProps {
@@ -57,8 +57,6 @@ const StyledEditableSettingsList = styled(Stack, {
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
     const [selected, setSelected] = React.useState(false);
-    const [values, setValues] = useSettings<Record<string, any>>("test");
-    const [toastMax, setToastMax] = useSetting<number | undefined>("app", "toast.max");
 
     return (
         <StyledEditableSettingsRoot
@@ -72,26 +70,23 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
             <StyledEditableSettingsContent>
                 <StyledEditableSettingsList>
                     <NumberSetting
-                        path={["root"]}
                         setting={{
                             type: "number",
+                            storageGroup: "app",
                             key: "toast.max",
-                            group: "General",
+                            category: "General",
                             label: "Max Toasts",
                             description: "Select the maximum number of toasts to display",
                             min: 1,
                             max: 10,
-                            defaultValue: settingsGroups["app"]["toast.max"],
                         }}
-                        onChange={(value) => setToastMax(value)}
-                        values={{ "toast.max": toastMax }}
                     />
                     <StringSetting
-                        path={["test"]}
                         setting={{
                             type: "string",
+                            storageGroup: "test",
                             key: "some-setting",
-                            group: "General",
+                            category: "General",
                             label: "Jakieś ustawienie",
                             description: "This is a string setting",
                             required: true,
@@ -106,11 +101,11 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         onClick={() => setSelected(!selected)}
                     />
                     <TextSetting
-                        path={["root"]}
                         setting={{
                             type: "text",
+                            storageGroup: "test",
                             key: "some-text-setting",
-                            group: "General",
+                            category: "General",
                             label: "Jakieś ustawienie tekstowe",
                             description: "This is a text setting with multiple lines",
                             required: true,
@@ -122,15 +117,13 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: () => `Jakiś efekt wartości tekstowej: **${getSetting("test", "some-text-setting")}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues("some-text-setting", value)}
-                        values={values}
                     />
                     <PasswordSetting
-                        path={["root"]}
                         setting={{
                             type: "password",
+                            storageGroup: "test",
                             key: "some-password-setting",
-                            group: "Security",
+                            category: "Security",
                             label: "Jakieś ustawienie hasła",
                             description: "This is a password setting with validation",
                             required: true,
@@ -148,15 +141,13 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             effect: () => `Jakiś efekt wartości hasła ${getSetting("test", "some-password-setting")}`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues("some-password-setting", value)}
-                        values={values}
                     />
                     <PatternSetting
-                        path={["test"]}
                         setting={{
                             type: "pattern",
+                            storageGroup: "test",
                             key: "phone-number",
-                            group: "General",
+                            category: "General",
                             label: "Phone Number",
                             description: "Enter your phone number",
                             mask: "+0 (___) ___-__-__",
@@ -165,27 +156,24 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                                 setSetting("test", "phone", value.replace(/\D/g, ""));
                             }
                         }}
-                        onChange={(value) => setValues("phone-number", value)}
-                        values={values}
                     />
                     <StringSetting
-                        path={["test"]}
                         setting={{
                             type: "string",
+                            storageGroup: "test",
                             key: "phone",
-                            group: "General",
+                            category: "General",
                             label: "Phone",
                             description: "This is a phone setting",
                             disabled: true,
                         }}
-                        //onChange={(value) => setValues((prev) => { prev["phone"] = value; return prev; })}
                     />
                     <NumberSetting
-                        path={["root"]}
                         setting={{
                             type: "number",
+                            storageGroup: "test",
                             key: "age",
-                            group: "General",
+                            category: "General",
                             label: "Age",
                             description: "Select your age",
                             required: true,
@@ -194,27 +182,23 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             defaultValue: 25,
                             effect: () => `Jakiś efekt wartości wieku : ${getSetting("test", "age")}`,
                         }}
-                        onChange={(value) => setValues("age", value)}
-                        values={values}
                     />
                     <EmailSetting
-                        path={["root"]}
                         setting={{
                             type: "email",
+                            storageGroup: "test",
                             key: "email",
-                            group: "General",
+                            category: "General",
                             label: "Email Address",
                             description: "Enter your email address",
                         }}
-                        onChange={(value) => setValues("email", value)}
-                        values={values}
                     />
                     <RangeSetting
-                        path={["root"]}
                         setting={{
                             type: "range",
+                            storageGroup: "test",
                             key: "age-range",
-                            group: "General",
+                            category: "General",
                             label: "Age Range",
                             description: "Select your age range",
                             min: 0,
@@ -223,8 +207,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             minDistance: 200,
                             effect: () => `Jakiś efekt wartości zakresu wieku : ${getSetting("test", "age-range")[0]} - ${getSetting("test", "age-range")[1]}`,
                         }}
-                        onChange={(value) => setValues("age-range", value)}
-                        values={values}
                     />
                     {/*
                     <ColorSetting

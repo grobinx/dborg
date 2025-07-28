@@ -4,25 +4,22 @@ import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const NumberSetting: React.FC<{
-    path: string[];
     setting: SettingTypeNumber;
-    onChange?: (value: number | undefined, valid?: boolean) => void;
     onClick?: () => void;
-    values: Record<string, any>;
     selected?: boolean;
-}> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const [value, setValue] = React.useState<number | undefined>(Number(values[setting.key]) ?? setting.defaultValue);
+}> = ({ setting, selected, onClick }) => {
+    const [settingValue, setSettingValue] = useSetting<number>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [value, setValue] = React.useState<number | undefined>(settingValue);
 
     return (
         <SettingInputControl
-            path={path}
             setting={setting}
             value={value}
             setValue={(value?: any) => setValue(value)}
-            values={values}
-            onStore={onChange}
+            onStore={(value: number) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}
             policy={() => {
@@ -43,7 +40,7 @@ export const NumberSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={[...path, setting.key].join("-")}
+                id={[setting.storageGroup, setting.key].join("-")}
                 type="number"
                 sx={{
                     width: calculateWidth(setting)
@@ -55,11 +52,11 @@ export const NumberSetting: React.FC<{
                         step: setting.step || 1,
                     }
                 }}
-                value={value ?? ""}
+                value={String(value) ?? ""}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(!!e.target.value ? Number(e.target.value) : undefined);
                 }}
-                disabled={disabledControl(setting, values)}
+                disabled={disabledControl(setting)}
                 onClick={onClick}
             />
         </SettingInputControl>

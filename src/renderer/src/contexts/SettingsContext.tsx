@@ -15,8 +15,6 @@ export const settingsGroups: Record<string, Record<string, any>> = {
 
 // Typ dla kontekstu ustawień
 interface SettingsContextType {
-    updateSettings: <T extends TSettings>(name: string, newSettings: T) => Promise<void>;
-    setSetting: <T = string>(group: string, key: string, value: T) => void;
     settings: Record<string, TSettings>;
     isLoading: boolean;
 }
@@ -91,53 +89,6 @@ export const getSetting = (group: string, key: string): any => {
 // Domyślna wartość kontekstu
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-export const useSettings = <T extends TSettings>(
-    settingsName: string,
-): readonly [
-    T,
-    (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => void
-] => {
-    const context = useContext(SettingsContext);
-
-    if (!context) {
-        throw new Error("useSettings must be used within a SettingsProvider");
-    }
-
-    return [
-        /**
-         * Pobierz ustawienia dla określonej grupy.
-         */
-        (context.settings[settingsName] || {}) as T,
-        /**
-         * Zaktualizuj ustawienia dla określonej grupy.
-         * Jeśli przekazano klucz i wartość, aktualizuje tylko ten klucz.
-         * Jeśli przekazano strukturę, aktualizuje wszystkie klucze w strukturze.
-         * @param keyOrStructure Klucz ustawienia lub struktura ustawień.
-         * @param value Nowa wartość dla klucza (opcjonalne, używane tylko przy aktualizacji pojedynczego klucza).
-         */
-        (keyOrStructure: keyof T | Partial<T>, value?: T[keyof T]) => {
-            const currentSettings = context.settings[settingsName] || {};
-            let updatedSettings: T;
-
-            if (typeof keyOrStructure === "object") {
-                // Aktualizacja na podstawie struktury
-                updatedSettings = {
-                    ...currentSettings,
-                    ...keyOrStructure,
-                } as T;
-            } else {
-                // Aktualizacja pojedynczego klucza
-                updatedSettings = {
-                    ...currentSettings,
-                    [keyOrStructure]: value,
-                } as T;
-            }
-
-            context.updateSettings<T>(settingsName, updatedSettings);
-        },
-    ];
-};
-
 /**
  * Hook for managing a single setting.
  * @param group Settings group.
@@ -185,13 +136,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(false);
     };
 
-    // Funkcja do zmiany ustawień z debouncing
-    const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
-        // Aktualizuj lokalne ustawienia
-        settings[name] = newSettings;
-        storeGroups(name, newSettings);
-    };
-
     // Inicjalizacja ustawień podczas montowania komponentu
     useEffect(() => {
         loadSettings();
@@ -213,10 +157,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (
         <SettingsContext.Provider
             value={{
-                updateSettings,
                 settings,
                 isLoading,
-                setSetting
             }}
         >
             {children}

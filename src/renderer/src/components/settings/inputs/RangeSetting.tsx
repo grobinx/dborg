@@ -3,21 +3,18 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import React from "react";
 import BaseSlider from "../base/BaseSlider";
 import { Tooltip } from "@mui/material";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const RangeSetting: React.FC<{
-    path: string[];
     setting: SettingTypeRange;
-    onChange?: (value: [number, number], valid?: boolean) => void;
     onClick?: () => void;
-    values: Record<string, any>;
     selected?: boolean;
-}> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const [value, setValue] = React.useState<[number, number]>(
-        values[setting.key] ?? setting.defaultValue ?? [setting.min, setting.max]
-    );
+}> = ({ setting, selected, onClick }) => {
+    const [settingValue, setSettingValue] = useSetting<[number, number] | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [value, setValue] = React.useState<[number, number] | undefined>(settingValue);
 
     const handleChange = (_e, newValue: number[], activeThumb: number) => {
-        if (newValue) {
+        if (newValue && value) {
             if (activeThumb === 0) {
                 newValue = [Math.min(newValue[0], value[1] - (setting.minDistance ?? 0)), value[1]];
             } else {
@@ -29,12 +26,10 @@ export const RangeSetting: React.FC<{
 
     return (
         <SettingInputControl
-            path={path}
             setting={setting}
             value={value}
             setValue={(value?: any) => setValue(value)}
-            values={values}
-            onStore={onChange}
+            onStore={(value: [number, number]) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}
             policy={() => {
@@ -65,7 +60,7 @@ export const RangeSetting: React.FC<{
                 max={setting.max}
                 step={setting.step}
                 value={value ?? [setting.min, setting.max]}
-                disabled={disabledControl(setting, values)}
+                disabled={disabledControl(setting)}
                 onClick={onClick}
             />
         </SettingInputControl>

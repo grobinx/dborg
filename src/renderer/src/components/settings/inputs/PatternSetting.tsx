@@ -3,25 +3,23 @@ import { SettingTypePattern } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { useMask } from "@react-input/mask";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const PatternSetting: React.FC<{
-    path: string[];
     setting: SettingTypePattern;
-    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
-    values: Record<string, any>;
     selected?: boolean;
-}> = ({ path, setting, onChange, values, selected, onClick }) => {
+}> = ({ setting, selected, onClick }) => {
     const inputRef = useMask({ mask: setting.mask, replacement: setting.replacement, showMask: true });
-    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
+    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [value, setValue] = React.useState<string | undefined>(settingValue);
 
     return (
         <SettingInputControl
-            path={path}
             setting={setting}
             value={value}
+            onStore={(value: string) => setSettingValue(value)}
             setValue={(value?: any) => setValue(value ?? "")}
-            onStore={onChange}
             selected={selected}
             onClick={onClick}
         >
@@ -36,7 +34,7 @@ export const PatternSetting: React.FC<{
                     },
                 }}
                 inputRef={inputRef}
-                value={value}
+                value={value ?? ""}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);
                 }}

@@ -153,7 +153,6 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
 }
 
 interface SettingInputControlOwnProps extends SettingInputControlProps {
-    path: string[];
     setting: SettingTypeBase;
     value?: any;
     setValue?: (value: any) => void;
@@ -168,7 +167,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
-        children, className, path, setting, value, setValue,
+        children, className, setting, value, setValue,
         onStore, onClick, validate, slotProps,
         selected, description, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
@@ -212,7 +211,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleCopyPath = () => {
-        navigator.clipboard.writeText([...path, setting.key].join('.'));
+        navigator.clipboard.writeText(setting.key);
         handleMenuClose();
     };
 
@@ -366,9 +365,9 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             </div>
             <StyledSettingInputControlInternal className="SettingInputControl-internal">
                 <StyledSettingInputControlLabel variant="label" className="SettingInputControl-label" {...slotProps?.label}>
-                    {setting.group && (
+                    {setting.category && (
                         <span key="group" className="group">
-                            {setting.group}:
+                            {setting.category}:
                         </span>
                     )}
                     {<span key="title" className="title">{setting.label}</span>}

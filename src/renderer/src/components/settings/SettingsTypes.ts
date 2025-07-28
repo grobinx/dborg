@@ -85,7 +85,7 @@ export interface SettingTypeBase {
      * A group of the setting.
      * This is a file name in %HOME%/.dborg/settings catalog.
      */
-    keyGroup?: string;
+    storageGroup: string;
     /**
      * A key for the setting.
      */
@@ -94,7 +94,7 @@ export interface SettingTypeBase {
      * Optional group for categorization of settings.
      * This will be placed before title in the UI.
      */
-    group?: string;
+    category?: string;
     /**
      * The title of the setting, displayed in the UI.
      * This should be a user-friendly name that describes the setting.

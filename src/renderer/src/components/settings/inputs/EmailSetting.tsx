@@ -3,25 +3,22 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import BaseTextField from "../base/BaseTextField";
 import { validateEmail, validateStringLength } from "./validations";
 import React from "react";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const EmailSetting: React.FC<{
-    path: string[];
     setting: SettingTypeEmail;
-    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
-    values: Record<string, any>;
     selected?: boolean;
-}> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
+}> = ({ setting, selected, onClick }) => {
+    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [value, setValue] = React.useState<string | undefined>(settingValue);
 
     return (
         <SettingInputControl
-            path={path}
             setting={setting}
             value={value}
             setValue={(value?: any) => setValue(value)}
-            values={values}
-            onStore={onChange}
+            onStore={(value: string) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}
             validate={(value: string) => 
@@ -29,7 +26,7 @@ export const EmailSetting: React.FC<{
                     value,
                     () => validateStringLength(value, setting.minLength, setting.maxLength)
                 )}
-            policy={() => setting.maxLength ? `${value.length} / ${setting.maxLength}` : undefined}
+            policy={() => setting.maxLength ? `${(value ?? "").length} / ${setting.maxLength}` : undefined}
         >
             <BaseTextField
                 type="email"
@@ -40,7 +37,7 @@ export const EmailSetting: React.FC<{
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);
                 }}
-                disabled={disabledControl(setting, values)}
+                disabled={disabledControl(setting)}
                 onClick={onClick}
             />
         </SettingInputControl>
