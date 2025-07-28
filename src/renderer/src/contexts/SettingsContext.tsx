@@ -4,9 +4,10 @@ import { TSettings } from "src/api/settings";
 
 const settings: Record<string, TSettings> = {};
 const subscribers: Record<string, Record<string, ((value: any) => void)[]>> = {};
+const debounceMap: Record<string, NodeJS.Timeout> = {};
 
 // Globalna zmienna przechowująca listę nazw ustawień oraz ich domyślne wartości
-export const SETTINGS_NAMES: Record<string, Record<string, any>> = {
+export const settingsGroups: Record<string, Record<string, any>> = {
     // default: { theme: "light", notificationsEnabled: true },
     // user: { theme: "dark", notificationsEnabled: false },
     // app: { version: "1.0.0", autoUpdate: true },
@@ -51,11 +52,44 @@ const notifyChange = (group: string, key: string, value: any) => {
     }
 };
 
+const storeGroups = (name: string, newSettings: TSettings) => {
+    // Debouncing zapisu na dysku
+    if (debounceMap[name]) {
+        clearTimeout(debounceMap[name]);
+    }
+
+    debounceMap[name] = setTimeout(async () => {
+        try {
+            window.dborg.settings.store(name, newSettings);
+            delete debounceMap[name]; // Usuń z debounceMap po zapisaniu
+        } catch (error) {
+            console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
+        }
+    }, settings["app"]["settings.store_timeout"] ?? settingsGroups["app"]["settings.store_timeout"]);
+};
+
+export const setSetting = (group: string, key: string, value: any): void => {
+    if (settings[group][key] !== value) {
+        settings[group][key] = value;
+
+        notifyChange(group, key, value);
+
+        // Wywołaj storeGroups, aby zapisać zmiany na dysku
+        storeGroups(group, {
+            ...settings[group],
+        });
+    }
+};
+
+export const getSetting = (group: string, key: string): any => {
+    if (settings[group] && key in settings[group]) {
+        return settings[group][key];
+    }
+    return null;
+};
+
 // Domyślna wartość kontekstu
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
-
-// Mechanizm debouncing dla zapisu ustawień
-const debounceMap: Record<string, NodeJS.Timeout> = {};
 
 export const useSettings = <T extends TSettings>(
     settingsName: string,
@@ -104,18 +138,19 @@ export const useSettings = <T extends TSettings>(
     ];
 };
 
+/**
+ * Hook for managing a single setting.
+ * @param group Settings group.
+ * @param key Setting key.
+ * @param defaultValue Default value for the setting.
+ * @returns An array containing the setting value, a function to update it, and the default value.
+ */
 export const useSetting = <T = string>(
     group: string,
     key: string,
     defaultValue?: T
-): [T, (value: T) => void] => {
-    const context = useContext(SettingsContext);
-
-    if (!context) {
-        throw new Error("useSetting must be used within a SettingsProvider");
-    }
-
-    const [value, setValue] = useState<any>(context?.settings[group]?.[key] ?? defaultValue ?? SETTINGS_NAMES[group]?.[key]);
+): [T, (value: T) => void, T] => {
+    const [value, setValue] = useState<any>(settings[group]?.[key] ?? defaultValue ?? settingsGroups[group]?.[key]);
 
     React.useEffect(() => {
         const unsubscribe = subscribeChange(group, key, (value) => setValue(value));
@@ -126,10 +161,10 @@ export const useSetting = <T = string>(
     }, [group, key]);
 
     const setSettingValue = (newValue: T) => {
-        context.setSetting(group, key, newValue);
+        setSetting(group, key, newValue);
     };
 
-    return [value, setSettingValue];
+    return [value, setSettingValue, defaultValue ?? settingsGroups[group]?.[key]];
 };
 
 // Provider kontekstu ustawień
@@ -138,7 +173,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Funkcja do odczytu ustawień z plików
     const loadSettings = async () => {
-        for (const name in SETTINGS_NAMES) {
+        for (const name in settingsGroups) {
             try {
                 const fileSettings = await window.dborg.settings.get(name);
                 settings[name] = fileSettings || {};
@@ -150,40 +185,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(false);
     };
 
-    const storeGroups = (name: string, newSettings: TSettings) => {
-        // Debouncing zapisu na dysku
-        if (debounceMap[name]) {
-            clearTimeout(debounceMap[name]);
-        }
-
-        debounceMap[name] = setTimeout(async () => {
-            try {
-                window.dborg.settings.store(name, newSettings);
-                delete debounceMap[name]; // Usuń z debounceMap po zapisaniu
-            } catch (error) {
-                console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
-            }
-        }, settings["app"]["settings.store_timeout"] ?? SETTINGS_NAMES["app"]["settings.store_timeout"]);
-    };
-
     // Funkcja do zmiany ustawień z debouncing
     const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
         // Aktualizuj lokalne ustawienia
         settings[name] = newSettings;
         storeGroups(name, newSettings);
-    };
-
-    const setSetting = (group: string, key: string, value: any): void => {
-        if (settings[group][key] !== value) {
-            settings[group][key] = value;
-
-            notifyChange(group, key, value);
-
-            // Wywołaj storeGroups, aby zapisać zmiany na dysku
-            storeGroups(group, {
-                ...settings[group],
-            });
-        }
     };
 
     // Inicjalizacja ustawień podczas montowania komponentu

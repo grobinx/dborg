@@ -15,7 +15,7 @@ import tableIndexesTab from "./slots/tableIndexesSlot";
 import { ShowRelationDataAction } from "./actions/ShowRelationData";
 import { sendMessage } from "@renderer/contexts/MessageContext";
 import { SQL_EDITOR_EXECUTE_QUERY } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
-import { SETTINGS_NAMES } from "@renderer/contexts/SettingsContext";
+import { settingsGroups } from "@renderer/contexts/SettingsContext";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -261,6 +261,6 @@ interface TableRecord {
     description: string;
 }
 
-SETTINGS_NAMES[PLUGIN_ID] = {};
+settingsGroups[PLUGIN_ID] = {};
 
 export default PostgresPlugin;

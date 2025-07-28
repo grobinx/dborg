@@ -1,4 +1,4 @@
-import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
+import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
 import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
 import { NumberSetting } from "@renderer/components/settings/inputs/NumberSetting";
@@ -7,7 +7,7 @@ import { PatternSetting } from "@renderer/components/settings/inputs/PatternSett
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
-import { SETTINGS_NAMES, useSetting, useSettings } from "@renderer/contexts/SettingsContext";
+import { setSetting, settingsGroups, useSetting, useSettings } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
 export interface EditableSettingsProps extends StackProps {
@@ -59,6 +59,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
     const [selected, setSelected] = React.useState(false);
     const [values, setValues] = useSettings<Record<string, any>>("test");
     const [toastMax, setToastMax] = useSetting<number | undefined>("app", "toast.max");
+    const [phone, setPhone] = useSetting<string | undefined>("test", "phone");
 
     return (
         <StyledEditableSettingsRoot
@@ -81,7 +82,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             description: "Select the maximum number of toasts to display",
                             min: 1,
                             max: 10,
-                            defaultValue: SETTINGS_NAMES["app"]["toast.max"],
+                            defaultValue: settingsGroups["app"]["toast.max"],
                         }}
                         onChange={(value) => setToastMax(value)}
                         values={{ "toast.max": toastMax }}
@@ -154,7 +155,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         values={values}
                     />
                     <PatternSetting
-                        path={["root"]}
+                        path={["test"]}
                         setting={{
                             type: "pattern",
                             key: "phone-number",
@@ -164,14 +165,14 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             mask: "+0 (___) ___-__-__",
                             replacement: { "_": /\d/ },
                             changed: (value, values) => {
-                                values["phone"] = value.replace(/\D/g, "");
+                                setSetting("test", "phone", value.replace(/\D/g, ""));
                             }
                         }}
                         onChange={(value) => setValues("phone-number", value)}
                         values={values}
                     />
                     <StringSetting
-                        path={["root"]}
+                        path={["test"]}
                         setting={{
                             type: "string",
                             key: "phone",
@@ -249,7 +250,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
     );
 };
 
-SETTINGS_NAMES["test"] = {
+settingsGroups["test"] = {
     "some-setting": "wartość",
     "some-text-setting": "To jest przykładowa wartość tekstowa",
     "some-password-setting": "PrzykładoweHasło123!",

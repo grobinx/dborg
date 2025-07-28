@@ -4,6 +4,7 @@ import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const StringSetting: React.FC<{
     path: string[];
@@ -13,7 +14,12 @@ export const StringSetting: React.FC<{
     values: Record<string, any>;
     selected?: boolean;
 }> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const [value, setValue] = React.useState<string>(values[setting.key] ?? setting.defaultValue ?? "");
+    const [settingValue] = useSetting<string>(path[0], setting.key, setting.defaultValue);
+    const [value, setValue] = React.useState<string>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue);
+    }, [settingValue]);
 
     return (
         <SettingInputControl
