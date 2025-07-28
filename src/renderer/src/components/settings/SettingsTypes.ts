@@ -397,7 +397,6 @@ export type SettingTypeUnion =
 
 /**
  * Represents a settings group in the application.
- * Directly related to a specific structure in the settings file.
  */
 export interface SettingsGroup {
     /**
@@ -416,7 +415,6 @@ export interface SettingsGroup {
 
 /**
  * Represents a collection of settings in the application.
- * Directly related to a settings file name in %HOME%/.dborg/settings catalog.
  */
 export interface SettingsCollection {
     /**
