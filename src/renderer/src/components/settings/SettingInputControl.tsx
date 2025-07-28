@@ -118,8 +118,7 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
 };
 
 export const disabledControl = (
-    setting: SettingTypeBase,
-    values: Record<string, any> = {}
+    setting: SettingTypeBase
 ): boolean => {
     // Sprawdź, czy `administrated` jest ustawione i zwraca `true`
     if (typeof setting.administrated === "function") {
@@ -132,7 +131,7 @@ export const disabledControl = (
 
     // Sprawdź, czy `disabled` jest ustawione i zwraca `true`
     if (typeof setting.disabled === "function") {
-        if (setting.disabled(values)) {
+        if (setting.disabled()) {
             return true; // Wyłączone, jeśli disabled zwraca true
         }
     } else if (setting.disabled === true) {
@@ -158,8 +157,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     setting: SettingTypeBase;
     value?: any;
     setValue?: (value: any) => void;
-    values: Record<string, any>;
-    onChange?: (value: any, valid?: boolean) => void;
+    onStore?: (value: any, valid?: boolean) => void;
     onClick?: () => void;
     validate?: (value?: any) => string | boolean;
     selected?: boolean;
@@ -170,8 +168,8 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
 
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
-        children, className, path, setting, value, setValue, values,
-        onChange, onClick, validate, slotProps,
+        children, className, path, setting, value, setValue,
+        onStore, onClick, validate, slotProps,
         selected, description, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
@@ -186,14 +184,14 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
     const [refresh, setRefresh] = useState<boolean>(false);
 
-    const getEffectContent = (values: Record<string, any>) => {
-        const effect = setting.effect?.(values);
+    const getEffectContent = () => {
+        const effect = setting.effect?.();
         if (effect) {
             return typeof effect === "string" ? markdown(effect, theme) : effect;
         }
         return undefined;
     };
-    const [effectContent, setEffectContent] = useState<React.ReactNode>(getEffectContent(values));
+    const [effectContent, setEffectContent] = useState<React.ReactNode>(getEffectContent());
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setMenuAnchorEl(event.currentTarget);
@@ -224,10 +222,6 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     useEffect(() => {
-        if (JSON.stringify(value) === JSON.stringify(values[setting.key])) {
-            return;
-        }
-
         const timeoutId = setTimeout(() => {
             let valid = true;
             const isEmpty = value === undefined || value === null || value === "";
@@ -252,7 +246,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             if (valid && typeof setting.validate === "function") {
-                const result = setting.validate(value, values);
+                const result = setting.validate(value);
                 if (result === false) {
                     valid = false;
                     setValidity(t("invalid-value", "Invalid value"));
@@ -284,17 +278,17 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             }
 
             setValid(valid);
-            setting.changed?.(value, values);
-            onChange?.(value, valid);
+            setting.changed?.(value);
+            onStore?.(value, valid);
             setRefresh((prev) => !prev); 
         }, 500);
 
         return () => clearTimeout(timeoutId);
-    }, [value, setting, values, validate]);
+    }, [value, setting, validate]);
 
     useEffect(() => {
-        setEffectContent(getEffectContent(values));
-    }, [values[setting.key], refresh]);
+        setEffectContent(getEffectContent());
+    }, [refresh]);
 
     useEffect(() => {
         if (typeof policy === "function") {
@@ -308,7 +302,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
 
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
-    const isDisabled = disabledControl(setting, values);
+    const isDisabled = disabledControl(setting);
 
     console.count(`SettingInputControl render: ${setting.key}`);
     return (

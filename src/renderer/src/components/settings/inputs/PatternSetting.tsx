@@ -21,8 +21,7 @@ export const PatternSetting: React.FC<{
             setting={setting}
             value={value}
             setValue={(value?: any) => setValue(value ?? "")}
-            onChange={onChange}
-            values={values}
+            onStore={onChange}
             selected={selected}
             onClick={onClick}
         >
@@ -41,7 +40,7 @@ export const PatternSetting: React.FC<{
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);
                 }}
-                disabled={disabledControl(setting, values)}
+                disabled={disabledControl(setting)}
                 onClick={onClick}
             />
         </SettingInputControl>

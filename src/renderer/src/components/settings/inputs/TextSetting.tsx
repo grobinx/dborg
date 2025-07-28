@@ -21,7 +21,7 @@ export const TextSetting: React.FC<{
             value={value}
             setValue={(value?: any) => setValue(value ?? "")}
             values={values}
-            onChange={onChange}
+            onStore={onChange}
             selected={selected}
             onClick={onClick}
             validate={(value: string) =>

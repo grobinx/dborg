@@ -9,12 +9,10 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 export const StringSetting: React.FC<{
     path: string[];
     setting: SettingTypeString;
-    onChange?: (value: string, valid?: boolean) => void;
     onClick?: () => void;
-    values: Record<string, any>;
     selected?: boolean;
-}> = ({ path, setting, onChange, values, selected, onClick }) => {
-    const [settingValue] = useSetting<string>(path[0], setting.key, setting.defaultValue);
+}> = ({ path, setting, selected, onClick }) => {
+    const [settingValue, setSettingValue] = useSetting<string>(path[0], setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string>(settingValue);
 
     React.useEffect(() => {
@@ -27,8 +25,7 @@ export const StringSetting: React.FC<{
             setting={setting}
             value={value}
             setValue={(value?: any) => setValue(value ?? "")}
-            onChange={onChange}
-            values={values}
+            onStore={(value: string) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validateStringLength(value, setting.minLength, setting.maxLength)}
@@ -57,7 +54,7 @@ export const StringSetting: React.FC<{
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);
                 }}
-                disabled={disabledControl(setting, values)}
+                disabled={disabledControl(setting)}
                 onClick={onClick}
             />
         </SettingInputControl>

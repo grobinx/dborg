@@ -48,7 +48,7 @@ export const ColorSetting: React.FC<{
             setting={setting}
             contextRef={contextRef}
             values={values}
-            onChange={onChange}
+            onStore={onChange}
             selected={selected}
             onClick={onClick}
         >

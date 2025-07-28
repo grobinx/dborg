@@ -63,7 +63,7 @@ export const PasswordSetting: React.FC<{
             values={values}
             value={value}
             setValue={(value?: any) => setValue(value ?? "")}
-            onChange={onChange}
+            onStore={onChange}
             selected={selected}
             onClick={onClick}
             validate={(value: string) => validate(value)}

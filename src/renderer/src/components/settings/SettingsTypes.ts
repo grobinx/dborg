@@ -82,7 +82,12 @@ export type SettingType =
 export interface SettingTypeBase {
     type: SettingType;
     /**
-     * A unique key for the setting.
+     * A group of the setting.
+     * This is a file name in %HOME%/.dborg/settings catalog.
+     */
+    keyGroup?: string;
+    /**
+     * A key for the setting.
      */
     key: string;
     /**
@@ -136,7 +141,7 @@ export interface SettingTypeBase {
     * If true, the setting is disabled and cannot be changed by the user.
     * You can make this dependent on the values of other settings by passing a function.
     */
-    disabled?: boolean | ((values: Record<string, any>) => boolean);
+    disabled?: boolean | (() => boolean);
     /**,
      * Whether the setting is administrated.
      * If true, the setting is administrated and cannot be changed by the user.
@@ -150,23 +155,21 @@ export interface SettingTypeBase {
      * @param value - the current value of the setting
      * @param values - all values of the settings
      */
-    validate?: (value: any, values: Record<string, any>) => string | boolean;
+    validate?: (value: any) => string | boolean;
     /**
      * This is dynamic description used in the UI to show the descriptive effect of the setting.
      * Return value can be a string or a React node for more complex content.
      * String will be rendered as markdown.
-     * @param value - the current value of the setting
-     * @param values - all values of the settings
      */
-    effect?: (values: Record<string, any>) => React.ReactNode;
+    effect?: () => React.ReactNode;
     /**
      * A function that is called when the value of the setting changes.
-     * This can be used to perform additional actions when the setting value changes.
+     * This can be used to perform additional actions when the setting value changes and store.
      * @param value - the current value of the setting
      * @param values - all values of the settings
      * @returns 
      */
-    changed?: (value: any, values: Record<string, any>) => void;
+    changed?: (value: any) => void;
 }
 
 export interface SettingTypeBoolean extends SettingTypeBase {

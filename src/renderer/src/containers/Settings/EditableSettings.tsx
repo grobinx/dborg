@@ -7,7 +7,7 @@ import { PatternSetting } from "@renderer/components/settings/inputs/PatternSett
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
-import { setSetting, settingsGroups, useSetting, useSettings } from "@renderer/contexts/SettingsContext";
+import { getSetting, setSetting, settingsGroups, useSetting, useSettings } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
 export interface EditableSettingsProps extends StackProps {
@@ -59,7 +59,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
     const [selected, setSelected] = React.useState(false);
     const [values, setValues] = useSettings<Record<string, any>>("test");
     const [toastMax, setToastMax] = useSetting<number | undefined>("app", "toast.max");
-    const [phone, setPhone] = useSetting<string | undefined>("test", "phone");
 
     return (
         <StyledEditableSettingsRoot
@@ -88,7 +87,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         values={{ "toast.max": toastMax }}
                     />
                     <StringSetting
-                        path={["root"]}
+                        path={["test"]}
                         setting={{
                             type: "string",
                             key: "some-setting",
@@ -100,11 +99,9 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             advanced: true,
                             //maxLength: 23,
                             //minLength: 3,
-                            effect: (values) => `Jakiś efekt wartości: **${values["some-setting"]}**`,
+                            effect: () => `Jakiś efekt wartości: **${getSetting("test", "some-setting")}**`,
                             tags: ["example", "editable"],
                         }}
-                        onChange={(value) => setValues("some-setting", value)}
-                        values={values}
                         selected={selected}
                         onClick={() => setSelected(!selected)}
                     />
@@ -122,7 +119,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             maxLength: 100,
                             minRows: 1,
                             maxRows: 5,
-                            effect: (values) => `Jakiś efekt wartości tekstowej: **${values["some-text-setting"]}**`,
+                            effect: () => `Jakiś efekt wartości tekstowej: **${getSetting("test", "some-text-setting")}**`,
                             tags: ["example", "editable"],
                         }}
                         onChange={(value) => setValues("some-text-setting", value)}
@@ -148,7 +145,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             specialChars: "!@#$%^&*()_+[]{}|;:',.<>?/",
                             noSpaces: true,
                             canGenerate: true,
-                            effect: (_values) => `Jakiś efekt wartości hasła ${_values["some-password-setting"]}`,
+                            effect: () => `Jakiś efekt wartości hasła ${getSetting("test", "some-password-setting")}`,
                             tags: ["example", "editable"],
                         }}
                         onChange={(value) => setValues("some-password-setting", value)}
@@ -164,7 +161,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             description: "Enter your phone number",
                             mask: "+0 (___) ___-__-__",
                             replacement: { "_": /\d/ },
-                            changed: (value, values) => {
+                            changed: (value) => {
                                 setSetting("test", "phone", value.replace(/\D/g, ""));
                             }
                         }}
@@ -182,7 +179,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             disabled: true,
                         }}
                         //onChange={(value) => setValues((prev) => { prev["phone"] = value; return prev; })}
-                        values={values}
                     />
                     <NumberSetting
                         path={["root"]}
@@ -196,7 +192,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             //min: 0,
                             max: 1000,
                             defaultValue: 25,
-                            effect: (values) => `Jakiś efekt wartości wieku : ${values["age"]}`,
+                            effect: () => `Jakiś efekt wartości wieku : ${getSetting("test", "age")}`,
                         }}
                         onChange={(value) => setValues("age", value)}
                         values={values}
@@ -225,7 +221,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             max: 1000,
                             step: 10,
                             minDistance: 200,
-                            effect: (values) => `Jakiś efekt wartości zakresu wieku : ${values["age-range"][0]} - ${values["age-range"][1]}`,
+                            effect: () => `Jakiś efekt wartości zakresu wieku : ${getSetting("test", "age-range")[0]} - ${getSetting("test", "age-range")[1]}`,
                         }}
                         onChange={(value) => setValues("age-range", value)}
                         values={values}
