@@ -33,6 +33,7 @@ export const EmailSetting: React.FC<{
             policy={() => setting.maxLength ? `${(value ?? "").length} / ${setting.maxLength}` : undefined}
         >
             <BaseTextField
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 type="email"
                 sx={{
                     width: calculateWidth(setting)

@@ -44,7 +44,7 @@ export const NumberSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={[setting.storageGroup, setting.key].join("-")}
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 type="number"
                 sx={{
                     width: calculateWidth(setting)

@@ -297,12 +297,12 @@ export interface SettingTypeSelectBase extends SettingTypeBase {
 
 export interface SettingTypeSelect extends SettingTypeSelectBase {
     type: "select";
-    defaultValue?: string | number | bigint | boolean;
+    defaultValue?: string | number;
 }
 
 export interface SettingTypeMultiSelect extends SettingTypeSelectBase {
     type: "multiselect";
-    defaultValue?: (string | number | bigint | boolean)[];
+    defaultValue?: (string | number)[];
 }
 
 export interface SettingTypeJson extends SettingTypeBase {

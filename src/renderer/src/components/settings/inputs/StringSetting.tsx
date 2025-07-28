@@ -44,7 +44,7 @@ export const StringSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={[setting.storageGroup, setting.key].join("-")}
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 sx={{
                     width: calculateWidth(setting)
                 }}

@@ -144,6 +144,16 @@ export const disabledControl = (
     return false;
 };
 
+export const SettingInputControlDescription: React.FC<React.ComponentProps<typeof StyledSettingInputControlDescription> & { description: React.ReactNode }> = (props) => {
+    const { description, ...other } = props;
+    return (
+        <StyledSettingInputControlDescription variant="description" {...other} className="SettingInputControl-description">
+            {props.children}
+            {typeof description === "string" ? markdown(description, useTheme()) : description}
+        </StyledSettingInputControlDescription>
+    );
+};
+
 export interface SettingInputControlProps extends React.ComponentProps<typeof StyledSettingInputControlRoot> {
     slotProps?: {
         label?: React.ComponentProps<typeof StyledSettingInputControlLabel>;
@@ -404,9 +414,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     )}
                 </StyledSettingInputControlLabel>
                 {setting.description && (description ?? true) && (
-                    <StyledSettingInputControlDescription variant="description" className="SettingInputControl-description" {...slotProps?.description}>
-                        {typeof setting.description === "string" ? markdown(setting.description, theme) : setting.description}
-                    </StyledSettingInputControlDescription>
+                    <SettingInputControlDescription description={setting.description} {...slotProps?.description} />
                 )}
                 <Stack direction="row" ref={popperVisibilityRef}>
                     <StyledSettingInputControlInput className="SettingInputControl-input" {...slotProps?.input}>

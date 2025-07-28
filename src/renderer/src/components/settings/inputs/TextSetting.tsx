@@ -39,7 +39,7 @@ export const TextSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={[setting.storageGroup, setting.key].join("-")}
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 value={value}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(e.target.value);

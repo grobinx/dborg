@@ -11,6 +11,7 @@ const BaseTextField: React.FC<BaseTextFieldProps> = (props) => {
     return (
         <TextField
             id={id}
+            className="BaseTextField"
             value={value}
             onChange={(e) => onChange?.(e, e.target.value)}
             disabled={disabled}

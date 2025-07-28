@@ -848,7 +848,7 @@ const layout = (palette: Palette): ThemeOptions => {
                                 },
                             }
                         },
-                        '& .slider': {
+                        '& .BaseSlider': {
                             '& .slider-value': {
                                 fontSize: "0.9rem",
                                 color: palette.text.primary,
@@ -864,6 +864,11 @@ const layout = (palette: Palette): ThemeOptions => {
                             '& .slider-value.end': {
                                 marginLeft: 16,
                             },
+                        },
+                        '& .BaseCheckbox': {
+                            paddingTop: 0,
+                            paddingLeft: 0,
+                            alignSelf: "start",
                         },
                     },
                     label: {
@@ -910,6 +915,9 @@ const layout = (palette: Palette): ThemeOptions => {
                     },
                     description: {
                         color: palette.text.secondary,
+                        '&:has(>.BaseCheckbox)': {
+                            cursor: "pointer",
+                        },
                     },
                     effect: {
                         color: palette.text.secondary,

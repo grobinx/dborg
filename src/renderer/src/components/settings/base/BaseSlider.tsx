@@ -14,7 +14,7 @@ const BaseSlider: React.FC<BaseSliderProps> = (props) => {
 
     return (
         <Stack
-            className="slider"
+            className="BaseSlider"
             sx={{ width }}
             direction="row"
             alignItems="center"

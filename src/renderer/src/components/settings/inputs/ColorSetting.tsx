@@ -79,10 +79,11 @@ export const ColorSetting: React.FC<{
                     },
                 }}
                 renderInput={(params) => {
-                    const { InputProps, ...otherParams } = params;
+                    const { InputProps, id, ...otherParams } = params;
                     const { endAdornment, ...inputProps } = InputProps;
                     return (
                         <BaseTextField
+                            id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                             {...otherParams}
                             onFocus={handleFocus}
                             onBlur={handleBlur}

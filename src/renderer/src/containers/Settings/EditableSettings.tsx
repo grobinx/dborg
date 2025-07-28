@@ -1,4 +1,5 @@
 import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
+import { BooleanSetting } from "@renderer/components/settings/inputs/BooleanSetting";
 import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
 import { NumberSetting } from "@renderer/components/settings/inputs/NumberSetting";
@@ -206,7 +207,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             step: 10,
                             minDistance: 200,
                             effect: () => {
-                                console.log("getSetting", getSetting("test", "age-range"));
                                 if (!getSetting("test", "age-range")) {
                                     return "No age range selected";
                                 }
@@ -222,6 +222,17 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             category: "General",
                             label: "Color",
                             description: "Select a color",
+                        }}
+                    />
+                    <BooleanSetting
+                        setting={{
+                            type: "boolean",
+                            storageGroup: "test",
+                            key: "notifications",
+                            category: "General",
+                            label: "Enable Notifications",
+                            description: "Receive notifications for important updates\nBlended with the app theme",
+                            defaultValue: true,
                         }}
                     />
                 </StyledEditableSettingsList>

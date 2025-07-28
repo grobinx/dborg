@@ -57,6 +57,7 @@ export const RangeSetting: React.FC<{
             }}
         >
             <BaseSlider
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 width={calculateWidth(setting)}
                 onChange={handleChange}
                 disableSwap

@@ -28,6 +28,7 @@ export const PatternSetting: React.FC<{
             onClick={onClick}
         >
             <BaseTextField
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 sx={{
                     width: calculateWidth(setting),
                     fontFamily: "monospace",

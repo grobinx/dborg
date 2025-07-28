@@ -109,7 +109,7 @@ export const PasswordSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={[setting.storageGroup, setting.key].join("-")}
+                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 type={showPassword ? "text" : "password"}
                 sx={{
                     width: calculateWidth(setting)
