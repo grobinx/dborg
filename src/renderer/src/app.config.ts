@@ -4,33 +4,17 @@ import editableSettingsRegistry from "./components/settings/EditableSettingsRegi
 import i18next from "i18next";
 
 export interface AppSettings extends TSettings {
-    toast: {
-        /**
-         * Maximum number of toast notifications
-         */
-        max: number;
-        /**
-         * Timeout for toast in milliseconds
-         */
-        timeout: number;
-    };
-    settings: {
-        /**
-         * Timeout for storing settings in milliseconds
-         */
-        store_timeout: number;
-    };
+    "settings.store_timeout"?: number;
+
     placement?: 'left' | 'right' | 'top' | 'bottom';
+
     "toast.max"?: number;
     "toast.timeout"?: number;
 }
 
 export interface DborgSettings extends TSettings {
-    // Dodaj właściwości specyficzne dla "dborg", jeśli istnieją
-    data_grid: {
-        null_value: string;
-        colors_enabled: boolean;
-    }
+    "data_grid.null_value"?: string;
+    "data_grid.colors_enabled"?: boolean;
 }
 
 export interface UiSettings extends TSettings {
@@ -43,27 +27,23 @@ export interface ApplicationSettings extends TSettings {
     ui: UiSettings;
 }
 
-export const toast_max = 5;
+const toast_max = 5;
 const settings_store_timeout = 1000; // 1 second
-export const toast_timeout = 5000; // 5 seconds
+const toast_timeout = 5000; // 5 seconds
 const data_grid_null_value = '{null}';
 const data_grid_colors_enabled = true;
 
 export const default_settings: ApplicationSettings = {
     app: {
-        toast: {
-            max: toast_max,
-            timeout: toast_timeout,
-        },
-        settings: {
-            store_timeout: settings_store_timeout,
-        },
+        placement: 'left',
+        "toast.max": toast_max,
+        "toast.timeout": toast_timeout,
+
+        "settings.store_timeout": settings_store_timeout,
     },
     dborg: {
-        data_grid: {
-            null_value: data_grid_null_value,
-            colors_enabled: data_grid_colors_enabled,
-        },
+        "data_grid.null_value": data_grid_null_value,
+        "data_grid.colors_enabled": data_grid_colors_enabled,
     },
     ui: {
         theme: 'system',

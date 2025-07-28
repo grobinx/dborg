@@ -1,6 +1,5 @@
 import { useToastAdmin } from "../../contexts/ToastContext";
 import { Paper, Alert, Zoom, Collapse, Grow, Fade, Slide, useTheme } from "@mui/material";
-import { toast_max } from "@renderer/app.config";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { TransitionGroup } from "react-transition-group";
 import { styled, useThemeProps } from "@mui/material";
@@ -79,7 +78,7 @@ export interface ToastListProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const ToastList: React.FC<ToastListProps> = (props) => {
     const { toasts, dispatchToast, showedToast } = useToastAdmin();
-    const [toastMax] = useSetting("app", "toast.max", toast_max);
+    const [toastMax] = useSetting<number>("app", "toast.max");
     const theme = useTheme();
 
     // Use theme props to allow customization via slotProps

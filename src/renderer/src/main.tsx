@@ -43,23 +43,21 @@ const AppWrapper: React.FC = () => {
         <ToastProvider>
             <ErrorBoundaryWrapper>
                 <GlobalErrorHandler />
-                <MessageProvider>
-                    <DatabaseProvider>
-                        <ThemeWrapper>
-                            <DialogsProvider>
-                                <ToastList />
-                                <SchemaConnectionManager />
-                                <PluginManagerProvider>
-                                    <ApplicationProvider>
-                                        <QueryHistoryProvider>
-                                            <App />
-                                        </QueryHistoryProvider>
-                                    </ApplicationProvider>
-                                </PluginManagerProvider>
-                            </DialogsProvider>
-                        </ThemeWrapper>
-                    </DatabaseProvider>
-                </MessageProvider>
+                <DatabaseProvider>
+                    <ThemeWrapper>
+                        <DialogsProvider>
+                            <ToastList />
+                            <SchemaConnectionManager />
+                            <PluginManagerProvider>
+                                <ApplicationProvider>
+                                    <QueryHistoryProvider>
+                                        <App />
+                                    </QueryHistoryProvider>
+                                </ApplicationProvider>
+                            </PluginManagerProvider>
+                        </DialogsProvider>
+                    </ThemeWrapper>
+                </DatabaseProvider>
             </ErrorBoundaryWrapper>
         </ToastProvider>
     );
@@ -68,9 +66,11 @@ const AppWrapper: React.FC = () => {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
         <ConsoleProvider>
-            <SettingsProvider>
-                <AppWrapper />
-            </SettingsProvider>
+            <MessageProvider>
+                <SettingsProvider>
+                    <AppWrapper />
+                </SettingsProvider>
+            </MessageProvider>
         </ConsoleProvider>
     </React.StrictMode>
 );

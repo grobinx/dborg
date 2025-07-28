@@ -1,12 +1,12 @@
 import { AppSettings } from "@renderer/app.config";
-import definitions, { EditableSettingsRegistry } from "@renderer/components/settings/EditableSettingsRegistry";
-import { group } from "console";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
-import { produce } from "immer";
+
+const settings: Record<string, TSettings> = {};
+const subscribers: Record<string, Record<string, ((value: any) => void)[]>> = {};
 
 // Globalna zmienna przechowująca listę nazw ustawień oraz ich domyślne wartości
-export const SETTINGS_NAMES: Record<string, TSettings> = {
+export const SETTINGS_NAMES: Record<string, Record<string, any>> = {
     // default: { theme: "light", notificationsEnabled: true },
     // user: { theme: "dark", notificationsEnabled: false },
     // app: { version: "1.0.0", autoUpdate: true },
@@ -18,8 +18,38 @@ interface SettingsContextType {
     setSetting: <T = string>(group: string, key: string, value: T) => void;
     settings: Record<string, TSettings>;
     isLoading: boolean;
-    definitions: EditableSettingsRegistry;
 }
+
+const subscribeChange = (group: string, key: string, callback: (value: any) => void): (() => void) => {
+    if (!subscribers[group]) {
+        subscribers[group] = {};
+    }
+    if (!subscribers[group][key]) {
+        subscribers[group][key] = [];
+    }
+
+    subscribers[group][key].push(callback);
+
+    // Zwracamy funkcję do odsubskrybowania
+    return () => {
+        subscribers[group][key] = subscribers[group][key].filter((cb) => cb !== callback);
+        if (subscribers[group][key].length === 0) {
+            delete subscribers[group][key];
+        }
+        if (Object.keys(subscribers[group]).length === 0) {
+            delete subscribers[group];
+        }
+    };
+};
+
+const notifyChange = (group: string, key: string, value: any) => {
+    const keySubscribers = subscribers[group]?.[key];
+    if (keySubscribers) {
+        setTimeout(() => {
+            keySubscribers.forEach((callback) => callback(value));
+        });
+    }
+};
 
 // Domyślna wartość kontekstu
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -27,51 +57,6 @@ export const SettingsContext = createContext<SettingsContextType | undefined>(un
 // Mechanizm debouncing dla zapisu ustawień
 const debounceMap: Record<string, NodeJS.Timeout> = {};
 
-/**
- * Hook `useSettings` pozwala na dostęp do ustawień dla określonej grupy oraz ich aktualizację.
- * Można aktualizować pojedynczy klucz lub część/całą strukturę ustawień.
- *
- * @example
- * 
- * interface UserSettings {
- *     theme: string;
- *     notificationsEnabled: boolean;
- * }
- *
- * const App: React.FC = () => {
- *     const [userSettings, updateUserSetting] = useSettings<UserSettings>("user");
- *
- *     const handleThemeChange = () => {
- *         updateUserSetting("theme", "dark");
- *     };
- *
- *     const handleNotificationsChange = () => {
- *         updateUserSetting("notificationsEnabled", true);
- *     };
- *
- *     const handleUpdateStructure = () => {
- *         updateUserSetting({
- *             theme: "light",
- *             notificationsEnabled: false,
- *         });
- *     };
- *
- *     return (
- *         <div>
- *             <h1>Ustawienia użytkownika</h1>
- *             <pre>{JSON.stringify(userSettings, null, 2)}</pre>
- *             <button onClick={handleThemeChange}>Zmień motyw</button>
- *             <button onClick={handleNotificationsChange}>Włącz powiadomienia</button>
- *             <button onClick={handleUpdateStructure}>Zaktualizuj całą strukturę</button>
- *         </div>
- *     );
- * };
- *
- * @param settingsName Nazwa grupy ustawień, dla której chcemy uzyskać dostęp.
- * @returns Tablica zawierająca:
- * - Obiekt ustawień dla określonej grupy.
- * - Funkcję do aktualizacji ustawień (pojedynczego klucza lub całą strukturę).
- */
 export const useSettings = <T extends TSettings>(
     settingsName: string,
 ): readonly [
@@ -122,7 +107,7 @@ export const useSettings = <T extends TSettings>(
 export const useSetting = <T = string>(
     group: string,
     key: string,
-    defaultValue: T
+    defaultValue?: T
 ): [T, (value: T) => void] => {
     const context = useContext(SettingsContext);
 
@@ -130,37 +115,39 @@ export const useSetting = <T = string>(
         throw new Error("useSetting must be used within a SettingsProvider");
     }
 
-    // Wyciągnij wartość ustawienia i użyj useMemo, aby stabilizować referencję
-    const value =  (context.settings[group]?.[key] ?? defaultValue) as T;
-    const setValue = React.useCallback(
-        (newValue: T) => {
-            context.setSetting(group, key, newValue);
-        },
-        [context, group, key]
-    );
+    const [value, setValue] = useState<any>(context?.settings[group]?.[key] ?? defaultValue ?? SETTINGS_NAMES[group]?.[key]);
 
-    return [value, setValue];
+    React.useEffect(() => {
+        const unsubscribe = subscribeChange(group, key, (value) => setValue(value));
+
+        return () => {
+            unsubscribe();
+        };
+    }, [group, key]);
+
+    const setSettingValue = (newValue: T) => {
+        context.setSetting(group, key, newValue);
+    };
+
+    return [value, setSettingValue];
 };
 
 // Provider kontekstu ustawień
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [settings, setSettings] = useState<Record<string, TSettings>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     // Funkcja do odczytu ustawień z plików
     const loadSettings = async () => {
-        const loadedSettings: Record<string, TSettings> = {};
         for (const name in SETTINGS_NAMES) {
             try {
                 const fileSettings = await window.dborg.settings.get(name);
-                loadedSettings[name] = fileSettings || SETTINGS_NAMES[name]; // Użyj domyślnych ustawień, jeśli brak danych
+                settings[name] = fileSettings || {};
             } catch (error) {
                 console.error(`Nie udało się odczytać ustawień z pliku: ${name}`, error);
-                loadedSettings[name] = SETTINGS_NAMES[name]; // Użyj domyślnych ustawień w przypadku błędu
+                settings[name] = {};
             }
         }
         setIsLoading(false);
-        setSettings(loadedSettings);
     };
 
     const storeGroups = (name: string, newSettings: TSettings) => {
@@ -176,39 +163,27 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             } catch (error) {
                 console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
             }
-        }, (settings["app"] as AppSettings).settings.store_timeout);
+        }, settings["app"]["settings.store_timeout"] ?? SETTINGS_NAMES["app"]["settings.store_timeout"]);
     };
 
     // Funkcja do zmiany ustawień z debouncing
     const updateSettings = async <T extends TSettings>(name: string, newSettings: T) => {
         // Aktualizuj lokalne ustawienia
-        setSettings((prev) => ({
-            ...prev,
-            [name]: newSettings,
-        }));
-
+        settings[name] = newSettings;
         storeGroups(name, newSettings);
     };
 
-    const setSetting = <T = string>(group: string, key: string, value: T): void => {
-        setSettings((prev) =>
-            produce(prev, (draft) => {
-                if (!draft[group]) {
-                    draft[group] = {}; // Upewnij się, że grupa istnieje
-                }
+    const setSetting = (group: string, key: string, value: any): void => {
+        if (settings[group][key] !== value) {
+            settings[group][key] = value;
 
-                // Porównaj starą i nową wartość
-                if (draft[group][key] !== value) {
-                    draft[group][key] = value; // Zaktualizuj tylko, jeśli wartość się zmieniła
-                }
-            })
-        );
+            notifyChange(group, key, value);
 
-        // Wywołaj storeGroups, aby zapisać zmiany na dysku
-        storeGroups(group, {
-            ...settings[group],
-            [key]: value,
-        });
+            // Wywołaj storeGroups, aby zapisać zmiany na dysku
+            storeGroups(group, {
+                ...settings[group],
+            });
+        }
     };
 
     // Inicjalizacja ustawień podczas montowania komponentu
@@ -235,7 +210,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 updateSettings,
                 settings,
                 isLoading,
-                definitions,
                 setSetting
             }}
         >

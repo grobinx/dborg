@@ -5,8 +5,7 @@ import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import * as actions from "./actions";
 import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
-import { useSettings } from "@renderer/contexts/SettingsContext";
-import { DborgSettings } from "@renderer/app.config";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
@@ -400,7 +399,8 @@ export const DataGrid = <T extends object>({
     const commandManager = useRef<CommandManager<DataGridActionContext<T>> | null>(null);
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
-    const [settings] = useSettings<DborgSettings>("dborg");
+    const [null_value] = useSetting("dborg", "data_grid.null_value");
+    const [colors_enabled] = useSetting<boolean>("dborg", "data_grid.colors_enabled");
     const [rowHeight, setRowHeight] = useState(initialRowHeight);
     const [dataState, setDataState] = useState<T[] | null>(null);
     const searchState = useSearchState();
@@ -1275,7 +1275,7 @@ export const DataGrid = <T extends object>({
                                             row[col.key],
                                             columnDataType,
                                             col.formatter,
-                                            settings.data_grid.null_value, {
+                                            null_value, {
                                             maxLength: displayMaxLengh,
                                             //display: (searchState.current.text ?? '').trim() === ''
                                         });
@@ -1306,7 +1306,7 @@ export const DataGrid = <T extends object>({
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                             dataType={styleDataType}
-                                            colorsEnabled={mode === "defined" ? settings.data_grid.colors_enabled : true}
+                                            colorsEnabled={mode === "defined" ? colors_enabled : true}
                                         >
                                             {formattedValue}
                                         </StyledCell>

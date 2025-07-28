@@ -6,7 +6,7 @@ import StatusBar from "./StatusBar";
 import '@renderer/components/ToolPanels/QueryHistoryStatusButton';
 import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
-import { useSetting, useSettings } from '@renderer/contexts/SettingsContext';
+import { useSetting } from '@renderer/contexts/SettingsContext';
 import TabsPanel from '../components/TabsPanel/TabsPanel';
 import TabPanel from '../components/TabsPanel/TabPanel';
 import { useMessages } from '@renderer/contexts/MessageContext';
@@ -65,7 +65,7 @@ const App: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { height } = useWindowDimensions();
-    const [placement, setPlacement] = useSetting<Placement>("app", "placement", "left");
+    const [placement, setPlacement] = useSetting<Placement>("app", "placement");
     const [toolsTabsPanelVisible, setToolsTabsPanelVisible] = React.useState<boolean>(() => {
         const storedValue = window.sessionStorage.getItem(App_toolsTabsPanelVisible);
         return storedValue !== null ? JSON.parse(storedValue) : false;

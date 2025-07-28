@@ -1,5 +1,4 @@
 import { Box, BoxProps, Stack, StackProps, styled, Typography } from "@mui/material";
-import { toast_max } from "@renderer/app.config";
 import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
 import { NumberSetting } from "@renderer/components/settings/inputs/NumberSetting";
@@ -59,7 +58,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
     const [selected, setSelected] = React.useState(false);
     const [values, setValues] = useSettings<Record<string, any>>("test");
-    const [toastMax, setToastMax] = useSetting("app", "toast.max", toast_max);
+    const [toastMax, setToastMax] = useSetting<number | undefined>("app", "toast.max");
 
     return (
         <StyledEditableSettingsRoot
@@ -80,12 +79,11 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             group: "General",
                             label: "Max Toasts",
                             description: "Select the maximum number of toasts to display",
-                            required: true,
                             min: 1,
                             max: 10,
-                            defaultValue: toast_max,
+                            defaultValue: SETTINGS_NAMES["app"]["toast.max"],
                         }}
-                        onChange={(value) => setToastMax(value ?? toast_max)}
+                        onChange={(value) => setToastMax(value)}
                         values={{ "toast.max": toastMax }}
                     />
                     <StringSetting

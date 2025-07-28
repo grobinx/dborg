@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { uuidv7 } from "uuidv7";
 import { useSetting } from "./SettingsContext";
-import { toast_timeout } from "@renderer/app.config";
 
 export type ToastType = "error" | "warning" | "success" | "info" | "hint";
 
@@ -40,7 +39,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
     const [toasts, setToasts] = useState<Toast[]>([]);
-    const [timeout] = useSetting("app", "toast.timeout", toast_timeout);
+    const [timeout] = useSetting<number>("app", "toast.timeout");
 
     const addToast = (type: ToastType, message: string, options?: ToastOptions) => {
         const id = uuidv7();

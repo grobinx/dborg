@@ -9,7 +9,7 @@ import rootLayout from '../themes/layouts/root';
 import { UiSettings } from "@renderer/app.config";
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [uiTheme] = useSetting("ui", "theme", "system");
+    const [uiTheme] = useSetting("ui", "theme");
 
     const prefersDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
