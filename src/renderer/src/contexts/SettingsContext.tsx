@@ -79,11 +79,18 @@ export const setSetting = (group: string, key: string, value: any): void => {
     }
 };
 
-export const getSetting = (group: string, key: string): any => {
-    if (settings[group] && key in settings[group]) {
-        return settings[group][key];
+export const getSettingDefault = (group: string, key: string, defaultValue?: any): any => {
+    if (!defaultValue && settingsGroups[group] && key in settingsGroups[group]) {
+        return settingsGroups[group][key];
     }
-    return null;
+    return defaultValue;
+};
+
+export const getSetting = (group: string, key: string, defaultValue?: any): any => {
+    if (settings[group] && key in settings[group]) {
+        return settings[group][key] ?? defaultValue ?? settingsGroups[group]?.[key];
+    }
+    return defaultValue ?? settingsGroups[group]?.[key];
 };
 
 // Domyślna wartość kontekstu

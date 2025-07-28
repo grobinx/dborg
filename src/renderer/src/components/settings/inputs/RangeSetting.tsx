@@ -3,7 +3,7 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import React from "react";
 import BaseSlider from "../base/BaseSlider";
 import { Tooltip } from "@mui/material";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 
 export const RangeSetting: React.FC<{
     setting: SettingTypeRange;
@@ -12,6 +12,10 @@ export const RangeSetting: React.FC<{
 }> = ({ setting, selected, onClick }) => {
     const [settingValue, setSettingValue] = useSetting<[number, number] | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<[number, number] | undefined>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+    }, [settingValue]);
 
     const handleChange = (_e, newValue: number[], activeThumb: number) => {
         if (newValue && value) {

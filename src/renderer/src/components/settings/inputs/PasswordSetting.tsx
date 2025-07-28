@@ -6,7 +6,7 @@ import { InputAdornment, Tooltip, useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 
 export const PasswordSetting: React.FC<{
     setting: SettingTypePassword;
@@ -18,6 +18,10 @@ export const PasswordSetting: React.FC<{
     const { t } = useTranslation();
     const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+    }, [settingValue]);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const validate = (value: string) => {

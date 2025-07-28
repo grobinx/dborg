@@ -3,7 +3,7 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import BaseTextField from "../base/BaseTextField";
 import { validateEmail, validateStringLength } from "./validations";
 import React from "react";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 
 export const EmailSetting: React.FC<{
     setting: SettingTypeEmail;
@@ -12,6 +12,10 @@ export const EmailSetting: React.FC<{
 }> = ({ setting, selected, onClick }) => {
     const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+    }, [settingValue]);
 
     return (
         <SettingInputControl

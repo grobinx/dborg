@@ -8,7 +8,7 @@ import ColorPicker from "@renderer/components/useful/ColorPicker";
 import { useTranslation } from "react-i18next";
 import Tooltip from "@renderer/components/Tooltip";
 import { htmlColors } from "@renderer/utils/colors";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 
 export const ColorSetting: React.FC<{
     setting: SettingTypeColor;
@@ -21,6 +21,10 @@ export const ColorSetting: React.FC<{
     const [open, setOpen] = React.useState(false); // Stan otwierania listy
     const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+    }, [settingValue]);
 
     const handleColorPickerOpen = (event: React.MouseEvent<HTMLElement>) => {
         setColorPickerAnchoreEl(event.currentTarget);

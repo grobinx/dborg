@@ -7,6 +7,8 @@ import { BaseInputProps } from "./base/BaseInput";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import ToolButton from "../ToolButton";
 import clsx from "@renderer/utils/clsx";
+import { get } from "http";
+import { getSettingDefault } from "@renderer/contexts/SettingsContext";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -156,7 +158,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
     setting: SettingTypeBase;
     value?: any;
     setValue?: (value: any) => void;
-    onStore?: (value: any, valid?: boolean) => void;
+    onStore?: (value: any) => void;
     onClick?: () => void;
     validate?: (value?: any) => string | boolean;
     selected?: boolean;
@@ -175,13 +177,13 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const theme = useTheme();
     const [previousValue] = useState<any>(value);
     const [validity, setValidity] = useState<string | undefined>(undefined);
-    const [valid, setValid] = useState<boolean>(true);
     const anchorElRef = React.useRef<HTMLDivElement>(null);
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(menuAnchorEl);
     const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
     const [refresh, setRefresh] = useState<boolean>(false);
+    const defaultValue = getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue);
 
     const getEffectContent = () => {
         const effect = setting.effect?.();
@@ -201,7 +203,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleRestoreDefaults = () => {
-        setValue?.(setting.defaultValue);
+        setValue?.(defaultValue);
         handleMenuClose();
     };
 
@@ -276,10 +278,23 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 setValidity(undefined);
             }
 
-            setValid(valid);
             setting.changed?.(value);
-            onStore?.(value, valid);
-            setRefresh((prev) => !prev); 
+            let storeValue = value;
+            if (!valid) {
+                switch (setting.storeInvalid ?? "previous") {
+                    case "previous":
+                        storeValue = previousValue;
+                        break;
+                    case "default":
+                        storeValue = defaultValue;
+                        break;
+                }
+            }
+            if (!setting.storeDefault && JSON.stringify(defaultValue) === JSON.stringify(storeValue)) {
+                storeValue = undefined;
+            }
+            onStore?.(storeValue);
+            setRefresh((prev) => !prev);
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -300,7 +315,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     }, [value, policy]);
 
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
-    const isDefault = JSON.stringify(setting.defaultValue) === JSON.stringify(value);
+    const isDefault = JSON.stringify(defaultValue) === JSON.stringify(value);
     const isDisabled = disabledControl(setting);
 
     console.count(`SettingInputControl render: ${setting.key}`);
@@ -350,7 +365,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     </MenuItem>
                     <MenuItem key="restore-defaults"
                         onClick={handleRestoreDefaults}
-                        disabled={setting.defaultValue === undefined || isDisabled}
+                        disabled={defaultValue === undefined || isDisabled}
                     >
                         {t("restore-setting-defaults", "Restore defaults")}
                     </MenuItem>

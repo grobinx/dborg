@@ -205,7 +205,13 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             max: 1000,
                             step: 10,
                             minDistance: 200,
-                            effect: () => `Jakiś efekt wartości zakresu wieku : ${getSetting("test", "age-range")[0]} - ${getSetting("test", "age-range")[1]}`,
+                            effect: () => {
+                                console.log("getSetting", getSetting("test", "age-range"));
+                                if (!getSetting("test", "age-range")) {
+                                    return "No age range selected";
+                                }
+                                return `Jakiś efekt wartości zakresu wieku : ${getSetting("test", "age-range")[0]} - ${getSetting("test", "age-range")[1]}`;
+                            },
                         }}
                     />
                     <ColorSetting

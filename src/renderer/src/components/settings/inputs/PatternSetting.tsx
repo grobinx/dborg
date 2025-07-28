@@ -3,7 +3,7 @@ import { SettingTypePattern } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { useMask } from "@react-input/mask";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 
 export const PatternSetting: React.FC<{
     setting: SettingTypePattern;
@@ -13,6 +13,10 @@ export const PatternSetting: React.FC<{
     const inputRef = useMask({ mask: setting.mask, replacement: setting.replacement, showMask: true });
     const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
+
+    React.useEffect(() => {
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+    }, [settingValue]);
 
     return (
         <SettingInputControl

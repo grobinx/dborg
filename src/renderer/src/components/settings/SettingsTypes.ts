@@ -114,6 +114,12 @@ export interface SettingTypeBase {
      */
     defaultValue?: any;
     /**
+     * Whether the default value should be stored in the settings file.
+     * If current value is equal to default value, it will not be stored, it will be set as undefined.
+     * Default is false.
+     */
+    storeDefault?: boolean; 
+    /**
      * Width of the setting in the UI.
      * This can be a number (in pixels) or a string (e.g., "100%").
      * If not specified, the width will be determined by the type of setting.
@@ -156,6 +162,12 @@ export interface SettingTypeBase {
      * @param values - all values of the settings
      */
     validate?: (value: any) => string | boolean;
+    /**
+     * Whether and what value to store if the value is invalid
+     * Default is "previous", which means the previous set value will be stored.
+     * @see SettingTypeBase.storeDefault
+     */
+    storeInvalid?: "store" | "previous" | "default";
     /**
      * This is dynamic description used in the UI to show the descriptive effect of the setting.
      * Return value can be a string or a React node for more complex content.
