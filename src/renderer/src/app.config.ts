@@ -1,5 +1,5 @@
 import { TSettings } from "src/api/settings";
-import { settingsGroups } from "./contexts/SettingsContext";
+import { settingsGroupDefaults } from "./contexts/SettingsContext";
 import editableSettingsRegistry from "./components/settings/EditableSettingsRegistry";
 import i18next from "i18next";
 
@@ -56,9 +56,9 @@ export const default_settings: ApplicationSettings = {
     },
 };
 
-settingsGroups['app'] = default_settings.app;
-settingsGroups['dborg'] = default_settings.dborg;
-settingsGroups['ui'] = default_settings.ui;
+settingsGroupDefaults['app'] = default_settings.app;
+settingsGroupDefaults['dborg'] = default_settings.dborg;
+settingsGroupDefaults['ui'] = default_settings.ui;
 
 editableSettingsRegistry.register((context) => {
     const t = i18next.t.bind(i18next);

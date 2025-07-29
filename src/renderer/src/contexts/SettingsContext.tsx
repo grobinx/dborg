@@ -6,8 +6,10 @@ const settings: Record<string, TSettings> = {};
 const subscribers: Record<string, Record<string, ((value: any) => void)[]>> = {};
 const debounceMap: Record<string, NodeJS.Timeout> = {};
 
-// Globalna zmienna przechowująca listę nazw ustawień oraz ich domyślne wartości
-export const settingsGroups: Record<string, Record<string, any>> = {
+/**
+ * Global variable storing the list of setting names and their default values
+ */
+export const settingsGroupDefaults: Record<string, Record<string, any>> = {
     // default: { theme: "light", notificationsEnabled: true },
     // user: { theme: "dark", notificationsEnabled: false },
     // app: { version: "1.0.0", autoUpdate: true },
@@ -63,7 +65,7 @@ const storeGroups = (name: string, newSettings: TSettings) => {
         } catch (error) {
             console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
         }
-    }, settings["app"]["settings.store_timeout"] ?? settingsGroups["app"]["settings.store_timeout"]);
+    }, settings["app"]["settings.store_timeout"] ?? settingsGroupDefaults["app"]["settings.store_timeout"]);
 };
 
 export const setSetting = (group: string, key: string, value: any): void => {
@@ -80,17 +82,17 @@ export const setSetting = (group: string, key: string, value: any): void => {
 };
 
 export const getSettingDefault = (group: string, key: string, defaultValue?: any): any => {
-    if (!defaultValue && settingsGroups[group] && key in settingsGroups[group]) {
-        return settingsGroups[group][key];
+    if (!defaultValue && settingsGroupDefaults[group] && key in settingsGroupDefaults[group]) {
+        return settingsGroupDefaults[group][key];
     }
     return defaultValue;
 };
 
 export const getSetting = (group: string, key: string, defaultValue?: any): any => {
     if (settings[group] && key in settings[group]) {
-        return settings[group][key] ?? defaultValue ?? settingsGroups[group]?.[key];
+        return settings[group][key] ?? defaultValue ?? settingsGroupDefaults[group]?.[key];
     }
-    return defaultValue ?? settingsGroups[group]?.[key];
+    return defaultValue ?? settingsGroupDefaults[group]?.[key];
 };
 
 // Domyślna wartość kontekstu
@@ -108,11 +110,11 @@ export const useSetting = <T = string>(
     key: string,
     defaultValue?: T
 ): [T, (value: T) => void, T] => {
-    const [value, setValue] = useState<any>(settings[group]?.[key] ?? defaultValue ?? settingsGroups[group]?.[key]);
+    const [value, setValue] = useState<any>(settings[group]?.[key] ?? defaultValue ?? settingsGroupDefaults[group]?.[key]);
 
     React.useEffect(() => {
         const unsubscribe = subscribeChange(group, key, (value) => {
-            setValue(value ?? defaultValue ?? settingsGroups[group]?.[key]);
+            setValue(value ?? defaultValue ?? settingsGroupDefaults[group]?.[key]);
         });
 
         return () => {
@@ -124,7 +126,7 @@ export const useSetting = <T = string>(
         setSetting(group, key, newValue);
     };
 
-    return [value, setSettingValue, defaultValue ?? settingsGroups[group]?.[key]];
+    return [value, setSettingValue, defaultValue ?? settingsGroupDefaults[group]?.[key]];
 };
 
 // Provider kontekstu ustawień
@@ -133,7 +135,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Funkcja do odczytu ustawień z plików
     const loadSettings = async () => {
-        for (const name in settingsGroups) {
+        for (const name in settingsGroupDefaults) {
             try {
                 const fileSettings = await window.dborg.settings.get(name);
                 settings[name] = fileSettings || {};

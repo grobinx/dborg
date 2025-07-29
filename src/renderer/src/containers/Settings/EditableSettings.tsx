@@ -9,7 +9,7 @@ import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting"
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import { escape } from "@renderer/components/useful/MarkdownTransform";
-import { getSetting, setSetting, settingsGroups } from "@renderer/contexts/SettingsContext";
+import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
 export interface EditableSettingsProps extends StackProps {
@@ -279,12 +279,13 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             category: "General",
                             label: "Enable Notifications",
                             description: "Receive notifications for important updates\nBlended with the app theme",
-                            defaultValue: "on",
-                            values: {
-                                true: "on",
-                                false: "off",
-                            },
-                            effect: () => `Notifications are ${getSetting("test", "notifications")}`,
+                            defaultValue: true,
+                            //storeDefault: true,
+                            // values: {
+                            //     true: "on",
+                            //     false: "off",
+                            // },
+                            effect: () => `Notifications are ${getSetting("test", "notifications", true)}`,
                         }}
                     />
                 </StyledEditableSettingsList>
@@ -293,7 +294,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
     );
 };
 
-settingsGroups["test"] = {
+settingsGroupDefaults["test"] = {
     "some-setting": "wartość",
     "some-text-setting": "To jest przykładowa wartość tekstowa",
     "some-password-setting": "PrzykładoweHasło123!",
