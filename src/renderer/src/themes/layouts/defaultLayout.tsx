@@ -21,6 +21,14 @@ const layout = (palette: Palette): ThemeOptions => {
             }
         },
         components: {
+            MuiCssBaseline: {
+                styleOverrides: {
+                    html: {
+                        fontSize: `${(root.typography as any).fontSize}px`,
+                        fontFamily: (root.typography as any).fontFamily,
+                    },
+                },
+            },
             MuiTypography: {
                 defaultProps: {
                     variantMapping: {
