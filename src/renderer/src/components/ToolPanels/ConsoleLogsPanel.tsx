@@ -336,10 +336,11 @@ export const ConsoleLogsStatusBarButtons: React.FC = () => {
 
     return (
         <Tooltip
+            //open={true}
             title={[
                 "Console Logs",
-                ["!::Error::#::error:: Errors::", String(notificationCounts.error)],
-                ["!::Warning::#::warning:: Warnings::", String(notificationCounts.warning)],
+                ["![error](Error) Errors", String(notificationCounts.error)],
+                ["![warning](Warning) Warnings", String(notificationCounts.warning)],
             ]}
         >
             <StatusBarButton

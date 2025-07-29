@@ -1,10 +1,9 @@
-import { Error } from "@mui/icons-material";
-import { Box, Stack, Theme, Typography, useTheme } from "@mui/material";
+import { Stack, styled, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { resolveColor } from "@renderer/themes/utils";
-import { isTreeNode, transform, TransformationRule, TransformFunction } from "pattern-transformer";
 import React, { isValidElement, ReactNode } from "react";
 import Code from "../Code";
+import ReactMarkdown from "react-markdown";
 
 let counter: bigint = 0n;
 
@@ -14,146 +13,52 @@ export type MarkdownString =
         | [string, string]              // left and right aligned string
         | [string, string, string])[];  // left, center and right aligned string
 
-const transformReactMatch: TransformFunction<ReactNode> = (match) => {
-    return match.map(item => {
-        if (item == null) return "";
-        if (isTreeNode(item)) {
-            return item.transformed;
-        }
-        if (isValidElement(item)) {
-            return item;
-        }
-        if (Array.isArray(item)) {
-            return item;
-        }
-        return item.toString();
-    });
-}
+const StyledMarkdownParagraph = styled('span', {
+    name: "Markdown", // The component name
+    slot: "paragraph", // The slot name
+})(() => ({
+    whiteSpace: "pre-wrap", 
+    display: "flex", 
+    alignItems: "center",
+}));
 
-function markdownRules(theme: Theme, ...additionalRules: TransformationRule<ReactNode>[]): TransformationRule<ReactNode>[] {
-
-    const baseRules: TransformationRule<ReactNode>[] = [
-        {
-            pattern: /#::(\w+)::(.*)::/, // Matches "#:red:some text:"
-            group: 2,
-            transform: (match, original) => {
-                const color = original?.match(/#::(\w+)::/)?.[1];
-                if (color) {
-                    return <span key={counter++} style={{ color: resolveColor(color, theme)?.["light"] ?? color }}>{transformReactMatch(match)}</span>;
-                }
-                return null;
-            },
-        },
-        {
-            pattern: /!::(\w+)::/, // Matches "!:iconName:"
-            group: 1,
-            transform: (match) => <span key={counter++} style={{ display: "inline-flex", alignItems: "center" }}>{resolveIcon(theme, match[0] as string)}</span>,
-            stop: true,
-        },
-        // {
-        //     pattern: /^# (.*)$/m, // Matches lines starting with "# " (Markdown header level 1)
-        //     group: 1,
-        //     transform: (match) => <Typography key={counter++} variant="h1">{transformReactMatch(match)}</Typography>,
-        // },
-        // {
-        //     pattern: /^## (.*)$/m, // Matches lines starting with "## " (Markdown header level 2)
-        //     group: 1,
-        //     transform: (match) => <Typography key={counter++} variant="h2">{transformReactMatch(match)}</Typography>,
-        // },
-        // {
-        //     pattern: /^### (.*)$/m, // Matches lines starting with "### " (Markdown header level 3)
-        //     group: 1,
-        //     transform: (match) => <Typography key={counter++} variant="h3">{transformReactMatch(match)}</Typography>,
-        // },
-        // {
-        //     pattern: /^#### (.*)$/m, // Matches lines starting with "#### " (Markdown header level 4)
-        //     group: 1,
-        //     transform: (match) => <Typography key={counter++} variant="h4">{transformReactMatch(match)}</Typography>,
-        // },
-        {
-            pattern: /\*\*(.*?)\*\*/, // Matches bold text enclosed in "**"
-            group: 1,
-            transform: (match) => <strong key={counter++}>{transformReactMatch(match)}</strong>,
-        },
-        {
-            pattern: /\*(.*?)\*/, // Matches italic text enclosed in "*"
-            group: 1,
-            transform: (match) => <em key={counter++}>{transformReactMatch(match)}</em>,
-        },
-        {
-            pattern: /\[(.*?)\]\((.*?)\)/, // Matches Markdown links [text](url)
-            transform: (match) => {
-                if (!match || match.length < 1 || typeof match[0] !== 'string') {
-                    return null;
-                }
-                const found = match[0].match(/\[(.*?)\]\((.*?)\)/);
-                if (!found || found.length < 3) {
-                    return match[0];
-                }
-                return <a key={counter++} href={found[2]}>{found[1]}</a>;
-            },
-            stop: true,
-        },
-        {
-            pattern: /!\[(.*?)\]\((.*?)\)/, // Matches Markdown images ![alt](url)
-            transform: (match) => {
-                if (!match || match.length < 1 || typeof match[0] !== 'string') {
-                    return null;
-                }
-                const found = match[0].match(/!\[(.*?)\]\((.*?)\)/);
-                if (!found || found.length < 3) {
-                    return match[0];
-                }
-                return <img key={counter++} src={found[2]} alt={found[1]} />;
-            },
-            stop: true,
-        },
-        {
-            pattern: /`([^`]+)`/, // Matches inline code `code`
-            group: 1,
-            transform: (match) => <Code key={counter++}>{match[0] as string}</Code>,
-            stop: true,
-        },
-        // {
-        //     pattern: /```([\s\S]*?)```/, // Matches code blocks ```code```
-        //     transform: (match) => <pre key={counter++}><code>${match[0] as string}</code></pre>,
-        //     stop: true,
-        // },
-    ];
-
-    return [...baseRules, ...additionalRules];
-};
-
-export const TextPart = (props) => {
+const MarkdownParagraph: React.FC<React.ComponentProps<typeof StyledMarkdownParagraph>> = (props) => {
     return (
-        <Box
-            //variant="inherit"
-            //direction="row"
-            //alignItems="center"
-            //display="block"
-            //gap={2}
-            component={"span"}
-            sx={{ whiteSpace: "pre-wrap" }}
+        <StyledMarkdownParagraph
+            className="Markdown-paragraph"
             {...props}
         >
             {props.children}
-        </Box>
+        </StyledMarkdownParagraph>
     );
 }
 
-export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules: TransformationRule<ReactNode>[]): ReactNode => {
+export const Markdown: React.FC<React.ComponentProps<typeof ReactMarkdown>> = (props) => {
+    const theme = useTheme();
 
-    const defaultTransform: TransformFunction<ReactNode> = (match) => {
-        return transformReactMatch(match);
-    }
+    return (
+        <ReactMarkdown
+            {...props}
+            components={{
+                p: MarkdownParagraph,
+                h1: (props) => <Typography variant="h1" {...props} />,
+                h2: (props) => <Typography variant="h2" {...props} />,
+                h3: (props) => <Typography variant="h3" {...props} />,
+                h4: (props) => <Typography variant="h4" {...props} />,
+                h5: (props) => <Typography variant="h5" {...props} />,
+                h6: (props) => <Typography variant="h6" {...props} />,
+                code: Code,
+                img: ({ src, alt }) => resolveIcon(theme, src, alt),
+                ...props.components,
+            }}
+        />
+    );
+}
 
+export const markdown = (text: MarkdownString, theme: Theme): ReactNode => {
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return (
-            <TextPart key={counter++}>
-                {transform(text, markdownRules(theme, ...additionalRules), defaultTransform)}
-            </TextPart>
-        );
+        return <Markdown key={counter++}>{text}</Markdown>;
     } else if (Array.isArray(text)) {
         // Obsługa przypadku, gdy `text` jest tablicą
         return (
@@ -167,11 +72,7 @@ export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules:
                 {text.map((item) => {
                     if (typeof item === 'string') {
                         // Obsługa pojedynczego ciągu znaków w tablicy
-                        return (
-                            <TextPart key={counter++}>
-                                {transform(item, markdownRules(theme, ...additionalRules), defaultTransform)}
-                            </TextPart>
-                        );
+                        return <Markdown key={counter++}>{item}</Markdown>;
                     } else if (Array.isArray(item)) {
                         if (item.length === 2) {
                             // Obsługa tablicy dwóch ciągów znaków (left, right aligned)
@@ -182,18 +83,8 @@ export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules:
                                     gap={8}
                                     justifyContent="space-between"
                                 >
-                                    <TextPart
-                                        key={counter++}
-                                        style={{ textAlign: "left" }}
-                                    >
-                                        {transform(item[0], markdownRules(theme, ...additionalRules), defaultTransform)}
-                                    </TextPart>
-                                    <TextPart
-                                        key={counter++}
-                                        style={{ textAlign: "right" }}
-                                    >
-                                        {transform(item[1], markdownRules(theme, ...additionalRules), defaultTransform)}
-                                    </TextPart>
+                                    <span key={counter++} style={{ textAlign: "left" }}><Markdown>{item[0]}</Markdown></span>
+                                    <span key={counter++} style={{ textAlign: "right" }}><Markdown>{item[1]}</Markdown></span>
                                 </Stack>
                             );
                         } else if (item.length === 3) {
@@ -205,24 +96,9 @@ export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules:
                                     gap={8}
                                     justifyContent="space-between"
                                 >
-                                    <TextPart
-                                        key={counter++}
-                                        style={{ textAlign: "left" }}
-                                    >
-                                        {transform(item[0], markdownRules(theme, ...additionalRules), defaultTransform)}
-                                    </TextPart>
-                                    <TextPart
-                                        key={counter++}
-                                        style={{ textAlign: "center", flex: 1 }}
-                                    >
-                                        {transform(item[1], markdownRules(theme, ...additionalRules), defaultTransform)}
-                                    </TextPart>
-                                    <TextPart
-                                        key={counter++}
-                                        style={{ textAlign: "right" }}
-                                    >
-                                        {transform(item[2], markdownRules(theme, ...additionalRules), defaultTransform)}
-                                    </TextPart>
+                                    <span key={counter++} style={{ textAlign: "left" }}><Markdown>{item[0]}</Markdown></span>
+                                    <span key={counter++} style={{ textAlign: "center" }}><Markdown>{item[1]}</Markdown></span>
+                                    <span key={counter++} style={{ textAlign: "right" }}><Markdown>{item[2]}</Markdown></span>
                                 </Stack>
                             );
                         }
@@ -235,3 +111,7 @@ export const markdown = (text: MarkdownString, theme: Theme, ...additionalRules:
 
     return null;
 };
+
+export function escape(text: string): string {
+    return text.replace(/([*_`[\]()#+\-!])/g, '\\$1');
+}

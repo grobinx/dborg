@@ -8,6 +8,7 @@ import { PatternSetting } from "@renderer/components/settings/inputs/PatternSett
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
+import { escape } from "@renderer/components/useful/MarkdownTransform";
 import { getSetting, setSetting, settingsGroups } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
@@ -95,7 +96,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             advanced: true,
                             //maxLength: 23,
                             //minLength: 3,
-                            effect: () => `Jakiś efekt wartości: **${getSetting("test", "some-setting")}**`,
+                            effect: () => `Jakiś efekt wartości: **${escape(getSetting("test", "some-setting"))}**`,
                             tags: ["example", "editable"],
                         }}
                         selected={selected}
@@ -115,7 +116,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             maxLength: 100,
                             minRows: 1,
                             maxRows: 5,
-                            effect: () => `Jakiś efekt wartości tekstowej: **${getSetting("test", "some-text-setting")}**`,
+                            effect: () => `Jakiś efekt wartości tekstowej: **${escape(getSetting("test", "some-text-setting"))}**`,
                             tags: ["example", "editable"],
                         }}
                     />
@@ -139,7 +140,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             specialChars: "!@#$%^&*()_+[]{}|;:',.<>?/",
                             noSpaces: true,
                             canGenerate: true,
-                            effect: () => `Jakiś efekt wartości hasła ${getSetting("test", "some-password-setting")}`,
+                            effect: () => `Jakiś efekt wartości hasła ${escape(getSetting("test", "some-password-setting"))}`,
                             tags: ["example", "editable"],
                         }}
                     />

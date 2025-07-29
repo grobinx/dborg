@@ -1,6 +1,6 @@
 import { Alert, Box, Divider, FormControl, IconButton, Menu, MenuItem, Popover, Popper, Stack, styled, Tooltip, Typography, useTheme, useThemeProps } from "@mui/material";
 import { SettingTypeBase, SettingTypeUnion } from "./SettingsTypes";
-import { markdown } from "@renderer/components/useful/MarkdownTransform";
+import { Markdown, markdown } from "@renderer/components/useful/MarkdownTransform";
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
@@ -223,7 +223,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleCopyPath = () => {
-        navigator.clipboard.writeText(setting.key);
+        navigator.clipboard.writeText(`${setting.storageGroup}/${setting.key}`);
         handleMenuClose();
     };
 
@@ -438,7 +438,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                             severity="error"
                             {...slotProps?.validity}
                         >
-                            {markdown(validity!, theme)}
+                            {!!validity && markdown(validity, theme)}
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>

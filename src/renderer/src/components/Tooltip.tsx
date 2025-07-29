@@ -1,6 +1,6 @@
-import React, { isValidElement } from "react";
+import React from "react";
 import { Tooltip as MuiTooltip, TooltipProps as MuiTooltipProps, useTheme } from "@mui/material";
-import { markdown, MarkdownString, TextPart } from "./useful/MarkdownTransform";
+import { markdown, MarkdownString } from "./useful/MarkdownTransform";
 
 export interface TooltipProps extends Exclude<MuiTooltipProps, "title"> {
     title: Exclude<React.ReactNode, string | number | bigint | boolean> | MarkdownString;
@@ -12,8 +12,8 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
     return (
         <MuiTooltip
             title={
-                isValidElement(title) ? (
-                    <TextPart>{title}</TextPart>
+                React.isValidElement(title) ? (
+                    title
                 ) : title != null ? (
                     markdown(title as MarkdownString, theme)
                 ) : (

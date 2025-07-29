@@ -144,7 +144,7 @@ export interface ThemeIcons {
     LowerLetter: IconWrapperFC;
 }
 
-export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode)) => {
+export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {
     if (typeof icon === 'function') {
         icon = icon();
     }
@@ -154,7 +154,7 @@ export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.
             return React.createElement(theme.icons[icon]);
         } else {
             // Jeśli nie ma w `theme.icons`, wyświetl jako obrazek
-            return <img src={icon} alt={icon} style={{ width: 24, height: 24 }} />;
+            return <img src={icon} alt={alt} style={{ width: 24, height: 24 }} />;
         }
     } else {
         return icon;

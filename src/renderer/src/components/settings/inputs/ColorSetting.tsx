@@ -2,7 +2,7 @@ import { SettingTypeColor } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import React from "react";
-import { Autocomplete, InputAdornment, TextField, useTheme } from "@mui/material";
+import { Autocomplete, InputAdornment, useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import ColorPicker from "@renderer/components/useful/ColorPicker";
 import { useTranslation } from "react-i18next";
