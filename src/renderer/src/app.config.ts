@@ -19,6 +19,9 @@ export interface DborgSettings extends TSettings {
 
 export interface UiSettings extends TSettings {
     theme: 'system' | 'light' | 'dark';
+    fontSize?: number;
+    fontFamily?: string;
+    monospaceFontFamily?: string;
 }
 
 export interface ApplicationSettings extends TSettings {
@@ -47,6 +50,9 @@ export const default_settings: ApplicationSettings = {
     },
     ui: {
         theme: 'system',
+        fontSize: 14,
+        fontFamily: 'Segoe WPC,Segoe UI,sans-serif',
+        monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
     },
 };
 

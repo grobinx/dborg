@@ -20,6 +20,20 @@ export function validateTextRows(value: string, minRows?: number, maxRows?: numb
     return next ? next() : true;
 }
 
+export function validateNumberRange(value: string, min?: number, max?: number, next?: () => string | boolean): string | boolean {
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) {
+        return t("number-invalid", "Invalid number");
+    }
+    if (min !== undefined && numericValue < min) {
+        return t("number-min", "Value must be at least {{min}}", { min });
+    }
+    if (max !== undefined && numericValue > max) {
+        return t("number-max", "Value cannot exceed {{max}}", { max });
+    }
+    return next ? next() : true;
+}
+
 export function validatePassword(
     value: string,
     atLeastOneLowercase?: boolean,

@@ -111,7 +111,9 @@ export const useSetting = <T = string>(
     const [value, setValue] = useState<any>(settings[group]?.[key] ?? defaultValue ?? settingsGroups[group]?.[key]);
 
     React.useEffect(() => {
-        const unsubscribe = subscribeChange(group, key, (value) => setValue(value));
+        const unsubscribe = subscribeChange(group, key, (value) => {
+            setValue(value ?? defaultValue ?? settingsGroups[group]?.[key]);
+        });
 
         return () => {
             unsubscribe();

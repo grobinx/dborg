@@ -58,7 +58,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
         >
             <ContainerButtonRoot
                 {...other}
-                className={(className ?? "") +" ContainerButton-root" +(selected ? " Mui-selected" : "")}
+                className={(className ?? "") + " ContainerButton-root" + (selected ? " Mui-selected" : "")}
                 fullWidth={position.horizontal}
                 sx={{
                     justifyContent: 'flex-start',
@@ -72,7 +72,6 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                             variant="button"
                             component="div"
                             noWrap={true}
-                            fontSize="inherit"
                             maxWidth="inherit"
                         >
                             {label}
@@ -82,9 +81,8 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                                 variant="button"
                                 component="div"
                                 noWrap={false}
-                                fontSize="inherit"
                                 minWidth="5.6rem"
-                                maxWidth="5.6rem"
+                                width="min-content"
                             >
                                 {label}
                             </Typography>

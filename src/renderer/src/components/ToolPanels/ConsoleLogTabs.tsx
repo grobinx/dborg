@@ -2,9 +2,10 @@ import { LogEntry } from "@renderer/contexts/ConsoleContext"
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
 import { useTranslation } from "react-i18next";
 import i18next from "i18next";
-import { styled } from "@mui/material";
+import { styled, Typography } from "@mui/material";
 import TabPanelLabel from "../TabsPanel/TabPanelLabel";
 import TabPanelButtons from "../TabsPanel/TabPanelButtons";
+import { ComponentProps } from "react";
 
 export function formatLogDetails(log: LogEntry | undefined): string | null {
     const t = i18next.t.bind(i18next);
@@ -59,11 +60,11 @@ export function formatTime(time: number): string {
 export const StyledConsoleLogDetailsPanel = styled('div', {
     name: "ConsoleLogPanel",
     slot: "details",
-})(({ /*theme*/ }) => ({
+})(({ theme }) => ({
+    ...theme.typography.monospace,
     height: "100%",
     width: "100%",
     padding: 8,
-    fontFamily: "monospace",
     fontSize: "0.8em",
     overflow: "auto",
     whiteSpace: "pre-wrap",
@@ -72,8 +73,8 @@ export const StyledConsoleLogDetailsPanel = styled('div', {
 
 export interface ConsoleLogDetailsContentProps
     extends Omit<TabPanelContentOwnProps, "color">,
-        React.ComponentProps<typeof StyledConsoleLogDetailsPanel> {
-    item?: LogEntry
+        ComponentProps<typeof StyledConsoleLogDetailsPanel> {
+    item?: LogEntry;
 }
 
 export const ConsoleLogDetailsContent: React.FC<ConsoleLogDetailsContentProps> = (props) => {
@@ -112,9 +113,7 @@ export const ConsoleLogDetailsButtons: React.FC = () => {
     );
 };
 
-export interface ConsoleLogStackTraceContentProps
-    extends Omit<TabPanelContentOwnProps, "color">,
-        React.ComponentProps<typeof StyledConsoleLogDetailsPanel> {
+export interface ConsoleLogStackTraceContentProps extends Omit<TabPanelContentOwnProps, "color"> {
     stack?: string[]
 }
 

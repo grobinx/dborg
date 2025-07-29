@@ -6,7 +6,7 @@ import ToolButton from "../ToolButton";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
-import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab } from "@mui/material";
+import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab, Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { FixedSizeList, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
@@ -23,6 +23,7 @@ import TabsPanel from "../TabsPanel/TabsPanel";
 import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
 import Tooltip from "../Tooltip";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -70,10 +71,18 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const showTime = useConsoleLogStore(state => state.showTime);
     const search = useConsoleLogStore(state => state.search);
     const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
+    const [fontSize] = useSetting<number>("ui", "fontSize");
+    const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
+    const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5) ?? 20);
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
     };
+
+    useEffect(() => {
+        const newHeight = itemSize ?? (fontSize * 1.5) ?? 20;
+        setListItemSize(newHeight);
+    }, [fontSize, monospaceFontFamily, itemSize]);
 
     useEffect(() => {
         if ((search ?? "").trim() === "") {
@@ -112,33 +121,36 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                 className={`ConsoleLogPanel-item${selectedItem === log.id ? " Mui-selected" : ""}`}
                 {...slotProps?.item}
             >
-                <ListItemText
-                    slotProps={{ primary: { variant: "body2", sx: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } } }}
-                    sx={{ color: getLogLevelColor(log.level, theme.palette), m: 0, px: 8 }}
-                    primary={
-                        <>
-                            {showTime && log.time && (
-                                <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
-                                    {formatTime(log.time)}
-                                </span>
-                            )}
-                            {Array.isArray(log.message) ? log.message.map(value => {
-                                if (typeof value === "object") {
-                                    if (value !== null && "name" in value && "message" in value) {
-                                        return `${value.name}: ${value.message}`;
-                                    }
-                                    else {
-                                        return JSON.stringify(value);
-                                    }
-                                }
-                                else {
-                                    return value;
-                                }
-                            }).join(" ") : String(log.message)}
-                        </>
-                    }
-                    {...slotProps?.itemText}
-                />
+                <Typography
+                    variant="monospace"
+                    sx={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        color: getLogLevelColor(log.level, theme.palette),
+                        m: 0,
+                        px: 8
+                    }}
+                >
+                    {showTime && log.time && (
+                        <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
+                            {formatTime(log.time)}
+                        </span>
+                    )}
+                    {Array.isArray(log.message) ? log.message.map(value => {
+                        if (typeof value === "object") {
+                            if (value !== null && "name" in value && "message" in value) {
+                                return `${value.name}: ${value.message}`;
+                            }
+                            else {
+                                return JSON.stringify(value);
+                            }
+                        }
+                        else {
+                            return value;
+                        }
+                    }).join(" ") : String(log.message)}
+                </Typography>
             </ListItem>
         );
     };
@@ -155,7 +167,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                                     ref={listRef} // Przypisanie referencji
                                     height={height}
                                     width={width}
-                                    itemSize={itemSize ?? 20} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
+                                    itemSize={listItemSize} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
                                     itemCount={displayLogs.length}
                                     overscanCount={overscanCount ?? 2} // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
                                     {...slotProps?.list}

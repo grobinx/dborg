@@ -10,30 +10,35 @@ import { UiSettings } from "@renderer/app.config";
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [uiTheme] = useSetting("ui", "theme");
+    const [fontSize] = useSetting<number>("ui", "fontSize", 14);
+    const [fontFamily] = useSetting<string>("ui", "fontFamily");
+    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
 
     const prefersDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
     const createThemes = React.useCallback(() => {
+        const root = rootLayout(fontSize, fontFamily, monospaceFontFamily);
+
         const themeLight = createTheme(
             {
-                ...rootLayout,
+                ...root,
                 palette: defaultLightPalette,
             },
-            defaultLayout(defaultLightPalette),
+            defaultLayout(defaultLightPalette, root),
             defaultIcons(defaultLightPalette)
         );
 
         const themeDark = createTheme(
             {
-                ...rootLayout,
+                ...root,
                 palette: defaultDarkPalette,
             },
-            defaultLayout(defaultDarkPalette),
+            defaultLayout(defaultDarkPalette, root),
             defaultIcons(defaultDarkPalette)
         );
 
         return { themeLight, themeDark };
-    }, []);
+    }, [fontSize, fontFamily, monospaceFontFamily]);
 
     const [theme, setTheme] = React.useState(() => {
         const { themeLight, themeDark } = createThemes();
@@ -42,8 +47,8 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                 ? themeDark
                 : themeLight
             : uiTheme === "light"
-            ? themeLight
-            : themeDark;
+                ? themeLight
+                : themeDark;
     });
 
     React.useEffect(() => {
@@ -54,8 +59,8 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                     ? themeDark
                     : themeLight
                 : uiTheme === "light"
-                ? themeLight
-                : themeDark;
+                    ? themeLight
+                    : themeDark;
         setTheme(selectedTheme);
     }, [uiTheme, prefersDarkMode, createThemes]);
 

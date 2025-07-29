@@ -8,7 +8,7 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import ToolButton from "../ToolButton";
 import clsx from "@renderer/utils/clsx";
 import { get } from "http";
-import { getSettingDefault } from "@renderer/contexts/SettingsContext";
+import { getSetting, getSettingDefault } from "@renderer/contexts/SettingsContext";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -68,11 +68,11 @@ const StyledSettingInputControlInput = styled(Stack, {
 }));
 
 export const calculateWidth = (setting: SettingTypeUnion) => {
-    const defaultTextWidth = 300; // Default width
-    const defaultNumberWidth = 200;
-    const maxWidth = 500; // Maximum width
-    const minWidth = 150; // Minimum width
-    const widthPerChar = 11; // Approximate width per character in pixels
+    const widthPerChar = getSetting("ui", "fontSize") * 0.8; // Approximate width per character in pixels
+    const defaultTextWidth = 30 * widthPerChar; // Default width
+    const defaultNumberWidth = 20 * widthPerChar; // Default width for number inputs
+    const maxWidth = 50 * widthPerChar; // Maximum width
+    const minWidth = 10 * widthPerChar; // Minimum width
 
     if (setting.width) {
         if (typeof setting.width === "number") {

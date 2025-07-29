@@ -59,6 +59,7 @@ declare module '@mui/material/Typography' {
     interface TypographyPropsVariantOverrides {
         label: true;
         description: true;
+        monospace: true;
     }
 }
 
@@ -67,15 +68,14 @@ declare module "@mui/material/styles" {
     interface TypographyVariants {
         label: React.CSSProperties;
         description: React.CSSProperties;
+        monospace: React.CSSProperties;
     }
 
     // allow configuration using `createTheme()`
     interface TypographyVariantsOptions {
         label?: React.CSSProperties;
         description?: React.CSSProperties;
-    }
-
-    interface TypographyOptions {
+        monospace?: React.CSSProperties;
         monospaceFontFamily?: string;
     }
 

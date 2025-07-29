@@ -83,6 +83,41 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             max: 10,
                         }}
                     />
+                    <NumberSetting
+                        setting={{
+                            type: "number",
+                            storageGroup: "ui",
+                            key: "fontSize",
+                            category: "UI",
+                            label: "Base Font Size",
+                            description: "Select the base font size for the application",
+                            min: 10,
+                            max: 20,
+                            tags: ["font", "size", "ui"],
+                        }}
+                    />
+                    <StringSetting
+                        setting={{
+                            type: "string",
+                            storageGroup: "ui",
+                            key: "fontFamily",
+                            category: "UI",
+                            label: "Base Font Family",
+                            description: "Select the base font family for the application",
+                            tags: ["font", "ui"],
+                        }}
+                    />
+                    <StringSetting
+                        setting={{
+                            type: "string",
+                            storageGroup: "ui",
+                            key: "monospaceFontFamily",
+                            category: "UI",
+                            label: "Base Monospace Font Family",
+                            description: "Select the base monospace font family for the application",
+                            tags: ["font", "ui"],
+                        }}
+                    />
                     <StringSetting
                         setting={{
                             type: "string",

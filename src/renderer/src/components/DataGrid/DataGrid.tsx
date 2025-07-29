@@ -16,7 +16,7 @@ import { useSearchState } from "@renderer/hooks/useSearchState";
 import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
 import { useTranslation } from "react-i18next";
-import { areTypesEqual, ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { useColumnsGroup } from "./useColumnsGroup";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import Tooltip from "../Tooltip";
@@ -1121,7 +1121,7 @@ export const DataGrid = <T extends object>({
                 paddingY={cellPaddingY}
                 onFocus={handleFocus}
                 style={{
-                    fontFamily: (mode === "data" ? "monospace" : "inherit"),
+                    fontFamily: (mode === "data" ? theme.typography.monospace.fontFamily : "inherit"),
                     marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
                 }}

@@ -1,7 +1,7 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 import root from "./root";
 
-const layout = (palette: Palette): ThemeOptions => {
+const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
     return {
         typography: {
             label: {
@@ -15,6 +15,12 @@ const layout = (palette: Palette): ThemeOptions => {
                 lineHeight: 1.4,
                 fontWeight: 400,
                 fontFamily: (root.typography as any).fontFamily,
+            },
+            monospace: {
+                fontFamily: (root.typography as any).monospaceFontFamily,
+                fontSize: "1rem",
+                lineHeight: 1.4,
+                fontWeight: 400,
             },
             button: {
                 textTransform: 'none',
@@ -139,7 +145,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     sx: {
                         padding: "2px 8px",
                         minWidth: 0,
-                        height: 32,
+                        height: "min-content",
                         minHeight: 32,
                         borderRight: '1px solid',
                         borderLeft: '1px solid',
@@ -163,7 +169,7 @@ const layout = (palette: Palette): ThemeOptions => {
                     indicatorColor: "secondary",
                     textColor: "inherit",
                     sx: {
-                        height: 32,
+                        height: "min-content",
                         minHeight: 32,
                     },
                     slotProps: {
