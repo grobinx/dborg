@@ -122,4 +122,60 @@ editableSettingsRegistry.register((context) => {
             ],
         }],
     });
+
+    context.registerCollection({
+        key: 'ui',
+        title: t('ui-settings', 'UI Settings'),
+        description: t('ui-settings-description', 'Settings related to the user interface.'),
+        groups: [{
+            key: 'theme',
+            title: t('theme', 'Theme'),
+            description: t('theme-description', 'Settings for the application theme.'),
+            settings: [
+                {
+                    type: 'string',
+                    storageGroup: 'ui',
+                    key: 'theme',
+                    label: t('theme', 'Theme'),
+                    description: t('theme-description', 'Select the application theme.'),
+                },
+            ],
+        }],
+    });
+    context.registerCollection({
+        key: 'typography',
+        title: t('typography-settings', 'Typography Settings'),
+        description: t('typography-settings-description', 'Settings related to typography, including font size and family.'),
+        groups: [{
+            key: 'font',
+            title: t('font-settings', 'Font Settings'),
+            description: t('font-settings-description', 'Settings for font size and family.'),
+            settings: [
+                {
+                    type: 'number',
+                    storageGroup: 'ui',
+                    key: 'fontSize',
+                    label: t('font-size', 'Font Size'),
+                    description: t('font-size-description', 'Set the base font size for the application.'),
+                    min: 8,
+                    max: 32,
+                    step: 1,
+                },
+                {
+                    type: 'string',
+                    storageGroup: 'ui',
+                    key: 'fontFamily',
+                    label: t('font-family', 'Font Family'),
+                    description: t('font-family-description', 'Set the base font family for the application.'),
+                },
+                {
+                    type: 'string',
+                    storageGroup: 'ui',
+                    key: 'monospaceFontFamily',
+                    label: t('monospace-font-family', 'Monospace Font Family'),
+                    description: t('monospace-font-family-description', 'Set the monospace font family for code and other monospaced text.'),
+                },
+            ],
+        }],
+    });
 });

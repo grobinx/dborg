@@ -121,6 +121,17 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     <StringSetting
                         setting={{
                             type: "string",
+                            storageGroup: "ui",
+                            key: "theme",
+                            category: "UI",
+                            label: "Theme",
+                            description: "Select the application theme.",
+                            tags: ["theme", "ui"],
+                        }}
+                    />
+                    <StringSetting
+                        setting={{
+                            type: "string",
                             storageGroup: "test",
                             key: "some-setting",
                             category: "General",
