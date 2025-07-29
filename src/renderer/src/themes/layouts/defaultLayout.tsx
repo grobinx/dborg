@@ -390,7 +390,7 @@ const layout = (palette: Palette): ThemeOptions => {
                 defaultProps: {
                     paddingLeft: 1,
                     paddingRight: 1,
-                    marginBottom: 1,
+                    //marginBottom: 1,
                     borderTop: '1px solid',
                     borderColor: palette.mode === "dark" ? palette.statusBar.dark : palette.statusBar.light,
                     fontSize: "0.9rem",
@@ -878,6 +878,9 @@ const layout = (palette: Palette): ThemeOptions => {
                             paddingLeft: 0,
                             alignSelf: "start",
                         },
+                        '& input': {
+                            fontSize: "inherit",
+                        }
                     },
                     label: {
                         color: palette.text.primary,
