@@ -4,7 +4,7 @@ const root: ThemeOptions = {
     spacing: 1,
     typography: {
         fontFamily: "Segoe WPC,Segoe UI,sans-serif",
-        //fontSize: 16,
+        fontSize: 14,
     },
     components: {
         MuiCssBaseline: {
