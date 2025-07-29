@@ -186,7 +186,14 @@ export interface SettingTypeBase {
 
 export interface SettingTypeBoolean extends SettingTypeBase {
     type: "boolean";
-    defaultValue?: boolean;
+    /**
+     * Optional string or null values for true and false states.
+     */
+    values?: {
+        true: string | number | null;
+        false: string | number | null;
+    }
+    defaultValue?: boolean | number | string;
 }
 
 export interface SettingTypeStringBase extends SettingTypeBase {

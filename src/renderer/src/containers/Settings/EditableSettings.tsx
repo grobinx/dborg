@@ -279,7 +279,12 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             category: "General",
                             label: "Enable Notifications",
                             description: "Receive notifications for important updates\nBlended with the app theme",
-                            defaultValue: true,
+                            defaultValue: "on",
+                            values: {
+                                true: "on",
+                                false: "off",
+                            },
+                            effect: () => `Notifications are ${getSetting("test", "notifications")}`,
                         }}
                     />
                 </StyledEditableSettingsList>

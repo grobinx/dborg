@@ -165,7 +165,7 @@ export interface SettingInputControlProps extends React.ComponentProps<typeof St
 }
 
 interface SettingInputControlOwnProps extends SettingInputControlProps {
-    setting: SettingTypeBase;
+    setting: SettingTypeUnion;
     value?: any;
     setValue?: (value: any) => void;
     onStore?: (value: any) => void;
@@ -247,9 +247,17 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 } else if (setting.type === "number" && typeof value !== "number") {
                     valid = false;
                     setValidity(t("invalid-type", "Invalid type, expected number"));
-                } else if (setting.type === "boolean" && typeof value !== "boolean") {
-                    valid = false;
-                    setValidity(t("invalid-type", "Invalid type, expected boolean"));
+                // } else if (setting.type === "boolean") {
+                //     if (typeof value !== "boolean" && typeof value !== "string" && typeof value !== "number") {
+                //         valid = false;
+                //         setValidity(t("invalid-type", "Invalid type, expected boolean, string or number"));
+                //     } else if (
+                //         setting.values &&
+                //         !([setting.values.true, setting.values.false] as Array<string | number | null>).includes(value as string | number | null)
+                //     ) {
+                //         valid = false;
+                //         setValidity(t("invalid-value", "Invalid value, expected true/false values"));
+                //     }
                 } else if (setting.type === "array" && !Array.isArray(value)) {
                     valid = false;
                     setValidity(t("invalid-type", "Invalid type, expected array"));

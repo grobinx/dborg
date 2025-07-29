@@ -26,7 +26,7 @@ export const NumberSetting: React.FC<{
             onStore={(value: number) => setSettingValue(value)}
             selected={selected}
             onClick={onClick}
-            validate={(value: string) => validateNumberRange(value, setting.min, setting.max)}
+            validate={(value: number) => validateNumberRange(value, setting.min, setting.max)}
             policy={() => {
                 if (setting.min === undefined && setting.max === undefined) {
                     return null;
