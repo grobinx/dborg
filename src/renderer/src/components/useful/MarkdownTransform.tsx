@@ -7,6 +7,14 @@ import ReactMarkdown from "react-markdown";
 
 let counter: bigint = 0n;
 
+export type FormattedItem = React.ReactNode | string;
+export type FormattedContent =
+    FormattedItem // pojedynczy element
+    | (FormattedItem  // lista z pozycjami wyrównanymi do lewej
+        | [FormattedItem, FormattedItem]    // lista z pozycjami wyrównanymi do lewej i prawej
+        | [FormattedItem, FormattedItem, FormattedItem]   // lista z pozycjami wyrównanymi do lewej, środka i prawej
+    )[];
+
 export type MarkdownString =
     string
     | (string                           // left aligned string
