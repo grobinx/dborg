@@ -6,6 +6,7 @@ import { NumberSetting } from "@renderer/components/settings/inputs/NumberSettin
 import { PasswordSetting } from "@renderer/components/settings/inputs/PasswordSetting";
 import { PatternSetting } from "@renderer/components/settings/inputs/PatternSetting";
 import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting";
+import { SelectSetting } from "@renderer/components/settings/inputs/SelectSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import { escape } from "@renderer/components/useful/MarkdownTransform";
@@ -286,6 +287,21 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             //     false: "off",
                             // },
                             effect: () => `Notifications are ${getSetting("test", "notifications", true)}`,
+                        }}
+                    />
+                    <SelectSetting
+                        setting={{
+                            type: "select",
+                            storageGroup: "test",
+                            key: "favorite-color",
+                            category: "General",
+                            label: "Favorite Color",
+                            description: "Select your favorite color",
+                            options: [
+                                { value: "red", label: "Red" },
+                                { value: "green", label: "Green" },
+                                { value: "blue", label: "Blue" },
+                            ],
                         }}
                     />
                 </StyledEditableSettingsList>

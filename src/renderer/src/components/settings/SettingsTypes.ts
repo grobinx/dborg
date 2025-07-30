@@ -294,7 +294,7 @@ export interface SettingTypeNumber extends SettingTypeBase {
 
 export interface SelectOption {
     label: React.ReactNode;
-    value: string | number | bigint | boolean;
+    value: string | number;
     description?: React.ReactNode;
 }
 
