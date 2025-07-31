@@ -39,7 +39,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 defaultProps: {
                     variantMapping: {
                         label: 'label',
-                        description: 'p',
+                        description: 'div',
                     },
                 }
             },
@@ -961,6 +961,24 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             borderRadius: '5px',
                             display: 'block',
                         },
+                    }
+                }
+            },
+            FormattedText: {
+                styleOverrides: {
+                    root: {
+                        '& p': {
+                            whiteSpace: "pre-wrap",
+                            display: "flex",
+                            alignItems: "center",
+                            margin: 0,
+                        },
+                        '& ul': {
+                            whiteSpace: "pre-wrap",
+                            display: "flex",
+                            alignItems: "center",
+                            margin: 0,
+                        }
                     }
                 }
             },

@@ -69,7 +69,6 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                 <Collapse in={expanded} orientation="horizontal" timeout={100}>
                     {position.horizontal ?
                         <Typography
-                            variant="button"
                             component="div"
                             noWrap={true}
                             maxWidth="inherit"
@@ -78,7 +77,6 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                         </Typography> :
                         <Collapse in={expanded} orientation="vertical" timeout={100}>
                             <Typography
-                                variant="button"
                                 component="div"
                                 noWrap={false}
                                 minWidth="5.6rem"

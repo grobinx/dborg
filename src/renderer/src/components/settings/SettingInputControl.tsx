@@ -1,6 +1,6 @@
 import { Alert, Box, Divider, FormControl, IconButton, Menu, MenuItem, Popover, Popper, Stack, styled, Tooltip, Typography, useTheme, useThemeProps } from "@mui/material";
 import { SettingTypeBase, SettingTypeUnion } from "./SettingsTypes";
-import { Markdown, markdown } from "@renderer/components/useful/MarkdownTransform";
+import { FormattedTextItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
@@ -149,7 +149,7 @@ export const SettingInputControlDescription: React.FC<React.ComponentProps<typeo
     return (
         <StyledSettingInputControlDescription variant="description" {...other} className="SettingInputControl-description">
             {props.children}
-            {typeof description === "string" ? markdown(description, useTheme()) : description}
+            <FormattedText text={description} />
         </StyledSettingInputControlDescription>
     );
 };
@@ -198,7 +198,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const getEffectContent = () => {
         const effect = setting.effect?.();
         if (effect) {
-            return typeof effect === "string" ? markdown(effect, theme) : effect;
+            return <FormattedText text={effect} />;
         }
         return undefined;
     };
@@ -429,7 +429,11 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         <div ref={anchorElRef}>
                             {children}
                         </div>
-                        {policyContent && (<div key="policy" className="policy">{typeof policyContent === "string" ? markdown(policyContent, theme) : policyContent}</div>)}
+                        {policyContent && (
+                            <div key="policy" className="policy">
+                                <FormattedText text={policyContent} />
+                            </div>
+                        )}
                     </StyledSettingInputControlInput>
                     <Popper
                         disablePortal={true}
@@ -446,7 +450,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                             severity="error"
                             {...slotProps?.validity}
                         >
-                            {!!validity && markdown(validity, theme)}
+                            {!!validity && <FormattedText text={validity} />}
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>

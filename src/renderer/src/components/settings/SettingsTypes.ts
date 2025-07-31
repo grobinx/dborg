@@ -1,5 +1,6 @@
 import React from "react";
 import { ColorPickerType } from "../useful/ColorPicker";
+import { FormattedContent, FormattedItem } from "../useful/FormattedText";
 
 export type SettingType = 
     /**
@@ -99,14 +100,14 @@ export interface SettingTypeBase {
      * The title of the setting, displayed in the UI.
      * This should be a user-friendly name that describes the setting.
      */
-    label: string;
+    label: FormattedItem;
     /**
      * A description of the setting, displayed in the UI.
      * This should provide additional context or instructions for the user.
      * It can be a string or a React node for more complex content.
      * String descriptions will be rendered as markdown.
      */
-    description?: React.ReactNode;
+    description?: FormattedContent;
     /**
      * Default value for the setting, type depends on the setting type
      * For example, for a string setting, this would be a string.
@@ -161,7 +162,7 @@ export interface SettingTypeBase {
      * @param value - the current value of the setting
      * @param values - all values of the settings
      */
-    validate?: (value: any) => string | boolean;
+    validate?: (value: any) => FormattedContent | boolean;
     /**
      * Whether and what value to store if the value is invalid
      * Default is "previous", which means the previous set value will be stored.
@@ -173,7 +174,7 @@ export interface SettingTypeBase {
      * Return value can be a string or a React node for more complex content.
      * String will be rendered as markdown.
      */
-    effect?: () => React.ReactNode;
+    effect?: () => FormattedContent;
     /**
      * A function that is called when the value of the setting changes.
      * This can be used to perform additional actions when the setting value changes and store.
@@ -293,9 +294,9 @@ export interface SettingTypeNumber extends SettingTypeBase {
 }
 
 export interface SelectOption {
-    label: React.ReactNode;
+    label: FormattedItem;
     value: string | number;
-    description?: React.ReactNode;
+    description?: FormattedContent;
 }
 
 export interface SettingTypeSelectBase extends SettingTypeBase {

@@ -9,7 +9,7 @@ import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting"
 import { SelectSetting } from "@renderer/components/settings/inputs/SelectSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
-import { escape } from "@renderer/components/useful/MarkdownTransform";
+import { escape } from "@renderer/components/useful/FormattedText";
 import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
 
@@ -298,9 +298,27 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             label: "Favorite Color",
                             description: "Select your favorite color",
                             options: [
-                                { value: "red", label: "Red" },
-                                { value: "green", label: "Green" },
-                                { value: "blue", label: "Blue" },
+                                {
+                                    value: "red",
+                                    label: [["Red", <span style={{ backgroundColor: "red", width: 16, borderRadius: 2 }} />]],
+                                    description: [
+                                        "The color of passion and energy.",
+                                        "* Symbolizes love and desire.",
+                                        "* Often associated with danger and warning.",
+                                        "* Used in branding to grab attention.",
+                                        "* Represents courage and strength.",
+                                        "* Can evoke strong emotions."
+                                    ]
+                                },
+                                {
+                                    value: "green",
+                                    label: [["Green", <span style={{ backgroundColor: "green", width: 16, borderRadius: 2 }} />]],
+                                    description: "The color of nature"
+                                },
+                                {
+                                    value: "blue",
+                                    label: [["Blue", <span style={{ backgroundColor: "blue", width: 16, borderRadius: 2 }} />]],
+                                },
                             ],
                         }}
                     />
