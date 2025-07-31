@@ -50,6 +50,10 @@ export const SelectSetting: React.FC<{
         }
     }, [open]);
 
+    React.useEffect(() => {
+        setOptionDescription(setting.options.find(option => option.value === value)?.description || null);
+    }, [value]);
+
     return (
         <SettingInputControl
             setting={setting}
@@ -105,7 +109,10 @@ export const SelectSetting: React.FC<{
                                         <MenuItem
                                             key={option.value}
                                             value={option.value}
-                                            onClick={() => setValue(option.value)}
+                                            onClick={() => {
+                                                setOpen(false);
+                                                setValue(option.value);
+                                            }}
                                             selected={value === option.value}
                                             onMouseEnter={() => {
                                                 setOptionDescription(option.description || null)
