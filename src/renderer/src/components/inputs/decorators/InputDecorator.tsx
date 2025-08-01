@@ -227,7 +227,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restriction) => {
             const restrictions = React.Children.toArray(restriction).map((r, index) => {
-                return <Restriction key={`inputRestriction-${index}`}>{r}</Restriction>;
+                return <Restriction key={`restriction-${index}`}>{r}</Restriction>;
             });
             setInputRestrictions(restrictions);
         },

@@ -95,6 +95,8 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
         size = "medium",
         value,
         onChange,
+        onChanged,
+        changedDelay = 500,
         disabled = false,
         required = false,
         width = "100%",
@@ -179,14 +181,17 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
 
             if (valid) {
                 inputDecorationContext.setInvalid(undefined);
+                onChanged?.(currentValue);
             }
-        }, 500);
+        }, changedDelay);
 
         return () => clearTimeout(timeoutId);
     }, [currentValue, required, disabled, onValidate]);
 
     if (inputDecorationContext && maxLength) {
-        inputDecorationContext.setRestrictions(`${(currentValue ?? "").length}/${maxLength}`);
+        Promise.resolve().then(() => {
+            inputDecorationContext.setRestrictions(`${(currentValue ?? "").length}/${maxLength}`);
+        });
     }
 
     return (

@@ -86,10 +86,10 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                 value={values[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={(_e, value) => handleValueChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
-                                    <Adornment position="end">
+                                    <Adornment key="connected" position="end">
                                         <theme.icons.Connected />
                                     </Adornment>,
-                                    <Adornment position="end">
+                                    <Adornment key="clipboard" position="end">
                                         <theme.icons.Clipboard />
                                     </Adornment>
 

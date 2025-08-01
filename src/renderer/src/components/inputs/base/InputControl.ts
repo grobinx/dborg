@@ -34,6 +34,19 @@ export interface InputProps {
      */
     onChange?: (e: ChangeEvent, value: any) => void;
     /**
+     * Funkcja wywoływana z opóźnieniem po zmianie wartości, po walidacji.
+     * Może być używana do aktualizacji stanu lub wykonania innych działań po zmianie wartości,
+     * kiedy wartość jest poprawna.
+     * @param value Nowa wartość
+     */
+    onChanged?: (value: any) => void;
+    /**
+     * Czas opóźnienia w milisekundach przed wywołaniem funkcji onChanged
+     * Używane do opóźnienia aktualizacji stanu lub innych działań po zmianie wartości
+     * @default 500
+     */
+    changedDelay?: number;
+    /**
      * Funkcja wywoływana po kliknięciu w dowolną część pola
      */
     onClick?: () => void;
