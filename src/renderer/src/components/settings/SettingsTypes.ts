@@ -1,6 +1,6 @@
 import React from "react";
 import { ColorPickerType } from "../useful/ColorPicker";
-import { FormattedContent, FormattedItem } from "../useful/FormattedText";
+import { FormattedContent, FormattedContentItem } from "../useful/FormattedText";
 
 export type SettingType = 
     /**
@@ -100,7 +100,7 @@ export interface SettingTypeBase {
      * The title of the setting, displayed in the UI.
      * This should be a user-friendly name that describes the setting.
      */
-    label: FormattedItem;
+    label: FormattedContentItem;
     /**
      * A description of the setting, displayed in the UI.
      * This should provide additional context or instructions for the user.
@@ -294,7 +294,7 @@ export interface SettingTypeNumber extends SettingTypeBase {
 }
 
 export interface SelectOption {
-    label: FormattedItem;
+    label: FormattedContentItem;
     value: string | number;
     description?: FormattedContent;
 }

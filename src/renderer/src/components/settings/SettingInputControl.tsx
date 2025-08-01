@@ -1,6 +1,6 @@
-import { Alert, Box, Divider, FormControl, IconButton, Menu, MenuItem, Popover, Popper, Stack, styled, Tooltip, Typography, useTheme, useThemeProps } from "@mui/material";
+import { Alert, Box, Divider, Menu, MenuItem, Popper, Stack, styled, Tooltip, Typography, useTheme, useThemeProps } from "@mui/material";
 import { SettingTypeBase, SettingTypeUnion } from "./SettingsTypes";
-import { FormattedTextItem, FormattedText } from "@renderer/components/useful/FormattedText";
+import { FormattedText } from "@renderer/components/useful/FormattedText";
 import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";

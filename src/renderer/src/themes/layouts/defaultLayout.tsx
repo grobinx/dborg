@@ -1,8 +1,18 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 import root from "./root";
+import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
+    const borderRadius = 3;
+    const paddingSmall = 2;
+    const paddingMedium = 4;
+    const paddingLarge = 8;
+
     return {
+        shape: {
+            borderRadius: borderRadius,
+        },
+
         typography: {
             label: {
                 fontSize: "1rem",
@@ -982,6 +992,171 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
+            TextField: {
+                styleOverrides: {
+                    root: {
+                        fontSize: "1rem",
+                        border: `1px solid ${palette.divider}`,
+                        borderRadius: borderRadius,
+                        padding: paddingMedium,
+                        gap: paddingMedium,
+                        backgroundColor: alpha(palette.primary.main, 0.1),
+                        '&:hover': {
+                            borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+                        },
+                        '&:has(input:focus)': {
+                            outlineColor: palette.primary.main,
+                            outlineWidth: 2,
+                            outlineStyle: 'solid',
+                            outlineOffset: -2,
+                            borderColor: 'transparent',
+                            '&.color-secondary': {
+                                outlineColor: palette.secondary.main,
+                            },
+                            '&.color-error': {
+                                outlineColor: palette.error.main,
+                            },
+                            '&.color-warning': {
+                                outlineColor: palette.warning.main,
+                            },
+                            '&.color-info': {
+                                outlineColor: palette.info.main,
+                            },
+                            '&.color-success': {
+                                outlineColor: palette.success.main,
+                            },
+                        },
+                        '&.color-secondary': {
+                            backgroundColor: alpha(palette.secondary.main, 0.1),
+                        },
+                        '&.color-error': {
+                            backgroundColor: alpha(palette.error.main, 0.1),
+                        },
+                        '&.color-warning': {
+                            backgroundColor: alpha(palette.warning.main, 0.1),
+                        },
+                        '&.color-info': {
+                            backgroundColor: alpha(palette.info.main, 0.1),
+                        },
+                        '&.color-success': {
+                            backgroundColor: alpha(palette.success.main, 0.1),
+                        },
+                        '&.size-small': {
+                            fontSize: "0.9em",
+                            padding: paddingSmall,
+                            gap: paddingSmall,
+                        },
+                        '&.size-large': {
+                            fontSize: "1.2em",
+                            padding: paddingLarge,
+                            gap: paddingLarge,
+                        },
+                    },
+                    input: {
+                        fontSize: "inherit",
+                        backgroundColor: 'transparent',
+                        color: palette.text.primary,
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    },
+                    placeholder: {
+                        color: palette.text.disabled,
+                    },
+                    adornment: {
+                        alignItems: 'center',
+                    }
+                }
+            },
+            InputDecorator: {
+                styleOverrides: {
+                    root: {
+                        fontSize: "1rem",
+                        gap: paddingMedium,
+                        padding: paddingMedium,
+                        borderRadius: borderRadius,
+                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
+                        '&:hover': {
+                            backgroundColor: palette.action.hover,
+                        },
+                        '&.size-small': {
+                            padding: `${paddingSmall}px ${paddingMedium}px `,
+                            gap: paddingSmall,
+                        },
+                        '&.size-large': {
+                            padding: paddingLarge,
+                            gap: paddingLarge,
+                        },
+                        '&.selected': {
+                            backgroundColor: palette.action.selected,
+                        }
+                    },
+                    label: {
+                        color: palette.text.primary,
+                        marginBottom: paddingMedium / 2,
+                        fontSize: "1em",
+                        '&.size-small': {
+                            marginBottom: paddingSmall / 2,
+                            fontSize: "0.95em",
+                        },
+                        '&.size-large': {
+                            marginBottom: paddingLarge / 2,
+                            fontSize: "1.05em",
+                        },
+                    },
+                    labelText: {
+                        '&.required::after': {
+                            content: '" *"',
+                            color: palette.error.main,
+                        }
+                    },
+                    description: {
+                        marginTop: paddingMedium / 2,
+                        '&.size-small': {
+                            marginTop: paddingSmall / 2,
+                            fontSize: "0.85em",
+                        },
+                        '&.size-large': {
+                            marginTop: paddingLarge / 2,
+                            fontSize: "0.95em",
+                        },
+                        color: palette.text.secondary,
+                        fontSize: "0.9rem",
+                    },
+                    indicator: {
+                        width: 4,
+                        height: "100%",
+                        alignSelf: "center",
+                        borderRadius: 2,
+                        '&.changed': {
+                            backgroundColor: alpha(palette.warning.main, 0.4),
+                        },
+                        '&.default': {
+                            backgroundColor: alpha(palette.primary.main, 0.4),
+                        },
+                        '&.size-small': {
+                            width: 3,
+                        },
+                        '&.size-large': {
+                            width: 5,
+                        },
+                    },
+                    restrictions: {
+                        fontSize: "0.7em",
+                        alignItems: "end",
+                        color: palette.text.secondary,
+                    },
+                    restriction: {
+                        borderRadius: borderRadius,
+                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+                        lineHeight: 1,
+                        padding: "2px 4px",
+                    },
+                    validity: {
+                        margin: 1,
+                    }
+                }
+            }
         }
     }
 };

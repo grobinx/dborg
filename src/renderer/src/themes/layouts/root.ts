@@ -1,7 +1,9 @@
-import { ThemeOptions } from "@mui/material";
+import { createTheme, ThemeOptions } from "@mui/material";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 
 const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string): ThemeOptions => {
+    const rootTheme = createTheme();
+
     return {
         spacing: 1,
         typography: {
@@ -9,6 +11,14 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string)
             fontSize: fontSize,
             monospaceFontFamily: monospaceFontFamily,
         },
+
+        shape: rootTheme.shape,
+        shadows: rootTheme.shadows,
+        breakpoints: rootTheme.breakpoints,
+        zIndex: rootTheme.zIndex,
+        mixins: rootTheme.mixins,
+        transitions: rootTheme.transitions,
+
         components: {
             MuiCssBaseline: {
                 styleOverrides: {

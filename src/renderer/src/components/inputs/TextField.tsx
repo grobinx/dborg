@@ -2,11 +2,11 @@ import React from 'react';
 import { InputProps } from './base/InputControl';
 import { styled } from '@mui/material';
 import clsx from '../../utils/clsx';
-import { FormattedItem } from '../types';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
+import { FormattedContentItem } from '../useful/FormattedText';
 
 interface TextFieldProps extends InputProps {
-    placeholder?: FormattedItem;
+    placeholder?: FormattedContentItem;
     maxLength?: number;
     minLength?: number;
     adornments?: React.ReactNode;
@@ -74,12 +74,11 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
 const StyledPlaceholder = styled('div', {
     name: "TextField",
     slot: "placeholder",
-})(({ theme }) => ({
+})(({ /*theme*/ }) => ({
     position: "absolute",
     top: "50%", // Wyśrodkowanie w pionie
     left: "8px", // Wyśrodkowanie w poziomie
     transform: "translateY(-50%)", // Przesunięcie o połowę wysokości
-    color: theme.palette.text.disabled,
     pointerEvents: "none", // Zapobiega interakcji z placeholderem
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -230,7 +229,7 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
                 maxLength={maxLength}
                 minLength={minLength}
                 value={currentValue}
-                onChange={(e) => onChange?.(e.target.value)}
+                onChange={(e) => onChange?.(e, e.target.value)}
                 disabled={disabled}
                 required={required}
                 onFocus={onFocus}

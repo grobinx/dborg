@@ -1,5 +1,5 @@
+import { FormattedContent } from "@renderer/components/useful/FormattedText";
 import React from "react";
-import { FormattedContent } from "../../types";
 
 export interface InputDecoratorContextType {
     /**

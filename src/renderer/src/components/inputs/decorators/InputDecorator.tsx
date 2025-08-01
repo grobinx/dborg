@@ -1,10 +1,11 @@
 import { Alert, Palette, Popper, styled } from "@mui/material";
-import { FormattedContent, FormattedItem, Size } from "../../types";
 import clsx from "../../../utils/clsx";
 import { InputProps } from "../base/InputControl";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
 import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
+import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
+import { Size } from "../base/types";
 
 /**
  * Wspólny zestaw właściwości dla komponentów wejściowych
@@ -31,7 +32,7 @@ export interface InputDecoratorProps {
      * Etykieta elementu
      * @default undefined
      */
-    label?: FormattedItem;
+    label?: FormattedContentItem;
     /**
      * Opis elementu, wyświetlany pod elementem edycyjnym
      * Może być użyty do wyświetlenia dodatkowych informacji lub instrukcji
@@ -108,10 +109,16 @@ const StyledInputDecoratorLabelText = styled('label', {
     textOverflow: "ellipsis",
 }));
 
+const StyledInputDecoratorValidity = styled(Popper, {
+    name: "InputDecorator",
+    slot: "validity",
+})(({ /*theme*/ }) => ({
+}));
+
 interface InputDecoratorLabelProps {
     className?: string;
     children?: React.ReactNode;
-    label?: FormattedItem;
+    label?: FormattedContentItem;
     restrictions?: React.ReactNode;
 }
 
@@ -325,7 +332,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                             {description}
                         </StyledInputDecoratorDescription>
                     )}
-                    <Popper
+                    <StyledInputDecoratorValidity
                         disablePortal={true}
                         open={!!invalid && isPopperVisible}
                         anchorEl={inputRef.current || undefined}
@@ -334,14 +341,17 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                             width: inputRef.current ? `${inputRef.current.offsetWidth}px` : undefined,
                             minWidth: 200,
                         }}
+                        className={clsx(
+                            "InputDecorator-validity",
+                            classes,
+                        )}
                     >
                         <Alert
-                            className="InputDecorator-validity"
                             severity="error"
                         >
                             {!!invalid && invalid}
                         </Alert>
-                    </Popper>
+                    </StyledInputDecoratorValidity>
                 </StyledInputDecoratorContainer>
             </StyledInputDecorator>
         </InputDecoratorContext.Provider>

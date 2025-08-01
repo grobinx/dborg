@@ -4,6 +4,7 @@ import BaseTextField from "../base/BaseTextField";
 import { validateStringLength, validateTextRows } from "./validations";
 import React from "react";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { Stack } from "@mui/material";
 
 export const TextSetting: React.FC<{
     setting: SettingTypeText;
@@ -35,7 +36,7 @@ export const TextSetting: React.FC<{
                     setting.maxLength ? <div key="max-length" className="block">{`${(value ?? "").length} / ${setting.maxLength}`}</div> : undefined,
                     setting.maxRows ? <div key="max-rows" className="block">{`${(value ?? "").length ? (value ?? "").split('\n').length : 0} / ${setting.maxRows}`}</div> : undefined,
                 ];
-                return policy.filter(Boolean);
+                return <Stack direction="row">{policy.filter(Boolean)}</Stack>;
             }}
         >
             <BaseTextField

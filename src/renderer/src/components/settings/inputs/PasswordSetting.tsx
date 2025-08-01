@@ -2,7 +2,7 @@ import { SettingTypePassword } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
 import BaseTextField from "../base/BaseTextField";
 import { validatePassword, validateStringLength, validateTextRows } from "./validations";
-import { InputAdornment, Tooltip, useTheme } from "@mui/material";
+import { InputAdornment, Stack, Tooltip, useTheme } from "@mui/material";
 import ToolButton from "@renderer/components/ToolButton";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -105,7 +105,7 @@ export const PasswordSetting: React.FC<{
                         </Tooltip>
                     ),
                 ];
-                return policy.filter(Boolean);
+                return <Stack direction="row">{policy.filter(Boolean)}</Stack>;
             }}
         >
             <BaseTextField

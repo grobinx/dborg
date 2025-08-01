@@ -7,12 +7,12 @@ import ReactMarkdown from "react-markdown";
 
 let counter: bigint = 0n;
 
-export type FormattedItem = React.ReactNode | string;
+export type FormattedContentItem = React.ReactNode | string;
 export type FormattedContent =
-    FormattedItem // pojedynczy element
-    | (FormattedItem  // lista z pozycjami wyrównanymi do lewej
-        | [FormattedItem, FormattedItem]    // lista z pozycjami wyrównanymi do lewej i prawej
-        | [FormattedItem, FormattedItem, FormattedItem]   // lista z pozycjami wyrównanymi do lewej, środka i prawej
+    FormattedContentItem // pojedynczy element
+    | (FormattedContentItem  // lista z pozycjami wyrównanymi do lewej
+        | [FormattedContentItem, FormattedContentItem]    // lista z pozycjami wyrównanymi do lewej i prawej
+        | [FormattedContentItem, FormattedContentItem, FormattedContentItem]   // lista z pozycjami wyrównanymi do lewej, środka i prawej
     )[];
 
 const StyledFormattedTextParagraph = styled('span', {
@@ -39,7 +39,7 @@ const FormattedTextParagraph: React.FC<FormattedTextProps> = (props) => {
     );
 }
 
-export const FormattedTextItem: React.FC<React.ComponentProps<typeof ReactMarkdown>> = (props) => {
+export const FormattedTextElement: React.FC<React.ComponentProps<typeof ReactMarkdown>> = (props) => {
     const theme = useTheme();
 
     return (
@@ -63,12 +63,12 @@ export const FormattedTextItem: React.FC<React.ComponentProps<typeof ReactMarkdo
     );
 }
 
-export const FormattedText: React.FC<{text: FormattedContent}> = ({text}) => {
+export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) => {
     const theme = useTheme();
 
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return <FormattedTextItem key={counter++}>{text}</FormattedTextItem>;
+        return <FormattedTextElement key={counter++}>{text}</FormattedTextElement>;
     } else if (isValidElement(text)) {
         return text;
     } else if (Array.isArray(text)) {
@@ -82,16 +82,19 @@ export const FormattedText: React.FC<{text: FormattedContent}> = ({text}) => {
                 sx={{ whiteSpace: "pre-wrap" }}
                 width={"100%"}
             >
-                {text.map((item) => {
+                {text.map((item, index) => {
                     if (!Array.isArray(item)) {
                         if (typeof item === 'string') {
-                            return <FormattedTextItem key={counter++}>{item}</FormattedTextItem>;
+                            return <FormattedTextElement key={`text-${index}`}>{item}</FormattedTextElement>;
+                        }
+                        if (isValidElement(item)) {
+                            return React.cloneElement(item, { key: `element-${index}` });
                         }
                         return item;
                     } else if (Array.isArray(item)) {
                         return (
                             <Stack
-                                key={counter++}
+                                key={`stack-${index}`}
                                 direction="row"
                                 gap={8}
                                 justifyContent="space-between"
@@ -99,7 +102,10 @@ export const FormattedText: React.FC<{text: FormattedContent}> = ({text}) => {
                             >
                                 {item.map((subItem, index) => {
                                     if (typeof subItem === 'string') {
-                                        return <FormattedTextItem key={index}>{subItem}</FormattedTextItem>;
+                                        return <FormattedTextElement key={index}>{subItem}</FormattedTextElement>;
+                                    }
+                                    if (isValidElement(subItem)) {
+                                        return React.cloneElement(subItem, { key: `element-${index}` });
                                     }
                                     return subItem;
                                 })}
@@ -107,7 +113,7 @@ export const FormattedText: React.FC<{text: FormattedContent}> = ({text}) => {
                         );
                     }
                     return null;
-                })}
+                }).filter(Boolean)}
             </Stack>
         );
     }

@@ -22,11 +22,3 @@ export type PaletteColor =
     /** Kolor sukcesu */
     | 'success';
  
-
-export type FormattedItem = React.ReactNode | string;
-export type FormattedContent =
-    FormattedItem // pojedynczy element
-    | (FormattedItem  // lista z pozycjami wyrównanymi do lewej
-        | [FormattedItem, FormattedItem]    // lista z pozycjami wyrównanymi do lewej i prawej
-        | [FormattedItem, FormattedItem, FormattedItem]   // lista z pozycjami wyrównanymi do lewej, środka i prawej
-    )[];

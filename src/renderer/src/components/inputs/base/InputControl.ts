@@ -1,5 +1,6 @@
-import { FormattedContent, PaletteColor, Size } from "../../types";
-import React from "react";
+import { FormattedContent } from "@renderer/components/useful/FormattedText";
+import React, { ChangeEvent } from "react";
+import { PaletteColor, Size } from "./types";
 
 export interface InputProps {
     id?: string;
@@ -31,7 +32,7 @@ export interface InputProps {
      * @param args Dodatkowe argumenty
      * @returns
      */
-    onChange?: (value: any) => void;
+    onChange?: (e: ChangeEvent, value: any) => void;
     /**
      * Funkcja wywoływana po kliknięciu w dowolną część pola
      */

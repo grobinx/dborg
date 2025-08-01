@@ -41,6 +41,8 @@ import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLog
 import { SettingInputControlProps } from "@renderer/components/settings/SettingInputControl";
 import { CodeProps } from "@renderer/components/Code";
 import { FormattedTextProps } from "@renderer/components/useful/FormattedText";
+import { InputProps } from "@renderer/components/inputs/base/InputControl";
+import { InputDecoratorProps } from "@renderer/components/inputs/decorators/InputDecorator";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -143,6 +145,8 @@ declare module "@mui/material/styles" {
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
         Code: "root";
         FormattedText: "root";
+        TextField: "root" | "input" | "adornment" | "placeholder";
+        InputDecorator: "root" | "indicator" | "container" | "label" | "labelText" | "restrictions" | "restriction" | "description" | "input" | "validity";
     }
 
     interface ComponentsPropsList {
@@ -176,6 +180,8 @@ declare module "@mui/material/styles" {
         SettingInputControl: Partial<SettingInputControlProps>;
         Code: Partial<CodeProps>;
         FormattedText: Partial<FormattedTextProps>;
+        TextField: Partial<InputProps>;
+        InputDecorator: Partial<InputDecoratorProps>;
     }
     interface Components {
         MenuBar?: {
@@ -335,6 +341,16 @@ declare module "@mui/material/styles" {
             defaultProps?: ComponentsPropsList['FormattedText'];
             styleOverrides?: ComponentsOverrides<Theme>['FormattedText'];
             //variants?: ComponentsVariants['FormattedText'];
+        };
+        TextField?: {
+            //defaultProps?: ComponentsPropsList['TextField'];
+            styleOverrides?: ComponentsOverrides<Theme>['TextField'];
+            //variants?: ComponentsVariants['TextField'];
+        };
+        InputDecorator?: {
+            //defaultProps?: ComponentsPropsList['InputDecorator'];
+            styleOverrides?: ComponentsOverrides<Theme>['InputDecorator'];
+            //variants?: ComponentsVariants['InputDecorator'];
         };
     }
 
