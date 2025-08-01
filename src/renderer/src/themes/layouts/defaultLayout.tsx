@@ -1076,15 +1076,20 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         padding: paddingMedium,
                         borderRadius: borderRadius,
                         backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
+                        '&:has(.InputDecorator-indicator)': {
+                            paddingRight: paddingMedium *2 +4,
+                        },
                         '&:hover': {
                             backgroundColor: palette.action.hover,
                         },
                         '&.size-small': {
                             padding: `${paddingSmall}px ${paddingMedium}px `,
+                            paddingRight: paddingSmall *2 +3,
                             gap: paddingSmall,
                         },
                         '&.size-large': {
                             padding: paddingLarge,
+                            paddingRight: paddingLarge *2 +5,
                             gap: paddingLarge,
                         },
                         '&.selected': {
