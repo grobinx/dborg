@@ -24,9 +24,6 @@ const ContainerButtonRoot = styled(Button, {
     color: theme.palette.sideBar.contrastText,
     lineHeight: 0,
     fontSize: "inherit",
-    '& .IconWrapper-root': {
-        color: theme.palette.sideBar.icon,
-    },
 }));
 
 const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {

@@ -1,4 +1,4 @@
-import { Theme } from "@mui/material";
+import { darken, lighten, PaletteColor, Theme } from "@mui/material";
 
 export const resolveColor = (colorName: string, theme: Theme) => {
     // Obsługa dynamicznych kolorów
@@ -13,3 +13,12 @@ export const resolveColor = (colorName: string, theme: Theme) => {
 
     return color;
 };
+
+export function createPaletteColor(mainColor: string, contrastText: string): PaletteColor {
+    return {
+        light: lighten(mainColor, 0.2),
+        main: mainColor,
+        dark: darken(mainColor, 0.2),
+        contrastText: contrastText,
+    };
+}

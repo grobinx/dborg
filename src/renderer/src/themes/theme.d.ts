@@ -46,17 +46,9 @@ import { InputDecoratorProps } from "@renderer/components/inputs/decorators/Inpu
 
 type Theme = Omit<MuiTheme, 'components'>;
 
-export interface PaletteColorExtend extends PaletteColor {
-    icon: string,
-}
-
 export type DataTypeColors = Partial<{
     [key in ColumnBaseType | 'null']: string;
 }>;
-
-export type PaletteColorOptionsExtend = PaletteColorOptions & {
-    icon?: string,
-}
 
 declare module '@mui/material/Typography' {
     interface TypographyPropsVariantOverrides {
@@ -103,18 +95,20 @@ declare module "@mui/material/styles" {
     }
 
     interface Palette {
-        menuBar: PaletteColorExtend;
-        sideBar: PaletteColorExtend;
-        statusBar: PaletteColorExtend;
-        table: PaletteColorExtend;
+        main: PaletteColor;
+        menuBar: PaletteColor;
+        sideBar: PaletteColor;
+        statusBar: PaletteColor;
+        table: PaletteColor;
         dataType: DataTypeColors;
     }
 
     interface PaletteOptions {
-        menuBar?: PaletteColorOptionsExtend;
-        sideBar?: PaletteColorOptionsExtend;
-        statusBar?: PaletteColorOptionsExtend;
-        table?: PaletteColorOptionsExtend;
+        main?: PaletteColor;
+        menuBar?: PaletteColor;
+        sideBar?: PaletteColor;
+        statusBar?: PaletteColor;
+        table?: PaletteColor;
         dataType?: DataTypeColors;
     }
 

@@ -5,7 +5,7 @@ import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecorat
 import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
 import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
-import { Size } from "../base/types";
+import { PaletteColor, Size } from "../base/types";
 
 /**
  * Wspólny zestaw właściwości dla komponentów wejściowych
@@ -256,10 +256,10 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
         return {
             required: false,
             disabled: false,
-            size: "medium" as Size,
+            size: "medium",
             defaultValue: undefined,
             value: undefined,
-            color: "primary" as keyof Palette,
+            color: "primary",
         };
     }, [children]);
 

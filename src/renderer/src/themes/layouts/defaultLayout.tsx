@@ -1,6 +1,7 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 import root from "./root";
 import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
+import { PaletteColors } from "@renderer/components/inputs/base/types";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
     const borderRadius = 3;
@@ -278,7 +279,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             fontSize: "1.8em",
                         },
                         '&.Mui-selected': {
-                            outlineColor: palette.sideBar.icon,
+                            outlineColor: palette.sideBar.contrastText,
                             outlineWidth: 1,
                             outlineStyle: 'solid',
                             backgroundColor: palette.mode === "dark" ? lighten(palette.background.sideBar, 0.1) : darken(palette.background.sideBar, 0.1),
@@ -394,10 +395,10 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             }
                         },
                         '&.CloseWindowControlButton:hover': {
-                            backgroundColor: palette.mode === "dark" ? palette.error.dark : palette.error.light
+                            backgroundColor: palette.error.main
                         },
                         '&.LogoWindowControlButton:hover': {
-                            backgroundColor: palette.mode === "dark" ? palette.primary.dark : palette.primary.light
+                            backgroundColor: palette.primary.main
                         },
                     }
                 }
@@ -1000,7 +1001,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         borderRadius: borderRadius,
                         padding: paddingMedium,
                         gap: paddingMedium,
-                        backgroundColor: alpha(palette.primary.main, 0.1),
                         '&:hover': {
                             borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                         },
@@ -1010,37 +1010,19 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             outlineStyle: 'solid',
                             outlineOffset: -2,
                             borderColor: 'transparent',
-                            '&.color-secondary': {
-                                outlineColor: palette.secondary.main,
-                            },
-                            '&.color-error': {
-                                outlineColor: palette.error.main,
-                            },
-                            '&.color-warning': {
-                                outlineColor: palette.warning.main,
-                            },
-                            '&.color-info': {
-                                outlineColor: palette.info.main,
-                            },
-                            '&.color-success': {
-                                outlineColor: palette.success.main,
-                            },
+                            ...PaletteColors.reduce((acc, color) => {
+                                acc[`&.color-${color}`] = {
+                                    outlineColor: palette[color].main,
+                                };
+                                return acc;
+                            }, {}),
                         },
-                        '&.color-secondary': {
-                            backgroundColor: alpha(palette.secondary.main, 0.1),
-                        },
-                        '&.color-error': {
-                            backgroundColor: alpha(palette.error.main, 0.1),
-                        },
-                        '&.color-warning': {
-                            backgroundColor: alpha(palette.warning.main, 0.1),
-                        },
-                        '&.color-info': {
-                            backgroundColor: alpha(palette.info.main, 0.1),
-                        },
-                        '&.color-success': {
-                            backgroundColor: alpha(palette.success.main, 0.1),
-                        },
+                        ...PaletteColors.reduce((acc, color) => {
+                            acc[`&.color-${color}`] = {
+                                backgroundColor: alpha(palette[color].main, 0.1),
+                            };
+                            return acc;
+                        }, {}),
                         '&.size-small': {
                             fontSize: "0.9em",
                             padding: paddingSmall,
@@ -1073,6 +1055,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             InputDecorator: {
                 styleOverrides: {
                     root: {
+                        cursor: "default",
                         fontSize: "1rem",
                         gap: paddingMedium,
                         padding: paddingMedium,

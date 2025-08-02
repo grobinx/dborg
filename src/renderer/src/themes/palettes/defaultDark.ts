@@ -1,36 +1,14 @@
 import { colors, darken, lighten } from "@mui/material";
 import createPalette from "@mui/material/styles/createPalette";
+import { createPaletteColor } from "../utils";
 
 const palette = createPalette({
     mode: 'dark',
-    sideBar: {
-        main: colors.blueGrey[500],
-        light: lighten(colors.blueGrey[500], 0.2),
-        dark: darken(colors.blueGrey[500], 0.2),
-        contrastText: colors.blueGrey[100],
-        icon: colors.blueGrey[200],
-    },
-    menuBar: {
-        main: colors.blueGrey[500],
-        light: lighten(colors.blueGrey[500], 0.2),
-        dark: darken(colors.blueGrey[500], 0.2),
-        contrastText: colors.blueGrey[100],
-        icon: colors.blueGrey[200],
-    },
-    statusBar: {
-        main: colors.blueGrey[500],
-        light: lighten(colors.blueGrey[500], 0.2),
-        dark: darken(colors.blueGrey[500], 0.2),
-        contrastText: colors.blueGrey[100],
-        icon: colors.blueGrey[200],
-    },
-    table: {
-        main: colors.blueGrey[500],
-        light: lighten(colors.blueGrey[500], 0.2),
-        dark: darken(colors.blueGrey[500], 0.2),
-        contrastText: colors.blueGrey[100],
-        icon: colors.blueGrey[200],
-    },
+    main: createPaletteColor(colors.grey[700], colors.grey[50]),
+    sideBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
+    menuBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
+    statusBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
+    table: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
     background: {
         sideBar: darken(colors.blueGrey[900], 0.5),
         menuBar: darken(colors.blueGrey[900], 0.2),

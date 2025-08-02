@@ -8,9 +8,17 @@ export type Size =
     /** Duży rozmiar elementu - przeznaczenie: np. nagłówki */
     | 'large';
 
+export const Sizes: Size[] = [
+    'small',
+    'medium',
+    'large',
+];
+
 export type PaletteColor =
+    /** Kolor główny, neutralny */
+    'main'
     /** Kolor podstawowy */
-    'primary'
+    | 'primary'
     /** Kolor drugorzędny */
     | 'secondary'
     /** Kolor błędu */
@@ -21,4 +29,13 @@ export type PaletteColor =
     | 'info'
     /** Kolor sukcesu */
     | 'success';
- 
+
+export const PaletteColors: PaletteColor[] = [
+    'main',
+    'primary',
+    'secondary',
+    'error',
+    'warning',
+    'info',
+    'success',
+]

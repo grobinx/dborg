@@ -1,5 +1,5 @@
 import { Box, BoxProps, Stack, styled, Typography, useTheme } from "@mui/material";
-import { Size } from "@renderer/components/inputs/base/types";
+import { PaletteColor, Size } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Adornment, TextField } from "@renderer/components/inputs/TextField";
 import { IconsList } from "@renderer/components/settings/developer/IconList";
@@ -94,7 +94,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                     </Adornment>
 
                                 ]}
-                                color={"primary"}
+                                color="main"
                                 required={true}
                                 defaultValue={"dv"}
                             />
