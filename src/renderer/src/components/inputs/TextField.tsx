@@ -4,6 +4,7 @@ import { styled } from '@mui/material';
 import clsx from '../../utils/clsx';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
+import { useValidation, validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
 
 interface TextFieldProps extends InputProps {
     placeholder?: FormattedContentItem;
@@ -115,16 +116,27 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
     const textInputRef = React.useRef<HTMLInputElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
     const [inputLeft, setInputLeft] = React.useState<number>(0);
-    const inputDecorationContext = useInputDecorator();
+    const decorator = useInputDecorator();
 
     const currentValue = value ?? defaultValue;
+    const [invalid, setInvalid] = useValidation(
+        currentValue, 
+        disabled, 
+        [
+            (value: any) => validateRequired(value, required),
+            (value: any) => validateMinLength(value, minLength),
+            (value: any) => validateMaxLength(value, maxLength),
+            (value: any) => onValidate?.(value) ?? true
+        ], 
+        () => onChanged?.(currentValue)
+    );
 
     const classes = clsx(
         `size-${size}`,
         disabled && "disabled",
         required && "required",
         `color-${color}`,
-        inputDecorationContext && inputDecorationContext.invalid && "invalid",
+        invalid && "invalid",
     );
 
     React.useEffect(() => {
@@ -140,57 +152,9 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
         }
     }, [width, adornments]);
 
-    React.useEffect(() => {
-        if (!inputDecorationContext) return;
-
-        if (disabled) {
-            inputDecorationContext.setInvalid(undefined);
-            return;
-        }
-
-        const timeoutId = setTimeout(() => {
-            let valid = true;
-            const isEmpty = currentValue === undefined || currentValue === null || currentValue === "";
-
-            if (required && isEmpty) {
-                valid = false;
-                inputDecorationContext.setInvalid("To pole jest wymagane i nie może być puste");
-            }
-
-            if (valid && minLength && currentValue.length < minLength) {
-                valid = false;
-                inputDecorationContext.setInvalid(`Wymagana minimalna długość to ${minLength} znaków`);
-            }
-            if (valid && maxLength && currentValue.length > maxLength) {
-                valid = false;
-                inputDecorationContext.setInvalid(`Maksymalna długość to ${maxLength} znaków`);
-            }
-
-            if (valid && typeof onValidate === "function") {
-                const result = onValidate(currentValue);
-                if (result === false) {
-                    valid = false;
-                    inputDecorationContext.setInvalid("Nieprawidłowa wartość");
-                } else if (result) {
-                    valid = false;
-                    inputDecorationContext.setInvalid(result);
-                } else {
-                    inputDecorationContext.setInvalid(undefined);
-                }
-            }
-
-            if (valid) {
-                inputDecorationContext.setInvalid(undefined);
-                onChanged?.(currentValue);
-            }
-        }, changedDelay);
-
-        return () => clearTimeout(timeoutId);
-    }, [currentValue, required, disabled, onValidate]);
-
-    if (inputDecorationContext && maxLength) {
+    if (decorator && maxLength) {
         Promise.resolve().then(() => {
-            inputDecorationContext.setRestrictions(`${(currentValue ?? "").length}/${maxLength}`);
+            decorator.setRestrictions(`${(currentValue ?? "").length}/${maxLength}`);
         });
     }
 

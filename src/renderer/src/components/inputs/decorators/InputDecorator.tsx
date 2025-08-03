@@ -239,7 +239,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                 setInvalid(invalid);
             }
         },
-    }), [setInputRestrictions]);
+    }), [invalid]);
 
     // Pobieranie właściwości bez klonowania
     const { required, disabled, size, defaultValue, value, color } = React.useMemo(() => {
