@@ -20,6 +20,12 @@ export interface InputDecoratorContextType {
      * @param invalid Czy element jest nieprawidłowy
      */
     setInvalid: (invalid: boolean | FormattedContent) => void;
+    focused: boolean;
+    /**
+     * Ustawia nowy stan fokusu dla elementu
+     * @param focused Czy element jest w stanie fokusu
+     */
+    setFocused: (focused: boolean) => void;
 }
 
 export const InputDecoratorContext = React.createContext<InputDecoratorContextType | null>(null);

@@ -2,16 +2,16 @@ import { FormattedContent } from "@renderer/components/useful/FormattedText";
 import React, { ChangeEvent } from "react";
 import { PaletteColor, Size } from "./types";
 
-export interface InputProps {
+export interface BaseInputProps<T = any> {
     id?: string;
     className?: string;
 
-    value?: any;
+    value?: T;
     /**
      * Domyślna wartość, która będzie ustawiona przy pierwszym renderowaniu jeśli nie podano wartości w value
      * Jeśli nie zostanie podana, wartość będzie pusta
      */
-    defaultValue?: any;
+    defaultValue?: T;
     /**
      * Czy element jest wyłączony
      * Zostanie ustawiona odpowiednia klasa CSS "disabled"
@@ -32,14 +32,14 @@ export interface InputProps {
      * @param args Dodatkowe argumenty
      * @returns
      */
-    onChange?: (e: ChangeEvent, value: any) => void;
+    onChange?: (e: ChangeEvent, value: T) => void;
     /**
      * Funkcja wywoływana z opóźnieniem po zmianie wartości, po walidacji.
      * Może być używana do aktualizacji stanu lub wykonania innych działań po zmianie wartości,
      * kiedy wartość jest poprawna.
      * @param value Nowa wartość
      */
-    onChanged?: (value: any) => void;
+    onChanged?: (value: T) => void;
     /**
      * Czas opóźnienia w milisekundach przed wywołaniem funkcji onChanged
      * Używane do opóźnienia aktualizacji stanu lub innych działań po zmianie wartości
@@ -63,7 +63,7 @@ export interface InputProps {
      * @param value Wartość do sprawdzenia
      * @returns true, jeśli wartość jest poprawna, lub komunikat o błędzie
      */
-    onValidate?: (value: any) => boolean | FormattedContent;
+    onValidate?: (value: T) => boolean | FormattedContent;
     /**
      * Szerokość elementu
      * Może być podana jako liczba (w pikselach) lub jako string

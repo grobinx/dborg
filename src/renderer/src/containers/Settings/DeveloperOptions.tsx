@@ -1,7 +1,9 @@
 import { Box, BoxProps, Stack, styled, Typography, useTheme } from "@mui/material";
+import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
 import { PaletteColor, Size } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import { Adornment, TextField } from "@renderer/components/inputs/TextField";
+import { NumberField } from "@renderer/components/inputs/NumberField";
+import { TextField } from "@renderer/components/inputs/TextField";
 import { IconsList } from "@renderer/components/settings/developer/IconList";
 import React from "react";
 
@@ -48,14 +50,25 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
     const { ...other } = props;
     const theme = useTheme();
     const [selected, setSelected] = React.useState<string | undefined>(undefined);
-    const [values, setValues] = React.useState<Record<string, string>>({
-        small: "small",
-        medium: "medium",
-        large: "large",
+    const [textValues, setTextValues] = React.useState<Record<string, any>>({
+        small: "a",
+        medium: "b",
+        large: "c",
+    });
+    const [numberValues, setNumberValues] = React.useState<Record<string, any>>({
+        small: 1,
+        medium: 2,
+        large: 3,
     });
 
-    const handleValueChange = (size: string, value: string) => {
-        setValues((prev) => ({
+    const handleValueTextChange = (size: string, value: string) => {
+        setTextValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueNumberChange = (size: string, value: number) => {
+        setNumberValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -71,7 +84,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
             <Stack key="fields" direction="row" width="100%" gap={8}>
                 {["small", "medium", "large"].map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        Size: {size}
+                        TextField, size: {size}
                         <InputDecorator
                             key={size}
                             selected={selected === size}
@@ -83,8 +96,8 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                 size={size as Size}
                                 placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 maxLength={50}
-                                value={values[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(_e, value) => handleValueChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                value={textValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={(_e, value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
                                     <Adornment key="connected" position="end">
                                         <theme.icons.Connected />
@@ -96,7 +109,42 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                 ]}
                                 color="main"
                                 required={true}
-                                defaultValue={"dv"}
+                                defaultValue={1}
+                            />
+                        </InputDecorator>
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="fields" direction="row" width="100%" gap={8}>
+                {["small", "medium", "large"].map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        NumberField, size: {size}
+                        <InputDecorator
+                            key={size}
+                            selected={selected === size}
+                            onClick={() => setSelected(size)}
+                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                        >
+                            <NumberField
+                                size={size as Size}
+                                placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                max={50}
+                                min={1}
+                                value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={(_e, value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                adornments={[
+                                    <Adornment key="connected" position="end">
+                                        <theme.icons.Connected />
+                                    </Adornment>,
+                                    <Adornment key="clipboard" position="end">
+                                        <theme.icons.Clipboard />
+                                    </Adornment>
+
+                                ]}
+                                color="primary"
+                                required={true}
+                                defaultValue={1}
                             />
                         </InputDecorator>
                     </Stack>

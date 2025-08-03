@@ -41,7 +41,7 @@ import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLog
 import { SettingInputControlProps } from "@renderer/components/settings/SettingInputControl";
 import { CodeProps } from "@renderer/components/Code";
 import { FormattedTextProps } from "@renderer/components/useful/FormattedText";
-import { InputProps } from "@renderer/components/inputs/base/InputControl";
+import { BaseInputProps } from "@renderer/components/inputs/base/BaseInputProps";
 import { InputDecoratorProps } from "@renderer/components/inputs/decorators/InputDecorator";
 
 type Theme = Omit<MuiTheme, 'components'>;
@@ -139,7 +139,7 @@ declare module "@mui/material/styles" {
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
         Code: "root";
         FormattedText: "root";
-        TextField: "root" | "input" | "adornment" | "placeholder";
+        TextField: "root" | "input" | "adornment" | "placeholder" | "numberStepper";
         InputDecorator: "root" | "indicator" | "container" | "label" | "labelText" | "restrictions" | "restriction" | "description" | "input" | "validity";
     }
 
@@ -174,7 +174,7 @@ declare module "@mui/material/styles" {
         SettingInputControl: Partial<SettingInputControlProps>;
         Code: Partial<CodeProps>;
         FormattedText: Partial<FormattedTextProps>;
-        TextField: Partial<InputProps>;
+        TextField: Partial<BaseInputProps>;
         InputDecorator: Partial<InputDecoratorProps>;
     }
     interface Components {

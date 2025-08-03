@@ -1014,7 +1014,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         '&:hover': {
                             borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                         },
-                        '&:has(input:focus)': {
+                        '&.focused': {
                             outlineColor: palette.primary.main,
                             outlineWidth: 2,
                             outlineStyle: 'solid',
@@ -1053,12 +1053,43 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         border: "none",
                         boxShadow: "none",
                         outline: "none",
+                        '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button': {
+                            WebkitAppearance: "none",
+                            margin: 0,
+                        },
+                        '&[type="number"]': {
+                            MozAppearance: "textfield",
+                        }
                     },
                     placeholder: {
                         color: palette.text.disabled,
                     },
                     adornment: {
                         alignItems: 'center',
+                        '&.type-number.position-input': {
+                            flexDirection: 'column',
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            width: '2em',
+                            height: '100%',
+                            boxSizing: 'border-box',
+                        }
+                    },
+                    numberStepper: {
+                        display: 'flex',
+                        flexGrow: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontSize: '1em',
+                        color: palette.text.primary,
+                        width: '100%',
+                        '&:hover': {
+                            backgroundColor: palette.action.hover,
+                        },
                     }
                 }
             },
@@ -1145,6 +1176,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         fontSize: "0.7em",
                         alignItems: "end",
                         color: palette.text.secondary,
+                        gap: paddingMedium / 2,
                     },
                     restriction: {
                         borderRadius: borderRadius,

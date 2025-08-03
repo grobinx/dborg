@@ -71,3 +71,15 @@ export const validateMaxLength = (value: any, maxLength: number | undefined): bo
     }
     return true;
 };
+export const validateMaxValue = (value: any, max: number | undefined): boolean | FormattedContent => {
+    if (max !== undefined && value > max) {
+        return `Maksymalna wartość to ${max}`;
+    }
+    return true;
+};
+export const validateMinValue = (value: any, min: number | undefined): boolean | FormattedContent => {
+    if (min !== undefined && value < min) {
+        return `Minimalna wartość to ${min}`;
+    }
+    return true;
+};

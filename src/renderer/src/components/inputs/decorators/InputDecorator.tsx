@@ -1,6 +1,6 @@
 import { Alert, Palette, Popper, styled } from "@mui/material";
 import clsx from "../../../utils/clsx";
-import { InputProps } from "../base/InputControl";
+import { BaseInputProps } from "../base/BaseInputProps";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
 import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
@@ -13,7 +13,7 @@ import { PaletteColor, Size } from "../base/types";
  * @interface InputProps
  */
 export interface InputDecoratorProps {
-    children?: React.ReactElement<InputProps>;
+    children?: React.ReactElement<BaseInputProps>;
     id?: string;
     className?: string;
     /**
@@ -147,7 +147,19 @@ export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: I
                         className
                     )}
                 >
-                    {restrictions}
+                    {React.Children.toArray(restrictions).map((restriction, index) => {
+                        return (
+                            <Restriction
+                                key={`restriction-${index}`}
+                                className={clsx(
+                                    "InputDecorator-restriction",
+                                    className
+                                )}
+                            >
+                                {restriction}
+                            </Restriction>
+                        );
+                    })}
                 </StyledInputDecoratorRestrictions>
             )}
         </StyledInputDecoratorLabel>
@@ -223,12 +235,10 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
     const [inputRestrictions, setInputRestrictions] = React.useState<React.ReactNode>(null);
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [inputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
+    const [focused, setFocused] = React.useState<boolean>(false);
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
-        setRestrictions: (restriction) => {
-            const restrictions = React.Children.toArray(restriction).map((r, index) => {
-                return <Restriction key={`restriction-${index}`}>{r}</Restriction>;
-            });
+        setRestrictions: (restrictions) => {
             setInputRestrictions(restrictions);
         },
         invalid: invalid,
@@ -239,7 +249,11 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                 setInvalid(invalid);
             }
         },
-    }), [invalid]);
+        focused: focused,
+        setFocused: (focused) => {
+            setFocused(focused);
+        },
+    }), [invalid, focused]);
 
     // Pobieranie właściwości bez klonowania
     const { required, disabled, size, defaultValue, value, color } = React.useMemo(() => {
@@ -271,6 +285,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
         required && "required",
         invalid && "invalid",
         selected && "selected",
+        focused && "focused",
         `color-${color}`,
     );
 
