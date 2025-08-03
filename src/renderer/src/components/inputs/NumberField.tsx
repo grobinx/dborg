@@ -114,8 +114,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                         key="increment"
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
-                            const intervalId = startRepeat(() => handleIncrement(e));
-                            e.currentTarget.dataset.intervalId = String(intervalId); // Przechowaj ID interwału
+                            startRepeat(() => handleIncrement(e));
                         }}
                         onMouseUp={() => {
                             stopRepeat(); // Zatrzymaj interwał
@@ -130,8 +129,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                         key="decrement"
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
-                            const intervalId = startRepeat(() => handleDecrement(e));
-                            e.currentTarget.dataset.intervalId = String(intervalId); // Przechowaj ID interwału
+                            startRepeat(() => handleDecrement(e));
                         }}
                         onMouseUp={() => {
                             stopRepeat(); // Zatrzymaj interwał
