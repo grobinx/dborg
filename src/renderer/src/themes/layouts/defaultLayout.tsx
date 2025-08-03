@@ -1059,7 +1059,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                         '&[type="number"]': {
                             MozAppearance: "textfield",
-                        }
+                        },
                     },
                     placeholder: {
                         color: palette.text.disabled,
@@ -1068,11 +1068,9 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         alignItems: 'center',
                         '&.type-number.position-input': {
                             flexDirection: 'column',
-                            justifyContent: "space-between",
+                            justifyContent: "center",
                             alignItems: "center",
                             width: '2em',
-                            height: '100%',
-                            boxSizing: 'border-box',
                         }
                     },
                     numberStepper: {
@@ -1084,9 +1082,9 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         border: 'none',
                         cursor: 'pointer',
                         padding: 0,
-                        fontSize: '1em',
                         color: palette.text.primary,
                         width: '100%',
+                        height: 0,
                         '&:hover': {
                             backgroundColor: palette.action.hover,
                         },

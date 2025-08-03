@@ -81,7 +81,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                     Developer Options
                 </Typography>
             </StyledDeveloperOptionsTitle>
-            <Stack key="fields" direction="row" width="100%" gap={8}>
+            <Stack key="textFields" direction="row" width="100%" gap={8}>
                 {["small", "medium", "large"].map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         TextField, size: {size}
@@ -115,7 +115,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                     </Stack>
                 ))}
             </Stack>
-            <Stack key="fields" direction="row" width="100%" gap={8}>
+            <Stack key="numberFields" direction="row" width="100%" gap={8}>
                 {["small", "medium", "large"].map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         NumberField, size: {size}

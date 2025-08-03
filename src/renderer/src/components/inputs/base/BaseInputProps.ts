@@ -92,5 +92,5 @@ export interface BaseInputProps<T = any> {
      * Używana do bezpośredniego dostępu do elementu wejściowego, np. do ustawienia fokusu lub odczytu wartości
      * Jeśli nie zostanie podana, nie będzie możliwe bezpośrednie odwołanie się do elementu wejściowego
      */
-    inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 }

@@ -236,6 +236,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [inputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [focused, setFocused] = React.useState<boolean>(false);
+    const [type, setType] = React.useState<string>("text");
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
@@ -252,6 +253,10 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
         focused: focused,
         setFocused: (focused) => {
             setFocused(focused);
+        },
+        type: type,
+        setType: (type) => {
+            setType(type);
         },
     }), [invalid, focused]);
 
@@ -286,6 +291,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
         invalid && "invalid",
         selected && "selected",
         focused && "focused",
+        `type-${type}`,
         `color-${color}`,
     );
 

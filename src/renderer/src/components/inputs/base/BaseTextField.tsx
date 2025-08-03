@@ -53,10 +53,11 @@ interface AdornmentProps {
      * Kolejność <= 10 będzie na początku, a > 10 na końcu
      */
     position?: 'start' | 'end' | 'input' | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
+    ref?: React.Ref<HTMLDivElement>;
 }
 
 export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
-    const { children, position = 'start', className } = props;
+    const { children, position = 'start', className, ref } = props;
     let order = 0;
     let orderClass = 'start';
 
@@ -80,6 +81,7 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
                 `position-${orderClass}`,
                 className
             )}
+            ref={ref}
             sx={{
                 order,
             }}
@@ -176,6 +178,12 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         }
     }, [width, adornments]);
 
+    React.useEffect(() => {
+        if (decorator) {
+            decorator.setType(inputProps?.type || 'text');
+        }
+    }, [decorator, inputProps?.type]);
+
     return (
         <StyledBaseTextField
             className={clsx(
@@ -184,6 +192,9 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                 className,
             )}
             ref={ref}
+            onMouseDown={() => {
+                textInputRef.current?.focus();
+            }}
         >
             {adornments}
             {inputAdornments}
@@ -206,7 +217,11 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                 ref={(ref) => {
                     textInputRef.current = ref;
                     if (inputRef && ref) {
-                        inputRef.current = ref;
+                        if (typeof inputRef === 'object' && 'current' in inputRef) {
+                            (inputRef as React.RefObject<HTMLInputElement>).current = ref;
+                        } else if (typeof inputRef === 'function') {
+                            inputRef(ref);
+                        }
                     }
                 }}
                 className={clsx(
