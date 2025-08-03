@@ -1,5 +1,6 @@
 import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
+import clsx from "@renderer/utils/clsx";
 import React, { ReactElement, ReactNode } from "react";
 
 export type Placement = "top" | "bottom" | "left" | "right";
@@ -55,7 +56,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
         >
             <ContainerButtonRoot
                 {...other}
-                className={(className ?? "") + " ContainerButton-root" + (selected ? " Mui-selected" : "")}
+                className={clsx(className, "ContainerButton-root", selected && 'selected')}
                 fullWidth={position.horizontal}
                 sx={{
                     justifyContent: 'flex-start',
@@ -86,7 +87,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
 
                 </Collapse>
             </ContainerButtonRoot>
-        </Tooltip>
+        </Tooltip >
     );
 }
 

@@ -275,14 +275,19 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 },
                 styleOverrides: {
                     root: {
+                        color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
                         '& .IconWrapper-root': {
                             fontSize: "1.8em",
                         },
-                        '&.Mui-selected': {
+                        '&:hover': {
+                            color: palette.sideBar.contrastText,
+                        },
+                        '&.selected': {
                             outlineColor: palette.sideBar.contrastText,
                             outlineWidth: 1,
                             outlineStyle: 'solid',
                             backgroundColor: palette.mode === "dark" ? lighten(palette.background.sideBar, 0.1) : darken(palette.background.sideBar, 0.1),
+                            color: palette.sideBar.contrastText,
                         },
                         '& .MuiTypography-root': {
                             paddingLeft: 6,
@@ -301,11 +306,16 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 },
                 styleOverrides: {
                     root: {
+                        color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
+                        '&:hover': {
+                            color: palette.sideBar.contrastText,
+                        },
                         '& .IconWrapper-root': {
                             fontSize: "1.8em",
                         },
-                        '&.Mui-selected': {
+                        '&.selected': {
                             backgroundColor: palette.mode === "dark" ? lighten(palette.background.sideBar, 0.2) : darken(palette.background.sideBar, 0.2),
+                            color: palette.sideBar.contrastText,
                         },
                         '& .MuiTypography-root': {
                             paddingLeft: 6,

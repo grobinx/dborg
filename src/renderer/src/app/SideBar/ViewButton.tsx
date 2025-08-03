@@ -2,6 +2,7 @@ import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps, Zoom 
 import React, { ReactElement, ReactNode } from "react";
 import { Placement } from "./ContainerButton";
 import Tooltip from "@renderer/components/Tooltip";
+import clsx from "@renderer/utils/clsx";
 
 export interface ViewButtonProps extends ButtonProps {
 }
@@ -56,7 +57,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
             >
                 <ViewButtonRoot
                     {...other}
-                    className={(className ?? "") + " ViewButton-root" + (selected ? " Mui-selected" : "")}
+                    className={clsx(className, "ViewButton-root", selected && 'selected')}
                     fullWidth={position.horizontal}
                     sx={{
                         justifyContent: 'flex-start',
