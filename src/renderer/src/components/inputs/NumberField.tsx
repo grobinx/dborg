@@ -76,10 +76,10 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
         // Uruchom timeout dla pierwszego kliknięcia
         const timeoutId = setTimeout(() => {
             callback(); // Wywołaj funkcję po opóźnieniu
-            const intervalId = setInterval(callback, 100); // Powtarzaj co 100ms
+            const intervalId = setInterval(callback, 50); // Powtarzaj co 100ms
             timeoutRef.current = null; // Usuń timeout
             intervalRef.current = intervalId; // Zapisz ID interwału
-        }, 750); // Opóźnienie 750ms
+        }, 500); // Opóźnienie 500ms
 
         timeoutRef.current = timeoutId; // Zapisz ID timeoutu
     };

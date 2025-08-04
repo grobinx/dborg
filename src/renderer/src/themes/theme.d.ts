@@ -139,7 +139,7 @@ declare module "@mui/material/styles" {
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
         Code: "root";
         FormattedText: "root";
-        TextField: "root" | "input" | "adornment" | "placeholder" | "numberStepper";
+        TextField: "root" | "input" | "adornment" | "placeholder" | "numberStepper" | "sliderValue";
         InputDecorator: "root" | "indicator" | "container" | "label" | "labelText" | "restrictions" | "restriction" | "description" | "input" | "validity";
     }
 

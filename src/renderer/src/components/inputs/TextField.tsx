@@ -1,11 +1,8 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
-import { styled } from '@mui/material';
-import clsx from '../../utils/clsx';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { useValidation, validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
-import { o } from 'react-router/dist/development/fog-of-war-CvttGpNz';
+import { validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
 import { BaseTextField } from './base/BaseTextField';
 
 interface TextFieldProps extends BaseInputProps {

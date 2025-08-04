@@ -1,12 +1,15 @@
-import { Box, Grid2, Paper, Typography, useTheme } from "@mui/material";
+import { Box, Grid2, Paper, Stack, Typography, useTheme } from "@mui/material";
+import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { ThemeIcons } from "@renderer/themes/icons";
 
-export const IconsList: React.FC = () => {
+export const IconListContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
     const icons = theme.icons as ThemeIcons; // Rzutowanie na ThemeIcons
 
     return (
-        <Box sx={{ padding: 2, overflow: "auto", height: "600px" }}>
+        <TabPanelContent {...props}
+            sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}
+        >
             <Grid2 container spacing={4}>
                 {Object.entries(icons).map(([name, IconComponent]) => (
                     <Grid2 size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={name}>
@@ -47,6 +50,6 @@ export const IconsList: React.FC = () => {
                     </Grid2>
                 ))}
             </Grid2>
-        </Box>
+        </TabPanelContent >
     );
 };

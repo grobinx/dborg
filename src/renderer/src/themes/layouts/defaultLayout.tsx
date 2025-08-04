@@ -1011,6 +1011,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         borderRadius: borderRadius,
                         padding: paddingMedium,
                         gap: paddingMedium,
+                        height: "2em",
                         '&:hover': {
                             borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                         },
@@ -1037,11 +1038,17 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             fontSize: "0.9em",
                             padding: paddingSmall,
                             gap: paddingSmall,
+                            height: "1.8em",
                         },
                         '&.size-large': {
                             fontSize: "1.2em",
                             padding: paddingLarge,
                             gap: paddingLarge,
+                            height: "2.4em",
+                        },
+                        ':has(input[type="range"])': {
+                            //outline: "none",
+                            borderColor: 'transparent',
                         },
                     },
                     input: {
@@ -1060,6 +1067,33 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         '&[type="number"]': {
                             MozAppearance: "textfield",
                         },
+                        '&[type="range"]': {
+                            WebkitAppearance: "none",
+                            width: "100%",
+                            height: "0.5em",
+                            borderRadius: borderRadius,
+                            outline: "none",
+                            opacity: 0.9,
+                            transition: "opacity 0.2s",
+                            padding: paddingMedium,
+                            margin: 1,
+                            alignSelf: "center",
+                            backgroundColor: palette.text.secondary,
+                        },
+                        '&[type="range"]::-webkit-slider-thumb': {
+                            WebkitAppearance: "none",
+                            width: '1em',
+                            height: '1em',
+                            borderRadius: "50%",
+                            cursor: "pointer",
+                            boxShadow: "0 0 2px rgba(0, 0, 0, 0.5)",
+                            transition: "background 0.2s",
+                            backgroundColor: palette.primary.main,
+                        },
+                        '&[type="range"]::-webkit-slider-runnable-track': {
+                            width: "100%",
+                            height: "1em",
+                        }
                     },
                     placeholder: {
                         color: palette.text.disabled,
@@ -1088,6 +1122,19 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         '&:hover': {
                             backgroundColor: palette.action.hover,
                         },
+                    },
+                    sliderValue: {
+                        fontSize: "0.9em",
+                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+                        borderRadius: borderRadius,
+                        width: 50,
+                        textAlign: "center",
+                        ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
+                            acc[`&.power-${i}`] = {
+                                width: `${i * 0.7}em`,
+                            };
+                            return acc;
+                        }, {}),
                     }
                 }
             },

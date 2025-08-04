@@ -3,9 +3,13 @@ import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
 import { ThemeColor, Size } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { NumberField } from "@renderer/components/inputs/NumberField";
+import { SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
-import { IconsList } from "@renderer/components/settings/developer/IconList";
+import TabPanel from "@renderer/components/TabsPanel/TabPanel";
+import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import React from "react";
+import { InputFieldsContent } from "./developer/InputFields";
+import { IconListContent } from "./developer/IconList";
 
 export interface DeveloperOptionsProps extends BoxProps {
 }
@@ -25,6 +29,7 @@ const StyledDeveloperOptionsRoot = styled(Box, {
     padding: 16,
     width: "90%",
     margin: "auto",
+    height: "100%",
 }));
 
 const StyledDeveloperOptionsTitle = styled(Box, {
@@ -48,31 +53,6 @@ const StyledDeveloperOptionsContent = styled(Box, {
 
 const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
     const { ...other } = props;
-    const theme = useTheme();
-    const [selected, setSelected] = React.useState<string | undefined>(undefined);
-    const [textValues, setTextValues] = React.useState<Record<string, any>>({
-        small: "a",
-        medium: "b",
-        large: "c",
-    });
-    const [numberValues, setNumberValues] = React.useState<Record<string, any>>({
-        small: 1,
-        medium: 2,
-        large: 3,
-    });
-
-    const handleValueTextChange = (size: string, value: string) => {
-        setTextValues((prev) => ({
-            ...prev,
-            [size]: value, // Aktualizuj wartość dla danego rozmiaru
-        }));
-    };
-    const handleValueNumberChange = (size: string, value: number | undefined) => {
-        setNumberValues((prev) => ({
-            ...prev,
-            [size]: value, // Aktualizuj wartość dla danego rozmiaru
-        }));
-    };
 
     return (
         <StyledDeveloperOptionsRoot className="DeveloperOptions-root" {...other}>
@@ -81,76 +61,20 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                     Developer Options
                 </Typography>
             </StyledDeveloperOptionsTitle>
-            <Stack key="textFields" direction="row" width="100%" gap={8}>
-                {["small", "medium", "large"].map((size) => (
-                    <Stack key={size} direction={"column"} width="100%">
-                        TextField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={() => setSelected(size)}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <TextField
-                                size={size as Size}
-                                placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                                maxLength={50}
-                                value={textValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                adornments={[
-                                    <Adornment key="connected" position="end">
-                                        <theme.icons.Connected />
-                                    </Adornment>,
-                                    <Adornment key="clipboard" position="end">
-                                        <theme.icons.Clipboard />
-                                    </Adornment>
-
-                                ]}
-                                color="main"
-                                required={true}
-                                defaultValue={1}
-                            />
-                        </InputDecorator>
-                    </Stack>
-                ))}
+            <Stack key="content" direction="column" flex={1} height={0} width={"100%"}>
+                <TabsPanel itemID="developer-options-tabs">
+                    <TabPanel
+                        itemID="developer-options-text-fields"
+                        content={<InputFieldsContent />}
+                        label="Input Fields"
+                    />
+                    <TabPanel
+                        itemID="developer-options-icons"
+                        content={<IconListContent />}
+                        label="Icons"
+                    />
+                </TabsPanel>
             </Stack>
-            <Stack key="numberFields" direction="row" width="100%" gap={8}>
-                {["small", "medium", "large"].map((size) => (
-                    <Stack key={size} direction={"column"} width="100%">
-                        NumberField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={() => setSelected(size)}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <NumberField
-                                size={size as Size}
-                                placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                                max={50}
-                                min={1}
-                                value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                adornments={[
-                                    <Adornment key="connected" position="end">
-                                        <theme.icons.Connected />
-                                    </Adornment>,
-                                    <Adornment key="clipboard" position="end">
-                                        <theme.icons.Clipboard />
-                                    </Adornment>
-
-                                ]}
-                                color="primary"
-                                required={true}
-                                defaultValue={1}
-                            />
-                        </InputDecorator>
-                    </Stack>
-                ))}
-            </Stack>
-            <IconsList key="icons" />
         </StyledDeveloperOptionsRoot>
     );
 };

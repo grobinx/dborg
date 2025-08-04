@@ -5,7 +5,7 @@ const StyledTabPanelContent = styled(Stack, {
     name: "TabPanel",
     slot: "content",
 })(({ /*theme*/ }) => ({
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
     width: "100%",
     height: "100%",
