@@ -1,6 +1,6 @@
 import { FormattedContent } from "@renderer/components/useful/FormattedText";
 import React, { ChangeEvent } from "react";
-import { PaletteColor, Size } from "./types";
+import { ThemeColor, Size } from "./types";
 
 export interface BaseInputProps<T = any> {
     id?: string;
@@ -76,7 +76,7 @@ export interface BaseInputProps<T = any> {
      * Kolor nie zostanie zmieniony ale ustawiona zostanie odpowiednia klasa CSS "color-..."
      * @default 'primary'
      */
-    color?: PaletteColor;
+    color?: ThemeColor;
     /**
      * Rozmiar elementu, np. 'small', 'medium', 'large'
      * Rozmiar nie zostanie zmieniony ale ustawiona zostanie odpowiednia klasa CSS "size-..."

@@ -1,7 +1,7 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
 import root from "./root";
 import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
-import { PaletteColors } from "@renderer/components/inputs/base/types";
+import { ThemeColors } from "@renderer/components/inputs/base/types";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
     const borderRadius = 3;
@@ -1020,14 +1020,14 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             outlineStyle: 'solid',
                             outlineOffset: -2,
                             borderColor: 'transparent',
-                            ...PaletteColors.reduce((acc, color) => {
+                            ...ThemeColors.reduce((acc, color) => {
                                 acc[`&.color-${color}`] = {
                                     outlineColor: palette[color].main,
                                 };
                                 return acc;
                             }, {}),
                         },
-                        ...PaletteColors.reduce((acc, color) => {
+                        ...ThemeColors.reduce((acc, color) => {
                             acc[`&.color-${color}`] = {
                                 backgroundColor: alpha(palette[color].main, 0.1),
                             };

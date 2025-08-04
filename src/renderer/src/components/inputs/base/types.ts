@@ -14,7 +14,7 @@ export const Sizes: Size[] = [
     'large',
 ];
 
-export type PaletteColor =
+export type ThemeColor =
     /** Kolor główny, neutralny */
     'main'
     /** Kolor podstawowy */
@@ -30,7 +30,7 @@ export type PaletteColor =
     /** Kolor sukcesu */
     | 'success';
 
-export const PaletteColors: PaletteColor[] = [
+export const ThemeColors: ThemeColor[] = [
     'main',
     'primary',
     'secondary',
