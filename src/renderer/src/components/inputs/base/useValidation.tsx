@@ -19,8 +19,6 @@ export function useValidation<T>(
         }
 
         const timeoutId = setTimeout(() => {
-            const isEmpty = value === undefined || value === null || value === "";
-
             const invalid = validations.filter(Boolean).some((validate) => {
                 const result = validate(value);
                 if (typeof result === "boolean") {
