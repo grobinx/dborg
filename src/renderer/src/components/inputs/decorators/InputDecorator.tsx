@@ -307,7 +307,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                     className
                 )}
                 width={width}
-                onClick={onClick}
+                onMouseDown={onClick}
             >
                 {indicator && (
                     <StyledInputDecoratorIndicator

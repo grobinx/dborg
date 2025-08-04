@@ -36,18 +36,7 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
 
     React.useEffect(() => {
         if (decorator) {
-            const restrictions: React.ReactNode[] = [];
-            if (min !== undefined) {
-                restrictions.push(`≥${min}`);
-            }
-            if (max !== undefined) {
-                restrictions.push(`≤${max}`);
-            }
-            if (restrictions.length) {
-                decorator.setRestrictions(restrictions);
-            } else {
-                decorator.setRestrictions(undefined);
-            }
+            decorator.setRestrictions(`${min}-${max}`);
         }
     }, [decorator, min, max]);
 
