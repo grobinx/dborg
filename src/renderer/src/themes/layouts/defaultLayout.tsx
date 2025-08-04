@@ -1108,12 +1108,16 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                         '&.size-small': {
                             padding: `${paddingSmall}px ${paddingMedium}px `,
-                            paddingRight: paddingSmall * 2 + 3,
+                            '&:has(.InputDecorator-indicator)': {
+                                paddingRight: paddingSmall * 2 + 3,
+                            },
                             gap: paddingSmall,
                         },
                         '&.size-large': {
                             padding: paddingLarge,
-                            paddingRight: paddingLarge * 2 + 5,
+                            '&:has(.InputDecorator-indicator)': {
+                                paddingRight: paddingLarge * 2 + 5,
+                            },
                             gap: paddingLarge,
                         },
                         '&.selected': {
@@ -1154,8 +1158,8 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     },
                     indicator: {
                         width: 4,
-                        height: "100%",
-                        alignSelf: "center",
+                        //height: "100%",
+                        alignSelf: "stretch",
                         borderRadius: 2,
                         '&.changed': {
                             backgroundColor: alpha(palette.warning.main, 0.4),

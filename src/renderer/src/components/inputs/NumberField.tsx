@@ -6,7 +6,7 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxValue, validateMinValue } from './base/useValidation';
 import { Adornment, BaseTextField } from './base/BaseTextField';
 
-interface NumberFieldProps extends BaseInputProps<number> {
+interface NumberFieldProps extends BaseInputProps<number | undefined> {
     placeholder?: FormattedContentItem;
     max?: number;
     min?: number;
@@ -59,17 +59,19 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
         }
     }, [decorator, min, max]);
 
-    const handleIncrement = (e) => {
-        const newValue = Math.min((valueRef.current ?? 0) + (step ?? 1), max ?? Infinity);
-        onChange?.(e, newValue);
+    const handleIncrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
+        const newValue = Math.min((valueRef.current ?? 0) + amount, max ?? Infinity);
+        onChange?.(newValue);
     };
 
-    const handleDecrement = (e) => {
-        const newValue = Math.max((valueRef.current ?? 0) - (step ?? 1), min ?? -Infinity);
-        onChange?.(e, newValue);
+    const handleDecrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
+        const newValue = Math.max((valueRef.current ?? 0) - amount, min ?? -Infinity);
+        onChange?.(newValue);
     };
 
-    const startRepeat = (callback) => {
+    const startRepeat = (callback: () => void) => {
         callback();
         // Uruchom timeout dla pierwszego kliknięcia
         const timeoutId = setTimeout(() => {
@@ -107,7 +109,11 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                 (value: any) => validateMinValue(value, min),
                 (value: any) => validateMaxValue(value, max),
             ]}
-            onChange={(e, newValue) => onChange?.(e, newValue)}
+            onConvert={(value: string) => {
+                const numValue = parseFloat(value);
+                return isNaN(numValue) ? undefined : numValue;
+            }}
+            onChange={(newValue) => onChange?.(newValue)}
             inputAdornments={[
                 <Adornment key="stepper" position="input" className="type-number">
                     <StyledBaseTextFieldNumberStepper

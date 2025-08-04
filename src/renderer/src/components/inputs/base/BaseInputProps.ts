@@ -32,7 +32,7 @@ export interface BaseInputProps<T = any> {
      * @param args Dodatkowe argumenty
      * @returns
      */
-    onChange?: (e: ChangeEvent, value: T) => void;
+    onChange?: (value: T) => void;
     /**
      * Funkcja wywoływana z opóźnieniem po zmianie wartości, po walidacji.
      * Może być używana do aktualizacji stanu lub wykonania innych działań po zmianie wartości,

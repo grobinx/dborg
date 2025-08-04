@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { InputHTMLAttributes } from 'react';
 import { styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
 import { FormattedContentItem } from '@renderer/components/useful/FormattedText';
@@ -12,6 +12,7 @@ interface BaseTextFieldProps<T> extends BaseInputProps<T> {
     adornments?: React.ReactNode;
     validations?: ((value: T) => boolean | FormattedContentItem)[];
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    onConvert?: (value: string) => T;
 }
 
 const StyledBaseTextField = styled('div', {
@@ -26,13 +27,19 @@ const StyledBaseTextField = styled('div', {
     width: "100%", // Ogranicza szerokość do rodzica
 }));
 
+interface StyledInputProps extends InputHTMLAttributes<HTMLInputElement> {
+    width?: string | number;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
+}
+
 const StyledBaseTextFieldInput = styled('input', {
     name: "TextField",
     slot: "input",
-})(() => ({
+})<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
     minWidth: 0, // Pozwala na zmniejszenie się inputa
     order: 10,
+    width: width || "100%",
 }));
 
 const StyledBaseTextFieldAdornment = styled('div', {
@@ -113,6 +120,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         size = "medium",
         value,
         onChange,
+        onConvert,
         onChanged,
         changedDelay = 500,
         disabled = false,
@@ -149,7 +157,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         ], 
         () => {
             if (currentValue !== undefined) {
-                onChanged?.(currentValue as T);
+                onChanged?.(currentValue);
             }
         },
         changedDelay
@@ -198,7 +206,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         >
             {adornments}
             {inputAdornments}
-            {(!currentValue || currentValue === "") && placeholder && !disabled && (
+            {(currentValue === undefined || currentValue === "") && placeholder && !disabled && (
                 <StyledBaseTextFieldPlaceholder
                     className={clsx(
                         "TextField-placeholder",
@@ -229,7 +237,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                     classes,
                 )}
                 value={String(currentValue)}
-                onChange={(e) => onChange?.(e, e.target.value as T)}
+                onChange={(e) => onChange?.(typeof onConvert === 'function' ? onConvert(e.target.value) : e.target.value as T)}
                 disabled={disabled}
                 required={required}
                 onFocus={() => {
@@ -241,7 +249,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                     decorator?.setFocused(false);
                 }}
                 onClick={onClick}
-                sx={{ width: width }}
+                width={width}
                 {...inputProps}
             />
         </StyledBaseTextField>

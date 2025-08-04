@@ -67,7 +67,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
-    const handleValueNumberChange = (size: string, value: number) => {
+    const handleValueNumberChange = (size: string, value: number | undefined) => {
         setNumberValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
@@ -97,7 +97,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                 placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 maxLength={50}
                                 value={textValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(_e, value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                onChange={(value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
                                     <Adornment key="connected" position="end">
                                         <theme.icons.Connected />
@@ -132,7 +132,7 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                                 max={50}
                                 min={1}
                                 value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(_e, value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                onChange={(value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
                                     <Adornment key="connected" position="end">
                                         <theme.icons.Connected />
