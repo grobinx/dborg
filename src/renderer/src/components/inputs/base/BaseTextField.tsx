@@ -12,7 +12,8 @@ interface BaseTextFieldProps<T> extends BaseInputProps<T> {
     adornments?: React.ReactNode;
     validations?: ((value: T) => boolean | FormattedContentItem)[];
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
-    onConvert?: (value: string) => T;
+    onConvertToValue?: (value: string) => T;
+    onConvertToInput?: (value: T | undefined) => string;
 }
 
 const StyledBaseTextField = styled('div', {
@@ -120,7 +121,8 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         size = "medium",
         value,
         onChange,
-        onConvert,
+        onConvertToValue,
+        onConvertToInput,
         onChanged,
         changedDelay = 500,
         disabled = false,
@@ -236,8 +238,8 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                     "TextField-input",
                     classes,
                 )}
-                value={String(currentValue)}
-                onChange={(e) => onChange?.(typeof onConvert === 'function' ? onConvert(e.target.value) : e.target.value as T)}
+                value={typeof onConvertToInput === 'function' ? onConvertToInput(currentValue) : String(currentValue)}
+                onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
                 disabled={disabled}
                 required={required}
                 onFocus={() => {

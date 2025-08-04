@@ -109,9 +109,12 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                 (value: any) => validateMinValue(value, min),
                 (value: any) => validateMaxValue(value, max),
             ]}
-            onConvert={(value: string) => {
+            onConvertToValue={(value: string) => {
                 const numValue = parseFloat(value);
                 return isNaN(numValue) ? undefined : numValue;
+            }}
+            onConvertToInput={(value: number | undefined) => {
+                return value !== undefined ? String(value) : '';
             }}
             onChange={(newValue) => onChange?.(newValue)}
             inputAdornments={[
