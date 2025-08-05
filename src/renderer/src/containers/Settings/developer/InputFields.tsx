@@ -3,7 +3,7 @@ import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
 import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { NumberField } from "@renderer/components/inputs/NumberField";
-import { SliderField } from "@renderer/components/inputs/SliderField";
+import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import React from "react";
@@ -27,6 +27,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: 20,
         large: 30,
     });
+    const [rangeValues, setRangeValues] = React.useState<Record<string, [number, number] | undefined>>({
+        small: [0, 10],
+        medium: [0, 20],
+        large: [0, 30],
+    });
 
     const handleValueTextChange = (size: string, value: string) => {
         setTextValues((prev) => ({
@@ -42,6 +47,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueSliderChange = (size: string, value: number | undefined) => {
         setSliderValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueRangeChange = (size: string, value: [number, number] | undefined) => {
+        setRangeValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -131,7 +142,8 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         >
                             <SliderField
                                 size={size}
-                                max={10}
+                                max={1000}
+                                step={10}
                                 value={sliderValues[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={(value) => handleValueSliderChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
@@ -146,6 +158,40 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 required={true}
                                 defaultValue={1}
                                 legend={["safe", "low", "medium", "high", "critical"]}
+                            />
+                        </InputDecorator>
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="rangeFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        SliderField, size: {size}
+                        <InputDecorator
+                            key={size}
+                            selected={selected === size}
+                            onClick={() => setSelected(size)}
+                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                        >
+                            <RangeField
+                                size={size}
+                                max={1000}
+                                step={10}
+                                value={rangeValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={(value) => handleValueRangeChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                // adornments={[
+                                //     <Adornment key="connected" position="end">
+                                //         <theme.icons.Connected />
+                                //     </Adornment>,
+                                //     <Adornment key="clipboard" position="end">
+                                //         <theme.icons.Clipboard />
+                                //     </Adornment>
+                                // ]}
+                                color="error"
+                                required={true}
+                                defaultValue={[1, 5]}
+                                legend={["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"]}
                             />
                         </InputDecorator>
                     </Stack>

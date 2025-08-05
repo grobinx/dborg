@@ -2,6 +2,7 @@ import React from 'react';
 import { styled } from '@mui/material';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import clsx from '@renderer/utils/clsx';
+import { calculateTextWidth } from '../DataGrid/DataGridUtils';
 
 interface SliderProps {
     value: number;
@@ -14,16 +15,28 @@ interface SliderProps {
     onChange?: (value: number) => void;
 }
 
+interface RangeProps {
+    value: [number, number]; // [minValue, maxValue]
+    min: number;
+    max: number;
+    step: number;
+    scale?: boolean | number;
+    legend?: string[];
+    disabled?: boolean;
+    onChange?: (value: [number, number]) => void;
+}
+
+
 const StyledSlider = styled('div', {
     name: "Slider",
     slot: "root",
 })(() => ({
     display: 'flex',
     alignItems: 'center',
-    gap: "0.5em",
+    //gap: "0.7em",
     width: '100%',
     height: '100%',
-    padding: '0 0 0 0.5em',
+    //padding: '0 0.5em 0 0.5em',
 }));
 
 const StyledSliderContainer = styled('div', {
@@ -31,11 +44,12 @@ const StyledSliderContainer = styled('div', {
     slot: "container",
 })(() => ({
     position: 'relative',
-    width: '100%', 
-    height: '1em', 
+    width: '100%',
+    height: '1em',
     cursor: 'pointer',
     userSelect: 'none',
     outline: 'none',
+    margin: '0 0.5em',
 }));
 
 const StyledSliderTrack = styled('div', {
@@ -49,20 +63,23 @@ const StyledSliderTrack = styled('div', {
     height: '0.3em',
     backgroundColor: theme.palette.divider,
     borderRadius: '2px',
+    flexGrow: 1,
+    //padding: '0 0.5em',
 }));
 
 const StyledSliderProgress = styled('div', {
     name: "Slider",
     slot: "progress",
-})<{ progress: number }>(({ theme, progress }) => ({
+})<{ progress?: number, start?: number, end?: number }>(({ theme, start, end, progress }) => ({
     position: 'absolute',
     top: '50%',
+    left: start !== undefined ? `${start}%` : '0',
     transform: 'translateY(-50%)',
-    width: `${progress}%`,
+    width: progress !== undefined ? `${progress}%` : `${(end ?? 100) - (start ?? 0)}%`,
     height: '0.4em',
     backgroundColor: theme.palette.primary.main,
     borderRadius: '2px',
-    transition: 'width 0.1s ease',
+    transition: 'left 0.1s ease, width 0.1s ease',
 }));
 
 const StyledSliderThumb = styled('div', {
@@ -78,27 +95,42 @@ const StyledSliderThumb = styled('div', {
     backgroundColor: theme.palette.primary.main,
     borderRadius: '50%',
     border: `2px solid ${theme.palette.background.paper}`,
-    boxShadow: theme.shadows[2],
+    boxShadow: theme.shadows[3],
     transition: 'left 0.1s ease, transform 0.1s ease',
     '&:hover': {
         transform: 'translateY(-50%) scale(1.1)',
     },
     '&:active': {
         transform: 'translateY(-50%) scale(1.2)',
-    }
+        animation: 'thumbSelect 0.3s ease-out', // Dodanie animacji
+    },
+    '@keyframes thumbSelect': {
+        '0%': {
+            transform: 'translateY(-50%) scale(1.5)', // Powiększenie
+        },
+        '100%': {
+            transform: 'translateY(-50%) scale(1.2)', // Powrót do rozmiaru z :active
+        },
+    },
 }));
 
 const StyledBaseSliderLegend = styled('div', {
     name: "Slider",
     slot: "legend",
 })(({ theme }) => ({
-    minWidth: 'max-content',
-    fontSize: theme.typography.body2.fontSize,
-    color: theme.palette.text.primary,
-    width: '52px',
-    textAlign: 'center',
-    backgroundColor: theme.palette.background.paper,
-    borderRadius: '3px',
+    fontSize: "0.9em",
+    lineHeight: "1.3em",
+    backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+    borderRadius: theme.shape.borderRadius,
+    width: 50,
+    //padding: '0 0.3em',
+    textAlign: "center",
+    ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
+        acc[`&.units-${i}`] = {
+            width: `${i * 1}em`,
+        };
+        return acc;
+    }, {}),
 }));
 
 const StyledSliderScale = styled('div', {
@@ -135,11 +167,11 @@ const StyledSliderScaleTick = styled('div', {
     },
 }));
 
-export const Slider: React.FC<SliderProps> = React.memo(({
+export const Slider: React.FC<SliderProps> = ({
     value,
     min: initMin = 0,
     max: initMax = 100,
-    step = 1,
+    step: initStep = 1,
     scale = 10,
     legend,
     disabled,
@@ -150,12 +182,13 @@ export const Slider: React.FC<SliderProps> = React.memo(({
     const isDragging = React.useRef(false);
 
     // Obsługa legend w komponencie slidera
-    const { min, max, maxLength, displayValue, currentValue } = React.useMemo(() => {
+    const { min, max, step, maxLengthUnit, displayValue, currentValue } = React.useMemo(() => {
         const hasLabels = legend && legend.length > 0;
         const calculatedMin = hasLabels ? 0 : initMin;
         const calculatedMax = hasLabels ? legend.length - 1 : initMax;
-        const calculatedMaxLength = hasLabels
-            ? legend.reduce((maxLen, label) => Math.max(maxLen, String(label).length), 0)
+        const calculatedStep = hasLabels ? 1 : initStep;
+        const calculatedMaxLengthUnit = hasLabels
+            ? (legend.reduce((maxLenUnit, label) => Math.max(maxLenUnit, Math.ceil((calculateTextWidth(label, 14) ?? (label.length * 14)) / 10)), 0) + 1)
             : String(calculatedMax).length;
 
         const safeValue = Math.min(Math.max(value ?? calculatedMin, calculatedMin), calculatedMax);
@@ -164,17 +197,18 @@ export const Slider: React.FC<SliderProps> = React.memo(({
             : safeValue;
 
         if (value !== safeValue) {
-            onChange?.(safeValue);
+            Promise.resolve().then(() => onChange?.(safeValue));
         }
 
         return {
             min: calculatedMin,
             max: calculatedMax,
-            maxLength: calculatedMaxLength,
+            step: calculatedStep,
+            maxLengthUnit: calculatedMaxLengthUnit,
             displayValue: calculatedDisplayValue,
             currentValue: safeValue
         };
-    }, [legend, initMin, initMax, value]);
+    }, [legend, initMin, initMax, initStep, value]);
 
     const progressPercentage = max === min ? 0 : ((currentValue - min) / (max - min)) * 100;
     const shouldShowScale = typeof scale === 'number' ? (max - min) <= scale && (max - min) > 1 : !!scale;
@@ -243,7 +277,7 @@ export const Slider: React.FC<SliderProps> = React.memo(({
         onChange?.(newValue);
     };
 
-    const scaleValues = shouldShowScale 
+    const scaleValues = shouldShowScale
         ? Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
         : [];
 
@@ -284,17 +318,221 @@ export const Slider: React.FC<SliderProps> = React.memo(({
                 <StyledSliderProgress progress={progressPercentage} className={clsx("Slider-progress")} />
                 <StyledSliderThumb position={progressPercentage} className={clsx("Slider-thumb")} />
             </StyledSliderContainer>
-            
+
             <StyledBaseSliderLegend
                 className={clsx(
                     'Slider-legend',
-                    `length-${maxLength}`
+                    `units-${maxLengthUnit}`
                 )}
             >
                 {displayValue}
             </StyledBaseSliderLegend>
         </StyledSlider>
     );
-});
+};
 
 Slider.displayName = 'Slider';
+
+export const Range: React.FC<RangeProps> = ({
+    value,
+    min: initMin = 0,
+    max: initMax = 100,
+    step: initStep = 1,
+    scale = 10,
+    legend,
+    disabled,
+    onChange
+}) => {
+    const [minValue, maxValue] = value ?? [initMin, initMax];
+    const decorator = useInputDecorator();
+    const sliderRef = React.useRef<HTMLDivElement>(null);
+    const isDragging = React.useRef<"min" | "max" | null>(null);
+
+    // Obsługa legend w komponencie slidera
+    const { min, max, step, maxLengthUnit, displayMinValue, displayMaxValue, currentMinValue, currentMaxValue } = React.useMemo(() => {
+        const hasLabels = legend && legend.length > 0;
+        const calculatedMin = hasLabels ? 0 : initMin;
+        const calculatedMax = hasLabels ? legend.length - 1 : initMax;
+        const calculatedStep = hasLabels ? 1 : initStep;
+        const calculatedMaxLengthUnit = hasLabels
+            ? (legend.reduce((maxLenUnit, label) => Math.max(maxLenUnit, Math.ceil((calculateTextWidth(label, 14) ?? (label.length * 14)) / 10)), 0) + 1)
+            : String(calculatedMax).length;
+
+        const safeMinValue = Math.min(Math.max(minValue ?? calculatedMin, calculatedMin), calculatedMax);
+        const calculatedDisplayMinValue = hasLabels
+            ? legend[safeMinValue] || legend[0]
+            : safeMinValue;
+        const safeMaxValue = Math.min(Math.max(maxValue ?? calculatedMin, calculatedMin), calculatedMax);
+        const calculatedDisplayMaxValue = hasLabels
+            ? legend[safeMaxValue] || legend[0]
+            : safeMaxValue;
+
+        if (minValue !== safeMinValue || maxValue !== safeMaxValue) {
+            Promise.resolve().then(() => onChange?.([safeMinValue, safeMaxValue]));
+        }
+
+        return {
+            min: calculatedMin,
+            max: calculatedMax,
+            step: calculatedStep,
+            maxLengthUnit: calculatedMaxLengthUnit,
+            displayMinValue: calculatedDisplayMinValue,
+            displayMaxValue: calculatedDisplayMaxValue,
+            currentMinValue: safeMinValue,
+            currentMaxValue: safeMaxValue
+        };
+    }, [legend, initMin, initMax, initStep, value[0], value[1]]);
+
+    const shouldShowScale = typeof scale === 'number' ? (max - min) <= scale && (max - min) > 1 : !!scale;
+
+    const getValueFromPosition = React.useCallback((clientX: number) => {
+        if (!sliderRef.current) return min;
+        const rect = sliderRef.current.getBoundingClientRect();
+        const percentage = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+        const rawValue = min + (percentage * (max - min));
+        const steppedValue = Math.round(rawValue / step) * step;
+        return Math.min(Math.max(steppedValue, min), max);
+    }, [min, max, step]);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (disabled) return;
+        const element = e.currentTarget as HTMLElement;
+        if (element?.focus) element.focus();
+        e.preventDefault();
+    }
+
+    const handlePointerDown = (e: React.PointerEvent, thumb: "min" | "max") => {
+        if (disabled) return;
+        isDragging.current = thumb;
+        const newValue = getValueFromPosition(e.clientX);
+        if (thumb === "min") {
+            onChange?.([Math.min(newValue, maxValue), maxValue]);
+        } else {
+            onChange?.([minValue, Math.max(newValue, minValue)]);
+        }
+        e.currentTarget.setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging.current || disabled) return;
+        e.preventDefault();
+        const newValue = getValueFromPosition(e.clientX);
+        if (isDragging.current === "min") {
+            onChange?.([Math.min(newValue, maxValue), maxValue]);
+        } else {
+            onChange?.([minValue, Math.max(newValue, minValue)]);
+        }
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!isDragging.current) return;
+        isDragging.current = null;
+        e.currentTarget.releasePointerCapture(e.pointerId);
+    };
+
+    const minPercentage = ((minValue - min) / (max - min)) * 100;
+    const maxPercentage = ((maxValue - min) / (max - min)) * 100;
+
+    // const handleKeyDown = (e: React.KeyboardEvent) => {
+    //     if (disabled) return;
+    //     let newValue = currentValue;
+    //     switch (e.key) {
+    //         case 'ArrowLeft':
+    //         case 'ArrowDown':
+    //             newValue = Math.max(currentValue - step, min);
+    //             break;
+    //         case 'ArrowRight':
+    //         case 'ArrowUp':
+    //             newValue = Math.min(currentValue + step, max);
+    //             break;
+    //         case 'Home':
+    //             newValue = min;
+    //             break;
+    //         case 'End':
+    //             newValue = max;
+    //             break;
+    //         case 'PageDown':
+    //             newValue = Math.max(currentValue - step * 10, min);
+    //             break;
+    //         case 'PageUp':
+    //             newValue = Math.min(currentValue + step * 10, max);
+    //             break;
+    //         default:
+    //             return;
+    //     }
+    //     e.preventDefault();
+    //     onChange?.(newValue);
+    // };
+
+    const scaleValues = shouldShowScale
+        ? Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
+        : [];
+
+    return (
+        <StyledSlider className={clsx("Slider-root")}>
+            <StyledBaseSliderLegend
+                className={clsx(
+                    'Slider-legend',
+                    `units-${maxLengthUnit}`,
+                    'min'
+                )}
+            >
+                {displayMinValue}
+            </StyledBaseSliderLegend>
+            <StyledSliderContainer
+                className={clsx("Slider-container")}
+                ref={sliderRef}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                //onKeyDown={handleKeyDown}
+                onMouseDown={handleMouseDown}
+                tabIndex={disabled ? -1 : 0}
+                role="slider"
+                aria-valuemin={min}
+                aria-valuemax={max}
+                aria-valuetext={`${minValue} - ${maxValue}`}
+                aria-disabled={disabled}
+                onFocus={() => decorator?.setFocused(true)}
+                onBlur={() => decorator?.setFocused(false)}
+            >
+                {shouldShowScale && (
+                    <StyledSliderScale className={clsx("Slider-scale")}>
+                        {scaleValues.map((value) => (
+                            <StyledSliderScaleTick
+                                key={value}
+                                className={clsx(
+                                    "Slider-scaleTick",
+                                    (value === currentMinValue || value === currentMaxValue) && 'active'
+                                )}
+                            >
+                            </StyledSliderScaleTick>
+                        ))}
+                    </StyledSliderScale>
+                )}
+                <StyledSliderTrack className={clsx("Slider-track")} />
+                <StyledSliderProgress start={minPercentage} end={maxPercentage} className={clsx("Slider-progress")} />
+                <StyledSliderThumb 
+                    position={minPercentage} 
+                    className={clsx("Slider-thumb", "min")}
+                    onPointerDown={(e) => handlePointerDown(e, "min")}
+                />
+                <StyledSliderThumb 
+                    position={maxPercentage} 
+                    className={clsx("Slider-thumb", "max")}
+                    onPointerDown={(e) => handlePointerDown(e, "max")}
+                />
+            </StyledSliderContainer>
+            <StyledBaseSliderLegend
+                className={clsx(
+                    'Slider-legend',
+                    `units-${maxLengthUnit}`,
+                    'max'
+                )}
+            >
+                {displayMaxValue}
+            </StyledBaseSliderLegend>
+        </StyledSlider>
+    );
+};
+
+Range.displayName = 'Range';

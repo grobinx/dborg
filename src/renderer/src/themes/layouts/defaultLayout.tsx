@@ -1014,6 +1014,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         height: "2em",
                         '&:hover': {
                             borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+                            transition: "border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                         },
                         '&.focused': {
                             outlineColor: palette.primary.main,
@@ -1021,6 +1022,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             outlineStyle: 'solid',
                             outlineOffset: -2,
                             borderColor: 'transparent',
+                            transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                             ...ThemeColors.reduce((acc, color) => {
                                 acc[`&.color-${color}`] = {
                                     outlineColor: palette[color].main,
@@ -1046,10 +1048,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             gap: paddingLarge,
                             height: "2.4em",
                         },
-                        ':has(input[type="range"])': {
-                            //outline: "none",
-                            borderColor: 'transparent',
-                        },
                     },
                     input: {
                         fontFamily: "inherit",
@@ -1067,33 +1065,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         '&[type="number"]': {
                             MozAppearance: "textfield",
                         },
-                        '&[type="range"]': {
-                            // WebkitAppearance: "none",
-                            // width: "100%",
-                            height: "0.5em",
-                            // borderRadius: borderRadius,
-                            // outline: "none",
-                            // opacity: 0.9,
-                            // transition: "opacity 0.2s",
-                            // padding: paddingMedium,
-                            // margin: 1,
-                            alignSelf: "center",
-                            // backgroundColor: palette.text.secondary,
-                        },
-                        '&[type="range"]::-webkit-slider-thumb': {
-                            // WebkitAppearance: "none",
-                            // width: '1em',
-                            // height: '1em',
-                            // borderRadius: "50%",
-                            cursor: "pointer",
-                            // boxShadow: "0 0 2px rgba(0, 0, 0, 0.5)",
-                            // transition: "background 0.2s",
-                            // backgroundColor: palette.primary.main,
-                        },
-                        '&[type="range"]::-webkit-slider-runnable-track': {
-                            // width: "100%",
-                            // height: "1em",
-                        }
                     },
                     placeholder: {
                         color: palette.text.disabled,
@@ -1130,8 +1101,8 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         width: 50,
                         textAlign: "center",
                         ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
-                            acc[`&.length-${i}`] = {
-                                width: `${i * 0.7}em`,
+                            acc[`&.units-${i}`] = {
+                                width: `${i * 1.2}em`,
                             };
                             return acc;
                         }, {}),
@@ -1152,6 +1123,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                         '&:hover': {
                             backgroundColor: palette.action.hover,
+                            transition: "background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                         },
                         '&.size-small': {
                             padding: `${paddingSmall}px ${paddingMedium}px `,
