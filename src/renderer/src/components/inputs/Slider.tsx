@@ -136,7 +136,7 @@ const StyledSliderScaleTick = styled('div', {
 }));
 
 export const Slider: React.FC<SliderProps> = React.memo(({
-    value: initialValue,
+    value,
     min: initMin = 0,
     max: initMax = 100,
     step = 1,
@@ -158,10 +158,14 @@ export const Slider: React.FC<SliderProps> = React.memo(({
             ? legend.reduce((maxLen, label) => Math.max(maxLen, String(label).length), 0)
             : String(calculatedMax).length;
 
-        const safeValue = Math.min(Math.max(initialValue ?? calculatedMin, calculatedMin), calculatedMax);
+        const safeValue = Math.min(Math.max(value ?? calculatedMin, calculatedMin), calculatedMax);
         const calculatedDisplayValue = hasLabels
             ? legend[safeValue] || legend[0]
             : safeValue;
+
+        if (value !== safeValue) {
+            onChange?.(safeValue);
+        }
 
         return {
             min: calculatedMin,
@@ -170,7 +174,7 @@ export const Slider: React.FC<SliderProps> = React.memo(({
             displayValue: calculatedDisplayValue,
             currentValue: safeValue
         };
-    }, [legend, initMin, initMax, initialValue]);
+    }, [legend, initMin, initMax, value]);
 
     const progressPercentage = max === min ? 0 : ((currentValue - min) / (max - min)) * 100;
     const shouldShowScale = typeof scale === 'number' ? (max - min) <= scale && (max - min) > 1 : !!scale;
