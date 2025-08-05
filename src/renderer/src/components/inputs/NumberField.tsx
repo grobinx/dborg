@@ -27,7 +27,6 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
         min,
         step,
         onChange,
-        size,
         ...other
     } = props;
 
@@ -98,7 +97,6 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
     return (
         <BaseTextField
             value={value}
-            size={size}
             inputProps={{
                 max,
                 min,

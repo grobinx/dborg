@@ -7,11 +7,22 @@ import { useInputDecorator } from '../decorators/InputDecoratorContext';
 import { useValidation, validateRequired } from './useValidation';
 
 interface BaseTextFieldProps<T> extends BaseInputProps<T> {
+    /**
+     * Field type, not necessarily the same as HTML input type, but can be used for styling
+     * e.g. 'text', 'number', 'password', 'email', etc.
+     */
+    type?: string;
     placeholder?: FormattedContentItem;
     inputAdornments?: React.ReactNode;
     adornments?: React.ReactNode;
     validations?: ((value: T) => boolean | FormattedContentItem)[];
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    /**
+     * Komponent, który zastępuje w miejscu inputa.
+     * Może być użyty do renderowania niestandardowych pól wejściowych, takich jak przyciski, suwaki itp.
+     * Jeśli jest podany, html input zostanie ukryty i nie będzie renderowany. 
+     */
+    input?: React.ReactNode;
     onConvertToValue?: (value: string) => T;
     onConvertToInput?: (value: T | undefined) => string;
 }
@@ -33,13 +44,22 @@ interface StyledInputProps extends InputHTMLAttributes<HTMLInputElement> {
     onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
+const StyledBaseTextFieldCustomInput = styled('div', {
+    name: "TextField",
+    slot: "customInput",
+})<StyledInputProps>(({ width }) => ({
+    flexGrow: 1,
+    minWidth: 0, // Pozwala na zmniejszenie się inputa
+    order: 10,
+    width: width || "100%",
+}));
+
 const StyledBaseTextFieldInput = styled('input', {
     name: "TextField",
     slot: "input",
 })<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
     minWidth: 0, // Pozwala na zmniejszenie się inputa
-    order: 10,
     width: width || "100%",
 }));
 
@@ -62,10 +82,12 @@ interface AdornmentProps {
      */
     position?: 'start' | 'end' | 'input' | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
     ref?: React.Ref<HTMLDivElement>;
+    fullWidth?: boolean;
+    style?: React.CSSProperties;
 }
 
 export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
-    const { children, position = 'start', className, ref } = props;
+    const { children, position = 'start', className, ref, fullWidth, style } = props;
     let order = 0;
     let orderClass = 'start';
 
@@ -78,7 +100,7 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
         order = 20;
         orderClass = 'end';
     } else if (position === 'input') {
-        order = 11; 
+        order = 11;
         orderClass = 'input';
     }
 
@@ -91,8 +113,10 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
             )}
             ref={ref}
             sx={{
+                flex: fullWidth ? 1 : 'unset',
                 order,
             }}
+            style={style}
         >
             {children}
         </StyledBaseTextFieldAdornment>
@@ -116,6 +140,7 @@ const StyledBaseTextFieldPlaceholder = styled('div', {
 
 export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
     const {
+        type,
         id,
         className,
         size = "medium",
@@ -139,6 +164,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         defaultValue,
         validations,
         inputProps,
+        input,
         ref,
         inputRef,
     } = props;
@@ -150,13 +176,13 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
 
     const currentValue = value ?? defaultValue;
     const [invalid, setInvalid] = useValidation(
-        currentValue, 
-        disabled, 
+        currentValue,
+        disabled,
         [
             (value: any) => validateRequired(value, required),
             ...(validations ?? []),
             (value: any) => onValidate?.(value) ?? true
-        ], 
+        ],
         () => {
             if (currentValue !== undefined) {
                 onChanged?.(currentValue);
@@ -172,7 +198,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
         `color-${color}`,
         invalid && "invalid",
         decorator?.focused && "focused",
-        `type-${inputProps?.type || 'text'}`,
+        `type-${type ?? inputProps?.type ?? 'text'}`,
     );
 
     React.useEffect(() => {
@@ -190,9 +216,9 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
 
     React.useEffect(() => {
         if (decorator) {
-            decorator.setType(inputProps?.type || 'text');
+            decorator.setType(type ?? inputProps?.type ?? 'text');
         }
-    }, [decorator, inputProps?.type]);
+    }, [decorator, type, inputProps?.type]);
 
     return (
         <StyledBaseTextField
@@ -221,6 +247,16 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                 >
                     {placeholder}
                 </StyledBaseTextFieldPlaceholder>
+            )}
+            {input && (
+                <StyledBaseTextFieldCustomInput
+                    className={clsx(
+                        "TextField-customInput",
+                        classes,
+                    )}
+                >
+                    {input}
+                </StyledBaseTextFieldCustomInput>
             )}
             <StyledBaseTextFieldInput
                 id={id}
@@ -252,6 +288,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                 }}
                 onClick={onClick}
                 width={width}
+                hidden={!!input}
                 {...inputProps}
             />
         </StyledBaseTextField>

@@ -1,55 +1,62 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
-import { styled, useTheme } from '@mui/material';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
-import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxValue, validateMinValue } from './base/useValidation';
-import { Adornment, BaseTextField } from './base/BaseTextField';
-import clsx from '@renderer/utils/clsx';
+import { BaseTextField } from './base/BaseTextField';
+import { Slider } from './Slider';
 
 interface SliderFieldProps extends BaseInputProps<number | undefined> {
     max?: number;
     min?: number;
     step?: number;
+    legend?: string[];
+    /**
+     * Czy pokazywać skalę lub ile wynosi maksymalna wartość by ją pokazać
+     * Domyślnie 10 - jeśli różnica między min a max jest mniejsza lub równa 10, to pokaż skalę
+     */
+    scale?: boolean | number;
     adornments?: React.ReactNode;
 }
 
-const StyledBaseTextFieldSliderValue = styled('div', {
-    name: "TextField",
-    slot: "sliderValue",
-})(() => ({
-}));
-
-export const SliderField: React.FC<SliderFieldProps> = (props) => {
+export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
     const {
         value,
         max = 100,
         min = 0,
-        step,
+        step = 1,
+        scale = 10,
+        legend,
         onChange,
-        size,
+        disabled,
         ...other
     } = props;
 
-    const theme = useTheme();
     const decorator = useInputDecorator();
 
+    // Uproszczona wersja - CustomSlider obsługuje legend
+    const currentValue = value ?? min;
+
+    // Ustawienie ograniczeń w dekoratorze
     React.useEffect(() => {
-        if (decorator) {
+        if (decorator && (!legend || legend.length === 0)) {
             decorator.setRestrictions(`${min}-${max}`);
+        } else if (decorator) {
+            decorator.setRestrictions(undefined);
         }
-    }, [decorator, min, max]);
+    }, [decorator, min, max, legend]);
 
     return (
         <BaseTextField
-            value={value}
-            size={size}
+            type="slider"
+            value={currentValue}
             inputProps={{
-                max,
-                min,
-                step,
+                style: { display: 'none', pointerEvents: 'none' },
                 type: 'range',
             }}
+            validations={[
+                (value: any) => validateMinValue(value, min),
+                (value: any) => validateMaxValue(value, max),
+            ]}
             onConvertToValue={(value: string) => {
                 const numValue = parseFloat(value);
                 return isNaN(numValue) ? undefined : numValue;
@@ -57,25 +64,23 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
             onConvertToInput={(value: number | undefined) => {
                 return value !== undefined ? String(value) : '';
             }}
-            onChange={(newValue) => onChange?.(newValue)}
-            inputAdornments={[
-                <Adornment
-                    key="slider-value"
-                    position="input"
-                    className={clsx(
-                        "type-slider",
-                    )}
-                >
-                    <StyledBaseTextFieldSliderValue className={clsx(
-                        'TextField-sliderValue',
-                        `power-${String(max).length}`
-                    )}>
-                        {value}
-                    </StyledBaseTextFieldSliderValue>
-                </Adornment>,
-            ]}
+            //onChange={onChange}
+            input={
+                <Slider
+                    value={currentValue}
+                    min={min}
+                    max={max}
+                    step={step}
+                    scale={scale}
+                    legend={legend}
+                    disabled={disabled}
+                    onChange={onChange}
+                />
+            }
             {...other}
         />
     );
-};
+});
+
+SliderField.displayName = 'SliderField';
 

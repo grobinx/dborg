@@ -1,6 +1,6 @@
 import { Box, Stack, Tab, useTheme } from "@mui/material";
 import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
-import { Size } from "@renderer/components/inputs/base/types";
+import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SliderField } from "@renderer/components/inputs/SliderField";
@@ -50,7 +50,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
             <Stack key="textFields" direction="row" width="100%" gap={8}>
-                {["small", "medium", "large"].map((size) => (
+                {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         TextField, size: {size}
                         <InputDecorator
@@ -61,7 +61,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
                             <TextField
-                                size={size as Size}
+                                size={size}
                                 placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 maxLength={50}
                                 value={textValues[size]} // Pobierz wartość dla danego rozmiaru
@@ -84,7 +84,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 ))}
             </Stack>
             <Stack key="numberFields" direction="row" width="100%" gap={8}>
-                {["small", "medium", "large"].map((size) => (
+                {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         NumberField, size: {size}
                         <InputDecorator
@@ -95,7 +95,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
                             <NumberField
-                                size={size as Size}
+                                size={size}
                                 placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 max={50}
                                 min={1}
@@ -119,7 +119,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 ))}
             </Stack>
             <Stack key="sliderFields" direction="row" width="100%" gap={8}>
-                {["small", "medium", "large"].map((size) => (
+                {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         SliderField, size: {size}
                         <InputDecorator
@@ -130,8 +130,8 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
                             <SliderField
-                                size={size as Size}
-                                max={1000}
+                                size={size}
+                                max={10}
                                 value={sliderValues[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={(value) => handleValueSliderChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 adornments={[
@@ -141,11 +141,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     <Adornment key="clipboard" position="end">
                                         <theme.icons.Clipboard />
                                     </Adornment>
-
                                 ]}
                                 color="secondary"
                                 required={true}
                                 defaultValue={1}
+                                legend={["safe", "low", "medium", "high", "critical"]}
                             />
                         </InputDecorator>
                     </Stack>

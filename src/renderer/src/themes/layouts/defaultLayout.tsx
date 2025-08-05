@@ -1068,31 +1068,31 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             MozAppearance: "textfield",
                         },
                         '&[type="range"]': {
-                            WebkitAppearance: "none",
-                            width: "100%",
+                            // WebkitAppearance: "none",
+                            // width: "100%",
                             height: "0.5em",
-                            borderRadius: borderRadius,
-                            outline: "none",
-                            opacity: 0.9,
-                            transition: "opacity 0.2s",
-                            padding: paddingMedium,
-                            margin: 1,
+                            // borderRadius: borderRadius,
+                            // outline: "none",
+                            // opacity: 0.9,
+                            // transition: "opacity 0.2s",
+                            // padding: paddingMedium,
+                            // margin: 1,
                             alignSelf: "center",
-                            backgroundColor: palette.text.secondary,
+                            // backgroundColor: palette.text.secondary,
                         },
                         '&[type="range"]::-webkit-slider-thumb': {
-                            WebkitAppearance: "none",
-                            width: '1em',
-                            height: '1em',
-                            borderRadius: "50%",
+                            // WebkitAppearance: "none",
+                            // width: '1em',
+                            // height: '1em',
+                            // borderRadius: "50%",
                             cursor: "pointer",
-                            boxShadow: "0 0 2px rgba(0, 0, 0, 0.5)",
-                            transition: "background 0.2s",
-                            backgroundColor: palette.primary.main,
+                            // boxShadow: "0 0 2px rgba(0, 0, 0, 0.5)",
+                            // transition: "background 0.2s",
+                            // backgroundColor: palette.primary.main,
                         },
                         '&[type="range"]::-webkit-slider-runnable-track': {
-                            width: "100%",
-                            height: "1em",
+                            // width: "100%",
+                            // height: "1em",
                         }
                     },
                     placeholder: {
@@ -1123,14 +1123,14 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             backgroundColor: palette.action.hover,
                         },
                     },
-                    sliderValue: {
+                    sliderLegend: {
                         fontSize: "0.9em",
                         backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
                         borderRadius: borderRadius,
                         width: 50,
                         textAlign: "center",
                         ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
-                            acc[`&.power-${i}`] = {
+                            acc[`&.length-${i}`] = {
                                 width: `${i * 0.7}em`,
                             };
                             return acc;
