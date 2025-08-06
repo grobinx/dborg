@@ -1050,6 +1050,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                     },
                     input: {
+                        maxWidth: '100%',
                         fontFamily: "inherit",
                         padding: 2,
                         fontSize: "inherit",
@@ -1094,19 +1095,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             backgroundColor: palette.action.hover,
                         },
                     },
-                    sliderLegend: {
-                        fontSize: "0.9em",
-                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-                        borderRadius: borderRadius,
-                        width: 50,
-                        textAlign: "center",
-                        ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
-                            acc[`&.units-${i}`] = {
-                                width: `${i * 1.2}em`,
-                            };
-                            return acc;
-                        }, {}),
-                    }
                 }
             },
             InputDecorator: {

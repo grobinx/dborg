@@ -119,6 +119,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
                 <Adornment key="stepper" position="input" className="type-number">
                     <StyledBaseInputFieldNumberStepper
                         key="increment"
+                        className={"InputField-numberStepper"}
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
                             startRepeat(() => handleIncrement(e));
@@ -134,6 +135,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
                     </StyledBaseInputFieldNumberStepper>
                     <StyledBaseInputFieldNumberStepper
                         key="decrement"
+                        className={"InputField-numberStepper"}
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
                             startRepeat(() => handleDecrement(e));

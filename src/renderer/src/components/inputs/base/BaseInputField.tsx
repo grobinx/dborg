@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes } from 'react';
-import { styled } from '@mui/material';
+import { Collapse, styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
 import { FormattedContentItem } from '@renderer/components/useful/FormattedText';
 import clsx from '@renderer/utils/clsx';
@@ -57,6 +57,7 @@ const StyledBaseInputFieldCustomInput = styled('div', {
 const StyledBaseInputFieldInput = styled('input', {
     name: "InputField",
     slot: "input",
+    shouldForwardProp: (prop) => prop !== 'width',
 })<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
     minWidth: 0, // Pozwala na zmniejszenie się inputa
@@ -84,10 +85,11 @@ interface AdornmentProps {
     ref?: React.Ref<HTMLDivElement>;
     fullWidth?: boolean;
     style?: React.CSSProperties;
+    onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
-    const { children, position = 'start', className, ref, fullWidth, style } = props;
+    const { children, position = 'start', className, ref, fullWidth, style, onClick } = props;
     let order = 0;
     let orderClass = 'start';
 
@@ -107,7 +109,7 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
     return (
         <StyledBaseInputFieldAdornment
             className={clsx(
-                "TextField-adornment",
+                "InputField-adornment",
                 `position-${orderClass}`,
                 className
             )}
@@ -117,6 +119,7 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
                 order,
             }}
             style={style}
+            onClick={onClick}
         >
             {children}
         </StyledBaseInputFieldAdornment>
@@ -173,6 +176,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [inputWidth, setInputWidth] = React.useState<number>(0);
     const [inputLeft, setInputLeft] = React.useState<number>(0);
     const decorator = useInputDecorator();
+    const [focused, setFocused] = React.useState(false);
 
     const currentValue = value ?? defaultValue;
     const [invalid, setInvalid] = useValidation(
@@ -197,7 +201,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         required && "required",
         `color-${color}`,
         invalid && "invalid",
-        decorator?.focused && "focused",
+        focused && "focused",
         `type-${type ?? inputProps?.type ?? 'text'}`,
     );
 
@@ -223,7 +227,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     return (
         <StyledBaseInputField
             className={clsx(
-                "TextField-root",
+                "InputField-root",
                 classes,
                 className,
             )}
@@ -231,13 +235,14 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             onMouseDown={() => {
                 textInputRef.current?.focus();
             }}
+            sx={{ width }}
         >
             {adornments}
             {inputAdornments}
             {(currentValue === undefined || currentValue === "") && placeholder && !disabled && (
                 <StyledBaseInputFieldPlaceholder
                     className={clsx(
-                        "TextField-placeholder",
+                        "InputField-placeholder",
                         classes,
                     )}
                     sx={{
@@ -251,7 +256,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             {input && (
                 <StyledBaseInputFieldCustomInput
                     className={clsx(
-                        "TextField-customInput",
+                        "InputField-customInput",
                         classes,
                     )}
                 >
@@ -271,7 +276,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     }
                 }}
                 className={clsx(
-                    "TextField-input",
+                    "InputField-input",
                     classes,
                 )}
                 value={typeof onConvertToInput === 'function' ? onConvertToInput(currentValue) : String(currentValue)}
@@ -280,10 +285,12 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 required={required}
                 onFocus={() => {
                     onFocus?.();
+                    setFocused(true);
                     decorator?.setFocused(true);
                 }}
                 onBlur={() => {
                     onBlur?.();
+                    setFocused(false);
                     decorator?.setFocused(false);
                 }}
                 onClick={onClick}

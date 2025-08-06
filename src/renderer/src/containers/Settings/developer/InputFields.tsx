@@ -1,9 +1,10 @@
-import { Box, Stack, Tab, useTheme } from "@mui/material";
+import { Box, Collapse, Stack, Tab, useTheme } from "@mui/material";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
+import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
@@ -38,6 +39,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: "medium@example.com",
         large: "large@example.com",
     });
+    const [searchValues, setSearchValues] = React.useState<Record<string, string | undefined>>({
+        small: "search1",
+        medium: "search2",
+        large: "search3",
+    });
 
     const handleValueTextChange = (size: string, value: string) => {
         setTextValues((prev) => ({
@@ -65,6 +71,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueEmailChange = (size: string, value: string | undefined) => {
         setEmailValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueSearchChange = (size: string, value: string | undefined) => {
+        setSearchValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -194,6 +206,30 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 onChange={React.useCallback((value) => handleValueEmailChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="warning"
                                 required={true}
+                            />
+                        </InputDecorator>
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="searchFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        SearchField, size: {size}
+                        <InputDecorator
+                            key={size}
+                            selected={selected === size}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
+                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                        >
+                            <SearchField
+                                key={size}
+                                placeholder={"Search..."}
+                                size={size}
+                                value={searchValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={React.useCallback((value) => handleValueSearchChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
+                                color="info"
+                                required={false}
                             />
                         </InputDecorator>
                     </Stack>

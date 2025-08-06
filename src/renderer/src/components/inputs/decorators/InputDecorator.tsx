@@ -317,6 +317,8 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
                 return <Adornment key="number" position="end"><NumberField /></Adornment>;
             case "email":
                 return <Adornment key="email" position="end"><EmailField /></Adornment>;
+            // case "search":
+            //     return <Adornment key="search" position="end"><theme.icons.Search /></Adornment>;
             default:
                 return undefined;
         }
