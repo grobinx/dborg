@@ -1003,10 +1003,10 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            TextField: {
+            InputField: {
                 styleOverrides: {
                     root: {
-                        fontSize: "1rem",
+                        fontSize: "1em",
                         border: `1px solid ${palette.divider}`,
                         borderRadius: borderRadius,
                         padding: paddingMedium,
@@ -1207,7 +1207,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     },
                     validity: {
                         margin: 1,
-                    }
+                    },
                 }
             }
         }

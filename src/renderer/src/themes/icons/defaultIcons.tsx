@@ -113,6 +113,10 @@ const icons = (_palette: Palette): ThemeOptions => {
             NoSpaces: (props) => <IconWrapper {...props} className="space-off"><SpaceOff fontSize="inherit" /></IconWrapper>,
             UpperLetter: (props) => <IconWrapper {...props} className="upper-letter"><UpperLetter fontSize="inherit" /></IconWrapper>,
             LowerLetter: (props) => <IconWrapper {...props} className="lower-letter"><LowerLetter fontSize="inherit" /></IconWrapper>,
+            TextField: (props) => <IconWrapper {...props} className="text-field"><MuiIcons.TextFields fontSize="inherit" /></IconWrapper>,
+            NumberField: (props) => <IconWrapper {...props} className="number-field"><MuiIcons.Numbers fontSize="inherit" /></IconWrapper>,
+            PasswordField: (props) => <IconWrapper {...props} className="password-field"><MuiIcons.Password fontSize="inherit" /></IconWrapper>,
+            EmailField: (props) => <IconWrapper {...props} className="email-field"><MuiIcons.AlternateEmail fontSize="inherit" /></IconWrapper>,
         }
     }
 }

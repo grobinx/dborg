@@ -4,7 +4,7 @@ import { styled, useTheme } from '@mui/material';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxValue, validateMinValue } from './base/useValidation';
-import { Adornment, BaseTextField } from './base/BaseTextField';
+import { Adornment, BaseInputField } from './base/BaseInputField';
 
 interface NumberFieldProps extends BaseInputProps<number | undefined> {
     placeholder?: FormattedContentItem;
@@ -14,13 +14,13 @@ interface NumberFieldProps extends BaseInputProps<number | undefined> {
     adornments?: React.ReactNode;
 }
 
-const StyledBaseTextFieldNumberStepper = styled('button', {
-    name: "TextField",
+const StyledBaseInputFieldNumberStepper = styled('button', {
+    name: "InputField",
     slot: "numberStepper",
 })(() => ({
 }));
 
-export const NumberField: React.FC<NumberFieldProps> = (props) => {
+export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
     const {
         value,
         max,
@@ -95,7 +95,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
     };
 
     return (
-        <BaseTextField
+        <BaseInputField
             value={value}
             inputProps={{
                 max,
@@ -117,7 +117,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
             onChange={(newValue) => onChange?.(newValue)}
             inputAdornments={[
                 <Adornment key="stepper" position="input" className="type-number">
-                    <StyledBaseTextFieldNumberStepper
+                    <StyledBaseInputFieldNumberStepper
                         key="increment"
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
@@ -131,8 +131,8 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                         }}
                     >
                         <theme.icons.ExpandLess />
-                    </StyledBaseTextFieldNumberStepper>
-                    <StyledBaseTextFieldNumberStepper
+                    </StyledBaseInputFieldNumberStepper>
+                    <StyledBaseInputFieldNumberStepper
                         key="decrement"
                         onMouseDown={(e) => {
                             e.preventDefault(); // Zapobiega utracie focusu
@@ -146,11 +146,12 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                         }}
                     >
                         <theme.icons.ExpandMore />
-                    </StyledBaseTextFieldNumberStepper>
+                    </StyledBaseInputFieldNumberStepper>
                 </Adornment>,
             ]}
             {...other}
         />
     );
-};
+});
 
+NumberField.displayName = 'NumberField';

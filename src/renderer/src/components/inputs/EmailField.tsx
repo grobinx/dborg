@@ -2,21 +2,23 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
+import { validateEmail, validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
-interface TextFieldProps extends BaseInputProps {
+interface EmailFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
     maxLength?: number;
     minLength?: number;
+    valiate?: boolean; 
     adornments?: React.ReactNode;
 }
 
-export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
+export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
     const {
         value,
         maxLength,
         minLength,
+        valiate = true, 
         ...other
     } = props;
 
@@ -34,15 +36,17 @@ export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
             inputProps={{
                 maxLength,
                 minLength,
-                type: 'text',
+                type: 'email',
             }}
             validations={[
                 (value: any) => validateMinLength(value, minLength),
                 (value: any) => validateMaxLength(value, maxLength),
+                valiate ? (value: any) => validateEmail(value) : undefined,
             ]}
             {...other}
         />
     )
 });
 
-TextField.displayName = "TextField";
+EmailField.displayName = "EmailField";
+

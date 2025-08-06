@@ -6,7 +6,7 @@ import clsx from '@renderer/utils/clsx';
 import { useInputDecorator } from '../decorators/InputDecoratorContext';
 import { useValidation, validateRequired } from './useValidation';
 
-interface BaseTextFieldProps<T> extends BaseInputProps<T> {
+interface BaseInputFieldProps<T> extends BaseInputProps<T> {
     /**
      * Field type, not necessarily the same as HTML input type, but can be used for styling
      * e.g. 'text', 'number', 'password', 'email', etc.
@@ -15,7 +15,7 @@ interface BaseTextFieldProps<T> extends BaseInputProps<T> {
     placeholder?: FormattedContentItem;
     inputAdornments?: React.ReactNode;
     adornments?: React.ReactNode;
-    validations?: ((value: T) => boolean | FormattedContentItem)[];
+    validations?: (((value: T) => boolean | FormattedContentItem) | undefined)[];
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     /**
      * Komponent, który zastępuje w miejscu inputa.
@@ -27,8 +27,8 @@ interface BaseTextFieldProps<T> extends BaseInputProps<T> {
     onConvertToInput?: (value: T | undefined) => string;
 }
 
-const StyledBaseTextField = styled('div', {
-    name: "TextField",
+const StyledBaseInputField = styled('div', {
+    name: "InputField",
     slot: "root",
 })(() => ({
     display: "flex",
@@ -44,8 +44,8 @@ interface StyledInputProps extends InputHTMLAttributes<HTMLInputElement> {
     onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
-const StyledBaseTextFieldCustomInput = styled('div', {
-    name: "TextField",
+const StyledBaseInputFieldCustomInput = styled('div', {
+    name: "InputField",
     slot: "customInput",
 })<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
@@ -54,8 +54,8 @@ const StyledBaseTextFieldCustomInput = styled('div', {
     width: width || "100%",
 }));
 
-const StyledBaseTextFieldInput = styled('input', {
-    name: "TextField",
+const StyledBaseInputFieldInput = styled('input', {
+    name: "InputField",
     slot: "input",
 })<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
@@ -63,8 +63,8 @@ const StyledBaseTextFieldInput = styled('input', {
     width: width || "100%",
 }));
 
-const StyledBaseTextFieldAdornment = styled('div', {
-    name: "TextField",
+const StyledBaseInputFieldAdornment = styled('div', {
+    name: "InputField",
     slot: "adornment",
 })(({ /*theme*/ }) => ({
     display: "flex",
@@ -105,7 +105,7 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
     }
 
     return (
-        <StyledBaseTextFieldAdornment
+        <StyledBaseInputFieldAdornment
             className={clsx(
                 "TextField-adornment",
                 `position-${orderClass}`,
@@ -119,12 +119,12 @@ export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
             style={style}
         >
             {children}
-        </StyledBaseTextFieldAdornment>
+        </StyledBaseInputFieldAdornment>
     );
 }
 
-const StyledBaseTextFieldPlaceholder = styled('div', {
-    name: "TextField",
+const StyledBaseInputFieldPlaceholder = styled('div', {
+    name: "InputField",
     slot: "placeholder",
 })(({ /*theme*/ }) => ({
     position: "absolute",
@@ -138,7 +138,7 @@ const StyledBaseTextFieldPlaceholder = styled('div', {
     minWidth: 0,
 }));
 
-export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
+export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const {
         type,
         id,
@@ -221,7 +221,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
     }, [decorator, type, inputProps?.type]);
 
     return (
-        <StyledBaseTextField
+        <StyledBaseInputField
             className={clsx(
                 "TextField-root",
                 classes,
@@ -235,7 +235,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
             {adornments}
             {inputAdornments}
             {(currentValue === undefined || currentValue === "") && placeholder && !disabled && (
-                <StyledBaseTextFieldPlaceholder
+                <StyledBaseInputFieldPlaceholder
                     className={clsx(
                         "TextField-placeholder",
                         classes,
@@ -246,19 +246,19 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                     }}
                 >
                     {placeholder}
-                </StyledBaseTextFieldPlaceholder>
+                </StyledBaseInputFieldPlaceholder>
             )}
             {input && (
-                <StyledBaseTextFieldCustomInput
+                <StyledBaseInputFieldCustomInput
                     className={clsx(
                         "TextField-customInput",
                         classes,
                     )}
                 >
                     {input}
-                </StyledBaseTextFieldCustomInput>
+                </StyledBaseInputFieldCustomInput>
             )}
-            <StyledBaseTextFieldInput
+            <StyledBaseInputFieldInput
                 id={id}
                 ref={(ref) => {
                     textInputRef.current = ref;
@@ -291,7 +291,7 @@ export const BaseTextField = <T,>(props: BaseTextFieldProps<T>) => {
                 hidden={!!input}
                 {...inputProps}
             />
-        </StyledBaseTextField>
+        </StyledBaseInputField>
     )
 }
 

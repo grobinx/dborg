@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { validateMaxValue, validateMinValue } from './base/useValidation';
-import { BaseTextField } from './base/BaseTextField';
+import { BaseInputField } from './base/BaseInputField';
 import { Range, Slider } from './Slider';
 
 interface SliderFieldProps extends BaseInputProps<number | undefined> {
@@ -32,7 +32,7 @@ interface RangeFieldProps extends BaseInputProps<[number, number] | undefined> {
     adornments?: React.ReactNode;
 }
 
-export const SliderField: React.FC<SliderFieldProps> = (props) => {
+export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
     const {
         value,
         max = 100,
@@ -60,7 +60,7 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
     }, [decorator, min, max, legend]);
 
     return (
-        <BaseTextField
+        <BaseInputField
             type="slider"
             value={currentValue}
             inputProps={{
@@ -94,11 +94,11 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
             {...other}
         />
     );
-};
+});
 
 SliderField.displayName = 'SliderField';
 
-export const RangeField: React.FC<RangeFieldProps> = (props) => {
+export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
     const {
         value,
         max = 100,
@@ -127,12 +127,12 @@ export const RangeField: React.FC<RangeFieldProps> = (props) => {
     }, [decorator, min, max, legend]);
 
     return (
-        <BaseTextField
-            type="slider"
+        <BaseInputField
+            type="range"
             value={currentValue}
             inputProps={{
                 style: { display: 'none', pointerEvents: 'none' },
-                type: 'range',
+                type: 'text',
             }}
             validations={[
                 (value: any) => validateMinValue(value, min),
@@ -167,7 +167,7 @@ export const RangeField: React.FC<RangeFieldProps> = (props) => {
             {...other}
         />
     );
-};
+});
 
 RangeField.displayName = 'RangeField';
 

@@ -139,7 +139,7 @@ declare module "@mui/material/styles" {
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
         Code: "root";
         FormattedText: "root";
-        TextField: "root" | "input" | "adornment" | "placeholder" | "numberStepper" | "sliderLegend";
+        InputField: "root" | "input" | "adornment" | "placeholder" | "numberStepper" | "sliderLegend";
         InputDecorator: "root" | "indicator" | "container" | "label" | "labelText" | "restrictions" | "restriction" | "description" | "input" | "validity";
     }
 
@@ -174,7 +174,7 @@ declare module "@mui/material/styles" {
         SettingInputControl: Partial<SettingInputControlProps>;
         Code: Partial<CodeProps>;
         FormattedText: Partial<FormattedTextProps>;
-        TextField: Partial<BaseInputProps>;
+        InputField: Partial<BaseInputProps>;
         InputDecorator: Partial<InputDecoratorProps>;
     }
     interface Components {
@@ -336,10 +336,10 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['FormattedText'];
             //variants?: ComponentsVariants['FormattedText'];
         };
-        TextField?: {
-            //defaultProps?: ComponentsPropsList['TextField'];
-            styleOverrides?: ComponentsOverrides<Theme>['TextField'];
-            //variants?: ComponentsVariants['TextField'];
+        InputField?: {
+            //defaultProps?: ComponentsPropsList['InputField'];
+            styleOverrides?: ComponentsOverrides<Theme>['InputField'];
+            //variants?: ComponentsVariants['InputField'];
         };
         InputDecorator?: {
             //defaultProps?: ComponentsPropsList['InputDecorator'];

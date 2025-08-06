@@ -5,7 +5,7 @@ import React from "react";
 export function useValidation<T>(
     value: T,
     disabled: boolean = false,
-    validations: ((value: any) => boolean | FormattedContent)[],
+    validations: (((value: any) => boolean | FormattedContent) | undefined)[],
     onValid?: () => void,
     changedDelay: number = 500,
 ): [boolean | FormattedContent, ((valid: boolean | FormattedContent) => void) | undefined | null] {
@@ -20,7 +20,7 @@ export function useValidation<T>(
 
         const timeoutId = setTimeout(() => {
             const invalid = validations.filter(Boolean).some((validate) => {
-                const result = validate(value);
+                const result = validate!(value);
                 if (typeof result === "boolean") {
                     if (!result) {
                         setInvalid("Nieprawidłowa wartość");
@@ -81,3 +81,10 @@ export const validateMinValue = (value: any, min: number | undefined): boolean |
     }
     return true;
 };
+export const validateEmail = (value: any): boolean | FormattedContent => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (value && !emailRegex.test(value)) {
+        return "Nieprawidłowy format adresu e-mail";
+    }
+    return true;
+}

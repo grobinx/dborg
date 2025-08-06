@@ -1,5 +1,5 @@
 import { Box, BoxProps, Stack, styled, Typography, useTheme } from "@mui/material";
-import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
+import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { ThemeColor, Size } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { NumberField } from "@renderer/components/inputs/NumberField";

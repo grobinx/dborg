@@ -1,7 +1,8 @@
 import { Box, Stack, Tab, useTheme } from "@mui/material";
-import { Adornment } from "@renderer/components/inputs/base/BaseTextField";
+import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
@@ -32,6 +33,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: [0, 20],
         large: [0, 30],
     });
+    const [emailValues, setEmailValues] = React.useState<Record<string, string | undefined>>({
+        small: "small@example.com",
+        medium: "medium@example.com",
+        large: "large@example.com",
+    });
 
     const handleValueTextChange = (size: string, value: string) => {
         setTextValues((prev) => ({
@@ -57,6 +63,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
+    const handleValueEmailChange = (size: string, value: string | undefined) => {
+        setEmailValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
@@ -67,7 +79,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         <InputDecorator
                             key={size}
                             selected={selected === size}
-                            onClick={() => setSelected(size)}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
                             label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
@@ -76,16 +88,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 maxLength={50}
                                 value={textValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                adornments={[
-                                    <Adornment key="connected" position="end">
-                                        <theme.icons.Connected />
-                                    </Adornment>,
-                                    <Adornment key="clipboard" position="end">
-                                        <theme.icons.Clipboard />
-                                    </Adornment>
-
-                                ]}
+                                onChange={React.useCallback((value) => handleValueTextChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="main"
                                 required={true}
                                 defaultValue={1}
@@ -101,7 +104,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         <InputDecorator
                             key={size}
                             selected={selected === size}
-                            onClick={() => setSelected(size)}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
                             label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
@@ -111,16 +114,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 max={50}
                                 min={1}
                                 value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                adornments={[
-                                    <Adornment key="connected" position="end">
-                                        <theme.icons.Connected />
-                                    </Adornment>,
-                                    <Adornment key="clipboard" position="end">
-                                        <theme.icons.Clipboard />
-                                    </Adornment>
-
-                                ]}
+                                onChange={React.useCallback((value) => handleValueNumberChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="primary"
                                 required={true}
                                 defaultValue={1}
@@ -136,7 +130,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         <InputDecorator
                             key={size}
                             selected={selected === size}
-                            onClick={() => setSelected(size)}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
                             label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
@@ -145,19 +139,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 max={1000}
                                 step={10}
                                 value={sliderValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueSliderChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                adornments={[
-                                    <Adornment key="connected" position="end">
-                                        <theme.icons.Connected />
-                                    </Adornment>,
-                                    <Adornment key="clipboard" position="end">
-                                        <theme.icons.Clipboard />
-                                    </Adornment>
-                                ]}
+                                onChange={React.useCallback((value) => handleValueSliderChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="secondary"
                                 required={true}
                                 defaultValue={1}
-                                legend={["safe", "low", "medium", "high", "critical"]}
+                                legend={React.useMemo(() => ["safe", "low", "medium", "high", "critical"], [])}
                             />
                         </InputDecorator>
                     </Stack>
@@ -166,11 +152,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             <Stack key="rangeFields" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        SliderField, size: {size}
+                        RangeField, size: {size}
                         <InputDecorator
                             key={size}
                             selected={selected === size}
-                            onClick={() => setSelected(size)}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
                             label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                         >
@@ -180,19 +166,34 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 step={10}
                                 distance={1}
                                 value={rangeValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={(value) => handleValueRangeChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                // adornments={[
-                                //     <Adornment key="connected" position="end">
-                                //         <theme.icons.Connected />
-                                //     </Adornment>,
-                                //     <Adornment key="clipboard" position="end">
-                                //         <theme.icons.Clipboard />
-                                //     </Adornment>
-                                // ]}
+                                onChange={React.useCallback((value) => handleValueRangeChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="error"
                                 required={true}
-                                defaultValue={[1, 5]}
-                                legend={["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"]}
+                                defaultValue={React.useMemo(() => [1, 5], [])}
+                                legend={React.useMemo(() => ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"], [])}
+                            />
+                        </InputDecorator>
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="emailFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        EmailField, size: {size}
+                        <InputDecorator
+                            key={size}
+                            selected={selected === size}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
+                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                        >
+                            <EmailField
+                                key={size}
+                                size={size}
+                                value={emailValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={React.useCallback((value) => handleValueEmailChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
+                                color="warning"
+                                required={true}
                             />
                         </InputDecorator>
                     </Stack>

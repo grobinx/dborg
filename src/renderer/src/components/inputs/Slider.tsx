@@ -416,15 +416,32 @@ export const Range: React.FC<RangeProps> = ({
         return Math.min(Math.max(steppedValue, min), max);
     }, [min, max, step]);
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (disabled) return;
+    const handleTrackClick = (e: React.MouseEvent) => {
+        if (disabled || isDragging.current) return;
+        
         const element = e.currentTarget as HTMLElement;
         if (element?.focus) element.focus();
-        e.preventDefault();
-    }
+        
+        const clickValue = getValueFromPosition(e.clientX);
+        
+        // Sprawdź który thumb jest bliżej kliknięcia
+        const distanceToMin = Math.abs(clickValue - currentMinValue);
+        const distanceToMax = Math.abs(clickValue - currentMaxValue);
+        
+        if (distanceToMin <= distanceToMax) {
+            // Przesuń min thumb
+            const newMinValue = Math.min(clickValue, currentMaxValue - distance);
+            onChange?.([Math.max(newMinValue, min), currentMaxValue]);
+        } else {
+            // Przesuń max thumb
+            const newMaxValue = Math.max(clickValue, currentMinValue + distance);
+            onChange?.([currentMinValue, Math.min(newMaxValue, max)]);
+        }
+    };
 
     const handlePointerDown = (e: React.PointerEvent, thumb: "min" | "max") => {
         if (disabled) return;
+        e.stopPropagation(); // Zatrzymaj propagację żeby nie wywołać handleTrackClick
         isDragging.current = thumb;
         const newValue = getValueFromPosition(e.clientX);
         
@@ -458,6 +475,65 @@ export const Range: React.FC<RangeProps> = ({
         e.currentTarget.releasePointerCapture(e.pointerId);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (disabled) return;
+        let newMinValue = currentMinValue;
+        let newMaxValue = currentMaxValue;
+        
+        const isShiftPressed = e.shiftKey;
+        
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'ArrowDown':
+                if (isShiftPressed) {
+                    // Shift + strzałka - przesuń tylko min thumb w lewo/dół
+                    newMinValue = Math.max(currentMinValue - step, min);
+                    // Upewnij się, że zachowana jest minimalna odległość
+                    if (newMinValue > currentMaxValue - distance) {
+                        newMinValue = Math.max(currentMaxValue - distance, min);
+                    }
+                } else {
+                    // Bez Shift - przesuń oba thumby w lewo/dół
+                    //newMinValue = Math.max(currentMinValue - step, min);
+                    newMaxValue = Math.max(currentMaxValue - step, newMinValue + distance);
+                }
+                break;
+            case 'ArrowRight':
+            case 'ArrowUp':
+                if (isShiftPressed) {
+                    // Shift + strzałka - przesuń tylko max thumb w prawo/górę
+                    newMaxValue = Math.min(currentMaxValue + step, max);
+                    // Upewnij się, że zachowana jest minimalna odległość
+                    if (newMaxValue < currentMinValue + distance) {
+                        newMaxValue = Math.min(currentMinValue + distance, max);
+                    }
+                } else {
+                    // Bez Shift - przesuń oba thumby w prawo/górę
+                    // newMaxValue = Math.min(currentMaxValue + step, max);
+                    newMinValue = Math.min(currentMinValue + step, newMaxValue - distance);
+                }
+                break;
+            case 'Home':
+                if (isShiftPressed) {
+                    newMaxValue = Math.max(currentMinValue - distance, min);
+                } else {
+                    newMinValue = min;
+                }
+                break;
+            case 'End':
+                if (isShiftPressed) {
+                    newMinValue = Math.min(currentMaxValue + distance, max);
+                } else {
+                    newMaxValue = max;
+                }
+                break;
+            default:
+                return;
+        }
+        e.preventDefault();
+        onChange?.([newMinValue, newMaxValue]);
+    };
+
     const minPercentage = ((currentMinValue - min) / (max - min)) * 100;
     const maxPercentage = ((currentMaxValue - min) / (max - min)) * 100;
 
@@ -481,7 +557,8 @@ export const Range: React.FC<RangeProps> = ({
                 ref={sliderRef}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                onMouseDown={handleMouseDown}
+                onMouseDown={handleTrackClick}
+                onKeyDown={handleKeyDown}
                 tabIndex={disabled ? -1 : 0}
                 role="slider"
                 aria-valuemin={min}

@@ -1,4 +1,4 @@
-import { Alert, Palette, Popper, styled } from "@mui/material";
+import { Alert, Palette, Popper, styled, useTheme } from "@mui/material";
 import clsx from "../../../utils/clsx";
 import { BaseInputProps } from "../base/BaseInputProps";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
@@ -6,6 +6,7 @@ import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
 import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
 import { ThemeColor, Size } from "../base/types";
+import { Adornment, BaseInputField } from "../base/BaseInputField";
 
 /**
  * Wspólny zestaw właściwości dla komponentów wejściowych
@@ -217,9 +218,14 @@ const StyledInputDecoratorInput = styled('div', {
     name: "InputDecorator",
     slot: "input",
 })(() => ({
+    display: "flex",
+    flexDirection: "row",
+    flexGrow: 1,
+    minWidth: 0,
+    width: "100%",
 }));
 
-export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
+export const InputDecorator = React.memo((props: InputDecoratorProps): React.ReactElement => {
     const {
         children,
         className,
@@ -232,6 +238,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
         selected = false,
     } = props;
 
+    const theme = useTheme();
     const [inputRestrictions, setInputRestrictions] = React.useState<React.ReactNode>(null);
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [inputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
@@ -298,6 +305,44 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefaultValue = JSON.stringify(value ?? defaultValue) === JSON.stringify(defaultValue);
 
+    // Przygotuj adornments poza memo
+    const typeAdornments = React.useMemo(() => {
+        const { TextField, NumberField, EmailField } = theme.icons;
+        console.debug("InputDecorator: typeAdornments", type, value);
+        
+        switch (type) {
+            case "text":
+                return <Adornment key="text" position="end"><TextField /></Adornment>;
+            case "number":
+                return <Adornment key="number" position="end"><NumberField /></Adornment>;
+            case "email":
+                return <Adornment key="email" position="end"><EmailField /></Adornment>;
+            default:
+                return undefined;
+        }
+    }, [type, theme.icons]);
+
+    const clonedChildren = React.useMemo(() => {
+        if (!React.isValidElement(children)) {
+            return children;
+        }
+        console.debug("InputDecorator: clonedChildren", type, value);
+
+        if ('adornments' in children.props || typeAdornments) {
+            const childProps = children.props as BaseInputProps & { adornments?: React.ReactNode };
+
+            return React.cloneElement<typeof childProps>(children, {
+                ...children.props,
+                adornments: [
+                    ...React.Children.toArray(childProps.adornments || []),
+                    typeAdornments,
+                ].filter(Boolean),
+            });
+        }
+
+        return children;
+    }, [children, typeAdornments]); // Teraz zależy tylko od stabilnych wartości
+
     return (
         <InputDecoratorContext.Provider value={contextValue}>
             <StyledInputDecorator
@@ -341,7 +386,7 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
                         )}
                         ref={inputRef}
                     >
-                        {children}
+                        {clonedChildren}
                     </StyledInputDecoratorInput>
                     {description && (
                         <StyledInputDecoratorDescription
@@ -377,4 +422,6 @@ export function InputDecorator(props: InputDecoratorProps): React.ReactElement {
             </StyledInputDecorator>
         </InputDecoratorContext.Provider>
     );
-}
+});
+
+InputDecorator.displayName = "InputDecorator";
