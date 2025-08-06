@@ -22,6 +22,7 @@ interface RangeFieldProps extends BaseInputProps<[number, number] | undefined> {
     max?: number;
     min?: number;
     step?: number;
+    distance?: number; 
     legend?: string[];
     /**
      * Czy pokazywać skalę lub ile wynosi maksymalna wartość by ją pokazać
@@ -104,6 +105,7 @@ export const RangeField: React.FC<RangeFieldProps> = (props) => {
         min = 0,
         step = 1,
         scale = 10,
+        distance = 0, 
         legend,
         onChange,
         disabled,
@@ -155,6 +157,7 @@ export const RangeField: React.FC<RangeFieldProps> = (props) => {
                     min={min}
                     max={max}
                     step={step}
+                    distance={distance}
                     scale={scale}
                     legend={legend}
                     disabled={disabled}

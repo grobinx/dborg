@@ -20,6 +20,7 @@ interface RangeProps {
     min: number;
     max: number;
     step: number;
+    distance?: number;
     scale?: boolean | number;
     legend?: string[];
     disabled?: boolean;
@@ -127,7 +128,7 @@ const StyledBaseSliderLegend = styled('div', {
     textAlign: "center",
     ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
         acc[`&.units-${i}`] = {
-            width: `${i * 1}em`,
+            minWidth: `${i * 0.7}em`,
         };
         return acc;
     }, {}),
@@ -338,6 +339,7 @@ export const Range: React.FC<RangeProps> = ({
     min: initMin = 0,
     max: initMax = 100,
     step: initStep = 1,
+    distance = 0,
     scale = 10,
     legend,
     disabled,
@@ -358,11 +360,31 @@ export const Range: React.FC<RangeProps> = ({
             ? (legend.reduce((maxLenUnit, label) => Math.max(maxLenUnit, Math.ceil((calculateTextWidth(label, 14) ?? (label.length * 14)) / 10)), 0) + 1)
             : String(calculatedMax).length;
 
-        const safeMinValue = Math.min(Math.max(minValue ?? calculatedMin, calculatedMin), calculatedMax);
+        let safeMinValue = Math.min(Math.max(minValue ?? calculatedMin, calculatedMin), calculatedMax);
+        let safeMaxValue = Math.min(Math.max(maxValue ?? calculatedMin, calculatedMin), calculatedMax);
+        
+        // Sprawdzenie minimalnej odległości
+        if (safeMaxValue - safeMinValue < distance) {
+            // Jeśli odległość jest za mała, dostosuj wartości
+            const center = (safeMinValue + safeMaxValue) / 2;
+            const halfDistance = distance / 2;
+            
+            safeMinValue = Math.max(calculatedMin, center - halfDistance);
+            safeMaxValue = Math.min(calculatedMax, center + halfDistance);
+            
+            // Jeśli nadal nie można zachować distance, przesunięcie w kierunku granic
+            if (safeMaxValue - safeMinValue < distance) {
+                if (safeMinValue === calculatedMin) {
+                    safeMaxValue = Math.min(calculatedMax, safeMinValue + distance);
+                } else if (safeMaxValue === calculatedMax) {
+                    safeMinValue = Math.max(calculatedMin, safeMaxValue - distance);
+                }
+            }
+        }
+
         const calculatedDisplayMinValue = hasLabels
             ? legend[safeMinValue] || legend[0]
             : safeMinValue;
-        const safeMaxValue = Math.min(Math.max(maxValue ?? calculatedMin, calculatedMin), calculatedMax);
         const calculatedDisplayMaxValue = hasLabels
             ? legend[safeMaxValue] || legend[0]
             : safeMaxValue;
@@ -381,7 +403,7 @@ export const Range: React.FC<RangeProps> = ({
             currentMinValue: safeMinValue,
             currentMaxValue: safeMaxValue
         };
-    }, [legend, initMin, initMax, initStep, value[0], value[1]]);
+    }, [legend, initMin, initMax, initStep, minValue, maxValue, distance]);
 
     const shouldShowScale = typeof scale === 'number' ? (max - min) <= scale && (max - min) > 1 : !!scale;
 
@@ -405,10 +427,13 @@ export const Range: React.FC<RangeProps> = ({
         if (disabled) return;
         isDragging.current = thumb;
         const newValue = getValueFromPosition(e.clientX);
+        
         if (thumb === "min") {
-            onChange?.([Math.min(newValue, maxValue), maxValue]);
+            const newMinValue = Math.min(newValue, currentMaxValue - distance);
+            onChange?.([Math.max(newMinValue, min), currentMaxValue]);
         } else {
-            onChange?.([minValue, Math.max(newValue, minValue)]);
+            const newMaxValue = Math.max(newValue, currentMinValue + distance);
+            onChange?.([currentMinValue, Math.min(newMaxValue, max)]);
         }
         e.currentTarget.setPointerCapture(e.pointerId);
     };
@@ -417,10 +442,13 @@ export const Range: React.FC<RangeProps> = ({
         if (!isDragging.current || disabled) return;
         e.preventDefault();
         const newValue = getValueFromPosition(e.clientX);
+        
         if (isDragging.current === "min") {
-            onChange?.([Math.min(newValue, maxValue), maxValue]);
+            const newMinValue = Math.min(newValue, currentMaxValue - distance);
+            onChange?.([Math.max(newMinValue, min), currentMaxValue]);
         } else {
-            onChange?.([minValue, Math.max(newValue, minValue)]);
+            const newMaxValue = Math.max(newValue, currentMinValue + distance);
+            onChange?.([currentMinValue, Math.min(newMaxValue, max)]);
         }
     };
 
@@ -430,39 +458,8 @@ export const Range: React.FC<RangeProps> = ({
         e.currentTarget.releasePointerCapture(e.pointerId);
     };
 
-    const minPercentage = ((minValue - min) / (max - min)) * 100;
-    const maxPercentage = ((maxValue - min) / (max - min)) * 100;
-
-    // const handleKeyDown = (e: React.KeyboardEvent) => {
-    //     if (disabled) return;
-    //     let newValue = currentValue;
-    //     switch (e.key) {
-    //         case 'ArrowLeft':
-    //         case 'ArrowDown':
-    //             newValue = Math.max(currentValue - step, min);
-    //             break;
-    //         case 'ArrowRight':
-    //         case 'ArrowUp':
-    //             newValue = Math.min(currentValue + step, max);
-    //             break;
-    //         case 'Home':
-    //             newValue = min;
-    //             break;
-    //         case 'End':
-    //             newValue = max;
-    //             break;
-    //         case 'PageDown':
-    //             newValue = Math.max(currentValue - step * 10, min);
-    //             break;
-    //         case 'PageUp':
-    //             newValue = Math.min(currentValue + step * 10, max);
-    //             break;
-    //         default:
-    //             return;
-    //     }
-    //     e.preventDefault();
-    //     onChange?.(newValue);
-    // };
+    const minPercentage = ((currentMinValue - min) / (max - min)) * 100;
+    const maxPercentage = ((currentMaxValue - min) / (max - min)) * 100;
 
     const scaleValues = shouldShowScale
         ? Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step)
@@ -484,13 +481,12 @@ export const Range: React.FC<RangeProps> = ({
                 ref={sliderRef}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                //onKeyDown={handleKeyDown}
                 onMouseDown={handleMouseDown}
                 tabIndex={disabled ? -1 : 0}
                 role="slider"
                 aria-valuemin={min}
                 aria-valuemax={max}
-                aria-valuetext={`${minValue} - ${maxValue}`}
+                aria-valuetext={`${currentMinValue} - ${currentMaxValue}`}
                 aria-disabled={disabled}
                 onFocus={() => decorator?.setFocused(true)}
                 onBlur={() => decorator?.setFocused(false)}

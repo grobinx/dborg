@@ -178,6 +178,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 size={size}
                                 max={1000}
                                 step={10}
+                                distance={1}
                                 value={rangeValues[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={(value) => handleValueRangeChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                 // adornments={[
