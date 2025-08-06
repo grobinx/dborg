@@ -89,6 +89,8 @@ export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
                     legend={legend}
                     disabled={disabled}
                     onChange={onChange}
+                    onFocus={() => decorator?.setFocused(true)}
+                    onBlur={() => decorator?.setFocused(false)}
                 />
             }
             {...other}
@@ -162,6 +164,8 @@ export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
                     legend={legend}
                     disabled={disabled}
                     onChange={onChange}
+                    onFocus={() => decorator?.setFocused(true)}
+                    onBlur={() => decorator?.setFocused(false)}
                 />
             }
             {...other}

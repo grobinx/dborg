@@ -13,6 +13,8 @@ interface SliderProps {
     legend?: string[];
     disabled?: boolean;
     onChange?: (value: number) => void;
+    onFocus?: () => void;
+    onBlur?: () => void;
 }
 
 interface RangeProps {
@@ -25,6 +27,8 @@ interface RangeProps {
     legend?: string[];
     disabled?: boolean;
     onChange?: (value: [number, number]) => void;
+    onFocus?: () => void;
+    onBlur?: () => void;
 }
 
 
@@ -176,9 +180,10 @@ export const Slider: React.FC<SliderProps> = ({
     scale = 10,
     legend,
     disabled,
-    onChange
+    onChange,
+    onFocus,
+    onBlur,
 }) => {
-    const decorator = useInputDecorator();
     const sliderRef = React.useRef<HTMLDivElement>(null);
     const isDragging = React.useRef(false);
 
@@ -298,8 +303,8 @@ export const Slider: React.FC<SliderProps> = ({
                 aria-valuenow={currentValue}
                 aria-valuetext={String(displayValue)}
                 aria-disabled={disabled}
-                onFocus={() => decorator?.setFocused(true)}
-                onBlur={() => decorator?.setFocused(false)}
+                onFocus={onFocus}
+                onBlur={onBlur}
             >
                 {shouldShowScale && (
                     <StyledSliderScale className={clsx("Slider-scale")}>
@@ -343,10 +348,11 @@ export const Range: React.FC<RangeProps> = ({
     scale = 10,
     legend,
     disabled,
-    onChange
+    onChange,
+    onFocus,
+    onBlur
 }) => {
     const [minValue, maxValue] = value ?? [initMin, initMax];
-    const decorator = useInputDecorator();
     const sliderRef = React.useRef<HTMLDivElement>(null);
     const isDragging = React.useRef<"min" | "max" | null>(null);
 
@@ -565,8 +571,8 @@ export const Range: React.FC<RangeProps> = ({
                 aria-valuemax={max}
                 aria-valuetext={`${currentMinValue} - ${currentMaxValue}`}
                 aria-disabled={disabled}
-                onFocus={() => decorator?.setFocused(true)}
-                onBlur={() => decorator?.setFocused(false)}
+                onFocus={onFocus}
+                onBlur={onBlur}
             >
                 {shouldShowScale && (
                     <StyledSliderScale className={clsx("Slider-scale")}>
