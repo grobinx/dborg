@@ -1,8 +1,6 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
-import { useInputDecorator } from './decorators/InputDecoratorContext';
-import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength, validatePatternRequired, validateRequired } from './base/useValidation';
+import { validatePatternRequired } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 import { Replacement, useMask } from '@react-input/mask';
 import { useTheme } from '@mui/material';

@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes } from 'react';
-import { Collapse, styled } from '@mui/material';
+import { styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
 import { FormattedContentItem } from '@renderer/components/useful/FormattedText';
 import clsx from '@renderer/utils/clsx';

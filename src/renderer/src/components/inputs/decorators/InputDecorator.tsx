@@ -1,12 +1,11 @@
-import { Alert, Palette, Popper, styled, useTheme } from "@mui/material";
+import { Alert, Popper, styled, useTheme } from "@mui/material";
 import clsx from "../../../utils/clsx";
 import { BaseInputProps } from "../base/BaseInputProps";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
 import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
 import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
-import { ThemeColor, Size } from "../base/types";
-import { Adornment, BaseInputField } from "../base/BaseInputField";
+import { Adornment } from "../base/BaseInputField";
 
 /**
  * Wspólny zestaw właściwości dla komponentów wejściowych

@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
+import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
 interface TextFieldProps extends BaseInputProps {

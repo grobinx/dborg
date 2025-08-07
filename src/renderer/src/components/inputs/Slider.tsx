@@ -2,7 +2,7 @@ import React from 'react';
 import { styled } from '@mui/material';
 import clsx from '@renderer/utils/clsx';
 import calculateTextWidth from '@renderer/utils/calculateTextWidth';
-import useValueAnimation, { animationFlashCss, animationGlowCss, animationPulseCss, animationScaleCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
+import useValueAnimation, { animationPulseCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
 import { T } from 'react-router/dist/development/fog-of-war-CvttGpNz';
 
 interface SliderProps {

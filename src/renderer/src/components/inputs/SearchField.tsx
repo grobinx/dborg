@@ -2,9 +2,9 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
-import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Collapse, useTheme } from '@mui/material';
+import { validateMaxLength, validateMinLength } from './base/useValidation';
+import { BaseInputField } from './base/BaseInputField';
+import { useTheme } from '@mui/material';
 
 interface SearchFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
