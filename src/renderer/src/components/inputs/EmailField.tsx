@@ -9,8 +9,9 @@ interface EmailFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
     maxLength?: number;
     minLength?: number;
-    valiate?: boolean; 
+    validate?: boolean; 
     adornments?: React.ReactNode;
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
@@ -18,7 +19,8 @@ export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
         value,
         maxLength,
         minLength,
-        valiate = true, 
+        validate: valiate = true, 
+        inputProps,
         ...other
     } = props;
 
@@ -37,6 +39,7 @@ export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
                 maxLength,
                 minLength,
                 type: 'email',
+                ...inputProps,
             }}
             validations={[
                 (value: any) => validateMinLength(value, minLength),

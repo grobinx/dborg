@@ -129,7 +129,7 @@ const StyledBaseSliderLegend = styled('div', {
     width: 50,
     //padding: '0 0.3em',
     textAlign: "center",
-    ...Array.from({ length: 10 }, (_, i) => i + 1).reduce((acc, i) => {
+    ...Array.from({ length: 10 }, (_, i) => i + 1).reduce<Record<string, React.CSSProperties>>((acc, i) => {
         acc[`&.units-${i}`] = {
             minWidth: `${i * 0.7}em`,
         };
@@ -171,18 +171,19 @@ const StyledSliderScaleTick = styled('div', {
     },
 }));
 
-export const Slider: React.FC<SliderProps> = ({
-    value,
-    min: initMin = 0,
-    max: initMax = 100,
-    step: initStep = 1,
-    scale = 10,
-    legend,
-    disabled,
-    onChange,
-    onFocus,
-    onBlur,
-}) => {
+export const Slider: React.FC<SliderProps> = (props) => {
+    const {
+        value,
+        min: initMin = 0,
+        max: initMax = 100,
+        step: initStep = 1,
+        scale = 10,
+        legend,
+        disabled,
+        onChange,
+        onFocus,
+        onBlur,
+    } = props;
     const sliderRef = React.useRef<HTMLDivElement>(null);
     const isDragging = React.useRef(false);
 
@@ -367,16 +368,16 @@ export const Range: React.FC<RangeProps> = ({
 
         let safeMinValue = Math.min(Math.max(minValue ?? calculatedMin, calculatedMin), calculatedMax);
         let safeMaxValue = Math.min(Math.max(maxValue ?? calculatedMin, calculatedMin), calculatedMax);
-        
+
         // Sprawdzenie minimalnej odległości
         if (safeMaxValue - safeMinValue < distance) {
             // Jeśli odległość jest za mała, dostosuj wartości
             const center = (safeMinValue + safeMaxValue) / 2;
             const halfDistance = distance / 2;
-            
+
             safeMinValue = Math.max(calculatedMin, center - halfDistance);
             safeMaxValue = Math.min(calculatedMax, center + halfDistance);
-            
+
             // Jeśli nadal nie można zachować distance, przesunięcie w kierunku granic
             if (safeMaxValue - safeMinValue < distance) {
                 if (safeMinValue === calculatedMin) {
@@ -423,16 +424,16 @@ export const Range: React.FC<RangeProps> = ({
 
     const handleTrackClick = (e: React.MouseEvent) => {
         if (disabled || isDragging.current) return;
-        
+
         const element = e.currentTarget as HTMLElement;
         if (element?.focus) element.focus();
-        
+
         const clickValue = getValueFromPosition(e.clientX);
-        
+
         // Sprawdź który thumb jest bliżej kliknięcia
         const distanceToMin = Math.abs(clickValue - currentMinValue);
         const distanceToMax = Math.abs(clickValue - currentMaxValue);
-        
+
         if (distanceToMin <= distanceToMax) {
             // Przesuń min thumb
             const newMinValue = Math.min(clickValue, currentMaxValue - distance);
@@ -449,7 +450,7 @@ export const Range: React.FC<RangeProps> = ({
         e.stopPropagation(); // Zatrzymaj propagację żeby nie wywołać handleTrackClick
         isDragging.current = thumb;
         const newValue = getValueFromPosition(e.clientX);
-        
+
         if (thumb === "min") {
             const newMinValue = Math.min(newValue, currentMaxValue - distance);
             onChange?.([Math.max(newMinValue, min), currentMaxValue]);
@@ -464,7 +465,7 @@ export const Range: React.FC<RangeProps> = ({
         if (!isDragging.current || disabled) return;
         e.preventDefault();
         const newValue = getValueFromPosition(e.clientX);
-        
+
         if (isDragging.current === "min") {
             const newMinValue = Math.min(newValue, currentMaxValue - distance);
             onChange?.([Math.max(newMinValue, min), currentMaxValue]);
@@ -484,9 +485,9 @@ export const Range: React.FC<RangeProps> = ({
         if (disabled) return;
         let newMinValue = currentMinValue;
         let newMaxValue = currentMaxValue;
-        
+
         const isShiftPressed = e.shiftKey;
-        
+
         switch (e.key) {
             case 'ArrowLeft':
             case 'ArrowDown':
@@ -589,13 +590,13 @@ export const Range: React.FC<RangeProps> = ({
                 )}
                 <StyledSliderTrack className={clsx("Slider-track")} />
                 <StyledSliderProgress start={minPercentage} end={maxPercentage} className={clsx("Slider-progress")} />
-                <StyledSliderThumb 
-                    position={minPercentage} 
+                <StyledSliderThumb
+                    position={minPercentage}
                     className={clsx("Slider-thumb", "min")}
                     onPointerDown={(e) => handlePointerDown(e, "min")}
                 />
-                <StyledSliderThumb 
-                    position={maxPercentage} 
+                <StyledSliderThumb
+                    position={maxPercentage}
                     className={clsx("Slider-thumb", "max")}
                     onPointerDown={(e) => handlePointerDown(e, "max")}
                 />

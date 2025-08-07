@@ -426,8 +426,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         placeholder={t("search---", "Search...")}
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        onKeyDown={handleSearchKeyDown}
-                        autoFocus
+                        inputProps={{
+                            autoFocus: true,
+                            onKeyDown: handleSearchKeyDown,
+                        }}
                     />
                     <Tooltip title={t("group-schema-list", "Group schema list")}>
                         <ToolButton

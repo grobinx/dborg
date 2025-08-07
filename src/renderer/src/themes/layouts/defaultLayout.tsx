@@ -1194,6 +1194,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     },
                     validity: {
                         margin: 1,
+                        zIndex: 1000,
                     },
                 }
             }

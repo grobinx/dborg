@@ -16,6 +16,7 @@ interface SliderFieldProps extends BaseInputProps<number | undefined> {
      */
     scale?: boolean | number;
     adornments?: React.ReactNode;
+    inputProps?: React.ComponentProps<typeof Slider>;
 }
 
 interface RangeFieldProps extends BaseInputProps<[number, number] | undefined> {
@@ -30,6 +31,7 @@ interface RangeFieldProps extends BaseInputProps<[number, number] | undefined> {
      */
     scale?: boolean | number;
     adornments?: React.ReactNode;
+    inputProps?: React.ComponentProps<typeof Range>;
 }
 
 export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
@@ -42,13 +44,14 @@ export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
         legend,
         onChange,
         disabled,
+        inputProps,
         ...other
     } = props;
 
     const decorator = useInputDecorator();
 
     // Uproszczona wersja - CustomSlider obsługuje legend
-    const currentValue = value ?? min;
+    const currentValue: number = value ?? min;
 
     // Ustawienie ograniczeń w dekoratorze
     React.useEffect(() => {
@@ -64,7 +67,6 @@ export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
             type="slider"
             value={currentValue}
             inputProps={{
-                style: { display: 'none', pointerEvents: 'none' },
                 type: 'range',
             }}
             validations={[
@@ -91,6 +93,7 @@ export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
                     onChange={onChange}
                     onFocus={() => decorator?.setFocused(true)}
                     onBlur={() => decorator?.setFocused(false)}
+                    {...inputProps}
                 />
             }
             {...other}
@@ -111,6 +114,7 @@ export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
         legend,
         onChange,
         disabled,
+        inputProps,
         ...other
     } = props;
 
@@ -133,7 +137,6 @@ export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
             type="range"
             value={currentValue}
             inputProps={{
-                style: { display: 'none', pointerEvents: 'none' },
                 type: 'text',
             }}
             validations={[
@@ -166,6 +169,7 @@ export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
                     onChange={onChange}
                     onFocus={() => decorator?.setFocused(true)}
                     onBlur={() => decorator?.setFocused(false)}
+                    {...inputProps}
                 />
             }
             {...other}

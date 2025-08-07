@@ -10,6 +10,7 @@ interface TextFieldProps extends BaseInputProps {
     maxLength?: number;
     minLength?: number;
     adornments?: React.ReactNode;
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
@@ -17,6 +18,7 @@ export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
         value,
         maxLength,
         minLength,
+        inputProps,
         ...other
     } = props;
 
@@ -35,6 +37,7 @@ export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
                 maxLength,
                 minLength,
                 type: 'text',
+                ...inputProps,
             }}
             validations={[
                 (value: any) => validateMinLength(value, minLength),

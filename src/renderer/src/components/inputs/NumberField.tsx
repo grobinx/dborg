@@ -12,6 +12,7 @@ interface NumberFieldProps extends BaseInputProps<number | undefined> {
     min?: number;
     step?: number;
     adornments?: React.ReactNode;
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 const StyledBaseInputFieldNumberStepper = styled('button', {
@@ -27,6 +28,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
         min,
         step,
         onChange,
+        inputProps,
         ...other
     } = props;
 
@@ -102,6 +104,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
                 min,
                 step,
                 type: 'number',
+                ...inputProps,
             }}
             validations={[
                 (value: any) => validateMinValue(value, min),

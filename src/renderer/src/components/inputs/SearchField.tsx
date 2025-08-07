@@ -11,6 +11,7 @@ interface SearchFieldProps extends BaseInputProps {
     maxLength?: number;
     minLength?: number;
     adornments?: React.ReactNode;
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
@@ -18,6 +19,7 @@ export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
         value,
         maxLength,
         minLength,
+        inputProps,
         ...other
     } = props;
 
@@ -38,6 +40,7 @@ export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
                 maxLength,
                 minLength,
                 type: 'search',
+                ...inputProps,
             }}
             validations={[
                 (value: any) => validateMinLength(value, minLength),

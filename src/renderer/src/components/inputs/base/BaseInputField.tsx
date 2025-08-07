@@ -170,15 +170,13 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         input,
         ref,
         inputRef,
-        onKeyDown,
-        onKeyUp,
     } = props;
 
     const textInputRef = React.useRef<HTMLInputElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
     const [inputLeft, setInputLeft] = React.useState<number>(0);
     const decorator = useInputDecorator();
-    const [focused, setFocused] = React.useState(false);
+    const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
 
     const currentValue = value ?? defaultValue;
     const [invalid, setInvalid] = useValidation(
@@ -238,8 +236,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 textInputRef.current?.focus();
             }}
             sx={{ width }}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
         >
             {adornments}
             {inputAdornments}
@@ -263,6 +259,16 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         "InputField-customInput",
                         classes,
                     )}
+                    onFocus={() => {
+                        onFocus?.();
+                        setFocused(true);
+                        decorator?.setFocused(true);
+                    }}
+                    onBlur={() => {
+                        onBlur?.();
+                        setFocused(false);
+                        decorator?.setFocused(false);
+                    }}
                 >
                     {input}
                 </StyledBaseInputFieldCustomInput>
