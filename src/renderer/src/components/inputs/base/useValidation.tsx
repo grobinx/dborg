@@ -88,3 +88,9 @@ export const validateEmail = (value: any): boolean | FormattedContent => {
     }
     return true;
 }
+export const validatePatternRequired = (value: any, mask: string): boolean | FormattedContent => {
+    if (mask === value) {
+        return "To pole jest wymagane i nie może być puste";
+    }
+    return true;
+}

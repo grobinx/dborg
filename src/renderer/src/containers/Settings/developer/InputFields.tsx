@@ -266,7 +266,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 mask="+48 ___ ___ ___"
                                 replacement={{ "_": /\d/ }}
                                 color="success"
-                                required={false}
+                                required={true}
                             />
                         </InputDecorator>
                     </Stack>

@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
+import { validateMaxLength, validateMinLength, validatePatternRequired, validateRequired } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 import { Replacement, useMask } from '@react-input/mask';
 import { useTheme } from '@mui/material';
@@ -18,6 +18,7 @@ export const PatternField: React.FC<PatternFieldProps> = React.memo((props) => {
     const {
         mask,
         replacement,
+        required,
         ...other
     } = props;
 
@@ -33,6 +34,10 @@ export const PatternField: React.FC<PatternFieldProps> = React.memo((props) => {
                     fontFamily: theme.typography.monospace.fontFamily,
                 }
             }}
+            validations={[
+                required ? (value: any) => validatePatternRequired(value, mask) : undefined,
+            ]}
+            required={required}
             {...other}
         />
     )
