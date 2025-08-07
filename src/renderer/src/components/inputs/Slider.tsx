@@ -1,7 +1,7 @@
 import React from 'react';
 import { styled } from '@mui/material';
 import clsx from '@renderer/utils/clsx';
-import { calculateTextWidth } from '../DataGrid/DataGridUtils';
+import calculateTextWidth from '@renderer/utils/calculateTextWidth';
 
 interface SliderProps {
     value: number;

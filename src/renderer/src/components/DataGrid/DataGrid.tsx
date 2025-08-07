@@ -6,7 +6,7 @@ import CommandPalette from "../CommandPalette/CommandPalette";
 import * as actions from "./actions";
 import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { useSetting } from "@renderer/contexts/SettingsContext";
-import { calculateSummary, calculateTextWidth, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
+import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
 import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
 import LoadingOverlay from "../useful/LoadingOverlay";
@@ -20,6 +20,7 @@ import { ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, 
 import { useColumnsGroup } from "./useColumnsGroup";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import Tooltip from "../Tooltip";
+import calculateTextWidth from "@renderer/utils/calculateTextWidth";
 
 export type DataGridMode = "defined" | "data";
 
