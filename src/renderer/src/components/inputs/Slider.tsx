@@ -2,7 +2,8 @@ import React from 'react';
 import { styled } from '@mui/material';
 import clsx from '@renderer/utils/clsx';
 import calculateTextWidth from '@renderer/utils/calculateTextWidth';
-import useValueAnimation, { animationBounceCss, animationFadeInCss, animationFadeOutCss, animationFlashCss, animationFlipInCss, animationFlipXCss, animationGlowCss, animationHeartBeatCss, animationPulseCss, animationRotateInCss, animationRubberBandCss, animationScaleCss, animationShakeCss, animationSlideDownCss, animationSlideInFromTopCss, animationWobbleCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
+import useValueAnimation, { animationFlashCss, animationGlowCss, animationPulseCss, animationScaleCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
+import { T } from 'react-router/dist/development/fog-of-war-CvttGpNz';
 
 interface SliderProps {
     value: number;
@@ -106,16 +107,7 @@ const StyledSliderThumb = styled('div', {
         transform: 'translateY(-50%) scale(1.1)',
     },
     '&:active': {
-        transform: 'translateY(-50%) scale(1.2)',
-        animation: 'thumbSelect 0.3s ease-out', // Dodanie animacji
-    },
-    '@keyframes thumbSelect': {
-        '0%': {
-            transform: 'translateY(-50%) scale(1.5)', // Powiększenie
-        },
-        '100%': {
-            transform: 'translateY(-50%) scale(1.2)', // Powrót do rozmiaru z :active
-        },
+        ...animationPulseCss,
     },
 }));
 
@@ -132,7 +124,7 @@ const StyledBaseSliderLegend = styled('div', {
     textAlign: "center",
     // Animacja dla zmiany wartości
     '&.value-changing': {
-        ...animationFlipInCss,
+        ...animationZoomInCss,
     },
     ...Array.from({ length: 10 }, (_, i) => i + 1).reduce<Record<string, React.CSSProperties>>((acc, i) => {
         acc[`&.units-${i}`] = {

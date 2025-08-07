@@ -64,6 +64,7 @@ declare module "@mui/material/styles" {
         label: React.CSSProperties;
         description: React.CSSProperties;
         monospace: React.CSSProperties;
+        monospaceFontFamily: string;
     }
 
     // allow configuration using `createTheme()`

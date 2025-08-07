@@ -4,6 +4,7 @@ import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
+import { PatternField } from "@renderer/components/inputs/PatternField";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
@@ -44,6 +45,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: "search2",
         large: "search3",
     });
+    const [patternValues, setPatternValues] = React.useState<Record<string, string | undefined>>({
+        small: "+48 123 456 789",
+        medium: "+48 234 567 890",
+        large: "+48 345 678 901",
+    });
 
     const handleValueTextChange = (size: string, value: string) => {
         setTextValues((prev) => ({
@@ -77,6 +83,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueSearchChange = (size: string, value: string | undefined) => {
         setSearchValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValuePatternChange = (size: string, value: string | undefined) => {
+        setPatternValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -229,6 +241,31 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 value={searchValues[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={React.useCallback((value) => handleValueSearchChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 color="info"
+                                required={false}
+                            />
+                        </InputDecorator>
+                    </Stack>
+                ))}
+            </Stack>
+             <Stack key="patternFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        PatternField, size: {size}
+                        <InputDecorator
+                            key={size}
+                            selected={selected === size}
+                            onClick={React.useCallback(() => setSelected(size), [size])}
+                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                        >
+                            <PatternField
+                                key={size}
+                                size={size}
+                                value={patternValues[size]} // Pobierz wartość dla danego rozmiaru
+                                onChange={React.useCallback((value) => handleValuePatternChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
+                                mask="+48 ___ ___ ___"
+                                replacement={{ "_": /\d/ }}
+                                color="main"
                                 required={false}
                             />
                         </InputDecorator>

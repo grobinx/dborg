@@ -145,15 +145,15 @@ export const animationPulseCss = {
     animation: 'pulse 0.4s ease-in-out',
     '@keyframes pulse': {
         '0%': {
-            transform: 'scale(1)',
+            //transform: 'scale(1)',
             boxShadow: '0 0 0 0 rgba(66, 165, 245, 0.7)',
         },
         '70%': {
-            transform: 'scale(1.05)',
+            //transform: 'scale(1.05)',
             boxShadow: '0 0 0 10px rgba(66, 165, 245, 0)',
         },
         '100%': {
-            transform: 'scale(1)',
+            //transform: 'scale(1)',
             boxShadow: '0 0 0 0 rgba(66, 165, 245, 0)',
         },
     },
@@ -183,7 +183,7 @@ export const animationZoomInCss = {
     animation: 'zoomIn 0.3s ease-out',
     '@keyframes zoomIn': {
         '0%': {
-            transform: 'scale3d(0.3, 0.3, 0.3)',
+            transform: 'scale3d(0.8, 0.8, 0.8)',
             opacity: 0,
         },
         '50%': {
@@ -350,7 +350,7 @@ export const animationRubberBandCss = {
 };
 
 export const animationFlashCss = {
-    animation: 'flash 0.8s ease-in-out',
+    animation: 'flash 0.3s ease-in-out',
     '@keyframes flash': {
         '0%, 50%, 100%': {
             opacity: 1,
