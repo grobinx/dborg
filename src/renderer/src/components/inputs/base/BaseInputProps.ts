@@ -93,4 +93,8 @@ export interface BaseInputProps<T = any> {
      * Jeśli nie zostanie podana, nie będzie możliwe bezpośrednie odwołanie się do elementu wejściowego
      */
     inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+
+    onKeyDown?: React.KeyboardEventHandler<HTMLDivElement | HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    onKeyUp?: React.KeyboardEventHandler<HTMLDivElement | HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    autoFocus?: boolean;
 }

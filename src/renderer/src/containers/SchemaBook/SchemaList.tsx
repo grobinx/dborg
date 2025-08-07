@@ -22,6 +22,7 @@ import { DateTime } from "luxon";
 import ToolButton from "@renderer/components/ToolButton";
 import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
 import Tooltip from "@renderer/components/Tooltip";
+import { SearchField } from "@renderer/components/inputs/SearchField";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -420,35 +421,37 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             <SchemaListTitle {...slotProps?.title} className="SchemaList-title">
                 <Typography variant="h4">{t_connectionSchema}</Typography>
                 <Stack flexGrow={1} />
-                <TextField
-                    label={t("search", "Search...")}
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    autoFocus
-                />
-                <Tooltip title={t("group-schema-list", "Group schema list")}>
-                    <ToolButton
-                        size="large"
-                        className="group-list"
-                        value="group-list"
-                        onClick={() => setGroupList((prev) => !prev)}
-                        selected={groupList}
-                    >
-                        <theme.icons.GroupList {...slotProps?.icon} />
-                    </ToolButton>
-                </Tooltip>
-                <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
-                    <ToolButton
-                        size="large"
-                        className="refresh"
-                        onClick={() => {
-                            queueMessage(Messages.RELOAD_SCHEMAS);
-                        }}
-                    >
-                        <theme.icons.Refresh {...slotProps?.icon} />
-                    </ToolButton>
-                </Tooltip>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <SearchField
+                        placeholder={t("search---", "Search...")}
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        autoFocus
+                    />
+                    <Tooltip title={t("group-schema-list", "Group schema list")}>
+                        <ToolButton
+                            size="large"
+                            className="group-list"
+                            value="group-list"
+                            onClick={() => setGroupList((prev) => !prev)}
+                            selected={groupList}
+                        >
+                            <theme.icons.GroupList {...slotProps?.icon} />
+                        </ToolButton>
+                    </Tooltip>
+                    <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
+                        <ToolButton
+                            size="large"
+                            className="refresh"
+                            onClick={() => {
+                                queueMessage(Messages.RELOAD_SCHEMAS);
+                            }}
+                        >
+                            <theme.icons.Refresh {...slotProps?.icon} />
+                        </ToolButton>
+                    </Tooltip>
+                </Box>
             </SchemaListTitle>
             <SchemaListContent
                 {...slotProps?.content}

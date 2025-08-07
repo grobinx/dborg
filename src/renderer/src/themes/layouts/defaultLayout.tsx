@@ -1050,7 +1050,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                     },
                     input: {
-                        maxWidth: '100%',
                         fontFamily: "inherit",
                         padding: 2,
                         fontSize: "inherit",

@@ -170,6 +170,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         input,
         ref,
         inputRef,
+        onKeyDown,
+        onKeyUp,
     } = props;
 
     const textInputRef = React.useRef<HTMLInputElement>(null);
@@ -236,6 +238,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 textInputRef.current?.focus();
             }}
             sx={{ width }}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyUp}
         >
             {adornments}
             {inputAdornments}

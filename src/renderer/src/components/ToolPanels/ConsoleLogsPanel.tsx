@@ -24,6 +24,7 @@ import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
 import Tooltip from "../Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import { SearchField } from "../inputs/SearchField";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -32,7 +33,7 @@ interface ConsoleLogState {
     setSearch: (search: string) => void;
 }
 
-export const useConsoleLogStore = create<ConsoleLogState>((set) => ({
+export const useConsoleLogState = create<ConsoleLogState>((set) => ({
     showTime: false,
     search: "",
     toggleShowTime: () => set((state) => ({ showTime: !state.showTime })),
@@ -68,8 +69,8 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const showTime = useConsoleLogStore(state => state.showTime);
-    const search = useConsoleLogStore(state => state.search);
+    const showTime = useConsoleLogState(state => state.showTime);
+    const search = useConsoleLogState(state => state.search);
     const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
     const [fontSize] = useSetting<number>("ui", "fontSize");
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
@@ -220,8 +221,8 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const { logs, logLevels, setLogLevels } = useConsole();
     const theme = useTheme();
     const { t } = useTranslation();
-    const { showTime, toggleShowTime } = useConsoleLogStore();
-    const { search, setSearch } = useConsoleLogStore();
+    const { showTime, toggleShowTime } = useConsoleLogState();
+    const { search, setSearch } = useConsoleLogState();
 
     // Obsługa zmiany zaznaczenia
     const handleLogLevelChange = (event: SelectChangeEvent<LogLevel[]>) => {
@@ -248,17 +249,12 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
 
     return (
         <TabPanelButtons>
-            <ToolTextField
+            <SearchField
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={setSearch}
                 placeholder={t("search---", "Search...")}
-                slotProps={{
-                    input: {
-                        startAdornment: (
-                            <theme.icons.Search />
-                        ),
-                    }
-                }}
+                size="small"
+                color="main"
             />
             <Tooltip title={t("show-item-time", "Show item time")}>
                 <span>
