@@ -265,7 +265,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 onChange={React.useCallback((value) => handleValuePatternChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 mask="+48 ___ ___ ___"
                                 replacement={{ "_": /\d/ }}
-                                color="main"
+                                color="success"
                                 required={false}
                             />
                         </InputDecorator>
