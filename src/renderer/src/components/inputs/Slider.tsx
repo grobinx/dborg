@@ -2,6 +2,7 @@ import React from 'react';
 import { styled } from '@mui/material';
 import clsx from '@renderer/utils/clsx';
 import calculateTextWidth from '@renderer/utils/calculateTextWidth';
+import useValueAnimation, { animationBounceCss, animationFadeInCss, animationFadeOutCss, animationFlashCss, animationFlipInCss, animationFlipXCss, animationGlowCss, animationHeartBeatCss, animationPulseCss, animationRotateInCss, animationRubberBandCss, animationScaleCss, animationShakeCss, animationSlideDownCss, animationSlideInFromTopCss, animationWobbleCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
 
 interface SliderProps {
     value: number;
@@ -129,6 +130,10 @@ const StyledBaseSliderLegend = styled('div', {
     width: 50,
     //padding: '0 0.3em',
     textAlign: "center",
+    // Animacja dla zmiany wartości
+    '&.value-changing': {
+        ...animationFlipInCss,
+    },
     ...Array.from({ length: 10 }, (_, i) => i + 1).reduce<Record<string, React.CSSProperties>>((acc, i) => {
         acc[`&.units-${i}`] = {
             minWidth: `${i * 0.7}em`,
@@ -186,6 +191,7 @@ export const Slider: React.FC<SliderProps> = (props) => {
     } = props;
     const sliderRef = React.useRef<HTMLDivElement>(null);
     const isDragging = React.useRef(false);
+    const [valueAnimated] = useValueAnimation(value);
 
     // Obsługa legend w komponencie slidera
     const { min, max, step, maxLengthUnit, displayValue, currentValue } = React.useMemo(() => {
@@ -228,10 +234,15 @@ export const Slider: React.FC<SliderProps> = (props) => {
         return Math.min(Math.max(steppedValue, min), max);
     }, [min, max, step, currentValue]);
 
+    const focus = () => {
+        if (sliderRef.current) {
+            sliderRef.current.focus();
+        }
+    }
+
     const handlePointerDown = (e: React.PointerEvent) => {
         if (disabled) return;
-        const element = e.currentTarget as HTMLElement;
-        if (element?.focus) element.focus();
+        focus();
         e.preventDefault();
         isDragging.current = true;
         const newValue = getValueFromPosition(e.clientX);
@@ -328,8 +339,10 @@ export const Slider: React.FC<SliderProps> = (props) => {
             <StyledBaseSliderLegend
                 className={clsx(
                     'Slider-legend',
-                    `units-${maxLengthUnit}`
+                    `units-${maxLengthUnit}`,
+                    valueAnimated && 'value-changing',
                 )}
+                onClick={focus}
             >
                 {displayValue}
             </StyledBaseSliderLegend>
@@ -355,6 +368,8 @@ export const Range: React.FC<RangeProps> = ({
     const [minValue, maxValue] = value ?? [initMin, initMax];
     const sliderRef = React.useRef<HTMLDivElement>(null);
     const isDragging = React.useRef<"min" | "max" | null>(null);
+    const [minValueAnimated] = useValueAnimation(minValue);
+    const [maxValueAnimated] = useValueAnimation(maxValue);
 
     // Obsługa legend w komponencie slidera
     const { min, max, step, maxLengthUnit, displayMinValue, displayMaxValue, currentMinValue, currentMaxValue } = React.useMemo(() => {
@@ -422,11 +437,16 @@ export const Range: React.FC<RangeProps> = ({
         return Math.min(Math.max(steppedValue, min), max);
     }, [min, max, step]);
 
+    const focus = () => {
+        if (sliderRef.current) {
+            sliderRef.current.focus();
+        }
+    }
+
     const handleTrackClick = (e: React.MouseEvent) => {
         if (disabled || isDragging.current) return;
 
-        const element = e.currentTarget as HTMLElement;
-        if (element?.focus) element.focus();
+        focus();
 
         const clickValue = getValueFromPosition(e.clientX);
 
@@ -553,8 +573,10 @@ export const Range: React.FC<RangeProps> = ({
                 className={clsx(
                     'Slider-legend',
                     `units-${maxLengthUnit}`,
-                    'min'
+                    'min',
+                    minValueAnimated && 'value-changing',
                 )}
+                onClick={focus}
             >
                 {displayMinValue}
             </StyledBaseSliderLegend>
@@ -605,8 +627,10 @@ export const Range: React.FC<RangeProps> = ({
                 className={clsx(
                     'Slider-legend',
                     `units-${maxLengthUnit}`,
-                    'max'
+                    'max',
+                    maxValueAnimated && 'value-changing',
                 )}
+                onClick={focus}
             >
                 {displayMaxValue}
             </StyledBaseSliderLegend>
