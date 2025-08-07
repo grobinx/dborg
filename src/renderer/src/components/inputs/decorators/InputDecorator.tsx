@@ -241,9 +241,10 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
     const theme = useTheme();
     const [inputRestrictions, setInputRestrictions] = React.useState<React.ReactNode>(null);
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
-    const [inputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
+    const [visibleInputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [focused, setFocused] = React.useState<boolean>(false);
     const [type, setType] = React.useState<string>("text");
+    const inputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
@@ -300,6 +301,7 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
         focused && "focused",
         `type-${type}`,
         `color-${color}`,
+        { bare: !indicator && !label && !restrictions && !description },
     );
 
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
@@ -307,18 +309,18 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
 
     // Przygotuj adornments poza memo
     const typeAdornments = React.useMemo(() => {
-        const { TextField, NumberField, EmailField } = theme.icons;
+        const { TextField, NumberField, EmailField, Search } = theme.icons;
         console.debug("InputDecorator: typeAdornments", type, value);
-        
+
         switch (type) {
             case "text":
-                return <Adornment key="text" position="end"><TextField /></Adornment>;
+                return <Adornment key="text" position="end" onClick={() => inputRef.current?.focus()}><TextField /></Adornment>;
             case "number":
-                return <Adornment key="number" position="end"><NumberField /></Adornment>;
+                return <Adornment key="number" position="end" onClick={() => inputRef.current?.focus()}><NumberField /></Adornment>;
             case "email":
-                return <Adornment key="email" position="end"><EmailField /></Adornment>;
-            // case "search":
-            //     return <Adornment key="search" position="end"><theme.icons.Search /></Adornment>;
+                return <Adornment key="email" position="end" onClick={() => inputRef.current?.focus()}><EmailField /></Adornment>;
+            case "search":
+                return <Adornment key="search" position="end" onClick={() => inputRef.current?.focus()}><Search /></Adornment>;
             default:
                 return undefined;
         }
@@ -339,6 +341,15 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
                     ...React.Children.toArray(childProps.adornments || []),
                     typeAdornments,
                 ].filter(Boolean),
+                inputRef: (ref) => {
+                    if (typeof childProps.inputRef === 'function') {
+                        childProps.inputRef(ref);
+                    }
+                    else if (childProps.inputRef) {
+                        childProps.inputRef.current = ref;
+                    }
+                    inputRef.current = ref;
+                }
             });
         }
 
@@ -386,7 +397,7 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
                             "InputDecorator-input",
                             classes,
                         )}
-                        ref={inputRef}
+                        ref={visibleInputRef}
                     >
                         {clonedChildren}
                     </StyledInputDecoratorInput>
@@ -403,10 +414,10 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
                     <StyledInputDecoratorValidity
                         disablePortal={true}
                         open={!!invalid && isPopperVisible}
-                        anchorEl={inputRef.current || undefined}
+                        anchorEl={visibleInputRef.current || undefined}
                         placement="bottom-start"
                         sx={{
-                            width: inputRef.current ? `${inputRef.current.offsetWidth}px` : undefined,
+                            width: visibleInputRef.current ? `${visibleInputRef.current.offsetWidth}px` : undefined,
                             minWidth: 200,
                         }}
                         className={clsx(

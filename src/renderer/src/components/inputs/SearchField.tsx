@@ -25,7 +25,6 @@ export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
 
     const theme = useTheme();
     const decorator = useInputDecorator();
-    const inputRef = React.useRef<HTMLInputElement>(null);
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
@@ -46,20 +45,6 @@ export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
                 (value: any) => validateMinLength(value, minLength),
                 (value: any) => validateMaxLength(value, maxLength),
             ]}
-            inputRef={inputRef}
-            adornments={
-                <Adornment
-                    key="search"
-                    position="end"
-                    onClick={() => {
-                        if (inputRef.current) {
-                            inputRef.current.focus();
-                        }
-                    }}
-                >
-                    <theme.icons.Search />
-                </Adornment>
-            }
             {...other}
         />
     )

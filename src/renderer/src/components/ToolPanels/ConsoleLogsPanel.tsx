@@ -25,6 +25,7 @@ import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLa
 import Tooltip from "../Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
+import { InputDecorator } from "../inputs/decorators/InputDecorator";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -249,13 +250,15 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
 
     return (
         <TabPanelButtons>
-            <SearchField
-                value={search}
-                onChange={setSearch}
-                placeholder={t("search---", "Search...")}
-                size="small"
-                color="main"
-            />
+            <InputDecorator indicator={false}>
+                <SearchField
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={t("search---", "Search...")}
+                    size="small"
+                    color="main"
+                />
+            </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>
                 <span>
                     <ToolButton

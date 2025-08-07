@@ -1128,7 +1128,10 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         },
                         '&.selected': {
                             backgroundColor: palette.action.selected,
-                        }
+                        },
+                        '&.bare': {
+                            padding: 0,
+                        },
                     },
                     label: {
                         color: palette.text.primary,

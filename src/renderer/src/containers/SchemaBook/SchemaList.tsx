@@ -7,7 +7,8 @@ import {
     TextField,
     ListSubheader,
     Badge,
-    ButtonGroup
+    ButtonGroup,
+    Input
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
@@ -23,6 +24,7 @@ import ToolButton from "@renderer/components/ToolButton";
 import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
 import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -422,15 +424,18 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 <Typography variant="h4">{t_connectionSchema}</Typography>
                 <Stack flexGrow={1} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <SearchField
-                        placeholder={t("search---", "Search...")}
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        inputProps={{
-                            autoFocus: true,
-                            onKeyDown: handleSearchKeyDown,
-                        }}
-                    />
+                    <InputDecorator indicator={false}>
+                        <SearchField
+                            placeholder={t("search---", "Search...")}
+                            value={search}
+                            onChange={setSearch}
+                            inputProps={{
+                                autoFocus: true,
+                                onKeyDown: handleSearchKeyDown,
+                            }}
+                            size="large"
+                        />
+                    </InputDecorator>
                     <Tooltip title={t("group-schema-list", "Group schema list")}>
                         <ToolButton
                             size="large"
