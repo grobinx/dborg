@@ -1,4 +1,4 @@
-import { FormattedContent } from "@renderer/components/useful/FormattedText";
+import { FormattedContent } from "../../useful/FormattedText";
 import { useInputDecorator } from "../decorators/InputDecoratorContext";
 import React from "react";
 

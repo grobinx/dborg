@@ -1,9 +1,10 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { validatePatternRequired } from './base/useValidation';
-import { BaseInputField } from './base/BaseInputField';
+import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Replacement, useMask } from '@react-input/mask';
 import { useTheme } from '@mui/material';
+import { BaseButton } from '../buttons/BaseButton';
 
 interface PatternFieldProps extends BaseInputProps {
     mask: string;

@@ -7,8 +7,8 @@ import ToolButton from "@renderer/components/ToolButton";
 import ColorPicker from "@renderer/components/useful/ColorPicker";
 import { useTranslation } from "react-i18next";
 import Tooltip from "@renderer/components/Tooltip";
-import { htmlColors } from "@renderer/utils/colors";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { htmlColors } from "@renderer/types/colors";
 
 export const ColorSetting: React.FC<{
     setting: SettingTypeColor;

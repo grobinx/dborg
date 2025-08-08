@@ -1,9 +1,8 @@
 import React from 'react';
 import { styled } from '@mui/material';
 import clsx from '@renderer/utils/clsx';
-import calculateTextWidth from '@renderer/utils/calculateTextWidth';
+import calculateTextWidth from '@renderer/utils/canvas';
 import useValueAnimation, { animationPulseCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
-import { T } from 'react-router/dist/development/fog-of-war-CvttGpNz';
 
 interface SliderProps {
     value: number;

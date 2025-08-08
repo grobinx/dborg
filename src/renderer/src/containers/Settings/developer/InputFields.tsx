@@ -1,6 +1,6 @@
 import { Box, Collapse, Stack, Tab, useTheme } from "@mui/material";
+import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
-import { Size, Sizes } from "@renderer/components/inputs/base/types";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
@@ -9,6 +9,7 @@ import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
+import { Sizes } from "@renderer/types/sizes";
 import React from "react";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
@@ -247,7 +248,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                     </Stack>
                 ))}
             </Stack>
-             <Stack key="patternFields" direction="row" width="100%" gap={8}>
+            <Stack key="patternFields" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         PatternField, size: {size}
@@ -269,6 +270,9 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 required={true}
                             />
                         </InputDecorator>
+                        <BaseButton component={"span"} size={size}>
+                            <span>Mask:</span>
+                        </BaseButton>
                     </Stack>
                 ))}
             </Stack>

@@ -242,6 +242,7 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [visibleInputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [focused, setFocused] = React.useState<boolean>(false);
+    const [hover, setHover] = React.useState<boolean>(false);
     const [type, setType] = React.useState<string>("text");
     const inputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
 
@@ -298,6 +299,7 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
         invalid && "invalid",
         selected && "selected",
         focused && "focused",
+        hover && "hover",
         `type-${type}`,
         `color-${color}`,
         { bare: !indicator && !label && !restrictions && !description },
@@ -365,6 +367,8 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
                 )}
                 width={width}
                 onMouseDown={onClick}
+                onMouseEnter={() => setHover(true)}
+                onMouseLeave={() => setHover(false)}
             >
                 {indicator && (
                     <StyledInputDecoratorIndicator

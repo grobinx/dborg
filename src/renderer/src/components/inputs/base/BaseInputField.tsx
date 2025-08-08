@@ -1,8 +1,8 @@
 import React, { InputHTMLAttributes } from 'react';
 import { styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
-import { FormattedContentItem } from '@renderer/components/useful/FormattedText';
-import clsx from '@renderer/utils/clsx';
+import { FormattedContentItem } from '../../useful/FormattedText';
+import clsx from '../../../utils/clsx';
 import { useInputDecorator } from '../decorators/InputDecoratorContext';
 import { useValidation, validateRequired } from './useValidation';
 
@@ -177,6 +177,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [inputLeft, setInputLeft] = React.useState<number>(0);
     const decorator = useInputDecorator();
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
+    const [hover, setHover] = React.useState<boolean>(false);
 
     const currentValue = value ?? defaultValue;
     const [invalid, setInvalid] = useValidation(
@@ -203,6 +204,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         invalid && "invalid",
         focused && "focused",
         `type-${type ?? inputProps?.type ?? 'text'}`,
+        hover && "hover",
     );
 
     React.useEffect(() => {
@@ -235,6 +237,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             onMouseDown={() => {
                 textInputRef.current?.focus();
             }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
             sx={{ width }}
         >
             {adornments}

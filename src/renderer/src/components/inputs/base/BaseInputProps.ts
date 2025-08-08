@@ -1,6 +1,7 @@
 import { FormattedContent } from "@renderer/components/useful/FormattedText";
-import React, { ChangeEvent } from "react";
-import { ThemeColor, Size } from "./types";
+import React from "react";
+import { ThemeColor } from "../../../types/colors";
+import { Size } from "../../../types/sizes";
 
 export interface BaseInputProps<T = any> {
     id?: string;

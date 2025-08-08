@@ -1,13 +1,34 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
-import root from "./root";
-import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
-import { ThemeColors } from "@renderer/components/inputs/base/types";
+import { themeColors } from "@renderer/types/colors";
+import { Size } from "@renderer/types/sizes";
+import { CSSProperties } from "react";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
     const borderRadius = 3;
     const paddingSmall = 2;
     const paddingMedium = 4;
     const paddingLarge = 8;
+
+    const rootSizeProperties: Record<Size, CSSProperties> = {
+        small: {
+            padding: paddingSmall,
+            fontSize: "0.9em",
+            height: "1.8em",
+            gap: paddingSmall,
+        },
+        medium: {
+            padding: paddingMedium,
+            fontSize: "1em",
+            height: "2em",
+            gap: paddingMedium,
+        },
+        large: {
+            padding: paddingLarge,
+            fontSize: "1.2em",
+            height: "2.4em",
+            gap: paddingLarge,
+        },
+    };
 
     return {
         shape: {
@@ -1006,12 +1027,9 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             InputField: {
                 styleOverrides: {
                     root: {
-                        fontSize: "1em",
+                        ...rootSizeProperties.medium,
                         border: `1px solid ${palette.divider}`,
                         borderRadius: borderRadius,
-                        padding: paddingMedium,
-                        gap: paddingMedium,
-                        height: "2em",
                         '&:hover': {
                             borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                             transition: "border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -1023,30 +1041,24 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             outlineOffset: -2,
                             borderColor: 'transparent',
                             transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                            ...ThemeColors.reduce((acc, color) => {
+                            ...themeColors.reduce((acc, color) => {
                                 acc[`&.color-${color}`] = {
                                     outlineColor: palette[color].main,
                                 };
                                 return acc;
                             }, {}),
                         },
-                        ...ThemeColors.reduce((acc, color) => {
+                        ...themeColors.reduce((acc, color) => {
                             acc[`&.color-${color}`] = {
                                 backgroundColor: alpha(palette[color].main, 0.1),
                             };
                             return acc;
                         }, {}),
                         '&.size-small': {
-                            fontSize: "0.9em",
-                            padding: paddingSmall,
-                            gap: paddingSmall,
-                            height: "1.8em",
+                            ...rootSizeProperties.small,
                         },
                         '&.size-large': {
-                            fontSize: "1.2em",
-                            padding: paddingLarge,
-                            gap: paddingLarge,
-                            height: "2.4em",
+                            ...rootSizeProperties.large,
                         },
                     },
                     input: {
@@ -1088,8 +1100,12 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         cursor: 'pointer',
                         padding: 0,
                         color: palette.text.primary,
-                        width: '100%',
+                        width: '90%',
                         height: 0,
+                        '& span': {
+                            fontSize: '0.8em',
+                            transform: 'scaleY(0.5)',
+                        },
                         '&:hover': {
                             backgroundColor: palette.action.hover,
                         },

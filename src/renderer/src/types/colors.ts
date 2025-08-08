@@ -1,5 +1,31 @@
 import { DataType } from "csstype";
 
+export type ThemeColor =
+    /** Kolor główny, neutralny */
+    'main'
+    /** Kolor podstawowy */
+    | 'primary'
+    /** Kolor drugorzędny */
+    | 'secondary'
+    /** Kolor błędu */
+    | 'error'
+    /** Kolor ostrzeżenia */
+    | 'warning'
+    /** Kolor informacji */
+    | 'info'
+    /** Kolor sukcesu */
+    | 'success';
+
+export const themeColors: ThemeColor[] = [
+    'main',
+    'primary',
+    'secondary',
+    'error',
+    'warning',
+    'info',
+    'success',
+]
+
 export const htmlColors: DataType.NamedColor[] = [
     "aliceblue",
     "antiquewhite",
@@ -150,10 +176,3 @@ export const htmlColors: DataType.NamedColor[] = [
     "yellow",
     "yellowgreen"
 ];
-
-export const muiColors = [
-    "primary", "secondary", "error", "warning", "info", "success"
-];
-
-export const combinedColors = [...htmlColors, ...muiColors];
-

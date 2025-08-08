@@ -134,7 +134,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
                             stopRepeat(); // Zatrzymaj interwał, gdy kursor opuści przycisk
                         }}
                     >
-                        <theme.icons.ExpandLess />
+                        <span>▲</span>
                     </StyledBaseInputFieldNumberStepper>
                     <StyledBaseInputFieldNumberStepper
                         key="decrement"
@@ -150,7 +150,7 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
                             stopRepeat(); // Zatrzymaj interwał, gdy kursor opuści przycisk
                         }}
                     >
-                        <theme.icons.ExpandMore />
+                       <span>▼</span>
                     </StyledBaseInputFieldNumberStepper>
                 </Adornment>,
             ]}

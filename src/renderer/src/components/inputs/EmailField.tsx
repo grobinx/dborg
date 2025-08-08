@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateEmail, validateMaxLength, validateMinLength, validateRequired } from './base/useValidation';
+import { validateEmail, validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
 interface EmailFieldProps extends BaseInputProps {

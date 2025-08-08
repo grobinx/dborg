@@ -20,7 +20,7 @@ import { ColumnBaseType, compareValuesByType, resolvePrimitiveType, toBaseType, 
 import { useColumnsGroup } from "./useColumnsGroup";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import Tooltip from "../Tooltip";
-import calculateTextWidth from "@renderer/utils/calculateTextWidth";
+import calculateTextWidth from "@renderer/utils/canvas";
 
 export type DataGridMode = "defined" | "data";
 
