@@ -1,26 +1,52 @@
 import React from 'react';
-import { styled } from '@mui/material';
+import { alpha, darken, lighten, styled } from '@mui/material';
 import { BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
+import { borderRadius, rootSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { themeColors } from '@renderer/types/colors';
+import { dark, light } from '@mui/material/styles/createPalette';
+
+const mix = (color1: string, color2: string, ratio: number = 0.5): string => {
+    // Prosta implementacja mieszania kolorów hex
+    const hex1 = color1.replace('#', '');
+    const hex2 = color2.replace('#', '');
+    
+    const r1 = parseInt(hex1.substring(0, 2), 16);
+    const g1 = parseInt(hex1.substring(2, 4), 16);
+    const b1 = parseInt(hex1.substring(4, 6), 16);
+    
+    const r2 = parseInt(hex2.substring(0, 2), 16);
+    const g2 = parseInt(hex2.substring(2, 4), 16);
+    const b2 = parseInt(hex2.substring(4, 6), 16);
+    
+    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
 
 const StyledBaseButton = styled('button', {
     name: "Button",
     slot: "root",
-})<{}>(({ theme }) => ({
+})(({ theme }) => ({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
-    border: "none",
     outline: "none",
+    border: "none",
     cursor: "pointer",
     userSelect: "none",
     textDecoration: "none",
     fontFamily: "inherit",
     fontSize: "inherit",
+    fontWeight: 600,
     lineHeight: 1,
-    transition: "all 0.3s ease-in-out",
+    transition: "all 0.2s ease-in-out",
+    borderRadius: borderRadius,
+    ...rootSizeProperties.medium,
 
     // Podstawowe style
     backgroundColor: "transparent",
@@ -35,6 +61,7 @@ const StyledBaseButton = styled('button', {
     whiteSpace: "nowrap",
 
     "&.focused": {
+        borderColor: "transparent",
         outline: "2px solid #468",
         outlineOffset: "-2px",
     },
@@ -59,84 +86,43 @@ const StyledBaseButton = styled('button', {
 
     // Size variants
     "&.size-small": {
-        padding: "4px 8px",
-        fontSize: "0.875rem",
-        minHeight: "28px",
+        ...rootSizeProperties.small
     },
 
     "&.size-medium": {
-        padding: "8px 16px",
-        fontSize: "1rem",
-        minHeight: "36px",
+        ...rootSizeProperties.medium
     },
 
     "&.size-large": {
-        padding: "12px 24px",
-        fontSize: "1.125rem",
-        minHeight: "44px",
+        ...rootSizeProperties.large
     },
 
-    // Color variants
-    "&.color-primary": {
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.primary.contrastText,
+    ...themeColors.reduce((acc, color) => {
+        acc[`&.color-${color}`] = {
+            backgroundColor: alpha(theme.palette[color].main, 0.1),
+            color: theme.palette.text.primary,
+            outline: `1px solid ${theme.palette[color].main}`,
+            outlineOffset: "-1px",
 
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.primary.dark,
-        },
+            "&.hover:not(.disabled):not(.loading)": {
+                backgroundColor: alpha(theme.palette[color].main, 0.2),
+            },
 
-        "&:active:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.primary.light,
-        },
-    },
+            "&.active:not(.disabled):not(.loading)": {
+                backgroundColor: alpha(theme.palette[color].dark, 0.3),
+            },
 
-    "&.color-secondary": {
-        backgroundColor: theme.palette.secondary.main,
-        color: theme.palette.secondary.contrastText,
-
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.secondary.dark,
-        },
-    },
-
-    "&.color-success": {
-        backgroundColor: theme.palette.success.main,
-        color: theme.palette.success.contrastText,
-
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.success.dark,
-        },
-    },
-
-    "&.color-error": {
-        backgroundColor: theme.palette.error.main,
-        color: theme.palette.error.contrastText,
-
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.error.dark,
-        },
-    },
-
-    "&.color-warning": {
-        backgroundColor: theme.palette.warning.main,
-        color: theme.palette.warning.contrastText,
-
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.warning.dark,
-        },
-    },
-
-    "&.color-info": {
-        backgroundColor: theme.palette.info.main,
-        color: theme.palette.info.contrastText,
-
-        "&:hover:not(.disabled):not(.loading)": {
-            backgroundColor: theme.palette.info.dark,
-        },
-    },
+            "&.focused, &.selected": {
+                outlineOffset: "-2px",
+                outline: `2px solid ${theme.palette[color].main}`,
+                backgroundColor: alpha(theme.palette[color].main, 0.3),
+            },
+        };
+        return acc;
+    }, {}),
 }));
 
-const StyledLoadingIndicator = styled('div', {
+const StyledBaseButtonLoadingIndicator = styled('div', {
     name: "Button",
     slot: "loadingIndicator",
 })(() => ({
@@ -144,8 +130,8 @@ const StyledLoadingIndicator = styled('div', {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: "16px",
-    height: "16px",
+    width: "1em",
+    height: "1em",
     border: "2px solid transparent",
     borderTop: "2px solid currentColor",
     borderRadius: "50%",
@@ -157,9 +143,24 @@ const StyledLoadingIndicator = styled('div', {
     },
 }));
 
-const StyledButtonContent = styled('span', {
+const StyledBaseButtonContent = styled('span', {
     name: "Button",
     slot: "content",
+})(({ }) => ({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "4px",
+    transition: "opacity 0.2s ease-in-out",
+    padding: "0 8px",
+    '&.loading': {
+        opacity: 0,
+    }
+}));
+
+const StyledBaseButtonLoadingContent = styled('span', {
+    name: "Button",
+    slot: "loadingContent",
 })(({ }) => ({
     display: "flex",
     alignItems: "center",
@@ -223,11 +224,11 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
             disabled={disabled || !!loading}
             type={type}
             onClick={handleClick}
-            onFocus={(e) => {
+            onFocus={(_e) => {
                 setFocused(true);
                 onFocus?.();
             }}
-            onBlur={(e) => {
+            onBlur={(_e) => {
                 setFocused(false);
                 onBlur?.();
             }}
@@ -244,7 +245,7 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
             {...other}
         >
             {loading === true && (
-                <StyledLoadingIndicator
+                <StyledBaseButtonLoadingIndicator
                     className={clsx(
                         "Button-loadingIndicator",
                         classes,
@@ -252,23 +253,23 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
                 />
             )}
             {loading && typeof loading !== 'boolean' && (
-                <StyledButtonContent
+                <StyledBaseButtonLoadingContent
                     className={clsx(
-                        "Button-content",
+                        "Button-loadingContent",
                         classes,
                     )}
                 >
                     <FormattedText text={loading} />
-                </StyledButtonContent>
+                </StyledBaseButtonLoadingContent>
             )}
-            <StyledButtonContent
+            <StyledBaseButtonContent
                 className={clsx(
                     "Button-content",
                     classes,
                 )}
             >
                 {children}
-            </StyledButtonContent>
+            </StyledBaseButtonContent>
         </StyledBaseButton>
     );
 });

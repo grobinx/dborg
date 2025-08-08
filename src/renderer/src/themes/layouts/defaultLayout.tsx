@@ -1,34 +1,10 @@
 import { alpha, darken, Fade, lighten, Palette, ThemeOptions } from "@mui/material";
-import { themeColors } from "@renderer/types/colors";
-import { Size } from "@renderer/types/sizes";
-import { CSSProperties } from "react";
+import { InputFieldLayout } from "./default/InputField";
+import { CodeLayout } from "./default/Code";
+import { InputDecoratorLayout } from "./default/InputDecorator";
+import { borderRadius } from "./default/consts";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
-    const borderRadius = 3;
-    const paddingSmall = 2;
-    const paddingMedium = 4;
-    const paddingLarge = 8;
-
-    const rootSizeProperties: Record<Size, CSSProperties> = {
-        small: {
-            padding: paddingSmall,
-            fontSize: "0.9em",
-            height: "1.8em",
-            gap: paddingSmall,
-        },
-        medium: {
-            padding: paddingMedium,
-            fontSize: "1em",
-            height: "2em",
-            gap: paddingMedium,
-        },
-        large: {
-            padding: paddingLarge,
-            fontSize: "1.2em",
-            height: "2.4em",
-            gap: paddingLarge,
-        },
-    };
 
     return {
         shape: {
@@ -986,26 +962,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 defaultProps: {
                 }
             },
-            Code: {
-                styleOverrides: {
-                    root: {
-                        backgroundColor: 'rgba(245, 245, 245, 0.3)',
-                        fontFamily: 'monospace',
-                        padding: '0.1rem 0.3rem',
-                        borderRadius: '3px',
-                        fontSize: '0.9em',
-                        '&:not(pre > &)': {
-                            backgroundColor: 'rgba(245, 245, 245, 0.3)', // Styl dla <code> poza <pre>
-                        },
-                        'pre > &': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.1)', // Styl dla <code> wewnątrz <pre>
-                            padding: '8px',
-                            borderRadius: '5px',
-                            display: 'block',
-                        },
-                    }
-                }
-            },
+            Code: CodeLayout(palette, root),
             FormattedText: {
                 styleOverrides: {
                     root: {
@@ -1024,199 +981,8 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            InputField: {
-                styleOverrides: {
-                    root: {
-                        ...rootSizeProperties.medium,
-                        border: `1px solid ${palette.divider}`,
-                        borderRadius: borderRadius,
-                        '&:hover': {
-                            borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
-                            transition: "border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                        },
-                        '&.focused': {
-                            outlineColor: palette.primary.main,
-                            outlineWidth: 2,
-                            outlineStyle: 'solid',
-                            outlineOffset: -2,
-                            borderColor: 'transparent',
-                            transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                            ...themeColors.reduce((acc, color) => {
-                                acc[`&.color-${color}`] = {
-                                    outlineColor: palette[color].main,
-                                };
-                                return acc;
-                            }, {}),
-                        },
-                        ...themeColors.reduce((acc, color) => {
-                            acc[`&.color-${color}`] = {
-                                backgroundColor: alpha(palette[color].main, 0.1),
-                            };
-                            return acc;
-                        }, {}),
-                        '&.size-small': {
-                            ...rootSizeProperties.small,
-                        },
-                        '&.size-large': {
-                            ...rootSizeProperties.large,
-                        },
-                    },
-                    input: {
-                        fontFamily: "inherit",
-                        padding: 2,
-                        fontSize: "inherit",
-                        backgroundColor: 'transparent',
-                        color: palette.text.primary,
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                        '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button': {
-                            WebkitAppearance: "none",
-                            margin: 0,
-                        },
-                        '&[type="number"]': {
-                            MozAppearance: "textfield",
-                        },
-                    },
-                    placeholder: {
-                        color: palette.text.disabled,
-                    },
-                    adornment: {
-                        alignItems: 'center',
-                        '&.type-number.position-input': {
-                            flexDirection: 'column',
-                            justifyContent: "center",
-                            alignItems: "center",
-                            width: '2em',
-                        }
-                    },
-                    numberStepper: {
-                        display: 'flex',
-                        flexGrow: 1,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                        color: palette.text.primary,
-                        width: '90%',
-                        height: 0,
-                        '& span': {
-                            fontSize: '0.8em',
-                            transform: 'scaleY(0.5)',
-                        },
-                        '&:hover': {
-                            backgroundColor: palette.action.hover,
-                        },
-                    },
-                }
-            },
-            InputDecorator: {
-                styleOverrides: {
-                    root: {
-                        cursor: "default",
-                        fontSize: "1rem",
-                        gap: paddingMedium,
-                        padding: paddingMedium,
-                        borderRadius: borderRadius,
-                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
-                        '&:has(.InputDecorator-indicator)': {
-                            paddingRight: paddingMedium * 2 + 4,
-                        },
-                        '&:hover': {
-                            backgroundColor: palette.action.hover,
-                            transition: "background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                        },
-                        '&.size-small': {
-                            padding: `${paddingSmall}px ${paddingMedium}px `,
-                            '&:has(.InputDecorator-indicator)': {
-                                paddingRight: paddingSmall * 2 + 3,
-                            },
-                            gap: paddingSmall,
-                        },
-                        '&.size-large': {
-                            padding: paddingLarge,
-                            '&:has(.InputDecorator-indicator)': {
-                                paddingRight: paddingLarge * 2 + 5,
-                            },
-                            gap: paddingLarge,
-                        },
-                        '&.selected': {
-                            backgroundColor: palette.action.selected,
-                        },
-                        '&.bare': {
-                            padding: 0,
-                        },
-                    },
-                    label: {
-                        color: palette.text.primary,
-                        marginBottom: paddingMedium / 2,
-                        fontSize: "1em",
-                        '&.size-small': {
-                            marginBottom: paddingSmall / 2,
-                            fontSize: "0.95em",
-                        },
-                        '&.size-large': {
-                            marginBottom: paddingLarge / 2,
-                            fontSize: "1.05em",
-                        },
-                    },
-                    labelText: {
-                        '&.required::after': {
-                            content: '" *"',
-                            color: palette.error.main,
-                        }
-                    },
-                    description: {
-                        marginTop: paddingMedium / 2,
-                        '&.size-small': {
-                            marginTop: paddingSmall / 2,
-                            fontSize: "0.85em",
-                        },
-                        '&.size-large': {
-                            marginTop: paddingLarge / 2,
-                            fontSize: "0.95em",
-                        },
-                        color: palette.text.secondary,
-                        fontSize: "0.9rem",
-                    },
-                    indicator: {
-                        width: 4,
-                        //height: "100%",
-                        alignSelf: "stretch",
-                        borderRadius: 2,
-                        '&.changed': {
-                            backgroundColor: alpha(palette.warning.main, 0.4),
-                        },
-                        '&.default': {
-                            backgroundColor: alpha(palette.primary.main, 0.4),
-                        },
-                        '&.size-small': {
-                            width: 3,
-                        },
-                        '&.size-large': {
-                            width: 5,
-                        },
-                    },
-                    restrictions: {
-                        fontSize: "0.7em",
-                        alignItems: "end",
-                        color: palette.text.secondary,
-                        gap: paddingMedium / 2,
-                    },
-                    restriction: {
-                        borderRadius: borderRadius,
-                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-                        lineHeight: 1,
-                        padding: "2px 4px",
-                    },
-                    validity: {
-                        margin: 1,
-                        zIndex: 1000,
-                    },
-                }
-            }
+            InputField: InputFieldLayout(palette, root),
+            InputDecorator: InputDecoratorLayout(palette, root),
         }
     }
 };

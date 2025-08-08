@@ -4,7 +4,7 @@ import { createPaletteColor } from "../utils";
 
 const palette = createPalette({
     mode: 'light',
-    main: createPaletteColor(colors.grey[600], colors.grey[900]),
+    main: createPaletteColor(colors.grey[600], colors.grey[50]),
     sideBar: createPaletteColor(colors.blueGrey[400], colors.blueGrey[900]),
     menuBar: createPaletteColor(colors.blueGrey[400], colors.blueGrey[900]),
     statusBar: createPaletteColor(colors.blueGrey[400], colors.blueGrey[900]),

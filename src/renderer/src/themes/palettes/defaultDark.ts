@@ -4,11 +4,11 @@ import { createPaletteColor } from "../utils";
 
 const palette = createPalette({
     mode: 'dark',
-    main: createPaletteColor(colors.grey[500], colors.grey[50]),
-    sideBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
-    menuBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
-    statusBar: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
-    table: createPaletteColor(colors.blueGrey[500], colors.blueGrey[100]),
+    main: createPaletteColor(colors.grey[600], colors.grey[50]),
+    sideBar: createPaletteColor(colors.blueGrey[700], colors.blueGrey[100]),
+    menuBar: createPaletteColor(colors.blueGrey[700], colors.blueGrey[100]),
+    statusBar: createPaletteColor(colors.blueGrey[700], colors.blueGrey[100]),
+    table: createPaletteColor(colors.blueGrey[700], colors.blueGrey[100]),
     background: {
         sideBar: darken(colors.blueGrey[900], 0.5),
         menuBar: darken(colors.blueGrey[900], 0.2),

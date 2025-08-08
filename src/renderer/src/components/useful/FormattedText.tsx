@@ -47,7 +47,7 @@ export const FormattedTextElement: React.FC<React.ComponentProps<typeof ReactMar
             <ReactMarkdown
                 {...props}
                 components={{
-                    p: (props) => <Typography {...props} />,
+                    p: (props) => <Typography fontSize="inherit" {...props} />,
                     h1: (props) => <Typography variant="h1" {...props} />,
                     h2: (props) => <Typography variant="h2" {...props} />,
                     h3: (props) => <Typography variant="h3" {...props} />,

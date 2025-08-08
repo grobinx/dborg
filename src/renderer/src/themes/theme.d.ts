@@ -43,6 +43,9 @@ import { CodeProps } from "@renderer/components/Code";
 import { FormattedTextProps } from "@renderer/components/useful/FormattedText";
 import { BaseInputProps } from "@renderer/components/inputs/base/BaseInputProps";
 import { InputDecoratorProps } from "@renderer/components/inputs/decorators/InputDecorator";
+import { CodeComponent, CodeComponentProps, CodeComponentSlots } from "./theme.d/Code";
+import { InputFieldComponent, InputFieldComponentProps, InputFieldComponentSlots } from "./theme.d/InputField";
+import { InputDecoratorComponent, InputDecoratorComponentProps, InputDecoratorComponentSlots } from "./theme.d/InputDecorator";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -138,10 +141,10 @@ declare module "@mui/material/styles" {
         ToolSelect: "root";
         ConsoleLogPanel: "root" | "details";
         SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
-        Code: "root";
+        Code: CodeComponentSlots;
         FormattedText: "root";
-        InputField: "root" | "input" | "adornment" | "placeholder" | "numberStepper" | "sliderLegend";
-        InputDecorator: "root" | "indicator" | "container" | "label" | "labelText" | "restrictions" | "restriction" | "description" | "input" | "validity";
+        InputField: InputFieldComponentSlots;
+        InputDecorator: InputDecoratorComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -173,10 +176,10 @@ declare module "@mui/material/styles" {
         UnboundBadge: Partial<UnboundBadgeProps>;
         ConsoleLogPanel: Partial<ConsoleLogPanelProps>;
         SettingInputControl: Partial<SettingInputControlProps>;
-        Code: Partial<CodeProps>;
+        Code: CodeComponentProps;
         FormattedText: Partial<FormattedTextProps>;
-        InputField: Partial<BaseInputProps>;
-        InputDecorator: Partial<InputDecoratorProps>;
+        InputField: InputFieldComponentProps;
+        InputDecorator: InputDecoratorComponentProps;
     }
     interface Components {
         MenuBar?: {
@@ -327,26 +330,14 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['SettingInputControl'];
             //variants?: ComponentsVariants['SettingInputControl'];
         };
-        Code?: {
-            defaultProps?: ComponentsPropsList['Code'];
-            styleOverrides?: ComponentsOverrides<Theme>['Code'];
-            //variants?: ComponentsVariants['Code'];
-        };
+        Code?: CodeComponent;
         FormattedText?: {
             defaultProps?: ComponentsPropsList['FormattedText'];
             styleOverrides?: ComponentsOverrides<Theme>['FormattedText'];
             //variants?: ComponentsVariants['FormattedText'];
         };
-        InputField?: {
-            //defaultProps?: ComponentsPropsList['InputField'];
-            styleOverrides?: ComponentsOverrides<Theme>['InputField'];
-            //variants?: ComponentsVariants['InputField'];
-        };
-        InputDecorator?: {
-            //defaultProps?: ComponentsPropsList['InputDecorator'];
-            styleOverrides?: ComponentsOverrides<Theme>['InputDecorator'];
-            //variants?: ComponentsVariants['InputDecorator'];
-        };
+        InputField?: InputFieldComponent;
+        InputDecorator?: InputDecoratorComponent;
     }
 
 }

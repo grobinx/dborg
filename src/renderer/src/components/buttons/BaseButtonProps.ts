@@ -2,13 +2,10 @@ import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
 
-export interface BaseButtonProps {
-    id?: string;
-
+interface BaseProps {
     /**
-     * Komponent, który będzie renderowany jako przycisk
-     * Może to być np. 'button', 'a', 'div' lub inny komponent React.
-     * @default 'button'
+     * Komponent, który będzie renderowany
+     * Może to być np. 'span', 'div', 'button' lub inny komponent React.
      */
     component?: React.ElementType;
     
@@ -57,7 +54,11 @@ export interface BaseButtonProps {
      * @default "button"
      */
     type?: "button" | "submit" | "reset";
-    
+}
+
+export interface BaseButtonProps extends BaseProps {
+    id?: string;
+
     /**
      * Callback wywoływany przy kliknięciu
      */
@@ -82,4 +83,12 @@ export interface BaseButtonProps {
      * Ref do elementu button
      */
     ref?: React.Ref<HTMLButtonElement>;
+}
+
+export interface BaseButtonContentProps extends BaseProps {
+    /**
+     * Ref do elementu zawartości
+     */
+    ref?: React.Ref<HTMLElement>;
+
 }

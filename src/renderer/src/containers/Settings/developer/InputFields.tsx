@@ -270,9 +270,44 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 required={true}
                             />
                         </InputDecorator>
-                        <BaseButton component={"span"} size={size} loading={"Ładowanie *danych* ..."} >
-                            <span>Mask:</span>
-                        </BaseButton>
+                        <Box sx={{ gap: 4, display: "flex", padding: 4 }}>
+                            <BaseButton
+                                component={"span"}
+                                size={size}
+                                //loading={"![](Loading) Ładowanie *danych* ..."}
+                                //loading={false}
+                                color="primary"
+                            >
+                                Primary
+                            </BaseButton>
+                            <BaseButton
+                                component={"span"}
+                                size={size}
+                                //loading={"![](Loading) Ładowanie *danych* ..."}
+                                //loading={false}
+                                color="secondary"
+                            >
+                                Secondary
+                            </BaseButton>
+                            <BaseButton
+                                component={"span"}
+                                size={size}
+                                //loading={"![](Loading) Ładowanie *danych* ..."}
+                                //loading={false}
+                                color="error"
+                            >
+                                <span>Mask:</span>
+                            </BaseButton>
+                            <BaseButton
+                                component={"span"}
+                                size={size}
+                                //loading={"![](Loading) Ładowanie *danych* ..."}
+                                //loading={true}
+                                color="main"
+                            >
+                                Jakiś opis
+                            </BaseButton>
+                        </Box>
                     </Stack>
                 ))}
             </Stack>
