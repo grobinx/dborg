@@ -2,6 +2,7 @@ import React from 'react';
 import { styled } from '@mui/material';
 import { BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
+import { FormattedText } from '../useful/FormattedText';
 
 const StyledBaseButton = styled('button', {
     name: "Button",
@@ -20,66 +21,66 @@ const StyledBaseButton = styled('button', {
     fontSize: "inherit",
     lineHeight: 1,
     transition: "all 0.3s ease-in-out",
-    
+
     // Podstawowe style
     backgroundColor: "transparent",
     color: "inherit",
-    
+
     // Usuwa domyślne style przeglądarki
     appearance: "none",
     WebkitAppearance: "none",
     MozAppearance: "none",
-    
+
     // Zapobiega zawijaniu tekstu
     whiteSpace: "nowrap",
-    
+
     "&.focused": {
         outline: "2px solid #468",
         outlineOffset: "-2px",
     },
-    
+
     // Disabled styles
     "&.disabled": {
         cursor: "not-allowed",
         opacity: 0.6,
         pointerEvents: "none",
     },
-    
+
     // Loading styles
     "&.loading": {
         cursor: "wait",
         pointerEvents: "none",
     },
-    
+
     // Selected styles
     "&.selected": {
         // Dodaj style dla stanu wybranego
     },
-    
+
     // Size variants
     "&.size-small": {
         padding: "4px 8px",
         fontSize: "0.875rem",
         minHeight: "28px",
     },
-    
+
     "&.size-medium": {
         padding: "8px 16px",
         fontSize: "1rem",
         minHeight: "36px",
     },
-    
+
     "&.size-large": {
         padding: "12px 24px",
         fontSize: "1.125rem",
         minHeight: "44px",
     },
-    
+
     // Color variants
     "&.color-primary": {
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.primary.contrastText,
-        
+
         "&:hover:not(.disabled):not(.loading)": {
             backgroundColor: theme.palette.primary.dark,
         },
@@ -88,7 +89,7 @@ const StyledBaseButton = styled('button', {
             backgroundColor: theme.palette.primary.light,
         },
     },
-    
+
     "&.color-secondary": {
         backgroundColor: theme.palette.secondary.main,
         color: theme.palette.secondary.contrastText,
@@ -97,7 +98,7 @@ const StyledBaseButton = styled('button', {
             backgroundColor: theme.palette.secondary.dark,
         },
     },
-    
+
     "&.color-success": {
         backgroundColor: theme.palette.success.main,
         color: theme.palette.success.contrastText,
@@ -106,7 +107,7 @@ const StyledBaseButton = styled('button', {
             backgroundColor: theme.palette.success.dark,
         },
     },
-    
+
     "&.color-error": {
         backgroundColor: theme.palette.error.main,
         color: theme.palette.error.contrastText,
@@ -115,7 +116,7 @@ const StyledBaseButton = styled('button', {
             backgroundColor: theme.palette.error.dark,
         },
     },
-    
+
     "&.color-warning": {
         backgroundColor: theme.palette.warning.main,
         color: theme.palette.warning.contrastText,
@@ -124,7 +125,7 @@ const StyledBaseButton = styled('button', {
             backgroundColor: theme.palette.warning.dark,
         },
     },
-    
+
     "&.color-info": {
         backgroundColor: theme.palette.info.main,
         color: theme.palette.info.contrastText,
@@ -149,7 +150,7 @@ const StyledLoadingIndicator = styled('div', {
     borderTop: "2px solid currentColor",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
-    
+
     "@keyframes spin": {
         "0%": { transform: "translate(-50%, -50%) rotate(0deg)" },
         "100%": { transform: "translate(-50%, -50%) rotate(360deg)" },
@@ -159,12 +160,11 @@ const StyledLoadingIndicator = styled('div', {
 const StyledButtonContent = styled('span', {
     name: "Button",
     slot: "content",
-})<{ loading?: boolean }>(({ loading }) => ({
+})(({ }) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "4px",
-    opacity: loading ? 0 : 1,
     transition: "opacity 0.2s ease-in-out",
 }));
 
@@ -220,7 +220,7 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
                 classes,
                 className,
             )}
-            disabled={disabled || loading}
+            disabled={disabled || !!loading}
             type={type}
             onClick={handleClick}
             onFocus={(e) => {
@@ -240,10 +240,10 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
             onMouseEnter={() => setHover(true)}
             role="button"
             tabIndex={disabled ? -1 : (tabIndex ?? 0)}
-            aria-disabled={disabled || loading}
+            aria-disabled={disabled || !!loading}
             {...other}
         >
-            {loading && (
+            {loading === true && (
                 <StyledLoadingIndicator
                     className={clsx(
                         "Button-loadingIndicator",
@@ -251,12 +251,21 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
                     )}
                 />
             )}
+            {loading && typeof loading !== 'boolean' && (
+                <StyledButtonContent
+                    className={clsx(
+                        "Button-content",
+                        classes,
+                    )}
+                >
+                    <FormattedText text={loading} />
+                </StyledButtonContent>
+            )}
             <StyledButtonContent
                 className={clsx(
                     "Button-content",
                     classes,
                 )}
-                loading={loading}
             >
                 {children}
             </StyledButtonContent>

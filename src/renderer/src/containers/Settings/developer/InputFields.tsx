@@ -270,7 +270,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 required={true}
                             />
                         </InputDecorator>
-                        <BaseButton component={"span"} size={size}>
+                        <BaseButton component={"span"} size={size} loading={"Ładowanie *danych* ..."} >
                             <span>Mask:</span>
                         </BaseButton>
                     </Stack>

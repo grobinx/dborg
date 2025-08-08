@@ -1,5 +1,6 @@
 import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
+import { FormattedContentItem } from "../useful/FormattedText";
 
 export interface BaseButtonProps {
     id?: string;
@@ -31,7 +32,7 @@ export interface BaseButtonProps {
      * Czy przycisk jest w stanie ładowania
      * @default false
      */
-    loading?: boolean;
+    loading?: boolean | FormattedContentItem;
     
     /**
      * Czy przycisk jest w stanie wybranym
