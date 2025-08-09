@@ -7,28 +7,8 @@ import { borderRadius, rootSizeProperties } from '@renderer/themes/layouts/defau
 import { themeColors } from '@renderer/types/colors';
 import { dark, light } from '@mui/material/styles/createPalette';
 
-const mix = (color1: string, color2: string, ratio: number = 0.5): string => {
-    // Prosta implementacja mieszania kolorów hex
-    const hex1 = color1.replace('#', '');
-    const hex2 = color2.replace('#', '');
-    
-    const r1 = parseInt(hex1.substring(0, 2), 16);
-    const g1 = parseInt(hex1.substring(2, 4), 16);
-    const b1 = parseInt(hex1.substring(4, 6), 16);
-    
-    const r2 = parseInt(hex2.substring(0, 2), 16);
-    const g2 = parseInt(hex2.substring(2, 4), 16);
-    const b2 = parseInt(hex2.substring(4, 6), 16);
-    
-    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
-    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
-    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
-    
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-};
-
 const StyledBaseButton = styled('button', {
-    name: "Button",
+    name: "BaseButton",
     slot: "root",
 })(({ theme }) => ({
     display: "inline-flex",
@@ -106,16 +86,19 @@ const StyledBaseButton = styled('button', {
 
             "&.hover:not(.disabled):not(.loading)": {
                 backgroundColor: alpha(theme.palette[color].main, 0.2),
+                '&.focused, &.selected': {
+                    backgroundColor: alpha(theme.palette[color].main, 0.3),
+                },
             },
 
             "&.active:not(.disabled):not(.loading)": {
-                backgroundColor: alpha(theme.palette[color].dark, 0.3),
+                backgroundColor: alpha(theme.palette[color].main, 0.3),
             },
 
             "&.focused, &.selected": {
                 outlineOffset: "-2px",
                 outline: `2px solid ${theme.palette[color].main}`,
-                backgroundColor: alpha(theme.palette[color].main, 0.3),
+                backgroundColor: alpha(theme.palette[color].main, 0.4),
             },
         };
         return acc;
@@ -169,7 +152,7 @@ const StyledBaseButtonLoadingContent = styled('span', {
     transition: "opacity 0.2s ease-in-out",
 }));
 
-export const BaseButton = React.memo<BaseButtonProps>((props) => {
+export const BaseButton: React.FC<BaseButtonProps> = (props) => {
     const {
         id,
         component = 'button',
@@ -217,7 +200,7 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
             id={id}
             ref={ref}
             className={clsx(
-                "Button-root",
+                "BaseButton-root",
                 classes,
                 className,
             )}
@@ -272,7 +255,7 @@ export const BaseButton = React.memo<BaseButtonProps>((props) => {
             </StyledBaseButtonContent>
         </StyledBaseButton>
     );
-});
+};
 
 BaseButton.displayName = 'BaseButton';
 

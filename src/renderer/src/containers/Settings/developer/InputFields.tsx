@@ -1,5 +1,6 @@
 import { Box, Collapse, Stack, Tab, useTheme } from "@mui/material";
 import { BaseButton } from "@renderer/components/buttons/BaseButton";
+import { Button } from "@renderer/components/buttons/Button";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
@@ -271,7 +272,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             />
                         </InputDecorator>
                         <Box sx={{ gap: 4, display: "flex", padding: 4 }}>
-                            <BaseButton
+                            <Button
                                 component={"span"}
                                 size={size}
                                 //loading={"![](Loading) Ładowanie *danych* ..."}
@@ -279,7 +280,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 color="primary"
                             >
                                 Primary
-                            </BaseButton>
+                            </Button>
                             <BaseButton
                                 component={"span"}
                                 size={size}

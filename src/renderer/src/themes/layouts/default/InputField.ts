@@ -4,7 +4,7 @@ import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
 
 
-export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFieldComponent => {
+export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFieldComponent => {
     return {
         styleOverrides: {
             root: {
@@ -29,6 +29,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                         };
                         return acc;
                     }, {}),
+                    //boxShadow: `0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
                 },
                 ...themeColors.reduce((acc, color) => {
                     acc[`&.color-${color}`] = {
