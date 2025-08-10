@@ -338,11 +338,9 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     values={['on', 'off', null]}
                                     size={size}
                                     onChange={(newValue) => setValue(newValue)}
-                                    sx={{width: 70}}
+                                    sx={{ width: 70 }}
                                 >
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        {value ? value : 'Power'}
-                                    </div>
+                                    {value ? value : 'Power'}
                                 </BaseButton>
                             </Grid2>
                         </Grid2>
