@@ -1,16 +1,17 @@
 import React from 'react';
-import { alpha, darken, lighten, styled } from '@mui/material';
+import { alpha, lighten, styled, SxProps, Theme } from '@mui/material';
+import { ButtonProvider, useButtonContext } from './ButtonContext';
 import { BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
 import { borderRadius, rootSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { themeColors } from '@renderer/types/colors';
-import { dark, light } from '@mui/material/styles/createPalette';
 
 const StyledBaseButton = styled('button', {
     name: "BaseButton",
     slot: "root",
-})(({ theme }) => ({
+    shouldForwardProp: (prop) => prop !== 'componentName',
+})<{ componentName?: string }>(({ theme, componentName = 'BaseButton' }) => ({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -24,20 +25,14 @@ const StyledBaseButton = styled('button', {
     fontSize: "inherit",
     fontWeight: 600,
     lineHeight: 1,
-    transition: "all 0.2s ease-in-out",
+    transition: "all 0.1s ease-in-out",
     borderRadius: borderRadius,
     ...rootSizeProperties.medium,
-
-    // Podstawowe style
     backgroundColor: "transparent",
     color: "inherit",
-
-    // Usuwa domyślne style przeglądarki
     appearance: "none",
     WebkitAppearance: "none",
     MozAppearance: "none",
-
-    // Zapobiega zawijaniu tekstu
     whiteSpace: "nowrap",
 
     "&.focused": {
@@ -46,25 +41,16 @@ const StyledBaseButton = styled('button', {
         outlineOffset: "-2px",
     },
 
-    // Disabled styles
     "&.disabled": {
         cursor: "not-allowed",
         opacity: 0.6,
         pointerEvents: "none",
     },
 
-    // Loading styles
-    "&.loading": {
-        cursor: "wait",
-        pointerEvents: "none",
-    },
-
-    // Selected styles
     "&.selected": {
-        // Dodaj style dla stanu wybranego
+        // Style dla stanu wybranego
     },
 
-    // Size variants
     "&.size-small": {
         ...rootSizeProperties.small
     },
@@ -92,7 +78,27 @@ const StyledBaseButton = styled('button', {
             },
 
             "&.active:not(.disabled):not(.loading)": {
-                backgroundColor: alpha(theme.palette[color].main, 0.3),
+                position: "relative",
+                transform: "scale(0.98)",
+                overflow: "hidden",
+                backgroundColor: alpha(theme.palette[color].dark, 0.3),
+
+                // "&::before": {
+                //     content: '""',
+                //     position: "absolute",
+                //     top: "50%",
+                //     left: "50%",
+                //     width: "0",
+                //     height: "0",
+                //     borderRadius: "50%",
+                //     background: `radial-gradient(circle, 
+                //         ${alpha(lighten(theme.palette[color].main, 0.4), 0.6)} 0%, 
+                //         transparent 70%
+                //     )`,
+                //     transform: "translate(-50%, -50%)",
+                //     animation: "radialBurst 0.4s ease-out",
+                //     pointerEvents: "none",
+                // },
             },
 
             "&.focused, &.selected": {
@@ -100,19 +106,63 @@ const StyledBaseButton = styled('button', {
                 outline: `2px solid ${theme.palette[color].main}`,
                 backgroundColor: alpha(theme.palette[color].main, 0.4),
             },
+
+            // Style dla różnych pressed states
+            "&.has-value": {
+                backgroundColor: alpha(theme.palette[color].main, 0.3),
+                //boxShadow: `inset 0 0 4px 2px ${theme.palette[color].main}`,
+            },
         };
         return acc;
     }, {}),
+
+    "&.loading": {
+        cursor: "wait",
+        pointerEvents: "none",
+        color: theme.palette.text.disabled,
+        outline: `1px solid ${theme.palette.text.disabled}`,
+        outlineOffset: -1,
+    },
+
+    // Animacja dla efektu naciśnięcia
+    "@keyframes radialBurst": {
+        "0%": {
+            width: "0",
+            height: "0",
+            opacity: 1,
+        },
+        "50%": {
+            width: "200%",
+            height: "200%",
+            opacity: 0.8,
+        },
+        "100%": {
+            width: "300%",
+            height: "300%",
+            opacity: 0,
+        },
+    },
+}));
+
+const StyledBaseButtonLoading = styled('div', {
+    name: "BaseButton",
+    slot: "loading",
+})(() => ({
+    display: "flex",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
 }));
 
 const StyledBaseButtonLoadingIndicator = styled('div', {
-    name: "Button",
+    name: "BaseButton",
     slot: "loadingIndicator",
 })(() => ({
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
     width: "1em",
     height: "1em",
     border: "2px solid transparent",
@@ -121,141 +171,197 @@ const StyledBaseButtonLoadingIndicator = styled('div', {
     animation: "spin 1s linear infinite",
 
     "@keyframes spin": {
-        "0%": { transform: "translate(-50%, -50%) rotate(0deg)" },
-        "100%": { transform: "translate(-50%, -50%) rotate(360deg)" },
+        "0%": { transform: "rotate(0deg)" },
+        "100%": { transform: "rotate(360deg)" },
     },
 }));
 
+const StyledBaseButtonLoadingContent = styled('span', {
+    name: "BaseButton",
+    slot: "loadingContent",
+})(() => ({
+    fontSize: "0.875em",
+    opacity: 0.8,
+}));
+
 const StyledBaseButtonContent = styled('span', {
-    name: "Button",
+    name: "BaseButton",
     slot: "content",
-})(({ }) => ({
+})(() => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "4px",
     transition: "opacity 0.2s ease-in-out",
-    padding: "0 8px",
+    padding: "0 0.2em",
     '&.loading': {
         opacity: 0,
     }
 }));
 
-const StyledBaseButtonLoadingContent = styled('span', {
-    name: "Button",
-    slot: "loadingContent",
-})(({ }) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "4px",
-    transition: "opacity 0.2s ease-in-out",
-}));
+// Komponent Loading z kontekstem
+const BaseButtonLoading: React.FC = () => {
+    const { config, classes } = useButtonContext();
 
-export const BaseButton: React.FC<BaseButtonProps> = (props) => {
-    const {
-        id,
-        component = 'button',
-        children,
-        className,
-        disabled = false,
-        loading = false,
-        selected = false,
-        size = "medium",
-        color = "primary",
-        type = "button",
-        onClick,
-        onFocus,
-        onBlur,
-        tabIndex,
-        ref,
-        ...other
-    } = props;
-
-    const [focused, setFocused] = React.useState(false);
-    const [active, setActive] = React.useState(false);
-    const [hover, setHover] = React.useState(false);
-
-    const classes = clsx(
-        `size-${size}`,
-        `color-${color}`,
-        `type-${type}`,
-        disabled && "disabled",
-        loading && "loading",
-        selected && "selected",
-        focused && "focused",
-        active && "active",
-        hover && "hover",
-    );
-
-    const handleClick = () => {
-        if (!disabled && !loading && onClick) {
-            onClick();
+    const shouldShowIndicator = React.useMemo(() => {
+        if (typeof config.showLoadingIndicator === 'boolean') {
+            return config.showLoadingIndicator;
         }
-    };
+
+        if (config.loading === true) {
+            return true;
+        }
+
+        return false;
+
+    }, [config.loading, config.showLoadingIndicator]);
+
+    return (
+        <StyledBaseButtonLoading
+            className={`${config.componentName}-loading ${classes}`}
+        >
+            {shouldShowIndicator &&
+                <StyledBaseButtonLoadingIndicator
+                    className={`${config.componentName}-loadingIndicator`}
+                />
+            }
+
+            {(config.loading && typeof config.loading !== 'boolean') && (
+                <StyledBaseButtonLoadingContent
+                    className={`${config.componentName}-loadingContent`}
+                >
+                    <FormattedText text={config.loading} />
+                </StyledBaseButtonLoadingContent>
+            )}
+        </StyledBaseButtonLoading>
+    );
+};
+
+// Komponent Content z kontekstem
+const BaseButtonContent: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
+    const { config, classes } = useButtonContext();
+
+    return (
+        <StyledBaseButtonContent
+            className={`${config.componentName}-content ${classes}`}
+        >
+            {children}
+        </StyledBaseButtonContent>
+    );
+};
+
+// Wewnętrzny komponent przycisku
+const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode, sx?: SxProps<Theme> }> = (props) => {
+    const {
+        actions,
+        config,
+        classes,
+        shouldShowLoading,
+    } = useButtonContext();
 
     return (
         <StyledBaseButton
-            //as={component}
-            id={id}
-            ref={ref}
+            {...props}
+            componentName={config.componentName}
             className={clsx(
-                "BaseButton-root",
+                `${config.componentName}-root`,
                 classes,
-                className,
+                props.className
             )}
-            disabled={disabled || !!loading}
-            type={type}
-            onClick={handleClick}
-            onFocus={(_e) => {
-                setFocused(true);
-                onFocus?.();
-            }}
-            onBlur={(_e) => {
-                setFocused(false);
-                onBlur?.();
-            }}
-            onMouseDown={() => setActive(true)}
-            onMouseUp={() => setActive(false)}
-            onMouseLeave={() => {
-                setActive(false);
-                setHover(false);
-            }}
-            onMouseEnter={() => setHover(true)}
+            disabled={config.disabled || !!config.loading}
+            type={config.type}
+            onClick={actions.handleClick}
+            onFocus={actions.handleFocus}
+            onBlur={actions.handleBlur}
+            onMouseDown={actions.handleMouseDown}
+            onMouseUp={actions.handleMouseUp}
+            onMouseEnter={actions.handleMouseEnter}
+            onMouseLeave={actions.handleMouseLeave}
+            onKeyDown={actions.handleKeyDown}
+            onKeyUp={actions.handleKeyUp}
             role="button"
-            tabIndex={disabled ? -1 : (tabIndex ?? 0)}
-            aria-disabled={disabled || !!loading}
-            {...other}
+            tabIndex={config.disabled ? -1 : 0}
+            aria-disabled={config.disabled || !!config.loading}
+            aria-pressed={config.selected}
         >
-            {loading === true && (
-                <StyledBaseButtonLoadingIndicator
-                    className={clsx(
-                        "Button-loadingIndicator",
-                        classes,
-                    )}
-                />
-            )}
-            {loading && typeof loading !== 'boolean' && (
-                <StyledBaseButtonLoadingContent
-                    className={clsx(
-                        "Button-loadingContent",
-                        classes,
-                    )}
-                >
-                    <FormattedText text={loading} />
-                </StyledBaseButtonLoadingContent>
-            )}
-            <StyledBaseButtonContent
-                className={clsx(
-                    "Button-content",
-                    classes,
-                )}
-            >
-                {children}
-            </StyledBaseButtonContent>
+            {/* Loading zawsze na wierzchu */}
+            {shouldShowLoading && <BaseButtonLoading />}
+
+            {/* Zawartość przycisku - programista sam decyduje co wrzucić */}
+            <BaseButtonContent>
+                {props.children}
+            </BaseButtonContent>
         </StyledBaseButton>
     );
 };
 
+// Główny komponent BaseButton z providerem
+export const BaseButton: React.FC<BaseButtonProps> = (props) => {
+    const {
+        // Props specyficzne dla BaseButton
+        componentName = "BaseButton",
+
+        // Event handlers
+        onClick,
+        onFocus,
+        onBlur,
+        onMouseDown,
+        onMouseUp,
+        onMouseEnter,
+        onMouseLeave,
+        onKeyDown,
+        onKeyUp,
+
+        // Content props
+        children,
+
+        // HTML button props
+        className,
+        id,
+        tabIndex,
+        'aria-label': ariaLabel,
+        'aria-describedby': ariaDescribedBy,
+
+        sx,
+        style,
+
+        // Pozostałe props dla config
+        ...configProps
+    } = props;
+
+    return (
+        <ButtonProvider
+            config={{
+                componentName,
+                ...configProps
+            }}
+            onClick={onClick}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyUp}
+            onChange={configProps.onChange}
+        >
+            <BaseButtonInner
+                id={id}
+                className={className}
+                tabIndex={tabIndex}
+                aria-label={ariaLabel}
+                aria-describedby={ariaDescribedBy}
+                sx={sx}
+                style={style}
+            >
+                {children}
+            </BaseButtonInner>
+        </ButtonProvider>
+    );
+};
+
 BaseButton.displayName = 'BaseButton';
+
+// Export również wewnętrznych komponentów dla użycia w dziedziczących buttonach
+export { BaseButtonLoading as ButtonLoading, BaseButtonContent as ButtonContent, BaseButtonInner };
 

@@ -1,13 +1,6 @@
-import { Box, BoxProps, Stack, styled, Typography, useTheme } from "@mui/material";
-import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
-import { ThemeColor, Size } from "@renderer/components/inputs/base/types";
-import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import { NumberField } from "@renderer/components/inputs/NumberField";
-import { SliderField } from "@renderer/components/inputs/SliderField";
-import { TextField } from "@renderer/components/inputs/TextField";
+import { Box, BoxProps, Stack, styled, Typography } from "@mui/material";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
-import React from "react";
 import { InputFieldsContent } from "./developer/InputFields";
 import { IconListContent } from "./developer/IconList";
 

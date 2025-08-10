@@ -1,4 +1,4 @@
-import { Box, Collapse, Stack, Tab, useTheme } from "@mui/material";
+import { Box, Collapse, Grid2, Stack, Tab, useTheme } from "@mui/material";
 import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import { Button } from "@renderer/components/buttons/Button";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
@@ -12,10 +12,12 @@ import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
+import Logo from "../../../../../../resources/dborg.png";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
 
+    const [value, setValue] = React.useState<string | null>(null);
     const [selected, setSelected] = React.useState<string | undefined>(undefined);
     const [textValues, setTextValues] = React.useState<Record<string, any>>({
         small: "a",
@@ -271,44 +273,79 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 required={true}
                             />
                         </InputDecorator>
-                        <Box sx={{ gap: 4, display: "flex", padding: 4 }}>
-                            <Button
-                                component={"span"}
-                                size={size}
-                                //loading={"![](Loading) Ładowanie *danych* ..."}
-                                //loading={false}
-                                color="primary"
-                            >
-                                Primary
-                            </Button>
-                            <BaseButton
-                                component={"span"}
-                                size={size}
-                                //loading={"![](Loading) Ładowanie *danych* ..."}
-                                //loading={false}
-                                color="secondary"
-                            >
-                                Secondary
-                            </BaseButton>
-                            <BaseButton
-                                component={"span"}
-                                size={size}
-                                //loading={"![](Loading) Ładowanie *danych* ..."}
-                                //loading={false}
-                                color="error"
-                            >
-                                <span>Mask:</span>
-                            </BaseButton>
-                            <BaseButton
-                                component={"span"}
-                                size={size}
-                                //loading={"![](Loading) Ładowanie *danych* ..."}
-                                //loading={true}
-                                color="main"
-                            >
-                                Jakiś opis
-                            </BaseButton>
-                        </Box>
+                        <Grid2 container gap={4} padding={4}>
+                            <Grid2>
+                                <BaseButton
+                                    color="primary"
+                                    onClick={() => console.log('clicked')}
+                                    size={size}
+                                >
+                                    Save Changes
+                                </BaseButton>
+                            </Grid2>
+
+                            <Grid2>
+                                <BaseButton
+                                    color="secondary"
+                                    size={size}
+                                >
+                                    <theme.icons.Search />
+                                    Save File
+                                </BaseButton>
+                            </Grid2>
+
+                            <Grid2>
+                                <BaseButton
+                                    color="error"
+                                    size={size}
+                                    aria-label="Delete"
+                                >
+                                    <theme.icons.Delete />
+                                </BaseButton>
+                            </Grid2>
+
+                            <Grid2>
+                                <BaseButton
+                                    loading="![](Loading) Saving..."
+                                    size={size}
+                                    color="warning"
+                                    showLoadingIndicator={false}
+                                >
+                                    <theme.icons.Clipboard />
+                                    Save state
+                                </BaseButton>
+                            </Grid2>
+
+                            <Grid2>
+                                <BaseButton
+                                    color="info"
+                                    size={size}
+                                >
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <img src={Logo} width="16" height="16" alt="" />
+                                        <div>
+                                            <div style={{ fontWeight: 'bold' }}>Primary Action</div>
+                                            <div style={{ fontSize: '0.8em', opacity: 0.7 }}>Subtitle</div>
+                                        </div>
+                                        <theme.icons.Info />
+                                    </div>
+                                </BaseButton>
+                            </Grid2>
+
+                            <Grid2 sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <BaseButton
+                                    color="success"
+                                    values={['on', 'off', null]}
+                                    size={size}
+                                    onChange={(newValue) => setValue(newValue)}
+                                    sx={{width: 70}}
+                                >
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        {value ? value : 'Power'}
+                                    </div>
+                                </BaseButton>
+                            </Grid2>
+                        </Grid2>
                     </Stack>
                 ))}
             </Stack>

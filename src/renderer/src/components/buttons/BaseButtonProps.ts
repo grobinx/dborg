@@ -1,8 +1,10 @@
 import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
+import { SxProps } from "@mui/material";
+import { Theme } from "@mui/system";
 
-interface BaseProps {
+export interface BaseButtonProps {
     /**
      * Komponent, który będzie renderowany
      * Może to być np. 'span', 'div', 'button' lub inny komponent React.
@@ -54,41 +56,58 @@ interface BaseProps {
      * @default "button"
      */
     type?: "button" | "submit" | "reset";
-}
 
-export interface BaseButtonProps extends BaseProps {
+    /**
+     * Stany przycisku
+     */
+    values?: (string | null)[];
+
+    /**
+     * Aktualny stan przycisku
+     */
+    value?: string | null;
+
+    /**
+     * Funkcja wywoływana po zmianie stanu przycisku
+     * @param value Nowy stan przycisku
+     * @returns
+     */
+    onChange?: (value: string | null) => void;
+
     id?: string;
 
-    /**
-     * Callback wywoływany przy kliknięciu
-     */
+    componentName?: string;
+
+    showLoadingIndicator?: boolean;
+
     onClick?: () => void;
-
-    /**
-     * Callback wywoływany przy fokusie
-     */
     onFocus?: () => void;
-
-    /**
-     * Callback wywoływany przy utracie fokusu
-     */
     onBlur?: () => void;
+    onMouseDown?: () => void;
+    onMouseUp?: () => void;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+    onKeyDown?: () => void;
+    onKeyUp?: () => void;
     
     /**
      * Tab index
      */
     tabIndex?: number;
+
+    slots?: {
+        // content?: React.ComponentType<BaseButtonContentProps>;
+        // loading?: React.ComponentType<BaseButtonLoadingProps>;
+    }
     
-    /**
-     * Ref do elementu button
-     */
     ref?: React.Ref<HTMLButtonElement>;
-}
 
-export interface BaseButtonContentProps extends BaseProps {
+    'aria-label'?: string;
+    'aria-describedby'?: string;
+
     /**
-     * Ref do elementu zawartości
+     * Style obiektu (np. MUI sx prop)
      */
-    ref?: React.Ref<HTMLElement>;
-
+    sx?: SxProps<Theme>;
+    style?: React.CSSProperties;
 }
