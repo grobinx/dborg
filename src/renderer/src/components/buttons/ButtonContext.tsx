@@ -209,8 +209,8 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
                 cycleValues(); // Zmiana nazwy
             }
 
-            e.stopPropagation();
-            e.preventDefault();
+            //e.stopPropagation();
+            //e.preventDefault();
             onClick?.();
         }
     }, [isInteractable, values.length, cycleValues, onClick]);
@@ -230,15 +230,15 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (isInteractable) {
             setActive(true);
         }
-        e.stopPropagation();
-        e.preventDefault();
+        //e.stopPropagation();
+        //e.preventDefault();
         onMouseDown?.();
     }, [isInteractable, setActive, onMouseDown]);
 
     const handleMouseUp = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         setActive(false);
-        e.stopPropagation();
-        e.preventDefault();
+        //e.stopPropagation();
+        //e.preventDefault();
         onMouseUp?.();
     }, [setActive, onMouseUp]);
 
