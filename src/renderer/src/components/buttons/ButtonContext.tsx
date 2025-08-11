@@ -17,42 +17,42 @@ export interface ButtonActions {
     cycleValues: () => void; // Zmiana nazwy
     setValueByIndex: (index: number) => void; // Zmiana nazwy
     resetValue: () => void; // Zmiana nazwy
-    handleClick: () => void;
+    handleClick: (e: React.SyntheticEvent<HTMLButtonElement>) => void;
     handleFocus: (e: React.FocusEvent<HTMLButtonElement>) => void;
     handleBlur: (e: React.FocusEvent<HTMLButtonElement>) => void;
-    handleMouseDown: () => void;
-    handleMouseUp: () => void;
+    handleMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    handleMouseUp: (e: React.MouseEvent<HTMLButtonElement>) => void;
     handleMouseEnter: () => void;
     handleMouseLeave: () => void;
     handleKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
     handleKeyUp: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 }
 
-export interface ButtonConfig extends Pick<BaseButtonProps, 
+export interface ButtonConfig extends Pick<BaseButtonProps,
     'disabled' | 'loading' | 'selected' | 'size' | 'color' | 'type'
 > {
     componentName: string;
     values?: (string | null)[]; // Zmiana z 'pressedStates' na 'values'
-    showLoadingIndicator?: boolean; 
+    showLoadingIndicator?: boolean;
 }
 
 export interface ButtonContextValue {
     // Stan przycisku
     state: ButtonState;
-    
+
     // Akcje
     actions: ButtonActions;
-    
+
     // Konfiguracja
     config: ButtonConfig;
-    
+
     // Klasy CSS
     classes: string;
-    
+
     // Dodatkowe metody
     isInteractable: boolean;
     shouldShowLoading: boolean;
-    
+
     // Nowe helper methods
     currentValueIndex: number; // Zmiana nazwy
     hasValue: boolean; // Zmiana z 'isPressed' na 'hasValue'
@@ -120,7 +120,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     // Helper values
     const values = config.values || [];
-    
+
     // Inicjalna wartość pressed
     const initialValue = React.useMemo(() => {
         const nullState = values.find(state => state === null);
@@ -142,7 +142,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     // Sprawdź czy przycisk może być interaktywny
     const isInteractable = !config.disabled && !config.loading;
-    
+
     // Sprawdź czy pokazać loading
     const shouldShowLoading = !!config.loading;
 
@@ -171,14 +171,14 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     const cycleValues = useCallback(() => {
         if (values.length === 0) return;
-        
+
         setState(prev => {
             const currentIndex = values.indexOf(prev.value);
             const nextIndex = (currentIndex + 1) % values.length;
             const newValue = values[nextIndex];
 
             onChange?.(newValue);
-            
+
             return { ...prev, value: newValue };
         });
     }, [values, onChange]);
@@ -202,13 +202,15 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     }, [values]);
 
     // Event handlers
-    const handleClick = useCallback(() => {
+    const handleClick = useCallback((e: React.SyntheticEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             // Jeśli są dostępne stany pressed, przełącz je przy kliknięciu
             if (values.length > 0) {
                 cycleValues(); // Zmiana nazwy
             }
-            
+
+            e.stopPropagation();
+            e.preventDefault();
             onClick?.();
         }
     }, [isInteractable, values.length, cycleValues, onClick]);
@@ -224,15 +226,19 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         onBlur?.(e);
     }, [setFocused, setActive, onBlur]);
 
-    const handleMouseDown = useCallback(() => {
+    const handleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             setActive(true);
         }
+        e.stopPropagation();
+        e.preventDefault();
         onMouseDown?.();
     }, [isInteractable, setActive, onMouseDown]);
 
-    const handleMouseUp = useCallback(() => {
+    const handleMouseUp = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         setActive(false);
+        e.stopPropagation();
+        e.preventDefault();
         onMouseUp?.();
     }, [setActive, onMouseUp]);
 
@@ -253,9 +259,9 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (isInteractable && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             setActive(true);
-            
+
             if (e.key === 'Enter') {
-                handleClick();
+                handleClick(e);
             }
         }
         onKeyDown?.(e);
@@ -265,10 +271,10 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (isInteractable && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             setActive(false);
-            
+
             // Tylko spacja wywołuje click w keyUp
             if (e.key === ' ') {
-                handleClick();
+                handleClick(e);
             }
         }
         onKeyUp?.(e);
@@ -288,7 +294,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (state.focused) classArray.push('focused');
         if (state.active) classArray.push('active');
         if (state.hover) classArray.push('hover');
-        
+
         // Dodaj klasę dla konkretnego stanu pressed
         if (state.value !== null) {
             classArray.push(`value-${state.value}`); // Zmiana nazwy klasy
@@ -375,7 +381,7 @@ export const useButtonStatus = () => {
 // Helper hook do sprawdzania czy przycisk jest w określonym stanie
 export const useButtonIs = () => {
     const { state, config, hasValue, currentValueIndex } = useButtonContext();
-    
+
     return {
         isFocused: state.focused,
         isActive: state.active,
@@ -393,7 +399,7 @@ export const useButtonIs = () => {
 // Hook do zarządzania pressed states
 export const usePressedStates = () => {
     const { state, actions, values, currentValueIndex } = useButtonContext();
-    
+
     return {
         currentPressed: state.value,
         currentIndex: currentValueIndex,

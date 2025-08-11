@@ -268,13 +268,14 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 value={patternValues[size]} // Pobierz wartość dla danego rozmiaru
                                 onChange={React.useCallback((value) => handleValuePatternChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
                                 mask="+48 ___ ___ ___"
-                                replacement={{ "_": /\d/ }}
+                                replacement={React.useMemo(() => ({ "_": /\d/ }), [])}
                                 color="success"
                                 required={true}
                             />
                         </InputDecorator>
                         <Grid2 container gap={4} padding={4}>
                             <Grid2>
+                                {React.useMemo(() => (
                                 <BaseButton
                                     color="primary"
                                     onClick={() => console.log('clicked')}
@@ -282,9 +283,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 >
                                     Save Changes
                                 </BaseButton>
+                                ), [size])}
                             </Grid2>
 
                             <Grid2>
+                                {React.useMemo(() => (
                                 <BaseButton
                                     color="secondary"
                                     size={size}
@@ -292,34 +295,41 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     <theme.icons.Search />
                                     Save File
                                 </BaseButton>
+                                ), [size])}
                             </Grid2>
 
                             <Grid2>
-                                <BaseButton
-                                    color="error"
-                                    size={size}
-                                    aria-label="Delete"
-                                >
-                                    <theme.icons.Delete />
-                                </BaseButton>
+                                {React.useMemo(() => (
+                                    <BaseButton
+                                        color="error"
+                                        size={size}
+                                        aria-label="Delete"
+                                    >
+                                        <theme.icons.Delete />
+                                    </BaseButton>
+                                ), [size])}
                             </Grid2>
 
                             <Grid2>
-                                <BaseButton
-                                    loading="![](Loading) Saving..."
-                                    size={size}
-                                    color="warning"
-                                    showLoadingIndicator={false}
-                                >
-                                    <theme.icons.Clipboard />
-                                    Save state
-                                </BaseButton>
+                                {React.useMemo(() => (
+                                    <BaseButton
+                                        loading="![](Loading) Saving..."
+                                        size={size}
+                                        color="warning"
+                                        showLoadingIndicator={false}
+                                    >
+                                        <theme.icons.Clipboard />
+                                        Save state
+                                    </BaseButton>
+                                ), [size])}
                             </Grid2>
 
                             <Grid2>
+                                {React.useMemo(() => (
                                 <BaseButton
                                     color="info"
                                     size={size}
+                                    onClick={() => setValue(prev => prev === 'on' ? 'off' : 'on')}
                                 >
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                         <img src={Logo} width="16" height="16" alt="" />
@@ -330,18 +340,22 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                         <theme.icons.Info />
                                     </div>
                                 </BaseButton>
+                                ), [size])}
                             </Grid2>
 
-                            <Grid2 sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <Grid2>
+                                {React.useMemo(() => (
                                 <BaseButton
                                     color="success"
-                                    values={['on', 'off', null]}
+                                    values={['on', 'off']}
+                                    value={value}
                                     size={size}
                                     onChange={(newValue) => setValue(newValue)}
                                     sx={{ width: 70 }}
                                 >
                                     {value ? value : 'Power'}
                                 </BaseButton>
+                                ), [value, size])}
                             </Grid2>
                         </Grid2>
                     </Stack>
