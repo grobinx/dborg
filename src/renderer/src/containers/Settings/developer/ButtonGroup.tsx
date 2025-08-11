@@ -12,7 +12,6 @@ const StyledButtonGroup = styled('div', {
     slot: "root",
 })<{ 
     orientation?: 'horizontal' | 'vertical';
-    size?: Size;
 }>(({ orientation = 'horizontal' }) => ({
     display: 'inline-flex',
     flexDirection: orientation === 'horizontal' ? 'row' : 'column',
@@ -111,9 +110,15 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
 
     return (
         <StyledButtonGroup
-            className={clsx('ButtonGroup-root', className)}
+            className={clsx(
+                'ButtonGroup-root',
+                `size-${size}`,
+                `color-${color}`,
+                `orientation-${orientation}`,
+                disabled && `disabled`,
+                className
+            )}
             orientation={orientation}
-            size={size}
             sx={sx}
         >
             {processedChildren}
