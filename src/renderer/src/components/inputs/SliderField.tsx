@@ -34,7 +34,7 @@ interface RangeFieldProps extends BaseInputProps<[number, number] | undefined> {
     inputProps?: React.ComponentProps<typeof Range>;
 }
 
-export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
+export const SliderField: React.FC<SliderFieldProps> = (props) => {
     const {
         value,
         max = 100,
@@ -99,11 +99,11 @@ export const SliderField: React.FC<SliderFieldProps> = React.memo((props) => {
             {...other}
         />
     );
-});
+};
 
 SliderField.displayName = 'SliderField';
 
-export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
+export const RangeField: React.FC<RangeFieldProps> = (props) => {
     const {
         value,
         max = 100,
@@ -175,7 +175,7 @@ export const RangeField: React.FC<RangeFieldProps> = React.memo((props) => {
             {...other}
         />
     );
-});
+};
 
 RangeField.displayName = 'RangeField';
 

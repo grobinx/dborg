@@ -14,7 +14,7 @@ interface EmailFieldProps extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
+export const EmailField: React.FC<EmailFieldProps> = (props) => {
     const {
         value,
         maxLength,
@@ -49,7 +49,7 @@ export const EmailField: React.FC<EmailFieldProps> = React.memo((props) => {
             {...other}
         />
     )
-});
+};
 
 EmailField.displayName = "EmailField";
 

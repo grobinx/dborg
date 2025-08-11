@@ -21,7 +21,7 @@ const StyledBaseInputFieldNumberStepper = styled('button', {
 })(() => ({
 }));
 
-export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
+export const NumberField: React.FC<NumberFieldProps> = (props) => {
     const {
         value,
         max,
@@ -157,6 +157,6 @@ export const NumberField: React.FC<NumberFieldProps> = React.memo((props) => {
             {...other}
         />
     );
-});
+};
 
 NumberField.displayName = 'NumberField';

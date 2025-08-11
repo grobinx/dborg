@@ -13,7 +13,7 @@ interface TextFieldProps extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
+export const TextField: React.FC<TextFieldProps> = (props) => {
     const {
         value,
         maxLength,
@@ -46,6 +46,6 @@ export const TextField: React.FC<TextFieldProps> = React.memo((props) => {
             {...other}
         />
     )
-});
+};
 
 TextField.displayName = "TextField";

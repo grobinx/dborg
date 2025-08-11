@@ -104,24 +104,26 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         TextField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <TextField
-                                size={size}
-                                placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                                maxLength={50}
-                                value={textValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueTextChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="main"
-                                required={true}
-                                defaultValue={1}
-                            />
-                        </InputDecorator>
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <TextField
+                                    size={size}
+                                    placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                    maxLength={50}
+                                    value={textValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueTextChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="main"
+                                    required={true}
+                                    defaultValue={1}
+                                />
+                            </InputDecorator>
+                        ), [size, textValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -129,25 +131,27 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         NumberField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <NumberField
-                                size={size}
-                                placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                                max={50}
-                                min={1}
-                                value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueNumberChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="primary"
-                                required={true}
-                                defaultValue={1}
-                            />
-                        </InputDecorator>
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <NumberField
+                                    size={size}
+                                    placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                    max={50}
+                                    min={1}
+                                    value={numberValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueNumberChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="primary"
+                                    required={true}
+                                    defaultValue={1}
+                                />
+                            </InputDecorator>
+                        ), [size, numberValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -155,25 +159,27 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         SliderField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <SliderField
-                                size={size}
-                                max={1000}
-                                step={10}
-                                value={sliderValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueSliderChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="secondary"
-                                required={true}
-                                defaultValue={1}
-                                legend={React.useMemo(() => ["safe", "low", "medium", "high", "critical"], [])}
-                            />
-                        </InputDecorator>
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <SliderField
+                                    size={size}
+                                    max={1000}
+                                    step={10}
+                                    value={sliderValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueSliderChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="secondary"
+                                    required={true}
+                                    defaultValue={1}
+                                    legend={["safe", "low", "medium", "high", "critical"]}
+                                />
+                            </InputDecorator>
+                        ), [size, sliderValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -181,26 +187,28 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         RangeField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <RangeField
-                                size={size}
-                                max={1000}
-                                step={10}
-                                distance={1}
-                                value={rangeValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueRangeChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="error"
-                                required={true}
-                                defaultValue={React.useMemo(() => [1, 5], [])}
-                                legend={React.useMemo(() => ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"], [])}
-                            />
-                        </InputDecorator>
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <RangeField
+                                    size={size}
+                                    max={1000}
+                                    step={10}
+                                    distance={1}
+                                    value={rangeValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueRangeChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="error"
+                                    required={true}
+                                    defaultValue={[1, 5]}
+                                    legend={["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"]}
+                                />
+                            </InputDecorator>
+                        ), [size, rangeValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -208,22 +216,24 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         EmailField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <EmailField
+                        {React.useMemo(() => (
+                            <InputDecorator
                                 key={size}
-                                size={size}
-                                value={emailValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueEmailChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="warning"
-                                required={true}
-                            />
-                        </InputDecorator>
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <EmailField
+                                    key={size}
+                                    size={size}
+                                    value={emailValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueEmailChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="warning"
+                                    required={true}
+                                />
+                            </InputDecorator>
+                        ), [size, emailValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -231,23 +241,25 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         SearchField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <SearchField
+                        {React.useMemo(() => (
+                            <InputDecorator
                                 key={size}
-                                placeholder={"Search..."}
-                                size={size}
-                                value={searchValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValueSearchChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                color="info"
-                                required={false}
-                            />
-                        </InputDecorator>
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <SearchField
+                                    key={size}
+                                    placeholder={"Search..."}
+                                    size={size}
+                                    value={searchValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueSearchChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="info"
+                                    required={false}
+                                />
+                            </InputDecorator>
+                        ), [size, searchValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
@@ -255,46 +267,48 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         PatternField, size: {size}
-                        <InputDecorator
-                            key={size}
-                            selected={selected === size}
-                            onClick={React.useCallback(() => setSelected(size), [size])}
-                            label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                            description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
-                        >
-                            <PatternField
+                        {React.useMemo(() => (
+                            <InputDecorator
                                 key={size}
-                                size={size}
-                                value={patternValues[size]} // Pobierz wartość dla danego rozmiaru
-                                onChange={React.useCallback((value) => handleValuePatternChange(size, value), [size])} // Aktualizuj wartość dla danego rozmiaru
-                                mask="+48 ___ ___ ___"
-                                replacement={React.useMemo(() => ({ "_": /\d/ }), [])}
-                                color="success"
-                                required={true}
-                            />
-                        </InputDecorator>
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <PatternField
+                                    key={size}
+                                    size={size}
+                                    value={patternValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValuePatternChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    mask="+48 ___ ___ ___"
+                                    replacement={{ "_": /\d/ }}
+                                    color="success"
+                                    required={true}
+                                />
+                            </InputDecorator>
+                        ), [size, patternValues[size], selected])}
                         <Grid2 container gap={4} padding={4}>
                             <Grid2>
                                 {React.useMemo(() => (
-                                <BaseButton
-                                    color="primary"
-                                    onClick={() => console.log('clicked')}
-                                    size={size}
-                                >
-                                    Save Changes
-                                </BaseButton>
+                                    <BaseButton
+                                        color="primary"
+                                        onClick={() => console.log('clicked')}
+                                        size={size}
+                                    >
+                                        Save Changes
+                                    </BaseButton>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                <BaseButton
-                                    color="secondary"
-                                    size={size}
-                                >
-                                    <theme.icons.Search />
-                                    Save File
-                                </BaseButton>
+                                    <BaseButton
+                                        color="secondary"
+                                        size={size}
+                                    >
+                                        <theme.icons.Search />
+                                        Save File
+                                    </BaseButton>
                                 ), [size])}
                             </Grid2>
 
@@ -326,35 +340,35 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                <BaseButton
-                                    color="info"
-                                    size={size}
-                                    onClick={() => setValue(prev => prev === 'on' ? 'off' : 'on')}
-                                >
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <img src={Logo} width="16" height="16" alt="" />
-                                        <div>
-                                            <div style={{ fontWeight: 'bold' }}>Primary Action</div>
-                                            <div style={{ fontSize: '0.8em', opacity: 0.7 }}>Subtitle</div>
+                                    <BaseButton
+                                        color="info"
+                                        size={size}
+                                        onClick={() => setValue(prev => prev === 'on' ? 'off' : 'on')}
+                                    >
+                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                            <img src={Logo} width="16" height="16" alt="" />
+                                            <div>
+                                                <div style={{ fontWeight: 'bold' }}>Primary Action</div>
+                                                <div style={{ fontSize: '0.8em', opacity: 0.7 }}>Subtitle</div>
+                                            </div>
+                                            <theme.icons.Info />
                                         </div>
-                                        <theme.icons.Info />
-                                    </div>
-                                </BaseButton>
+                                    </BaseButton>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                <BaseButton
-                                    color="success"
-                                    values={['on', 'off']}
-                                    value={value}
-                                    size={size}
-                                    onChange={(newValue) => setValue(newValue)}
-                                    sx={{ width: 70 }}
-                                >
-                                    {value ? value : 'Power'}
-                                </BaseButton>
+                                    <BaseButton
+                                        color="success"
+                                        values={['on', 'off']}
+                                        value={value}
+                                        size={size}
+                                        onChange={(newValue) => setValue(newValue)}
+                                        sx={{ width: 70 }}
+                                    >
+                                        {value ? value : 'Power'}
+                                    </BaseButton>
                                 ), [value, size])}
                             </Grid2>
                         </Grid2>

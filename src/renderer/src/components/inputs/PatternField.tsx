@@ -13,7 +13,7 @@ interface PatternFieldProps extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const PatternField: React.FC<PatternFieldProps> = React.memo((props) => {
+export const PatternField: React.FC<PatternFieldProps> = (props) => {
     const {
         mask,
         replacement,
@@ -40,6 +40,6 @@ export const PatternField: React.FC<PatternFieldProps> = React.memo((props) => {
             {...other}
         />
     )
-});
+};
 
 PatternField.displayName = "TextField";

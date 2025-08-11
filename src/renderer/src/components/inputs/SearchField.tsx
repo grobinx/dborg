@@ -14,7 +14,7 @@ interface SearchFieldProps extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
+export const SearchField: React.FC<SearchFieldProps> = (props) => {
     const {
         value,
         maxLength,
@@ -48,6 +48,6 @@ export const SearchField: React.FC<SearchFieldProps> = React.memo((props) => {
             {...other}
         />
     )
-});
+};
 
 SearchField.displayName = "TextField";

@@ -224,7 +224,7 @@ const StyledInputDecoratorInput = styled('div', {
     width: "100%",
 }));
 
-export const InputDecorator = React.memo((props: InputDecoratorProps): React.ReactElement => {
+export const InputDecorator = (props: InputDecoratorProps): React.ReactElement => {
     const {
         children,
         className,
@@ -438,6 +438,6 @@ export const InputDecorator = React.memo((props: InputDecoratorProps): React.Rea
             </StyledInputDecorator>
         </InputDecoratorContext.Provider>
     );
-});
+};
 
 InputDecorator.displayName = "InputDecorator";
