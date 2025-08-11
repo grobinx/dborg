@@ -76,6 +76,9 @@ const StyledBaseButton = styled('button', {
                 '&.focused, &.selected': {
                     backgroundColor: alpha(theme.palette[color].main, 0.3),
                 },
+                '&.has-value': {
+                    backgroundColor: alpha(theme.palette[color].main, 0.6),
+                }
             },
 
             "&.active:not(.disabled):not(.loading)": {
@@ -110,7 +113,7 @@ const StyledBaseButton = styled('button', {
 
             // Style dla różnych pressed states
             "&.has-value": {
-                backgroundColor: alpha(theme.palette[color].main, 0.3),
+                backgroundColor: alpha(theme.palette[color].main, 0.8),
                 //boxShadow: `inset 0 0 4px 2px ${theme.palette[color].main}`,
             },
         };

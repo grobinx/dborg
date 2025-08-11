@@ -121,7 +121,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     // Helper values
     const values = config.values || [];
 
-    // Inicjalna wartość pressed
+    // Inicjalna wartość value
     const initialValue = React.useMemo(() => {
         const nullState = values.find(state => state === null);
         if (nullState === null) return null;
@@ -130,15 +130,36 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     const [state, setState] = useState<ButtonState>(() => ({
         ...defaultState,
-        value: initialValue, // Zmiana nazwy
+        value: initialValue,
     }));
+
+    // Flaga do śledzenia czy komponent jest już zamontowany
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Wywołaj onChange dla wartości inicjalnej po zamontowaniu
+    React.useEffect(() => {
+        if (!isMounted) {
+            setIsMounted(true);
+            // Wywołaj onChange dla wartości inicjalnej
+            if (initialValue !== null) {
+                onChange?.(initialValue);
+            }
+        }
+    }, [isMounted, initialValue, onChange]);
 
     // Aktualizuj value gdy values się zmienią
     React.useEffect(() => {
+        // Pomiń pierwszy render (inicjalizację)
+        if (!isMounted) return;
+
         if (values.length > 0 && !values.includes(state.value)) {
-            setState(prev => ({ ...prev, value: values[0] }));
+            const newValue = values[0];
+            if (newValue !== state.value) {
+                setState(prev => ({ ...prev, value: newValue }));
+                onChange?.(newValue);
+            }
         }
-    }, [values, state.value]);
+    }, [values, state.value, onChange, isMounted]);
 
     // Sprawdź czy przycisk może być interaktywny
     const isInteractable = !config.disabled && !config.loading;
@@ -151,23 +172,44 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     // Akcje
     const setFocused = useCallback((focused: boolean) => {
-        setState(prev => ({ ...prev, focused }));
+        setState(prev => {
+            if (prev.focused !== focused) {
+                return { ...prev, focused };
+            }
+            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+        });
     }, []);
 
     const setActive = useCallback((active: boolean) => {
-        setState(prev => ({ ...prev, active }));
+        setState(prev => {
+            if (prev.active !== active) {
+                return { ...prev, active };
+            }
+            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+        });
     }, []);
 
     const setHover = useCallback((hover: boolean) => {
-        setState(prev => ({ ...prev, hover }));
+        setState(prev => {
+            if (prev.hover !== hover) {
+                return { ...prev, hover };
+            }
+            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+        });
     }, []);
 
     const setValue = useCallback((value: string | null) => {
         // Sprawdź czy value jest w dostępnych stanach
         if (values.includes(value)) {
-            setState(prev => ({ ...prev, value }));
+            setState(prev => {
+                if (prev.value !== value) {
+                    onChange?.(value);
+                    return { ...prev, value };
+                }
+                return prev;
+            });
         }
-    }, [values]);
+    }, [values, onChange]);
 
     const cycleValues = useCallback(() => {
         if (values.length === 0) return;
@@ -176,41 +218,69 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
             const currentIndex = values.indexOf(prev.value);
             const nextIndex = (currentIndex + 1) % values.length;
             const newValue = values[nextIndex];
+            console.log('Cycling values', prev.value, '->', newValue);
 
-            onChange?.(newValue);
-
-            return { ...prev, value: newValue };
+            if (newValue !== prev.value) {
+                setTimeout(() => onChange?.(newValue), 0);
+                return { ...prev, value: newValue };
+            }
+            return prev;
         });
     }, [values, onChange]);
 
     const setValueByIndex = useCallback((index: number) => {
         if (index >= 0 && index < values.length) {
-            setState(prev => ({ ...prev, value: values[index] }));
+            const newValue = values[index];
+            setState(prev => {
+                if (prev.value !== newValue) {
+                    onChange?.(newValue);
+                    return { ...prev, value: newValue };
+                }
+                return prev;
+            });
         } else if (values.length > 0) {
             // Jeśli indeks poza zakresem, ustaw pierwszą wartość
-            setState(prev => ({ ...prev, value: values[0] }));
+            const newValue = values[0];
+            setState(prev => {
+                if (prev.value !== newValue) {
+                    onChange?.(newValue);
+                    return { ...prev, value: newValue };
+                }
+                return prev;
+            });
         }
-    }, [values]);
+    }, [values, onChange]);
 
     const resetValue = useCallback(() => {
         // Resetuj do pierwszej wartości z listy, lub null jeśli lista jest pusta
         if (values.length > 0) {
-            setState(prev => ({ ...prev, value: values[0] }));
+            const newValue = values[0];
+            setState(prev => {
+                if (prev.value !== newValue) {
+                    onChange?.(newValue);
+                    return { ...prev, value: newValue };
+                }
+                return prev;
+            });
         } else {
-            setState(prev => ({ ...prev, value: null }));
+            setState(prev => {
+                if (prev.value !== null) {
+                    onChange?.(null);
+                    return { ...prev, value: null };
+                }
+                return prev;
+            });
         }
-    }, [values]);
+    }, [values, onChange]);
 
     // Event handlers
-    const handleClick = useCallback((e: React.SyntheticEvent<HTMLButtonElement>) => {
+    const handleClick = useCallback((_e: React.SyntheticEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             // Jeśli są dostępne stany pressed, przełącz je przy kliknięciu
             if (values.length > 0) {
-                cycleValues(); // Zmiana nazwy
+                cycleValues();
             }
 
-            //e.stopPropagation();
-            //e.preventDefault();
             onClick?.();
         }
     }, [isInteractable, values.length, cycleValues, onClick]);
@@ -226,19 +296,15 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         onBlur?.(e);
     }, [setFocused, setActive, onBlur]);
 
-    const handleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseDown = useCallback((_e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             setActive(true);
         }
-        //e.stopPropagation();
-        //e.preventDefault();
         onMouseDown?.();
     }, [isInteractable, setActive, onMouseDown]);
 
-    const handleMouseUp = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseUp = useCallback((_e: React.MouseEvent<HTMLButtonElement>) => {
         setActive(false);
-        //e.stopPropagation();
-        //e.preventDefault();
         onMouseUp?.();
     }, [setActive, onMouseUp]);
 

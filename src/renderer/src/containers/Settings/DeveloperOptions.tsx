@@ -3,6 +3,7 @@ import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import { InputFieldsContent } from "./developer/InputFields";
 import { IconListContent } from "./developer/IconList";
+import { ButtonsContent } from "./developer/Buttons";
 
 export interface DeveloperOptionsProps extends BoxProps {
 }
@@ -60,6 +61,11 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                         itemID="developer-options-text-fields"
                         content={<InputFieldsContent />}
                         label="Input Fields"
+                    />
+                    <TabPanel
+                        itemID="developer-options-buttons"
+                        content={<ButtonsContent />}
+                        label="Buttons"
                     />
                     <TabPanel
                         itemID="developer-options-icons"

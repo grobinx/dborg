@@ -16,8 +16,6 @@ import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
 
-    const valueButtonRef = React.useRef<ButtonRefHandle>(null);
-    const [value, setValue] = React.useState<string | null>(null);
     const [selected, setSelected] = React.useState<string | undefined>(undefined);
     const [textValues, setTextValues] = React.useState<Record<string, any>>({
         small: "a",
@@ -287,94 +285,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 />
                             </InputDecorator>
                         ), [size, patternValues[size], selected])}
-                        <Grid2 container gap={4} padding={4}>
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        color="primary"
-                                        onClick={() => console.log('clicked')}
-                                        size={size}
-                                    >
-                                        Save Changes
-                                    </BaseButton>
-                                ), [size])}
-                            </Grid2>
-
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        color="secondary"
-                                        size={size}
-                                    >
-                                        <theme.icons.Search />
-                                        Save File
-                                    </BaseButton>
-                                ), [size])}
-                            </Grid2>
-
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        color="error"
-                                        size={size}
-                                        aria-label="Delete"
-                                    >
-                                        <theme.icons.Delete />
-                                    </BaseButton>
-                                ), [size])}
-                            </Grid2>
-
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        loading="![](Loading) Saving..."
-                                        size={size}
-                                        color="warning"
-                                        showLoadingIndicator={false}
-                                    >
-                                        <theme.icons.Clipboard />
-                                        Save state
-                                    </BaseButton>
-                                ), [size])}
-                            </Grid2>
-
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        color="info"
-                                        size={size}
-                                        onClick={() => {
-                                            valueButtonRef.current?.cycleValues();
-                                            console.log('Button clicked, current value:', valueButtonRef.current?.getValue());
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <img src={Logo} width="16" height="16" alt="" />
-                                            <div>
-                                                <div style={{ fontWeight: 'bold' }}>Primary Action</div>
-                                                <div style={{ fontSize: '0.8em', opacity: 0.7 }}>Subtitle</div>
-                                            </div>
-                                            <theme.icons.Info />
-                                        </div>
-                                    </BaseButton>
-                                ), [size, valueButtonRef.current])}
-                            </Grid2>
-
-                            <Grid2>
-                                {React.useMemo(() => (
-                                    <BaseButton
-                                        color="success"
-                                        values={['on', 'off']}
-                                        size={size}
-                                        onChange={(newValue) => setValue(newValue)}
-                                        sx={{ width: 70 }}
-                                        ref={valueButtonRef}
-                                    >
-                                        {value ? value : 'Power'}
-                                    </BaseButton>
-                                ), [value, size, value, valueButtonRef.current])}
-                            </Grid2>
-                        </Grid2>
                     </Stack>
                 ))}
             </Stack>
