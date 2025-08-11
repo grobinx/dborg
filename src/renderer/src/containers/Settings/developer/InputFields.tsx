@@ -1,7 +1,5 @@
-import { Box, Collapse, Grid2, Stack, Tab, useTheme } from "@mui/material";
+import { Grid2, Stack, useTheme } from "@mui/material";
 import { BaseButton } from "@renderer/components/buttons/BaseButton";
-import { Button } from "@renderer/components/buttons/Button";
-import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
@@ -13,10 +11,12 @@ import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/T
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
+import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
 
+    const valueButtonRef = React.useRef<ButtonRefHandle>(null);
     const [value, setValue] = React.useState<string | null>(null);
     const [selected, setSelected] = React.useState<string | undefined>(undefined);
     const [textValues, setTextValues] = React.useState<Record<string, any>>({
@@ -343,7 +343,10 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     <BaseButton
                                         color="info"
                                         size={size}
-                                        onClick={() => setValue(prev => prev === 'on' ? 'off' : 'on')}
+                                        onClick={() => {
+                                            valueButtonRef.current?.cycleValues();
+                                            console.log('Button clicked, current value:', valueButtonRef.current?.getValue());
+                                        }}
                                     >
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                             <img src={Logo} width="16" height="16" alt="" />
@@ -354,7 +357,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                             <theme.icons.Info />
                                         </div>
                                     </BaseButton>
-                                ), [size])}
+                                ), [size, valueButtonRef.current])}
                             </Grid2>
 
                             <Grid2>
@@ -362,14 +365,14 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     <BaseButton
                                         color="success"
                                         values={['on', 'off']}
-                                        value={value}
                                         size={size}
                                         onChange={(newValue) => setValue(newValue)}
                                         sx={{ width: 70 }}
+                                        ref={valueButtonRef}
                                     >
                                         {value ? value : 'Power'}
                                     </BaseButton>
-                                ), [value, size])}
+                                ), [value, size, value, valueButtonRef.current])}
                             </Grid2>
                         </Grid2>
                     </Stack>

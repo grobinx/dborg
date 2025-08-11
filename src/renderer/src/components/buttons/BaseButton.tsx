@@ -1,12 +1,13 @@
 import React from 'react';
 import { alpha, lighten, styled, SxProps, Theme } from '@mui/material';
 import { ButtonProvider, useButtonContext } from './ButtonContext';
-import { BaseButtonProps } from './BaseButtonProps';
+import { ButtonRefHandle, BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
 import { borderRadius, rootSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { themeColors } from '@renderer/types/colors';
 
+// Interfejs dla ref handle
 const StyledBaseButton = styled('button', {
     name: "BaseButton",
     slot: "root",
@@ -250,17 +251,64 @@ const BaseButtonContent: React.FC<{ children?: React.ReactNode }> = ({ children 
 };
 
 // Wewnętrzny komponent przycisku
-const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode, sx?: SxProps<Theme> }> = (props) => {
+const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
+    children?: React.ReactNode; 
+    sx?: SxProps<Theme>;
+    onRefReady?: (handle: ButtonRefHandle) => void;
+}> = (props) => {
     const {
         actions,
         config,
         classes,
         shouldShowLoading,
+        state,
+        isInteractable,
     } = useButtonContext();
+
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+    const { onRefReady, ...otherProps } = props;
+
+    // Create handle object
+    const handle = React.useMemo<ButtonRefHandle>(() => ({
+        // Focus management
+        focus: () => buttonRef.current?.focus(),
+        blur: () => buttonRef.current?.blur(),
+        
+        // State management
+        setValue: actions.setValue,
+        getValue: () => state.value,
+        cycleValues: actions.cycleValues,
+        setValueByIndex: actions.setValueByIndex,
+        resetValue: actions.resetValue,
+        
+        // State getters
+        isFocused: () => state.focused,
+        isActive: () => state.active,
+        isHover: () => state.hover,
+        hasValue: () => state.value !== null,
+        isInteractable: () => isInteractable,
+        
+        // DOM element access
+        getElement: () => buttonRef.current,
+        
+        // Manual state setters
+        setFocused: actions.setFocused,
+        setActive: actions.setActive,
+        setHover: actions.setHover,
+        
+        // Click simulation
+        click: () => actions.handleClick({} as React.SyntheticEvent<HTMLButtonElement>),
+    }), [actions, state, isInteractable]);
+
+    // Notify parent about handle availability
+    React.useEffect(() => {
+        onRefReady?.(handle);
+    }, [handle, onRefReady]);
 
     return (
         <StyledBaseButton
-            {...props}
+            {...otherProps}
+            ref={buttonRef}
             componentName={config.componentName}
             className={clsx(
                 `${config.componentName}-root`,
@@ -286,7 +334,7 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
             {/* Loading zawsze na wierzchu */}
             {shouldShowLoading && <BaseButtonLoading />}
 
-            {/* Zawartość przycisku - programista sam decyduje co wrzucić */}
+            {/* Zawartość przycisku */}
             <BaseButtonContent>
                 {props.children}
             </BaseButtonContent>
@@ -294,11 +342,12 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
     );
 };
 
-// Główny komponent BaseButton z providerem
+// Główny komponent BaseButton z ref support
 export const BaseButton: React.FC<BaseButtonProps> = (props) => {
     const {
         // Props specyficzne dla BaseButton
         componentName = "BaseButton",
+        ref,
 
         // Event handlers
         onClick,
@@ -328,6 +377,17 @@ export const BaseButton: React.FC<BaseButtonProps> = (props) => {
         ...configProps
     } = props;
 
+    // Handle ref setup
+    const handleRefReady = React.useCallback((handle: ButtonRefHandle) => {
+        if (ref) {
+            if (typeof ref === 'function') {
+                ref(handle);
+            } else {
+                (ref as React.RefObject<ButtonRefHandle>).current = handle;
+            }
+        }
+    }, [ref]);
+
     return (
         <ButtonProvider
             config={{
@@ -353,6 +413,7 @@ export const BaseButton: React.FC<BaseButtonProps> = (props) => {
                 aria-describedby={ariaDescribedBy}
                 sx={sx}
                 style={style}
+                onRefReady={handleRefReady}
             >
                 {children}
             </BaseButtonInner>
