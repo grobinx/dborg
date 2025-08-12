@@ -1,7 +1,7 @@
 import { Size } from "@renderer/types/sizes";
 import { CSSProperties } from "react";
 
-export const borderRadius = 3;
+export const borderRadius = 2;
 export const paddingSmall = 2;
 export const paddingMedium = 4;
 export const paddingLarge = 8;

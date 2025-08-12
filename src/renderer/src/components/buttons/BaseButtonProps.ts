@@ -60,7 +60,7 @@ export interface BaseButtonProps {
     /**
      * Stany przycisku
      */
-    values?: (string | null)[];
+    toggle?: string | ((string | null)[]);
 
     /**
      * Aktualny stan przycisku

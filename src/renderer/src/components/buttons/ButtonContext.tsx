@@ -6,17 +6,17 @@ export interface ButtonState {
     focused: boolean;
     active: boolean;
     hover: boolean;
-    value: string | null; // Zmiana z 'pressed' na 'value'
+    value: string | null;
 }
 
 export interface ButtonActions {
     setFocused: (focused: boolean) => void;
     setActive: (active: boolean) => void;
     setHover: (hover: boolean) => void;
-    setValue: (value: string | null) => void; // Zmiana nazwy
-    cycleValues: () => void; // Zmiana nazwy
-    setValueByIndex: (index: number) => void; // Zmiana nazwy
-    resetValue: () => void; // Zmiana nazwy
+    setValue: (value: string | null) => void;
+    cycleValues: () => void;
+    setValueByIndex: (index: number) => void;
+    resetValue: () => void;
     handleClick: (e: React.SyntheticEvent<HTMLButtonElement>) => void;
     handleFocus: (e: React.FocusEvent<HTMLButtonElement>) => void;
     handleBlur: (e: React.FocusEvent<HTMLButtonElement>) => void;
@@ -32,31 +32,21 @@ export interface ButtonConfig extends Pick<BaseButtonProps,
     'disabled' | 'loading' | 'selected' | 'size' | 'color' | 'type'
 > {
     componentName: string;
-    values?: (string | null)[]; // Zmiana z 'pressedStates' na 'values'
+    toggle?: string | (string | null)[];
+    value?: string | null;
     showLoadingIndicator?: boolean;
 }
 
 export interface ButtonContextValue {
-    // Stan przycisku
     state: ButtonState;
-
-    // Akcje
     actions: ButtonActions;
-
-    // Konfiguracja
     config: ButtonConfig;
-
-    // Klasy CSS
     classes: string;
-
-    // Dodatkowe metody
     isInteractable: boolean;
     shouldShowLoading: boolean;
-
-    // Nowe helper methods
-    currentValueIndex: number; // Zmiana nazwy
-    hasValue: boolean; // Zmiana z 'isPressed' na 'hasValue'
-    values: (string | null)[]; // Zmiana nazwy
+    currentValueIndex: number;
+    hasValue: boolean;
+    toggleValues: (string | null)[]; // Znormalizowana tablica wartości
 }
 
 // Domyślne wartości
@@ -75,7 +65,7 @@ const defaultConfig: ButtonConfig = {
     size: 'medium',
     color: 'primary',
     type: 'button',
-    values: [],
+    toggle: undefined,
     showLoadingIndicator: undefined,
 };
 
@@ -98,6 +88,22 @@ export interface ButtonProviderProps {
     onChange?: (value: string | null) => void;
 }
 
+// Helper function do normalizacji toggle
+const normalizeToggle = (toggle: string | (string | null)[] | undefined): (string | null)[] => {
+    if (!toggle) return [];
+    
+    if (typeof toggle === 'string') {
+        // Jeśli toggle to string, stwórz przełącznik [null, string]
+        return [null, toggle];
+    }
+    
+    if (Array.isArray(toggle)) {
+        return toggle;
+    }
+    
+    return [];
+};
+
 // Provider komponent
 export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     children,
@@ -113,20 +119,28 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     onKeyUp,
     onChange
 }) => {
-    const config: ButtonConfig = {
+    // Normalizacja konfiguracji
+    const config: ButtonConfig = React.useMemo(() => ({
         ...defaultConfig,
         ...configProp,
-    };
+    }), [configProp]);
 
-    // Helper values
-    const values = config.values || [];
+    // Normalizacja toggle do tablicy
+    const toggleValues = React.useMemo(() => 
+        normalizeToggle(config.toggle), 
+        [config.toggle]
+    );
 
-    // Inicjalna wartość value
+    // Inicjalna wartość value - uwzględnij przekazane value
     const initialValue = React.useMemo(() => {
-        const nullState = values.find(state => state === null);
-        if (nullState === null) return null;
-        return values.length > 0 ? values[0] : null;
-    }, [values]);
+        // Jeśli value zostało przekazane i jest w toggleValues, użyj go
+        if (config.value !== undefined && toggleValues.includes(config.value)) {
+            return config.value;
+        }
+        
+        // W przeciwnym przypadku użyj pierwszej wartości lub null
+        return toggleValues.length > 0 ? toggleValues[0] : null;
+    }, [toggleValues, config.value]);
 
     const [state, setState] = useState<ButtonState>(() => ({
         ...defaultState,
@@ -140,26 +154,36 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     React.useEffect(() => {
         if (!isMounted) {
             setIsMounted(true);
-            // Wywołaj onChange dla wartości inicjalnej
+            // Wywołaj onChange dla wartości inicjalnej tylko jeśli nie jest null
             if (initialValue !== null) {
                 onChange?.(initialValue);
             }
         }
     }, [isMounted, initialValue, onChange]);
 
-    // Aktualizuj value gdy values się zmienią
+    // Aktualizuj value gdy toggleValues się zmienią
     React.useEffect(() => {
         // Pomiń pierwszy render (inicjalizację)
         if (!isMounted) return;
 
-        if (values.length > 0 && !values.includes(state.value)) {
-            const newValue = values[0];
+        if (toggleValues.length > 0 && !toggleValues.includes(state.value)) {
+            const newValue = toggleValues[0];
             if (newValue !== state.value) {
                 setState(prev => ({ ...prev, value: newValue }));
                 onChange?.(newValue);
             }
         }
-    }, [values, state.value, onChange, isMounted]);
+    }, [toggleValues, state.value, onChange, isMounted]);
+
+    // Aktualizuj value gdy config.value się zmieni
+    React.useEffect(() => {
+        if (config.value !== undefined && config.value !== state.value && toggleValues.includes(config.value)) {
+            setState(prev => ({ ...prev, value: config.value! }));
+            if (isMounted) {
+                onChange?.(config.value!);
+            }
+        }
+    }, [config.value, state.value, toggleValues, onChange, isMounted]);
 
     // Sprawdź czy przycisk może być interaktywny
     const isInteractable = !config.disabled && !config.loading;
@@ -167,7 +191,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     // Sprawdź czy pokazać loading
     const shouldShowLoading = !!config.loading;
 
-    const currentValueIndex = values.indexOf(state.value);
+    const currentValueIndex = toggleValues.indexOf(state.value);
     const hasValue = state.value !== null;
 
     // Akcje
@@ -176,7 +200,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
             if (prev.focused !== focused) {
                 return { ...prev, focused };
             }
-            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+            return prev;
         });
     }, []);
 
@@ -185,7 +209,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
             if (prev.active !== active) {
                 return { ...prev, active };
             }
-            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+            return prev;
         });
     }, []);
 
@@ -194,13 +218,13 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
             if (prev.hover !== hover) {
                 return { ...prev, hover };
             }
-            return prev; // Nie zmieniaj stanu jeśli wartość jest taka sama
+            return prev;
         });
     }, []);
 
     const setValue = useCallback((value: string | null) => {
         // Sprawdź czy value jest w dostępnych stanach
-        if (values.includes(value)) {
+        if (toggleValues.includes(value)) {
             setState(prev => {
                 if (prev.value !== value) {
                     onChange?.(value);
@@ -209,16 +233,15 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
                 return prev;
             });
         }
-    }, [values, onChange]);
+    }, [toggleValues, onChange]);
 
     const cycleValues = useCallback(() => {
-        if (values.length === 0) return;
+        if (toggleValues.length === 0) return;
 
         setState(prev => {
-            const currentIndex = values.indexOf(prev.value);
-            const nextIndex = (currentIndex + 1) % values.length;
-            const newValue = values[nextIndex];
-            console.log('Cycling values', prev.value, '->', newValue);
+            const currentIndex = toggleValues.indexOf(prev.value);
+            const nextIndex = (currentIndex + 1) % toggleValues.length;
+            const newValue = toggleValues[nextIndex];
 
             if (newValue !== prev.value) {
                 setTimeout(() => onChange?.(newValue), 0);
@@ -226,11 +249,11 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
             }
             return prev;
         });
-    }, [values, onChange]);
+    }, [toggleValues, onChange]);
 
     const setValueByIndex = useCallback((index: number) => {
-        if (index >= 0 && index < values.length) {
-            const newValue = values[index];
+        if (index >= 0 && index < toggleValues.length) {
+            const newValue = toggleValues[index];
             setState(prev => {
                 if (prev.value !== newValue) {
                     onChange?.(newValue);
@@ -238,9 +261,9 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
                 }
                 return prev;
             });
-        } else if (values.length > 0) {
+        } else if (toggleValues.length > 0) {
             // Jeśli indeks poza zakresem, ustaw pierwszą wartość
-            const newValue = values[0];
+            const newValue = toggleValues[0];
             setState(prev => {
                 if (prev.value !== newValue) {
                     onChange?.(newValue);
@@ -249,12 +272,12 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
                 return prev;
             });
         }
-    }, [values, onChange]);
+    }, [toggleValues, onChange]);
 
     const resetValue = useCallback(() => {
         // Resetuj do pierwszej wartości z listy, lub null jeśli lista jest pusta
-        if (values.length > 0) {
-            const newValue = values[0];
+        if (toggleValues.length > 0) {
+            const newValue = toggleValues[0];
             setState(prev => {
                 if (prev.value !== newValue) {
                     onChange?.(newValue);
@@ -271,19 +294,19 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
                 return prev;
             });
         }
-    }, [values, onChange]);
+    }, [toggleValues, onChange]);
 
     // Event handlers
     const handleClick = useCallback((_e: React.SyntheticEvent<HTMLButtonElement>) => {
         if (isInteractable) {
-            // Jeśli są dostępne stany pressed, przełącz je przy kliknięciu
-            if (values.length > 0) {
+            // Jeśli są dostępne stany toggle, przełącz je przy kliknięciu
+            if (toggleValues.length > 0) {
                 cycleValues();
             }
 
             onClick?.();
         }
-    }, [isInteractable, values.length, cycleValues, onClick]);
+    }, [isInteractable, toggleValues.length, cycleValues, onClick]);
 
     const handleFocus = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
         setFocused(true);
@@ -361,10 +384,10 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (state.active) classArray.push('active');
         if (state.hover) classArray.push('hover');
 
-        // Dodaj klasę dla konkretnego stanu pressed
+        // Dodaj klasę dla konkretnego stanu value
         if (state.value !== null) {
-            classArray.push(`value-${state.value}`); // Zmiana nazwy klasy
-            classArray.push('has-value'); // Ogólna klasa
+            classArray.push(`value-${state.value}`);
+            classArray.push('has-value');
         }
 
         return classArray.join(' ');
@@ -374,10 +397,10 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         setFocused,
         setActive,
         setHover,
-        setValue, // Zmiana nazwy
-        cycleValues, // Zmiana nazwy
-        setValueByIndex, // Zmiana nazwy
-        resetValue, // Zmiana nazwy
+        setValue,
+        cycleValues,
+        setValueByIndex,
+        resetValue,
         handleClick,
         handleFocus,
         handleBlur,
@@ -396,9 +419,9 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         classes,
         isInteractable,
         shouldShowLoading,
-        currentValueIndex, // Zmiana nazwy
-        hasValue, // Zmiana nazwy
-        values, // Zmiana nazwy
+        currentValueIndex,
+        hasValue,
+        toggleValues, // Zwróć znormalizowaną tablicę
     };
 
     return (
@@ -462,20 +485,20 @@ export const useButtonIs = () => {
     };
 };
 
-// Hook do zarządzania pressed states
-export const usePressedStates = () => {
-    const { state, actions, values, currentValueIndex } = useButtonContext();
+// Hook do zarządzania toggle states
+export const useToggleStates = () => {
+    const { state, actions, toggleValues, currentValueIndex } = useButtonContext();
 
     return {
-        currentPressed: state.value,
+        currentValue: state.value,
         currentIndex: currentValueIndex,
-        availableStates: values,
-        setPressed: actions.setValue,
-        cyclePressedStates: actions.cycleValues,
-        setPressedByIndex: actions.setValueByIndex,
-        resetPressed: actions.resetValue,
-        isPressed: state.value !== null,
-        isPressedState: (stateName: string | null) => state.value === stateName,
+        availableValues: toggleValues,
+        setValue: actions.setValue,
+        cycleValues: actions.cycleValues,
+        setValueByIndex: actions.setValueByIndex,
+        resetValue: actions.resetValue,
+        hasValue: state.value !== null,
+        isValue: (valueName: string | null) => state.value === valueName,
     };
 };
 

@@ -11,8 +11,7 @@ import { themeColors } from '@renderer/types/colors';
 const StyledBaseButton = styled('button', {
     name: "BaseButton",
     slot: "root",
-    shouldForwardProp: (prop) => prop !== 'componentName',
-})<{ componentName?: string }>(({ theme, componentName = 'BaseButton' }) => ({
+})(({ theme }) => ({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -86,23 +85,6 @@ const StyledBaseButton = styled('button', {
                 transform: "scale(0.98)",
                 overflow: "hidden",
                 backgroundColor: alpha(theme.palette[color].dark, 0.3),
-
-                // "&::before": {
-                //     content: '""',
-                //     position: "absolute",
-                //     top: "50%",
-                //     left: "50%",
-                //     width: "0",
-                //     height: "0",
-                //     borderRadius: "50%",
-                //     background: `radial-gradient(circle, 
-                //         ${alpha(lighten(theme.palette[color].main, 0.4), 0.6)} 0%, 
-                //         transparent 70%
-                //     )`,
-                //     transform: "translate(-50%, -50%)",
-                //     animation: "radialBurst 0.4s ease-out",
-                //     pointerEvents: "none",
-                // },
             },
 
             "&.focused, &.selected": {
@@ -114,7 +96,6 @@ const StyledBaseButton = styled('button', {
             // Style dla różnych pressed states
             "&.has-value": {
                 backgroundColor: alpha(theme.palette[color].main, 0.8),
-                //boxShadow: `inset 0 0 4px 2px ${theme.palette[color].main}`,
             },
         };
         return acc;
@@ -126,25 +107,6 @@ const StyledBaseButton = styled('button', {
         color: theme.palette.text.disabled,
         outline: `1px solid ${theme.palette.text.disabled}`,
         outlineOffset: -1,
-    },
-
-    // Animacja dla efektu naciśnięcia
-    "@keyframes radialBurst": {
-        "0%": {
-            width: "0",
-            height: "0",
-            opacity: 1,
-        },
-        "50%": {
-            width: "200%",
-            height: "200%",
-            opacity: 0.8,
-        },
-        "100%": {
-            width: "300%",
-            height: "300%",
-            opacity: 0,
-        },
     },
 }));
 
@@ -312,7 +274,6 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
         <StyledBaseButton
             {...otherProps}
             ref={buttonRef}
-            componentName={config.componentName}
             className={clsx(
                 `${config.componentName}-root`,
                 classes,

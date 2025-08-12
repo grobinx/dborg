@@ -5,7 +5,8 @@ import { Size, Sizes } from "@renderer/types/sizes";
 import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
 import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
-import ButtonGroup from "./ButtonGroup";
+import ButtonGroup from "../../../components/buttons/ButtonGroup";
+import { Button } from "@renderer/components/buttons/Button";
 
 export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme();
@@ -43,43 +44,43 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                         <Grid2 container gap={4} padding={4}>
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         color="primary"
                                         onClick={() => console.log('clicked')}
                                         size={size}
                                     >
                                         Save Changes
-                                    </BaseButton>
+                                    </Button>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         color="secondary"
                                         size={size}
                                     >
                                         <theme.icons.Search />
                                         Save File
-                                    </BaseButton>
+                                    </Button>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         color="error"
                                         size={size}
                                         aria-label="Delete"
                                     >
                                         <theme.icons.Delete />
-                                    </BaseButton>
+                                    </Button>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         loading="![](Loading) Saving..."
                                         size={size}
                                         color="warning"
@@ -87,13 +88,13 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                     >
                                         <theme.icons.Clipboard />
                                         Save state
-                                    </BaseButton>
+                                    </Button>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         color="info"
                                         size={size}
                                         onClick={() => {
@@ -109,22 +110,22 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                             </div>
                                             <theme.icons.Info style={{ fontSize: "1.3em" }} />
                                         </div>
-                                    </BaseButton>
+                                    </Button>
                                 ), [size])}
                             </Grid2>
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <BaseButton
+                                    <Button
                                         color="success"
-                                        values={[null, 'on']}
+                                        toggle={[null, 'on']}
                                         size={size}
                                         sx={{ width: 70 }}
                                         ref={getButtonRef(size)}
                                         onChange={(value) => setButtonValues(prev => ({ ...prev, [size]: value }))}
                                     >
                                         {getButtonRef(size).current?.getValue() || 'Power'}
-                                    </BaseButton>
+                                    </Button>
                                 ), [size, buttonValues[size]])}
                             </Grid2>
                         </Grid2>
@@ -141,58 +142,58 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             {/* Horizontal ButtonGroup */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="primary">
-                                    <BaseButton values={[null, 'left']}>Left</BaseButton>
-                                    <BaseButton values={[null, 'center']}>Center</BaseButton>
-                                    <BaseButton values={[null, 'right']}>Right</BaseButton>
+                                <ButtonGroup orientation="horizontal" size={size} color="primary" sameWidth exclusive value="left">
+                                    <Button toggle="left">Left</Button>
+                                    <Button toggle="center">Center</Button>
+                                    <Button toggle="right">Right</Button>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* ButtonGroup z ikonami */}
                             <Grid2>
                                 <ButtonGroup orientation="horizontal" size={size} color="secondary">
-                                    <BaseButton><theme.icons.Search /></BaseButton>
-                                    <BaseButton><theme.icons.Delete /></BaseButton>
-                                    <BaseButton><theme.icons.Info /></BaseButton>
+                                    <Button><theme.icons.Search /></Button>
+                                    <Button><theme.icons.Delete /></Button>
+                                    <Button><theme.icons.Info /></Button>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* ButtonGroup z values (toggle buttons) */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="success">
-                                    <BaseButton values={[null, 'bold']} sx={{ width: "2em" }} onChange={(v) => console.log('Bold:', v)}>
+                                <ButtonGroup orientation="horizontal" size={size} color="success" sameWidth>
+                                    <Button toggle='bold' onChange={(v) => console.log('Bold:', v)}>
                                         <strong>B</strong>
-                                    </BaseButton>
-                                    <BaseButton values={[null, 'italic']} sx={{ width: "2em" }} onChange={(v) => console.log('Italic:', v)}>
+                                    </Button>
+                                    <Button toggle='italic' onChange={(v) => console.log('Italic:', v)}>
                                         <em>I</em>
-                                    </BaseButton>
-                                    <BaseButton values={[null, 'underline']} sx={{ width: "2em" }} onChange={(v) => console.log('Underline:', v)}>
+                                    </Button>
+                                    <Button toggle='underline' onChange={(v) => console.log('Underline:', v)}>
                                         <u>U</u>
-                                    </BaseButton>
+                                    </Button>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* Vertical ButtonGroup */}
                             <Grid2>
                                 <ButtonGroup orientation="vertical" size={size}>
-                                    <BaseButton color="primary">Top</BaseButton>
-                                    <BaseButton color="secondary">Middle</BaseButton>
-                                    <BaseButton color="error">Bottom</BaseButton>
+                                    <Button color="primary">Top</Button>
+                                    <Button color="secondary">Middle</Button>
+                                    <Button color="error">Bottom</Button>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* Single button w ButtonGroup */}
                             <Grid2>
                                 <ButtonGroup size={size} color="info">
-                                    <BaseButton>Single Button</BaseButton>
+                                    <Button>Single Button</Button>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* Disabled ButtonGroup */}
                             <Grid2>
                                 <ButtonGroup orientation="horizontal" size={size} color="error" disabled>
-                                    <BaseButton>Disabled</BaseButton>
-                                    <BaseButton>Group</BaseButton>
+                                    <Button>Disabled</Button>
+                                    <Button>Group</Button>
                                 </ButtonGroup>
                             </Grid2>
 
