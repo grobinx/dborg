@@ -151,7 +151,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             {/* ButtonGroup z ikonami */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="secondary">
+                                <ButtonGroup orientation="horizontal" size={size} color="secondary" sameWidth>
                                     <Button><theme.icons.Search /></Button>
                                     <Button><theme.icons.Delete /></Button>
                                     <Button><theme.icons.Info /></Button>
@@ -169,6 +169,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                     </Button>
                                     <Button toggle='underline' onChange={(v) => console.log('Underline:', v)}>
                                         <u>U</u>
+                                    </Button>
+                                    <Button toggle='strikethrough' onChange={(v) => console.log('Strikethrough:', v)}>
+                                        <s>S</s>
                                     </Button>
                                 </ButtonGroup>
                             </Grid2>

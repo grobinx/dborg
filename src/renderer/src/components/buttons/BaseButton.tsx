@@ -25,7 +25,7 @@ const StyledBaseButton = styled('button', {
     fontSize: "inherit",
     fontWeight: 600,
     lineHeight: 1,
-    transition: "all 0.1s ease-in-out",
+    transition: "all 0.2s ease-in-out",
     borderRadius: borderRadius,
     ...rootSizeProperties.medium,
     backgroundColor: "transparent",
