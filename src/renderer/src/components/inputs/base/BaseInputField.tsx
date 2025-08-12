@@ -17,6 +17,7 @@ interface BaseInputFieldProps<T> extends BaseInputProps<T> {
     adornments?: React.ReactNode;
     validations?: (((value: T) => boolean | FormattedContentItem) | undefined)[];
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    autoCollapse?: boolean;
     /**
      * Komponent, który zastępuje w miejscu inputa.
      * Może być użyty do renderowania niestandardowych pól wejściowych, takich jak przyciski, suwaki itp.
@@ -159,6 +160,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         inputAdornments,
         adornments,
         placeholder,
+        autoCollapse,
         color = "primary",
         onValidate,
         onFocus,
@@ -205,6 +207,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         focused && "focused",
         `type-${type ?? inputProps?.type ?? 'text'}`,
         hover && "hover",
+        autoCollapse && "auto-collapse",
     );
 
     React.useEffect(() => {

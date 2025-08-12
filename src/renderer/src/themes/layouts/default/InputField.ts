@@ -8,7 +8,7 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
     return {
         styleOverrides: {
             root: {
-                transition: "all 0.2s ease-in-out",
+                transition: "all 1s ease-in-out",
                 ...rootSizeProperties.medium,
                 border: `1px solid ${palette.divider}`,
                 borderRadius: borderRadius,
@@ -45,6 +45,7 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
                 },
             },
             input: {
+                transition: "all 1s ease-in-out",
                 fontFamily: "inherit",
                 padding: 2,
                 fontSize: "inherit",

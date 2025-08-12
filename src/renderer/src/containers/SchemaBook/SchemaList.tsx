@@ -434,6 +434,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                 onKeyDown: handleSearchKeyDown,
                             }}
                             size="large"
+                            autoCollapse
                         />
                     </InputDecorator>
                     <Tooltip title={t("group-schema-list", "Group schema list")}>

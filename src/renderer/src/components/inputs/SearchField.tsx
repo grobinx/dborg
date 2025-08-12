@@ -12,6 +12,7 @@ interface SearchFieldProps extends BaseInputProps {
     minLength?: number;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    autoCollapse?: boolean;
 }
 
 export const SearchField: React.FC<SearchFieldProps> = (props) => {
