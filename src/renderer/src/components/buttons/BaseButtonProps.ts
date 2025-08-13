@@ -3,6 +3,7 @@ import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
 import { SxProps } from "@mui/material";
 import { Theme } from "@mui/system";
+import { BaseButtonContent, BaseButtonLoading } from './BaseButton';
 
 export interface BaseButtonProps {
     /**
@@ -94,11 +95,6 @@ export interface BaseButtonProps {
      * Tab index
      */
     tabIndex?: number;
-
-    slots?: {
-        // content?: React.ComponentType<BaseButtonContentProps>;
-        // loading?: React.ComponentType<BaseButtonLoadingProps>;
-    }
     
     ref?: React.Ref<ButtonRefHandle>;
 

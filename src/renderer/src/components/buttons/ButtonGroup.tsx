@@ -5,11 +5,13 @@ import { Size } from '@renderer/types/sizes';
 import clsx from '@renderer/utils/clsx';
 import { BaseButtonProps } from '@renderer/components/buttons/BaseButtonProps';
 import { ThemeColor } from '@renderer/types/colors';
+import { useVisibleState } from '@renderer/hooks/useVisibleState';
 
 // Styled component dla grupy przycisków
 const StyledButtonGroup = styled('div', {
     name: "ButtonGroup",
     slot: "root",
+    shouldForwardProp: (prop) => !['maxWidth'].includes(prop as string),
 })<{
     maxWidth?: number;
 }>(({ theme, maxWidth }) => ({
@@ -148,10 +150,10 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     className,
     sx,
 }) => {
-    const groupRef = React.useRef<HTMLDivElement>(null);
     const [maxWidth, setMaxWidth] = React.useState<number | undefined>(undefined);
     const [isCalculated, setIsCalculated] = React.useState(false);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(value);
+    const [groupRef, isVisible] = useVisibleState<HTMLDivElement>();
 
     // Efekt do obliczania maksymalnej szerokości
     React.useLayoutEffect(() => {
@@ -204,7 +206,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         // return () => {
         //     clearTimeout(timeoutId);
         // };
-    }, [sameWidth, children, size, isCalculated]);
+    }, [sameWidth, children, size, isCalculated, isVisible]);
 
     const handleExclusiveChange = React.useCallback((newValue: string | null) => {
         setCurrentValue(prev => {
