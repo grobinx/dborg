@@ -3,6 +3,7 @@ import { InputFieldLayout } from "./default/InputField";
 import { CodeLayout } from "./default/Code";
 import { InputDecoratorLayout } from "./default/InputDecorator";
 import { borderRadius } from "./default/consts";
+import { ButtonLayout } from "./default/Button";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -983,6 +984,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             },
             InputField: InputFieldLayout(palette, root),
             InputDecorator: InputDecoratorLayout(palette, root),
+            Button: ButtonLayout(palette, root),
         }
     }
 };

@@ -46,6 +46,7 @@ import { InputDecoratorProps } from "@renderer/components/inputs/decorators/Inpu
 import { CodeComponent, CodeComponentProps, CodeComponentSlots } from "./theme.d/Code";
 import { InputFieldComponent, InputFieldComponentProps, InputFieldComponentSlots } from "./theme.d/InputField";
 import { InputDecoratorComponent, InputDecoratorComponentProps, InputDecoratorComponentSlots } from "./theme.d/InputDecorator";
+import { ButtonComponent, ButtonComponentProps, ButtonComponentSlots } from "./theme.d/Button";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -145,6 +146,7 @@ declare module "@mui/material/styles" {
         FormattedText: "root";
         InputField: InputFieldComponentSlots;
         InputDecorator: InputDecoratorComponentSlots;
+        Button: ButtonComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -180,6 +182,7 @@ declare module "@mui/material/styles" {
         FormattedText: Partial<FormattedTextProps>;
         InputField: InputFieldComponentProps;
         InputDecorator: InputDecoratorComponentProps;
+        Button: ButtonComponentProps;
     }
     interface Components {
         MenuBar?: {
@@ -338,6 +341,7 @@ declare module "@mui/material/styles" {
         };
         InputField?: InputFieldComponent;
         InputDecorator?: InputDecoratorComponent;
+        Button?: ButtonComponent;
     }
 
 }

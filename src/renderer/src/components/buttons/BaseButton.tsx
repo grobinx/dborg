@@ -12,155 +12,45 @@ interface BaseButtonSlots {
     loading?: React.ComponentType;
 }
 
-// Interfejs dla ref handle
-const StyledBaseButton = styled('button', {
-    name: "BaseButton",
-    slot: "root",
-})(({ theme }) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    outline: "none",
-    border: "none",
-    cursor: "pointer",
-    userSelect: "none",
-    textDecoration: "none",
-    fontFamily: "inherit",
-    fontSize: "inherit",
-    fontWeight: 600,
-    lineHeight: 1,
-    transition: "all 0.1s ease-in-out",
-    borderRadius: borderRadius,
-    ...rootSizeProperties.medium,
-    backgroundColor: "transparent",
-    appearance: "none",
-    WebkitAppearance: "none",
-    MozAppearance: "none",
-    whiteSpace: "nowrap",
+const createDynamicBaseButton = (componentName: string) => {
+    return styled('button', {
+        name: componentName,
+        slot: "root",
+    })(() => ({
+    }));
+};
 
-    "&.disabled": {
-        cursor: "not-allowed",
-        opacity: 0.6,
-        pointerEvents: "none",
-    },
+const createDynamicBaseButtonLoading = (componentName: string) => {
+    return styled('div', {
+        name: componentName,
+        slot: "loading",
+    })(() => ({
+    }));
+};
 
-    "&.selected": {
-        // Style dla stanu wybranego
-    },
+const createDynamicBaseButtonLoadingIndicator = (componentName: string) => {
+    return styled('div', {
+        name: componentName,
+        slot: "loadingIndicator",
+    })(() => ({
+    }));
+};
 
-    "&.size-small": {
-        ...rootSizeProperties.small
-    },
+const createDynamicBaseButtonLoadingContent = (componentName: string) => {
+    return styled('span', {
+        name: componentName,
+        slot: "loadingContent",
+    })(() => ({
+    }));
+};
 
-    "&.size-medium": {
-        ...rootSizeProperties.medium
-    },
-
-    "&.size-large": {
-        ...rootSizeProperties.large
-    },
-
-    ...themeColors.reduce((acc, color) => {
-        acc[`&.color-${color}`] = {
-            backgroundColor: alpha(theme.palette[color].main, 0.1),
-            color: theme.palette.text.primary,
-            outline: `1px solid ${theme.palette[color].main}`,
-            outlineOffset: "-1px",
-
-            "&.hover:not(.disabled):not(.loading)": {
-                backgroundColor: alpha(theme.palette[color].main, 0.2),
-                '&.focused, &.selected': {
-                    backgroundColor: alpha(theme.palette[color].main, 0.3),
-                },
-                '&.has-value': {
-                    backgroundColor: alpha(theme.palette[color].main, 0.6),
-                }
-            },
-
-            "&.active:not(.disabled):not(.loading)": {
-                position: "relative",
-                transform: "scale(0.98)",
-                overflow: "hidden",
-                backgroundColor: alpha(theme.palette[color].dark, 0.3),
-            },
-
-            "&.focused, &.selected": {
-                outlineOffset: "-2px",
-                outline: `2px solid ${theme.palette[color].main}`,
-                backgroundColor: alpha(theme.palette[color].main, 0.4),
-            },
-
-            // Style dla różnych pressed states
-            "&.has-value": {
-                backgroundColor: alpha(theme.palette[color].main, 0.8),
-            },
-        };
-        return acc;
-    }, {}),
-
-    "&.loading": {
-        cursor: "wait",
-        pointerEvents: "none",
-        color: theme.palette.text.disabled,
-        outline: `1px solid ${theme.palette.text.disabled}`,
-        outlineOffset: -1,
-    },
-}));
-
-const StyledBaseButtonLoading = styled('div', {
-    name: "BaseButton",
-    slot: "loading",
-})(() => ({
-    display: "flex",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-}));
-
-const StyledBaseButtonLoadingIndicator = styled('div', {
-    name: "BaseButton",
-    slot: "loadingIndicator",
-})(() => ({
-    width: "1em",
-    height: "1em",
-    border: "2px solid transparent",
-    borderTop: "2px solid currentColor",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-
-    "@keyframes spin": {
-        "0%": { transform: "rotate(0deg)" },
-        "100%": { transform: "rotate(360deg)" },
-    },
-}));
-
-const StyledBaseButtonLoadingContent = styled('span', {
-    name: "BaseButton",
-    slot: "loadingContent",
-})(() => ({
-    fontSize: "0.875em",
-    opacity: 0.8,
-}));
-
-const StyledBaseButtonContent = styled('span', {
-    name: "BaseButton",
-    slot: "content",
-})(() => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "opacity 0.2s ease-in-out",
-    padding: "0 0.2em",
-    '&.loading': {
-        opacity: 0,
-    }
-}));
+const createDynamicBaseButtonContent = (componentName: string) => {
+    return styled('span', {
+        name: componentName,
+        slot: "content",
+    })(() => ({
+    }));
+};
 
 // Komponent Loading z kontekstem
 export const BaseButtonLoading: React.FC = () => {
@@ -179,24 +69,28 @@ export const BaseButtonLoading: React.FC = () => {
 
     }, [config.loading, config.showLoadingIndicator]);
 
+    const DynamicBaseButtonLoading = React.useMemo(() => createDynamicBaseButtonLoading(config.componentName), [config.componentName]);
+    const DynamicBaseButtonLoadingIndicator = React.useMemo(() => createDynamicBaseButtonLoadingIndicator(config.componentName), [config.componentName]);
+    const DynamicBaseButtonLoadingContent = React.useMemo(() => createDynamicBaseButtonLoadingContent(config.componentName), [config.componentName]);
+
     return (
-        <StyledBaseButtonLoading
+        <DynamicBaseButtonLoading
             className={`${config.componentName}-loading ${classes}`}
         >
             {shouldShowIndicator &&
-                <StyledBaseButtonLoadingIndicator
+                <DynamicBaseButtonLoadingIndicator
                     className={`${config.componentName}-loadingIndicator`}
                 />
             }
 
             {(config.loading && typeof config.loading !== 'boolean') && (
-                <StyledBaseButtonLoadingContent
+                <DynamicBaseButtonLoadingContent
                     className={`${config.componentName}-loadingContent`}
                 >
                     <FormattedText text={config.loading} />
-                </StyledBaseButtonLoadingContent>
+                </DynamicBaseButtonLoadingContent>
             )}
-        </StyledBaseButtonLoading>
+        </DynamicBaseButtonLoading>
     );
 };
 
@@ -204,18 +98,20 @@ export const BaseButtonLoading: React.FC = () => {
 export const BaseButtonContent: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     const { config, classes } = useButtonContext();
 
+    const DynamicBaseButtonContent = React.useMemo(() => createDynamicBaseButtonContent(config.componentName), [config.componentName]);
+
     return (
-        <StyledBaseButtonContent
+        <DynamicBaseButtonContent
             className={`${config.componentName}-content ${classes}`}
         >
             {children}
-        </StyledBaseButtonContent>
+        </DynamicBaseButtonContent>
     );
 };
 
 // Wewnętrzny komponent przycisku
-const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
-    children?: React.ReactNode; 
+const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children?: React.ReactNode;
     sx?: SxProps<Theme>;
     onRefReady?: (handle: ButtonRefHandle) => void;
     slots?: BaseButtonSlots
@@ -237,31 +133,34 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
     // Create handle object
     const handle = React.useMemo<ButtonRefHandle>(() => ({
         // Focus management
-        focus: () => buttonRef.current?.focus(),
+        focus: () => {
+            actions.setFocusedSource("program");
+            buttonRef.current?.focus()
+        },
         blur: () => buttonRef.current?.blur(),
-        
+
         // State management
         setValue: actions.setValue,
         getValue: () => state.value,
         cycleValues: actions.cycleValues,
         setValueByIndex: actions.setValueByIndex,
         resetValue: actions.resetValue,
-        
+
         // State getters
         isFocused: () => state.focused,
         isActive: () => state.active,
         isHover: () => state.hover,
         hasValue: () => state.value !== null,
         isInteractable: () => isInteractable,
-        
+
         // DOM element access
         getElement: () => buttonRef.current,
-        
+
         // Manual state setters
         setFocused: actions.setFocused,
         setActive: actions.setActive,
         setHover: actions.setHover,
-        
+
         // Click simulation
         click: () => actions.handleClick({} as React.SyntheticEvent<HTMLButtonElement>),
     }), [actions, state, isInteractable]);
@@ -271,8 +170,10 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
         onRefReady?.(handle);
     }, [handle, onRefReady]);
 
+    const DynamicBaseButton = React.useMemo(() => createDynamicBaseButton(config.componentName), [config.componentName]);
+    
     return (
-        <StyledBaseButton
+        <DynamicBaseButton
             {...otherProps}
             ref={buttonRef}
             className={clsx(
@@ -301,7 +202,7 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
             <ContentComponent>
                 {props.children}
             </ContentComponent>
-        </StyledBaseButton>
+        </DynamicBaseButton>
     );
 };
 

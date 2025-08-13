@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { BaseButtonProps } from './BaseButtonProps';
+import { f } from 'react-router/dist/development/route-data-H2S3hwhf';
+
+type FocusSource = "keyboard" | "mouse" | "program" | null;
 
 // Typy dla kontekstu
 export interface ButtonState {
     focused: boolean;
+    focusedSource: FocusSource;
     active: boolean;
     hover: boolean;
     value: string | null;
@@ -11,6 +15,7 @@ export interface ButtonState {
 
 export interface ButtonActions {
     setFocused: (focused: boolean) => void;
+    setFocusedSource: (source: FocusSource) => void;
     setActive: (active: boolean) => void;
     setHover: (hover: boolean) => void;
     setValue: (value: string | null) => void;
@@ -52,6 +57,7 @@ export interface ButtonContextValue {
 // Domyślne wartości
 const defaultState: ButtonState = {
     focused: false,
+    focusedSource: null,
     active: false,
     hover: false,
     value: null,
@@ -91,16 +97,16 @@ export interface ButtonProviderProps {
 // Helper function do normalizacji toggle
 const normalizeToggle = (toggle: string | (string | null)[] | undefined): (string | null)[] => {
     if (!toggle) return [];
-    
+
     if (typeof toggle === 'string') {
         // Jeśli toggle to string, stwórz przełącznik [null, string]
         return [null, toggle];
     }
-    
+
     if (Array.isArray(toggle)) {
         return toggle;
     }
-    
+
     return [];
 };
 
@@ -126,8 +132,8 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     }), [configProp]);
 
     // Normalizacja toggle do tablicy
-    const toggleValues = React.useMemo(() => 
-        normalizeToggle(config.toggle), 
+    const toggleValues = React.useMemo(() =>
+        normalizeToggle(config.toggle),
         [config.toggle]
     );
 
@@ -137,7 +143,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (config.value !== undefined && toggleValues.includes(config.value)) {
             return config.value;
         }
-        
+
         // W przeciwnym przypadku użyj pierwszej wartości lub null
         return toggleValues.length > 0 ? toggleValues[0] : null;
     }, [toggleValues, config.value]);
@@ -199,6 +205,15 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         setState(prev => {
             if (prev.focused !== focused) {
                 return { ...prev, focused };
+            }
+            return prev;
+        });
+    }, []);
+
+    const setFocusedSource = useCallback((source: FocusSource) => {
+        setState(prev => {
+            if (prev.focusedSource !== source) {
+                return { ...prev, focusedSource: source };
             }
             return prev;
         });
@@ -311,20 +326,23 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     const handleFocus = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
         setFocused(true);
         onFocus?.(e);
-    }, [setFocused, onFocus]);
+        setFocusedSource(state.focusedSource ?? 'keyboard');
+    }, [setFocused, onFocus, setFocusedSource, state.focusedSource]);
 
     const handleBlur = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
         setFocused(false);
         setActive(false);
+        setFocusedSource(null);
         onBlur?.(e);
-    }, [setFocused, setActive, onBlur]);
+    }, [setFocused, setActive, setFocusedSource, onBlur]);
 
     const handleMouseDown = useCallback((_e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             setActive(true);
+            setFocusedSource(state.focusedSource ?? 'mouse');
         }
         onMouseDown?.();
-    }, [isInteractable, setActive, onMouseDown]);
+    }, [isInteractable, setActive, setFocusedSource, state.focusedSource, onMouseDown]);
 
     const handleMouseUp = useCallback((_e: React.MouseEvent<HTMLButtonElement>) => {
         setActive(false);
@@ -345,16 +363,18 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     }, [setHover, setActive, onMouseLeave]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (isInteractable && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            setActive(true);
+        if (isInteractable) {
+            if ((e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setActive(true);
 
-            if (e.key === 'Enter') {
-                handleClick(e);
+                if (e.key === 'Enter') {
+                    handleClick(e);
+                }
             }
         }
         onKeyDown?.(e);
-    }, [isInteractable, setActive, handleClick, onKeyDown]);
+    }, [isInteractable, setActive, handleClick, onKeyDown, setFocusedSource, state.focusedSource]);
 
     const handleKeyUp = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
         if (isInteractable && (e.key === 'Enter' || e.key === ' ')) {
@@ -381,6 +401,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (config.loading) classArray.push('loading');
         if (config.selected) classArray.push('selected');
         if (state.focused) classArray.push('focused');
+        if (state.focusedSource) classArray.push(`focused-${state.focusedSource}`);
         if (state.active) classArray.push('active');
         if (state.hover) classArray.push('hover');
 
@@ -395,6 +416,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
 
     const actions: ButtonActions = {
         setFocused,
+        setFocusedSource,
         setActive,
         setHover,
         setValue,

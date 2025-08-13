@@ -163,6 +163,10 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
             return;
         }
 
+        if (!isVisible) {
+            return;
+        }
+
         const calculateMaxWidth = () => {
             const buttons = groupRef.current?.querySelectorAll('.ButtonGroup-button');
             if (!buttons || buttons.length === 0) return;

@@ -8,8 +8,6 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
             root: {
                 cursor: "default",
                 fontSize: "1rem",
-                gap: paddingMedium,
-                padding: paddingMedium,
                 borderRadius: borderRadius,
                 backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
                 '&:has(.InputDecorator-indicator)': {
@@ -25,6 +23,13 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                         paddingRight: paddingSmall * 2 + 3,
                     },
                     gap: paddingSmall,
+                },
+                '&.size-medium': {
+                    padding: `${paddingMedium}px ${paddingMedium}px `,
+                    '&:has(.InputDecorator-indicator)': {
+                        paddingRight: paddingMedium * 2 + 3,
+                    },
+                    gap: paddingMedium,
                 },
                 '&.size-large': {
                     padding: paddingLarge,
@@ -42,11 +47,13 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
             },
             label: {
                 color: palette.text.primary,
-                marginBottom: paddingMedium / 2,
-                fontSize: "1em",
                 '&.size-small': {
                     marginBottom: paddingSmall / 2,
                     fontSize: "0.95em",
+                },
+                '&.size-medium': {
+                    marginBottom: paddingMedium / 2,
+                    fontSize: "1em",
                 },
                 '&.size-large': {
                     marginBottom: paddingLarge / 2,

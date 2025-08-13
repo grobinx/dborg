@@ -26,11 +26,13 @@ import Tooltip from "../Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
+import { Button } from "../buttons/Button";
 
 interface ConsoleLogState {
     showTime: boolean;
     search: string;
     toggleShowTime: () => void;
+    setShowTime: (show: boolean) => void;
     setSearch: (search: string) => void;
 }
 
@@ -38,6 +40,7 @@ export const useConsoleLogState = create<ConsoleLogState>((set) => ({
     showTime: false,
     search: "",
     toggleShowTime: () => set((state) => ({ showTime: !state.showTime })),
+    setShowTime: (show: boolean) => set(() => ({ showTime: show })),
     setSearch: (search: string) => set(() => ({ search: search })),
 }));
 
@@ -73,16 +76,16 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const showTime = useConsoleLogState(state => state.showTime);
     const search = useConsoleLogState(state => state.search);
     const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
-    const [fontSize] = useSetting<number>("ui", "fontSize");
+    const [fontSize] = useSetting<number>("ui", "fontSize", 20);
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
-    const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5) ?? 20);
+    const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5));
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
     };
 
     useEffect(() => {
-        const newHeight = itemSize ?? (fontSize * 1.5) ?? 20;
+        const newHeight = itemSize ?? fontSize * 1.5;
         setListItemSize(newHeight);
     }, [fontSize, monospaceFontFamily, itemSize]);
 
@@ -222,7 +225,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const { logs, logLevels, setLogLevels } = useConsole();
     const theme = useTheme();
     const { t } = useTranslation();
-    const { showTime, toggleShowTime } = useConsoleLogState();
+    const { showTime, setShowTime } = useConsoleLogState();
     const { search, setSearch } = useConsoleLogState();
 
     // Obsługa zmiany zaznaczenia
@@ -261,14 +264,16 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>
                 <span>
-                    <ToolButton
-                        selected={showTime}
-                        onClick={() => {
-                            toggleShowTime();
+                    <Button
+                        toggle={[null, 'on']}
+                        onChange={(value) => {
+                            setShowTime(value === 'on');
                         }}
+                        size="small"
+                        color="main"
                     >
                         <theme.icons.Clock />
-                    </ToolButton>
+                    </Button>
                 </span>
             </Tooltip>
             <ToolSelect
@@ -309,12 +314,14 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             </ToolSelect>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <span>
-                    <ToolButton
+                    <Button
+                        size="small"
                         disabled={logs.length === 0}
                         onClick={() => console.clear()}
+                        color="main"
                     >
                         <theme.icons.Delete />
-                    </ToolButton>
+                    </Button>
                 </span>
             </Tooltip>
         </TabPanelButtons>

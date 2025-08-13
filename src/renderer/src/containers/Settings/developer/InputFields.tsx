@@ -12,6 +12,8 @@ import { Sizes } from "@renderer/types/sizes";
 import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
 import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
+import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
+import { Button } from "@renderer/components/buttons/Button";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -255,6 +257,13 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     onChange={(value) => handleValueSearchChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="info"
                                     required={false}
+                                    adornments={
+                                        <Adornment position="start">
+                                            <Button sx={{ width: "1.6em", height: "1.6em" }}>
+                                                <theme.icons.AddTab />
+                                            </Button>
+                                        </Adornment>
+                                    }
                                 />
                             </InputDecorator>
                         ), [size, searchValues[size], selected])}

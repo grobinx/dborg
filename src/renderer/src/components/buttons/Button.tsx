@@ -3,20 +3,14 @@ import { BaseButtonProps } from "./BaseButtonProps";
 import { BaseButton } from "./BaseButton";
 import { styled } from "@mui/material";
 
-interface ButtonProps extends BaseButtonProps {
+export interface ButtonOwnProps extends BaseButtonProps {
 }
 
-const StyledButton = styled(BaseButton, {
-    name: "Button",
-    slot: "root",
-})(({ theme }) => ({
-}));
-
-export const Button = React.memo<ButtonProps>((props) => {
+export const Button = React.memo<ButtonOwnProps>((props) => {
     const { ...other } = props;
 
     return (
-        <StyledButton
+        <BaseButton
             componentName="Button"
             {...other}
         />
