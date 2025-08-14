@@ -27,6 +27,7 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
 import { Button } from "../buttons/Button";
+import { IconButton } from "../buttons/IconButton";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -264,7 +265,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>
                 <span>
-                    <Button
+                    <IconButton
                         toggle={[null, 'on']}
                         onChange={(value) => {
                             setShowTime(value === 'on');
@@ -273,7 +274,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                         color="main"
                     >
                         <theme.icons.Clock />
-                    </Button>
+                    </IconButton>
                 </span>
             </Tooltip>
             <ToolSelect
@@ -314,14 +315,14 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             </ToolSelect>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <span>
-                    <Button
+                    <IconButton
                         size="small"
                         disabled={logs.length === 0}
                         onClick={() => console.clear()}
                         color="main"
                     >
                         <theme.icons.Delete />
-                    </Button>
+                    </IconButton>
                 </span>
             </Tooltip>
         </TabPanelButtons>

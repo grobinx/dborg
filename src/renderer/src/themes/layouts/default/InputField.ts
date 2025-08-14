@@ -9,7 +9,6 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
-                ...rootSizeProperties.medium,
                 border: `1px solid ${palette.divider}`,
                 borderRadius: borderRadius,
                 '&:hover': {
@@ -39,12 +38,14 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
                 '&.size-small': {
                     ...rootSizeProperties.small,
                 },
+                '&.size-medium': {
+                    ...rootSizeProperties.medium,
+                },
                 '&.size-large': {
                     ...rootSizeProperties.large,
                 },
             },
             input: {
-                transition: "all 1s ease-in-out",
                 fontFamily: "inherit",
                 padding: 2,
                 fontSize: "inherit",
@@ -70,7 +71,7 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
                     flexDirection: 'column',
                     justifyContent: "center",
                     alignItems: "center",
-                    width: '2em',
+                    width: '2rem',
                 }
             },
             numberStepper: {
@@ -86,7 +87,7 @@ export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFie
                 width: '90%',
                 height: 0,
                 '& span': {
-                    fontSize: '0.8em',
+                    fontSize: '0.8rem',
                     transform: 'scaleY(0.5)',
                 },
                 '&:hover': {

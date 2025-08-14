@@ -13,6 +13,8 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import { ContainerType, useContainers } from "@renderer/contexts/ApplicationContext";
+import { SearchField } from "@renderer/components/inputs/SearchField";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 
 export interface SchemaAssistantProps extends BoxProps {
     slotProps?: {
@@ -274,12 +276,19 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 </Typography>
                 <Stack flexGrow={1} />
                 {activeStep === 1 &&
-                    <TextField
-                        label={t("search", "Search...")}
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        autoFocus
-                    />
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <InputDecorator indicator={false}>
+                            <SearchField
+                                placeholder={t("search", "Search...")}
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                inputProps={{
+                                    autoFocus: true,
+                                }}
+                                size="large"
+                            />
+                        </InputDecorator>
+                    </Box>
                 }
             </SchemaAssistantTitle>
             <SchemaAssistantStepper className="SchemaAssistant-stepper" {...slotProps?.assistantStepper}>

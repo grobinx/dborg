@@ -259,7 +259,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={false}
                                     adornments={
                                         <Adornment position="start">
-                                            <Button sx={{ width: "1.6em", height: "1.6em" }}>
+                                            <Button size={size}>
                                                 <theme.icons.AddTab />
                                             </Button>
                                         </Adornment>

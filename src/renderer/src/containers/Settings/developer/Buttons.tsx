@@ -1,5 +1,4 @@
 import { Grid2, Stack, useTheme } from "@mui/material";
-import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Size, Sizes } from "@renderer/types/sizes";
 import React from "react";
@@ -7,6 +6,7 @@ import Logo from "../../../../../../resources/dborg.png";
 import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
 import ButtonGroup from "../../../components/buttons/ButtonGroup";
 import { Button } from "@renderer/components/buttons/Button";
+import { IconButton } from "@renderer/components/buttons/IconButton";
 
 export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme();
@@ -68,13 +68,13 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             <Grid2>
                                 {React.useMemo(() => (
-                                    <Button
+                                    <IconButton
                                         color="error"
                                         size={size}
                                         aria-label="Delete"
                                     >
                                         <theme.icons.Delete />
-                                    </Button>
+                                    </IconButton>
                                 ), [size])}
                             </Grid2>
 
@@ -152,27 +152,27 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                             {/* ButtonGroup z ikonami */}
                             <Grid2>
                                 <ButtonGroup orientation="horizontal" size={size} color="secondary" sameWidth>
-                                    <Button><theme.icons.Search /></Button>
-                                    <Button><theme.icons.Delete /></Button>
-                                    <Button><theme.icons.Info /></Button>
+                                    <IconButton><theme.icons.Search /></IconButton>
+                                    <IconButton><theme.icons.Delete /></IconButton>
+                                    <IconButton><theme.icons.Info /></IconButton>
                                 </ButtonGroup>
                             </Grid2>
 
                             {/* ButtonGroup z values (toggle buttons) */}
                             <Grid2>
                                 <ButtonGroup orientation="horizontal" size={size} color="success" sameWidth>
-                                    <Button toggle='bold' onChange={(v) => console.log('Bold:', v)}>
+                                    <IconButton toggle='bold' onChange={(v) => console.log('Bold:', v)}>
                                         <strong>B</strong>
-                                    </Button>
-                                    <Button toggle='italic' onChange={(v) => console.log('Italic:', v)}>
+                                    </IconButton>
+                                    <IconButton toggle='italic' onChange={(v) => console.log('Italic:', v)}>
                                         <em>I</em>
-                                    </Button>
-                                    <Button toggle='underline' onChange={(v) => console.log('Underline:', v)}>
+                                    </IconButton>
+                                    <IconButton toggle='underline' onChange={(v) => console.log('Underline:', v)}>
                                         <u>U</u>
-                                    </Button>
-                                    <Button toggle='strikethrough' onChange={(v) => console.log('Strikethrough:', v)}>
+                                    </IconButton>
+                                    <IconButton toggle='strikethrough' onChange={(v) => console.log('Strikethrough:', v)}>
                                         <s>S</s>
-                                    </Button>
+                                    </IconButton>
                                 </ButtonGroup>
                             </Grid2>
 

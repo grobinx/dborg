@@ -49,15 +49,15 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 color: palette.text.primary,
                 '&.size-small': {
                     marginBottom: paddingSmall / 2,
-                    fontSize: "0.95em",
+                    fontSize: "0.95rem",
                 },
                 '&.size-medium': {
                     marginBottom: paddingMedium / 2,
-                    fontSize: "1em",
+                    fontSize: "1rem",
                 },
                 '&.size-large': {
                     marginBottom: paddingLarge / 2,
-                    fontSize: "1.05em",
+                    fontSize: "1.05rem",
                 },
             },
             labelText: {
@@ -67,17 +67,19 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 }
             },
             description: {
-                marginTop: paddingMedium / 2,
                 '&.size-small': {
                     marginTop: paddingSmall / 2,
-                    fontSize: "0.85em",
+                    fontSize: "0.85rem",
+                },
+                '&.size-medium': {
+                    marginTop: paddingMedium / 2,
+                    fontSize: "0.9rem",
                 },
                 '&.size-large': {
                     marginTop: paddingLarge / 2,
-                    fontSize: "0.95em",
+                    fontSize: "0.95rem",
                 },
                 color: palette.text.secondary,
-                fontSize: "0.9rem",
             },
             indicator: {
                 width: 4,
@@ -98,7 +100,7 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 },
             },
             restrictions: {
-                fontSize: "0.7em",
+                fontSize: "0.7rem",
                 alignItems: "end",
                 color: palette.text.secondary,
                 gap: paddingMedium / 2,

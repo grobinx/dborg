@@ -4,6 +4,7 @@ import { CodeLayout } from "./default/Code";
 import { InputDecoratorLayout } from "./default/InputDecorator";
 import { borderRadius } from "./default/consts";
 import { ButtonLayout } from "./default/Button";
+import { IconButtonLayout } from "./default/IconButton";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -585,7 +586,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             SchemaList: {
                 defaultProps: {
                     sx: {
-                        fontSize: "1.2rem",
+                        fontSize: "1rem",
                     },
                     slotProps: {
                         list: {
@@ -985,6 +986,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             InputField: InputFieldLayout(palette, root),
             InputDecorator: InputDecoratorLayout(palette, root),
             Button: ButtonLayout(palette, root),
+            IconButton: IconButtonLayout(palette, root),
         }
     }
 };

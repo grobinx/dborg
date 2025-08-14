@@ -1,11 +1,9 @@
 import React from 'react';
-import { alpha, lighten, styled, SxProps, Theme } from '@mui/material';
+import { styled, SxProps, Theme } from '@mui/material';
 import { ButtonProvider, useButtonContext } from './ButtonContext';
 import { ButtonRefHandle, BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
-import { borderRadius, rootSizeProperties } from '@renderer/themes/layouts/default/consts';
-import { themeColors } from '@renderer/types/colors';
 
 interface BaseButtonSlots {
     content?: React.ComponentType<{ children?: React.ReactNode }>;
@@ -143,7 +141,6 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
         setValue: actions.setValue,
         getValue: () => state.value,
         cycleValues: actions.cycleValues,
-        setValueByIndex: actions.setValueByIndex,
         resetValue: actions.resetValue,
 
         // State getters
@@ -155,6 +152,7 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
 
         // DOM element access
         getElement: () => buttonRef.current,
+        getAttribute: (name: string) => buttonRef.current?.getAttribute(name) || null,
 
         // Manual state setters
         setFocused: actions.setFocused,

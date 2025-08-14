@@ -20,7 +20,6 @@ export interface ButtonActions {
     setHover: (hover: boolean) => void;
     setValue: (value: string | null) => void;
     cycleValues: () => void;
-    setValueByIndex: (index: number) => void;
     resetValue: () => void;
     handleClick: (e: React.SyntheticEvent<HTMLButtonElement>) => void;
     handleFocus: (e: React.FocusEvent<HTMLButtonElement>) => void;
@@ -242,7 +241,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         if (toggleValues.includes(value)) {
             setState(prev => {
                 if (prev.value !== value) {
-                    onChange?.(value);
+                    setTimeout(() => onChange?.(value), 0);
                     return { ...prev, value };
                 }
                 return prev;
@@ -266,36 +265,13 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         });
     }, [toggleValues, onChange]);
 
-    const setValueByIndex = useCallback((index: number) => {
-        if (index >= 0 && index < toggleValues.length) {
-            const newValue = toggleValues[index];
-            setState(prev => {
-                if (prev.value !== newValue) {
-                    onChange?.(newValue);
-                    return { ...prev, value: newValue };
-                }
-                return prev;
-            });
-        } else if (toggleValues.length > 0) {
-            // Jeśli indeks poza zakresem, ustaw pierwszą wartość
-            const newValue = toggleValues[0];
-            setState(prev => {
-                if (prev.value !== newValue) {
-                    onChange?.(newValue);
-                    return { ...prev, value: newValue };
-                }
-                return prev;
-            });
-        }
-    }, [toggleValues, onChange]);
-
     const resetValue = useCallback(() => {
         // Resetuj do pierwszej wartości z listy, lub null jeśli lista jest pusta
         if (toggleValues.length > 0) {
             const newValue = toggleValues[0];
             setState(prev => {
                 if (prev.value !== newValue) {
-                    onChange?.(newValue);
+                    setTimeout(() => onChange?.(newValue), 0);
                     return { ...prev, value: newValue };
                 }
                 return prev;
@@ -303,7 +279,7 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         } else {
             setState(prev => {
                 if (prev.value !== null) {
-                    onChange?.(null);
+                    setTimeout(() => onChange?.(null), 0);
                     return { ...prev, value: null };
                 }
                 return prev;
@@ -421,7 +397,6 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
         setHover,
         setValue,
         cycleValues,
-        setValueByIndex,
         resetValue,
         handleClick,
         handleFocus,
@@ -517,7 +492,6 @@ export const useToggleStates = () => {
         availableValues: toggleValues,
         setValue: actions.setValue,
         cycleValues: actions.cycleValues,
-        setValueByIndex: actions.setValueByIndex,
         resetValue: actions.resetValue,
         hasValue: state.value !== null,
         isValue: (valueName: string | null) => state.value === valueName,

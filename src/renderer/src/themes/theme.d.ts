@@ -147,6 +147,7 @@ declare module "@mui/material/styles" {
         InputField: InputFieldComponentSlots;
         InputDecorator: InputDecoratorComponentSlots;
         Button: ButtonComponentSlots;
+        IconButton: IconButtonComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -183,6 +184,7 @@ declare module "@mui/material/styles" {
         InputField: InputFieldComponentProps;
         InputDecorator: InputDecoratorComponentProps;
         Button: ButtonComponentProps;
+        IconButton: IconButtonComponentProps;
     }
     interface Components {
         MenuBar?: {
@@ -342,6 +344,7 @@ declare module "@mui/material/styles" {
         InputField?: InputFieldComponent;
         InputDecorator?: InputDecoratorComponent;
         Button?: ButtonComponent;
+        IconButton?: IconButtonComponent;
     }
 
 }

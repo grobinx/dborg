@@ -116,7 +116,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 alignItems: "center",
                 justifyContent: "center",
                 transition: "opacity 0.2s ease-in-out",
-                padding: "0 0.2em",
+                padding: "0 0.5rem",
                 '&.loading': {
                     opacity: 0,
                 }
@@ -146,7 +146,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 },
             },
             loadingContent: {
-                fontSize: "0.875em",
+                fontSize: "0.875rem",
                 opacity: 0.8,
             }
         }

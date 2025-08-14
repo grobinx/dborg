@@ -117,7 +117,6 @@ export interface ButtonRefHandle {
     setValue: (value: string | null) => void;
     getValue: () => string | null;
     cycleValues: () => void;
-    setValueByIndex: (index: number) => void;
     resetValue: () => void;
     
     // State getters
@@ -126,9 +125,6 @@ export interface ButtonRefHandle {
     isHover: () => boolean;
     hasValue: () => boolean;
     isInteractable: () => boolean;
-    
-    // DOM element access
-    getElement: () => HTMLButtonElement | null;
     
     // Manual state setters
     setFocused: (focused: boolean) => void;

@@ -4,11 +4,9 @@ import {
     ListItemButtonProps, ListItemIconProps, ListItemTextProps,
     ListProps,
     ListItemProps,
-    TextField,
     ListSubheader,
     Badge,
     ButtonGroup,
-    Input
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
@@ -25,6 +23,7 @@ import { highlightText } from "@renderer/components/CommandPalette/CommandPalett
 import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { Button } from "@renderer/components/buttons/Button";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -433,31 +432,29 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                 autoFocus: true,
                                 onKeyDown: handleSearchKeyDown,
                             }}
-                            size="large"
                             autoCollapse
+                            size="large"
                         />
                     </InputDecorator>
                     <Tooltip title={t("group-schema-list", "Group schema list")}>
-                        <ToolButton
+                        <Button
+                            toggle="group"
+                            value={groupList ? "group" : null}
+                            onClick={() => setGroupList(!groupList)}
                             size="large"
-                            className="group-list"
-                            value="group-list"
-                            onClick={() => setGroupList((prev) => !prev)}
-                            selected={groupList}
                         >
                             <theme.icons.GroupList {...slotProps?.icon} />
-                        </ToolButton>
+                        </Button>
                     </Tooltip>
                     <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
-                        <ToolButton
-                            size="large"
-                            className="refresh"
+                        <Button
                             onClick={() => {
                                 queueMessage(Messages.RELOAD_SCHEMAS);
                             }}
+                            size="large"
                         >
                             <theme.icons.Refresh {...slotProps?.icon} />
-                        </ToolButton>
+                        </Button>
                     </Tooltip>
                 </Box>
             </SchemaListTitle>
@@ -499,24 +496,22 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             />
                                             <ButtonGroup className="actions">
                                                 <Tooltip title={t("text-connection", "Test connection")}>
-                                                    <span>
-                                                        <ToolButton
-                                                            size="large"
-                                                            className="test"
-                                                            onClick={(event) => {
-                                                                event.stopPropagation();
-                                                                if (!testing.includes(record.sch_id)) {
-                                                                    handleTestConnection(record);
-                                                                }
-                                                            }}
-                                                            color="success"
-                                                        >
-                                                            {testing.includes(record.sch_id) ?
-                                                                <theme.icons.Loading {...slotProps?.icon} /> :
-                                                                <theme.icons.ConnectionTest {...slotProps?.icon} />
+                                                    <ToolButton
+                                                        size="large"
+                                                        className="test"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            if (!testing.includes(record.sch_id)) {
+                                                                handleTestConnection(record);
                                                             }
-                                                        </ToolButton>
-                                                    </span>
+                                                        }}
+                                                        color="success"
+                                                    >
+                                                        {testing.includes(record.sch_id) ?
+                                                            <theme.icons.Loading {...slotProps?.icon} /> :
+                                                            <theme.icons.ConnectionTest {...slotProps?.icon} />
+                                                        }
+                                                    </ToolButton>
                                                 </Tooltip>
                                                 <Tooltip title={t("edit-schema", "Edit Schema")}>
                                                     <ToolButton
