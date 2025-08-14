@@ -24,6 +24,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
+import { IconButton } from "@renderer/components/buttons/IconButton";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -437,24 +438,24 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         />
                     </InputDecorator>
                     <Tooltip title={t("group-schema-list", "Group schema list")}>
-                        <Button
+                        <IconButton
                             toggle="group"
                             value={groupList ? "group" : null}
                             onClick={() => setGroupList(!groupList)}
                             size="large"
                         >
                             <theme.icons.GroupList {...slotProps?.icon} />
-                        </Button>
+                        </IconButton>
                     </Tooltip>
                     <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
-                        <Button
+                        <IconButton
                             onClick={() => {
                                 queueMessage(Messages.RELOAD_SCHEMAS);
                             }}
                             size="large"
                         >
                             <theme.icons.Refresh {...slotProps?.icon} />
-                        </Button>
+                        </IconButton>
                     </Tooltip>
                 </Box>
             </SchemaListTitle>
