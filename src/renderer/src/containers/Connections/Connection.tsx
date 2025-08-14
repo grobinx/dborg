@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { Stack, styled, useTheme, useThemeProps, Badge, Box } from "@mui/material"; // Importuj Badge z Material-UI
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import ToolButton from "@renderer/components/ToolButton";
 import { useTranslation } from "react-i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
@@ -22,6 +21,7 @@ import { createContentComponent, createTabContent, createTabLabel, createActionC
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
 import ActionsBar from "../ViewSlots/ActionsBar";
 import Tooltip from "@renderer/components/Tooltip";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -195,24 +195,24 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
         <TabPanelButtons>
             {session.info.driver.implements.includes("metadata") && (
                 < Tooltip title={t("refresh-metadata", "Refresh metadata")}>
-                    <span>
-                        <ToolButton
-                            onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
-                            disabled={gettingMetadata}
-                        >
-                            <theme.icons.RefreshMetadata />
-                        </ToolButton>
-                    </span>
+                    <ToolButton
+                        onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
+                        disabled={gettingMetadata}
+                        color="main"
+                        size="small"
+                    >
+                        <theme.icons.RefreshMetadata color="primary" />
+                    </ToolButton>
                 </Tooltip>
             )}
             <Tooltip title={t("disconnect", "Close connection")}>
-                <span>
-                    <ToolButton
-                        onClick={() => queueMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
-                    >
-                        <theme.icons.Disconnected />
-                    </ToolButton>
-                </span>
+                <ToolButton
+                    onClick={() => queueMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
+                    color="main"
+                    size="small"
+                >
+                    <theme.icons.Disconnected />
+                </ToolButton>
             </Tooltip>
         </TabPanelButtons >
     );

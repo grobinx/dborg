@@ -148,6 +148,7 @@ declare module "@mui/material/styles" {
         InputDecorator: InputDecoratorComponentSlots;
         Button: ButtonComponentSlots;
         IconButton: IconButtonComponentSlots;
+        ToolButton: ToolButtonComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -173,7 +174,7 @@ declare module "@mui/material/styles" {
         TabPanel: Partial<TabPanelProps>;
         TabPanelLabel: Partial<TabPanelLabelProps>;
         TabPanelButtons: Partial<TabPanelButtonsProps>;
-        ToolButton: Partial<ToolButtonProps>;
+        //ToolButton: Partial<ToolButtonProps>;
         ToolTextField: Partial<ToolTextFieldProps>;
         ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeProps>;
@@ -185,6 +186,7 @@ declare module "@mui/material/styles" {
         InputDecorator: InputDecoratorComponentProps;
         Button: ButtonComponentProps;
         IconButton: IconButtonComponentProps;
+        ToolButton: ToolButtonComponentProps;
     }
     interface Components {
         MenuBar?: {
@@ -302,11 +304,11 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['TabPanelButtons'];
             //variants?: ComponentsVariants['TabPanelButtons'];
         };
-        ToolButton?: {
-            defaultProps?: ComponentsPropsList['ToolButton'];
-            styleOverrides?: ComponentsOverrides<Theme>['ToolButton'];
-            //variants?: ComponentsVariants['ToolButton'];
-        };
+        // ToolButton?: {
+        //     defaultProps?: ComponentsPropsList['ToolButton'];
+        //     styleOverrides?: ComponentsOverrides<Theme>['ToolButton'];
+        //     //variants?: ComponentsVariants['ToolButton'];
+        // };
         ToolTextField?: {
             defaultProps?: ComponentsPropsList['ToolTextField'];
             styleOverrides?: ComponentsOverrides<Theme>['ToolTextField'];
@@ -345,6 +347,7 @@ declare module "@mui/material/styles" {
         InputDecorator?: InputDecoratorComponent;
         Button?: ButtonComponent;
         IconButton?: IconButtonComponent;
+        ToolButton?: ToolButtonComponent;
     }
 
 }

@@ -5,7 +5,6 @@ import { Monaco } from "@monaco-editor/react";
 import { ExecuteQueryAction } from "./editor/actions/ExecuteQueryAction";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material";
-import ToolButton from "@renderer/components/ToolButton";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
@@ -28,6 +27,7 @@ import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { use } from "i18next";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
@@ -399,8 +399,9 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
                     <ToolButton
                         color="error"
                         onClick={handleDeleteSqlEditor}
+                        size="small"
                     >
-                        <theme.icons.Delete />
+                        <theme.icons.Delete color="error" />
                     </ToolButton>
                 </span>
             </Tooltip>
@@ -445,12 +446,13 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             <theme.icons.SqlEditor />
             <span>{label}</span>
             <ToolButton
-                color="error"
+                color="main"
                 onClick={() => queueMessage(SQL_EDITOR_CLOSE, itemID)}
                 size="small"
                 disabled={!tabIsActive || tabsCount <= 1}
+                style={{ minWidth: "1.2rem", height: "1.2rem" }}
             >
-                <theme.icons.Close />
+                <theme.icons.Close color={!tabIsActive || tabsCount <= 1 ? undefined : "error" } />
             </ToolButton>
         </TabPanelLabel>
     );

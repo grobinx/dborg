@@ -193,6 +193,12 @@ export const ButtonProvider: React.FC<ButtonProviderProps> = ({
     // Sprawdź czy przycisk może być interaktywny
     const isInteractable = !config.disabled && !config.loading;
 
+    React.useEffect(() => {
+        if (!isInteractable) {
+            setFocused(false);
+        }
+    }, [isInteractable]);
+
     // Sprawdź czy pokazać loading
     const shouldShowLoading = !!config.loading;
 

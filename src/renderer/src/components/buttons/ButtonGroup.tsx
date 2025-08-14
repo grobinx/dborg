@@ -14,7 +14,7 @@ const StyledButtonGroup = styled('div', {
     shouldForwardProp: (prop) => !['maxWidth'].includes(prop as string),
 })<{
     maxWidth?: number;
-}>(({ theme, maxWidth }) => ({
+}>(({ maxWidth }) => ({
     display: 'inline-flex',
     gap: 0,
 
@@ -23,7 +23,7 @@ const StyledButtonGroup = styled('div', {
         flexDirection: 'row',
         '& .ButtonGroup-button': {
             borderRadius: 0,
-            marginLeft: -1, // Nakładanie borders dla seamless look
+            marginLeft: 0, // Nakładanie borders dla seamless look
 
             '&:first-of-type': {
                 borderTopLeftRadius: borderRadius,

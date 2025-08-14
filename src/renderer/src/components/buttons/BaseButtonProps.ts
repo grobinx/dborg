@@ -95,8 +95,8 @@ export interface BaseButtonProps {
      * Tab index
      */
     tabIndex?: number;
-    
-    ref?: React.Ref<ButtonRefHandle>;
+
+    ref?: React.Ref<HTMLButtonElement>;
 
     'aria-label'?: string;
     'aria-describedby'?: string;
@@ -106,31 +106,4 @@ export interface BaseButtonProps {
      */
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
-}
-
-export interface ButtonRefHandle {
-    // Focus management
-    focus: () => void;
-    blur: () => void;
-    
-    // State management
-    setValue: (value: string | null) => void;
-    getValue: () => string | null;
-    cycleValues: () => void;
-    resetValue: () => void;
-    
-    // State getters
-    isFocused: () => boolean;
-    isActive: () => boolean;
-    isHover: () => boolean;
-    hasValue: () => boolean;
-    isInteractable: () => boolean;
-    
-    // Manual state setters
-    setFocused: (focused: boolean) => void;
-    setActive: (active: boolean) => void;
-    setHover: (hover: boolean) => void;
-    
-    // Click simulation
-    click: () => void;
 }

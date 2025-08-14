@@ -3,18 +3,18 @@ import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/T
 import { Size, Sizes } from "@renderer/types/sizes";
 import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
-import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
 import ButtonGroup from "../../../components/buttons/ButtonGroup";
 import { Button } from "@renderer/components/buttons/Button";
 import { IconButton } from "@renderer/components/buttons/IconButton";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme();
 
     // 3 osobne referencje zamiast struktury
-    const smallButtonRef = React.useRef<ButtonRefHandle | null>(null);
-    const mediumButtonRef = React.useRef<ButtonRefHandle | null>(null);
-    const largeButtonRef = React.useRef<ButtonRefHandle | null>(null);
+    const smallButtonRef = React.useRef<HTMLButtonElement | null>(null);
+    const mediumButtonRef = React.useRef<HTMLButtonElement | null>(null);
+    const largeButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
     // State do śledzenia wartości przycisków dla re-renderowania
     const [buttonValues, setButtonValues] = React.useState<Record<Size, string | null>>({
@@ -99,7 +99,6 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         size={size}
                                         onClick={() => {
                                             const buttonRef = getButtonRef(size);
-                                            buttonRef.current?.cycleValues();
                                         }}
                                     >
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -124,7 +123,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         ref={getButtonRef(size)}
                                         onChange={(value) => setButtonValues(prev => ({ ...prev, [size]: value }))}
                                     >
-                                        {getButtonRef(size).current?.getValue() || 'Power'}
+                                        {buttonValues[size] || 'Power'}
                                     </Button>
                                 ), [size, buttonValues[size]])}
                             </Grid2>
@@ -133,7 +132,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 ))}
             </Stack>
 
-            {/* Nowa sekcja z ButtonGroup */}
+            {/* Sekcja z ButtonGroup */}
             <Stack key="ButtonGroupList" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
@@ -200,6 +199,39 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                 </ButtonGroup>
                             </Grid2>
 
+                        </Grid2>
+                    </Stack>
+                ))}
+            </Stack>
+
+            {/* Sekcja z ToolButtonami */}
+            <Stack direction="row" spacing={1}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        ToolButton, size: {size}
+                        <Grid2 container gap={4} padding={4}>
+                            <Grid2>
+                                <ToolButton size={size} color="primary" onClick={() => console.log('Primary ToolButton clicked')}>
+                                    <theme.icons.MaximizeWindow />
+                                </ToolButton>
+                            </Grid2>
+                            <Grid2>
+                                <ToolButton size={size} color="secondary" onClick={() => console.log('Secondary ToolButton clicked')}>
+                                    <theme.icons.MinimizeWindow />
+                                </ToolButton>
+                            </Grid2>
+                            <Grid2>
+                                <ToolButton size={size} color="error" onClick={() => console.log('Error ToolButton clicked')}>
+                                    <theme.icons.CloseWindow />
+                                </ToolButton>
+                            </Grid2>
+                            <Grid2>
+                                <ButtonGroup orientation="horizontal" size={size} color="warning">
+                                    <ToolButton><theme.icons.Warning /></ToolButton>
+                                    <ToolButton><theme.icons.Error /></ToolButton>
+                                    <ToolButton><theme.icons.Info /></ToolButton>
+                                </ButtonGroup>
+                            </Grid2>
                         </Grid2>
                     </Stack>
                 ))}

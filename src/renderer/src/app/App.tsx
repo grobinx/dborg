@@ -17,9 +17,9 @@ import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/Spli
 import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
 import { ConsoleLogPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from '@renderer/components/ToolPanels/ConsoleLogsPanel';
 import TabPanelButtons from '@renderer/components/TabsPanel/TabPanelButtons';
-import ToolButton from '@renderer/components/ToolButton';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@renderer/components/Tooltip';
+import { ToolButton } from '@renderer/components/buttons/ToolButton';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -202,6 +202,8 @@ const App: React.FC = () => {
                                                 setToolsTabsPanelVisible(!toolsTabsPanelVisible);
                                                 lastToolItemRef.current = null;
                                             }}
+                                            size="small"
+                                            color="main"
                                         >
                                             <theme.icons.ExpandMore />
                                         </ToolButton>

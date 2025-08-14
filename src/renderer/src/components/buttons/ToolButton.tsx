@@ -2,15 +2,15 @@ import React from "react";
 import { BaseButtonProps } from "./BaseButtonProps";
 import { BaseButton } from "./BaseButton";
 
-export interface IconButtonOwnProps extends BaseButtonProps {
+export interface ToolButtonOwnProps extends BaseButtonProps {
 }
 
-export const IconButton = React.memo<IconButtonOwnProps>((props) => {
+export const ToolButton = React.memo<ToolButtonOwnProps>((props) => {
     const { ...other } = props;
 
     return (
         <BaseButton
-            componentName="IconButton"
+            componentName="ToolButton"
             {...other}
         />
     );

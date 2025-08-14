@@ -11,7 +11,6 @@ import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/T
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
-import { ButtonRefHandle } from "@renderer/components/buttons/BaseButtonProps";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Button } from "@renderer/components/buttons/Button";
 
@@ -61,7 +60,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
-    const handleValueNumberChange = (size: string, value: number | undefined) => {
+    const handleValueNumberChange = (size: string, value: number | null | undefined) => {
         setNumberValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru

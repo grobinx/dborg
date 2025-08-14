@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ButtonGroup, Stack, styled, useTheme, Menu, MenuItem } from "@mui/material";
+import { Stack, styled, useTheme, Menu, MenuItem } from "@mui/material";
 import { SqlEditorButtons, SqlEditorContent, SqlEditorLabel } from "./SqlEditorPanel";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { UseListenersType } from "@renderer/hooks/useListeners";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import ToolButton from "@renderer/components/ToolButton";
 import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
 import EditorContentManager, { EditorState } from "@renderer/contexts/EditorContentManager";
@@ -16,6 +14,8 @@ import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs"; // M
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import Tooltip from "@renderer/components/Tooltip";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
@@ -209,25 +209,23 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
             <TabPanelButtons>
                 <ButtonGroup>
                     <Tooltip title={t("add-sql-editor-tab", "Add SQL Editor Tab")}>
-                        <span>
-                            <ToolButton
-                                color="success"
-                                onClick={() => queueMessage(SQL_EDITOR_ADD, { tabsItemID })}
-                            >
-                                <theme.icons.AddTab />
-                            </ToolButton>
-                        </span>
+                        <ToolButton
+                            onClick={() => queueMessage(SQL_EDITOR_ADD, { tabsItemID })}
+                            size="small"
+                            color="main"
+                        >
+                            <theme.icons.AddTab color="success" />
+                        </ToolButton>
                     </Tooltip>
                     <Tooltip title={t("open-closed-editors", "Open closed editors")}>
-                        <span>
-                            <ToolButton
-                                ref={menuButtonRef} // Przypisanie referencji do ToolButton
-                                color="primary"
-                                onClick={() => queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID })}
-                            >
-                                <theme.icons.ExpandMore />
-                            </ToolButton>
-                        </span>
+                        <ToolButton
+                            ref={menuButtonRef} // Przypisanie referencji do ToolButton
+                            color="main"
+                            onClick={() => queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID })}
+                            size="small"
+                        >
+                            <theme.icons.ExpandMore color="primary" />
+                        </ToolButton>
                     </Tooltip>
                     <Menu
                         anchorEl={menuAnchor}

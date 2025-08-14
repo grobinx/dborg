@@ -5,7 +5,7 @@ import { ButtonComponent } from "@renderer/themes/theme.d/Button";
 import { ButtonLayout } from "./Button";
 
 
-export const IconButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonComponent => {
+export const ToolButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonComponent => {
     const button = ButtonLayout(palette, _root);
 
     return {
@@ -14,6 +14,14 @@ export const IconButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonC
             ...button.styleOverrides,
             root: {
                 ...(button.styleOverrides?.root as any),
+                borderColor: 'transparent',
+                borderWidth: 0,
+                "&.focused": {
+                    outline: "none",
+                    '&.focused-keyboard': {
+                        ...(button.styleOverrides?.root as any)["&.focused"],
+                    }
+                },
                 "&.size-small": {
                     ...(button.styleOverrides?.root as any)["&.size-small"],
                     minWidth: (button.styleOverrides?.root as any)["&.size-small"].height

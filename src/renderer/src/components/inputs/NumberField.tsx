@@ -6,7 +6,7 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxValue, validateMinValue } from './base/useValidation';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 
-interface NumberFieldProps extends BaseInputProps<number | undefined> {
+interface NumberFieldProps extends BaseInputProps<number | undefined | null> {
     placeholder?: FormattedContentItem;
     max?: number;
     min?: number;
@@ -114,8 +114,8 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                 const numValue = parseFloat(value);
                 return isNaN(numValue) ? undefined : numValue;
             }}
-            onConvertToInput={(value: number | undefined) => {
-                return value !== undefined ? String(value) : '';
+            onConvertToInput={(value: number | undefined | null) => {
+                return value !== undefined && value !== null ? String(value) : '';
             }}
             onChange={(newValue) => onChange?.(newValue)}
             inputAdornments={[

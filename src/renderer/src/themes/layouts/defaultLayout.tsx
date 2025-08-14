@@ -5,6 +5,7 @@ import { InputDecoratorLayout } from "./default/InputDecorator";
 import { borderRadius } from "./default/consts";
 import { ButtonLayout } from "./default/Button";
 import { IconButtonLayout } from "./default/IconButton";
+import { ToolButtonLayout } from "./default/ToolButton";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -699,19 +700,19 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             TabPanelButtons: {
                 defaultProps: {
                     sx: {
-                        padding: 2,
+                        padding: "2px 4px",
                         gap: 2,
                     }
                 }
             },
-            ToolButton: {
-                defaultProps: {
-                    variant: "text",
-                    sx: {
-                        borderRadius: 1,
-                    }
-                },
-            },
+            // ToolButton: {
+            //     defaultProps: {
+            //         variant: "text",
+            //         sx: {
+            //             borderRadius: 1,
+            //         }
+            //     },
+            // },
             ToolTextField: {
                 defaultProps: {
                     sx: {
@@ -987,6 +988,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             InputDecorator: InputDecoratorLayout(palette, root),
             Button: ButtonLayout(palette, root),
             IconButton: IconButtonLayout(palette, root),
+            ToolButton: ToolButtonLayout(palette, root),
         }
     }
 };

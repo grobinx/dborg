@@ -1,7 +1,7 @@
 import React from 'react';
 import { styled, SxProps, Theme } from '@mui/material';
 import { ButtonProvider, useButtonContext } from './ButtonContext';
-import { ButtonRefHandle, BaseButtonProps } from './BaseButtonProps';
+import { BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
 
@@ -111,7 +111,7 @@ export const BaseButtonContent: React.FC<{ children?: React.ReactNode }> = ({ ch
 const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
     children?: React.ReactNode;
     sx?: SxProps<Theme>;
-    onRefReady?: (handle: ButtonRefHandle) => void;
+    ref?: React.Ref<HTMLButtonElement>;
     slots?: BaseButtonSlots
 }> = (props) => {
     const {
@@ -119,61 +119,18 @@ const BaseButtonInner: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & 
         config,
         classes,
         shouldShowLoading,
-        state,
-        isInteractable,
     } = useButtonContext();
 
-    const buttonRef = React.useRef<HTMLButtonElement>(null);
-    const { onRefReady, slots, ...otherProps } = props;
+    const { ref, slots, ...otherProps } = props;
     const ContentComponent = slots?.content || BaseButtonContent;
     const LoadingComponent = slots?.loading || BaseButtonLoading;
-
-    // Create handle object
-    const handle = React.useMemo<ButtonRefHandle>(() => ({
-        // Focus management
-        focus: () => {
-            actions.setFocusedSource("program");
-            buttonRef.current?.focus()
-        },
-        blur: () => buttonRef.current?.blur(),
-
-        // State management
-        setValue: actions.setValue,
-        getValue: () => state.value,
-        cycleValues: actions.cycleValues,
-        resetValue: actions.resetValue,
-
-        // State getters
-        isFocused: () => state.focused,
-        isActive: () => state.active,
-        isHover: () => state.hover,
-        hasValue: () => state.value !== null,
-        isInteractable: () => isInteractable,
-
-        // DOM element access
-        getElement: () => buttonRef.current,
-        getAttribute: (name: string) => buttonRef.current?.getAttribute(name) || null,
-
-        // Manual state setters
-        setFocused: actions.setFocused,
-        setActive: actions.setActive,
-        setHover: actions.setHover,
-
-        // Click simulation
-        click: () => actions.handleClick({} as React.SyntheticEvent<HTMLButtonElement>),
-    }), [actions, state, isInteractable]);
-
-    // Notify parent about handle availability
-    React.useEffect(() => {
-        onRefReady?.(handle);
-    }, [handle, onRefReady]);
 
     const DynamicBaseButton = React.useMemo(() => createDynamicBaseButton(config.componentName), [config.componentName]);
     
     return (
         <DynamicBaseButton
             {...otherProps}
-            ref={buttonRef}
+            ref={ref}
             className={clsx(
                 `${config.componentName}-root`,
                 classes,
@@ -245,17 +202,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         ...configProps
     } = props;
 
-    // Handle ref setup
-    const handleRefReady = React.useCallback((handle: ButtonRefHandle) => {
-        if (ref) {
-            if (typeof ref === 'function') {
-                ref(handle);
-            } else {
-                (ref as React.RefObject<ButtonRefHandle>).current = handle;
-            }
-        }
-    }, [ref]);
-
     return (
         <ButtonProvider
             config={{
@@ -281,7 +227,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
                 aria-describedby={ariaDescribedBy}
                 sx={sx}
                 style={style}
-                onRefReady={handleRefReady}
+                ref={ref}
                 slots={slots}
             >
                 {children}

@@ -24,6 +24,9 @@ import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { durationToHuman } from "@renderer/common";
+import { TextField } from "@renderer/components/inputs/TextField";
+import { NumberField } from "@renderer/components/inputs/NumberField";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -35,10 +38,10 @@ export interface SqlResultFocusMessage {
 interface SqlResultState {
     tabs: {
         [id: string]: {
-            maxFetchSize: string | undefined;
+            maxFetchSize: number | null | undefined;
         };
     };
-    setMaxFetchSize: (id: string, maxFetchSize: string | undefined) => void;
+    setMaxFetchSize: (id: string, maxFetchSize: number | null | undefined) => void;
     removeState: (id: string) => void;
 }
 
@@ -108,7 +111,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             setMaxFetchSize(itemID!, maxFetchSize);
         }
         else {
-            setMaxFetchSize(itemID!, "");
+            setMaxFetchSize(itemID!, null);
         }
         return () => removeTabState(itemID!);
     }, [session, itemID]);
@@ -446,27 +449,28 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const { t } = useTranslation();
     const theme = useTheme();
-    const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize ?? '');
+    const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize ?? null);
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
 
     return (
         <TabPanelButtons>
             <ToolLabel label={t("Fetch", "Fetch")} />
-            <ToolTextField
-                style={{ width: 6 * 10 }}
-                value={maxFetchSize}
-                onChange={(e) => {
-                    const value = e.target.value;
-                    if (maxFetchSize !== value) {
-                        setMaxFetchSize(itemID!, value);
-                    }
-                }}
-                onKeyDown={(e) => {
-                    if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab") {
-                        e.preventDefault(); // Zablokuj wprowadzanie znaków innych niż cyfry
-                    }
-                }}
-            />
+            <InputDecorator indicator={false}>
+                <NumberField
+                    width={6 * 12 + 8}
+                    value={maxFetchSize}
+                    onChange={(value) => {
+                        if (maxFetchSize !== value) {
+                            setMaxFetchSize(itemID!, value);
+                        }
+                    }}
+                    size="small"
+                    color="main"
+                    min={0}
+                    max={500000}
+                    step={1000}
+                />
+            </InputDecorator>
         </TabPanelButtons>
     );
 };

@@ -12,9 +12,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
             title={title && <FormattedText text={title} />}
             {...props}
         >
-            <span>
-                {children}
-            </span>
+            {children}
         </MuiTooltip>
     );
 };
