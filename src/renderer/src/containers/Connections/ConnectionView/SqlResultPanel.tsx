@@ -4,7 +4,6 @@ import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/Dat
 import { useTranslation } from "react-i18next";
 import { Box, Stack, useTheme } from "@mui/material";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import ToolButton from "@renderer/components/ToolButton";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
@@ -27,6 +26,7 @@ import { durationToHuman } from "@renderer/common";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -428,12 +428,13 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
             )}
             <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{label}</span>
             <ToolButton
-                color="error"
+                color="main"
                 onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
                 size="small"
                 disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
+                style={{ minWidth: "1.2rem", height: "1.2rem" }}
             >
-                <theme.icons.Close />
+                <theme.icons.Close color={!tabIsActive ? undefined : "error" } />
             </ToolButton>
         </TabPanelLabel>
     );
