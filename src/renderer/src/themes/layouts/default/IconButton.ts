@@ -1,6 +1,4 @@
-import { alpha, Palette, ThemeOptions } from "@mui/material";
-import { borderRadius, rootSizeProperties } from "./consts";
-import { themeColors } from "@renderer/types/colors";
+import { Palette, ThemeOptions } from "@mui/material";
 import { ButtonComponent } from "@renderer/themes/theme.d/Button";
 import { ButtonLayout } from "./Button";
 
