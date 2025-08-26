@@ -72,6 +72,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         color="error"
                                         size={size}
                                         aria-label="Delete"
+                                        dense
                                     >
                                         <theme.icons.Delete />
                                     </IconButton>

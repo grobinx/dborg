@@ -13,6 +13,7 @@ import React from "react";
 import Logo from "../../../../../../resources/dborg.png";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Button } from "@renderer/components/buttons/Button";
+import { IconButton } from "@renderer/components/buttons/IconButton";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -258,9 +259,9 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={false}
                                     adornments={
                                         <Adornment position="start">
-                                            <Button size={size}>
+                                            <IconButton size={size} dense>
                                                 <theme.icons.AddTab />
-                                            </Button>
+                                            </IconButton>
                                         </Adornment>
                                     }
                                 />

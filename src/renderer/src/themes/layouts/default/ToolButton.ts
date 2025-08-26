@@ -22,18 +22,6 @@ export const ToolButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonC
                         ...(button.styleOverrides?.root as any)["&.focused"],
                     }
                 },
-                "&.size-small": {
-                    ...(button.styleOverrides?.root as any)["&.size-small"],
-                    minWidth: (button.styleOverrides?.root as any)["&.size-small"].height
-                },
-                "&.size-medium": {
-                    ...(button.styleOverrides?.root as any)["&.size-medium"],
-                    minWidth: (button.styleOverrides?.root as any)["&.size-medium"].height
-                },
-                "&.size-large": {
-                    ...(button.styleOverrides?.root as any)["&.size-large"],
-                    minWidth: (button.styleOverrides?.root as any)["&.size-large"].height
-                },
             },
             content: {
                 ...(button.styleOverrides?.content as any),

@@ -112,6 +112,7 @@ export interface ButtonGroupProps {
     size?: Size;
     color?: ThemeColor;
     disabled?: boolean;
+    dense?: boolean;
     /**
      * Czy wszystkie przyciski mają mieć taką samą szerokość
      * Dopasowuje wszystkie do najszerszego
@@ -141,6 +142,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     children,
     orientation = 'horizontal',
     size = 'medium',
+    dense,
     color = 'main',
     disabled = false,
     sameWidth = false,
@@ -236,6 +238,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
                 ...child.props,
                 className: clsx('ButtonGroup-button', child.props.className),
                 size: child.props.size || size,
+                dense: child.props.dense || dense,
                 color: child.props.color || color,
                 disabled: child.props.disabled || disabled,
                 value: exclusive ? (currentValue === child.props.toggle ? currentValue : null) : child.props.value,

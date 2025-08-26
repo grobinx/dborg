@@ -450,7 +450,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
                 onClick={() => queueMessage(SQL_EDITOR_CLOSE, itemID)}
                 size="small"
                 disabled={!tabIsActive || tabsCount <= 1}
-                style={{ minWidth: "1.2rem", height: "1.2rem" }}
+                dense
             >
                 <theme.icons.Close color={!tabIsActive || tabsCount <= 1 ? undefined : "error" } />
             </ToolButton>

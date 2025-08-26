@@ -432,7 +432,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
                 onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
                 size="small"
                 disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
-                style={{ minWidth: "1.2rem", height: "1.2rem" }}
+                dense
             >
                 <theme.icons.Close color={!tabIsActive ? undefined : "error" } />
             </ToolButton>

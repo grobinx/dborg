@@ -3,7 +3,6 @@ import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
 import { SxProps } from "@mui/material";
 import { Theme } from "@mui/system";
-import { BaseButtonContent, BaseButtonLoading } from './BaseButton';
 
 export interface BaseButtonProps {
     /**
@@ -51,7 +50,13 @@ export interface BaseButtonProps {
      * @default "medium"
      */
     size?: Size;
-    
+
+    /**
+     * Czy przycisk jest w gęstym układzie
+     * @default false
+     */
+    dense?: boolean;
+
     /**
      * Kolor motywu
      * @default "primary"
