@@ -219,7 +219,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
             }
             return newValue;
         });
-    }, [exclusive]);
+    }, []);
 
     React.useEffect(() => {
         setCurrentValue(value);
@@ -240,8 +240,8 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
                 disabled: child.props.disabled || disabled,
                 value: exclusive ? (currentValue === child.props.toggle ? currentValue : null) : child.props.value,
                 onChange: (newValue: string | null) => {
-                    child.props.onChange?.(newValue);
-                    if (exclusive && newValue) {
+                    child.props.onChange?.(newValue !== child.props.toggle ? null : newValue);
+                    if (exclusive && newValue && newValue !== currentValue) {
                         handleExclusiveChange(newValue);
                     }
                 },

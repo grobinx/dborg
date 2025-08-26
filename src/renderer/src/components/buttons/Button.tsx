@@ -1,7 +1,6 @@
 import React from "react";
 import { BaseButtonProps } from "./BaseButtonProps";
 import { BaseButton } from "./BaseButton";
-import { styled } from "@mui/material";
 
 export interface ButtonOwnProps extends BaseButtonProps {
 }

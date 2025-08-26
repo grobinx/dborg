@@ -33,6 +33,12 @@ export interface BaseButtonProps {
      * @default false
      */
     loading?: boolean | FormattedContentItem;
+
+    /**
+     * Czy pokazywać wskaźnik ładowania
+     * @default true
+     */
+    showLoadingIndicator?: boolean;
     
     /**
      * Czy przycisk jest w stanie wybranym
@@ -69,6 +75,11 @@ export interface BaseButtonProps {
     value?: string | null;
 
     /**
+     * Domyślny stan przycisku
+     */
+    defaultValue?: string | null;
+
+    /**
      * Funkcja wywoływana po zmianie stanu przycisku
      * @param value Nowy stan przycisku
      * @returns
@@ -79,18 +90,16 @@ export interface BaseButtonProps {
 
     componentName?: string;
 
-    showLoadingIndicator?: boolean;
+    onClick?: React.MouseEventHandler<HTMLButtonElement>
+    onFocus?: React.FocusEventHandler<HTMLButtonElement>;
+    onBlur?: React.FocusEventHandler<HTMLButtonElement>;
+    onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
+    onMouseUp?: React.MouseEventHandler<HTMLButtonElement>;
+    onMouseEnter?: React.MouseEventHandler<HTMLButtonElement>;
+    onMouseLeave?: React.MouseEventHandler<HTMLButtonElement>;
+    onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
+    onKeyUp?: React.KeyboardEventHandler<HTMLButtonElement>;
 
-    onClick?: () => void;
-    onFocus?: () => void;
-    onBlur?: () => void;
-    onMouseDown?: () => void;
-    onMouseUp?: () => void;
-    onMouseEnter?: () => void;
-    onMouseLeave?: () => void;
-    onKeyDown?: () => void;
-    onKeyUp?: () => void;
-    
     /**
      * Tab index
      */
@@ -106,4 +115,17 @@ export interface BaseButtonProps {
      */
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
+}
+
+export interface BaseButtonLoadingProps {
+    componentName: string;
+    className?: string;
+    loading?: boolean | FormattedContentItem;
+    showLoadingIndicator?: boolean;
+}
+
+export interface BaseButtonContentProps {
+    componentName: string;
+    className?: string;
+    children?: React.ReactNode;
 }
