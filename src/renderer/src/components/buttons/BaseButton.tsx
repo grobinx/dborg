@@ -280,6 +280,12 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         setCurrentValue(value);
     }, [value]);
 
+    React.useEffect(() => {
+        if (disabled || !!loading) {
+            setFocused(false);
+        }
+    }, [disabled, loading]);
+
     return (
         <StyledBaseButton
             {...otherProps}

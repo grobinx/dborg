@@ -1,11 +1,11 @@
 import { useTheme } from "@mui/material";
-import ToolButton, { ToolButtonProps } from "../ToolButton"; // Zakładam, że ToolButton jest w katalogu nadrzędnym
 import { ActionDescriptor, ActionManager } from "./ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
 import { renderKeybindings } from "./CommandPalette";
 import Tooltip from "../Tooltip";
+import { ToolButton, ToolButtonOwnProps } from "../buttons/ToolButton";
 
-interface ActionButtonProps<T> extends Omit<ToolButtonProps, "action"> {
+interface ActionButtonProps<T> extends Omit<ToolButtonOwnProps, "action"> {
     actionManager?: ActionManager<T>; // Menedżer akcji
     actionId?: string; // Identyfikator akcji
     action?: ActionDescriptor<T>; // Opis akcji
@@ -49,6 +49,7 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...othe
                 <ToolButton
                     {...other}
                     className={`ActionButton-root ${other.className || ""}`}
+                    size="small"
                     onClick={handleClick}
                     disabled={resolvedAction.precondition ? !resolvedAction.precondition(getContext()) : false}
                     selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(getContext()) : resolvedAction.selected}

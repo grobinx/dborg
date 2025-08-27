@@ -11,7 +11,7 @@ export interface IconWrapperProps extends React.HTMLAttributes<HTMLDivElement> {
     size?: IconWrapperSize
 }
 
-interface IconWrapperOwnProps extends IconWrapperProps {
+export interface IconWrapperOwnProps extends IconWrapperProps {
     color?: ThemeColor;
 }
 

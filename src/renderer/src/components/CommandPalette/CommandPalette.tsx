@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment, ButtonGroup } from '@mui/material'; // Import komponentu Button
+import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
 import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
 import { resolveIcon } from '@renderer/themes/icons';
-import ToolButton from '../ToolButton';
 import Tooltip from '../Tooltip';
+import { ToolButton } from '../buttons/ToolButton';
+import ButtonGroup from '../buttons/ButtonGroup';
 
 interface CommandPaletteProps {
     manager: ActionManager<any>;
@@ -518,15 +519,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                         </>
                                                     }
                                                 >
-                                                    <span>
-                                                        <ToolButton
-                                                            onClick={() => handleOptionClick(option)}
-                                                            selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
-                                                            disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
-                                                        >
-                                                            {resolveIcon(theme, option.icon)}
-                                                        </ToolButton>
-                                                    </span>
+                                                    <ToolButton
+                                                        dense
+                                                        onClick={() => handleOptionClick(option)}
+                                                        selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
+                                                        disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
+                                                    >
+                                                        {resolveIcon(theme, option.icon)}
+                                                    </ToolButton>
                                                 </Tooltip>
                                             ))}
                                         </ButtonGroup>

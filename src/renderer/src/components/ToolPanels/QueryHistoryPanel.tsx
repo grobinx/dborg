@@ -1,17 +1,15 @@
-import React, { useEffect } from "react";
-import { styled, useTheme } from "@mui/material/styles";
+import React from "react";
+import { useTheme } from "@mui/material/styles";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import ToolTextField from "../ToolTextField";
-import ToolButton from "../ToolButton";
 import { useQueryHistory } from "@renderer/contexts/QueryHistoryContext";
 import { useTranslation } from "react-i18next";
 import { ColumnDefinition } from "../DataGrid/DataGridTypes";
-import { useMessages } from "@renderer/contexts/MessageContext";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import { DataGrid } from "../DataGrid/DataGrid";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import Tooltip from "../Tooltip";
+import { ToolButton } from "../buttons/ToolButton";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
@@ -63,6 +61,7 @@ export const QueryHistoryPanelButtons: React.FC = () => {
         <Tooltip title={t("queryHistory-clear-all", "Clear query history")}>
             <span>
                 <ToolButton
+                    size="small"
                     disabled={queryHistory.length === 0}
                     onClick={() => clearQueryHistory()}
                 >

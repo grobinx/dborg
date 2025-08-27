@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, Stack, StackProps, styled, Typography, TypographyProps, useThemeProps, useTheme } from "@mui/material";
-import { IconWrapper, IconWrapperProps, IconWrapperSize } from "@renderer/themes/icons";
+import { IconWrapper, IconWrapperOwnProps, IconWrapperProps, IconWrapperSize } from "@renderer/themes/icons";
 import { DriverInfo } from "src/api/db";
 import { useTranslation } from "react-i18next";
 import { useDialogs } from "@toolpad/core";
 import DriverInfoDialog from "@renderer/dialogs/DriverInfoDialog";
-import ToolButton from "@renderer/components/ToolButton";
 import Tooltip from "@renderer/components/Tooltip";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 const iconSizes: Record<IconWrapperSize, number> = {
     small: 32,
@@ -22,7 +22,7 @@ const DriverSummaryIconStyled = styled(IconWrapper)(({ size, theme }) => ({
     }),
 }));
 
-export function DriverSummaryIcon(props: IconWrapperProps): React.JSX.Element {
+export function DriverSummaryIcon(props: IconWrapperOwnProps): React.JSX.Element {
     const { className, ...other } = useThemeProps({ name: "IconWrapper", props });
     return (
         <DriverSummaryIconStyled {...other} className={(className ?? "") + " DriverSummary-icon"}>
@@ -34,7 +34,7 @@ export function DriverSummaryIcon(props: IconWrapperProps): React.JSX.Element {
 export interface DriverSummaryProps extends StackProps {
     driver?: DriverInfo;
     slotProps?: {
-        driverIcon?: IconWrapperProps;
+        driverIcon?: IconWrapperOwnProps;
         driverName?: TypographyProps;
         driverDescription?: TypographyProps;
     };

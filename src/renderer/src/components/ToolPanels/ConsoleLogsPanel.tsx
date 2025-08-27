@@ -13,8 +13,6 @@ import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic si
 import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
-import ToolTextField from "../ToolTextField";
-import i18next from "i18next";
 import * as Messages from '../../app/Messages';
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { useMessages } from "@renderer/contexts/MessageContext";
@@ -26,7 +24,6 @@ import Tooltip from "../Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
-import { Button } from "../buttons/Button";
 import { IconButton } from "../buttons/IconButton";
 
 interface ConsoleLogState {

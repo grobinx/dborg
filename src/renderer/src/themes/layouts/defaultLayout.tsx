@@ -6,6 +6,18 @@ import { borderRadius } from "./default/consts";
 import { ButtonLayout } from "./default/Button";
 import { IconButtonLayout } from "./default/IconButton";
 import { ToolButtonLayout } from "./default/ToolButton";
+import { ZoomStateLayout } from "./default/ZoomState";
+import { IconWrapperLayout } from "./default/IconWrapper";
+import { FormattedTextLayout } from "./default/FormattedText";
+import { SplitPanelLayout } from "./default/SplitPanel";
+import { ConsoleLogPanelLayout } from "./default/ConsoleLogPanel";
+import { WindowControlButtonLayout } from "./default/WindowControlButton";
+import { SideBarLayout } from "./default/SideBar";
+import { ToastListLayout } from "./default/ToastList";
+import { StatusBarLayout } from "./default/StatusBar";
+import { MenuBarLayout } from "./default/MenuBar";
+import { SchemaAssistantLayout } from "./default/SchemaAssistant";
+import { DriverSelectLayout } from "./default/DriverSelect";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -241,33 +253,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 }
             },
 
-            IconWrapper: {
-                styleOverrides: {
-                    root: {
-                        '&.connected': {
-                            color: palette.success.main,
-                        },
-                        '&.disconnected': {
-                            color: palette.warning.main
-                        },
-                        '&.connections svg > path:nth-of-type(1)': {
-                            fill: palette.success.main
-                        },
-                        '&.new-connection svg > path:nth-of-type(1)': {
-                            fill: palette.primary.main
-                        },
-                        '&.database-views svg path:nth-of-type(1)': {
-                            color: palette.warning.main
-                        },
-                        '&.error': {
-                            color: palette.error.main,
-                        },
-                        '&.warning': {
-                            color: palette.warning.main,
-                        },
-                    }
-                }
-            },
+            IconWrapper: IconWrapperLayout(palette, root),
             ContainerButton: {
                 defaultProps: {
                     size: "small",
@@ -327,106 +313,11 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            SideBar: {
-                styleOverrides: {
-                    root: {
-                        gap: 4,
-                        padding: 4,
-                        '& .MuiStack-root': {
-                            gap: 4,
-                        },
-                        '&.placement-left': {
-                            borderRight: '1px solid',
-                            borderColor: palette.mode === "dark" ? palette.sideBar.dark : palette.sideBar.light,
-                        },
-                        '&.placement-right': {
-                            borderLeft: '1px solid',
-                            borderColor: palette.mode === "dark" ? palette.sideBar.dark : palette.sideBar.light,
-                        },
-                        '&.placement-top': {
-                            borderBottom: '1px solid',
-                            borderColor: palette.mode === "dark" ? palette.sideBar.dark : palette.sideBar.light,
-                        },
-                        '&.placement-bottom': {
-                            borderTop: '1px solid',
-                            borderColor: palette.mode === "dark" ? palette.sideBar.dark : palette.sideBar.light,
-                        },
-                    }
-                }
-            },
-            ZoomState: {
-                defaultProps: {
-                },
-                styleOverrides: {
-                    root: {
-                        //fontSize: "0.8rem"
-                        backgroundColor:
-                            palette.mode === "dark" ?
-                                lighten(palette.background.menuBar, 0.1) :
-                                darken(palette.background.menuBar, 0.1),
-                        paddingLeft: 6,
-                        paddingRight: 6,
-                        paddingTop: 2,
-                        paddingBottom: 2,
-                        margin: 2,
-                        borderRadius: 4
-                    },
-                    value: {
-                        //fontSize: "0.8rem",
-                        paddingLeft: 4
-                    }
-                }
-            },
-            MenuBar: {
-                styleOverrides: {
-                    root: {
-                        borderBottom: '1px solid',
-                        borderColor: palette.mode === "dark" ? palette.menuBar.dark : palette.menuBar.light,
-                    },
-                    title: {
-                        paddingLeft: 6,
-                    }
-                }
-            },
-            WindowControlButton: {
-                defaultProps: {
-                    size: "small",
-                    variant: "text",
-                },
-                styleOverrides: {
-                    root: {
-                        width: 42,
-                        height: 32,
-                        borderRadius: 0,
-                        '&.LogoWindowControlButton': {
-                            '& .LogoIcon': {
-                                width: '1.3rem',
-                                height: '1.3rem',
-                            }
-                        },
-                        '&.CloseWindowControlButton:hover': {
-                            backgroundColor: palette.error.main
-                        },
-                        '&.LogoWindowControlButton:hover': {
-                            backgroundColor: palette.primary.main
-                        },
-                    }
-                }
-            },
-            StatusBar: {
-                defaultProps: {
-                    paddingLeft: 1,
-                    paddingRight: 1,
-                    //marginBottom: 1,
-                    borderTop: '1px solid',
-                    borderColor: palette.mode === "dark" ? palette.statusBar.dark : palette.statusBar.light,
-                    fontSize: "0.9rem",
-                    //divider: <Divider orientation="vertical" flexItem />,
-                    sx: {
-                        gap: 4,
-                    }
-                },
-            },
+            SideBar: SideBarLayout(palette, root),
+            ZoomState: ZoomStateLayout(palette, root),
+            MenuBar: MenuBarLayout(palette, root),
+            WindowControlButton: WindowControlButtonLayout(palette, root),
+            StatusBar: StatusBarLayout(palette, root),
             StatusBarButton: {
                 defaultProps: {
                     size: "small",
@@ -442,62 +333,8 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            SchemaAssistant: {
-                defaultProps: {
-                    slotProps: {
-                        button: {
-                        },
-                        stepperTitle: {
-                            variant: "body1"
-                        },
-                    }
-                },
-                styleOverrides: {
-                    root: {
-                        gap: 16,
-                        padding: 16,
-                        width: "90%",
-                        margin: "auto"
-                    },
-                    title: {
-                        //justifyItems: "center",
-                        paddingBottom: 6,
-                        borderBottom: "1px solid",
-                        borderColor: palette.action.focus,
-                        width: "100%",
-                        paddingLeft: 16,
-                        paddingRight: 16,
-                        display: "flex"
-                    },
-                    buttons: {
-                        paddingTop: 6,
-                        borderTop: "1px solid",
-                        borderColor: palette.action.focus,
-                        width: "100%",
-                        display: "flex",
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 16
-                    },
-                    stepper: {
-                        width: "95%",
-                    },
-                    content: {
-                        width: "95%",
-                    }
-                }
-            },
-            DriverSelect: {
-                defaultProps: {
-                    padding: 4,
-                    gap: 8,
-                    slotProps: {
-                        button: {
-                        },
-                    }
-                }
-            },
+            SchemaAssistant: SchemaAssistantLayout(palette, root),
+            DriverSelect: DriverSelectLayout(palette, root),
             DriverSummary: {
                 defaultProps: {
                     direction: "row",
@@ -705,14 +542,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            // ToolButton: {
-            //     defaultProps: {
-            //         variant: "text",
-            //         sx: {
-            //             borderRadius: 1,
-            //         }
-            //     },
-            // },
             ToolTextField: {
                 defaultProps: {
                     sx: {
@@ -757,73 +586,9 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     unmountOnHide: true,
                 }
             },
-            ToastList: {
-                defaultProps: {
-                    slotProps: {
-                        transition: {
-                            component: "Slide",
-                            slotProps: {
-                                slide: {
-                                    direction: "right",
-                                },
-                            }
-                        }
-                    }
-                },
-                styleOverrides: {
-                    root: {
-                        left: 32,
-                        bottom: 32,
-                    }
-                }
-            },
-            ConsoleLogPanel: {
-                defaultProps: {
-                    slotProps: {
-                        item: {
-                            sx: {
-                                cursor: "pointer",
-                                '&.Mui-selected': {
-                                    backgroundColor: palette.action.selected
-                                },
-                                "&:hover": {
-                                    backgroundColor: palette.action.hover,
-                                },
-                            }
-                        },
-                        details: {
-                            sx: {
-                                "&.no-selection": {
-                                    color: palette.text.disabled,
-                                    fontStyle: "italic",
-                                    textAlign: "center",
-                                },
-                            }
-                        },
-                    },
-                }
-            },
-            SplitPanel: {
-                styleOverrides: {
-                    splitter: {
-                        backgroundColor: palette.divider,
-                        "&[data-panel-group-direction='horizontal']": {
-                            width: "2px", // Szerokość uchwytu dla poziomego podziału
-                            height: "100%",
-                        },
-                        "&[data-panel-group-direction='vertical']": {
-                            height: "2px", // Wysokość uchwytu dla pionowego podziału
-                            width: "100%",
-                        },
-                        "&[data-resize-handle-state='hover']": {
-                            backgroundColor: palette.primary.main,
-                        },
-                        "&[data-resize-handle-state='drag']": {
-                            backgroundColor: palette.primary.main,
-                        },
-                    }
-                }
-            },
+            ToastList: ToastListLayout(palette, root),
+            ConsoleLogPanel: ConsoleLogPanelLayout(palette, root),
+            SplitPanel: SplitPanelLayout(palette, root),
             SettingInputControl: {
                 styleOverrides: {
                     root: {
@@ -966,24 +731,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 }
             },
             Code: CodeLayout(palette, root),
-            FormattedText: {
-                styleOverrides: {
-                    root: {
-                        '& p': {
-                            whiteSpace: "pre-wrap",
-                            display: "flex",
-                            alignItems: "center",
-                            margin: 0,
-                        },
-                        '& ul': {
-                            whiteSpace: "pre-wrap",
-                            display: "flex",
-                            alignItems: "center",
-                            margin: 0,
-                        }
-                    }
-                }
-            },
+            FormattedText: FormattedTextLayout(palette, root),
             InputField: InputFieldLayout(palette, root),
             InputDecorator: InputDecoratorLayout(palette, root),
             Button: ButtonLayout(palette, root),
