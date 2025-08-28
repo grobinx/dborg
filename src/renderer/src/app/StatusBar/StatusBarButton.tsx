@@ -1,8 +1,10 @@
-import { Button, ButtonProps, Menu, MenuItem, styled, useThemeProps } from "@mui/material";
+import { Button, Menu, MenuItem, styled, useThemeProps } from "@mui/material";
+import { BaseButton } from "@renderer/components/buttons/BaseButton";
+import { BaseButtonProps } from "@renderer/components/buttons/BaseButtonProps";
 import Tooltip from "@renderer/components/Tooltip";
 import React, { useState } from "react";
 
-export interface StatusBarButtonProps extends ButtonProps {
+export interface StatusBarButtonProps extends Omit<BaseButtonProps, 'size'> {
 }
 
 type StatusBarOption = {
@@ -40,16 +42,6 @@ function isStatusBarOption(options: any): options is StatusBarOption {
     return typeof options === "object" && options !== null && "label" in options && "value" in options;
 }
 
-const StatusBarButtonRoot = styled(Button, {
-    name: "StatusBarButton", // The component name
-    slot: "root", // The slot name
-})(({ theme }) => ({
-    color: theme.palette.statusBar.contrastText,
-    "& .IconWrapper-root": {
-        //color: theme.palette.statusBar.icon,
-    },
-}));
-
 /**
  * StatusBarButton component for the status bar.
  * @param props Props for the button.
@@ -82,13 +74,13 @@ const StatusBarButton: React.FC<StatusBarButtonOwnProps> = (props) => {
     return (
         <>
             <Tooltip title={toolTip}>
-                <StatusBarButtonRoot
+                <BaseButton
+                    componentName="StatusBarButton"
                     {...other}
-                    className={(className ?? "") + " StatusBarButton-root"}
                     onClick={handleOpenMenu} // Otwórz menu po kliknięciu
                 >
                     {other.children}
-                </StatusBarButtonRoot>
+                </BaseButton>
             </Tooltip>
             {options && (
                 <Menu

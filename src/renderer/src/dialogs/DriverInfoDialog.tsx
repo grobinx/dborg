@@ -1,8 +1,9 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, useThemeProps } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, useThemeProps } from '@mui/material';
 import { DialogProps } from '@toolpad/core';
 import { useTranslation } from 'react-i18next';
 import { DriverInfo } from 'src/api/db';
 import { DefaultDialogProps } from './DefaultDialogProps';
+import { Button } from '@renderer/components/buttons/Button';
 
 export interface DriverInfoDialogProps extends DefaultDialogProps {
     driver: DriverInfo;
@@ -103,7 +104,7 @@ function DriverInfoDialog({ open, onClose, payload }: DialogProps<DriverInfoDial
 
             {/* Akcje dialogu */}
             <DialogActions>
-                <Button onClick={() => onClose()} variant="contained" color="primary" {...slotProps?.button}>
+                <Button onClick={() => onClose()} color="primary" {...slotProps?.button}>
                     {t("close", "Close")}
                 </Button>
             </DialogActions>

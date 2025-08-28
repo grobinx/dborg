@@ -5,7 +5,7 @@ import { BaseButton } from "./BaseButton";
 export interface IconButtonOwnProps extends BaseButtonProps {
 }
 
-export const IconButton = React.memo<IconButtonOwnProps>((props) => {
+export const IconButton: React.FC<IconButtonOwnProps> = (props) => {
     const { ...other } = props;
 
     return (
@@ -14,4 +14,4 @@ export const IconButton = React.memo<IconButtonOwnProps>((props) => {
             {...other}
         />
     );
-});
+};

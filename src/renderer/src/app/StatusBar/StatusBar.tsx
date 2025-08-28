@@ -4,8 +4,7 @@ import React from "react";
 const StatusBarRoot = styled(Stack, {
     name: 'StatusBar', // The component name
     slot: 'root', // The slot name
-})(({ theme }) => ({
-    backgroundColor: theme.palette.background.statusBar,
+})(() => ({
 }));
 
 export interface StatusBarProps extends StackProps {

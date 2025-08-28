@@ -15,5 +15,10 @@ export const StatusBarLayout = (palette: Palette, _root: ThemeOptions): StatusBa
                 gap: 4,
             }
         },
+        styleOverrides: {
+            root: {
+                backgroundColor: palette.background.statusBar,
+            }
+        }
     }
 };

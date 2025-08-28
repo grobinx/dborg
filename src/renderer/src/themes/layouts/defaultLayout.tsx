@@ -18,6 +18,14 @@ import { StatusBarLayout } from "./default/StatusBar";
 import { MenuBarLayout } from "./default/MenuBar";
 import { SchemaAssistantLayout } from "./default/SchemaAssistant";
 import { DriverSelectLayout } from "./default/DriverSelect";
+import { themeColors } from "@renderer/types/colors";
+import { StatusBarButtonLayout } from "./default/StatusBarButton";
+import { DriverSummaryLayout } from "./default/DriverSummary";
+import { SchemaParametersLayout } from "./default/SchemaParameters";
+import { SchemaSummaryLayout } from "./default/SchemaSummary";
+import { SchemaListLayout } from "./default/SchemaList";
+import { TabsPanelLayout } from "./default/TabsPanel";
+import { TabPanelLayout } from "./default/TabPanel";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -83,28 +91,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             }
                         },
                         arrow: { style: { color: palette.background.tooltip } },
-                    }
-                }
-            },
-            MuiButton: {
-                defaultProps: {
-                    variant: "outlined",
-                },
-                styleOverrides: {
-                    root: {
-                        textTransform: 'none',
-                    }
-                },
-            },
-            MuiButtonGroup: {
-                defaultProps: {
-                    variant: "outlined",
-                },
-                styleOverrides: {
-                    grouped: {
-                        '&.ToolButton-root': {
-                            minWidth: 0,
-                        },
                     }
                 }
             },
@@ -318,230 +304,15 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             MenuBar: MenuBarLayout(palette, root),
             WindowControlButton: WindowControlButtonLayout(palette, root),
             StatusBar: StatusBarLayout(palette, root),
-            StatusBarButton: {
-                defaultProps: {
-                    size: "small",
-                    variant: "text",
-                    sx: {
-                        lineHeight: "1rem",
-                        minWidth: 0,
-                        borderRadius: 0,
-                        columnGap: 4,
-                        '& .IconWrapper-root': {
-                            fontSize: "1.2em",
-                        }
-                    }
-                }
-            },
+            StatusBarButton: StatusBarButtonLayout(palette, root),
             SchemaAssistant: SchemaAssistantLayout(palette, root),
             DriverSelect: DriverSelectLayout(palette, root),
-            DriverSummary: {
-                defaultProps: {
-                    direction: "row",
-                    sx: {
-                        '& .MuiBox-root': {
-                            paddingLeft: 10
-                        }
-                    },
-                }
-            },
-            SchemaParameters: {
-                defaultProps: {
-                    slotProps: {
-                        schemaParameters: {
-                            sx: {
-                                paddingRight: 8,
-                                '> .MuiBox-root': {
-                                    paddingBottom: 16,
-                                },
-                                '> .MuiBox-root > .MuiTextField-root': {
-                                    width: "100%",
-                                }
-                            }
-                            //paddingX: 16,
-                        },
-                        schemaGroup: {
-                            paddingBottom: 16,
-                        },
-                        groupProperties: {
-                            borderTop: "1px solid",
-                            borderColor: palette.action.focus,
-                            marginTop: 2,
-                            paddingTop: 6,
-                            //gap: 10,
-                            sx: {
-                                '& label.MuiFormControlLabel-root': {
-                                    marginLeft: 0
-                                },
-                                '& .MuiFormHelperText-root': {
-                                    marginTop: 2,
-                                    fontSize: "0.9rem",
-                                    lineHeight: 1.2
-                                },
-                                '& .item': {
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    //flexWrap: "wrap",
-                                    gap: 4,
-                                    padding: 10,
-                                },
-                                '& .item:hover': {
-                                    background: palette.action.hover,
-                                },
-                                '& .MuiFormControl-root.MuiTextField-root': {
-                                    // flexDirection: "row",
-                                    // alignItems: "center",
-                                    gap: 8,
-                                },
-                            }
-                        },
-                        schemaDriver: {
-                            paddingBottom: 16,
-                            sx: {
-                                '& .MuiBox-root': {
-                                    paddingLeft: 10
-                                },
-                                alignItems: "end"
-                            }
-                        },
-                        checkBoxField: {
-                            sx: {
-                                padding: 4,
-                            }
-                        },
-                    }
-                }
-            },
-            SchemaSummary: {
-                defaultProps: {
-                    slotProps: {
-                        list: {
-                            dense: true,
-                        },
-                    }
-                }
-            },
-            SchemaList: {
-                defaultProps: {
-                    sx: {
-                        fontSize: "1rem",
-                    },
-                    slotProps: {
-                        list: {
-                            dense: true,
-                        },
-                        item: {
-                            sx: {
-                                paddingY: 4,
-                                '& .status': {
-                                    marginRight: 12,
-                                    fontSize: "1.2em",
-                                    '& .MuiBadge-badge': {
-                                        right: -5,
-                                    }
-                                },
-                                '& .driver': {
-                                    marginTop: 6,
-                                },
-                                '&:not(:hover) :not(.Mui-selected)': {
-                                    '& .actions': {
-                                        visibility: "hidden",
-                                    }
-                                }
-                            },
-                        },
-                        itemButton: {
-                            sx: {
-                                gap: 8,
-                                paddingY: 0,
-                                //transition: "background-color 0.3s ease",
-                            }
-                        },
-                        itemText: {
-                            sx: {
-                                '& .MuiListItemText-primary': {
-                                    fontSize: "1em"
-                                },
-                                '& .MuiListItemText-secondary': {
-                                    display: "flex",
-                                    flexDirection: "row",
-                                    gap: 8,
-                                    '& .db-version': {
-                                        fontWeight: 600,
-                                    }
-                                }
-                            }
-                        },
-                        itemIcon: {
-                            sx: {
-                                minWidth: 0,
-                                padding: 4,
-                                flexDirection: "column",
-                                alignItems: "center",
-                                '&.driver': {
-                                    minWidth: 78,
-                                    '& .name': {
-                                        fontSize: "0.6rem",
-                                    }
-                                },
-                                '& img': {
-                                    width: 24,
-                                    height: 24,
-                                },
-                            }
-                        }
-                    }
-                },
-                styleOverrides: {
-                    root: {
-                        gap: 16,
-                        padding: 16,
-                        width: "90%",
-                        margin: "auto"
-                    },
-                    title: {
-                        //justifyItems: "center",
-                        flexDirection: "row",
-                        display: "flex",
-                        paddingBottom: 6,
-                        borderBottom: "1px solid",
-                        borderColor: palette.action.focus,
-                        width: "100%",
-                        paddingLeft: 16,
-                        paddingRight: 16,
-                        gap: 8,
-                    },
-                    content: {
-                        width: "90%",
-                    }
-                }
-            },
-            TabsPanel: {
-                styleOverrides: {
-                    root: {
-                        '&.ToolsPanel': {
-                            borderTop: '1px solid',
-                            borderColor: palette.mode === "dark" ? palette.statusBar.dark : palette.statusBar.light,
-                        }
-                    },
-                    header: {
-                        '&.position-top': {
-                            borderBottom: `1px solid ${palette.background.menuBar}`,
-                        },
-                        '&.position-bottom': {
-                            borderTop: `1px solid ${palette.background.menuBar}`,
-                        },
-                    }
-                }
-            },
-            TabPanelButtons: {
-                defaultProps: {
-                    sx: {
-                        padding: "2px 4px",
-                        gap: 2,
-                    }
-                }
-            },
+            DriverSummary: DriverSummaryLayout(palette, root),
+            SchemaParameters: SchemaParametersLayout(palette, root),
+            SchemaSummary: SchemaSummaryLayout(palette, root),
+            SchemaList: SchemaListLayout(palette, root),
+            TabsPanel: TabsPanelLayout(palette, root),
+            TabPanel: TabPanelLayout(palette, root),
             ToolTextField: {
                 defaultProps: {
                     sx: {
@@ -571,13 +342,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                             paddingX: 4,
                             paddingY: 0,
                         }
-                    }
-                }
-            },
-            TabPanelLabel: {
-                defaultProps: {
-                    sx: {
-                        gap: 6,
                     }
                 }
             },

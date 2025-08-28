@@ -1,6 +1,6 @@
 import {
-    Box, BoxProps, Button, ButtonProps, Stack,
-    styled, TextField, Typography, TypographyProps, useThemeProps
+    Box, BoxProps, ButtonProps, Stack,
+    styled, Typography, TypographyProps, useThemeProps
 } from "@mui/material";
 import * as React from 'react';
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,7 @@ import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import { ContainerType, useContainers } from "@renderer/contexts/ApplicationContext";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { Button } from "@renderer/components/buttons/Button";
 
 export interface SchemaAssistantProps extends BoxProps {
     slotProps?: {
@@ -24,7 +25,7 @@ export interface SchemaAssistantProps extends BoxProps {
         assistantContent?: BoxProps,
         title?: TypographyProps,
         stepperTitle?: TypographyProps,
-        button?: ButtonProps,
+        button?: React.ComponentProps<typeof Button>,
     },
 }
 

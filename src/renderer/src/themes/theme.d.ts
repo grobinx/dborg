@@ -15,16 +15,6 @@ import { AppSideBarProps } from "@renderer/components/app/AppSideBar";
 import { MenuBarProps } from "@renderer/app/MenuBar/MenuBar";
 import React from "react";
 import { ThemeIcons } from "./icons";
-import { StatusBarButtonProps } from "@renderer/app/StatusBar/StatusBarButton";
-import { ContainerButtonProps } from "@renderer/app/SideBar/ContainerButton";
-import { ContainerProps, PrimaryContainerProps } from "@renderer/app/PrimaryContainer";
-import { DriverSelectProps, SchemaAssistantProps } from "@renderer/containers/SchemaAssistant";
-import { ButtonProps } from "@mui/material";
-import { SchemaParametersProps } from "@renderer/containers/SchemaAssistant/SchemaParameters";
-import { DriverSummaryProps } from "@renderer/containers/SchemaAssistant/DriverSelect/DriverSummary";
-import { SchemaSummaryProps } from "@renderer/containers/SchemaAssistant/SchemaSummary/SchemaSummar";
-import { SchemaBookProps, SchemaListProps } from "@renderer/containers/SchemaBook";
-import { ToastListProps } from "@renderer/components/notifications/ToastList";
 import { TabsPanelProps } from "@renderer/components/TabsPanel/TabsPanel";
 import { TabPanelProps } from "@renderer/components/TabsPanel/TabPanel";
 import { TabPanelLabelProps } from "@renderer/components/TabsPanel/TabPanelLabel";
@@ -55,6 +45,13 @@ import { StatusBarComponent, StatusBarComponentProps, StatusBarComponentSlots } 
 import { MenuBarComponent, MenuBarComponentProps, MenuBarComponentSlots } from "./theme.d/MenuBar";
 import { SchemaAssistantComponent, SchemaAssistantComponentProps, SchemaAssistantComponentSlots } from "./theme.d/SchemaAssistant";
 import { DriverSelectComponent, DriverSelectComponentProps, DriverSelectComponentSlots } from "./theme.d/DriverSelect";
+import { StatusBarButtonComponent, StatusBarButtonComponentProps, StatusBarButtonComponentSlots } from "./theme.d/StatusBarButton";
+import { DriverSummaryComponent, DriverSummaryComponentProps, DriverSummaryComponentSlots } from "./theme.d/DriverSummary";
+import { SchemaParametersComponent, SchemaParametersComponentProps, SchemaParametersComponentSlots } from "./theme.d/SchemaParameters";
+import { SchemaSummaryComponent, SchemaSummaryComponentProps, SchemaSummaryComponentSlots } from "./theme.d/SchemaSummary";
+import { SchemaListComponent, SchemaListComponentProps, SchemaListComponentSlots } from "./theme.d/SchemaList";
+import { TabsPanelComponent, TabsPanelComponentProps, TabsPanelComponentSlots } from "./theme.d/TabsPanel";
+import { TabPanelComponent, TabPanelComponentSlots } from "./theme.d/TabPanel";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -132,18 +129,20 @@ declare module "@mui/material/styles" {
         ZoomState: ZoomStateComponentSlots;
         IconWrapper: IconWrapperComponentSlots;
         StatusBar: StatusBarComponentSlots;
+        StatusBarButton: StatusBarButtonComponentSlots;
         ContainerButton: 'root';
         ViewButton: 'root';
         PrimaryContainer: 'root';
         SchemaAssistant: SchemaAssistantComponentSlots;
         DriverSelect: DriverSelectComponentSlots;
-        SchemaParameters: "root" | "driver" | "group" | "properties";
-        SchemaSummary: "root" | "driver" | "schema";
+        DriverSummary: DriverSummaryComponentSlots;
+        SchemaParameters: SchemaParametersComponentSlots;
+        SchemaSummary: SchemaSummaryComponentSlots;
         SchemaBook: "root";
-        SchemaList: "root" | "content" | "title";
+        SchemaList: SchemaListComponentSlots;
         ToastList: ToastListComponentSlots;
-        TabsPanel: "root" | "header" | "content";
-        TabPanel: "content" | "button" | "label" | "buttons";
+        TabsPanel: TabsPanelComponentSlots;
+        TabPanel: TabPanelComponentSlots;
         UnboundBadge: "root";
         SplitPanel: SplitPanelComponentSlots;
         ToolTextField: "root";
@@ -166,22 +165,20 @@ declare module "@mui/material/styles" {
         ZoomState: ZoomStateComponentProps;
         IconWrapper: IconWrapperComponentProps;
         StatusBar: StatusBarComponentProps;
-        StatusBarButton: Partial<StatusBarButtonProps>;
+        StatusBarButton: StatusBarButtonComponentProps;
         ContainerButton: Partial<ContainerButtonProps>;
         ViewButton: Partial<ViewButtonProps>;
         Container: Partial<ContainerProps>;
         SchemaAssistant: SchemaAssistantComponentProps;
         DriverSelect: DriverSelectComponentProps;
-        SchemaParameters: Partial<SchemaParametersProps>;
-        DriverSummary: Partial<DriverSummaryProps>;
-        SchemaSummary: Partial<SchemaSummaryProps>;
+        SchemaParameters: SchemaParametersComponentProps;
+        DriverSummary: DriverSummaryComponentProps;
+        SchemaSummary: SchemaSummaryComponentProps;
         SchemaBook: Partial<SchemaBookProps>;
-        SchemaList: Partial<SchemaListProps>;
+        SchemaList: SchemaListComponentProps;
         ToastList: ToastListComponentProps;
-        TabsPanel: Partial<TabsPanelProps>;
-        TabPanel: Partial<TabPanelProps>;
-        TabPanelLabel: Partial<TabPanelLabelProps>;
-        TabPanelButtons: Partial<TabPanelButtonsProps>;
+        TabsPanel: TabsPanelComponentProps;
+        TabPanel: TabPanelComponent;
         ToolTextField: Partial<ToolTextFieldProps>;
         ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeProps>;
@@ -200,19 +197,10 @@ declare module "@mui/material/styles" {
         MenuBar?: MenuBarComponent;
         SideBar?: SideBarComponent;
         StatusBar?: StatusBarComponent;
-        StatusBarButton?: {
-            defaultProps?: ComponentsPropsList['StatusBarButton'];
-            styleOverrides?: ComponentsOverrides<Theme>['StatusBarButton'];
-            //variants?: ComponentsVariants['StatusBarButton']; 
-        };
+        StatusBarButton?: StatusBarButtonComponent;
         WindowControlButton?: WindowControlButtonComponent;
         ZoomState?: ZoomStateComponent;
         IconWrapper?: IconWrapperComponent;
-        StatusBar?: {
-            defaultProps?: ComponentsPropsList['StatusBar'];
-            styleOverrides?: ComponentsOverrides<Theme>['StatusBar'];
-            //variants?: ComponentsVariants['StatusBar'];
-        };
         ContainerButton?: {
             defaultProps?: ComponentsPropsList['ContainerButton'];
             styleOverrides?: ComponentsOverrides<Theme>['ContainerButton'];
@@ -230,52 +218,18 @@ declare module "@mui/material/styles" {
         };
         SchemaAssistant?: SchemaAssistantComponent;
         DriverSelect?: DriverSelectComponent;
-        SchemaParameters?: {
-            defaultProps?: ComponentsPropsList['SchemaParameters'];
-            styleOverrides?: ComponentsOverrides<Theme>['SchemaParameters'];
-            //variants?: ComponentsVariants['SchemaParameters'];
-        };
-        DriverSummary?: {
-            defaultProps?: ComponentsPropsList['DriverSummary'];
-            styleOverrides?: ComponentsOverrides<Theme>['DriverSummary'];
-            //variants?: ComponentsVariants['DriverSummary'];
-        };
-        SchemaSummary?: {
-            defaultProps?: ComponentsPropsList['SchemaSummary'];
-            styleOverrides?: ComponentsOverrides<Theme>['SchemaSummary'];
-            //variants?: ComponentsVariants['DriverSummary'];
-        };
+        SchemaParameters?: SchemaParametersComponent;
+        DriverSummary?: DriverSummaryComponent;
+        SchemaSummary?: SchemaSummaryComponent;
         SchemaBook?: {
             defaultProps?: ComponentsPropsList['SchemaBook'];
             styleOverrides?: ComponentsOverrides<Theme>['SchemaBook'];
             //variants?: ComponentsVariants['DriverSummary'];
         };
-        SchemaList?: {
-            defaultProps?: ComponentsPropsList['SchemaList'];
-            styleOverrides?: ComponentsOverrides<Theme>['SchemaList'];
-            //variants?: ComponentsVariants['DriverSummary'];
-        };
+        SchemaList?: SchemaListComponent;
         ToastList?: ToastListComponent;
-        TabsPanel?: {
-            defaultProps?: ComponentsPropsList['TabsPanel'];
-            styleOverrides?: ComponentsOverrides<Theme>['TabsPanel'];
-            //variants?: ComponentsVariants['TabsPanel'];
-        };
-        TabPanel?: {
-            defaultProps?: ComponentsPropsList['TabPanel'];
-            styleOverrides?: ComponentsOverrides<Theme>['TabPanel'];
-            //variants?: ComponentsVariants['TabPanel'];
-        };
-        TabPanelLabel?: {
-            defaultProps?: ComponentsPropsList['TabPanelLabel'];
-            styleOverrides?: ComponentsOverrides<Theme>['TabPanelLabel'];
-            //variants?: ComponentsVariants['TabPanelLabel'];
-        };
-        TabPanelButtons?: {
-            defaultProps?: ComponentsPropsList['TabPanelButtons'];
-            styleOverrides?: ComponentsOverrides<Theme>['TabPanelButtons'];
-            //variants?: ComponentsVariants['TabPanelButtons'];
-        };
+        TabsPanel?: TabsPanelComponent;
+        TabPanel?: TabPanelComponent;
         ToolTextField?: {
             defaultProps?: ComponentsPropsList['ToolTextField'];
             styleOverrides?: ComponentsOverrides<Theme>['ToolTextField'];

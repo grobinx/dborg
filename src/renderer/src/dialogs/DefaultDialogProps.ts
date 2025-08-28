@@ -1,8 +1,9 @@
-import { ButtonProps,TextFieldProps } from "@mui/material"
+import { TextFieldProps } from "@mui/material"
+import { Button } from "@renderer/components/buttons/Button"
 
 export interface DefaultDialogProps {
     slotProps?: {
         textField?: TextFieldProps,
-        button?: ButtonProps,
+        button?: React.ComponentProps<typeof Button>,
     }
 }

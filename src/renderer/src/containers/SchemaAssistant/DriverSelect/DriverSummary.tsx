@@ -14,12 +14,22 @@ const iconSizes: Record<IconWrapperSize, number> = {
     large: 128,
 };
 
-const DriverSummaryIconStyled = styled(IconWrapper)(({ size, theme }) => ({
+const DriverSummaryIconStyled = styled(IconWrapper, {
+    name: "DriverSummary",
+    slot: "icon",
+    shouldForwardProp: (prop) => !['size'].includes(prop as string),
+})(({ size, theme }) => ({
     width: iconSizes[size ?? "medium"],
     height: iconSizes[size ?? "medium"],
     transition: theme.transitions.create(["width", "height"], {
         duration: theme.transitions.duration.standard,
     }),
+}));
+
+const DriverSummaryStyled = styled(Stack, {
+    name: "DriverSummary",
+    slot: "root",
+})(() => ({
 }));
 
 export function DriverSummaryIcon(props: IconWrapperOwnProps): React.JSX.Element {
@@ -47,7 +57,7 @@ export default function DriverSummary(props: DriverSummaryProps): React.JSX.Elem
     const { t } = useTranslation();
 
     return (
-        <Stack className={(className ?? "") + " DriverSummary-root"} {...other}>
+        <DriverSummaryStyled className={(className ?? "") + " DriverSummary-root"} {...other}>
             {driver ? ([
                 <Box key="icon">
                     <DriverSummaryIcon {...slotProps?.driverIcon}>
@@ -85,6 +95,6 @@ export default function DriverSummary(props: DriverSummaryProps): React.JSX.Elem
             ]) : (
                 <Typography>No driver</Typography>
             )}
-        </Stack>
+        </DriverSummaryStyled>
     );
 }

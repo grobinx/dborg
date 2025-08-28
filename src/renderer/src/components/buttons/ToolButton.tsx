@@ -5,7 +5,7 @@ import { BaseButton } from "./BaseButton";
 export interface ToolButtonOwnProps extends BaseButtonProps {
 }
 
-export const ToolButton = React.memo<ToolButtonOwnProps>((props) => {
+export const ToolButton: React.FC<ToolButtonOwnProps> = (props) => {
     const { ...other } = props;
 
     return (
@@ -14,4 +14,4 @@ export const ToolButton = React.memo<ToolButtonOwnProps>((props) => {
             {...other}
         />
     );
-});
+};
