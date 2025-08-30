@@ -1,5 +1,4 @@
-import { alpha, Palette, ThemeOptions } from "@mui/material";
-import { DriverSelectComponent } from "@renderer/themes/theme.d/DriverSelect";
+import { alpha, darken, lighten, Palette, ThemeOptions } from "@mui/material";
 import { StatusBarButtonComponent } from "@renderer/themes/theme.d/StatusBarButton";
 import { themeColors } from "@renderer/types/colors";
 
@@ -7,7 +6,7 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
     return {
         styleOverrides: {
             root: {
-                color: palette.statusBar.contrastText,
+                //color: palette.statusBar.contrastText,
                 height: "100%",
                 display: "inline-flex",
                 alignItems: "center",
@@ -37,7 +36,7 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
                 },
                 ...themeColors.reduce((acc, color) => {
                     acc[`&.color-${color}`] = {
-                        color: palette[color].contrastText,
+                        color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
 
                         "&.hover:not(.disabled):not(.loading)": {
                             backgroundColor: alpha(palette[color].main, 0.2),
