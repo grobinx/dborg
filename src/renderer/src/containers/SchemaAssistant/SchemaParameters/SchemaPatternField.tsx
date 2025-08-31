@@ -5,9 +5,9 @@ import { PropertiesInfo } from 'src/api/db';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { textFieldWidth } from './Utils';
 import { useToast } from '@renderer/contexts/ToastContext';
-import ToolButton from '@renderer/components/ToolButton';
 import ColorPicker from '@renderer/components/useful/ColorPicker';
 import Tooltip from '@renderer/components/Tooltip';
+import { ToolButton } from '@renderer/components/buttons/ToolButton';
 
 interface SchemaPatternFieldProps {
     properties: PropertiesInfo,

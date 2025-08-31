@@ -3,8 +3,8 @@ import React from 'react';
 import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
-import ToolButton from '@renderer/components/ToolButton';
 import Tooltip from '@renderer/components/Tooltip';
+import { ToolButton } from '@renderer/components/buttons/ToolButton';
 
 export type SchemaUsePasswordType = "ask" | "save" | "empty" | undefined;
 

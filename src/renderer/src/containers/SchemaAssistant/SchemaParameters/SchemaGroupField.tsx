@@ -4,8 +4,8 @@ import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { useToast } from '@renderer/contexts/ToastContext';
-import ToolButton from '@renderer/components/ToolButton';
 import Tooltip from '@renderer/components/Tooltip';
+import { ToolButton } from '@renderer/components/buttons/ToolButton';
 
 interface SchemaGroupFieldProps {
     schemaGroup: string | undefined,
