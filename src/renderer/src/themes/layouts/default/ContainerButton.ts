@@ -7,6 +7,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
     return {
         styleOverrides: {
             root: {
+                outline: "none",
                 transition: "all 0.2s ease-in-out",
                 cursor: "pointer",
                 display: "flex",
@@ -28,7 +29,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                     acc[`&.color-${color}`] = {
                         color: palette.mode === "light" ? darken(palette[color].main, 0.2) : lighten(palette[color].main, 0.2),
 
-                        "&.hover:not(.disabled):not(.loading)": {
+                        "&.hover:not(.disabled):not(.loading), &.focused-keyboard:not(.selected)": {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.3),
                             '&.selected': {

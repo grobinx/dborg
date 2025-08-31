@@ -7,6 +7,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
     return {
         styleOverrides: {
             root: {
+                outline: "none",
                 transition: "all 0.2s ease-in-out",
                 cursor: "pointer",
                 display: "flex",

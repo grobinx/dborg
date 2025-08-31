@@ -1,3 +1,4 @@
+import { Palette } from "@mui/material";
 import { Size } from "@renderer/types/sizes";
 import { CSSProperties } from "react";
 

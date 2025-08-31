@@ -129,12 +129,12 @@ export const BaseButtonContent: React.FC<BaseButtonContentProps> = (props) => {
 
 export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const {
-        ref, slots, componentName, className,
-        disabled, loading, 
-        type = 'button', 
-        selected, 
-        size = 'medium', 
-        color = 'main', 
+        ref, slots, componentName, className, component, 
+        disabled, loading,
+        type = 'button',
+        selected,
+        size = 'medium',
+        color = 'main',
         value, toggle, defaultValue, showLoadingIndicator, dense,
         onFocus, onBlur, onClick, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, onKeyDown, onKeyUp, onChange,
         ...otherProps
@@ -147,11 +147,14 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const toggleValues = React.useMemo(() => normalizeToggle(toggle), [toggle]);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(defaultValue);
     const isInteractable = !disabled && !loading;
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
 
     const ContentComponent = slots?.content || BaseButtonContent;
     const LoadingComponent = slots?.loading || BaseButtonLoading;
 
     const StyledBaseButton = React.useMemo(() => createStyledBaseButton(componentName ?? "BaseButton"), [componentName]);
+
+    React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
 
     const classes = React.useMemo(() => {
         return clsx([
@@ -251,6 +254,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
                 if (e.key === 'Enter') {
                     click();
+                    buttonRef.current?.click();
                 }
             }
             onKeyDown?.(e);
@@ -265,6 +269,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
                 if (e.key === ' ') {
                     click();
+                    buttonRef.current?.click();
                 }
             }
             onKeyUp?.(e);
@@ -289,8 +294,9 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
     return (
         <StyledBaseButton
+            as={component}
             {...otherProps}
-            ref={ref}
+            ref={buttonRef}
             className={clsx(
                 `${componentName}-root`,
                 classes,

@@ -1,10 +1,11 @@
-import { darken, lighten, Palette, ThemeOptions } from "@mui/material";
+import { alpha, darken, lighten, Palette, ThemeOptions } from "@mui/material";
 import { WindowControlButtonComponent } from "@renderer/themes/theme.d/WindowControlButton";
 
 export const WindowControlButtonLayout = (palette: Palette, _root: ThemeOptions): WindowControlButtonComponent => {
     return {
         styleOverrides: {
             root: {
+                outline: "none",
                 transition: "all 0.2s ease-in-out",
                 display: "flex",
                 color: palette.mode === "dark" ? lighten(palette.menuBar.main, 0.6) : darken(palette.menuBar.main, 0.6),
@@ -20,7 +21,7 @@ export const WindowControlButtonLayout = (palette: Palette, _root: ThemeOptions)
                         height: '1.3rem',
                     }
                 },
-                '&.hover': {
+                '&.hover, &.focused-keyboard': {
                     backgroundColor: palette.action.hover,
                     '&.CloseWindowControlButton': {
                         backgroundColor: palette.error.main,

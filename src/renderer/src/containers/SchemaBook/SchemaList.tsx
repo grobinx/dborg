@@ -6,25 +6,24 @@ import {
     ListItemProps,
     ListSubheader,
     Badge,
-    ButtonGroup,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionInfo } from "src/api/db";
-import { IconWrapperProps } from "@renderer/themes/icons";
+import { IconWrapperOwnProps, IconWrapperProps } from "@renderer/themes/icons";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
-import ToolButton from "@renderer/components/ToolButton";
 import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
 import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import { Button } from "@renderer/components/buttons/Button";
 import { IconButton } from "@renderer/components/buttons/IconButton";
+import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -40,7 +39,7 @@ export interface SchemaListProps extends StackProps {
         content?: BoxProps,
         list?: ListProps,
         item?: ListItemProps,
-        icon?: IconWrapperProps,
+        icon?: IconWrapperOwnProps,
         itemButton?: ListItemButtonProps,
         itemIcon?: ListItemIconProps,
         itemText?: ListItemTextProps
@@ -444,7 +443,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             onClick={() => setGroupList(!groupList)}
                             size="large"
                         >
-                            <theme.icons.GroupList {...slotProps?.icon} />
+                            <theme.icons.GroupList />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
@@ -498,7 +497,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             <ButtonGroup className="actions">
                                                 <Tooltip title={t("text-connection", "Test connection")}>
                                                     <ToolButton
-                                                        size="large"
                                                         className="test"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
@@ -516,7 +514,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 </Tooltip>
                                                 <Tooltip title={t("edit-schema", "Edit Schema")}>
                                                     <ToolButton
-                                                        size="large"
                                                         className="edit"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
@@ -529,7 +526,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 </Tooltip>
                                                 <Tooltip title={t("clone-edit-schema", "Clone and edit as new schema")}>
                                                     <ToolButton
-                                                        size="large"
                                                         className="clone"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
@@ -544,7 +540,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             <ButtonGroup className="actions">
                                                 <Tooltip title={t("delete-schema", "Delete schema")}>
                                                     <ToolButton
-                                                        size="large"
                                                         className="delete"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
