@@ -74,16 +74,16 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
 
     const renderViewButtons = (views: View[]) => {
         return ([
-            ...views.map(({ id, icon, label }) => (
+            ...views.map(({ id, icon, label }, index) => (
                 <ViewButton
                     key={id}
-                    itemID={id}
                     selected={selectedView?.id === id}
                     onClick={() => queueMessage(Messages.SWITCH_VIEW, id)}
                     icon={resolveIcon(theme, icon)}
                     label={label}
                     expanded={expanded}
                     placement={placement}
+                    index={index}
                 />
             ))
         ]);
@@ -118,7 +118,6 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 return (
                     <ContainerButton
                         key={container.type}
-                        itemID={container.type}
                         selected={selectedContainer?.type === container.type}
                         onClick={() => queueMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}
@@ -143,7 +142,6 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 return (
                     <ContainerButton
                         key={container.type}
-                        itemID={container.type}
                         selected={selectedContainer?.type === container.type}
                         onClick={() => queueMessage(Messages.SWITCH_CONTAINER, container.type)}
                         expanded={expanded}

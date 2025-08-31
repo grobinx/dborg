@@ -52,6 +52,8 @@ import { SchemaSummaryComponent, SchemaSummaryComponentProps, SchemaSummaryCompo
 import { SchemaListComponent, SchemaListComponentProps, SchemaListComponentSlots } from "./theme.d/SchemaList";
 import { TabsPanelComponent, TabsPanelComponentProps, TabsPanelComponentSlots } from "./theme.d/TabsPanel";
 import { TabPanelComponent, TabPanelComponentSlots } from "./theme.d/TabPanel";
+import { ContainerButtonComponent, ContainerButtonComponentProps, ContainerButtonComponentSlots } from "./theme.d/ContainerButton";
+import { ViewButtonComponent, ViewButtonComponentProps, ViewButtonComponentSlots } from "./theme.d/ViewButton";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -130,9 +132,8 @@ declare module "@mui/material/styles" {
         IconWrapper: IconWrapperComponentSlots;
         StatusBar: StatusBarComponentSlots;
         StatusBarButton: StatusBarButtonComponentSlots;
-        ContainerButton: 'root';
-        ViewButton: 'root';
-        PrimaryContainer: 'root';
+        ContainerButton: ContainerButtonComponentSlots;
+        ViewButton: ViewButtonComponentSlots;
         SchemaAssistant: SchemaAssistantComponentSlots;
         DriverSelect: DriverSelectComponentSlots;
         DriverSummary: DriverSummaryComponentSlots;
@@ -166,9 +167,8 @@ declare module "@mui/material/styles" {
         IconWrapper: IconWrapperComponentProps;
         StatusBar: StatusBarComponentProps;
         StatusBarButton: StatusBarButtonComponentProps;
-        ContainerButton: Partial<ContainerButtonProps>;
-        ViewButton: Partial<ViewButtonProps>;
-        Container: Partial<ContainerProps>;
+        ContainerButton: ContainerButtonComponentProps;
+        ViewButton: ViewButtonComponentProps;
         SchemaAssistant: SchemaAssistantComponentProps;
         DriverSelect: DriverSelectComponentProps;
         SchemaParameters: SchemaParametersComponentProps;
@@ -201,21 +201,8 @@ declare module "@mui/material/styles" {
         WindowControlButton?: WindowControlButtonComponent;
         ZoomState?: ZoomStateComponent;
         IconWrapper?: IconWrapperComponent;
-        ContainerButton?: {
-            defaultProps?: ComponentsPropsList['ContainerButton'];
-            styleOverrides?: ComponentsOverrides<Theme>['ContainerButton'];
-            //variants?: ComponentsVariants['ContainerButton'];
-        };
-        ViewButton?: {
-            defaultProps?: ComponentsPropsList['ViewButton'];
-            styleOverrides?: ComponentsOverrides<Theme>['ViewButton'];
-            //variants?: ComponentsVariants['ViewButton'];
-        };
-        Container?: {
-            defaultProps?: ComponentsPropsList['PrimaryContainer'];
-            styleOverrides?: ComponentsOverrides<Theme>['PrimaryContainer'];
-            //variants?: ComponentsVariants['PrimaryContainer'];
-        };
+        ContainerButton?: ContainerButtonComponent;
+        ViewButton?: ViewButtonComponent;
         SchemaAssistant?: SchemaAssistantComponent;
         DriverSelect?: DriverSelectComponent;
         SchemaParameters?: SchemaParametersComponent;

@@ -397,7 +397,6 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
             <Tooltip title={t("delete-sql-editor-tab", "Delete SQL Editor tab")}>
                 <span>
                     <ToolButton
-                        color="error"
                         onClick={handleDeleteSqlEditor}
                         size="small"
                     >

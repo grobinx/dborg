@@ -1,11 +1,13 @@
 import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps } from "@mui/material";
+import { BaseButton } from "@renderer/components/buttons/BaseButton";
+import { BaseButtonProps } from "@renderer/components/buttons/BaseButtonProps";
 import Tooltip from "@renderer/components/Tooltip";
 import clsx from "@renderer/utils/clsx";
 import React, { ReactElement, ReactNode } from "react";
 
 export type Placement = "top" | "bottom" | "left" | "right";
 
-export interface ContainerButtonProps extends ButtonProps {
+export interface ContainerButtonProps extends BaseButtonProps {
 }
 
 interface ContainerButtonOwnProps extends ContainerButtonProps {
@@ -17,18 +19,8 @@ interface ContainerButtonOwnProps extends ContainerButtonProps {
     label?: string,
 }
 
-const ContainerButtonRoot = styled(Button, {
-    name: 'ContainerButton', // The component name
-    slot: 'root', // The slot name
-})(({ theme }) => ({
-    minWidth: 0,
-    color: theme.palette.sideBar.contrastText,
-    lineHeight: 0,
-    fontSize: "inherit",
-}));
-
 const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
-    const { toolTip, expanded, selected, className, itemID, placement, icon, label, ...other } = useThemeProps({ name: 'ContainerButton', props });
+    const { toolTip, expanded, className, placement, icon, label, ...other } = useThemeProps({ name: 'ContainerButton', props });
     const [position, setPosition] = React.useState<{
         horizontal: boolean,
         toolTipPlacement: Placement,
@@ -54,14 +46,13 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
             disableHoverListener={expanded}
             placement={position.toolTipPlacement}
         >
-            <ContainerButtonRoot
+            <BaseButton
+                componentName="ContainerButton"
                 {...other}
-                className={clsx(className, "ContainerButton-root", selected && 'selected')}
-                fullWidth={position.horizontal}
-                sx={{
-                    justifyContent: 'flex-start',
-                    flexDirection: position.stackDirection,
-                }}
+                className={clsx(
+                    `placement-${placement}`,
+                    expanded && 'expanded'
+                )}
             >
                 {icon}
                 <Collapse in={expanded} orientation="horizontal" timeout={100}>
@@ -86,7 +77,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                     }
 
                 </Collapse>
-            </ContainerButtonRoot>
+            </BaseButton>
         </Tooltip >
     );
 }

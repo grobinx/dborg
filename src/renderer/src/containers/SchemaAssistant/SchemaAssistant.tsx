@@ -280,7 +280,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <InputDecorator indicator={false}>
                             <SearchField
-                                placeholder={t("search", "Search...")}
+                                placeholder={t("search---", "Search...")}
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                                 inputProps={{

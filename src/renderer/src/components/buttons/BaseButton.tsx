@@ -168,8 +168,9 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
             focusedSource && `focused-${focusedSource}`,
             (value ?? currentValue) && `value-${(value ?? currentValue)}`,
             (value ?? currentValue) && 'has-value',
+            className,
         ]);
-    }, [size, color, disabled, loading, selected, focused, active, hover, type, value, currentValue, focusedSource]);
+    }, [size, color, disabled, loading, selected, focused, active, hover, type, value, currentValue, focusedSource, className]);
 
     const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
         if (isInteractable) {
@@ -293,7 +294,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
             className={clsx(
                 `${componentName}-root`,
                 classes,
-                className
             )}
             disabled={disabled || !!loading}
             type={type}

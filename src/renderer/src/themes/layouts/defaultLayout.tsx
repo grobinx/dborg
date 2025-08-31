@@ -26,6 +26,8 @@ import { SchemaSummaryLayout } from "./default/SchemaSummary";
 import { SchemaListLayout } from "./default/SchemaList";
 import { TabsPanelLayout } from "./default/TabsPanel";
 import { TabPanelLayout } from "./default/TabPanel";
+import { ContainerButtonLayout } from "./default/ContainerButton";
+import { ViewButtonLayout } from "./default/ViewButton";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -240,65 +242,8 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             },
 
             IconWrapper: IconWrapperLayout(palette, root),
-            ContainerButton: {
-                defaultProps: {
-                    size: "small",
-                    variant: "text",
-                },
-                styleOverrides: {
-                    root: {
-                        color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                        '& .IconWrapper-root': {
-                            fontSize: "1.8em",
-                        },
-                        '&:hover': {
-                            color: palette.sideBar.contrastText,
-                        },
-                        '&.selected': {
-                            outlineColor: palette.sideBar.contrastText,
-                            outlineWidth: 1,
-                            outlineStyle: 'solid',
-                            backgroundColor: palette.mode === "dark" ? lighten(palette.background.sideBar, 0.1) : darken(palette.background.sideBar, 0.1),
-                            color: palette.sideBar.contrastText,
-                        },
-                        '& .MuiTypography-root': {
-                            paddingLeft: 6,
-                            paddingRight: 6,
-                            paddingTop: 2,
-                            paddingBottom: 2,
-                            lineHeight: 1.5,
-                        }
-                    }
-                }
-            },
-            ViewButton: {
-                defaultProps: {
-                    size: "small",
-                    variant: "text",
-                },
-                styleOverrides: {
-                    root: {
-                        color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                        '&:hover': {
-                            color: palette.sideBar.contrastText,
-                        },
-                        '& .IconWrapper-root': {
-                            fontSize: "1.8em",
-                        },
-                        '&.selected': {
-                            backgroundColor: palette.mode === "dark" ? lighten(palette.background.sideBar, 0.2) : darken(palette.background.sideBar, 0.2),
-                            color: palette.sideBar.contrastText,
-                        },
-                        '& .MuiTypography-root': {
-                            paddingLeft: 6,
-                            paddingRight: 6,
-                            paddingTop: 2,
-                            paddingBottom: 2,
-                            lineHeight: 1.5,
-                        }
-                    }
-                }
-            },
+            ContainerButton: ContainerButtonLayout(palette, root),
+            ViewButton: ViewButtonLayout(palette, root),
             SideBar: SideBarLayout(palette, root),
             ZoomState: ZoomStateLayout(palette, root),
             MenuBar: MenuBarLayout(palette, root),

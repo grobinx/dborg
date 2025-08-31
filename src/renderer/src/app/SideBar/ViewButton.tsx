@@ -1,10 +1,12 @@
-import { Button, ButtonProps, Collapse, styled, Typography, useThemeProps, Zoom } from "@mui/material";
-import React, { ReactElement, ReactNode } from "react";
+import { Button, Collapse, styled, Typography, useThemeProps, Zoom } from "@mui/material";
+import React, { ReactNode } from "react";
 import { Placement } from "./ContainerButton";
 import Tooltip from "@renderer/components/Tooltip";
 import clsx from "@renderer/utils/clsx";
+import { BaseButton } from "@renderer/components/buttons/BaseButton";
+import { BaseButtonProps } from "@renderer/components/buttons/BaseButtonProps";
 
-export interface ViewButtonProps extends ButtonProps {
+export interface ViewButtonProps extends BaseButtonProps {
 }
 
 interface ViewButtonOwnProps extends ViewButtonProps {
@@ -17,18 +19,8 @@ interface ViewButtonOwnProps extends ViewButtonProps {
     index?: number,
 }
 
-const ViewButtonRoot = styled(Button, {
-    name: 'ViewButton', // The component name
-    slot: 'root', // The slot name
-})(({ theme }) => ({
-    minWidth: 0,
-    color: theme.palette.sideBar.contrastText,
-    lineHeight: 0,
-    fontSize: "inherit",
-}));
-
 const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
-    const { toolTip, expanded, selected, className, itemID, placement, icon, label, index, ...other } = useThemeProps({ name: 'ViewButton', props });
+    const { toolTip, expanded, className, placement, icon, label, index, ...other } = useThemeProps({ name: 'ViewButton', props });
     const [position, setPosition] = React.useState<{
         horizontal: boolean,
         toolTipPlacement: Placement,
@@ -55,14 +47,13 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                 disableHoverListener={expanded}
                 placement={position.toolTipPlacement}
             >
-                <ViewButtonRoot
+                <BaseButton
+                    componentName="ViewButton"
                     {...other}
-                    className={clsx(className, "ViewButton-root", selected && 'selected')}
-                    fullWidth={position.horizontal}
-                    sx={{
-                        justifyContent: 'flex-start',
-                        flexDirection: position.stackDirection,
-                    }}
+                    className={clsx(
+                        `placement-${placement}`,
+                        expanded && 'expanded'
+                    )}
                 >
                     {icon}
                     <Collapse in={expanded} orientation="horizontal" timeout={100}>
@@ -87,7 +78,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                         }
 
                     </Collapse>
-                </ViewButtonRoot>
+                </BaseButton>
             </Tooltip>
         </Zoom>
     );

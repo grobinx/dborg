@@ -16,7 +16,7 @@ export interface IconWrapperOwnProps extends IconWrapperProps {
 }
 
 export const IconWrapperRoot = styled('span', {
-    name: 'IconWrapper', 
+    name: 'IconWrapper',
     slot: 'root',
     shouldForwardProp: (prop) => prop !== 'color',
 })<{ color?: ThemeColor }>(({ theme, color }) => ({
@@ -153,17 +153,14 @@ export interface ThemeIcons {
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {
     if (typeof icon === 'function') {
-        icon = icon();
+        return icon();
     }
     if (typeof icon === 'string') {
-        // Jeśli `icon` jest ciągiem znaków, sprawdź w `theme.icons`
         if (theme.icons[icon]) {
             return React.createElement(theme.icons[icon]);
         } else {
-            // Jeśli nie ma w `theme.icons`, wyświetl jako obrazek
             return <img src={icon} alt={alt} style={{ width: 24, height: 24 }} />;
         }
-    } else {
-        return icon;
     }
+    return icon;
 };
