@@ -146,7 +146,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 },
             },
             loadingContent: {
-                fontSize: "0.875rem",
+                fontSize: "0.875em",
                 opacity: 0.8,
             }
         }

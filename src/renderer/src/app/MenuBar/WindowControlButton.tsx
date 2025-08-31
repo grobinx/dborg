@@ -1,37 +1,26 @@
-import { Button, ButtonProps, styled, useThemeProps } from "@mui/material";
+import { useThemeProps } from "@mui/material";
+import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import Tooltip from "@renderer/components/Tooltip";
 import React from "react";
 
-export interface WindowControlButtonProps extends ButtonProps {
+export interface WindowControlButtonProps extends React.ComponentProps<typeof BaseButton> {
 }
 
 interface WindowControlButtonOwnProps extends WindowControlButtonProps {
     toolTip?: string,
 }
 
-const WindowControlButtonRoot = styled(Button, {
-    name: 'WindowControlButton', // The component name
-    slot: 'root', // The slot name
-})(({ theme }) => ({
-    minWidth: 0,
-    color: theme.palette.menuBar?.contrastText,
-    lineHeight: 0,
-    fontSize: "inherit",
-    '& .IconWrapper-root': {
-        color: theme.palette.menuBar?.icon
-    },
-}));
-
 const WindowControlButton: React.FC<WindowControlButtonOwnProps> = (props) => {
     const { toolTip, className, ...other } = useThemeProps({ name: 'WindowControlButton', props });
     return (
         <Tooltip title={toolTip}>
-            <WindowControlButtonRoot
+            <BaseButton
+                componentName="WindowControlButton"
                 {...other}
-                className={className + " WindowControlButton-root"}
+                className={className}
             >
                 {other.children}
-            </WindowControlButtonRoot>
+            </BaseButton>
         </Tooltip>
     );
 }

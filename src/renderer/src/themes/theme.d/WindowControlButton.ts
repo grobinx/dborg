@@ -9,5 +9,9 @@ export type WindowControlButtonComponent = {
 }
 
 export type WindowControlButtonComponentSlots =
-    "root" 
+    "root"
+    | "content"
+    | "loading"
+    | "loadingIndicator"
+    | "loadingContent"
     ;

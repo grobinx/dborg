@@ -18,7 +18,6 @@ import { StatusBarLayout } from "./default/StatusBar";
 import { MenuBarLayout } from "./default/MenuBar";
 import { SchemaAssistantLayout } from "./default/SchemaAssistant";
 import { DriverSelectLayout } from "./default/DriverSelect";
-import { themeColors } from "@renderer/types/colors";
 import { StatusBarButtonLayout } from "./default/StatusBarButton";
 import { DriverSummaryLayout } from "./default/DriverSummary";
 import { SchemaParametersLayout } from "./default/SchemaParameters";

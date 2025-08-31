@@ -8,6 +8,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
+                cursor: "pointer",
                 display: "flex",
                 color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
                 minWidth: 0,
