@@ -6,7 +6,7 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { PatternField } from "@renderer/components/inputs/PatternField";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
-import { TextField } from "@renderer/components/inputs/TextField";
+import { StringField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
@@ -112,7 +112,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <TextField
+                                <StringField
                                     size={size}
                                     placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                     maxLength={50}

@@ -161,7 +161,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         adornments,
         placeholder,
         autoCollapse,
-        color = "primary",
+        color = "main",
         onValidate,
         onFocus,
         onBlur,

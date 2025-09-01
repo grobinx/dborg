@@ -4,6 +4,7 @@ import BaseTextField from "../base/BaseTextField";
 import { validateEmail, validateStringLength } from "./validations";
 import React from "react";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { EmailField } from "@renderer/components/inputs/EmailField";
 
 export const EmailSetting: React.FC<{
     setting: SettingTypeEmail;
@@ -32,15 +33,12 @@ export const EmailSetting: React.FC<{
                 )}
             policy={() => setting.maxLength ? `${(value ?? "").length} / ${setting.maxLength}` : undefined}
         >
-            <BaseTextField
+            <EmailField
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
-                type="email"
-                sx={{
-                    width: calculateWidth(setting)
-                }}
+                width={calculateWidth(setting)}
                 value={value ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setValue(e.target.value);
+                onChange={(value: string) => {
+                    setValue(value);
                 }}
                 disabled={disabledControl(setting)}
                 onClick={onClick}

@@ -5,6 +5,7 @@ import { validateNumberRange, validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { NumberField } from "@renderer/components/inputs/NumberField";
 
 export const NumberSetting: React.FC<{
     setting: SettingTypeNumber;
@@ -44,22 +45,15 @@ export const NumberSetting: React.FC<{
                 );
             }}
         >
-            <BaseTextField
+            <NumberField
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
-                type="number"
-                sx={{
-                    width: calculateWidth(setting)
-                }}
-                slotProps={{
-                    htmlInput: {
-                        min: setting.min,
-                        max: setting.max,
-                        step: setting.step || 1,
-                    }
-                }}
-                value={String(value) ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setValue(!!e.target.value ? Number(e.target.value) : undefined);
+                width={calculateWidth(setting)}
+                min={setting.min}
+                max={setting.max}
+                step={setting.step || 1}
+                value={value}
+                onChange={(value: number | null | undefined) => {
+                    setValue(value ?? undefined);
                 }}
                 disabled={disabledControl(setting)}
                 onClick={onClick}

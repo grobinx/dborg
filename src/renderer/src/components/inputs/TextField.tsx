@@ -5,7 +5,7 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
-interface TextFieldProps extends BaseInputProps {
+interface StringFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
     maxLength?: number;
     minLength?: number;
@@ -13,7 +13,7 @@ interface TextFieldProps extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const TextField: React.FC<TextFieldProps> = (props) => {
+export const StringField: React.FC<StringFieldProps> = (props) => {
     const {
         value,
         maxLength,
@@ -48,4 +48,4 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
     )
 };
 
-TextField.displayName = "TextField";
+StringField.displayName = "TextField";

@@ -4,13 +4,14 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import BaseTextField from "../base/BaseTextField";
 import { useMask } from "@react-input/mask";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { StringField } from "@renderer/components/inputs/TextField";
+import { PatternField } from "@renderer/components/inputs/PatternField";
 
 export const PatternSetting: React.FC<{
     setting: SettingTypePattern;
     onClick?: () => void;
     selected?: boolean;
 }> = ({ setting, selected, onClick }) => {
-    const inputRef = useMask({ mask: setting.mask, replacement: setting.replacement, showMask: true });
     const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
 
@@ -27,21 +28,14 @@ export const PatternSetting: React.FC<{
             selected={selected}
             onClick={onClick}
         >
-            <BaseTextField
+            <PatternField
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
-                sx={{
-                    width: calculateWidth(setting),
-                    fontFamily: "monospace",
-                }}
-                slotProps={{
-                    input: {
-                        style: { fontFamily: "monospace", fontSize: "0.9em" },
-                    },
-                }}
-                inputRef={inputRef}
+                width={calculateWidth(setting)}
+                mask={setting.mask}
+                replacement={setting.replacement}
                 value={value ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setValue(e.target.value);
+                onChange={(value: string) => {
+                    setValue(value);
                 }}
                 disabled={disabledControl(setting)}
                 onClick={onClick}
