@@ -48,8 +48,8 @@ export const StringSetting: React.FC<{
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 width={calculateWidth(setting)}
                 value={value ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setValue(e.target.value);
+                onChange={(value: string | undefined) => {
+                    setValue(value);
                 }}
                 disabled={disabledControl(setting)}
                 onClick={onClick}

@@ -29,7 +29,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                     acc[`&.color-${color}`] = {
                         color: palette.mode === "light" ? darken(palette[color].main, 0.2) : lighten(palette[color].main, 0.2),
 
-                        "&.hover:not(.disabled):not(.loading)": {
+                        "&.hover:not(.disabled):not(.loading), &.focused-keyboard": {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.3),
                             '&.selected': {
