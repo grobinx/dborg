@@ -1,12 +1,8 @@
 import React from "react";
-import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabContentSlot, ITabLabelSlot, resolveContentSlotFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { Box, useThemeProps } from "@mui/material";
+import { ITabContentSlot } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
-import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
-import { resolveIcon } from "@renderer/themes/icons";
-import ToolButton from "@renderer/components/ToolButton";
 import { useMessages } from "@renderer/contexts/MessageContext";
-import { SQL_EDITOR_CLOSE } from "../Connections/ConnectionView/EdiorsTabs";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { createContentComponent } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";

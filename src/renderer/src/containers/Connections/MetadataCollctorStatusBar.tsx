@@ -1,10 +1,10 @@
 import React from "react";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { useTheme, Menu, MenuItem, IconButton, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import { useTheme, Menu, ListItem, ListItemIcon, ListItemText, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { appStatusBarButtons } from "@renderer/app/App";
-import ToolButton from "@renderer/components/ToolButton";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 interface GetMetadataStatus {
     status: "start" | "process" | "error" | "success" | "end";
@@ -199,12 +199,14 @@ const MetadataCollctorStatusBar: React.FC = () => {
                                 },
                             }}
                         />
-                        <ToolButton
-                            onClick={() => handleCancel(connectionId)}
-                            label={t("cancel", "Cancel")}
-                        >
-                            <theme.icons.Close />
-                        </ToolButton>
+                        <Tooltip title={t("cancel", "Cancel")}>
+                            <ToolButton
+                                onClick={() => handleCancel(connectionId)}
+                                size="small"
+                            >
+                                <theme.icons.Close />
+                            </ToolButton>
+                        </Tooltip>
                     </ListItem>
                 ))}
             </Menu>

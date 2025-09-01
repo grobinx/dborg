@@ -3,10 +3,10 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import BaseTextField from "../base/BaseTextField";
 import { validatePassword, validateStringLength, validateTextRows } from "./validations";
 import { InputAdornment, Stack, Tooltip, useTheme } from "@mui/material";
-import ToolButton from "@renderer/components/ToolButton";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 export const PasswordSetting: React.FC<{
     setting: SettingTypePassword;

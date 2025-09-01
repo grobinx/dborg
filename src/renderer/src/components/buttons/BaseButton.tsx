@@ -1,9 +1,8 @@
 import React from 'react';
-import { styled, SxProps, Theme } from '@mui/material';
+import { styled } from '@mui/material';
 import { BaseButtonContentProps, BaseButtonLoadingProps, BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
-import { on } from 'node:events';
 
 type FocusSource = "keyboard" | "mouse" | "program" | null;
 

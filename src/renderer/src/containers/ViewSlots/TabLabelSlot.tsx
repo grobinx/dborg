@@ -4,10 +4,9 @@ import { ITabLabelSlot, resolveReactNodeFactory } from "../../../../../plugins/m
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
-import ToolButton from "@renderer/components/ToolButton";
 import { useMessages } from "@renderer/contexts/MessageContext";
-import { SQL_EDITOR_CLOSE } from "../Connections/ConnectionView/EdiorsTabs";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 interface TabLabelSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -67,6 +66,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
                     onClick={onClose}
                     size="small"
                     disabled={!active}
+                    dense
                 >
                     <theme.icons.Close />
                 </ToolButton>

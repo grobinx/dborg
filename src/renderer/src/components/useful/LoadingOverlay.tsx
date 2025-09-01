@@ -2,8 +2,8 @@ import { Box, styled, useTheme, Zoom } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Duration } from "luxon";
-import ToolButton from "../ToolButton";
 import Tooltip from "../Tooltip";
+import { ToolButton } from "../buttons/ToolButton";
 
 const spinnerColorsLight = [
     "#1976d2", // niebieski
@@ -205,7 +205,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
                         <span>{label}</span>
                         {onCancelLoading !== undefined && (
                             <Tooltip title={t("cancel", "Cancel")}>
-                                <ToolButton onClick={onCancelLoading}>
+                                <ToolButton size="small" onClick={onCancelLoading}>
                                     <theme.icons.Close />
                                 </ToolButton>
                             </Tooltip>

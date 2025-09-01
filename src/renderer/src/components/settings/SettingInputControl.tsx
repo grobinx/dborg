@@ -5,10 +5,10 @@ import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import { BaseInputProps } from "./base/BaseInput";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import ToolButton from "../ToolButton";
 import clsx from "@renderer/utils/clsx";
 import { get } from "http";
 import { getSetting, getSettingDefault } from "@renderer/contexts/SettingsContext";
+import { ToolButton } from "../buttons/ToolButton";
 
 const StyledSettingInputControlRoot = styled(Box, {
     name: "SettingInputControl", // The component name
@@ -367,6 +367,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
             ].filter(Boolean).join(' ')}>
                 <ToolButton
                     onClick={handleMenuOpen}
+                    dense
                 >
                     <theme.icons.MoreVert />
                 </ToolButton>
