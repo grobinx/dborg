@@ -40,6 +40,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                         '&.selected': {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.5),
+                            boxShadow: (_root.shadows?.[2]) ?? "none",
                         },
                     };
                     return acc;

@@ -6,7 +6,7 @@ export const SideBarLayout = (palette: Palette, _root: ThemeOptions): SideBarCom
         styleOverrides: {
             root: {
                 gap: 4,
-                padding: 2,
+                padding: 4,
                 '& .MuiStack-root': {
                     gap: 4,
                 },

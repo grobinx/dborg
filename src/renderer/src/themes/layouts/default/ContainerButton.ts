@@ -40,7 +40,8 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                         '&.selected': {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.5),
-                            outline: '1px solid ' + (palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6))
+                            outline: '1px solid ' + (palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6)),
+                            boxShadow: (_root.shadows?.[4]) ?? "none",
                         },
                     };
                     return acc;
