@@ -445,6 +445,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             <theme.icons.SqlEditor />
             <span>{label}</span>
             <ToolButton
+                component="div"
                 color="main"
                 onClick={() => queueMessage(SQL_EDITOR_CLOSE, itemID)}
                 size="small"

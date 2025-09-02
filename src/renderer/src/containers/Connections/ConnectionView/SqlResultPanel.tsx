@@ -425,6 +425,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
             )}
             <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{label}</span>
             <ToolButton
+                component="div"
                 color="main"
                 onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
                 size="small"
