@@ -80,7 +80,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
 
                         "&.active:not(.disabled):not(.loading)": {
                             position: "relative",
-                            transform: "scale(0.98)",
+                            //transform: "scale(0.98)",
                             overflow: "hidden",
                             backgroundColor: alpha(palette[color].dark, 0.4),
                         },
@@ -119,7 +119,10 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 padding: "0 0.5rem",
                 '&.loading': {
                     opacity: 0,
-                }
+                },
+                "&.active:not(.disabled):not(.loading)": {
+                    transform: "scale(0.9)",
+                },
             },
             loading: {
                 display: "flex",
