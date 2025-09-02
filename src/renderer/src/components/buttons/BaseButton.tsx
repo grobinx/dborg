@@ -143,6 +143,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
     const [hover, setHover] = React.useState(false);
     const [focusedSource, setFocusedSource] = React.useState<FocusSource>(null);
+    const [mouseDown, setMouseDown] = React.useState(false);
     const toggleValues = React.useMemo(() => normalizeToggle(toggle), [toggle]);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(defaultValue);
     const isInteractable = !disabled && !loading;
@@ -217,6 +218,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
     const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
+            setMouseDown(true);
             setActive(true);
             setFocusedSource(focusedSource ?? 'mouse');
             onMouseDown?.(e);
@@ -226,12 +228,16 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const handleMouseUp = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             setActive(false);
+            setMouseDown(false);
             onMouseUp?.(e);
         }
     };
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
+            if (mouseDown) {
+                setActive(true);
+            }
             setHover(true);
             onMouseEnter?.(e);
         }
