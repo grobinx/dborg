@@ -6,7 +6,7 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { PatternField } from "@renderer/components/inputs/PatternField";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
-import { StringField } from "@renderer/components/inputs/TextField";
+import { StringField } from "@renderer/components/inputs/StringField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
@@ -14,6 +14,7 @@ import Logo from "../../../../../../resources/dborg.png";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Button } from "@renderer/components/buttons/Button";
 import { IconButton } from "@renderer/components/buttons/IconButton";
+import { PasswordField } from "@renderer/components/inputs/PasswordField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -53,6 +54,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         small: "+48 123 456 789",
         medium: "+48 234 567 890",
         large: "+48 345 678 901",
+    });
+    const [passwordValues, setPasswordValues] = React.useState<Record<string, string | undefined>>({
+        small: "password1",
+        medium: "password2",
+        large: "password3",
     });
 
     const handleValueTextChange = (size: string, value: string) => {
@@ -97,13 +103,19 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
+    const handleValuePasswordChange = (size: string, value: string | undefined) => {
+        setPasswordValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
-            <Stack key="textFields" direction="row" width="100%" gap={8}>
+            <Stack key="stringFields" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        TextField, size: {size}
+                        StringField, size: {size}
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
@@ -294,6 +306,31 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 />
                             </InputDecorator>
                         ), [size, patternValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="passwordFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        PasswordField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <PasswordField
+                                    key={size}
+                                    size={size}
+                                    value={passwordValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValuePasswordChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="success"
+                                    required={true}
+                                />
+                            </InputDecorator>
+                        ), [size, passwordValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>

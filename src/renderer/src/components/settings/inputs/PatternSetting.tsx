@@ -4,7 +4,7 @@ import SettingInputControl, { calculateWidth, disabledControl } from "../Setting
 import BaseTextField from "../base/BaseTextField";
 import { useMask } from "@react-input/mask";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
-import { StringField } from "@renderer/components/inputs/TextField";
+import { StringField } from "@renderer/components/inputs/StringField";
 import { PatternField } from "@renderer/components/inputs/PatternField";
 
 export const PatternSetting: React.FC<{

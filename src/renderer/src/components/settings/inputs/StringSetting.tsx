@@ -5,7 +5,7 @@ import { validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
-import { StringField } from "@renderer/components/inputs/TextField";
+import { StringField } from "@renderer/components/inputs/StringField";
 
 export const StringSetting: React.FC<{
     setting: SettingTypeString;

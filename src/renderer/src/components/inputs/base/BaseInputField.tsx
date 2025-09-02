@@ -82,7 +82,7 @@ interface AdornmentProps {
      * Można również podać liczbę, która określa kolejność (order) elementu
      * Kolejność <= 10 będzie na początku, a > 10 na końcu
      */
-    position?: 'start' | 'end' | 'input' | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
+    position?: 'start' | 'end' | 'input';
     ref?: React.Ref<HTMLDivElement>;
     fullWidth?: boolean;
     style?: React.CSSProperties;
@@ -91,33 +91,17 @@ interface AdornmentProps {
 
 export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
     const { children, position = 'start', className, ref, fullWidth, style, onClick } = props;
-    let order = 0;
-    let orderClass = 'start';
-
-    if (typeof position === 'number') {
-        order = position;
-        if (position > 10) {
-            orderClass = 'end';
-        }
-    } else if (position === 'end') {
-        order = 20;
-        orderClass = 'end';
-    } else if (position === 'input') {
-        order = 11;
-        orderClass = 'input';
-    }
 
     return (
         <StyledBaseInputFieldAdornment
             className={clsx(
                 "InputField-adornment",
-                `position-${orderClass}`,
+                `position-${position}`,
                 className
             )}
             ref={ref}
             sx={{
                 flex: fullWidth ? 1 : 'unset',
-                order,
             }}
             style={style}
             onClick={onClick}
@@ -131,15 +115,6 @@ const StyledBaseInputFieldPlaceholder = styled('div', {
     name: "InputField",
     slot: "placeholder",
 })(({ /*theme*/ }) => ({
-    position: "absolute",
-    top: "50%", // Wyśrodkowanie w pionie
-    left: "8px", // Wyśrodkowanie w poziomie
-    transform: "translateY(-50%)", // Przesunięcie o połowę wysokości
-    pointerEvents: "none", // Zapobiega interakcji z placeholderem
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    minWidth: 0,
 }));
 
 export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
@@ -210,6 +185,24 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         autoCollapse && "auto-collapse",
     );
 
+    const startAdornments = React.Children.toArray(adornments).filter((child) => {
+        if (React.isValidElement(child) && child.type === Adornment) {
+            const props = child.props as AdornmentProps;
+            const position = props.position || 'start';
+            return position === 'start';
+        }
+        return true;
+    });
+
+    const endAdornments = React.Children.toArray(adornments).filter((child) => {
+        if (React.isValidElement(child) && child.type === Adornment) {
+            const props = child.props as AdornmentProps;
+            const position = props.position || 'start';
+            return position === 'end';
+        }
+        return false;
+    });
+
     React.useEffect(() => {
         if (textInputRef.current) {
             const computedStyle = window.getComputedStyle(textInputRef.current);
@@ -244,8 +237,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             onMouseLeave={() => setHover(false)}
             sx={{ width }}
         >
-            {adornments}
-            {inputAdornments}
+            {startAdornments}
             {(currentValue === undefined || currentValue === "") && placeholder && !disabled && (
                 <StyledBaseInputFieldPlaceholder
                     className={clsx(
@@ -315,6 +307,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 hidden={!!input}
                 {...inputProps}
             />
+            {endAdornments}
+            {inputAdornments}
         </StyledBaseInputField>
     )
 }

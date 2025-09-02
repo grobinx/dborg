@@ -54,6 +54,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-start",
+                transition: "all 0.1s ease-in-out",
                 '&.placement-left': {
                     flexDirection: "row",
                 },
@@ -62,7 +63,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 },
                 '&.placement-top, &.placement-bottom': {
                     flexDirection: "column",
-                }
+                },
             }
         }
     }

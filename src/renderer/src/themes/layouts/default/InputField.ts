@@ -64,6 +64,15 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
             },
             placeholder: {
                 color: palette.text.disabled,
+                position: "absolute",
+                top: "50%", // Wyśrodkowanie w pionie
+                left: "8px", // Wyśrodkowanie w poziomie
+                transform: "translateY(-50%)", // Przesunięcie o połowę wysokości
+                pointerEvents: "none", // Zapobiega interakcji z placeholderem
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
             },
             adornment: {
                 alignItems: 'center',

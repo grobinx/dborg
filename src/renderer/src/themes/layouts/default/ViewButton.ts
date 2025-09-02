@@ -53,6 +53,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-start",
+                transition: "all 0.1s ease-in-out",
                 '&.placement-left': {
                     flexDirection: "row",
                 },
@@ -61,7 +62,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 },
                 '&.placement-top, &.placement-bottom': {
                     flexDirection: "column",
-                }
+                },
             }
         }
     }

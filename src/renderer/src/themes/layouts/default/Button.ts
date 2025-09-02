@@ -115,7 +115,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "opacity 0.2s ease-in-out",
+                transition: "all 0.1s ease-in-out",
                 padding: "0 0.5rem",
                 '&.loading': {
                     opacity: 0,
