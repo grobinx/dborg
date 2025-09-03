@@ -9,6 +9,8 @@ import Tooltip from "@renderer/components/Tooltip";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import { htmlColors } from "@renderer/types/colors";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { StringField } from "@renderer/components/inputs/StringField";
+import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 
 export const ColorSetting: React.FC<{
     setting: SettingTypeColor;
@@ -82,49 +84,47 @@ export const ColorSetting: React.FC<{
                     const { InputProps, id, ...otherParams } = params;
                     const { endAdornment, ...inputProps } = InputProps;
                     return (
-                        <BaseTextField
+                        <StringField
                             id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                             {...otherParams}
                             onFocus={handleFocus}
                             onBlur={handleBlur}
-                            sx={{
-                                width: calculateWidth(setting)
-                            }}
-                            slotProps={{
-                                input: {
-                                    ...inputProps,
-                                    endAdornment: (
-                                        <>
-                                            <InputAdornment
-                                                position="end"
-                                                style={{ cursor: "pointer" }}
-                                            >
-                                                <Tooltip title={t("pick-a-color", "Pick a color")}>
-                                                    <ToolButton onClick={handleColorPickerOpen}>
-                                                        <div
-                                                            style={{
-                                                                width: '18px',
-                                                                height: '18px',
-                                                                backgroundColor: value || '#000000',
-                                                                border: `1px solid ${theme.palette.primary.main}`,
-                                                                borderRadius: '4px',
-                                                            }}
-                                                        />
-                                                    </ToolButton>
-                                                </Tooltip>
-                                                <ColorPicker
-                                                    value={value || "#000000"}
-                                                    onChange={onChangeColor}
-                                                    anchorEl={colorPickerAnchoreEl}
-                                                    onClose={handleColorPickerClose}
-                                                    picker={setting.picker}
+                            width={calculateWidth(setting)}
+                            adornments={
+                                [
+                                    <Adornment
+                                        key="picker"
+                                        position="end"
+                                    >
+                                        <Tooltip title={t("pick-a-color", "Pick a color")}>
+                                            <ToolButton onClick={handleColorPickerOpen} dense>
+                                                <div
+                                                    style={{
+                                                        width: '18px',
+                                                        height: '18px',
+                                                        backgroundColor: value || '#000000',
+                                                        border: `1px solid ${theme.palette.primary.main}`,
+                                                        borderRadius: '4px',
+                                                    }}
                                                 />
-                                            </InputAdornment>
-                                            {endAdornment}
-                                        </>
-                                    ),
-                                },
-                            }}
+                                            </ToolButton>
+                                        </Tooltip>
+                                        <ColorPicker
+                                            value={value || "#000000"}
+                                            onChange={onChangeColor}
+                                            anchorEl={colorPickerAnchoreEl}
+                                            onClose={handleColorPickerClose}
+                                            picker={setting.picker}
+                                        />
+                                    </Adornment>,
+                                    <Adornment
+                                        position="end"
+                                        key="endAdornment"
+                                    >
+                                        {endAdornment}
+                                    </Adornment>
+                                ]
+                            }
                         />
                     );
                 }}
