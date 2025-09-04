@@ -15,4 +15,5 @@ export type InputFieldComponentSlots =
     | "placeholder" 
     | "numberStepper" 
     | "sliderLegend"
+    | "colorIndicator"
     ;

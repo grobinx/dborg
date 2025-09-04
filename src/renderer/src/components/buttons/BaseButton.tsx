@@ -1,5 +1,5 @@
 import React from 'react';
-import { styled } from '@mui/material';
+import { ClickAwayListener, styled } from '@mui/material';
 import { BaseButtonContentProps, BaseButtonLoadingProps, BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
@@ -128,7 +128,7 @@ export const BaseButtonContent: React.FC<BaseButtonContentProps> = (props) => {
 
 export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const {
-        ref, slots, componentName, className, component, 
+        ref, slots, componentName, className, component,
         disabled, loading,
         type = 'button',
         selected,
@@ -143,7 +143,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
     const [hover, setHover] = React.useState(false);
     const [focusedSource, setFocusedSource] = React.useState<FocusSource>(null);
-    const [mouseDown, setMouseDown] = React.useState(false);
     const toggleValues = React.useMemo(() => normalizeToggle(toggle), [toggle]);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(defaultValue);
     const isInteractable = !disabled && !loading;
@@ -218,7 +217,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
     const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
-            setMouseDown(true);
             setActive(true);
             setFocusedSource(focusedSource ?? 'mouse');
             onMouseDown?.(e);
@@ -228,18 +226,16 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const handleMouseUp = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
             setActive(false);
-            setMouseDown(false);
             onMouseUp?.(e);
+            console.log('mouse up');
         }
     };
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
-            if (mouseDown) {
-                setActive(true);
-            }
             setHover(true);
             onMouseEnter?.(e);
+            console.log('mouse enter');
         }
     };
 
@@ -248,6 +244,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
             setHover(false);
             setActive(false);
             onMouseLeave?.(e);
+            console.log('mouse leave');
         }
     };
 

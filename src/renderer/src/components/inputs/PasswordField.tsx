@@ -40,6 +40,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
     return (
         <BaseInputField
             value={value}
+            type="password"
             inputProps={{
                 maxLength,
                 minLength,

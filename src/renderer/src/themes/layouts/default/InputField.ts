@@ -103,6 +103,22 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     backgroundColor: palette.action.hover,
                 },
             },
+            colorIndicator: {
+                border: `1px solid ${palette.primary.main}`,
+                borderRadius: borderRadius,
+                '&.size-small': {
+                    width: '14px',
+                    height: '14px',
+                },
+                '&.size-medium': {
+                    width: '18px',
+                    height: '18px',
+                },
+                '&.size-large': {
+                    width: '22px',
+                    height: '22px',
+                },
+            }
         }
     };
 };

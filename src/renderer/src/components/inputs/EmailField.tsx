@@ -19,7 +19,7 @@ export const EmailField: React.FC<EmailFieldProps> = (props) => {
         value,
         maxLength,
         minLength,
-        validate: valiate = true, 
+        validate = true, 
         inputProps,
         ...other
     } = props;
@@ -44,7 +44,7 @@ export const EmailField: React.FC<EmailFieldProps> = (props) => {
             validations={[
                 (value: any) => validateMinLength(value, minLength),
                 (value: any) => validateMaxLength(value, maxLength),
-                valiate ? (value: any) => validateEmail(value) : undefined,
+                validate ? (value: any) => validateEmail(value) : undefined,
             ]}
             {...other}
         />

@@ -15,6 +15,7 @@ import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { Button } from "@renderer/components/buttons/Button";
 import { IconButton } from "@renderer/components/buttons/IconButton";
 import { PasswordField } from "@renderer/components/inputs/PasswordField";
+import { ColorField } from "@renderer/components/inputs/ColorField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -59,6 +60,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         small: "password1",
         medium: "password2",
         large: "password3",
+    });
+    const [colorValues, setColorValues] = React.useState<Record<string, string | undefined>>({
+        small: "#ff0000",
+        medium: "#00ff00",
+        large: "#0000ff",
     });
 
     const handleValueTextChange = (size: string, value: string) => {
@@ -105,6 +111,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValuePasswordChange = (size: string, value: string | undefined) => {
         setPasswordValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueColorChange = (size: string, value: string | undefined) => {
+        setColorValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -331,6 +343,31 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 />
                             </InputDecorator>
                         ), [size, passwordValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="colorFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        ColorField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <ColorField
+                                    key={size}
+                                    size={size}
+                                    value={colorValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueColorChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="success"
+                                    required={true}
+                                />
+                            </InputDecorator>
+                        ), [size, colorValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
