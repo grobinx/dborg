@@ -124,10 +124,9 @@ const StyledHeader = styled('div', {
 const StyledHeaderCell = styled('div', {
     name: "DataGrid",
     slot: "headerCell",
-    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY',
-})<{ rowHeight: number; paddingX: number; paddingY: number }>(
-    ({ theme, rowHeight, paddingX, paddingY }) => {
-        const contentHeight = rowHeight - paddingY * 2; // Wysokość dostępna dla treści
+    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
+})<{ paddingX: number; paddingY: number }>(
+    ({ theme, paddingX, paddingY }) => {
 
         return {
             fontWeight: "bold",
@@ -138,9 +137,10 @@ const StyledHeaderCell = styled('div', {
             position: "absolute",
             userSelect: "none", // Wyłączenie zaznaczania tekstu
             boxSizing: "border-box",
-            height: rowHeight, // Użycie rowHeight w stylach
+            height: "100%",
             padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
+            lineHeight: "1rem",
+            alignContent: "center",
             borderRadius: 0, // Ustawienie zaokrąglenia na 0
             alignItems: "center",
             "&:not(:first-of-type)": {
@@ -233,14 +233,12 @@ const StyledRow = styled("div", {
 const StyledCell = styled("div", {
     name: "DataGrid",
     slot: "cell",
-    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY',
+    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
 })<{
-    rowHeight: number;
     paddingX: number;
     paddingY: number;
 }>(
-    ({ theme, rowHeight, paddingX, paddingY }) => {
-        const contentHeight = rowHeight - paddingY * 2; // Wysokość dostępna dla treści
+    ({ theme, paddingX, paddingY }) => {
 
         return {
             overflow: "hidden",
@@ -249,9 +247,10 @@ const StyledCell = styled("div", {
             position: "absolute",
             userSelect: "none", // Wyłączenie zaznaczania tekstu
             boxSizing: "border-box",
-            height: rowHeight,
+            height: "100%",
             padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
+            lineHeight: "1rem",
+            alignContent: "center",
             alignItems: "center",
             zIndex: 1,
             color: "inherit",
@@ -315,14 +314,12 @@ const StyledFooter = styled('div', {
 const StyledFooterCell = styled('div', {
     name: "DataGrid",
     slot: "footerCell",
-    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingX' && prop !== 'paddingY',
+    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
 })<{
-    rowHeight: number;
     paddingX: number;
     paddingY: number;
 }>(
-    ({ theme, rowHeight, paddingX, paddingY }) => {
-        const contentHeight = rowHeight - paddingY * 2; // Wysokość dostępna dla treści
+    ({ theme, paddingX, paddingY }) => {
 
         return {
             fontWeight: "bold",
@@ -332,11 +329,15 @@ const StyledFooterCell = styled('div', {
             position: "absolute",
             userSelect: "none", // Wyłączenie zaznaczania tekstu
             boxSizing: "border-box",
-            height: rowHeight, // Użycie rowHeight w stylach
+            height: "100%",
             padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: `${contentHeight}px`, // Ustawienie lineHeight na wysokość treści
+            lineHeight: "1rem",
+            alignContent: "center",
             borderRadius: 0, // Ustawienie zaokrąglenia na 0
             alignItems: "center",
+            flexDirection: "column",
+            textAlign: "center",
+            color: "gray",
             "&:not(:first-of-type)": {
                 borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
             },
@@ -352,6 +353,36 @@ const StyledFooterCell = styled('div', {
         };
     }
 );
+
+const StyledFooterCellHeader = styled('div', {
+    name: "DataGrid",
+    slot: "footerCellHeader",
+})({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    fontSize: "0.8em",
+});
+
+const StyledFooterCellContent = styled('div', {
+    name: "DataGrid",
+    slot: "footerCellContent",
+})({
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    width: "100%",
+    "&.align-start": {
+        textAlign: "left",
+    },
+    "&.align-end": {
+        textAlign: "right",
+    },
+    "&.align-center": {
+        textAlign: "center",
+    },
+});
 
 // Dodaj styled komponent dla kolumny z numerami wierszy
 const StyledRowNumberColumn = styled('div', {
@@ -1176,7 +1207,6 @@ export const DataGrid = <T extends object>({
                             }}
                             paddingX={cellPaddingX}
                             paddingY={cellPaddingY}
-                            rowHeight={rowHeight}
                             onClick={() => {
                                 if (!resizingColumn) {
                                     updateSelectedCell({ row: selectedCell?.row ?? startRow, column: startColumn + colIndex });
@@ -1335,7 +1365,6 @@ export const DataGrid = <T extends object>({
                                                 left: columnLeft,
                                             }}
                                             onClick={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
-                                            rowHeight={rowHeight}
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                         >
@@ -1353,76 +1382,67 @@ export const DataGrid = <T extends object>({
                 </StyledRowsContainer>
                 {columnsState.anySummarized && (
                     <StyledFooter
-                        style={{ width: columnsState.totalWidth, height: (rowHeight * 0.7) + rowHeight }}
+                        style={{ width: columnsState.totalWidth, height: (rowHeight * footerCaptionHeightFactor) + rowHeight }}
                         className="DataGrid-footer"
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                             const absoluteColIndex = startColumn + colIndex;
                             let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
-                            let operationLabel = "";
-                            if (col.summary) {
-                                operationLabel = summaryOperationDisplayMap[col.summary] || "";
-                            }
 
                             return (
-                                <React.Fragment key={colIndex}>
-                                    <StyledFooterCell
-                                        className={clsx(
-                                            'DataGrid-footerCell',
-                                            `data-type-${styleDataType}`,
-                                            styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
-                                        )}
-                                        style={{
-                                            width: col.width || 150,
-                                            left: columnsState.columnLeft(startColumn + colIndex),
-                                            textAlign: "center",
-                                            fontSize: "0.8em",
-                                            color: "gray",
-                                        }}
-                                        rowHeight={rowHeight * footerCaptionHeightFactor}
-                                        paddingX={cellPaddingX}
-                                        paddingY={cellPaddingY}
-                                        onClick={() => {
-                                            handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
-                                            actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
-                                        }}
-                                    >
-                                        <StyledHeaderCellContent className="DataGrid-footerCellContent">
-                                            {operationLabel}
-                                            {(col.summary !== undefined) &&
-                                                <StyledIconContainer
-                                                    onClick={(event) => {
-                                                        columnsState.setSummary(col.key);
-                                                        event.stopPropagation();
-                                                    }}
+                                <StyledFooterCell
+                                    key={colIndex}
+                                    className={clsx(
+                                        'DataGrid-footerCell',
+                                        `data-type-${styleDataType}`,
+                                        styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                    )}
+                                    style={{
+                                        width: col.width || 150,
+                                        left: columnsState.columnLeft(startColumn + colIndex),
+                                    }}
+                                    paddingX={cellPaddingX}
+                                    paddingY={cellPaddingY}
+                                    onClick={() => {
+                                        handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
+                                        actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
+                                    }}
+                                >
+                                    {(col.summary !== undefined) && [
+                                        <StyledFooterCellHeader
+                                            key="header"
+                                            className={clsx(
+                                                "DataGrid-footerCellHeader",
+                                                `data-type-${styleDataType}`,
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                            )}
+                                        >
+                                            {summaryOperationDisplayMap[col.summary] || ""}
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    columnsState.setSummary(col.key);
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                <Tooltip
+                                                    title={t("summary-off", "Toggle summary off")}
                                                 >
-                                                    <Tooltip
-                                                        title={t("summary-off", "Toggle summary off")}
-                                                    >
-                                                        <theme.icons.Close />
-                                                    </Tooltip>
-                                                </StyledIconContainer>
-                                            }
-                                        </StyledHeaderCellContent>
-                                    </StyledFooterCell>
-                                    <StyledFooterCell
-                                        className={clsx(
-                                            'DataGrid-footerCell',
-                                            `data-type-${styleDataType}`,
-                                            styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
-                                        )}
-                                        style={{
-                                            width: col.width || 150,
-                                            left: columnsState.columnLeft(startColumn + colIndex),
-                                            top: (rowHeight * footerCaptionHeightFactor),
-                                        }}
-                                        rowHeight={rowHeight}
-                                        paddingX={cellPaddingX}
-                                        paddingY={cellPaddingY}
-                                    >
-                                        {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
-                                    </StyledFooterCell>
-                                </React.Fragment>
+                                                    <theme.icons.Close />
+                                                </Tooltip>
+                                            </StyledIconContainer>
+                                        </StyledFooterCellHeader>,
+                                        <StyledFooterCellContent
+                                            key="content"
+                                            className={clsx(
+                                                "DataGrid-footerCellContent",
+                                                `data-type-${styleDataType}`,
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                            )}
+                                        >
+                                            {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
+                                        </StyledFooterCellContent>
+                                    ]}
+                                </StyledFooterCell>
                             );
                         })}
                     </StyledFooter>
