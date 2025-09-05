@@ -338,7 +338,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={passwordValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValuePasswordChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                    color="success"
+                                    color="main"
                                     required={true}
                                 />
                             </InputDecorator>
@@ -363,7 +363,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={colorValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueColorChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                    color="success"
+                                    color="info"
                                     required={true}
                                 />
                             </InputDecorator>

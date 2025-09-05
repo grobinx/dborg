@@ -14,7 +14,7 @@ export type ColumnBaseType =
     // specjal type error for error caching and handling
     | "error";
 
-const columnBaseTypes: readonly ColumnBaseType[] = [
+export const columnBaseTypes: readonly ColumnBaseType[] = [
     "string",
     "number",
     "boolean",
@@ -37,7 +37,7 @@ export type ColumnStringType =
     | 'hash'
     | 'color';
 
-const columnStringTypes: readonly ColumnStringType[] = [
+export const columnStringTypes: readonly ColumnStringType[] = [
     "string",
     "uuid",
     "email",

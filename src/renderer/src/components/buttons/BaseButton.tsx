@@ -227,7 +227,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         if (isInteractable) {
             setActive(false);
             onMouseUp?.(e);
-            console.log('mouse up');
         }
     };
 
@@ -235,7 +234,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         if (isInteractable) {
             setHover(true);
             onMouseEnter?.(e);
-            console.log('mouse enter');
         }
     };
 
@@ -244,7 +242,6 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
             setHover(false);
             setActive(false);
             onMouseLeave?.(e);
-            console.log('mouse leave');
         }
     };
 
