@@ -51,7 +51,6 @@ const StyledBaseInputFieldCustomInput = styled('div', {
 })<StyledInputProps>(({ width }) => ({
     flexGrow: 1,
     minWidth: 0, // Pozwala na zmniejszenie się inputa
-    order: 10,
     width: width || "100%",
 }));
 
@@ -268,11 +267,18 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         setFocused(false);
                         decorator?.setFocused(false);
                     }}
+                    onKeyDown={inputProps?.onKeyDown}
+                    onKeyUp={inputProps?.onKeyUp}
+                    onMouseDown={inputProps?.onMouseDown}
+                    onMouseUp={inputProps?.onMouseUp}
+                    onClick={inputProps?.onClick}
+                    tabIndex={0}
                 >
                     {input}
                 </StyledBaseInputFieldCustomInput>
             )}
             <StyledBaseInputFieldInput
+                {...inputProps}
                 id={id}
                 ref={(ref) => {
                     textInputRef.current = ref;
@@ -305,7 +311,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 onClick={onClick}
                 width={width}
                 hidden={!!input}
-                {...inputProps}
             />
             {endAdornments}
             {inputAdornments}

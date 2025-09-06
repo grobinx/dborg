@@ -16,4 +16,5 @@ export type InputFieldComponentSlots =
     | "numberStepper" 
     | "sliderLegend"
     | "colorIndicator"
+    | "customInput"
     ;

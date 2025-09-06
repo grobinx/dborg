@@ -87,7 +87,7 @@ export interface BaseInputProps<T = any> {
     /**
      * Referencja do elementu kontenera
      */
-    ref?: React.RefObject<HTMLDivElement>;
+    ref?: React.RefObject<HTMLDivElement | null>;
     /**
      * Referencja do elementu wejściowego
      * Używana do bezpośredniego dostępu do elementu wejściowego, np. do ustawienia fokusu lub odczytu wartości

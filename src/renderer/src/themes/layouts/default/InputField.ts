@@ -62,6 +62,10 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     MozAppearance: "textfield",
                 },
             },
+            customInput: {
+                alignSelf: "center",
+                outline: "none",
+            },
             placeholder: {
                 color: palette.text.disabled,
                 position: "absolute",
