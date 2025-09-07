@@ -2,11 +2,11 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 import { ToolButton } from '../buttons/ToolButton';
 import { useTranslation } from 'react-i18next';
+import { an } from 'react-router/dist/development/route-data-H2S3hwhf';
 
 export interface SelectOption {
     label: FormattedContentItem;
@@ -15,7 +15,6 @@ export interface SelectOption {
 }
 
 interface SelectFieldProps extends BaseInputProps {
-    placeholder?: FormattedContentItem;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: SelectOption[];
@@ -35,6 +34,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
         size,
         color,
         options,
+        disabled,
         ...other
     } = props;
 
@@ -83,7 +83,6 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
     // Reset focused index when menu opens
     React.useEffect(() => {
         if (open) {
-            const currentIndex = options?.findIndex(opt => opt.value === value) ?? -1;
             setTimeout(() => {
                 menuListRef.current?.focus();
             }, 0);
@@ -98,6 +97,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
             size={size}
             color={color}
             onChange={onChange}
+            disabled={disabled}
             input={
                 <FormattedText
                     text={options?.find(option => option.value === value)?.label}
@@ -118,6 +118,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                         size={size}
                         color={color}
                         dense
+                        disabled={disabled}
                     >
                         {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                     </ToolButton>
@@ -144,6 +145,11 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                                             outline: "none",
                                         }}
                                         tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                setOpen(false);
+                                            }
+                                        }}
                                     >
                                         {options?.map((option) => (
                                             <StyledMenuItem
@@ -152,6 +158,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                                                 onClick={() => {
                                                     setOpen(false);
                                                     onChange?.(option.value);
+                                                    //anchorRef.current?.focus();
                                                 }}
                                                 selected={value === option.value}
                                                 onMouseEnter={() => {

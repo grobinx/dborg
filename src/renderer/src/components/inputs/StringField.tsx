@@ -48,4 +48,4 @@ export const StringField: React.FC<StringFieldProps> = (props) => {
     )
 };
 
-StringField.displayName = "TextField";
+StringField.displayName = "StringField";

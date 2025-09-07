@@ -149,6 +149,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     } = props;
 
     const textInputRef = React.useRef<HTMLInputElement>(null);
+    const customInputRef = React.useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
     const [inputLeft, setInputLeft] = React.useState<number>(0);
     const decorator = useInputDecorator();
@@ -156,7 +157,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [hover, setHover] = React.useState<boolean>(false);
 
     const currentValue = value ?? defaultValue;
-    const [invalid, setInvalid] = useValidation(
+    const [invalid] = useValidation(
         currentValue,
         disabled,
         [
@@ -230,7 +231,9 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             )}
             ref={ref}
             onMouseDown={() => {
-                textInputRef.current?.focus();
+                if (!input && !disabled) { // ✅ Already handled
+                    textInputRef.current?.focus();
+                }
             }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
@@ -253,32 +256,35 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             )}
             {input && (
                 <StyledBaseInputFieldCustomInput
+                    ref={customInputRef}
                     className={clsx(
                         "InputField-customInput",
                         classes,
                     )}
-                    onFocus={() => {
+                    onFocus={!disabled ? () => {  // ✅ Dodaj sprawdzenie disabled
                         onFocus?.();
                         setFocused(true);
                         decorator?.setFocused(true);
-                    }}
-                    onBlur={() => {
+                    } : undefined}
+                    onBlur={!disabled ? () => {  
                         onBlur?.();
                         setFocused(false);
                         decorator?.setFocused(false);
-                    }}
-                    onKeyDown={inputProps?.onKeyDown}
-                    onKeyUp={inputProps?.onKeyUp}
-                    onMouseDown={inputProps?.onMouseDown}
-                    onMouseUp={inputProps?.onMouseUp}
-                    onClick={inputProps?.onClick}
-                    tabIndex={0}
+                    } : undefined}
+                    onKeyDown={!disabled ? inputProps?.onKeyDown : undefined}
+                    onKeyUp={!disabled ? inputProps?.onKeyUp : undefined}
+                    onMouseDown={!disabled ? inputProps?.onMouseDown : undefined}
+                    onMouseUp={!disabled ? inputProps?.onMouseUp : undefined}
+                    onClick={!disabled ? inputProps?.onClick : undefined}
+                    tabIndex={disabled ? -1 : 0}
+                    aria-disabled={disabled}
                 >
                     {input}
                 </StyledBaseInputFieldCustomInput>
             )}
             <StyledBaseInputFieldInput
                 {...inputProps}
+                type={!!input ? "hidden" :inputProps?.type ?? "text"}
                 id={id}
                 ref={(ref) => {
                     textInputRef.current = ref;
@@ -296,7 +302,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 )}
                 value={typeof onConvertToInput === 'function' ? onConvertToInput(currentValue) : String(currentValue)}
                 onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
-                disabled={disabled}
+                disabled={disabled}  // ✅ Already handled
                 required={required}
                 onFocus={() => {
                     onFocus?.();
@@ -310,7 +316,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 }}
                 onClick={onClick}
                 width={width}
-                hidden={!!input}
             />
             {endAdornments}
             {inputAdornments}

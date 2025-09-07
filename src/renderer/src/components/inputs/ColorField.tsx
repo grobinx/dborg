@@ -12,7 +12,6 @@ import { htmlColors } from '@renderer/types/colors';
 import ButtonGroup from '../buttons/ButtonGroup';
 
 interface ColorFieldProps extends BaseInputProps {
-    placeholder?: FormattedContentItem;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     picker?: ColorPickerType;
@@ -45,8 +44,8 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
         onChange,
         inputProps,
         picker,
-        size,
-        color,
+        size = 'medium',
+        color = 'main',
         ...other
     } = props;
 

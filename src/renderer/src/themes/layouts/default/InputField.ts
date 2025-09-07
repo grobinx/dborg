@@ -9,13 +9,24 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
-                border: `1px solid ${palette.divider}`,
-                borderRadius: borderRadius,
-                '&:hover': {
-                    borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
-                    transition: "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                '&:not(.type-boolean)': {
+                    border: `1px solid ${palette.divider}`,
+                    borderRadius: borderRadius,
+                    '&:hover': {
+                        borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+                        transition: "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    },
+                    ...themeColors.reduce((acc, color) => {
+                        acc[`&.color-${color}`] = {
+                            backgroundColor: alpha(palette[color].main, 0.2),
+                        };
+                        return acc;
+                    }, {}),
                 },
-                '&.focused': {
+                '&.type-boolean': {
+                    backgroundColor: "transparent",
+                },
+                '&.focused:not(.type-boolean)': {
                     outlineWidth: 2,
                     outlineStyle: 'solid',
                     outlineOffset: -2,
@@ -29,12 +40,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     }, {}),
                     //boxShadow: `0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
                 },
-                ...themeColors.reduce((acc, color) => {
-                    acc[`&.color-${color}`] = {
-                        backgroundColor: alpha(palette[color].main, 0.2),
-                    };
-                    return acc;
-                }, {}),
                 '&.size-small': {
                     ...rootSizeProperties.small,
                 },
@@ -43,6 +48,11 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
                 '&.size-large': {
                     ...rootSizeProperties.large,
+                },
+                '&.disabled': {
+                    pointerEvents: 'none',
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
                 },
             },
             input: {

@@ -17,6 +17,7 @@ import { IconButton } from "@renderer/components/buttons/IconButton";
 import { PasswordField } from "@renderer/components/inputs/PasswordField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
+import { BooleanField } from "@renderer/components/inputs/BooleanField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -71,6 +72,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         small: "red",
         medium: "green",
         large: "blue",
+    });
+    const [booleanValues, setBooleanValues] = React.useState<Record<string, boolean | undefined>>({
+        small: true,
+        medium: false,
+        large: true,
     });
 
     const handleValueTextChange = (size: string, value: string) => {
@@ -129,6 +135,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueSelectChange = (size: string, value: string | undefined) => {
         setSelectValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueBooleanChange = (size: string, value: boolean | undefined) => {
+        setBooleanValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -427,11 +439,35 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                             value: "yellow",
                                             label: [["Yellow", <span style={{ backgroundColor: "yellow", width: 16, borderRadius: 2 }} />]],
                                             description: "The color of sunshine"
-                                        }
+                                        },
                                     ]}
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="booleanFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        BooleanField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <BooleanField
+                                    key={size}
+                                    size={size}
+                                    value={booleanValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueBooleanChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="primary"
+                                />
+                            </InputDecorator>
+                        ), [size, booleanValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>
