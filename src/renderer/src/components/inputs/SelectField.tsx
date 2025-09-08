@@ -63,11 +63,9 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
         const anchorRect = anchorRef.current.getBoundingClientRect();
         // Compare distances from anchor to viewport top and bottom
         if (anchorRect.top > window.innerHeight -anchorRect.bottom) {
-            console.log("false");
             return false;
         }
 
-        console.log("true");
         return true;
     };
 
