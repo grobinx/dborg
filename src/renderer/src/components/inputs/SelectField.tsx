@@ -44,7 +44,6 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
     const anchorRef = React.useRef<HTMLDivElement>(null);
     const menuListRef = React.useRef<HTMLUListElement>(null);
     const [popperBelow, setPopperBelow] = React.useState(false);
-    const { t } = useTranslation();
     const theme = useTheme();
 
     const handleToggle = () => {
@@ -62,12 +61,12 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
         if (!anchorRef.current) return false;
 
         const anchorRect = anchorRef.current.getBoundingClientRect();
-        const popperRect = document.querySelector('.MuiPaper-root')?.getBoundingClientRect();
+        // Compare distances from anchor to viewport top and bottom
+        if (anchorRect.top - 0 > anchorRect.bottom - window.innerHeight) {
+            return false;
+        }
 
-        if (!popperRect) return false;
-
-        // Sprawdź, czy górna krawędź Popper jest poniżej dolnej krawędzi Select
-        return popperRect.top >= anchorRect.bottom;
+        return true;
     };
 
     React.useEffect(() => {
@@ -125,13 +124,13 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                     <Popper
                         open={open}
                         anchorEl={anchorRef.current}
-                        placement="bottom-start"
+                        placement={popperBelow ? "bottom-start" : "top-start"}
                         style={{
                             zIndex: 1300,
                             width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
                         }}
                     >
-                        <Paper elevation={3} sx={{ margin: 1 }}>
+                        <Paper elevation={4} sx={{ margin: 1 }}>
                             <ClickAwayListener onClickAway={handleClose} mouseEvent="onMouseDown">
                                 <Box
                                     display={"flex"}

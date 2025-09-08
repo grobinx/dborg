@@ -1,6 +1,6 @@
 import { colors, darken, lighten } from "@mui/material";
 import createPalette from "@mui/material/styles/createPalette";
-import { createPaletteColor } from "../utils";
+import { createPaletteColor } from "../../utils/colors";
 
 const palette = createPalette({
     mode: 'dark',

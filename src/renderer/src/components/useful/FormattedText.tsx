@@ -1,6 +1,6 @@
 import { Stack, styled, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
-import { resolveColor } from "@renderer/themes/utils";
+import { resolveColor } from "@renderer/utils/colors";
 import React, { isValidElement, ReactNode } from "react";
 import Code from "../Code";
 import ReactMarkdown from "react-markdown";
