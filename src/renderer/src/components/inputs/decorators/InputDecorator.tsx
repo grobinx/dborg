@@ -366,7 +366,9 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                     className
                 )}
                 width={width}
-                onMouseDown={onClick}
+                onMouseDown={(_e) => {
+                    onClick?.();
+                }}
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
             >

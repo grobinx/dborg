@@ -261,30 +261,37 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         "InputField-customInput",
                         classes,
                     )}
-                    onFocus={!disabled ? () => {  // ✅ Dodaj sprawdzenie disabled
+                    onFocus={!disabled ? () => {
                         onFocus?.();
                         setFocused(true);
                         decorator?.setFocused(true);
                     } : undefined}
-                    onBlur={!disabled ? () => {  
+                    onBlur={!disabled ? () => {
                         onBlur?.();
                         setFocused(false);
                         decorator?.setFocused(false);
                     } : undefined}
                     onKeyDown={!disabled ? inputProps?.onKeyDown : undefined}
                     onKeyUp={!disabled ? inputProps?.onKeyUp : undefined}
-                    onMouseDown={!disabled ? inputProps?.onMouseDown : undefined}
-                    onMouseUp={!disabled ? inputProps?.onMouseUp : undefined}
-                    onClick={!disabled ? inputProps?.onClick : undefined}
+                    onMouseDown={!disabled ? (e) => {
+                        inputProps?.onMouseDown?.(e);
+                    } : undefined}
+                    onMouseUp={!disabled ? (e) => {
+                        inputProps?.onClick?.(e as any);
+                        inputProps?.onMouseUp?.(e);
+                        onClick?.();
+                    } : undefined}
+                    onClick={undefined}
                     tabIndex={disabled ? -1 : 0}
                     aria-disabled={disabled}
                 >
                     {input}
                 </StyledBaseInputFieldCustomInput>
-            )}
+            )
+            }
             <StyledBaseInputFieldInput
                 {...inputProps}
-                type={!!input ? "hidden" :inputProps?.type ?? "text"}
+                type={!!input ? "hidden" : inputProps?.type ?? "text"}
                 id={id}
                 ref={(ref) => {
                     textInputRef.current = ref;
@@ -319,7 +326,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             />
             {endAdornments}
             {inputAdornments}
-        </StyledBaseInputField>
+        </StyledBaseInputField >
     )
 }
 

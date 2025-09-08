@@ -62,10 +62,12 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
 
         const anchorRect = anchorRef.current.getBoundingClientRect();
         // Compare distances from anchor to viewport top and bottom
-        if (anchorRect.top - 0 > anchorRect.bottom - window.innerHeight) {
+        if (anchorRect.top > window.innerHeight -anchorRect.bottom) {
+            console.log("false");
             return false;
         }
 
+        console.log("true");
         return true;
     };
 
@@ -103,7 +105,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                 />
             }
             inputProps={{
-                onMouseDown: handleToggle,
+                onClick: handleToggle,
                 onKeyDown: (e) => {
                     if (e.key === ' ') {
                         handleToggle();
@@ -174,8 +176,10 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                                             </StyledMenuItem>
                                         ))}
                                     </MenuList>
-                                    {optionDescription && (<>
+                                    {optionDescription && (
                                         <Divider sx={{ order: popperBelow ? 1 : -1 }} />
+                                    )}
+                                    {optionDescription && (
                                         <Box
                                             sx={{
                                                 padding: 4,
@@ -186,7 +190,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                                         >
                                             <FormattedText text={optionDescription} />
                                         </Box>
-                                    </>)}
+                                    )}
                                 </Box>
                             </ClickAwayListener>
                         </Paper>

@@ -456,7 +456,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 key={size}
                                 selected={selected === size}
                                 onClick={() => setSelected(size)}
-                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
                                 <BooleanField
@@ -464,6 +463,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={booleanValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueBooleanChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    label={"Label for " + (size.charAt(0).toUpperCase() + size.slice(1)) + ", See the Installation page for additional docs about how to make sure everything is set up correctly."}
                                     color="primary"
                                 />
                             </InputDecorator>

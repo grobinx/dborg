@@ -1,5 +1,5 @@
 import { alpha, Palette, ThemeOptions } from "@mui/material";
-import { borderRadius, rootSizeProperties } from "./consts";
+import { borderRadius, paddingLarge, paddingMedium, paddingSmall, rootSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
 
@@ -22,9 +22,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                         };
                         return acc;
                     }, {}),
-                },
-                '&.type-boolean': {
-                    backgroundColor: "transparent",
                 },
                 '&.focused:not(.type-boolean)': {
                     outlineWidth: 2,
@@ -54,6 +51,10 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     opacity: 0.6,
                     cursor: 'not-allowed',
                 },
+                '&.type-boolean': {
+                    backgroundColor: "transparent",
+                    height: "auto",
+                },
             },
             input: {
                 fontFamily: "inherit",
@@ -73,7 +74,19 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
             },
             customInput: {
+                display: "flex",
+                flexDirection: "row",
                 alignSelf: "center",
+                alignItems: "center",
+                '&.size-small': {
+                    gap: paddingSmall,
+                },
+                '&.size-medium': {
+                    gap: paddingMedium,
+                },
+                '&.size-large': {
+                    gap: paddingLarge,
+                },
                 outline: "none",
             },
             placeholder: {
