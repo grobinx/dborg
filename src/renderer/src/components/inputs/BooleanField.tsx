@@ -46,8 +46,8 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
                 return value !== undefined && value !== null ? String(value) : '';
             }}
             input={[
-                <span className="checkbox-icon">{value ? <theme.icons.CheckBoxChecked color={color} /> : <theme.icons.CheckBoxBlank color={color} />}</span>,
-                <FormattedText text={label} />
+                <span key="icon" className="checkbox-icon">{value ? <theme.icons.CheckBoxChecked color={color} /> : <theme.icons.CheckBoxBlank color={color} />}</span>,
+                <FormattedText key="label" text={label} />
             ]}
             {...other}
         />

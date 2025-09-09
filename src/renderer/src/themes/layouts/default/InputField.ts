@@ -54,7 +54,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&.type-boolean': {
                     backgroundColor: "transparent",
                     height: "auto",
-                    cursor: "pointer",
                     paddingLeft: 0,
                     '& .checkbox-icon': {
                         fontSize: "1.4em",
@@ -79,10 +78,16 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
             },
             customInput: {
+                cursor: "pointer",
                 display: "flex",
                 flexDirection: "row",
                 alignSelf: "center",
                 alignItems: "center",
+                height: "100%",
+                minWidth: 0,
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
                 '&.size-small': {
                     gap: paddingSmall,
                 },

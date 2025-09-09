@@ -78,6 +78,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: false,
         large: true,
     });
+    const [arraySelectValues, setArraySelectValues] = React.useState<Record<string, string[] | undefined>>({
+        small: ["red", "green"],
+        medium: ["blue"],
+        large: ["yellow", "orange"],
+    });
 
     const handleValueTextChange = (size: string, value: string) => {
         setTextValues((prev) => ({
@@ -145,6 +150,38 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
+    const handleArraySelectChange = (size: string, value: string | undefined) => {
+        setArraySelectValues((prev) => {
+            const current = prev[size] ?? [];
+            if (value === undefined) {
+                return prev;
+            }
+            if (current.includes(value)) {
+                return {
+                    ...prev,
+                    [size]: current.filter((v) => v !== value),
+                };
+            }
+            // Jeśli nie ma, dodaj
+            return {
+                ...prev,
+                [size]: [...current, value].filter((v): v is string => v !== undefined),
+            };
+        });
+    };
+
+    const ColorBox = ({ color }: { color: string }) => (
+        <span
+            style={{
+                width: 16,
+                height: 16,
+                backgroundColor: color,
+                borderRadius: 2,
+                alignSelf: "center",
+                marginLeft: 4,
+            }}
+        />
+    );
 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
@@ -409,7 +446,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     options={[
                                         {
                                             value: "red",
-                                            label: [["Red", <span style={{ backgroundColor: "red", width: 16, borderRadius: 2 }} />]],
+                                            label: [["Red", <ColorBox color="red" />]],
                                             description: [
                                                 "The color of passion and energy.",
                                                 "* Symbolizes love and desire.",
@@ -421,22 +458,55 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                         },
                                         {
                                             value: "green",
-                                            label: [["Green", <span style={{ backgroundColor: "green", width: 16, borderRadius: 2 }} />]],
+                                            label: [["Green", <ColorBox color="green" />]],
                                             description: "The color of nature"
                                         },
                                         {
                                             value: "blue",
-                                            label: [["Blue", <span style={{ backgroundColor: "blue", width: 16, borderRadius: 2 }} />]],
+                                            label: [["Blue", <ColorBox color="blue" />]],
                                         },
                                         {
                                             value: "yellow",
-                                            label: [["Yellow", <span style={{ backgroundColor: "yellow", width: 16, borderRadius: 2 }} />]],
+                                            label: [["Yellow", <ColorBox color="yellow" />]],
                                             description: "The color of sunshine"
                                         },
                                     ]}
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="multipleSelectFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        MultipleSelectField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <SelectField
+                                    key={size}
+                                    size={size}
+                                    value={arraySelectValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="warning"
+                                    width={200}
+                                    options={[
+                                        { value: "red", label: <span style={{display: "flex"}}>Red<ColorBox color="red" /></span> },
+                                        { value: "green", label: <span style={{display: "flex"}}>Green<ColorBox color="green" /></span> },
+                                        { value: "blue", label: <span style={{display: "flex"}}>Blue<ColorBox color="blue" /></span> },
+                                        { value: "yellow", label: <span style={{display: "flex"}}>Yellow<ColorBox color="yellow" /></span> },
+                                        { value: "purple", label: <span style={{display: "flex"}}>Purple<ColorBox color="purple" /></span> },
+                                        { value: "orange", label: <span style={{display: "flex"}}>Orange<ColorBox color="orange" /></span> },
+                                    ]}
+                                />
+                            </InputDecorator>
+                        ), [size, arraySelectValues[size], selected])}
                     </Stack>
                 ))}
             </Stack>

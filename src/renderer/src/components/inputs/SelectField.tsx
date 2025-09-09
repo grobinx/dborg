@@ -3,18 +3,20 @@ import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
+import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, Stack, styled, useTheme } from '@mui/material';
 import { ToolButton } from '../buttons/ToolButton';
 import { useTranslation } from 'react-i18next';
 import { an } from 'react-router/dist/development/route-data-H2S3hwhf';
+import { IconButton } from '../buttons/IconButton';
 
-export interface SelectOption {
+export interface SelectOption<T = any> {
     label: FormattedContentItem;
-    value: string | number;
+    value: T;
     description?: FormattedContent;
 }
 
-interface SelectFieldProps extends BaseInputProps {
+interface SelectFieldProps<T = any> extends BaseInputProps {
+    value?: T | T[];
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: SelectOption[];
@@ -27,7 +29,7 @@ const StyledMenuItem = styled(MenuItem)({
     minHeight: 32,
 });
 
-export const SelectField: React.FC<SelectFieldProps> = (props) => {
+export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const {
         value,
         onChange,
@@ -62,7 +64,7 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
 
         const anchorRect = anchorRef.current.getBoundingClientRect();
         // Compare distances from anchor to viewport top and bottom
-        if (anchorRect.top > window.innerHeight -anchorRect.bottom) {
+        if (anchorRect.top > window.innerHeight - anchorRect.bottom) {
             return false;
         }
 
@@ -98,9 +100,20 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
             onChange={onChange}
             disabled={disabled}
             input={
-                <FormattedText
-                    text={options?.find(option => option.value === value)?.label}
-                />
+                !Array.isArray(value) ?
+                    <FormattedText
+                        text={options?.find(option => option.value === value)?.label}
+                    /> :
+                    options?.filter(option => value?.includes(option.value)).map(
+                        (option) => {
+                            return (
+                                <FormattedText
+                                    key={option.value}
+                                    text={option.label}
+                                />
+                            );
+                        }
+                    )
             }
             inputProps={{
                 onClick: handleToggle,
@@ -112,15 +125,12 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
             }}
             inputAdornments={
                 <Adornment position='input'>
-                    <ToolButton
+                    <span
                         onClick={handleToggle}
-                        size={size}
                         color={color}
-                        dense
-                        disabled={disabled}
                     >
                         {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
-                    </ToolButton>
+                    </span>
                     <Popper
                         open={open}
                         anchorEl={anchorRef.current}
@@ -155,11 +165,13 @@ export const SelectField: React.FC<SelectFieldProps> = (props) => {
                                                 key={option.value}
                                                 value={option.value}
                                                 onClick={() => {
-                                                    setOpen(false);
+                                                    if (!Array.isArray(value)) {
+                                                        setOpen(false);
+                                                    }
                                                     onChange?.(option.value);
                                                     //anchorRef.current?.focus();
                                                 }}
-                                                selected={value === option.value}
+                                                selected={Array.isArray(value) ? value.includes(option.value) : value === option.value}
                                                 onMouseEnter={() => {
                                                     setOptionDescription(option.description || null);
                                                 }}
