@@ -305,13 +305,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     onChange={(value) => handleValueSearchChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="info"
                                     required={false}
-                                    adornments={
-                                        <Adornment position="start">
-                                            <IconButton size={size} dense>
-                                                <theme.icons.AddTab />
-                                            </IconButton>
-                                        </Adornment>
-                                    }
                                 />
                             </InputDecorator>
                         ), [size, searchValues[size], selected])}
