@@ -81,7 +81,7 @@ interface AdornmentProps {
      * Można również podać liczbę, która określa kolejność (order) elementu
      * Kolejność <= 10 będzie na początku, a > 10 na końcu
      */
-    position?: 'start' | 'end' | 'input';
+    position?: 'start' | 'end' | "input";
     ref?: React.Ref<HTMLDivElement>;
     fullWidth?: boolean;
     style?: React.CSSProperties;
@@ -240,7 +240,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             sx={{ width }}
         >
             {startAdornments}
-            {(currentValue === undefined || currentValue === "") && placeholder && !disabled && (
+            {(currentValue === undefined || currentValue === null || currentValue === "") && placeholder && !disabled && !input && (
                 <StyledBaseInputFieldPlaceholder
                     className={clsx(
                         "InputField-placeholder",
@@ -307,7 +307,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     "InputField-input",
                     classes,
                 )}
-                value={typeof onConvertToInput === 'function' ? onConvertToInput(currentValue) : String(currentValue)}
+                value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
                 onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
                 disabled={disabled}  // ✅ Already handled
                 required={required}
@@ -324,8 +324,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 onClick={onClick}
                 width={width}
             />
-            {endAdornments}
             {inputAdornments}
+            {endAdornments}
         </StyledBaseInputField >
     )
 }
