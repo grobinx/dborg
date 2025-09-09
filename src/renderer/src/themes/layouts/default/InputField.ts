@@ -54,6 +54,11 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&.type-boolean': {
                     backgroundColor: "transparent",
                     height: "auto",
+                    cursor: "pointer",
+                    paddingLeft: 0,
+                    '& .checkbox-icon': {
+                        fontSize: "1.4em",
+                    }
                 },
             },
             input: {
@@ -88,6 +93,9 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     gap: paddingLarge,
                 },
                 outline: "none",
+                '&.type-boolean': {
+                    alignItems: "flex-start",
+                }
             },
             placeholder: {
                 color: palette.text.disabled,

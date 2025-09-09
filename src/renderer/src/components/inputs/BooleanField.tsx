@@ -14,6 +14,7 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
     const {
         value,
         label,
+        color = "main",
         onChange,
         inputProps,
         ...other
@@ -30,6 +31,7 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
         <BaseInputField
             value={value}
             type="boolean"
+            color={color}
             inputProps={{
                 type: 'checkbox',
                 onClick: (_e) => {
@@ -44,7 +46,7 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
                 return value !== undefined && value !== null ? String(value) : '';
             }}
             input={[
-                value ? <theme.icons.CheckBoxChecked /> : <theme.icons.CheckBoxBlank />,
+                <span className="checkbox-icon">{value ? <theme.icons.CheckBoxChecked color={color} /> : <theme.icons.CheckBoxBlank color={color} />}</span>,
                 <FormattedText text={label} />
             ]}
             {...other}
