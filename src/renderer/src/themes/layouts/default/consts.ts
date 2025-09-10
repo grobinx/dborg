@@ -11,8 +11,8 @@ export const rootSizeProperties: Record<Size, any> = {
     small: {
         padding: paddingSmall,
         fontSize: "0.9rem",
-        height: "1.6rem",
-        minWidth: "1.6rem",
+        height: "1.7rem",
+        minWidth: "1.7rem",
         gap: paddingSmall,
         '&.dense': {
             padding: paddingSmall / 2,
@@ -23,25 +23,25 @@ export const rootSizeProperties: Record<Size, any> = {
     medium: {
         padding: paddingMedium,
         fontSize: "1rem",
-        height: "2rem",
-        minWidth: "2rem",
+        height: "2.4rem",
+        minWidth: "2.4rem",
         gap: paddingMedium,
         '&.dense': {
             padding: paddingMedium / 2,
-            height: "1.5rem",
-            minWidth: "1.5rem",
+            height: "1.6rem",
+            minWidth: "1.6rem",
         }
     },
     large: {
         padding: paddingLarge,
         fontSize: "1.2rem",
-        height: "2.6rem",
-        minWidth: "2.6rem",
+        height: "3rem",
+        minWidth: "3rem",
         gap: paddingLarge,
         '&.dense': {
             padding: paddingLarge / 2,
-            height: "2rem",
-            minWidth: "2rem",
+            height: "2.2rem",
+            minWidth: "2.2rem",
         }
     },
 };

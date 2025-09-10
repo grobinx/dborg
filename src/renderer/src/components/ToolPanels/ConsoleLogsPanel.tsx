@@ -24,6 +24,7 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
 import { IconButton } from "../buttons/IconButton";
+import { SelectField } from "../inputs/SelectField";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -226,31 +227,27 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const { search, setSearch } = useConsoleLogState();
 
     // Obsługa zmiany zaznaczenia
-    const handleLogLevelChange = (event: SelectChangeEvent<LogLevel[]>) => {
-        if (
-            Array.isArray(event.target.value) &&
-            (event.target.value.filter(entry => typeof entry === "string") as string[]).includes("default")
-        ) {
+    const handleLogLevelChange = (value: LogLevel) => {
+        if (value as string === "default") {
             setLogLevels(DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]);
         }
-        else if (
-            Array.isArray(event.target.value) &&
-            (event.target.value.filter(entry => typeof entry === "string") as string[]).includes("all")
-        ) {
+        else if (value as string === "all") {
             setLogLevels(DefaultLogLevels.map(entry => entry.level) as LogLevel[]);
         }
         else {
-            if (Array.isArray(event.target.value)) {
-                setLogLevels(event.target.value as LogLevel[]);
+            // toggle: jeśli level był aktywny, usuń go; jeśli nie, dodaj
+            const prev = logLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
+            if (prev.includes(value as LogLevel)) {
+                setLogLevels(prev.filter(lvl => lvl !== value) as LogLevel[]);
             } else {
-                setLogLevels([event.target.value as LogLevel]);
+                setLogLevels([...prev, value] as LogLevel[]);
             }
         }
     };
 
     return (
         <TabPanelButtons>
-            <InputDecorator indicator={false}>
+            <InputDecorator indicator={false} width={200}>
                 <SearchField
                     value={search}
                     onChange={setSearch}
@@ -273,42 +270,43 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     </IconButton>
                 </span>
             </Tooltip>
-            <ToolSelect
-                multiple
-                displayEmpty
-                value={logLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]}
-                onChange={handleLogLevelChange}
-                renderValue={(selected) => {
-                    const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
-                    const selectedLogLevels = selected.length && selected.every(lvl => defaultLogLevels.includes(lvl));
-                    if (selectedLogLevels) {
-                        return t("default-log-levels", "Default log levels");
-                    }
-                    else if (selected.length === DefaultLogLevels.length) {
-                        return t("all-log-levels", "All log levels");
-                    }
-                    else if (selected.length === 0) {
-                        return t("select-log-levels", "Select log levels");
-                    }
-                    return selected.join(", ");
-                }}
-            >
-                <MenuItem key="default" value="default">
-                    {t("default-log-levels", "Default log levels")}
-                </MenuItem>
-                <MenuItem key="all" value="all">
-                    {t("all-log-levels", "All log levels")}
-                </MenuItem>
-                <Divider />
-                {logLevels.map((level) => (
-                    <MenuItem key={level.level} value={level.level}>
-                        <ListItemIcon>
-                            {level.logged ? <theme.icons.Check /> : null}
-                        </ListItemIcon>
-                        {level.level}
+            <InputDecorator indicator={false} width={200}>
+                <SelectField
+                    size="small"
+                    value={logLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]}
+                    onChange={handleLogLevelChange}
+                    renderValue={(values) => {
+                        const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
+                        const selectedLogLevels = values.length && values.every(lvl => defaultLogLevels.includes(lvl));
+                        if (selectedLogLevels) {
+                            return t("default-log-levels", "Default log levels");
+                        }
+                        else if (values.length === DefaultLogLevels.length) {
+                            return t("all-log-levels", "All log levels");
+                        }
+                        else if (values.length === 0) {
+                            return t("select-log-levels", "Select log levels");
+                        }
+                        return values.join(", ");
+                    }}
+                >
+                    <MenuItem key="default" value="default">
+                        {t("default-log-levels", "Default log levels")}
                     </MenuItem>
-                ))}
-            </ToolSelect>
+                    <MenuItem key="all" value="all">
+                        {t("all-log-levels", "All log levels")}
+                    </MenuItem>
+                    <Divider />
+                    {logLevels.map((level) => (
+                        <MenuItem key={level.level} value={level.level}>
+                            <ListItemIcon>
+                                {level.logged ? <theme.icons.Check /> : null}
+                            </ListItemIcon>
+                            {level.level}
+                        </MenuItem>
+                    ))}
+                </SelectField>
+            </InputDecorator>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <span>
                     <IconButton

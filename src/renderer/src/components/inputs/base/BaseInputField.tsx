@@ -204,17 +204,19 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     });
 
     React.useEffect(() => {
-        if (textInputRef.current) {
-            const computedStyle = window.getComputedStyle(textInputRef.current);
+        const element = customInputRef.current ?? textInputRef.current;
+        if (element) {
+            const computedStyle = window.getComputedStyle(element);
             const paddingLeft = parseFloat(computedStyle.paddingLeft);
             const paddingRight = parseFloat(computedStyle.paddingRight);
             const borderLeft = Math.ceil(parseFloat(computedStyle.borderLeftWidth));
             const borderRight = Math.ceil(parseFloat(computedStyle.borderRightWidth));
+            console.log("paddingLeft", paddingLeft, "paddingRight", paddingRight, "borderLeft", borderLeft, "borderRight", borderRight);
 
-            setInputWidth(textInputRef.current.offsetWidth - paddingLeft - paddingRight - borderLeft - borderRight);
-            setInputLeft(textInputRef.current.offsetLeft + paddingLeft + borderLeft);
+            setInputWidth((element.offsetWidth ?? 0) - paddingLeft - paddingRight - borderLeft - borderRight);
+            setInputLeft((element.offsetLeft ?? 0) + paddingLeft + borderLeft);
         }
-    }, [width, adornments]);
+    }, [width, React.Children.toArray(adornments).length, classes]);
 
     React.useEffect(() => {
         if (decorator) {
@@ -240,7 +242,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             sx={{ width }}
         >
             {startAdornments}
-            {(currentValue === undefined || currentValue === null || currentValue === "") && placeholder && !disabled && !input && (
+            {(currentValue === undefined || currentValue === null || currentValue === "" || (Array.isArray(currentValue) && currentValue.length === 0)) && placeholder && !disabled && (
                 <StyledBaseInputFieldPlaceholder
                     className={clsx(
                         "InputField-placeholder",
@@ -291,7 +293,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             }
             <StyledBaseInputFieldInput
                 {...inputProps}
-                type={!!input ? "hidden" : inputProps?.type ?? "text"}
                 id={id}
                 ref={(ref) => {
                     textInputRef.current = ref;
@@ -323,6 +324,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 }}
                 onClick={onClick}
                 width={width}
+                hidden={!!input}
             />
             {inputAdornments}
             {endAdornments}

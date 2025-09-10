@@ -16,27 +16,32 @@ export interface SelectOption<T = any> {
 }
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
-    value?: T | T[];
+    placeholder?: FormattedContentItem;
+    value?: T;
+    renderValue?: (selected: T) => React.ReactNode;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: SelectOption[];
+    children?: React.ReactNode;
 }
 
 const StyledMenuItem = styled(MenuItem)({
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    minHeight: 32,
+    //minHeight: 32,
 });
 
 export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const {
         value,
+        renderValue,
         onChange,
         size,
         color,
         options,
         disabled,
+        children,
         ...other
     } = props;
 
@@ -71,6 +76,62 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         return true;
     };
 
+    const SelectValueRenderer = () => {
+        if (renderValue && value !== undefined) return <>{renderValue(value as T)}</>;
+
+        if (!Array.isArray(value)) {
+            return (
+                <FormattedText
+                    text={options?.find(option => option.value === value)?.label}
+                />
+            );
+        }
+
+        if (options) {
+            return (
+                <>
+                    {options
+                        .filter(option => value?.includes(option.value))
+                        .map(option => (
+                            <FormattedText
+                                key={option.value}
+                                text={option.label}
+                            />
+                        ))}
+                </>
+            );
+        }
+
+        if (children) {
+            return (
+                <>
+                    {React.Children.toArray(children)
+                        .filter(child => {
+                            if (React.isValidElement(child) && child.type === MenuItem) {
+                                const childValue = (child.props as any).value;
+                                return Array.isArray(value)
+                                    ? value.includes(childValue)
+                                    : value === childValue;
+                            }
+                            return false;
+                        })
+                        .map(child => {
+                            if (React.isValidElement(child)) {
+                                return React.cloneElement(child, {
+                                    disableGutters: true,
+                                    disableRipple: true,
+                                    style: { fontSize: 'inherit' },
+                                } as React.ComponentProps<typeof MenuItem>);
+                            }
+                            return null;
+                        })}
+                </>
+            );
+        }
+
+        return <></>; // równoważne z "" w poprzedniej wersji
+    };
+
     React.useEffect(() => {
         if (open) {
             setPopperBelow(isPopperBelow());
@@ -99,22 +160,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             color={color}
             onChange={onChange}
             disabled={disabled}
-            input={
-                !Array.isArray(value) ?
-                    <FormattedText
-                        text={options?.find(option => option.value === value)?.label}
-                    /> :
-                    options?.filter(option => value?.includes(option.value)).map(
-                        (option) => {
-                            return (
-                                <FormattedText
-                                    key={option.value}
-                                    text={option.label}
-                                />
-                            );
-                        }
-                    )
-            }
+            input={<SelectValueRenderer />}
             inputProps={{
                 onClick: handleToggle,
                 onKeyDown: (e) => {
@@ -160,31 +206,46 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                             }
                                         }}
                                     >
-                                        {options?.map((option) => (
-                                            <StyledMenuItem
-                                                key={option.value}
-                                                value={option.value}
-                                                onClick={() => {
-                                                    if (!Array.isArray(value)) {
-                                                        setOpen(false);
-                                                    }
-                                                    onChange?.(option.value);
-                                                    //anchorRef.current?.focus();
-                                                }}
-                                                selected={Array.isArray(value) ? value.includes(option.value) : value === option.value}
-                                                onMouseEnter={() => {
-                                                    setOptionDescription(option.description || null);
-                                                }}
-                                                onMouseLeave={() => {
-                                                    setOptionDescription(option.description || null);
-                                                }}
-                                                onFocusVisible={() => {
-                                                    setOptionDescription(option.description || null);
-                                                }}
-                                            >
-                                                <FormattedText text={option.label} />
-                                            </StyledMenuItem>
-                                        ))}
+                                        {children ? React.Children.toArray(children).map(child => {
+                                            if (React.isValidElement(child) && child.type === MenuItem && 'value' in (child.props as any)) {
+                                                return React.cloneElement(child, {
+                                                    onClick: () => {
+                                                        if (!Array.isArray(value)) {
+                                                            setOpen(false);
+                                                        }
+                                                        onChange?.((child.props as any).value);
+                                                        //anchorRef.current?.focus();
+                                                    },
+                                                    selected: Array.isArray(value) ? value.includes((child.props as any).value) : value === (child.props as any).value,
+                                                } as React.ComponentProps<typeof MenuItem>);
+                                            }
+                                            return child;
+                                        }) :
+                                            options?.map((option) => (
+                                                <StyledMenuItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                    onClick={() => {
+                                                        if (!Array.isArray(value)) {
+                                                            setOpen(false);
+                                                        }
+                                                        onChange?.(option.value);
+                                                        //anchorRef.current?.focus();
+                                                    }}
+                                                    selected={Array.isArray(value) ? value.includes(option.value) : value === option.value}
+                                                    onMouseEnter={() => {
+                                                        setOptionDescription(option.description || null);
+                                                    }}
+                                                    onMouseLeave={() => {
+                                                        setOptionDescription(option.description || null);
+                                                    }}
+                                                    onFocusVisible={() => {
+                                                        setOptionDescription(option.description || null);
+                                                    }}
+                                                >
+                                                    <FormattedText text={option.label} />
+                                                </StyledMenuItem>
+                                            ))}
                                     </MenuList>
                                     {optionDescription && (
                                         <Divider sx={{ order: popperBelow ? 1 : -1 }} />

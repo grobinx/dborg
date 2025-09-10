@@ -1,4 +1,4 @@
-import { Grid2, Stack, useTheme } from "@mui/material";
+import { Grid2, MenuItem, Stack, useTheme } from "@mui/material";
 import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
@@ -439,6 +439,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             >
                                 <SelectField
                                     key={size}
+                                    placeholder={"Select " + size.charAt(0).toUpperCase() + size.slice(1)}
                                     size={size}
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
@@ -491,20 +492,20 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             >
                                 <SelectField
                                     key={size}
+                                    placeholder={"Select colors"}
                                     size={size}
                                     value={arraySelectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="warning"
                                     width={200}
-                                    options={[
-                                        { value: "red", label: <span style={{display: "flex"}}>Red<ColorBox color="red" /></span> },
-                                        { value: "green", label: <span style={{display: "flex"}}>Green<ColorBox color="green" /></span> },
-                                        { value: "blue", label: <span style={{display: "flex"}}>Blue<ColorBox color="blue" /></span> },
-                                        { value: "yellow", label: <span style={{display: "flex"}}>Yellow<ColorBox color="yellow" /></span> },
-                                        { value: "purple", label: <span style={{display: "flex"}}>Purple<ColorBox color="purple" /></span> },
-                                        { value: "orange", label: <span style={{display: "flex"}}>Orange<ColorBox color="orange" /></span> },
-                                    ]}
-                                />
+                                >
+                                    <MenuItem value="red">Red<ColorBox color="red" /></MenuItem>
+                                    <MenuItem value="green">Green<ColorBox color="green" /></MenuItem>
+                                    <MenuItem value="blue">Blue<ColorBox color="blue" /></MenuItem>
+                                    <MenuItem value="yellow">Yellow<ColorBox color="yellow" /></MenuItem>
+                                    <MenuItem value="purple">Purple<ColorBox color="purple" /></MenuItem>
+                                    <MenuItem value="orange">Orange<ColorBox color="orange" /></MenuItem>
+                                </SelectField>
                             </InputDecorator>
                         ), [size, arraySelectValues[size], selected])}
                     </Stack>
