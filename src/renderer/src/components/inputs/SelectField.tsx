@@ -77,7 +77,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     };
 
     const SelectValueRenderer = () => {
-        if (renderValue && value !== undefined) return <>{renderValue(value as T)}</>;
+        if (renderValue && value !== undefined) return renderValue(value);
 
         if (!Array.isArray(value)) {
             return (
@@ -89,43 +89,40 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
 
         if (options) {
             return (
-                <>
-                    {options
-                        .filter(option => value?.includes(option.value))
-                        .map(option => (
-                            <FormattedText
-                                key={option.value}
-                                text={option.label}
-                            />
-                        ))}
-                </>
+                options
+                    .filter(option => value?.includes(option.value))
+                    .map(option => (
+                        <FormattedText
+                            key={option.value}
+                            text={option.label}
+                        />
+                    ))
             );
         }
 
         if (children) {
             return (
-                <>
-                    {React.Children.toArray(children)
-                        .filter(child => {
-                            if (React.isValidElement(child) && child.type === MenuItem) {
-                                const childValue = (child.props as any).value;
-                                return Array.isArray(value)
-                                    ? value.includes(childValue)
-                                    : value === childValue;
-                            }
-                            return false;
-                        })
-                        .map(child => {
-                            if (React.isValidElement(child)) {
-                                return React.cloneElement(child, {
-                                    disableGutters: true,
-                                    disableRipple: true,
-                                    style: { fontSize: 'inherit' },
-                                } as React.ComponentProps<typeof MenuItem>);
-                            }
-                            return null;
-                        })}
-                </>
+                React.Children.toArray(children)
+                    .filter(child => {
+                        if (React.isValidElement(child) && child.type === MenuItem) {
+                            const childValue = (child.props as any).value;
+                            return Array.isArray(value)
+                                ? value.includes(childValue)
+                                : value === childValue;
+                        }
+                        return false;
+                    })
+                    .map(child => {
+                        if (React.isValidElement(child)) {
+                            return React.cloneElement(child, {
+                                //disableGutters: true,
+                                disableRipple: true,
+                                style: { fontSize: 'inherit' },
+                                dense: true
+                            } as React.ComponentProps<typeof MenuItem>);
+                        }
+                        return null;
+                    })
             );
         }
 

@@ -148,6 +148,21 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         inputRef,
     } = props;
 
+    // NEW: internalValue state for uncontrolled mode
+    const [internalValue, setInternalValue] = React.useState<T | undefined>(
+        value !== undefined ? value : defaultValue
+    );
+
+    // Sync internalValue with value prop if it changes (controlled mode)
+    React.useEffect(() => {
+        if (value !== undefined) {
+            setInternalValue(value);
+        }
+    }, [value]);
+
+    // Use internalValue if value is undefined
+    const currentValue = value !== undefined ? value : internalValue;
+
     const textInputRef = React.useRef<HTMLInputElement>(null);
     const customInputRef = React.useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
@@ -156,7 +171,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
     const [hover, setHover] = React.useState<boolean>(false);
 
-    const currentValue = value ?? defaultValue;
     const [invalid] = useValidation(
         currentValue,
         disabled,
@@ -211,7 +225,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             const paddingRight = parseFloat(computedStyle.paddingRight);
             const borderLeft = Math.ceil(parseFloat(computedStyle.borderLeftWidth));
             const borderRight = Math.ceil(parseFloat(computedStyle.borderRightWidth));
-            console.log("paddingLeft", paddingLeft, "paddingRight", paddingRight, "borderLeft", borderLeft, "borderRight", borderRight);
 
             setInputWidth((element.offsetWidth ?? 0) - paddingLeft - paddingRight - borderLeft - borderRight);
             setInputLeft((element.offsetLeft ?? 0) + paddingLeft + borderLeft);
@@ -289,8 +302,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 >
                     {input}
                 </StyledBaseInputFieldCustomInput>
-            )
-            }
+            )}
             <StyledBaseInputFieldInput
                 {...inputProps}
                 id={id}
@@ -309,8 +321,18 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     classes,
                 )}
                 value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
-                onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
-                disabled={disabled}  // ✅ Already handled
+                onChange={(e) => {
+                    const newValue = typeof onConvertToValue === 'function'
+                        ? onConvertToValue(e.target.value)
+                        : (e.target.value as T);
+                    if (onChange) {
+                        onChange(newValue);
+                    }
+                    if (value === undefined) {
+                        setInternalValue(newValue);
+                    }
+                }}
+                disabled={disabled}
                 required={required}
                 onFocus={() => {
                     onFocus?.();

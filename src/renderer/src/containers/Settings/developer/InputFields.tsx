@@ -18,6 +18,9 @@ import { PasswordField } from "@renderer/components/inputs/PasswordField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { BooleanField } from "@renderer/components/inputs/BooleanField";
+import { DateField } from "@renderer/components/inputs/DateField";
+import { TimeField } from "@renderer/components/inputs/TimeField";
+import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -532,6 +535,72 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 />
                             </InputDecorator>
                         ), [size, booleanValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="dateFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        DateField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <DateField
+                                    key={size}
+                                    size={size}
+                                    color="secondary"
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="timeFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        TimeField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <TimeField
+                                    key={size}
+                                    size={size}
+                                    color="warning"
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="datetimeFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        DateTimeField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <DateTimeField
+                                    key={size}
+                                    size={size}
+                                    color="success"
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
                     </Stack>
                 ))}
             </Stack>
