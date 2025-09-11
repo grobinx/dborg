@@ -23,6 +23,7 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: SelectOption[];
     children?: React.ReactNode;
+    listHeight?: number; 
 }
 
 const StyledMenuItem = styled(MenuItem)({
@@ -42,6 +43,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         options,
         disabled,
         children,
+        listHeight = 250,
         ...other
     } = props;
 
@@ -132,21 +134,12 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     React.useEffect(() => {
         if (open) {
             setPopperBelow(isPopperBelow());
-        }
-    }, [open]);
-
-    React.useEffect(() => {
-        setOptionDescription(options?.find(option => option.value === value)?.description || null);
-    }, [value]);
-
-    // Reset focused index when menu opens
-    React.useEffect(() => {
-        if (open) {
+            setOptionDescription(options?.find(option => option.value === value)?.description || null);
             setTimeout(() => {
                 menuListRef.current?.focus();
             }, 0);
         }
-    }, [open, options, value]);
+    }, [value, open]);
 
     return (
         <BaseInputField
@@ -161,7 +154,8 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             inputProps={{
                 onClick: handleToggle,
                 onKeyDown: (e) => {
-                    if (e.key === ' ') {
+                    if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
                         handleToggle();
                     }
                 },
@@ -192,7 +186,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     <MenuList
                                         ref={menuListRef}
                                         sx={{
-                                            maxHeight: 200,
+                                            maxHeight: listHeight,
                                             overflow: "auto",
                                             outline: "none",
                                         }}
