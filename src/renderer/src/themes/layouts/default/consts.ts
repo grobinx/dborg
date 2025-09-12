@@ -40,8 +40,8 @@ export const rootSizeProperties: Record<Size, any> = {
         gap: paddingLarge,
         '&.dense': {
             padding: paddingLarge / 2,
-            height: "2rem",
-            minWidth: "2rem",
+            height: "1.9rem",
+            minWidth: "1.9rem",
         }
     },
 };

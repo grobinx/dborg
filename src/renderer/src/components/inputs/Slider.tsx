@@ -5,6 +5,7 @@ import calculateTextWidth from '@renderer/utils/canvas';
 import useValueAnimation, { animationPulseCss, animationZoomInCss } from '@renderer/hooks/useValueAnimation';
 
 interface SliderProps {
+    className?: string;
     value: number;
     min: number;
     max: number;
@@ -18,6 +19,7 @@ interface SliderProps {
 }
 
 interface RangeProps {
+    className?: string;
     value: [number, number]; // [minValue, maxValue]
     min: number;
     max: number;
@@ -169,6 +171,7 @@ const StyledSliderScaleTick = styled('div', {
 
 export const Slider: React.FC<SliderProps> = (props) => {
     const {
+        className,
         value,
         min: initMin = 0,
         max: initMax = 100,
@@ -290,7 +293,7 @@ export const Slider: React.FC<SliderProps> = (props) => {
         : [];
 
     return (
-        <StyledSlider className={clsx("Slider-root")}>
+        <StyledSlider className={clsx("Slider-root", className)}>
             <StyledSliderContainer
                 className={clsx("Slider-container")}
                 ref={sliderRef}
@@ -344,6 +347,7 @@ export const Slider: React.FC<SliderProps> = (props) => {
 Slider.displayName = 'Slider';
 
 export const Range: React.FC<RangeProps> = ({
+    className,
     value,
     min: initMin = 0,
     max: initMax = 100,
@@ -559,7 +563,7 @@ export const Range: React.FC<RangeProps> = ({
         : [];
 
     return (
-        <StyledSlider className={clsx("Slider-root")}>
+        <StyledSlider className={clsx("Slider-root", className)}>
             <StyledBaseSliderLegend
                 className={clsx(
                     'Slider-legend',

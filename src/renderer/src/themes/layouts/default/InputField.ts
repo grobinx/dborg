@@ -12,9 +12,12 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&:not(.type-boolean)': {
                     border: `1px solid ${palette.divider}`,
                     borderRadius: borderRadius,
-                    '&:hover': {
+                    '&.hover': {
                         borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
                         transition: "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    },
+                    '&.hover:not(.focused)': {
+                        //boxShadow: `inset 0 0 3px 0px ${alpha(palette.text.primary, 0.5)}`,
                     },
                     ...themeColors.reduce((acc, color) => {
                         acc[`&.color-${color}`] = {
@@ -35,7 +38,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                         };
                         return acc;
                     }, {}),
-                    //boxShadow: `0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
+                    //boxShadow: `inset 0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
                 },
                 '&.size-small': {
                     ...rootSizeProperties.small,
@@ -111,6 +114,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     fontFamily: 'inherit',
                     fontSize: 'inherit',
                     backgroundColor: "transparent",
+                    color: palette.text.primary,
                 }
             },
             placeholder: {

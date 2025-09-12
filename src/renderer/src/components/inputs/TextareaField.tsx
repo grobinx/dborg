@@ -5,26 +5,32 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
-interface TextareaFieldProps extends BaseInputProps {
+interface TextareaFieldProps extends Omit<BaseInputProps, 'inputProps'> {
     maxLength?: number;
     minLength?: number;
     rows?: number;
     adornments?: React.ReactNode;
     inputProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+    defaultValue?: string;
 }
 
 export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
     const {
-        value,
+        value: controlledValue,
         onChange,
         maxLength,
         minLength,
         rows = 4,
         inputProps,
+        defaultValue,
         ...other
     } = props;
 
     const decorator = useInputDecorator();
+
+    // Obsługa uncontrolled value
+    const [uncontrolledValue, setUncontrolledValue] = React.useState<string | undefined>(defaultValue);
+    const value = controlledValue !== undefined ? controlledValue : uncontrolledValue;
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
@@ -33,7 +39,11 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
     }
 
     const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-        onChange?.(e.currentTarget.value);
+        if (onChange) {
+            onChange(e.currentTarget.value);
+        } else {
+            setUncontrolledValue(e.currentTarget.value);
+        }
     };
 
     return (
@@ -46,11 +56,8 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
                     maxLength={maxLength}
                     minLength={minLength}
                     rows={rows}
-                    onInput={handleChange}
-                // onChange={(e) => {
-                //     onChange?.(e.target.value);
-                // }}
-                //{...inputProps}
+                    onChange={handleChange}
+                    {...inputProps}
                 />
             }
             validations={[

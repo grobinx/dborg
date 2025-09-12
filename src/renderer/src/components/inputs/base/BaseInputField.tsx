@@ -148,21 +148,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         inputRef,
     } = props;
 
-    // NEW: internalValue state for uncontrolled mode
-    const [internalValue, setInternalValue] = React.useState<T | undefined>(
-        value !== undefined ? value : defaultValue
-    );
-
-    // Sync internalValue with value prop if it changes (controlled mode)
-    React.useEffect(() => {
-        if (value !== undefined) {
-            setInternalValue(value);
-        }
-    }, [value]);
-
-    // Use internalValue if value is undefined
-    const currentValue = value !== undefined ? value : internalValue;
-
     const textInputRef = React.useRef<HTMLInputElement>(null);
     const customInputRef = React.useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
@@ -171,6 +156,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
     const [hover, setHover] = React.useState<boolean>(false);
 
+    const currentValue = value ?? defaultValue;
     const [invalid] = useValidation(
         currentValue,
         disabled,
@@ -300,9 +286,15 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     tabIndex={disabled ? -1 : 0}
                     aria-disabled={disabled}
                 >
-                    {input}
+                    {React.isValidElement(input)
+                        ? React.cloneElement(
+                            input as React.ReactElement<any>,
+                            { className: clsx(classes, (input as React.ReactElement<any>).props.className) }
+                        )
+                        : input}
                 </StyledBaseInputFieldCustomInput>
-            )}
+            )
+            }
             <StyledBaseInputFieldInput
                 {...inputProps}
                 id={id}
@@ -321,18 +313,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     classes,
                 )}
                 value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
-                onChange={(e) => {
-                    const newValue = typeof onConvertToValue === 'function'
-                        ? onConvertToValue(e.target.value)
-                        : (e.target.value as T);
-                    if (onChange) {
-                        onChange(newValue);
-                    }
-                    if (value === undefined) {
-                        setInternalValue(newValue);
-                    }
-                }}
-                disabled={disabled}
+                onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
+                disabled={disabled}  // ✅ Already handled
                 required={required}
                 onFocus={() => {
                     onFocus?.();
