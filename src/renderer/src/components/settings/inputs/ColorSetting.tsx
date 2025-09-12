@@ -9,7 +9,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import { htmlColors } from "@renderer/types/colors";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { StringField } from "@renderer/components/inputs/StringField";
+import { TextField } from "@renderer/components/inputs/TextField";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
 

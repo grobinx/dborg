@@ -58,13 +58,13 @@ export const validateRequired = (value: any, required: boolean | undefined): boo
     return true;
 };
 export const validateMinLength = (value: any, minLength: number | undefined): boolean | FormattedContent => {
-    if (minLength !== undefined && value.length < minLength) {
+    if (minLength !== undefined && (value ?? "").length < minLength) {
         return `Wymagana minimalna długość to ${minLength} znaków`;
     }
     return true;
 };
 export const validateMaxLength = (value: any, maxLength: number | undefined): boolean | FormattedContent => {
-    if (maxLength !== undefined && value.length > maxLength) {
+    if (maxLength !== undefined && (value ?? "").length > maxLength) {
         return `Maksymalna długość to ${maxLength} znaków`;
     }
     return true;

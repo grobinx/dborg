@@ -44,6 +44,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         disabled,
         children,
         listHeight = 250,
+        inputProps,
         ...other
     } = props;
 
@@ -152,12 +153,17 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             disabled={disabled}
             input={<SelectValueRenderer />}
             inputProps={{
-                onClick: handleToggle,
+                ...inputProps,
+                onClick: (e) => {
+                    handleToggle();
+                    inputProps?.onClick?.(e);
+                },
                 onKeyDown: (e) => {
                     if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                         e.preventDefault();
                         handleToggle();
                     }
+                    inputProps?.onKeyDown?.(e);
                 },
             }}
             inputAdornments={

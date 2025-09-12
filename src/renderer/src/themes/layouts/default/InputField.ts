@@ -52,18 +52,20 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     cursor: 'not-allowed',
                 },
                 '&.type-boolean': {
-                    backgroundColor: "transparent",
                     height: "auto",
                     paddingLeft: 0,
                     '& .checkbox-icon': {
                         fontSize: "1.4em",
                     }
                 },
+                '&.type-textarea': {
+                    height: "auto",
+                },
             },
             input: {
                 fontFamily: "inherit",
-                padding: 2,
                 fontSize: "inherit",
+                padding: 0,
                 backgroundColor: 'transparent',
                 color: palette.text.primary,
                 border: "none",
@@ -100,6 +102,15 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 outline: "none",
                 '&.type-boolean': {
                     alignItems: "flex-start",
+                },
+                '& textarea': {
+                    outline: 'none',
+                    border: 'none',
+                    resize: 'none',
+                    width: '100%',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    backgroundColor: "transparent",
                 }
             },
             placeholder: {

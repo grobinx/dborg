@@ -5,7 +5,7 @@ import { validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
-import { StringField } from "@renderer/components/inputs/StringField";
+import { TextField } from "@renderer/components/inputs/TextField";
 
 export const StringSetting: React.FC<{
     setting: SettingTypeString;
@@ -44,7 +44,7 @@ export const StringSetting: React.FC<{
                 );
             }}
         >
-            <StringField
+            <TextField
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 width={calculateWidth(setting)}
                 value={value ?? ""}

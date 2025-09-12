@@ -6,7 +6,7 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { PatternField } from "@renderer/components/inputs/PatternField";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { RangeField, SliderField } from "@renderer/components/inputs/SliderField";
-import { StringField } from "@renderer/components/inputs/StringField";
+import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
@@ -21,6 +21,8 @@ import { BooleanField } from "@renderer/components/inputs/BooleanField";
 import { DateField } from "@renderer/components/inputs/DateField";
 import { TimeField } from "@renderer/components/inputs/TimeField";
 import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
+import { FileField } from "@renderer/components/inputs/FileField";
+import { TextareaField } from "@renderer/components/inputs/TextareaField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -188,10 +190,10 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
-            <Stack key="stringFields" direction="row" width="100%" gap={8}>
+            <Stack key="textFields" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        StringField, size: {size}
+                        TextField, size: {size}
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
@@ -200,7 +202,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <StringField
+                                <TextField
                                     size={size}
                                     placeholder={"Placeholder for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                     maxLength={50}
@@ -598,6 +600,51 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     key={size}
                                     size={size}
                                     color="success"
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="fileFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        FileField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <FileField
+                                    key={size}
+                                    size={size}
+                                    color="main"
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="textareaFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        TextareaField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <TextareaField
+                                    key={size}
+                                    size={size}
+                                    color="error"
+                                    maxLength={500}
                                 />
                             </InputDecorator>
                         ), [size, selected])}

@@ -40,14 +40,19 @@ const StyledColorSwatch = styled('div')({
 
 export const ColorField: React.FC<ColorFieldProps> = (props) => {
     const {
-        value,
+        value: controlledValue,
         onChange,
         inputProps,
         picker,
         size = 'medium',
         color = 'main',
+        defaultValue,
         ...other
     } = props;
+
+    const [uncontrolledValue, setUncontrolledValue] = React.useState<string>(defaultValue ?? "");
+    const isControlled = controlledValue !== undefined;
+    const value = isControlled ? controlledValue : uncontrolledValue;
 
     const [colorPickerAnchoreEl, setColorPickerAnchoreEl] = React.useState<null | HTMLElement>(null);
     const [colorMenuAnchorEl, setColorMenuAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -71,23 +76,31 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
     };
 
     const handleColorSelect = (selectedColor: string) => {
-        onChange?.(selectedColor);
+        if (onChange) {
+            onChange(selectedColor);
+        } else {
+            setUncontrolledValue(selectedColor);
+        }
         handleColorMenuClose();
+    };
+
+    const handlePickerChange = (selectedColor: string) => {
+        if (onChange) {
+            onChange(selectedColor);
+        } else {
+            setUncontrolledValue(selectedColor);
+        }
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.altKey && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
             event.preventDefault();
             if (!colorMenuAnchorEl) {
-                // Otwórz menu, używając input jako anchor
                 setColorMenuAnchorEl(event.currentTarget);
             } else {
-                // Zamknij menu jeśli już otwarte
                 handleColorMenuClose();
             }
         }
-        
-        // Wywołaj oryginalny onKeyDown jeśli istnieje
         inputProps?.onKeyDown?.(event);
     };
 
@@ -97,95 +110,99 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
             type="color"
             size={size}
             color={color}
-            onChange={onChange}
+            onChange={(val) => {
+                if (onChange) {
+                    onChange(val);
+                } else {
+                    setUncontrolledValue(val);
+                }
+            }}
             inputProps={{
                 type: 'text',
                 ...inputProps,
                 onKeyDown: handleKeyDown,
             }}
-            inputAdornments={
-                [
-                    <Adornment
-                        key="colorControls"
-                        position="input"
-                    >
-                        <ButtonGroup>
-                            <Tooltip title={t("pick-a-color", "Pick a color")}>
-                                <ToolButton
-                                    onClick={handleColorPickerOpen}
-                                    size={size}
-                                    color={color}
-                                    dense
-                                >
-                                    <StyledInputFieldColorIndicator
-                                        className={clsx(
-                                            'ColorField-indicator',
-                                            `size-${size}`,
-                                            `color-${color}`
-                                        )}
-                                        style={{
-                                            backgroundColor: value || '#000000',
-                                        }}
-                                    />
-                                </ToolButton>
-                            </Tooltip>
-                            <Tooltip title={t("select-color", "Select color")}>
-                                <ToolButton
-                                    onClick={handleColorMenuOpen}
-                                    size={size}
-                                    color={color}
-                                    dense
-                                >
-                                    {Boolean(colorMenuAnchorEl) ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
-                                </ToolButton>
-                            </Tooltip>
-                        </ButtonGroup>
+            inputAdornments={[
+                <Adornment
+                    key="colorControls"
+                    position="input"
+                >
+                    <ButtonGroup>
+                        <Tooltip title={t("pick-a-color", "Pick a color")}>
+                            <ToolButton
+                                onClick={handleColorPickerOpen}
+                                size={size}
+                                color={color}
+                                dense
+                            >
+                                <StyledInputFieldColorIndicator
+                                    className={clsx(
+                                        'ColorField-indicator',
+                                        `size-${size}`,
+                                        `color-${color}`
+                                    )}
+                                    style={{
+                                        backgroundColor: value || '#000000',
+                                    }}
+                                />
+                            </ToolButton>
+                        </Tooltip>
+                        <Tooltip title={t("select-color", "Select color")}>
+                            <ToolButton
+                                onClick={handleColorMenuOpen}
+                                size={size}
+                                color={color}
+                                dense
+                            >
+                                {Boolean(colorMenuAnchorEl) ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
+                            </ToolButton>
+                        </Tooltip>
+                    </ButtonGroup>
 
-                        <Menu
-                            anchorEl={colorMenuAnchorEl}
-                            open={Boolean(colorMenuAnchorEl)}
-                            onClose={handleColorMenuClose}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'left',
-                            }}
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'left',
-                            }}
-                            slotProps={{
-                                paper: {
-                                    style: {
-                                        maxHeight: 300,
-                                        width: 200,
-                                    },
+                    <Menu
+                        anchorEl={colorMenuAnchorEl}
+                        open={Boolean(colorMenuAnchorEl)}
+                        onClose={handleColorMenuClose}
+                        anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                        }}
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'left',
+                        }}
+                        slotProps={{
+                            paper: {
+                                style: {
+                                    maxHeight: 300,
+                                    width: 200,
                                 },
-                            }}
-                        >
-                            {htmlColors.map((name) => (
-                                <StyledColorMenuItem
-                                    key={name}
-                                    onClick={() => handleColorSelect(name)}
-                                    selected={value === name}
-                                >
-                                    <StyledColorSwatch
-                                        style={{ backgroundColor: name }}
-                                    />
-                                    {name}
-                                </StyledColorMenuItem>
-                            ))}
-                        </Menu>
+                            },
+                        }}
+                    >
+                        {htmlColors.map((name) => (
+                            <StyledColorMenuItem
+                                key={name}
+                                onClick={() => handleColorSelect(name)}
+                                selected={value === name}
+                            >
+                                <StyledColorSwatch
+                                    style={{ backgroundColor: name }}
+                                />
+                                {name}
+                            </StyledColorMenuItem>
+                        ))}
+                    </Menu>
 
-                        <ColorPicker
-                            value={value || "#000000"}
-                            onChange={(value) => onChange?.(value)}
-                            anchorEl={colorPickerAnchoreEl}
-                            onClose={handleColorPickerClose}
-                            picker={picker}
-                        />
-                    </Adornment>,
-                ]
-            }
+                    <ColorPicker
+                        value={value || "#000000"}
+                        onChange={handlePickerChange}
+                        anchorEl={colorPickerAnchoreEl}
+                        onClose={handleColorPickerClose}
+                        picker={picker}
+                    />
+                </Adornment>,
+            ]}
             {...other}
         />
     );

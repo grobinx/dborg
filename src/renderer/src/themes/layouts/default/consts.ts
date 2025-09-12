@@ -5,14 +5,14 @@ import { CSSProperties } from "react";
 export const borderRadius = 3;
 export const paddingSmall = 2;
 export const paddingMedium = 4;
-export const paddingLarge = 8;
+export const paddingLarge = 6;
 
 export const rootSizeProperties: Record<Size, any> = {
     small: {
         padding: paddingSmall,
         fontSize: "0.9rem",
-        height: "1.7rem",
-        minWidth: "1.7rem",
+        height: "1.8rem",
+        minWidth: "1.8rem",
         gap: paddingSmall,
         '&.dense': {
             padding: paddingSmall / 2,
@@ -23,8 +23,8 @@ export const rootSizeProperties: Record<Size, any> = {
     medium: {
         padding: paddingMedium,
         fontSize: "1rem",
-        height: "2.4rem",
-        minWidth: "2.4rem",
+        height: "2.3rem",
+        minWidth: "2.3rem",
         gap: paddingMedium,
         '&.dense': {
             padding: paddingMedium / 2,
@@ -35,13 +35,13 @@ export const rootSizeProperties: Record<Size, any> = {
     large: {
         padding: paddingLarge,
         fontSize: "1.2rem",
-        height: "3rem",
-        minWidth: "3rem",
+        height: "2.8rem",
+        minWidth: "2.8rem",
         gap: paddingLarge,
         '&.dense': {
             padding: paddingLarge / 2,
-            height: "2.2rem",
-            minWidth: "2.2rem",
+            height: "2rem",
+            minWidth: "2rem",
         }
     },
 };

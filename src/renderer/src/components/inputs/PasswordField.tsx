@@ -6,6 +6,8 @@ import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { IconButton } from '../buttons/IconButton';
 import { useTheme } from '@mui/material';
+import Tooltip from '../Tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface StringFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -30,6 +32,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
     const [showPassword, setShowPassword] = React.useState(false);
     const decorator = useInputDecorator();
     const inputPasswordRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
+    const { t } = useTranslation();
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
@@ -62,16 +65,18 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
             }}
             inputAdornments={
                 <Adornment position="end">
-                    <IconButton
-                        onClick={() => {
-                            setShowPassword(!showPassword);
-                            inputPasswordRef.current?.focus();
-                        }}
-                        size={size}
-                        dense
-                    >
-                        {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                    </IconButton>
+                    <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
+                        <IconButton
+                            onClick={() => {
+                                setShowPassword(!showPassword);
+                                inputPasswordRef.current?.focus();
+                            }}
+                            size={size}
+                            dense
+                        >
+                            {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                        </IconButton>
+                    </Tooltip>
                 </Adornment>
             }
             size={size}
@@ -80,4 +85,4 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
     )
 };
 
-PasswordField.displayName = "TextField";
+PasswordField.displayName = "PasswordField";

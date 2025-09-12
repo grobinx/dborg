@@ -23,22 +23,28 @@ const StyledBaseInputFieldNumberStepper = styled('button', {
 
 export const NumberField: React.FC<NumberFieldProps> = (props) => {
     const {
-        value,
+        value: controlledValue,
         max,
         min,
         step,
         onChange,
         inputProps,
+        defaultValue,
         ...other
     } = props;
 
     const theme = useTheme();
     const decorator = useInputDecorator();
-    const valueRef = React.useRef(value); // Referencja do aktualnej wartości
+
+    // Obsługa controlled/uncontrolled
+    const isControlled = controlledValue !== undefined;
+    const [uncontrolledValue, setUncontrolledValue] = React.useState<number | null | undefined>(defaultValue);
+    const value = isControlled ? controlledValue : uncontrolledValue;
+
+    const valueRef = React.useRef(value);
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    // Aktualizuj referencję za każdym razem, gdy `value` się zmienia
     React.useEffect(() => {
         valueRef.current = value;
     }, [value]);
@@ -63,13 +69,21 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
     const handleIncrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
         const newValue = Math.min((valueRef.current ?? 0) + amount, max ?? Infinity);
-        onChange?.(newValue);
+        if (isControlled) {
+            onChange?.(newValue);
+        } else {
+            setUncontrolledValue(newValue);
+        }
     };
 
     const handleDecrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
         const newValue = Math.max((valueRef.current ?? 0) - amount, min ?? -Infinity);
-        onChange?.(newValue);
+        if (isControlled) {
+            onChange?.(newValue);
+        } else {
+            setUncontrolledValue(newValue);
+        }
     };
 
     const startRepeat = (callback: () => void) => {
@@ -117,7 +131,13 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
             onConvertToInput={(value: number | undefined | null) => {
                 return value !== undefined && value !== null ? String(value) : '';
             }}
-            onChange={(newValue) => onChange?.(newValue)}
+            onChange={(newValue) => {
+                if (isControlled) {
+                    onChange?.(newValue);
+                } else {
+                    setUncontrolledValue(newValue);
+                }
+            }}
             inputAdornments={[
                 <Adornment key="stepper" position="input" className="type-number">
                     <StyledBaseInputFieldNumberStepper
@@ -150,7 +170,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                             stopRepeat(); // Zatrzymaj interwał, gdy kursor opuści przycisk
                         }}
                     >
-                       <span>▼</span>
+                        <span>▼</span>
                     </StyledBaseInputFieldNumberStepper>
                 </Adornment>,
             ]}

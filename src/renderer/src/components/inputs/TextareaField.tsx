@@ -5,19 +5,21 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
-interface StringFieldProps extends BaseInputProps {
-    placeholder?: FormattedContentItem;
+interface TextareaFieldProps extends BaseInputProps {
     maxLength?: number;
     minLength?: number;
+    rows?: number;
     adornments?: React.ReactNode;
-    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    inputProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 }
 
-export const StringField: React.FC<StringFieldProps> = (props) => {
+export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
     const {
         value,
+        onChange,
         maxLength,
         minLength,
+        rows = 4,
         inputProps,
         ...other
     } = props;
@@ -30,15 +32,27 @@ export const StringField: React.FC<StringFieldProps> = (props) => {
         });
     }
 
+    const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+        onChange?.(e.currentTarget.value);
+    };
+
     return (
         <BaseInputField
             value={value}
-            inputProps={{
-                maxLength,
-                minLength,
-                type: 'text',
-                ...inputProps,
-            }}
+            type="textarea"
+            input={
+                <textarea
+                    value={value}
+                    maxLength={maxLength}
+                    minLength={minLength}
+                    rows={rows}
+                    onInput={handleChange}
+                // onChange={(e) => {
+                //     onChange?.(e.target.value);
+                // }}
+                //{...inputProps}
+                />
+            }
             validations={[
                 (value: any) => validateMinLength(value, minLength),
                 (value: any) => validateMaxLength(value, maxLength),
@@ -48,4 +62,4 @@ export const StringField: React.FC<StringFieldProps> = (props) => {
     )
 };
 
-StringField.displayName = "StringField";
+TextareaField.displayName = "TextareaField";
