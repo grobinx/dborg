@@ -215,7 +215,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             setInputWidth((element.offsetWidth ?? 0) - paddingLeft - paddingRight - borderLeft - borderRight);
             setInputLeft((element.offsetLeft ?? 0) + paddingLeft + borderLeft);
         }
-    }, [width, React.Children.toArray(adornments).length, classes]);
+    }, [width, React.Children.toArray(adornments).length, classes, size, placeholder, adornments]);
 
     React.useEffect(() => {
         if (decorator) {

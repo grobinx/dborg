@@ -239,6 +239,16 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     variant: "filled",
                 }
             },
+            MuiChip: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: borderRadius,
+                        '& .MuiChip-label': {
+                            //padding: '4px 8px',
+                        }
+                    },
+                }
+            },
 
             IconWrapper: IconWrapperLayout(palette, root),
             ContainerButton: ContainerButtonLayout(palette, root),

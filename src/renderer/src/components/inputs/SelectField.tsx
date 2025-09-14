@@ -3,11 +3,7 @@ import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, Stack, styled, useTheme } from '@mui/material';
-import { ToolButton } from '../buttons/ToolButton';
-import { useTranslation } from 'react-i18next';
-import { an } from 'react-router/dist/development/route-data-H2S3hwhf';
-import { IconButton } from '../buttons/IconButton';
+import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 
 export interface SelectOption<T = any> {
     label: FormattedContentItem;
@@ -23,7 +19,7 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: SelectOption[];
     children?: React.ReactNode;
-    listHeight?: number; 
+    listHeight?: number;
 }
 
 const StyledMenuItem = styled(MenuItem)({
@@ -33,6 +29,14 @@ const StyledMenuItem = styled(MenuItem)({
     //minHeight: 32,
 });
 
+/**
+ * 
+ * @param props 
+ * @returns 
+ * 
+ * @description
+ * Use "data-ignore-toggle" attribute on elements inside input to prevent toggling the select when clicking them (e.g. buttons).
+ */
 export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const {
         value,
@@ -155,6 +159,9 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             inputProps={{
                 ...inputProps,
                 onClick: (e) => {
+                    if ((e.target as HTMLElement).closest('[data-ignore-toggle]')) {
+                        return;
+                    }
                     handleToggle();
                     inputProps?.onClick?.(e);
                 },

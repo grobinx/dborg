@@ -220,10 +220,10 @@ export const ConsoleLogsPanelLabel: React.FC = () => {
 };
 
 export const ConsoleLogsPanelButtons: React.FC = () => {
-    const { logs, logLevels, setLogLevels } = useConsole();
+    const { logs, logLevels, loggedLevels, setLogLevels } = useConsole();
     const theme = useTheme();
     const { t } = useTranslation();
-    const { showTime, setShowTime } = useConsoleLogState();
+    const { setShowTime } = useConsoleLogState();
     const { search, setSearch } = useConsoleLogState();
 
     // Obsługa zmiany zaznaczenia
@@ -273,7 +273,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
             <InputDecorator indicator={false} width={200}>
                 <SelectField
                     size="small"
-                    value={logLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[]}
+                    value={loggedLevels ?? []}
                     onChange={handleLogLevelChange}
                     renderValue={(values) => {
                         const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];

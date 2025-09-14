@@ -1,4 +1,4 @@
-import { Grid2, MenuItem, Stack, useTheme } from "@mui/material";
+import { Chip, Grid2, MenuItem, Stack, useTheme } from "@mui/material";
 import { BaseButton } from "@renderer/components/buttons/BaseButton";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
@@ -23,6 +23,7 @@ import { TimeField } from "@renderer/components/inputs/TimeField";
 import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
 import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
+import { TagsField } from "@renderer/components/inputs/TagsField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -503,6 +504,23 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="warning"
                                     width={200}
+                                    renderValue={(selected) => (<>
+                                        {selected.map((value) => (
+                                            <Chip
+                                                key={value}
+                                                style={{ gap: 4, fontSize: "inherit", height: "100%" }}
+                                                size="small"
+                                                onDelete={(_e) => handleArraySelectChange(size, value)}
+                                                label={
+                                                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                        {value}
+                                                        <ColorBox color={value} />
+                                                    </span>
+                                                }
+                                                data-ignore-toggle
+                                            />
+                                        ))}
+                                    </>)} // Renderowanie wybranych wartości z kolorowymi boxami
                                 >
                                     <MenuItem value="red">Red<ColorBox color="red" /></MenuItem>
                                     <MenuItem value="green">Green<ColorBox color="green" /></MenuItem>
@@ -645,6 +663,29 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     color="error"
                                     maxLength={500}
+                                />
+                            </InputDecorator>
+                        ), [size, selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="tagsFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        TagsField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <TagsField
+                                    key={size}
+                                    size={size}
+                                    color="info"
+                                    placeholder="Add tag..."
                                 />
                             </InputDecorator>
                         ), [size, selected])}

@@ -64,6 +64,9 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&.type-textarea': {
                     height: "auto",
                 },
+                '&.type-tags': {
+                    height: "auto",
+                }
             },
             input: {
                 fontFamily: "inherit",
@@ -81,6 +84,10 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&[type="number"]': {
                     MozAppearance: "textfield",
                 },
+                '&.type-tags': {
+                    minWidth: "5rem",
+                    width: "auto",
+                },
             },
             customInput: {
                 cursor: "pointer",
@@ -91,8 +98,13 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 height: "100%",
                 minWidth: 0,
                 maxWidth: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                overflowX: "auto",
+                overflowY: "hidden",
+                '&::-webkit-scrollbar': {
+                    display: 'none', // Chrome/Safari/Edge
+                },
+                padding: 0,
+                whiteSpace: "nowrap",
                 '&.size-small': {
                     gap: paddingSmall,
                 },
@@ -115,15 +127,16 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     fontSize: 'inherit',
                     backgroundColor: "transparent",
                     color: palette.text.primary,
+                    padding: 0,
                 }
             },
             placeholder: {
                 color: palette.text.disabled,
                 position: "absolute",
-                top: "50%", // Wyśrodkowanie w pionie
-                left: "8px", // Wyśrodkowanie w poziomie
-                transform: "translateY(-50%)", // Przesunięcie o połowę wysokości
-                pointerEvents: "none", // Zapobiega interakcji z placeholderem
+                top: "50%",
+                left: "8px",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -136,7 +149,32 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     justifyContent: "center",
                     alignItems: "center",
                     width: '2rem',
-                }
+                },
+                '&.tags-container': {
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    alignItems: 'center',
+                    overflowX: 'auto',
+                    overflowY: 'hidden',
+                    '&::-webkit-scrollbar': {
+                        display: 'none', // Chrome/Safari/Edge
+                    },
+                    gap: paddingMedium,
+                    '& .MuiChip-root': {
+                        fontSize: "inherit",
+                        maxWidth: "10rem",
+                        height: "100%",
+                    },
+                    '&.size-small': {
+                        gap: paddingSmall,
+                    },
+                    '&.size-medium': {
+                        gap: paddingMedium,
+                    },
+                    '&.size-large': {
+                        gap: paddingLarge,
+                    },
+                },
             },
             numberStepper: {
                 display: 'flex',

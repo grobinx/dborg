@@ -311,7 +311,6 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     // Przygotuj adornments poza memo
     const typeAdornments = React.useMemo(() => {
         const { TextField, NumberField, EmailField, Search } = theme.icons;
-        console.debug("InputDecorator: typeAdornments", type, value);
 
         switch (type) {
             case "text":
@@ -331,7 +330,6 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         if (!React.isValidElement(children)) {
             return children;
         }
-        console.debug("InputDecorator: clonedChildren", type, value);
 
         if ('adornments' in children.props || typeAdornments) {
             const childProps = children.props as BaseInputProps & { adornments?: React.ReactNode };

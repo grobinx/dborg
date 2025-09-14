@@ -39,6 +39,7 @@ interface ConsoleContextValue {
     logs: LogEntry[];
     logLevels: LogLevelEntry[];
     setLogLevels: (levels: LogLevel[]) => void;
+    loggedLevels?: LogLevel[];
 }
 
 export const LOG_LEVEL_COLORS: Partial<Record<LogLevel, string>> = {
@@ -246,7 +247,7 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     return (
-        <ConsoleContext.Provider value={{ logs, logLevels, setLogLevels: setLogLevelsHandle }}>
+        <ConsoleContext.Provider value={{ logs, logLevels, setLogLevels: setLogLevelsHandle, loggedLevels }}>
             {children}
         </ConsoleContext.Provider>
     );

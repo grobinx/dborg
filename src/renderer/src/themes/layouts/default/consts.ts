@@ -9,7 +9,7 @@ export const paddingLarge = 6;
 
 export const rootSizeProperties: Record<Size, any> = {
     small: {
-        padding: paddingSmall,
+        padding: `${paddingSmall}px ${paddingSmall * 1.5}px`,
         fontSize: "0.9rem",
         height: "1.8rem",
         minWidth: "1.8rem",
@@ -21,7 +21,7 @@ export const rootSizeProperties: Record<Size, any> = {
         }
     },
     medium: {
-        padding: paddingMedium,
+        padding: `${paddingMedium}px ${paddingMedium * 1.5}px`,
         fontSize: "1rem",
         height: "2.3rem",
         minWidth: "2.3rem",
@@ -33,7 +33,7 @@ export const rootSizeProperties: Record<Size, any> = {
         }
     },
     large: {
-        padding: paddingLarge,
+        padding: `${paddingLarge}px ${paddingLarge * 1.5}px`,
         fontSize: "1.2rem",
         height: "2.8rem",
         minWidth: "2.8rem",
