@@ -119,6 +119,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             EmailField: (props) => <IconWrapper {...props} className="email-field"><MuiIcons.AlternateEmail fontSize="inherit" /></IconWrapper>,
             CheckBoxBlank: (props) => <IconWrapper {...props} className="checkbox-blank"><MuiIcons.CheckBoxOutlineBlank fontSize="inherit" /></IconWrapper>,
             CheckBoxChecked: (props) => <IconWrapper {...props} className="checkbox-checked"><MuiIcons.CheckBox fontSize="inherit" /></IconWrapper>,
+            Add: (props) => <IconWrapper {...props} className="add"><MuiIcons.Add fontSize="inherit" /></IconWrapper>,
         }
     }
 }

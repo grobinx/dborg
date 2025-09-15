@@ -151,6 +151,7 @@ export interface ThemeIcons {
     EmailField: IconWrapperFC;
     CheckBoxBlank: IconWrapperFC;
     CheckBoxChecked: IconWrapperFC;
+    Add: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {

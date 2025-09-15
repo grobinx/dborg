@@ -11,7 +11,6 @@ interface DateTimeFieldProps extends BaseInputProps {
 
 export const DateTimeField: React.FC<DateTimeFieldProps> = (props) => {
     const {
-        value,
         inputProps,
         ...other
     } = props;
@@ -20,7 +19,6 @@ export const DateTimeField: React.FC<DateTimeFieldProps> = (props) => {
 
     return (
         <BaseInputField
-            value={value}
             inputProps={{
                 type: 'datetime-local',
                 ...inputProps,

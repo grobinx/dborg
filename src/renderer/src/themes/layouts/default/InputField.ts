@@ -152,7 +152,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
                 '&.tags-container': {
                     display: 'flex',
-                    flexWrap: 'nowrap',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
                     overflowX: 'auto',
                     overflowY: 'hidden',
@@ -163,7 +163,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     '& .MuiChip-root': {
                         fontSize: "inherit",
                         maxWidth: "10rem",
-                        height: "100%",
                     },
                     '&.size-small': {
                         gap: paddingSmall,

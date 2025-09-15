@@ -10,6 +10,8 @@ export type InputFieldComponent = {
 
 export type InputFieldComponentSlots = 
     "root" 
+    | "main"
+    | "below"
     | "input" 
     | "adornment" 
     | "placeholder" 

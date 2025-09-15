@@ -33,6 +33,30 @@ const StyledBaseInputField = styled('div', {
     slot: "root",
 })(() => ({
     display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    position: "relative",
+    minWidth: 0, 
+    width: "100%", 
+}));
+
+const StyledBaseInputFieldMain = styled('div', {
+    name: "InputField",
+    slot: "main",
+})(() => ({
+    display: "flex",
+    flexDirection: "row",
+    flexGrow: 1,
+    position: "relative",
+    minWidth: 0, // Pozwala na zmniejszenie się kontenera
+    width: "100%", // Ogranicza szerokość do rodzica
+}));
+
+const StyledBaseInputFieldBelow = styled('div', {
+    name: "InputField",
+    slot: "below",
+})(() => ({
+    display: "flex",
     flexDirection: "row",
     flexGrow: 1,
     position: "relative",
@@ -81,7 +105,7 @@ interface AdornmentProps {
      * Można również podać liczbę, która określa kolejność (order) elementu
      * Kolejność <= 10 będzie na początku, a > 10 na końcu
      */
-    position?: 'start' | 'end' | "input";
+    position?: 'start' | 'end' | "input" | 'below';
     ref?: React.Ref<HTMLDivElement>;
     fullWidth?: boolean;
     style?: React.CSSProperties;
@@ -123,6 +147,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         className,
         size = "medium",
         value,
+        defaultValue,
         onChange,
         onConvertToValue,
         onConvertToInput,
@@ -140,13 +165,15 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         onFocus,
         onBlur,
         onClick,
-        defaultValue,
         validations,
         inputProps,
         input,
         ref,
         inputRef,
     } = props;
+
+    const [uncontrolledValue, setUncontrolledValue] = React.useState<T | undefined>(defaultValue);
+    const currentValue = value !== undefined ? value : uncontrolledValue;
 
     const textInputRef = React.useRef<HTMLInputElement>(null);
     const customInputRef = React.useRef<HTMLDivElement>(null);
@@ -156,7 +183,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
     const [hover, setHover] = React.useState<boolean>(false);
 
-    const currentValue = value ?? defaultValue;
     const [invalid] = useValidation(
         currentValue,
         disabled,
@@ -203,6 +229,15 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         return false;
     });
 
+    const belowAdornments = React.Children.toArray(adornments).filter((child) => {
+        if (React.isValidElement(child) && child.type === Adornment) {
+            const props = child.props as AdornmentProps;
+            const position = props.position || 'start';
+            return position === 'below';
+        }
+        return false;
+    });
+
     React.useEffect(() => {
         const element = customInputRef.current ?? textInputRef.current;
         if (element) {
@@ -240,98 +275,122 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             onMouseLeave={() => setHover(false)}
             sx={{ width }}
         >
-            {startAdornments}
-            {(currentValue === undefined || currentValue === null || currentValue === "" || (Array.isArray(currentValue) && currentValue.length === 0)) && placeholder && !disabled && (
-                <StyledBaseInputFieldPlaceholder
-                    className={clsx(
-                        "InputField-placeholder",
-                        classes,
-                    )}
-                    sx={{
-                        width: inputWidth ? `${inputWidth}px` : 'auto',
-                        left: inputLeft,
+            <StyledBaseInputFieldMain
+                className={clsx(
+                    "InputField-main",
+                    classes,
+                )}
+            >
+                {startAdornments}
+                {(currentValue === undefined || currentValue === null || currentValue === "" || (Array.isArray(currentValue) && currentValue.length === 0)) && placeholder && !disabled && (
+                    <StyledBaseInputFieldPlaceholder
+                        className={clsx(
+                            "InputField-placeholder",
+                            classes,
+                        )}
+                        sx={{
+                            width: inputWidth ? `${inputWidth}px` : 'auto',
+                            left: inputLeft,
+                        }}
+                    >
+                        {placeholder}
+                    </StyledBaseInputFieldPlaceholder>
+                )}
+                {input && (
+                    <StyledBaseInputFieldCustomInput
+                        ref={customInputRef}
+                        className={clsx(
+                            "InputField-customInput",
+                            classes,
+                        )}
+                        onFocus={!disabled ? () => {
+                            onFocus?.();
+                            setFocused(true);
+                            decorator?.setFocused(true);
+                        } : undefined}
+                        onBlur={!disabled ? () => {
+                            onBlur?.();
+                            setFocused(false);
+                            decorator?.setFocused(false);
+                        } : undefined}
+                        onKeyDown={!disabled ? inputProps?.onKeyDown : undefined}
+                        onKeyUp={!disabled ? inputProps?.onKeyUp : undefined}
+                        onMouseDown={!disabled ? (e) => {
+                            inputProps?.onMouseDown?.(e);
+                        } : undefined}
+                        onMouseUp={!disabled ? (e) => {
+                            inputProps?.onClick?.(e as any);
+                            inputProps?.onMouseUp?.(e);
+                            onClick?.();
+                        } : undefined}
+                        onClick={undefined}
+                        tabIndex={disabled ? -1 : 0}
+                        aria-disabled={disabled}
+                    >
+                        {React.isValidElement(input)
+                            ? React.cloneElement(
+                                input as React.ReactElement<any>,
+                                { className: clsx(classes, (input as React.ReactElement<any>).props.className) }
+                            )
+                            : input}
+                    </StyledBaseInputFieldCustomInput>
+                )
+                }
+                <StyledBaseInputFieldInput
+                    {...inputProps}
+                    id={id}
+                    ref={(ref) => {
+                        textInputRef.current = ref;
+                        if (inputRef && ref) {
+                            if (typeof inputRef === 'object' && 'current' in inputRef) {
+                                (inputRef as React.RefObject<HTMLInputElement>).current = ref;
+                            } else if (typeof inputRef === 'function') {
+                                inputRef(ref);
+                            }
+                        }
                     }}
-                >
-                    {placeholder}
-                </StyledBaseInputFieldPlaceholder>
-            )}
-            {input && (
-                <StyledBaseInputFieldCustomInput
-                    ref={customInputRef}
                     className={clsx(
-                        "InputField-customInput",
+                        "InputField-input",
                         classes,
                     )}
-                    onFocus={!disabled ? () => {
+                    value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
+                    onChange={(e) => {
+                        const newValue = typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : (e.target.value as T);
+                        if (onChange) {
+                            onChange(newValue);
+                        } else {
+                            setUncontrolledValue(newValue);
+                        }
+                    }}
+                    disabled={disabled}
+                    required={required}
+                    onFocus={() => {
                         onFocus?.();
                         setFocused(true);
                         decorator?.setFocused(true);
-                    } : undefined}
-                    onBlur={!disabled ? () => {
+                    }}
+                    onBlur={() => {
                         onBlur?.();
                         setFocused(false);
                         decorator?.setFocused(false);
-                    } : undefined}
-                    onKeyDown={!disabled ? inputProps?.onKeyDown : undefined}
-                    onKeyUp={!disabled ? inputProps?.onKeyUp : undefined}
-                    onMouseDown={!disabled ? (e) => {
-                        inputProps?.onMouseDown?.(e);
-                    } : undefined}
-                    onMouseUp={!disabled ? (e) => {
-                        inputProps?.onClick?.(e as any);
-                        inputProps?.onMouseUp?.(e);
-                        onClick?.();
-                    } : undefined}
-                    onClick={undefined}
-                    tabIndex={disabled ? -1 : 0}
-                    aria-disabled={disabled}
+                    }}
+                    onClick={onClick}
+                    width={width}
+                    hidden={!!input}
+                />
+                {inputAdornments}
+                {endAdornments}
+            </StyledBaseInputFieldMain>
+            {belowAdornments.length > 0 && (
+                <StyledBaseInputFieldBelow
+                    className={clsx(
+                        "InputField-below",
+                        classes,
+                    )}
                 >
-                    {React.isValidElement(input)
-                        ? React.cloneElement(
-                            input as React.ReactElement<any>,
-                            { className: clsx(classes, (input as React.ReactElement<any>).props.className) }
-                        )
-                        : input}
-                </StyledBaseInputFieldCustomInput>
-            )
-            }
-            <StyledBaseInputFieldInput
-                {...inputProps}
-                id={id}
-                ref={(ref) => {
-                    textInputRef.current = ref;
-                    if (inputRef && ref) {
-                        if (typeof inputRef === 'object' && 'current' in inputRef) {
-                            (inputRef as React.RefObject<HTMLInputElement>).current = ref;
-                        } else if (typeof inputRef === 'function') {
-                            inputRef(ref);
-                        }
-                    }
-                }}
-                className={clsx(
-                    "InputField-input",
-                    classes,
-                )}
-                value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
-                onChange={(e) => onChange?.(typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : e.target.value as T)}
-                disabled={disabled}  // ✅ Already handled
-                required={required}
-                onFocus={() => {
-                    onFocus?.();
-                    setFocused(true);
-                    decorator?.setFocused(true);
-                }}
-                onBlur={() => {
-                    onBlur?.();
-                    setFocused(false);
-                    decorator?.setFocused(false);
-                }}
-                onClick={onClick}
-                width={width}
-                hidden={!!input}
-            />
-            {inputAdornments}
-            {endAdornments}
+                    {belowAdornments}
+                </StyledBaseInputFieldBelow>
+            )}
         </StyledBaseInputField >
     )
 }
