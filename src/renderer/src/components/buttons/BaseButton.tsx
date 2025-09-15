@@ -209,7 +209,9 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isInteractable) {
-            e.preventDefault();
+            if (type !== 'submit') {
+                e.preventDefault();
+            }
             click();
             onClick?.(e);
         }
