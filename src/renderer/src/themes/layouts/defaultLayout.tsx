@@ -249,6 +249,11 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     },
                 }
             },
+            MuiPaper: {
+                defaultProps: {
+                    elevation: 4
+                }
+            },
 
             IconWrapper: IconWrapperLayout(palette, root),
             ContainerButton: ContainerButtonLayout(palette, root),

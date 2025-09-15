@@ -687,6 +687,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="info"
                                     placeholder="Add tag..."
                                     maxTags={5}
+                                    storeId="settings-dev-tags"
                                 />
                             </InputDecorator>
                         ), [size, selected])}

@@ -190,7 +190,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                             width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
                         }}
                     >
-                        <Paper elevation={4} sx={{ margin: 1 }}>
+                        <Paper sx={{ margin: 1 }}>
                             <ClickAwayListener onClickAway={handleClose} mouseEvent="onMouseDown">
                                 <Box
                                     display={"flex"}

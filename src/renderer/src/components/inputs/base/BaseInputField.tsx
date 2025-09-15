@@ -26,6 +26,7 @@ interface BaseInputFieldProps<T> extends BaseInputProps<T> {
     input?: React.ReactNode;
     onConvertToValue?: (value: string) => T;
     onConvertToInput?: (value: T | undefined) => string;
+    children?: React.ReactNode;
 }
 
 const StyledBaseInputField = styled('div', {
@@ -170,6 +171,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         input,
         ref,
         inputRef,
+        children,
     } = props;
 
     const [uncontrolledValue, setUncontrolledValue] = React.useState<T | undefined>(defaultValue);
@@ -391,6 +393,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     {belowAdornments}
                 </StyledBaseInputFieldBelow>
             )}
+            {children}
         </StyledBaseInputField >
     )
 }
