@@ -5,6 +5,7 @@ import { validateStringLength, validateTextRows } from "./validations";
 import React from "react";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import { Stack } from "@mui/material";
+import { TextareaField } from "@renderer/components/inputs/TextareaField";
 
 export const TextSetting: React.FC<{
     setting: SettingTypeText;
@@ -39,19 +40,16 @@ export const TextSetting: React.FC<{
                 return <Stack direction="row">{policy.filter(Boolean)}</Stack>;
             }}
         >
-            <BaseTextField
+            <TextareaField
                 id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
                 value={value}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setValue(e.target.value);
+                onChange={(value) => {
+                    setValue(value);
                 }}
                 disabled={disabledControl(setting)}
                 onClick={onClick}
-                multiline
                 rows={setting.rows || 4}
-                sx={{
-                    width: calculateWidth(setting)
-                }}
+                width={calculateWidth(setting)}
             />
         </SettingInputControl>
     );
