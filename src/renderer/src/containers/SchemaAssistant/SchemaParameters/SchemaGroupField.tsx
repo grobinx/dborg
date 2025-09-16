@@ -1,4 +1,4 @@
-import { Box, Divider, InputAdornment, InputLabel, ListItem, ListItemButton, ListItemText, Menu, MenuProps, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { Box, Divider, InputAdornment, InputLabel, ListItem, ListItemButton, ListItemText, Menu, useTheme } from '@mui/material';
 import React from 'react';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,8 @@ import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { useToast } from '@renderer/contexts/ToastContext';
 import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
+import { TextField } from '@renderer/components/inputs/TextField';
+import { Adornment } from '@renderer/components/inputs/base/BaseInputField';
 
 interface SchemaGroupFieldProps {
     schemaGroup: string | undefined,
@@ -48,7 +50,7 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
             }
         }
         catch (error) {
-            addToast("error", (error as Error).message, { source: "SchemaAssistant", reason: error } )
+            addToast("error", (error as Error).message, { source: "SchemaAssistant", reason: error })
         }
         if (result.length) {
             result.push({ value: "-" });
@@ -98,27 +100,22 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
                 value={schemaGroup ?? ''}
                 onChange={event => onChange(event.target.value)}
                 inputRef={inputRef}
-                sx={{ width: textFieldWidth("string", i18n_schemaGroup) }}
-                slotProps={{
-                    input: {
-                        endAdornment: (
-                            <InputAdornment
-                                position="end"
-                            >
-                                <Tooltip title={t("select-schema-group", "Select schema group from list")}>
-                                    <span>
-                                        <ToolButton
-                                            loading={loadingGroups}
-                                            onClick={handleMenuOpen}
-                                            >
-                                            <theme.icons.SelectGroup />
-                                        </ToolButton>
-                                    </span>
-                                </Tooltip>
-                            </InputAdornment>
-                        ),
-                    },
-                }}
+                width={textFieldWidth("string", i18n_schemaGroup)}
+                adornments={
+                    < Adornment position="end">
+                        <Tooltip title={t("select-schema-group", "Select schema group from list")}>
+                            <span>
+                                <ToolButton
+                                    loading={loadingGroups}
+                                    onClick={handleMenuOpen}
+                                    dense
+                                >
+                                    <theme.icons.SelectGroup />
+                                </ToolButton>
+                            </span>
+                        </Tooltip>
+                    </Adornment>
+                }
             />
             <Menu
                 anchorEl={anchorEl}

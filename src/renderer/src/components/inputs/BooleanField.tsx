@@ -4,8 +4,12 @@ import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { BaseInputField } from './base/BaseInputField';
 import { FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Box, Stack, useTheme } from '@mui/material';
+import { isTrue } from '@renderer/utils/booleans';
 
 interface BooleanFieldProps extends BaseInputProps {
+    value?: boolean;
+    defaultValue?: boolean;
+    onChange?: (value: boolean) => void;
     label?: FormattedContentItem
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
@@ -20,12 +24,7 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
         ...other
     } = props;
 
-    const decorator = useInputDecorator();
     const theme = useTheme();
-
-    const isTrue = (value: string) => {
-        return ["true", "1", "yes", "on", "y"].includes((value ?? "").toLowerCase());
-    }
 
     return (
         <BaseInputField

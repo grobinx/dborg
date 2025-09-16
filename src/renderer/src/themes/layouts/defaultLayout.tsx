@@ -234,6 +234,13 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
+            MuiListItemButton: {
+                styleOverrides: {
+                    root: {
+                        transition: "all 0.2s ease-in-out",
+                    }
+                },
+            },
             MuiAlert: {
                 defaultProps: {
                     variant: "filled",

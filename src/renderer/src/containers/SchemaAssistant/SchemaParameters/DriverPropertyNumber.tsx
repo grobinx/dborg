@@ -1,7 +1,8 @@
-import { Box, FormHelperText, InputLabel, TextField, TextFieldProps, Typography } from '@mui/material';
+import { Box, InputLabel, Typography } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from 'src/api/db';
 import { textFieldWidth } from './Utils';
+import { NumberField } from '@renderer/components/inputs/NumberField';
 
 interface DriverPropertyNumberProps {
     property: PropertyInfo,
@@ -15,14 +16,13 @@ const DriverPropertyNumber: React.FC<DriverPropertyNumberProps> = (props) => {
     return (
         <Box className="item">
             <InputLabel>{property.title}</InputLabel>
-            <TextField
+            <NumberField
                 id={property.name}
                 required={property.required}
                 value={value ?? ''}
-                type="number"
-                sx={{ width: textFieldWidth(property.type, property.title) }}
-                onChange={(event) => {
-                    onChange(property, event.target.value);
+                width={textFieldWidth(property.type, property.title)}
+                onChange={(value) => {
+                    onChange(property, value !== undefined && value !== null ? value.toString() : '');
                 }}
             />
             {property.description && (<Typography variant="description">{property.description}</Typography>)}

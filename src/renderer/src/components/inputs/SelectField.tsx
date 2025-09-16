@@ -86,15 +86,14 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const SelectValueRenderer = () => {
         if (renderValue && value !== undefined) return renderValue(value);
 
-        if (!Array.isArray(value)) {
-            return (
-                <FormattedText
-                    text={options?.find(option => option.value === value)?.label}
-                />
-            );
-        }
-
         if (options) {
+            if (!Array.isArray(value)) {
+                return (
+                    <FormattedText
+                        text={options?.find(option => option.value === value)?.label}
+                    />
+                );
+            }
             return (
                 options
                     .filter(option => value?.includes(option.value))
@@ -120,14 +119,18 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                         return false;
                     })
                     .map(child => {
-                        if (React.isValidElement(child)) {
-                            return React.cloneElement(child, {
-                                //disableGutters: true,
-                                disableRipple: true,
-                                style: { fontSize: 'inherit' },
-                                dense: true
-                            } as React.ComponentProps<typeof MenuItem>);
+                        if (React.isValidElement(child) && child.props && 'children' in (child as any).props) {
+                            return (child.props as any).children;
                         }
+                        //     return React.cloneElement(child, {
+                        //         disableGutters: true,
+                        //         disableRipple: true,
+                        //         dense: true,
+                        //         sx: {
+                        //             padding: 0,
+                        //         }
+                        //     } as React.ComponentProps<typeof MenuItem>);
+                        // }
                         return null;
                     })
             );

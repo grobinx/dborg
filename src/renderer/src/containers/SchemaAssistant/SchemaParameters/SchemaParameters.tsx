@@ -264,9 +264,6 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                                             property={property}
                                             value={properties[property.name]}
                                             onChange={handlePropertyChange}
-                                            slotProps={{
-                                                checkBoxField: slotProps?.checkBoxField
-                                            }}
                                         />
                                     )
                                 }
