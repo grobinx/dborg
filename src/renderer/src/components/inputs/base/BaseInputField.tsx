@@ -37,8 +37,8 @@ const StyledBaseInputField = styled('div', {
     flexDirection: "column",
     flexGrow: 1,
     position: "relative",
-    minWidth: 0, 
-    width: "100%", 
+    minWidth: 0,
+    width: "100%",
 }));
 
 const StyledBaseInputFieldMain = styled('div', {
@@ -172,6 +172,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         ref,
         inputRef,
         children,
+        autoFocus,
     } = props;
 
     const [uncontrolledValue, setUncontrolledValue] = React.useState<T | undefined>(defaultValue);
@@ -239,6 +240,13 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         }
         return false;
     });
+
+    React.useEffect(() => {
+        // Obsługa autoFocus z inputProps
+        if ((autoFocus ?? inputProps?.autoFocus) && textInputRef.current) {
+            textInputRef.current.focus();
+        }
+    }, [autoFocus ?? inputProps?.autoFocus]);
 
     React.useEffect(() => {
         const element = customInputRef.current ?? textInputRef.current;

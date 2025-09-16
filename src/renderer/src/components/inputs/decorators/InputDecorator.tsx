@@ -1,4 +1,4 @@
-import { Alert, Popper, styled, useTheme } from "@mui/material";
+import { Alert, Popper, styled, SxProps, useTheme } from "@mui/material";
 import clsx from "../../../utils/clsx";
 import { BaseInputProps } from "../base/BaseInputProps";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
@@ -57,6 +57,13 @@ export interface InputDecoratorProps {
      * Funkcja wywoływana po kliknięciu w dowolną część pola
      */
     onClick?: () => void;
+    /** 
+     * Czy pokazywać komunikat o błędzie pod polem, jeśli występuje błąd walidacji
+     * @default true
+     */
+    showValidity?: boolean;
+
+    sx?: SxProps;
 }
 
 const StyledInputDecorator = styled('div', {
@@ -235,6 +242,8 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         description,
         indicator = true,
         selected = false,
+        sx,
+        showValidity = true,
     } = props;
 
     const theme = useTheme();
@@ -369,6 +378,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                 }}
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
+                sx={sx}
             >
                 {indicator && (
                     <StyledInputDecoratorIndicator
@@ -414,26 +424,28 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                             {description}
                         </StyledInputDecoratorDescription>
                     )}
-                    <StyledInputDecoratorValidity
-                        disablePortal={true}
-                        open={!!invalid && isPopperVisible}
-                        anchorEl={visibleInputRef.current || undefined}
-                        placement="bottom-start"
-                        sx={{
-                            width: visibleInputRef.current ? `${visibleInputRef.current.offsetWidth}px` : undefined,
-                            minWidth: 200,
-                        }}
-                        className={clsx(
-                            "InputDecorator-validity",
-                            classes,
-                        )}
-                    >
-                        <Alert
-                            severity="error"
+                    {showValidity !== false && (
+                        <StyledInputDecoratorValidity
+                            disablePortal={true}
+                            open={!!invalid && isPopperVisible}
+                            anchorEl={visibleInputRef.current || undefined}
+                            placement="bottom-start"
+                            sx={{
+                                width: visibleInputRef.current ? `${visibleInputRef.current.offsetWidth}px` : undefined,
+                                minWidth: 200,
+                            }}
+                            className={clsx(
+                                "InputDecorator-validity",
+                                classes,
+                            )}
                         >
-                            {!!invalid && invalid}
-                        </Alert>
-                    </StyledInputDecoratorValidity>
+                            <Alert
+                                severity="error"
+                            >
+                                {!!invalid && invalid}
+                            </Alert>
+                        </StyledInputDecoratorValidity>
+                    )}
                 </StyledInputDecoratorContainer>
             </StyledInputDecorator>
         </InputDecoratorContext.Provider>

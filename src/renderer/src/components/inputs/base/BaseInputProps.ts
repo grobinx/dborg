@@ -94,4 +94,8 @@ export interface BaseInputProps<T = any> {
      * Jeśli nie zostanie podana, nie będzie możliwe bezpośrednie odwołanie się do elementu wejściowego
      */
     inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    /**
+     * Ustaw autofocus na elemencie wejściowym
+     */
+    autoFocus?: boolean;
 }
