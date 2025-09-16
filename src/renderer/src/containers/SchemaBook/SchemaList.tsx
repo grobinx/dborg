@@ -24,6 +24,7 @@ import { InputDecorator } from "@renderer/components/inputs/decorators/InputDeco
 import { IconButton } from "@renderer/components/buttons/IconButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -86,10 +87,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [connectionList, setConnectionList] = React.useState<ConnectionInfo[] | null>();
     const [search, setSearch] = React.useState('');
     const { addToast } = useToast();
-    const [selectedItem, setSelectedItem] = React.useState('');
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
+    const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation<Schema>({
+        items: displayData ?? [],
+        getId: (item) => item.sch_id,
+        onSelect: (item) => handleConnect(item.sch_id),
+    });
 
     const t_connectionSchema = t("connection-schemas", "Connection schemas");
 
@@ -308,29 +313,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     }, [refreshConnectionList, connectionStatus, data]);
 
-    const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (!displayData || displayData.length === 0) {
-            return;
-        }
-
-        const currentIndex = displayData.findIndex(record => record.sch_id === selectedItem);
-        let nextIndex = currentIndex;
-
-        if (event.key === "ArrowDown") {
-            nextIndex = (currentIndex + 1) % displayData.length;
-        }
-        else if (event.key === "ArrowUp") {
-            nextIndex = (currentIndex - 1 + displayData.length) % displayData.length;
-        }
-        else if (event.key === "Enter") {
-            handleConnect(selectedItem);
-        }
-
-        if (nextIndex !== currentIndex && nextIndex >= 0) {
-            setSelectedItem(displayData[nextIndex].sch_id);
-            document.getElementById(displayData[nextIndex].sch_id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
-    };
+    //document.getElementById(displayData[nextIndex].sch_id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     React.useEffect(() => {
         const handleSchemaCreateSuccess = (newSchema: Schema) => {
@@ -417,6 +400,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         ];
     };
 
+    React.useEffect(() => {
+        if (!selectedItem) return;
+        const el = document.getElementById(selectedItem);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }, [selectedItem]);
+
     return (
         <SchemaListRoot {...other} className={(className ?? '') + " SchemaList-root"}>
             <SchemaListTitle {...slotProps?.title} className="SchemaList-title">
@@ -432,7 +423,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                 autoFocus: true,
                                 onKeyDown: handleSearchKeyDown,
                             }}
-                            autoCollapse
+                            autoFocus
                             size="large"
                         />
                     </InputDecorator>
