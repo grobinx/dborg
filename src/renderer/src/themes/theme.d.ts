@@ -54,6 +54,7 @@ import { TabsPanelComponent, TabsPanelComponentProps, TabsPanelComponentSlots } 
 import { TabPanelComponent, TabPanelComponentSlots } from "./theme.d/TabPanel";
 import { ContainerButtonComponent, ContainerButtonComponentProps, ContainerButtonComponentSlots } from "./theme.d/ContainerButton";
 import { ViewButtonComponent, ViewButtonComponentProps, ViewButtonComponentSlots } from "./theme.d/ViewButton";
+import { ShortcutComponent, ShortcutComponentProps, ShortcutComponentSlots } from "./theme.d/Shortcut";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -157,6 +158,7 @@ declare module "@mui/material/styles" {
         Button: ButtonComponentSlots;
         IconButton: IconButtonComponentSlots;
         ToolButton: ToolButtonComponentSlots;
+        Shortcut: ShortcutComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -192,6 +194,7 @@ declare module "@mui/material/styles" {
         Button: ButtonComponentProps;
         IconButton: IconButtonComponentProps;
         ToolButton: ToolButtonComponentProps;
+        Shortcut: ShortcutComponentProps;
     }
     interface Components {
         MenuBar?: MenuBarComponent;
@@ -246,6 +249,7 @@ declare module "@mui/material/styles" {
         Button?: ButtonComponent;
         IconButton?: IconButtonComponent;
         ToolButton?: ToolButtonComponent;
+        Shortcut?: ShortcutComponent;
     }
 
 }

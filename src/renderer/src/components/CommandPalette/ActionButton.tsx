@@ -1,9 +1,9 @@
 import { useTheme } from "@mui/material";
 import { ActionDescriptor, ActionManager } from "./ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
-import { renderKeybindings } from "./CommandPalette";
 import Tooltip from "../Tooltip";
 import { ToolButton, ToolButtonOwnProps } from "../buttons/ToolButton";
+import { Shortcut } from "../Shortcut";
 
 interface ActionButtonProps<T> extends Omit<ToolButtonOwnProps, "action"> {
     actionManager?: ActionManager<T>; // Menedżer akcji
@@ -37,12 +37,7 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...othe
     return (
         <Tooltip title={
             resolvedAction.keybindings
-                ? (
-                    <span style={{ display: "inline", whiteSpace: "nowrap" }}>
-                        <span>{resolvedAction.label}</span>
-                        {renderKeybindings(resolvedAction.keybindings, true)}
-                    </span>
-                )
+                ? [[resolvedAction.label, <Shortcut keybindings={resolvedAction.keybindings} />]]
                 : resolvedAction.label
         }>
             <span>

@@ -18,7 +18,7 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
                 textDecoration: "none",
                 fontFamily: "inherit",
                 fontSize: "inherit",
-                fontWeight: 400,
+                fontWeight: 600,
                 lineHeight: 1,
                 transition: "all 0.2s ease-in-out",
                 borderRadius: 0,

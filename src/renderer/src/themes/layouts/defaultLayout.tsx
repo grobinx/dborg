@@ -27,6 +27,7 @@ import { TabsPanelLayout } from "./default/TabsPanel";
 import { TabPanelLayout } from "./default/TabPanel";
 import { ContainerButtonLayout } from "./default/ContainerButton";
 import { ViewButtonLayout } from "./default/ViewButton";
+import { ShortcutLayout } from "./default/Shortcut";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -467,6 +468,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             Button: ButtonLayout(palette, root),
             IconButton: IconButtonLayout(palette, root),
             ToolButton: ToolButtonLayout(palette, root),
+            Shortcut: ShortcutLayout(palette, root),
         }
     }
 };

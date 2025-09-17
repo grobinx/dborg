@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TextField, List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material'; // Import komponentu Button
+import { List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
 import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
@@ -8,6 +8,9 @@ import { resolveIcon } from '@renderer/themes/icons';
 import Tooltip from '../Tooltip';
 import { ToolButton } from '../buttons/ToolButton';
 import ButtonGroup from '../buttons/ButtonGroup';
+import { Shortcut } from '../Shortcut';
+import { TextField } from '../inputs/TextField';
+import { Adornment } from '../inputs/base/BaseInputField';
 
 interface CommandPaletteProps {
     manager: ActionManager<any>;
@@ -25,7 +28,8 @@ const CommandPaletteContainer = styled(Paper)(({ theme }) => ({
     width: '40%',
     zIndex: 1300,
     padding: theme.spacing(4),
-    fontSize: '1.2rem'
+    fontSize: '1rem',
+    fontFamily: (theme.typography as any)?.fontFamily,
 }));
 
 const CommandList = styled(List, {
@@ -37,31 +41,6 @@ const CommandList = styled(List, {
         marginTop: theme.spacing(1),
     }
 });
-
-const Key = styled('span')(({ theme }) => ({
-    transition: "all 0.2s ease-in-out",
-    display: "inline-block",
-    padding: "1px 4px",
-    fontSize: "0.85em",
-    fontFamily: "monospace",
-    background: "#f5f5f5",
-    border: "1px solid #ccc",
-    borderRadius: "3px",
-    color: "#333",
-    verticalAlign: "middle",
-    userSelect: "none",
-    boxShadow: "inset 0 -1px 0 #bbb",
-}));
-
-const KeybindingContainer = styled('span', {
-    shouldForwardProp: (prop) => prop !== 'alone',
-})<{ alone?: boolean }>(({ alone }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    marginLeft: alone ? '0px' : '16px', // Ustaw marginLeft na 16px, jeśli alone jest true
-    gap: '2px',
-    fontSize: '0.7em',
-}));
 
 // Helper function to highlight matching text
 export const highlightText = (text: string, query: string, theme: Theme) => {
@@ -92,24 +71,6 @@ export const highlightText = (text: string, query: string, theme: Theme) => {
         )
     );
 };
-
-export function renderKeybindings(keybindings: string[], alone: boolean = false) {
-    return (
-        <KeybindingContainer alone={alone}>
-            {keybindings.map((keybinding, bindingIdx, bindingArray) => (
-                <React.Fragment key={bindingIdx}>
-                    {splitKeybinding(keybinding).map((key, idx, array) => (
-                        <React.Fragment key={idx}>
-                            <Key>{key}</Key>
-                            {idx < array.length - 1 && <span>+</span>}
-                        </React.Fragment>
-                    ))}
-                    {bindingIdx < bindingArray.length - 1 && <span>&nbsp;→&nbsp;</span>}
-                </React.Fragment>
-            ))}
-        </KeybindingContainer>
-    );
-}
 
 const CommandPalette: React.FC<CommandPaletteProps> = ({
     manager,
@@ -497,48 +458,38 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     elevation={4}
                 >
                     <TextField
-                        fullWidth
-                        label={
-                            selectedGroup
-                                ? selectedGroup.label // Wyświetl label grupy akcji, jeśli jest wybrana
-                                : ""
-                        }
                         placeholder={selectedGroup ? "" : t("select-command-group-prefix", "Select command group prefix...")}
                         value={searchText}
-                        onChange={(e) => setSearchText(prev => prev !== e.target.value ? e.target.value : prev)}
+                        onChange={(value) => setSearchText(prev => prev !== value ? value : prev)}
                         inputRef={inputRef}
-                        slotProps={{
-                            input: {
-                                endAdornment: selectedGroup?.options?.length ? (
-                                    <InputAdornment position="end">
-                                        <ButtonGroup>
-                                            {selectedGroup.options.map((option) => (
-                                                <Tooltip
-                                                    key={option.id}
-                                                    title={
-                                                        <>
-                                                            {option.label}
-                                                            {option.keybinding && (
-                                                                renderKeybindings([option.keybinding], true)
-                                                            )}
-                                                        </>
-                                                    }
+                        adornments={
+                            selectedGroup?.options?.length ? (
+                                <Adornment position="end">
+                                    <ButtonGroup>
+                                        {selectedGroup.options.map((option) => (
+                                            <Tooltip
+                                                key={option.id}
+                                                title={
+                                                    [[
+                                                        option.label,
+                                                        option.keybinding && (<Shortcut keybindings={option.keybinding} />)
+                                                    ]]
+                                                }
+                                            >
+                                                <ToolButton
+                                                    dense
+                                                    onClick={() => handleOptionClick(option)}
+                                                    selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
+                                                    disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
                                                 >
-                                                    <ToolButton
-                                                        dense
-                                                        onClick={() => handleOptionClick(option)}
-                                                        selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
-                                                        disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
-                                                    >
-                                                        {resolveIcon(theme, option.icon)}
-                                                    </ToolButton>
-                                                </Tooltip>
-                                            ))}
-                                        </ButtonGroup>
-                                    </InputAdornment>
-                                ) : null,
-                            },
-                        }}
+                                                    {resolveIcon(theme, option.icon)}
+                                                </ToolButton>
+                                            </Tooltip>
+                                        ))}
+                                    </ButtonGroup>
+                                </Adornment>
+                            ) : undefined
+                        }
                     />
                     <CommandList
                         disablePadding
@@ -580,7 +531,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                 }
                                                 : {})}
                                         />
-                                        {action.keybindings && renderKeybindings(action.keybindings)}
+                                        {action.keybindings && <Shortcut keybindings={action.keybindings} />}
                                     </ListItemButton>
                                 </ListItem>
                             ))
@@ -627,10 +578,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 handleContextMenuClose();
                                 handleCommandClick(action);
                             }}
+                            dense
                         >
                             <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
                             <ListItemText>{action.label}</ListItemText>
-                            {action.keybindings && renderKeybindings(action.keybindings)}
+                            {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
                         </MenuItem>
                     )),
                 ])}
