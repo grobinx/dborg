@@ -39,13 +39,18 @@ const CommandList = styled(List, {
 });
 
 const Key = styled('span')(({ theme }) => ({
-    display: 'inline-block',
-    padding: theme.spacing(0, 4),
-    border: `1px solid ${theme.palette.divider}`,
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor: theme.palette.action.selected,
-    fontWeight: 500,
-    textAlign: 'center',
+    transition: "all 0.2s ease-in-out",
+    display: "inline-block",
+    padding: "1px 4px",
+    fontSize: "0.85em",
+    fontFamily: "monospace",
+    background: "#f5f5f5",
+    border: "1px solid #ccc",
+    borderRadius: "3px",
+    color: "#333",
+    verticalAlign: "middle",
+    userSelect: "none",
+    boxShadow: "inset 0 -1px 0 #bbb",
 }));
 
 const KeybindingContainer = styled('span', {
