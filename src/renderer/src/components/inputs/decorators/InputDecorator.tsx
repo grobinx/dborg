@@ -322,10 +322,10 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         const { TextField, NumberField, EmailField, Search } = theme.icons;
 
         switch (type) {
-            case "text":
-                return <Adornment key="text" position="end" onClick={() => inputRef.current?.focus()}><TextField /></Adornment>;
-            case "number":
-                return <Adornment key="number" position="end" onClick={() => inputRef.current?.focus()}><NumberField /></Adornment>;
+            // case "text":
+            //     return <Adornment key="text" position="end" onClick={() => inputRef.current?.focus()}><TextField /></Adornment>;
+            // case "number":
+            //     return <Adornment key="number" position="end" onClick={() => inputRef.current?.focus()}><NumberField /></Adornment>;
             case "email":
                 return <Adornment key="email" position="end" onClick={() => inputRef.current?.focus()}><EmailField /></Adornment>;
             case "search":
