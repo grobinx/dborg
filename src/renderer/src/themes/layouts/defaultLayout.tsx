@@ -157,7 +157,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                         padding: "2px 8px",
                         minWidth: 0,
                         height: "min-content",
-                        minHeight: 32,
+                        minHeight: "2.2rem",
                         borderRight: '1px solid',
                         borderLeft: '1px solid',
                         borderTop: '1px solid',
@@ -181,7 +181,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     textColor: "inherit",
                     sx: {
                         height: "min-content",
-                        minHeight: 32,
+                        minHeight: "2.2rem",
                     },
                     slotProps: {
                         indicator: {

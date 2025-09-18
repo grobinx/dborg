@@ -104,15 +104,13 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
                 adornments={
                     < Adornment position="end">
                         <Tooltip title={t("select-schema-group", "Select schema group from list")}>
-                            <span>
-                                <ToolButton
-                                    loading={loadingGroups}
-                                    onClick={handleMenuOpen}
-                                    dense
-                                >
-                                    <theme.icons.SelectGroup />
-                                </ToolButton>
-                            </span>
+                            <ToolButton
+                                loading={loadingGroups}
+                                onClick={handleMenuOpen}
+                                dense
+                            >
+                                <theme.icons.SelectGroup />
+                            </ToolButton>
                         </Tooltip>
                     </Adornment>
                 }

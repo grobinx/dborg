@@ -302,7 +302,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
                 `${componentName}-root`,
                 classes,
             )}
-            disabled={disabled || !!loading}
+            //disabled={disabled || !!loading}
             type={type}
             onClick={handleClick}
             onFocus={handleFocus}

@@ -40,18 +40,16 @@ const ActionButton = <T,>({ actionManager, actionId, getContext, action, ...othe
                 ? [[resolvedAction.label, <Shortcut keybindings={resolvedAction.keybindings} />]]
                 : resolvedAction.label
         }>
-            <span>
-                <ToolButton
-                    {...other}
-                    className={`ActionButton-root ${other.className || ""}`}
-                    size="small"
-                    onClick={handleClick}
-                    disabled={resolvedAction.precondition ? !resolvedAction.precondition(getContext()) : false}
-                    selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(getContext()) : resolvedAction.selected}
-                >
-                    {resolveIcon(theme, resolvedAction.icon)}
-                </ToolButton>
-            </span>
+            <ToolButton
+                {...other}
+                className={`ActionButton-root ${other.className || ""}`}
+                size="small"
+                onClick={handleClick}
+                disabled={resolvedAction.precondition ? !resolvedAction.precondition(getContext()) : false}
+                selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(getContext()) : resolvedAction.selected}
+            >
+                {resolveIcon(theme, resolvedAction.icon)}
+            </ToolButton>
         </Tooltip>
     );
 };

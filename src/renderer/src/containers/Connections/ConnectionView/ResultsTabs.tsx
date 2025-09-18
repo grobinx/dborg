@@ -75,13 +75,13 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
     const renderAddResultButton = () => (
         <TabPanelButtons>
             <Tooltip title="Add SQL Result Tab">
-                    <ToolButton
-                        color="main"
-                        onClick={handleAddSqlResult}
-                        size="small"
-                    >
-                        <theme.icons.AddTab color="success" />
-                    </ToolButton>
+                <ToolButton
+                    color="main"
+                    onClick={handleAddSqlResult}
+                    size="small"
+                >
+                    <theme.icons.AddTab color="success" />
+                </ToolButton>
             </Tooltip>
         </TabPanelButtons>
     );

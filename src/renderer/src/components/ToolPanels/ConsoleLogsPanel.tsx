@@ -257,18 +257,16 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                 />
             </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>
-                <span>
-                    <IconButton
-                        toggle={[null, 'on']}
-                        onChange={(value) => {
-                            setShowTime(value === 'on');
-                        }}
-                        size="small"
-                        color="main"
-                    >
-                        <theme.icons.Clock />
-                    </IconButton>
-                </span>
+                <IconButton
+                    toggle={[null, 'on']}
+                    onChange={(value) => {
+                        setShowTime(value === 'on');
+                    }}
+                    size="small"
+                    color="main"
+                >
+                    <theme.icons.Clock />
+                </IconButton>
             </Tooltip>
             <InputDecorator indicator={false} width={200}>
                 <SelectField
@@ -308,16 +306,14 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                 </SelectField>
             </InputDecorator>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
-                <span>
-                    <IconButton
-                        size="small"
-                        disabled={logs.length === 0}
-                        onClick={() => console.clear()}
-                        color="main"
-                    >
-                        <theme.icons.Delete />
-                    </IconButton>
-                </span>
+                <IconButton
+                    size="small"
+                    disabled={logs.length === 0}
+                    onClick={() => console.clear()}
+                    color="main"
+                >
+                    <theme.icons.Delete />
+                </IconButton>
             </Tooltip>
         </TabPanelButtons>
     );

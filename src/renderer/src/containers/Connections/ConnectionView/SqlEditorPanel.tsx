@@ -395,14 +395,12 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
     return (
         <TabPanelButtons>
             <Tooltip title={t("delete-sql-editor-tab", "Delete SQL Editor tab")}>
-                <span>
-                    <ToolButton
-                        onClick={handleDeleteSqlEditor}
-                        size="small"
-                    >
-                        <theme.icons.Delete color="error" />
-                    </ToolButton>
-                </span>
+                <ToolButton
+                    onClick={handleDeleteSqlEditor}
+                    size="small"
+                >
+                    <theme.icons.Delete color="error" />
+                </ToolButton>
             </Tooltip>
         </TabPanelButtons>
     );
@@ -452,7 +450,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
                 disabled={!tabIsActive || tabsCount <= 1}
                 dense
             >
-                <theme.icons.Close color={!tabIsActive || tabsCount <= 1 ? undefined : "error" } />
+                <theme.icons.Close color={!tabIsActive || tabsCount <= 1 ? undefined : "error"} />
             </ToolButton>
         </TabPanelLabel>
     );

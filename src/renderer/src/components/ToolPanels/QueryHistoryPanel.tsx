@@ -59,15 +59,13 @@ export const QueryHistoryPanelButtons: React.FC = () => {
 
     return <TabPanelButtons>
         <Tooltip title={t("queryHistory-clear-all", "Clear query history")}>
-            <span>
-                <ToolButton
-                    size="small"
-                    disabled={queryHistory.length === 0}
-                    onClick={() => clearQueryHistory()}
-                >
-                    <theme.icons.Delete />
-                </ToolButton>
-            </span>
+            <ToolButton
+                size="small"
+                disabled={queryHistory.length === 0}
+                onClick={() => clearQueryHistory()}
+            >
+                <theme.icons.Delete />
+            </ToolButton>
         </Tooltip>
     </TabPanelButtons>;
 };
