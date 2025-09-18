@@ -195,9 +195,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             (value: any) => onValidate?.(value) ?? true
         ],
         () => {
-            if (currentValue !== undefined) {
-                onChanged?.(currentValue);
-            }
+            onChanged?.(currentValue);
         },
         changedDelay
     );

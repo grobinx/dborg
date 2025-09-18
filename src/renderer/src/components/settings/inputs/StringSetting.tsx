@@ -51,6 +51,7 @@ export const StringSetting: React.FC<{
                 onChange={(value: string | undefined) => {
                     setValue(value);
                 }}
+                defaultValue={getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue)}
                 disabled={disabledControl(setting)}
                 onClick={onClick}
             />

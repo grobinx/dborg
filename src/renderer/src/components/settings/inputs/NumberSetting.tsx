@@ -55,6 +55,7 @@ export const NumberSetting: React.FC<{
                 onChange={(value: number | null | undefined) => {
                     setValue(value ?? undefined);
                 }}
+                defaultValue={getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue)}
                 disabled={disabledControl(setting)}
                 onClick={onClick}
             />

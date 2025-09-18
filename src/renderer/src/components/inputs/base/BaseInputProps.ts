@@ -40,7 +40,7 @@ export interface BaseInputProps<T = any> {
      * kiedy wartość jest poprawna.
      * @param value Nowa wartość
      */
-    onChanged?: (value: T) => void;
+    onChanged?: (value: T | undefined) => void;
     /**
      * Czas opóźnienia w milisekundach przed wywołaniem funkcji onChanged
      * Używane do opóźnienia aktualizacji stanu lub innych działań po zmianie wartości
