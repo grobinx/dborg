@@ -30,14 +30,14 @@ export const ShortcutLayout = (palette: Palette, _root: ThemeOptions): ShortcutC
                 transition: "all 0.2s ease-in-out",
                 display: "inline-block",
                 padding: "2px 4px",
-                background: "#f5f5f5",
-                border: "1px solid #ccc",
+                background: "#d5d5d5",
+                border: "1px solid #bbb",
                 borderRadius: "3px",
                 color: "#333",
                 verticalAlign: "middle",
                 userSelect: "none",
                 '&.active': {
-                    boxShadow: "inset 0 -1px 0 #bbb",
+                    boxShadow: "inset 0 -1px 0 #aaa",
                 }
             }
         }
