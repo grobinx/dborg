@@ -30,15 +30,6 @@ const AppWrapper: React.FC = () => {
         }, 2000);
     }, [settingsContext?.isLoading]);
 
-    if (!settingsContext || settingsContext.isLoading || pause) {
-        // Wyświetl ekran ładowania, dopóki ustawienia nie zostaną załadowane
-        return (
-            <ThemeWrapper>
-                <About loading={true} />
-            </ThemeWrapper>
-        );
-    }
-
     return (
         <ToastProvider>
             <ErrorBoundaryWrapper>
@@ -51,7 +42,10 @@ const AppWrapper: React.FC = () => {
                             <PluginManagerProvider>
                                 <ApplicationProvider>
                                     <QueryHistoryProvider>
-                                        <App />
+                                        {!settingsContext || settingsContext.isLoading || pause ?
+                                            <About loading={true} /> :
+                                            <App />
+                                        }
                                     </QueryHistoryProvider>
                                 </ApplicationProvider>
                             </PluginManagerProvider>
