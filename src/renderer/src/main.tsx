@@ -30,6 +30,14 @@ const AppWrapper: React.FC = () => {
         }, 2000);
     }, [settingsContext?.isLoading]);
 
+    if (!settingsContext || settingsContext.isLoading || pause) {
+        return (
+            <ThemeWrapper>
+                <About loading={true} />
+            </ThemeWrapper>
+        );
+    }
+
     return (
         <ToastProvider>
             <ErrorBoundaryWrapper>
@@ -42,10 +50,7 @@ const AppWrapper: React.FC = () => {
                             <PluginManagerProvider>
                                 <ApplicationProvider>
                                     <QueryHistoryProvider>
-                                        {!settingsContext || settingsContext.isLoading || pause ?
-                                            <About loading={true} /> :
-                                            <App />
-                                        }
+                                        <App />
                                     </QueryHistoryProvider>
                                 </ApplicationProvider>
                             </PluginManagerProvider>
