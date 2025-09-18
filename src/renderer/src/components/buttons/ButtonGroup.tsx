@@ -77,8 +77,8 @@ const StyledButtonGroup = styled('div', {
         },
     },
 
-    // Same width modifier classes
-    '&.same-width': {
+    // Same size modifier classes
+    '&.same-size': {
         '&.orientation-horizontal': {
             '& .ButtonGroup-button': {
                 ...(maxWidth && {
@@ -118,7 +118,7 @@ export interface ButtonGroupProps {
      * Dopasowuje wszystkie do najszerszego
      * @default false
      */
-    sameWidth?: boolean;
+    sameSize?: boolean;
     /**
      * Czy tylko jeden przycisk może być wybrany jednocześnie
      * W trybie exclusive, każdy przycisk ma toggle ustawiony na swoją wartość
@@ -145,7 +145,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     dense,
     color = 'main',
     disabled = false,
-    sameWidth = false,
+    sameSize: sameWidth = false,
     exclusive = false,
     value,
     onChange,
@@ -153,66 +153,55 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     sx,
 }) => {
     const [maxWidth, setMaxWidth] = React.useState<number | undefined>(undefined);
-    const [isCalculated, setIsCalculated] = React.useState(false);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(value);
     const [groupRef, isVisible] = useVisibleState<HTMLDivElement>();
 
-    // Efekt do obliczania maksymalnej szerokości
     React.useLayoutEffect(() => {
-        if (!sameWidth || !groupRef.current) {
-            setMaxWidth(undefined);
-            setIsCalculated(false);
+        if (!sameWidth || !groupRef.current || !isVisible) {
+            if (maxWidth !== undefined) setMaxWidth(undefined);
             return;
         }
 
-        if (!isVisible) {
+        const group = groupRef.current;
+        const hadSameWidth = group.classList.contains('same-size');
+
+        // Tymczasowo wyłącz wymuszanie szerokości
+        if (hadSameWidth) group.classList.remove('same-size');
+
+        const buttons = group.querySelectorAll('.ButtonGroup-button');
+        if (!buttons.length) {
+            if (hadSameWidth) group.classList.add('same-size');
             return;
         }
 
-        const calculateMaxWidth = () => {
-            const buttons = groupRef.current?.querySelectorAll('.ButtonGroup-button');
-            if (!buttons || buttons.length === 0) return;
+        // Wyczyść inline width na czas pomiaru
+        buttons.forEach((b) => {
+            const el = b as HTMLElement;
+            el.style.width = '';
+            el.style.minWidth = '';
+            el.style.maxWidth = '';
+            el.style.flexGrow = '';
+            el.style.flexShrink = '';
+            el.style.flexBasis = '';
+        });
 
-            // Tymczasowo usuń style szerokości i pokaż w naturalnym stanie
-            buttons.forEach((button) => {
-                const btn = button as HTMLElement;
-                btn.style.width = '';
-                btn.style.minWidth = '';
-                btn.style.maxWidth = '';
-                btn.style.flexShrink = '';
-                btn.style.flexGrow = '';
-                btn.style.flexBasis = '';
-            });
+        // Wymuś reflow
+        group.getBoundingClientRect();
 
-            // Wymuś reflow
-            groupRef.current?.offsetHeight;
+        // Zmierz naturalne szerokości
+        let max = 0;
+        buttons.forEach((b) => {
+            const el = b as HTMLElement;
+            const w = Math.max(el.scrollWidth, el.offsetWidth);
+            max = Math.max(max, w);
+        });
 
-            // Teraz zmierz
-            let maxButtonWidth = 0;
-            buttons.forEach((button) => {
-                // Użyj scrollWidth zamiast getBoundingClientRect
-                const scrollWidth = (button as HTMLElement).scrollWidth;
-                const offsetWidth = (button as HTMLElement).offsetWidth;
+        // Przywróć klasę
+        if (hadSameWidth) group.classList.add('same-width');
 
-                // Weź większą z wartości
-                const naturalWidth = Math.max(scrollWidth, offsetWidth);
-                maxButtonWidth = Math.max(maxButtonWidth, naturalWidth);
-            });
-
-            if (maxButtonWidth > 0) {
-                setMaxWidth(Math.ceil(maxButtonWidth));
-                setIsCalculated(true);
-            }
-        };
-
-        calculateMaxWidth();
-        // Opóźnij obliczenie, żeby komponenty się w pełni wyrenderowały
-        // const timeoutId = setTimeout(calculateMaxWidth, 100);
-
-        // return () => {
-        //     clearTimeout(timeoutId);
-        // };
-    }, [sameWidth, children, size, isCalculated, isVisible]);
+        const next = max > 0 ? Math.ceil(max) : undefined;
+        if (next !== maxWidth) setMaxWidth(next);
+    }, [sameWidth, children, size, isVisible]); // usuń isCalculated z deps
 
     const handleExclusiveChange = React.useCallback((newValue: string | null) => {
         setCurrentValue(prev => {
@@ -261,9 +250,9 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
                 `size-${size}`,
                 `color-${color}`,
                 `orientation-${orientation}`,
-                disabled && `disabled`,
-                sameWidth && `same-width`,
-                exclusive && `exclusive`,
+                disabled && 'disabled',
+                sameWidth && 'same-size',
+                exclusive && 'exclusive',
                 className
             )}
             maxWidth={maxWidth}

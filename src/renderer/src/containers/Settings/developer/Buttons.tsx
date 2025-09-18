@@ -142,7 +142,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             {/* Horizontal ButtonGroup */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="primary" sameWidth exclusive value="left">
+                                <ButtonGroup orientation="horizontal" size={size} color="primary" sameSize exclusive value="left">
                                     <Button toggle="left">Left</Button>
                                     <Button toggle="center">Center</Button>
                                     <Button toggle="right">Right</Button>
@@ -151,7 +151,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             {/* ButtonGroup z ikonami */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="secondary" sameWidth>
+                                <ButtonGroup orientation="horizontal" size={size} color="secondary" sameSize>
                                     <IconButton><theme.icons.Search /></IconButton>
                                     <IconButton><theme.icons.Delete /></IconButton>
                                     <IconButton><theme.icons.Info /></IconButton>
@@ -160,7 +160,7 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
 
                             {/* ButtonGroup z values (toggle buttons) */}
                             <Grid2>
-                                <ButtonGroup orientation="horizontal" size={size} color="success" sameWidth>
+                                <ButtonGroup orientation="horizontal" size={size} color="success" sameSize>
                                     <IconButton toggle='bold' onChange={(v) => console.log('Bold:', v)}>
                                         <strong>B</strong>
                                     </IconButton>
