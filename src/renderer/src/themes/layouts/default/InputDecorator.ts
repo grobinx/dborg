@@ -15,8 +15,11 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 },
                 '&:hover': {
                     backgroundColor: palette.action.hover,
-                    transition: "background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 },
+                '&.focused': {
+                    backgroundColor: palette.action.focus,
+                },
+                // Rozmiary
                 '&.size-small': {
                     padding: `${paddingSmall}px ${paddingMedium}px `,
                     '&:has(.InputDecorator-indicator)': {
@@ -43,6 +46,16 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 },
                 '&.bare': {
                     padding: 0,
+                },
+                '&.idle-attention': {
+                    outline: '2px solid rgba(255, 193, 7, 1)',
+                    outlineOffset: '2px',
+                    animation: 'idleAttentionPulse 0.3s infinite cubic-bezier(0.4,0,0.2,1)',
+                },
+                '@keyframes idleAttentionPulse': {
+                    '0%': { outlineColor: 'rgba(255, 193, 7, .2)' },
+                    '50%': { outlineColor: 'rgba(255, 193, 7, 1)' },
+                    '100%': { outlineColor: 'rgba(255, 193, 7, .2)' },
                 },
             },
             label: {
