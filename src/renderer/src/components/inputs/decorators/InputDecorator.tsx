@@ -255,6 +255,12 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     const [type, setType] = React.useState<string>("text");
     const inputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
 
+    // Idle-attention (blink after inactivity while focused)
+    const [idleAttention, setIdleAttention] = React.useState(false);
+    const lastActivityRef = React.useRef<number>(Date.now());
+    const onTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const offTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
             setInputRestrictions(restrictions);
@@ -299,6 +305,56 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         };
     }, [children]);
 
+    const clearIdleTimers = React.useCallback(() => {
+        if (onTimerRef.current) { clearTimeout(onTimerRef.current); onTimerRef.current = null; }
+        if (offTimerRef.current) { clearTimeout(offTimerRef.current); offTimerRef.current = null; }
+    }, []);
+
+    const scheduleIdleOff = React.useCallback(() => {
+        const ATTENTION_MS = 2000;
+        offTimerRef.current = setTimeout(() => {
+            if (!focused) return;
+            setIdleAttention(false);
+            // restart cycle “from the beginning”
+            lastActivityRef.current = Date.now();
+            // schedule next idle on
+            scheduleIdleOn();
+        }, ATTENTION_MS);
+    }, [focused]);
+
+    const scheduleIdleOn = React.useCallback(() => {
+        const IDLE_MS = 30000;
+        const elapsed = Date.now() - lastActivityRef.current;
+        const delay = Math.max(0, IDLE_MS - elapsed);
+        onTimerRef.current = setTimeout(() => {
+            if (!focused) return;
+            // ensure no activity happened in the meantime
+            if (Date.now() - lastActivityRef.current < IDLE_MS) return;
+            setIdleAttention(true);
+            scheduleIdleOff();
+        }, delay);
+    }, [focused, scheduleIdleOff]);
+
+    // restart cycle on focus change
+    React.useEffect(() => {
+        clearIdleTimers();
+        setIdleAttention(false);
+        if (focused) {
+            lastActivityRef.current = Date.now();
+            scheduleIdleOn();
+        }
+        return () => clearIdleTimers();
+    }, [focused, clearIdleTimers, scheduleIdleOn]);
+
+    // restart cycle on value change (activity)
+    React.useEffect(() => {
+        lastActivityRef.current = Date.now();
+        if (!focused) return;
+        clearIdleTimers();
+        setIdleAttention(false);
+        scheduleIdleOn();
+    }, [/* activity */ value, focused, clearIdleTimers, scheduleIdleOn]);
+
     const [previousValue] = React.useState(value);
 
     const classes = clsx(
@@ -309,6 +365,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         selected && "selected",
         focused && "focused",
         hover && "hover",
+        idleAttention && "idle-attention",
         `type-${type}`,
         `color-${color}`,
         { bare: !indicator && !label && !restrictions && !description },
@@ -379,6 +436,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
                 sx={sx}
+                data-focus-container={true}
             >
                 {indicator && (
                     <StyledInputDecoratorIndicator
