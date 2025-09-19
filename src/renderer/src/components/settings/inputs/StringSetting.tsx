@@ -1,6 +1,5 @@
 import { SettingTypeString } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
-import BaseTextField from "../base/BaseTextField";
 import { validateStringLength } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";

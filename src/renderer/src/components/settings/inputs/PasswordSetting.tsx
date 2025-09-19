@@ -121,24 +121,20 @@ export const PasswordSetting: React.FC<{
                                 position="end"
                             >
                                 <Tooltip title={showPassword ? t("hide-password", "Hide password") : t("show-password", "Show password")}>
-                                    <span>
-                                        <ToolButton
-                                            onClick={handleClickShowPassword}
-                                            selected={showPassword}
-                                        >
-                                            {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                        </ToolButton>
-                                    </span>
+                                    <ToolButton
+                                        onClick={handleClickShowPassword}
+                                        selected={showPassword}
+                                    >
+                                        {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                    </ToolButton>
                                 </Tooltip>
                                 {setting.canGenerate && (
                                     <Tooltip title={t("generate-password", "Generate password")}>
-                                        <span>
-                                            <ToolButton
-                                                onClick={generatePassword}
-                                            >
-                                                <theme.icons.GeneratePassword />
-                                            </ToolButton>
-                                        </span>
+                                        <ToolButton
+                                            onClick={generatePassword}
+                                        >
+                                            <theme.icons.GeneratePassword />
+                                        </ToolButton>
                                     </Tooltip>
                                 )}
                             </InputAdornment>

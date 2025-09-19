@@ -1,11 +1,8 @@
 import { SettingTypeBoolean } from "../SettingsTypes";
-import SettingInputControl, { calculateWidth, disabledControl, SettingInputControlDescription } from "../SettingInputControl";
-import BaseTextField from "../base/BaseTextField";
-import { validateStringLength } from "./validations";
+import SettingInputControl, { disabledControl, SettingInputControlDescription } from "../SettingInputControl";
 import React, { useRef } from "react";
-import { Tooltip } from "@mui/material";
-import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import BaseCheckbox from "../base/BaseCheckbox";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const BooleanSetting: React.FC<{
     setting: SettingTypeBoolean;

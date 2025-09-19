@@ -1,7 +1,6 @@
-import { SettingTypeNumber, SettingTypeString } from "../SettingsTypes";
+import { SettingTypeNumber } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
-import BaseTextField from "../base/BaseTextField";
-import { validateNumberRange, validateStringLength } from "./validations";
+import { validateNumberRange } from "./validations";
 import React from "react";
 import { Tooltip } from "@mui/material";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";

@@ -1,16 +1,9 @@
 import { SettingTypeColor } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth } from "../SettingInputControl";
-import BaseTextField from "../base/BaseTextField";
 import React from "react";
-import { Autocomplete, InputAdornment, useTheme } from "@mui/material";
-import ColorPicker from "@renderer/components/useful/ColorPicker";
+import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import Tooltip from "@renderer/components/Tooltip";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
-import { htmlColors } from "@renderer/types/colors";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { TextField } from "@renderer/components/inputs/TextField";
-import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
 
 export const ColorSetting: React.FC<{

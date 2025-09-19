@@ -1,6 +1,5 @@
 import { SettingTypeText } from "../SettingsTypes";
 import SettingInputControl, { calculateWidth, disabledControl } from "../SettingInputControl";
-import BaseTextField from "../base/BaseTextField";
 import { validateStringLength, validateTextRows } from "./validations";
 import React from "react";
 import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";

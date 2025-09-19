@@ -51,7 +51,7 @@ export const default_settings: ApplicationSettings = {
     ui: {
         theme: 'system',
         fontSize: 14,
-        fontFamily: 'Segoe WPC,Segoe UI,sans-serif',
+        fontFamily: 'Segoe WPC, Segoe UI, sans-serif',
         monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
     },
 };
