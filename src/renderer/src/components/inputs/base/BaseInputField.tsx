@@ -16,7 +16,7 @@ interface BaseInputFieldProps<T> extends BaseInputProps<T> {
     inputAdornments?: React.ReactNode;
     adornments?: React.ReactNode;
     validations?: (((value: T) => boolean | FormattedContentItem) | undefined)[];
-    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement>;
     autoCollapse?: boolean;
     /**
      * Komponent, który zastępuje w miejscu inputa.
@@ -89,12 +89,21 @@ const StyledBaseInputFieldInput = styled('input', {
     width: width || "100%",
 }));
 
+const StyledBaseInputFieldTextArea = styled('textarea', {
+    name: "InputField",
+    slot: "input",
+    shouldForwardProp: (prop) => prop !== 'width',
+})<StyledInputProps>(({ width }) => ({
+    flexGrow: 1,
+    minWidth: 0, // Pozwala na zmniejszenie się inputa
+    width: width || "100%",
+}));
+
 const StyledBaseInputFieldAdornment = styled('div', {
     name: "InputField",
     slot: "adornment",
 })(({ /*theme*/ }) => ({
     display: "flex",
-    flexDirection: "row",
 }));
 
 interface AdornmentProps {
@@ -107,6 +116,7 @@ interface AdornmentProps {
      * Kolejność <= 10 będzie na początku, a > 10 na końcu
      */
     position?: 'start' | 'end' | "input" | 'below';
+    direction?: 'row' | 'column';
     ref?: React.Ref<HTMLDivElement>;
     fullWidth?: boolean;
     style?: React.CSSProperties;
@@ -114,18 +124,20 @@ interface AdornmentProps {
 }
 
 export const Adornment: React.FC<AdornmentProps> = (props: AdornmentProps) => {
-    const { children, position = 'start', className, ref, fullWidth, style, onClick } = props;
+    const { children, position = 'start', className, ref, fullWidth, style, onClick, direction = 'row' } = props;
 
     return (
         <StyledBaseInputFieldAdornment
             className={clsx(
                 "InputField-adornment",
                 `position-${position}`,
+                `direction-${direction}`,
                 className
             )}
             ref={ref}
             sx={{
                 flex: fullWidth ? 1 : 'unset',
+                flexDirection: direction,
             }}
             style={style}
             onClick={onClick}
@@ -178,7 +190,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [uncontrolledValue, setUncontrolledValue] = React.useState<T | undefined>(defaultValue);
     const currentValue = value !== undefined ? value : uncontrolledValue;
 
-    const textInputRef = React.useRef<HTMLInputElement>(null);
+    const textInputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const customInputRef = React.useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = React.useState<number>(0);
     const [inputLeft, setInputLeft] = React.useState<number>(0);
@@ -266,6 +278,11 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         }
     }, [decorator, type, inputProps?.type]);
 
+    const InputArea =
+        type === 'textarea' ?
+            StyledBaseInputFieldTextArea :
+            StyledBaseInputFieldInput;
+
     return (
         <StyledBaseInputField
             className={clsx(
@@ -321,8 +338,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             setFocused(false);
                             decorator?.setFocused(false);
                         } : undefined}
-                        onKeyDown={!disabled ? inputProps?.onKeyDown : undefined}
-                        onKeyUp={!disabled ? inputProps?.onKeyUp : undefined}
+                        onKeyDown={!disabled ? (inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>) : undefined}
+                        onKeyUp={!disabled ? inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement> : undefined}
                         onMouseDown={!disabled ? (e) => {
                             inputProps?.onMouseDown?.(e);
                         } : undefined}
@@ -342,16 +359,15 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             )
                             : input}
                     </StyledBaseInputFieldCustomInput>
-                )
-                }
-                <StyledBaseInputFieldInput
+                )}
+                <InputArea
                     {...inputProps}
                     id={id}
-                    ref={(ref) => {
+                    ref={(ref: HTMLInputElement | HTMLTextAreaElement | null) => {
                         textInputRef.current = ref;
                         if (inputRef && ref) {
                             if (typeof inputRef === 'object' && 'current' in inputRef) {
-                                (inputRef as React.RefObject<HTMLInputElement>).current = ref;
+                                (inputRef as React.RefObject<HTMLInputElement | HTMLTextAreaElement>).current = ref;
                             } else if (typeof inputRef === 'function') {
                                 inputRef(ref);
                             }
@@ -362,7 +378,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         classes,
                     )}
                     value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         const newValue = typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : (e.target.value as T);
                         if (onChange) {
                             onChange(newValue);

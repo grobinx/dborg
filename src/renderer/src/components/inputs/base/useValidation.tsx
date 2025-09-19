@@ -81,6 +81,18 @@ export const validateMinValue = (value: any, min: number | undefined): boolean |
     }
     return true;
 };
+export const validateMinRows = (value: any, minRows: number | undefined): boolean | FormattedContent => {
+    if (minRows !== undefined && (value ?? "").split('\n').length < minRows) {
+        return `Wymagana minimalna liczba wierszy to ${minRows}`;
+    }
+    return true;
+};
+export const validateMaxRows = (value: any, maxRows: number | undefined): boolean | FormattedContent => {
+    if (maxRows !== undefined && (value ?? "").split('\n').length > maxRows) {
+        return `Maksymalna liczba wierszy to ${maxRows}`;
+    }
+    return true;
+};
 export const validateEmail = (value: any): boolean | FormattedContent => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (value && !emailRegex.test(value)) {

@@ -118,17 +118,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&.type-boolean': {
                     alignItems: "flex-start",
                 },
-                '& textarea': {
-                    outline: 'none',
-                    border: 'none',
-                    resize: 'none',
-                    width: '100%',
-                    fontFamily: 'inherit',
-                    fontSize: 'inherit',
-                    backgroundColor: "transparent",
-                    color: palette.text.primary,
-                    padding: 0,
-                }
             },
             placeholder: {
                 color: palette.text.disabled,

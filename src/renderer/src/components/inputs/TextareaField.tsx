@@ -2,13 +2,15 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContentItem } from '../useful/FormattedText';
-import { validateMaxLength, validateMinLength } from './base/useValidation';
+import { validateMaxLength, validateMaxRows, validateMinLength, validateMinRows } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 
 interface TextareaFieldProps extends Omit<BaseInputProps, 'inputProps'> {
     maxLength?: number;
     minLength?: number;
     rows?: number;
+    minRows?: number;
+    maxRows?: number;
     adornments?: React.ReactNode;
     inputProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
     defaultValue?: string;
@@ -21,6 +23,8 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
         maxLength,
         minLength,
         rows = 4,
+        minRows,
+        maxRows,
         inputProps,
         defaultValue,
         ...other
@@ -50,19 +54,19 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
         <BaseInputField
             value={value}
             type="textarea"
-            input={
-                <textarea
-                    value={value}
-                    maxLength={maxLength}
-                    minLength={minLength}
-                    rows={rows}
-                    onChange={handleChange}
-                    {...inputProps}
-                />
-            }
+            inputProps={{
+                ...inputProps,
+                maxLength,
+                minLength,
+                rows,
+                onChange: handleChange,
+                style: { ...(inputProps?.style || {}), resize: 'none' },
+            } as React.TextareaHTMLAttributes<HTMLTextAreaElement>}
             validations={[
                 (value: any) => validateMinLength(value, minLength),
                 (value: any) => validateMaxLength(value, maxLength),
+                (value: any) => validateMinRows(value, minRows),
+                (value: any) => validateMaxRows(value, maxRows),
             ]}
             {...other}
         />

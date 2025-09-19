@@ -20,50 +20,9 @@ import TabPanelButtons from '@renderer/components/TabsPanel/TabPanelButtons';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
+import FocusContainerHandler from '@renderer/components/useful/FocusContainerHandler';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
-
-function focusFirstContained(target: HTMLElement) {
-    const selectors = [
-        "input:not([disabled])",
-        "select:not([disabled])",
-        "textarea:not([disabled])",
-        "button:not([disabled])",
-        "a[href]",
-        "[tabindex]:not([tabindex='-1'])"
-    ];
-
-    function isFocusable(el: HTMLElement) {
-        return selectors.some(sel => el.matches(sel));
-    }
-
-    // Jeśli kliknięty element jest focusowalny, nie rób nic (przeglądarka sama focusuje)
-    if (isFocusable(target)) return;
-
-    // Szukaj wgłąb DOM w klikniętym elemencie
-    let focusable = target.hasAttribute("data-focus-container") && target.querySelector<HTMLElement>(selectors.join(","));
-    if (focusable) {
-        focusable.focus();
-        return;
-    }
-
-    // Jeśli nie znaleziono, przeszukaj rodziców aż do body
-    let parent = target.parentElement;
-    while (parent && parent !== document.body) {
-        if (parent.hasAttribute("data-focus-container")) {
-            if (isFocusable(parent)) {
-                parent.focus();
-                return;
-            }
-            focusable = parent.querySelector<HTMLElement>(selectors.join(","));
-            if (focusable) {
-                focusable.focus();
-                return;
-            }
-        }
-        parent = parent.parentElement;
-    }
-}
 
 const directionMap: Record<Placement, 'row' | 'row-reverse' | 'column' | 'column-reverse'> = {
     top: "column",
@@ -121,18 +80,6 @@ const App: React.FC = () => {
     const menuBarRef = React.useRef<HTMLDivElement>(null);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const sideBarRef = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            if (target && document.body.contains(target)) {
-                focusFirstContained(target);
-            }
-        };
-        document.addEventListener("mouseup", handler);
-        return () => document.removeEventListener("mouseup", handler);
-    }, []);
-
 
     React.useEffect(() => {
         window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(toolsTabsPanelVisible));
@@ -212,6 +159,7 @@ const App: React.FC = () => {
 
     return (
         <div>
+            <FocusContainerHandler />
             <MenuBar key="menu-bar" ref={menuBarRef} />
             <Stack key="stack-direction" direction={stackDirection}>
                 <SideBar key="side-bar" placement={placement} ref={sideBarRef} />

@@ -16,7 +16,7 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     value?: T;
     renderValue?: (selected: T) => React.ReactNode;
     adornments?: React.ReactNode;
-    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    inputProps?: React.InputHTMLAttributes<HTMLElement>;
     options?: SelectOption[];
     children?: React.ReactNode;
     listHeight?: number;

@@ -663,6 +663,13 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     color="error"
                                     maxLength={500}
+                                    adornments={
+                                        <Adornment key="length" position="end" direction="column">
+                                            <theme.icons.Info />
+                                            <theme.icons.Warning color="warning" />
+                                            <theme.icons.Error color="error" />
+                                        </Adornment>
+                                    }
                                 />
                             </InputDecorator>
                         ), [size, selected])}
