@@ -278,6 +278,27 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         }
     }, [decorator, type, inputProps?.type]);
 
+    const handleFocus = React.useCallback(() => {
+        onFocus?.();
+        setFocused(true);
+        decorator?.setFocused(true);
+    }, [onFocus, decorator]);
+
+    const handleBlur = React.useCallback(() => {
+        onBlur?.();
+        setFocused(false);
+        decorator?.setFocused(false);
+    }, [onBlur, decorator]);
+
+    const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const newValue = typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : (e.target.value as T);
+        if (onChange) {
+            onChange(newValue);
+        } else {
+            setUncontrolledValue(newValue);
+        }
+    }, [onChange, onConvertToValue]);
+
     const InputArea =
         type === 'textarea' ?
             StyledBaseInputFieldTextArea :
@@ -328,16 +349,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             "InputField-customInput",
                             classes,
                         )}
-                        onFocus={!disabled ? () => {
-                            onFocus?.();
-                            setFocused(true);
-                            decorator?.setFocused(true);
-                        } : undefined}
-                        onBlur={!disabled ? () => {
-                            onBlur?.();
-                            setFocused(false);
-                            decorator?.setFocused(false);
-                        } : undefined}
+                        onFocus={!disabled ? handleFocus : undefined}
+                        onBlur={!disabled ? handleBlur : undefined}
                         onKeyDown={!disabled ? (inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>) : undefined}
                         onKeyUp={!disabled ? inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement> : undefined}
                         onMouseDown={!disabled ? (e) => {
@@ -378,26 +391,11 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         classes,
                     )}
                     value={typeof onConvertToInput === 'function' ? (onConvertToInput(currentValue) ?? "") : String(currentValue ?? "")}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                        const newValue = typeof onConvertToValue === 'function' ? onConvertToValue(e.target.value) : (e.target.value as T);
-                        if (onChange) {
-                            onChange(newValue);
-                        } else {
-                            setUncontrolledValue(newValue);
-                        }
-                    }}
+                    onChange={handleChange}
                     disabled={disabled}
                     required={required}
-                    onFocus={() => {
-                        onFocus?.();
-                        setFocused(true);
-                        decorator?.setFocused(true);
-                    }}
-                    onBlur={() => {
-                        onBlur?.();
-                        setFocused(false);
-                        decorator?.setFocused(false);
-                    }}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     onClick={onClick}
                     width={width}
                     hidden={!!input}

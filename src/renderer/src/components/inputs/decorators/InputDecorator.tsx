@@ -421,6 +421,10 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         return children;
     }, [children, typeAdornments]); // Teraz zależy tylko od stabilnych wartości
 
+    const handleMouseEnter = React.useCallback(() => setHover(true), []);
+    const handleMouseLeave = React.useCallback(() => setHover(false), []);
+    const handleClick = React.useCallback(() => onClick?.(), [onClick]);
+
     return (
         <InputDecoratorContext.Provider value={contextValue}>
             <StyledInputDecorator
@@ -430,11 +434,9 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                     className
                 )}
                 width={width}
-                onMouseDown={(_e) => {
-                    onClick?.();
-                }}
-                onMouseEnter={() => setHover(true)}
-                onMouseLeave={() => setHover(false)}
+                onMouseDown={handleClick}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 sx={sx}
                 data-focus-container={true}
             >
