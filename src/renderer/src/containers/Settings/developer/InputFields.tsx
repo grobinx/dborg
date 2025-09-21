@@ -659,6 +659,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
                                 <TextareaField
+                                    placeholder={"Type something..."}
                                     key={size}
                                     size={size}
                                     color="error"

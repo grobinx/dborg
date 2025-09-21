@@ -192,8 +192,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
 
     const textInputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const customInputRef = React.useRef<HTMLDivElement>(null);
-    const [inputWidth, setInputWidth] = React.useState<number>(0);
-    const [inputLeft, setInputLeft] = React.useState<number>(0);
+    const [placeholderMetrics, setPlaceholderMetrics] = React.useState<{ width: number; top: number; left: number }>({ width: 0, top: 0, left: 0 });
     const decorator = useInputDecorator();
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
     const [hover, setHover] = React.useState<boolean>(false);
@@ -224,32 +223,17 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         autoCollapse && "auto-collapse",
     );
 
-    const startAdornments = React.Children.toArray(adornments).filter((child) => {
-        if (React.isValidElement(child) && child.type === Adornment) {
-            const props = child.props as AdornmentProps;
-            const position = props.position || 'start';
-            return position === 'start';
-        }
-        return true;
-    });
+    const allAdornments = React.Children.toArray(adornments);
 
-    const endAdornments = React.Children.toArray(adornments).filter((child) => {
-        if (React.isValidElement(child) && child.type === Adornment) {
-            const props = child.props as AdornmentProps;
-            const position = props.position || 'start';
-            return position === 'end';
-        }
-        return false;
-    });
-
-    const belowAdornments = React.Children.toArray(adornments).filter((child) => {
-        if (React.isValidElement(child) && child.type === Adornment) {
-            const props = child.props as AdornmentProps;
-            const position = props.position || 'start';
-            return position === 'below';
-        }
-        return false;
-    });
+    const startAdornments = allAdornments.filter((child: any) =>
+        child?.props?.position === undefined || child.props.position === "start"
+    );
+    const endAdornments = allAdornments.filter((child: any) =>
+        child?.props?.position === "end"
+    );
+    const belowAdornments = allAdornments.filter((child: any) =>
+        child?.props?.position === "below"
+    );
 
     React.useEffect(() => {
         // Obsługa autoFocus z inputProps
@@ -264,11 +248,16 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             const computedStyle = window.getComputedStyle(element);
             const paddingLeft = parseFloat(computedStyle.paddingLeft);
             const paddingRight = parseFloat(computedStyle.paddingRight);
+            const paddingTop = parseFloat(computedStyle.paddingTop);
+            const borderTop = Math.ceil(parseFloat(computedStyle.borderTopWidth));
             const borderLeft = Math.ceil(parseFloat(computedStyle.borderLeftWidth));
             const borderRight = Math.ceil(parseFloat(computedStyle.borderRightWidth));
 
-            setInputWidth((element.offsetWidth ?? 0) - paddingLeft - paddingRight - borderLeft - borderRight);
-            setInputLeft((element.offsetLeft ?? 0) + paddingLeft + borderLeft);
+            setPlaceholderMetrics({
+                width: (element.offsetWidth ?? 0) - paddingLeft - paddingRight - borderLeft - borderRight,
+                top: (element.offsetTop ?? 0) + paddingTop + borderTop,
+                left: (element.offsetLeft ?? 0) + paddingLeft + borderLeft,
+            });
         }
     }, [width, React.Children.toArray(adornments).length, classes, size, placeholder, adornments]);
 
@@ -335,8 +324,9 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             classes,
                         )}
                         sx={{
-                            width: inputWidth ? `${inputWidth}px` : 'auto',
-                            left: inputLeft,
+                            width: placeholderMetrics.width ? `${placeholderMetrics.width}px` : 'auto',
+                            left: placeholderMetrics.left,
+                            top: placeholderMetrics.top,
                         }}
                     >
                         {placeholder}
@@ -349,21 +339,20 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             "InputField-customInput",
                             classes,
                         )}
-                        onFocus={!disabled ? handleFocus : undefined}
-                        onBlur={!disabled ? handleBlur : undefined}
-                        onKeyDown={!disabled ? (inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>) : undefined}
-                        onKeyUp={!disabled ? inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement> : undefined}
-                        onMouseDown={!disabled ? (e) => {
-                            inputProps?.onMouseDown?.(e);
-                        } : undefined}
-                        onMouseUp={!disabled ? (e) => {
-                            inputProps?.onClick?.(e as any);
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                        onKeyDown={inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>}
+                        onKeyUp={inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement>}
+                        onMouseDown={inputProps?.onMouseDown as React.MouseEventHandler<HTMLDivElement>}
+                        onMouseUp={(e: any) => {
+                            inputProps?.onClick?.(e);
                             inputProps?.onMouseUp?.(e);
                             onClick?.();
-                        } : undefined}
+                        }}
                         onClick={undefined}
                         tabIndex={disabled ? -1 : 0}
                         aria-disabled={disabled}
+                        disabled={disabled}
                     >
                         {React.isValidElement(input)
                             ? React.cloneElement(

@@ -119,12 +119,23 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     alignItems: "flex-start",
                 },
             },
+            main: {
+                '&.size-small': {
+                    gap: paddingSmall,
+                },
+                '&.size-medium': {
+                    gap: paddingMedium,
+                },
+                '&.size-large': {
+                    gap: paddingLarge,
+                },
+            },
             placeholder: {
                 color: palette.text.disabled,
                 position: "absolute",
                 top: "50%",
                 left: "8px",
-                transform: "translateY(-50%)",
+                //transform: "translateY(-50%)",
                 pointerEvents: "none",
                 whiteSpace: "nowrap",
                 overflow: "hidden",

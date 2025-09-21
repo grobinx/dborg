@@ -6,6 +6,7 @@ import { validateMaxLength, validateMaxRows, validateMinLength, validateMinRows 
 import { BaseInputField } from './base/BaseInputField';
 
 interface TextareaFieldProps extends Omit<BaseInputProps, 'inputProps'> {
+    placeholder?: FormattedContentItem;
     maxLength?: number;
     minLength?: number;
     rows?: number;
