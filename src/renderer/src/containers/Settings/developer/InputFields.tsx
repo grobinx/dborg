@@ -79,7 +79,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         medium: "green",
         large: "blue",
     });
-    const [booleanValues, setBooleanValues] = React.useState<Record<string, boolean | undefined>>({
+    const [booleanValues, setBooleanValues] = React.useState<Record<string, boolean | null | undefined>>({
         small: true,
         medium: false,
         large: true,
@@ -150,7 +150,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
     };
-    const handleValueBooleanChange = (size: string, value: boolean | undefined) => {
+    const handleValueBooleanChange = (size: string, value: boolean | null | undefined) => {
         setBooleanValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
@@ -552,6 +552,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     onChange={(value) => handleValueBooleanChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     label={"Label for " + (size.charAt(0).toUpperCase() + size.slice(1)) + ", See the Installation page for additional docs about how to make sure everything is set up correctly."}
                                     color="primary"
+                                    indeterminate={true}
                                 />
                             </InputDecorator>
                         ), [size, booleanValues[size], selected])}

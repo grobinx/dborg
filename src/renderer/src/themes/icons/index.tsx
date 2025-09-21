@@ -151,6 +151,7 @@ export interface ThemeIcons {
     EmailField: IconWrapperFC;
     CheckBoxBlank: IconWrapperFC;
     CheckBoxChecked: IconWrapperFC;
+    CheckBoxIndeterminate: IconWrapperFC;
     Add: IconWrapperFC;
 }
 

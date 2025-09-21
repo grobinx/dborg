@@ -7,11 +7,12 @@ import { Box, Stack, useTheme } from '@mui/material';
 import { isTrue } from '@renderer/utils/booleans';
 
 interface BooleanFieldProps extends BaseInputProps {
-    value?: boolean;
+    value?: boolean | null;
     defaultValue?: boolean;
-    onChange?: (value: boolean) => void;
+    onChange?: (value: boolean | null) => void;
     label?: FormattedContentItem
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    indeterminate?: boolean;
 }
 
 export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
@@ -21,10 +22,13 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
         color = "main",
         onChange,
         inputProps,
+        indeterminate = false,
         ...other
     } = props;
 
     const theme = useTheme();
+
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
     return (
         <BaseInputField
@@ -34,18 +38,34 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
             inputProps={{
                 type: 'checkbox',
                 onClick: (_e) => {
-                    onChange?.(!value);
+                    if (indeterminate) {
+                        let next: boolean | null;
+                        if (value === false) next = null;
+                        else if (value === null) next = true;
+                        else next = false;
+                        onChange?.(next);
+                    } else {
+                        onChange?.(!value);
+                    }
                 },
                 ...inputProps,
             }}
-            onConvertToValue={(value: string) => {
+            onConvertToValue={(value: string | undefined) => {
                 return isTrue(value);
             }}
             onConvertToInput={(value: boolean | undefined | null) => {
                 return value !== undefined && value !== null ? String(value) : '';
             }}
             input={[
-                <span key="icon" className="checkbox-icon">{value ? <theme.icons.CheckBoxChecked color={color} /> : <theme.icons.CheckBoxBlank color={color} />}</span>,
+                <span key="icon" className="checkbox-icon">
+                    {value === true ? (
+                        <theme.icons.CheckBoxChecked color={color} />
+                    ) : value === null ? (
+                        <theme.icons.CheckBoxIndeterminate color={color} />
+                    ) : (
+                        <theme.icons.CheckBoxBlank color={color} />
+                    )}
+                </span>,
                 <FormattedText key="label" text={label} />
             ]}
             {...other}
