@@ -57,22 +57,23 @@ const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
 }) => {
     React.useEffect(() => {
         const handlePointerUp = (e: MouseEvent) => {
-            // Skip if user is selecting text
             if (window.getSelection && window.getSelection()?.isCollapsed === false) {
                 return;
             }
             let el = e.target as HTMLElement | null;
+            // Najpierw szukaj najbliższego focusowalnego na ścieżce w górę
             while (el && el !== document.body) {
+                if (isFocusable(el)) {
+                    el.focus();
+                    onFocused?.({
+                        focusedElement: el,
+                        containerElement: el,
+                        originalEvent: e,
+                    });
+                    return; // zakończ, nie szukaj dalej
+                }
                 if (el.hasAttribute(attribute)) {
-                    if (isFocusable(el)) {
-                        el.focus();
-                        onFocused?.({
-                            focusedElement: el,
-                            containerElement: el,
-                            originalEvent: e,
-                        });
-                        break;
-                    }
+                    // Jeśli kontener, spróbuj znaleźć focusowalny w środku
                     const focusable = el.querySelector<HTMLElement>(selectors.join(","));
                     if (focusable) {
                         focusable.focus();
@@ -81,7 +82,7 @@ const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
                             containerElement: el,
                             originalEvent: e,
                         });
-                        break;
+                        return;
                     }
                 }
                 el = el.parentElement;
