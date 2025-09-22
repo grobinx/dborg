@@ -1,7 +1,7 @@
 import React, { InputHTMLAttributes } from 'react';
 import { styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
-import { FormattedContentItem } from '../../useful/FormattedText';
+import { FormattedContentItem, FormattedText } from '../../useful/FormattedText';
 import clsx from '../../../utils/clsx';
 import { useInputDecorator } from '../decorators/InputDecoratorContext';
 import { useValidation, validateRequired } from './useValidation';
@@ -329,7 +329,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             top: placeholderMetrics.top,
                         }}
                     >
-                        {placeholder}
+                        {<FormattedText text={placeholder} />}
                     </StyledBaseInputFieldPlaceholder>
                 )}
                 {input && (

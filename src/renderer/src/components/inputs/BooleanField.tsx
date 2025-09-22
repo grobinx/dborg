@@ -1,9 +1,8 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
-import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { BaseInputField } from './base/BaseInputField';
 import { FormattedContentItem, FormattedText } from '../useful/FormattedText';
-import { Box, Stack, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import { isTrue } from '@renderer/utils/booleans';
 
 interface BooleanFieldProps extends BaseInputProps {
@@ -12,6 +11,11 @@ interface BooleanFieldProps extends BaseInputProps {
     onChange?: (value: boolean | null) => void;
     label?: FormattedContentItem
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    /**
+     * Czy pole może mieć stan pośredni (null)
+     * Jeśli tak, to kliknięcie w pole będzie cyklicznie zmieniać wartość między true, false i null
+     * @default false
+     */
     indeterminate?: boolean;
 }
 
@@ -27,8 +31,6 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
     } = props;
 
     const theme = useTheme();
-
-    const inputRef = React.useRef<HTMLInputElement>(null);
 
     return (
         <BaseInputField
