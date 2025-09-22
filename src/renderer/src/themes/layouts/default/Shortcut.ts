@@ -30,7 +30,7 @@ export const ShortcutLayout = (palette: Palette, _root: ThemeOptions): ShortcutC
                 transition: "all 0.2s ease-in-out",
                 display: "inline-block",
                 padding: "2px 4px",
-                background: "#d5d5d5",
+                background: "#e5e5e5",
                 border: "1px solid #bbb",
                 borderRadius: "3px",
                 color: "#333",
