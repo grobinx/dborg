@@ -97,6 +97,7 @@ const StatusBarButton: React.FC<StatusBarButtonOwnProps> = (props) => {
                                 isStatusBarOption(option) ? option.value : option
                             )}
                             selected={isStatusBarOption(option) ? option.value === optionSelected : option === optionSelected}
+                            style={{ fontSize: '0.875em', }}
                         >
                             {isStatusBarOption(option) ? option.label : option}
                         </MenuItem>
