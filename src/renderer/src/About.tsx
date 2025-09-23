@@ -103,6 +103,7 @@ const StackedWaves = () => {
                 ]
             ]}
             duration={20}
+            viewBox='0 0 960 541'
         />
     );
 }

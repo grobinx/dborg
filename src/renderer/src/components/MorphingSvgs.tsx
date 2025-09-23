@@ -52,6 +52,7 @@ export const MorphingSvgPaths: React.FC<MorphingSvgPathsProps> = ({
         <svg
             viewBox={viewBox}
             xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
             style={{ width: "100%", height: "auto", display: "block" }}
         >
             {Array.from({ length: pathCount }).map((_, pathIdx) => {
