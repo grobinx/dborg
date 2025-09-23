@@ -161,7 +161,7 @@ const StyledHeaderCell = styled('div', {
                 zIndex: 2,
             },
             '&.active-column': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
             },
         };
     }
@@ -359,7 +359,7 @@ const StyledFooterCell = styled('div', {
                 textAlign: "center",
             },
             '&.active-column': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
             },
         };
     }
@@ -803,7 +803,7 @@ export const DataGrid = <T extends object>({
                 onRowClick(undefined);
             }
         }
-    }, [filteredDataState, selectedCell?.row, onRowClick]);
+    }, [filteredDataState, selectedCell?.row]);
 
     useEffect(() => {
         if (showRowNumberColumn) {
