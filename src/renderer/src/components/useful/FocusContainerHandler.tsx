@@ -33,12 +33,18 @@ interface FocusContainerHandlerProps {
      * Function called after focusing an element inside the container.
      */
     onFocused?: OnFocusedHandler;
+    /**
+     * Attribute to exclude from focusing. If the element has this attribute, it will be ignored.
+     */
+    excludeAttribute?: string;
 }
 
 /**
  * Component that adds support for focusing the first element in containers with the `data-focus-container` attribute or another provided in `attribute`.
  * Adds a global `mouseup` listener that checks if the clicked element or its parent has the `data-focus-container` attribute.
  * If so, it tries to focus the first focusable element inside.
+ * 
+ * Elements with the `data-no-auto-focus` attribute (or another provided in `excludeAttribute`) are ignored.
  *
  * @example
  * ```tsx
@@ -46,6 +52,7 @@ interface FocusContainerHandlerProps {
  * 
  * <div data-focus-container>
  *   <label>Label</label>
+ *   <button data-no-auto-focus>Don't focus me</button>
  *   <input type="text" />
  * </div>
  * ```
@@ -53,6 +60,7 @@ interface FocusContainerHandlerProps {
  */
 const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
     attribute = "data-focus-container",
+    excludeAttribute = "data-no-auto-focus",
     onFocused
 }) => {
     React.useEffect(() => {
@@ -61,8 +69,8 @@ const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
                 return;
             }
             let el = e.target as HTMLElement | null;
-            // Najpierw szukaj najbliższego focusowalnego na ścieżce w górę
             while (el && el !== document.body) {
+                // Sprawdź, czy element ma atrybut wykluczający
                 if (isFocusable(el)) {
                     el.focus();
                     onFocused?.({
@@ -70,27 +78,29 @@ const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
                         containerElement: el,
                         originalEvent: e,
                     });
-                    return; // zakończ, nie szukaj dalej
+                    return;
                 }
                 if (el.hasAttribute(attribute)) {
-                    // Jeśli kontener, spróbuj znaleźć focusowalny w środku
-                    const focusable = el.querySelector<HTMLElement>(selectors.join(","));
-                    if (focusable) {
-                        focusable.focus();
-                        onFocused?.({
-                            focusedElement: focusable,
-                            containerElement: el,
-                            originalEvent: e,
-                        });
-                        return;
+                    const focusableElements = el.querySelectorAll<HTMLElement>(selectors.join(","));
+                    for (const focusable of Array.from(focusableElements)) {
+                        // Sprawdź, czy znaleziony element ma atrybut wykluczający
+                        if (!focusable.hasAttribute(excludeAttribute)) {
+                            focusable.focus();
+                            onFocused?.({
+                                focusedElement: focusable,
+                                containerElement: el,
+                                originalEvent: e,
+                            });
+                            return;
+                        }
                     }
                 }
-                el = el.parentElement;
+                el = el.parentElement; // Przejdź do rodzica
             }
         };
         document.addEventListener("pointerup", handlePointerUp);
         return () => document.removeEventListener("pointerup", handlePointerUp);
-    }, [attribute, onFocused]);
+    }, [attribute, excludeAttribute, onFocused]);
     return null;
 };
 

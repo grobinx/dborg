@@ -1,4 +1,6 @@
 import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
+import { NumberField } from "@renderer/components/inputs/NumberField";
+import { TextField } from "@renderer/components/inputs/TextField";
 import { BooleanSetting } from "@renderer/components/settings/inputs/BooleanSetting";
 import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
@@ -9,6 +11,7 @@ import { RangeSetting } from "@renderer/components/settings/inputs/RangeSetting"
 import { SelectSetting } from "@renderer/components/settings/inputs/SelectSetting";
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
+import { SettingDecorator } from "@renderer/components/settings/SettingDecorator";
 import { escape } from "@renderer/components/useful/FormattedText";
 import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
@@ -108,6 +111,21 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["font", "ui"],
                         }}
                     />
+                    <SettingDecorator
+                        setting={{
+                            type: "string",
+                            storageGroup: "ui",
+                            key: "monospaceFontFamily",
+                            category: "UI",
+                            label: "Base Monospace Font Family",
+                            description: "Select the base monospace font family for the application",
+                            tags: ["font", "ui"],
+                        }}
+                    >
+                        <TextField
+                            color="success"
+                        />
+                    </SettingDecorator>
                     <StringSetting
                         setting={{
                             type: "string",
