@@ -103,6 +103,7 @@ declare module "@mui/material/styles" {
             header: string;
             container: string;
             footer: string;
+            selected: string;
         };
         tooltip: string;
     }

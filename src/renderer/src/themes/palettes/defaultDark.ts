@@ -1,4 +1,4 @@
-import { colors, darken, lighten } from "@mui/material";
+import { alpha, colors, darken, lighten } from "@mui/material";
 import createPalette from "@mui/material/styles/createPalette";
 import { createPaletteColor } from "../../utils/colors";
 
@@ -17,6 +17,7 @@ const palette = createPalette({
             header: darken(colors.teal[900], 0.2),
             container: darken(colors.blueGrey[900], 0.2),
             footer: colors.brown[900],
+            selected: alpha(colors.amber[100], 0.2),
         },
         tooltip: darken(colors.blueGrey[900], 0.2),
     },

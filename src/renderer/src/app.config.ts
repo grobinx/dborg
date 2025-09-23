@@ -47,6 +47,7 @@ export const default_settings: ApplicationSettings = {
     dborg: {
         "data_grid.null_value": data_grid_null_value,
         "data_grid.colors_enabled": data_grid_colors_enabled,
+        "data_grid.active_highlight": true,
     },
     ui: {
         theme: 'system',
@@ -118,6 +119,13 @@ editableSettingsRegistry.register((context) => {
                     key: 'data_grid.colors_enabled',
                     label: t('enable-colors', 'Enable Colors'),
                     description: t('enable-colors-description', 'Enable or disable color coding in the data grid.'),
+                },
+                {
+                    type: 'boolean',
+                    storageGroup: 'dborg',
+                    key: 'data_grid.active_highlight',
+                    label: t('highlight-active-cell', 'Highlight Active row and column'),
+                    description: t('highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
                 },
             ],
         }],

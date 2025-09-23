@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect, useImperativeHandle } from "react"; // Dodaj import useMemo
-import { Box, darken, lighten, Stack, styled, useTheme } from "@mui/material";
+import React, { useRef, useState, useEffect, useImperativeHandle, useMemo, useCallback } from "react"; // Dodaj import useMemo
+import { alpha, Box, darken, lighten, Stack, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -101,13 +101,18 @@ interface DataGridProps<T extends object> {
 const StyledTable = styled('div', {
     name: "DataGrid",
     slot: "root",
-})({
-    position: "relative",
-    display: "flex",
-    height: "100%",
-    width: "100%",
-    userSelect: "none", // Wyłączenie zaznaczania tekstu
-});
+    shouldForwardProp: (prop) => prop !== 'fontSize' && prop !== 'fontFamily',
+})<{ fontSize: number | string; fontFamily: string }>(
+    ({ fontSize, fontFamily }) => ({
+        position: "relative",
+        display: "flex",
+        height: "100%",
+        width: "100%",
+        userSelect: "none", // Wyłączenie zaznaczania tekstu
+        fontFamily: fontFamily,
+        fontSize: fontSize,
+    })
+);
 
 const StyledHeader = styled('div', {
     name: "DataGrid",
@@ -155,6 +160,9 @@ const StyledHeaderCell = styled('div', {
                 cursor: "col-resize",
                 zIndex: 2,
             },
+            '&.active-column': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            },
         };
     }
 );
@@ -184,21 +192,15 @@ const StyledIconContainer = styled('div', {
 const StyledTableContainer = styled('div', {
     name: "DataGrid",
     slot: "tableContainer",
-    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingY',
-})<{ rowHeight: number; paddingY: number }>(
-    ({ rowHeight, paddingY }) => {
-        const contentHeight = rowHeight - paddingY * 2;
-        const fontSize = Math.max(12, contentHeight * 0.8);
-        return {
-            position: "relative",
-            overflow: "auto",
-            width: "100%",
-            height: "100%",
-            userSelect: "none",
-            borderRadius: 0,
-            fontSize: `${fontSize}px`,
-        };
-    }
+})<{}>(
+    ({ }) => ({
+        position: "relative",
+        overflow: "auto",
+        width: "100%",
+        height: "100%",
+        userSelect: "none",
+        borderRadius: 0,
+    })
 );
 
 const StyledRow = styled("div", {
@@ -226,7 +228,7 @@ const StyledRow = styled("div", {
         backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Kolor tła przy najechaniu myszką
     },
     "&.selected": {
-        backgroundColor: theme.palette.action.selected, // Kolor tła dla zaznaczonego wiersza
+        backgroundColor: theme.palette.background.table.selected,
     },
 }));
 
@@ -274,9 +276,6 @@ const StyledCell = styled("div", {
             "&.align-center": {
                 textAlign: "center",
             },
-            "&.selected": {
-                backgroundColor: theme.palette.action.selected,
-            },
             "&.focused": {
                 outline: `2px solid ${theme.palette.primary.main}`,
                 outlineOffset: -2,
@@ -285,7 +284,16 @@ const StyledCell = styled("div", {
                 borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
             },
             "&:hover": {
-                backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Efekt hover
+                backgroundColor: theme.palette.action.hover, // Efekt hover
+            },
+            '&.active-column': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            },
+            '&.active-row': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+            },
+            "&.selected": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
             },
         };
     }
@@ -350,6 +358,9 @@ const StyledFooterCell = styled('div', {
             "&.align-center": {
                 textAlign: "center",
             },
+            '&.active-column': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            },
         };
     }
 );
@@ -395,7 +406,7 @@ const StyledRowNumberColumn = styled('div', {
     height: "100%",
     borderRight: "1px solid #ddd", // Dodanie prawego obramowania
     boxSizing: "border-box",
-    fontSize: "0.9em",
+    //fontSize: "0.9em",
     textAlign: "center",
     userSelect: "none",
     backgroundColor: theme.palette.background.table.container,
@@ -413,7 +424,7 @@ const StyledRowNumberCell = styled('div', {
     lineHeight: `${rowHeight}px`,
     borderBottom: `1px solid ${theme.palette.divider}`, // Dodanie dolnego obramowania
     boxSizing: "border-box",
-    "&.Mui-selected": {
+    "&.selected": {
         backgroundColor: theme.palette.action.selected,
     },
 }));
@@ -459,6 +470,7 @@ export const DataGrid = <T extends object>({
     const isFocused = useFocus(containerRef);
     const [null_value] = useSetting("dborg", "data_grid.null_value");
     const [colors_enabled] = useSetting<boolean>("dborg", "data_grid.colors_enabled");
+    const [active_highlight] = useSetting<boolean>("dborg", "data_grid.active_highlight");
     const [rowHeight, setRowHeight] = useState(initialRowHeight);
     const [dataState, setDataState] = useState<T[] | null>(null);
     const searchState = useSearchState();
@@ -504,20 +516,29 @@ export const DataGrid = <T extends object>({
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
-    const [filteredDataState, setFilteredDataState] = useState<T[]>([]);
-    const [summaryRow, setSummaryRow] = useState<Record<string, any>>({});
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
     const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber); // Dodano stan
     const previousStatusRef = useRef<DataGridStatus | null>(null);
+    const previousStatusStringRef = useRef<string | null>(null);
     const { selectedRows, toggleRowSelection, setSelectedRows } = useRowSelection();
-    const [fontFamily, setFontFamily] = useState<string>("inherit");
-    const [fontSize, setFontSize] = useState<number>(16);
+    const [definedFontFamily] = useSetting("ui", "fontFamily");
+    const [dataFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [userData, setUserData] = useState<Record<string, any>>({});
     const columnsRef = useRef<ColumnDefinition[]>(columns);
+
+    const fontFamily = mode === "data" ? dataFontFamily : definedFontFamily;
+    const fontSize = Math.max(12, (rowHeight * 0.8 - cellPaddingY * 2));
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
     console.count("DataGrid render");
+
+    const classes = React.useMemo(() => {
+        return clsx(
+            `mode-${mode}`,
+            mode === "data" && colors_enabled && "color-enabled",
+        );
+    }, [mode, colors_enabled]);
 
     useEffect(() => {
         console.debug("DataGrid mounted");
@@ -534,7 +555,6 @@ export const DataGrid = <T extends object>({
             columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
             columnsRef.current = columns;
-            setSummaryRow({});
             //groupingColumns.clearColumns();
             searchState.resetSearch();
             //filterColumns.clearFilters();
@@ -543,74 +563,76 @@ export const DataGrid = <T extends object>({
         }
     }, [columns]);
 
-    useEffect(() => {
-        console.debug("DataGrid filtering");
+    const filteredDataState = React.useMemo<T[]>(() => {
+        console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet: T[] = [...(dataState || [])];
 
+        // Filtry kolumn
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
+        // Grupowanie (tylko w trybie 'data')
         if (mode === "data") {
             resultSet = groupingColumns.groupData(resultSet, columnsState.current);
         }
 
-        // Filtrowanie na podstawie queryData, wholeWordQuery i caseSensitiveQuery
+        // Wyszukiwanie
         if (searchState.current.text) {
-            const queryParts = searchState.current.caseSensitive
-                ? searchState.current.text.split(' ').filter(Boolean) // Bez konwersji na małe litery
-                : searchState.current.text.toLowerCase().split(' ').filter(Boolean);
+            const queryParts = (searchState.current.caseSensitive
+                ? searchState.current.text
+                : searchState.current.text.toLowerCase())
+                .split(' ')
+                .filter(Boolean);
 
             resultSet = resultSet.filter((row) => {
                 const matchesQuery = queryParts.every((part) =>
                     Object.values(row).some((value) => {
-                        if (value === null || value === undefined) return false; // Jeśli wartość jest null/undefined, pomiń
-
+                        if (value === null || value === undefined) return false;
                         const cellValue = searchState.current.caseSensitive
-                            ? value.toString() // Bez konwersji na małe litery
+                            ? value.toString()
                             : value.toString().toLowerCase();
 
                         if (searchState.current.wholeWord) {
-                            // Podziel cellValue na wyrazy i sprawdź, czy part jest jednym z nich
-                            const cellWords = cellValue.split(/\s+/); // Podział na wyrazy
-                            return cellWords.includes(part); // Dopasowanie całych wyrazów
-                        } else {
-                            return cellValue.includes(part); // Dopasowanie zawierające
+                            return cellValue.split(/\s+/).includes(part);
                         }
+                        return cellValue.includes(part);
                     })
                 );
-
-                // Jeśli excludeQuery jest włączone, wyklucz rekordy pasujące do queryData
                 return searchState.current.exclude ? !matchesQuery : matchesQuery;
             });
         }
 
-        // Sortowanie na podstawie sortDirection i sortOrder
+        // Sortowanie wielokolumnowe
         const sortedColumns = columnsState.current
-            .filter((col) => col.sortDirection) // Uwzględnij tylko kolumny z sortDirection
-            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); // Posortuj według sortOrder
+            .filter(c => c.sortDirection)
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
-        if (sortedColumns.length > 0) {
+        if (sortedColumns.length) {
             resultSet.sort((a, b) => {
                 for (const col of sortedColumns) {
-                    const valueA = a[col.key];
-                    const valueB = b[col.key];
-
-                    if (valueA === valueB) continue; // Jeśli wartości są równe, przejdź do następnej kolumny
-
-                    const comparisonResult = compareValuesByType(
-                        valueA, valueB,
+                    const va = (a as any)[col.key];
+                    const vb = (b as any)[col.key];
+                    if (va === vb) continue;
+                    const cmp = compareValuesByType(
+                        va, vb,
                         col.summary !== undefined
                             ? (summaryOperationToBaseTypeMap[col.summary] ?? col.dataType)
-                            : col.dataType);
-                    if (comparisonResult !== 0) {
-                        return col.sortDirection === "asc" ? comparisonResult : -comparisonResult;
-                    }
+                            : col.dataType
+                    );
+                    if (cmp !== 0) return col.sortDirection === "asc" ? cmp : -cmp;
                 }
-                return 0; // Jeśli wszystkie wartości są równe, nie zmieniaj kolejności
+                return 0;
             });
         }
 
-        setFilteredDataState(resultSet);
-    }, [dataState, searchState.current, columnsState.stateChanged, groupingColumns.columns, filterColumns.activeFilters]);
+        return resultSet;
+    }, [
+        dataState,
+        searchState.current,
+        columnsState.stateChanged,
+        groupingColumns.columns,
+        filterColumns.activeFilters,
+        mode
+    ]);
 
     useEffect(() => {
         console.debug("DataGrid row correction");
@@ -620,16 +642,19 @@ export const DataGrid = <T extends object>({
         }
     }, [filteredDataState.length, selectedCell?.row]);
 
-    useEffect(() => {
-        console.debug("DataGrid summary");
-        if (columnsState.anySummarized) {
-            const dataForSummary = selectedRows.length > 0
-                ? selectedRows.map((rowIndex) => filteredDataState[rowIndex]) // Dane tylko z zaznaczonych wierszy
-                : filteredDataState; // Wszystkie dane, jeśli brak zaznaczenia
-
-            setSummaryRow(calculateSummary(dataForSummary, columnsState.current));
-        }
-    }, [filteredDataState, selectedRows, columnsState.stateChanged]);
+    const summaryRow = React.useMemo<Record<string, any>>(() => {
+        if (!columnsState.anySummarized) return {};
+        console.debug("DataGrid derive summaryRow (memo)");
+        const dataForSummary = selectedRows.length > 0
+            ? selectedRows.map(i => filteredDataState[i]).filter(Boolean)
+            : filteredDataState;
+        return calculateSummary(dataForSummary, columnsState.current);
+    }, [
+        filteredDataState,
+        selectedRows,
+        columnsState.stateChanged,
+        columnsState.anySummarized
+    ]);
 
     useEffect(() => {
         console.debug("DataGrid save columns layout");
@@ -640,9 +665,10 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid update status bar");
         if (onChange) {
             const timeoutRef = setTimeout(() => {
-                const value = selectedCell?.row !== undefined && selectedCell.column !== undefined ?
-                    filteredDataState[selectedCell.row][columnsState.current[selectedCell.column].key]
+                const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
+                    ? filteredDataState[selectedCell.row][columnsState.current[selectedCell.column].key]
                     : null;
+
                 const newStatus: DataGridStatus = {
                     isActive: !!active || isFocused || openCommandPalette,
                     isLoading: !!loading,
@@ -655,17 +681,23 @@ export const DataGrid = <T extends object>({
                     selectedRowCount: selectedRows.length,
                     column: selectedCell?.column !== undefined ? columnsState.current[selectedCell.column] || null : null,
                     valueType: resolvePrimitiveType(value),
-                    valueLength: value ? value.length : null,
+                    valueLength: value ? (value as any)?.length ?? null : null,
                 };
 
-                // Porównaj nowy status z poprzednim
-                if (JSON.stringify(previousStatusRef.current) !== JSON.stringify(newStatus)) {
-                    onChange(newStatus); // Wywołaj onChange tylko, jeśli status się zmienił
-                    previousStatusRef.current = newStatus; // Zaktualizuj poprzedni status
-                }
-            }, 100); // Opóźnienie 100 ms
+                // Jeśli chcesz pominąć nieistotne pole:
+                // const { valueLength, ...stablePart } = newStatus;
+                // const newStatusString = JSON.stringify(stablePart);
 
-            return () => clearTimeout(timeoutRef); // Resetuj opóźnienie, jeśli dane wejściowe się zmienią
+                const newStatusString = JSON.stringify(newStatus);
+
+                if (previousStatusStringRef.current !== newStatusString) {
+                    onChange(newStatus);
+                    previousStatusRef.current = newStatus;
+                    previousStatusStringRef.current = newStatusString;
+                }
+            }, 100);
+
+            return () => clearTimeout(timeoutRef);
         }
         return;
     }, [
@@ -680,52 +712,8 @@ export const DataGrid = <T extends object>({
         onChange,
         active,
         dataState,
+        columnsState.anySummarized
     ]);
-
-    // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
-    useEffect(() => {
-        console.debug("DataGrid set initial selected cell");
-        if (filteredDataState.length > 0) {
-            const selected = updateSelectedCell(selectedCell);
-            if (containerRef.current) {
-                scrollToCell(
-                    containerRef.current,
-                    selected?.row ?? 0,
-                    selected?.column ?? 0,
-                    columnsState.columnLeft(selected?.column ?? 0),
-                    rowHeight,
-                    columnsState.current,
-                    columnsState.anySummarized);
-            }
-        } else {
-            updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
-        }
-    }, [filteredDataState.length, rowHeight, columnsState.current, selectedCell]);
-
-    const totalHeight = filteredDataState.length * rowHeight;
-    const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
-    const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
-
-    useEffect(() => {
-        console.debug("DataGrid update font");
-        if (containerRef.current) {
-            const style = window.getComputedStyle(containerRef.current);
-            setFontFamily(style.fontFamily || "inherit");
-            setFontSize(parseFloat(style.fontSize) || 16);
-        }
-    }, [rowHeight, mode]);
-
-    useEffect(() => {
-        console.debug("DataGrid row click");
-        if (onRowClick) {
-            if (selectedCell?.row !== undefined) {
-                onRowClick(filteredDataState[selectedCell.row]);
-            }
-            else {
-                onRowClick(undefined);
-            }
-        }
-    }, [filteredDataState, selectedCell?.row]);
 
     const updateSelectedCell = React.useCallback((cell: TableCellPosition | null): TableCellPosition | null => {
         console.debug("DataGrid update selected cell", cell);
@@ -747,6 +735,75 @@ export const DataGrid = <T extends object>({
         setSelectedCell(prev => (prev?.row !== row || prev?.column !== column ? { row, column } : prev));
         return { row, column };
     }, [filteredDataState.length, columnsState.current.length]);
+
+    // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
+    useEffect(() => {
+        console.debug("DataGrid set initial selected cell");
+        if (filteredDataState.length > 0) {
+            const selected = updateSelectedCell(selectedCell);
+            if (containerRef.current) {
+                scrollToCell(
+                    containerRef.current,
+                    selected?.row ?? 0,
+                    selected?.column ?? 0,
+                    columnsState.columnLeft(selected?.column ?? 0),
+                    rowHeight,
+                    columnsState.current,
+                    columnsState.anySummarized);
+            }
+        } else {
+            updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
+        }
+    }, [filteredDataState.length, rowHeight, columnsState.current, selectedCell, updateSelectedCell]);
+
+    const totalHeight = filteredDataState.length * rowHeight;
+    const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
+    const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
+
+    // PO obliczeniu: totalHeight, startRow, endRow, startColumn, endColumn
+    const overscanFrom = useMemo(
+        () => Math.max(startRow - overscanRowCount, 0),
+        [startRow, overscanRowCount]
+    );
+    const overscanTo = useMemo(
+        () => Math.min(endRow + overscanRowCount, filteredDataState.length),
+        [endRow, overscanRowCount, filteredDataState.length]
+    );
+
+    // Widoczne wiersze z overscan – jeden slice zamiast kilku
+    const visibleRows = useMemo(
+        () => filteredDataState.slice(overscanFrom, overscanTo),
+        [filteredDataState, overscanFrom, overscanTo]
+    );
+
+    // Widoczne kolumny
+    const visibleColumns = useMemo(
+        () => columnsState.current.slice(startColumn, endColumn),
+        [columnsState.current, startColumn, endColumn]
+    );
+
+    // Prekomputacja lewych pozycji (opcjonalnie)
+    const visibleColumnLefts = useMemo(() => {
+        const arr: number[] = [];
+        let left = columnsState.columnLeft(startColumn);
+        for (const col of visibleColumns) {
+            arr.push(left);
+            left += col.width || 150;
+        }
+        return arr;
+    }, [visibleColumns, startColumn, columnsState]);
+
+    useEffect(() => {
+        console.debug("DataGrid row click");
+        if (onRowClick) {
+            if (selectedCell?.row !== undefined) {
+                onRowClick(filteredDataState[selectedCell.row]);
+            }
+            else {
+                onRowClick(undefined);
+            }
+        }
+    }, [filteredDataState, selectedCell?.row, onRowClick]);
 
     useEffect(() => {
         if (showRowNumberColumn) {
@@ -1120,11 +1177,15 @@ export const DataGrid = <T extends object>({
     }, [resizingColumn]);
 
     const content = (
-        <StyledTable className="DataGrid-table">
+        <StyledTable
+            className={clsx("DataGrid-table", classes)}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+        >
             {/* Kolumna z numerami wierszy */}
             {showRowNumberColumn && (
                 <StyledRowNumberColumn
-                    className="DataGrid-rowNumberColumn"
+                    className={clsx("DataGrid-rowNumberColumn", classes)}
                     style={{
                         width: rowNumberColumnWidth,
                         height: containerHeight + (
@@ -1132,23 +1193,25 @@ export const DataGrid = <T extends object>({
                                 ? containerRef.current.offsetHeight - containerRef.current.clientHeight
                                 : 0
                         ), // wysokość kontenera, nie całej tabeli!
-                        fontFamily: fontFamily,
-                        // usuń transform: translateY(-${scrollTop}px)
                     }}
                     onWheel={handleRowNumberColumnScroll}
                 >
                     <div
                         style={{
                             position: "relative",
-                            top: rowHeight + -scrollTop, // przesuwaj numery wierszy
+                            top: rowHeight + -scrollTop,
                         }}
                     >
-                        {Array.from({ length: Math.min(endRow + 2, filteredDataState.length) - Math.max(startRow - 1, 0) }, (_, rowIndex) => {
-                            const absoluteRowIndex = Math.max(startRow - 1, 0) + rowIndex;
+                        {visibleRows.map((_, localIndex) => {
+                            const absoluteRowIndex = overscanFrom + localIndex;
                             return (
                                 <StyledRowNumberCell
                                     key={absoluteRowIndex}
-                                    className={`DataGrid-rowNumberCell ${selectedRows.includes(absoluteRowIndex) ? "Mui-selected" : ""}`}
+                                    className={clsx(
+                                        `DataGrid-rowNumberCell`,
+                                        { selected: selectedRows.includes(absoluteRowIndex) },
+                                        classes
+                                    )}
                                     rowHeight={rowHeight}
                                     style={{
                                         top: absoluteRowIndex * rowHeight,
@@ -1172,14 +1235,11 @@ export const DataGrid = <T extends object>({
 
             <StyledTableContainer
                 ref={containerRef}
-                className="DataGrid-tableContainer"
+                className={clsx("DataGrid-tableContainer", classes)}
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
-                rowHeight={rowHeight}
-                paddingY={cellPaddingY}
                 onFocus={handleFocus}
                 style={{
-                    fontFamily: (mode === "data" ? theme.typography.monospace.fontFamily : "inherit"),
                     marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
                 }}
@@ -1194,13 +1254,17 @@ export const DataGrid = <T extends object>({
                     searchText={commandPalettePrefix === "*" ? searchState.current.text ?? "" : ""}
                 />
                 <StyledHeader
-                    className="DataGrid-header"
+                    className={clsx("DataGrid-header", classes)}
                     style={{ width: columnsState.totalWidth, height: rowHeight }}
                 >
                     {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
                         <StyledHeaderCell
                             key={colIndex}
-                            className="DataGrid-headerCell"
+                            className={clsx(
+                                "DataGrid-headerCell",
+                                classes,
+                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                            )}
                             style={{
                                 width: col.width || 150,
                                 left: columnsState.columnLeft(startColumn + colIndex),
@@ -1214,7 +1278,13 @@ export const DataGrid = <T extends object>({
                                 }
                             }}
                         >
-                            <StyledHeaderCellContent className="DataGrid-headerCellContent">
+                            <StyledHeaderCellContent
+                                className={clsx(
+                                    "DataGrid-headerCellContent",
+                                    classes,
+                                    { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                )}
+                            >
                                 <span
                                     className="label"
                                     style={{
@@ -1290,37 +1360,41 @@ export const DataGrid = <T extends object>({
                     ))}
                 </StyledHeader>
                 {filteredDataState.length === 0 && (
-                    <StyledNoRowsInfo className="DataGrid-noRowsInfo">
+                    <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
                         {t("no-rows-to-display", "No rows to display")}
                     </StyledNoRowsInfo>
                 )}
                 <StyledRowsContainer
                     style={{ height: totalHeight, width: columnsState.totalWidth }}
-                    className="DataGrid-rowsContainer"
+                    className={clsx("DataGrid-rowsContainer", classes)}
                 >
-                    {filteredDataState.slice(Math.max(startRow - overscanRowCount, 0), Math.min(endRow + overscanRowCount, filteredDataState.length)).map((row, rowIndex) => {
-                        const absoluteRowIndex = Math.max(startRow - overscanRowCount, 0) + rowIndex;
+                    {visibleRows.map((row, localRowIndex) => {
+                        const absoluteRowIndex = overscanFrom + localRowIndex;
                         const isRowSelected = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
-                        let columnLeft = columnsState.columnLeft(startColumn);
 
                         return (
                             <StyledRow
                                 key={absoluteRowIndex}
                                 className={clsx(
                                     'DataGrid-row',
+                                    classes,
                                     rowClass,
-                                    selectedRows.includes(absoluteRowIndex) && "selected"
+                                    selectedRows.includes(absoluteRowIndex) && "selected",
+                                    { 'active-row': mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row }
                                 )}
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
                                 }}
                             >
-                                {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
-                                    const absoluteColIndex = startColumn + colIndex;
+                                {visibleColumns.map((col, vcIndex) => {
+                                    const absoluteColIndex = startColumn + vcIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
-                                    const columnDataType = (col.summary && groupingColumns.columns.length ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType ?? 'string';
+                                    const columnDataType = (col.summary && groupingColumns.columns.length
+                                        ? summaryOperationToBaseTypeMap[col.summary]
+                                        : undefined) ?? col.dataType ?? 'string';
+
                                     let styleDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         styleDataType = "null";
@@ -1330,51 +1404,49 @@ export const DataGrid = <T extends object>({
                                     }
 
                                     let formattedValue: React.ReactNode;
-
                                     try {
                                         formattedValue = columnDataFormatter(
                                             row[col.key],
                                             columnDataType,
                                             col.formatter,
-                                            null_value, {
-                                            maxLength: displayMaxLengh,
-                                            //display: (searchState.current.text ?? '').trim() === ''
-                                        });
-                                        if (typeof formattedValue === "string") {
-                                            formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                            null_value,
+                                            { maxLength: displayMaxLengh }
+                                        );
+                                        if (typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
+                                          formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                         }
-                                    }
-                                    catch (error: Error | any) {
+                                    } catch {
                                         formattedValue = "{error}";
                                         styleDataType = "error";
                                     }
 
-                                    const result = (
+                                    return (
                                         <StyledCell
-                                            key={colIndex}
+                                            key={col.key}
                                             className={clsx(
                                                 "DataGrid-cell",
+                                                classes,
                                                 isCellSelected && "selected",
                                                 isCellSelected && isFocused && "focused",
                                                 `data-type-${styleDataType}`,
                                                 (mode === "defined" ? colors_enabled : true) && 'color-enabled',
-                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                                {
+                                                    'active-column': mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column,
+                                                    'active-row': mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row
+                                                },
                                             )}
                                             style={{
                                                 width: col.width || 150,
-                                                left: columnLeft,
+                                                left: visibleColumnLefts[vcIndex],
                                             }}
                                             onClick={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                         >
-                                            {formattedValue}
+                                          {formattedValue}
                                         </StyledCell>
                                     );
-
-                                    columnLeft += col.width || 150;
-
-                                    return result;
                                 })}
                             </StyledRow>
                         );
@@ -1383,7 +1455,7 @@ export const DataGrid = <T extends object>({
                 {columnsState.anySummarized && (
                     <StyledFooter
                         style={{ width: columnsState.totalWidth, height: (rowHeight * footerCaptionHeightFactor) + rowHeight }}
-                        className="DataGrid-footer"
+                        className={clsx("DataGrid-footer", classes)}
                     >
                         {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                             const absoluteColIndex = startColumn + colIndex;
@@ -1394,8 +1466,10 @@ export const DataGrid = <T extends object>({
                                     key={colIndex}
                                     className={clsx(
                                         'DataGrid-footerCell',
+                                        classes,
                                         `data-type-${styleDataType}`,
-                                        styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                        styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                        { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
                                     )}
                                     style={{
                                         width: col.width || 150,
@@ -1413,8 +1487,10 @@ export const DataGrid = <T extends object>({
                                             key="header"
                                             className={clsx(
                                                 "DataGrid-footerCellHeader",
+                                                classes,
                                                 `data-type-${styleDataType}`,
-                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
                                             )}
                                         >
                                             {summaryOperationDisplayMap[col.summary] || ""}
@@ -1435,8 +1511,10 @@ export const DataGrid = <T extends object>({
                                             key="content"
                                             className={clsx(
                                                 "DataGrid-footerCellContent",
+                                                classes,
                                                 `data-type-${styleDataType}`,
-                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start'
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
                                             )}
                                         >
                                             {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
