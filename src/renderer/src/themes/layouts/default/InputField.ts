@@ -9,6 +9,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
+                lineHeight: 1.5,
                 '&:not(.type-boolean)': {
                     border: `1px solid ${palette.divider}`,
                     borderRadius: borderRadius,
@@ -71,6 +72,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
             input: {
                 fontFamily: "inherit",
                 fontSize: "inherit",
+                lineHeight: 1.5,
                 padding: 0,
                 backgroundColor: 'transparent',
                 color: palette.text.primary,
@@ -90,6 +92,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
             },
             customInput: {
+                lineHeight: 1.5,
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "row",
