@@ -200,6 +200,7 @@ const StyledTableContainer = styled('div', {
         height: "100%",
         userSelect: "none",
         borderRadius: 0,
+        outline: "none",
     })
 );
 

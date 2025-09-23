@@ -9,6 +9,7 @@ export const ShowRelationDataAction = (onAction: (context: DataGridActionContext
     return {
         id: ShowRelationDataAction_ID,
         label: t(ShowRelationDataAction_ID, "Show relation data"),
+        keybindings: ["Ctrl+Enter"],
         contextMenuGroupId: "objectGrid",
         contextMenuOrder: 3,
         run: (context) => {
