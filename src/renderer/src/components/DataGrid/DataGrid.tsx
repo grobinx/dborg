@@ -179,7 +179,7 @@ const StyledHeaderCellContent = styled('div', {
 
 const StyledIconContainer = styled('div', {
     name: "DataGrid",
-    slot: "sortIconContainer",
+    slot: "iconContainer",
 })({
     display: "flex",
     alignItems: "center",
@@ -441,6 +441,25 @@ const StyledNoRowsInfo = styled('div', {
     width: "100%",
     color: theme.palette.text.disabled, // Użycie koloru z motywu
     fontSize: "1.3em",
+}));
+
+const StyledGrow = styled('div', {
+    name: "DataGrid",
+    slot: "grow",
+})(({ }) => ({
+    display: "flex",
+    flexGrow: 1,
+}));
+
+const StyledLabel = styled('span', {
+    name: "DataGrid",
+    slot: "label",
+})(({ }) => ({
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "block",
+    maxWidth: "100%",
 }));
 
 export const DataGrid = <T extends object>({
@@ -1258,7 +1277,7 @@ export const DataGrid = <T extends object>({
                     className={clsx("DataGrid-header", classes)}
                     style={{ width: columnsState.totalWidth, height: rowHeight }}
                 >
-                    {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
+                    {visibleColumns.map((col, colIndex) => (
                         <StyledHeaderCell
                             key={colIndex}
                             className={clsx(
@@ -1286,19 +1305,10 @@ export const DataGrid = <T extends object>({
                                     { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
                                 )}
                             >
-                                <span
-                                    className="label"
-                                    style={{
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        display: "block",
-                                        maxWidth: "100%",
-                                    }}
-                                >
+                                <StyledLabel>
                                     {col.label}
-                                </span>
-                                <Stack flexGrow={1} />
+                                </StyledLabel>
+                                <StyledGrow />
                                 {(filterColumns.getFilter(col.key, true) !== null) && (
                                     <StyledIconContainer
                                         onClick={(event) => {
@@ -1414,7 +1424,7 @@ export const DataGrid = <T extends object>({
                                             { maxLength: displayMaxLengh }
                                         );
                                         if (typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
-                                          formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                            formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                         }
                                     } catch {
                                         formattedValue = "{error}";
@@ -1445,7 +1455,7 @@ export const DataGrid = <T extends object>({
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                         >
-                                          {formattedValue}
+                                            {formattedValue}
                                         </StyledCell>
                                     );
                                 })}
@@ -1458,7 +1468,7 @@ export const DataGrid = <T extends object>({
                         style={{ width: columnsState.totalWidth, height: (rowHeight * footerCaptionHeightFactor) + rowHeight }}
                         className={clsx("DataGrid-footer", classes)}
                     >
-                        {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
+                        {visibleColumns.map((col, colIndex) => {
                             const absoluteColIndex = startColumn + colIndex;
                             let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
 
@@ -1494,7 +1504,10 @@ export const DataGrid = <T extends object>({
                                                 { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
                                             )}
                                         >
-                                            {summaryOperationDisplayMap[col.summary] || ""}
+                                            <StyledLabel>
+                                                {summaryOperationDisplayMap[col.summary] || ""}
+                                            </StyledLabel>
+                                            <StyledGrow />
                                             <StyledIconContainer
                                                 onClick={(event) => {
                                                     columnsState.setSummary(col.key);
