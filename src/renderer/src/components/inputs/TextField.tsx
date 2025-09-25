@@ -26,7 +26,7 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
-            decorator.setRestrictions(`${(value ?? "").length}/${maxLength}`);
+            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
         });
     }
 

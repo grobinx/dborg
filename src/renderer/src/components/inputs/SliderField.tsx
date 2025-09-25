@@ -56,9 +56,9 @@ export const SliderField: React.FC<SliderFieldProps> = (props) => {
     // Ustawienie ograniczeń w dekoratorze
     React.useEffect(() => {
         if (decorator && (!legend || legend.length === 0)) {
-            decorator.setRestrictions(`${min}-${max}`);
+            decorator.setRestrictions([`${min}-${max}`]);
         } else if (decorator) {
-            decorator.setRestrictions(undefined);
+            decorator.setRestrictions([]);
         }
     }, [decorator, min, max, legend]);
 
@@ -126,9 +126,9 @@ export const RangeField: React.FC<RangeFieldProps> = (props) => {
     // Ustawienie ograniczeń w dekoratorze
     React.useEffect(() => {
         if (decorator && (!legend || legend.length === 0)) {
-            decorator.setRestrictions(`${min}-${max}`);
+            decorator.setRestrictions([`${min}-${max}`]);
         } else if (decorator) {
-            decorator.setRestrictions(undefined);
+            decorator.setRestrictions([]);
         }
     }, [decorator, min, max, legend]);
 

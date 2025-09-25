@@ -29,7 +29,7 @@ export const SearchField: React.FC<SearchFieldProps> = (props) => {
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
-            decorator.setRestrictions(`${(value ?? "").length}/${maxLength}`);
+            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
         });
     }
 

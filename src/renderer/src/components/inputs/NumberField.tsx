@@ -51,7 +51,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
 
     React.useEffect(() => {
         if (decorator) {
-            const restrictions: React.ReactNode[] = [];
+            const restrictions: FormattedContentItem[] = [];
             if (min !== undefined) {
                 restrictions.push(`≥${min}`);
             }
@@ -60,8 +60,6 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
             }
             if (restrictions.length) {
                 decorator.setRestrictions(restrictions);
-            } else {
-                decorator.setRestrictions(undefined);
             }
         }
     }, [decorator, min, max]);

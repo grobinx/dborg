@@ -148,7 +148,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["theme", "ui"],
                         }}
                     />
-                    <StringSetting
+                    <SettingDecorator
                         setting={{
                             type: "string",
                             storageGroup: "test",
@@ -159,14 +159,17 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             required: true,
                             experimental: true,
                             advanced: true,
-                            //maxLength: 23,
+                            maxLength: 180,
                             //minLength: 3,
                             effect: () => `Jakiś efekt wartości: **${escape(getSetting("test", "some-setting"))}**`,
                             tags: ["example", "editable"],
                         }}
-                        selected={selected}
-                        onClick={() => setSelected(!selected)}
-                    />
+                    >
+                        <TextField
+                            color="main"
+                            maxLength={180}
+                        />
+                    </SettingDecorator>
                     <TextSetting
                         setting={{
                             type: "text",

@@ -1,4 +1,4 @@
-import { Alert, Divider, Menu, MenuItem, Popper, styled, SxProps, Tooltip, useTheme } from "@mui/material";
+import { Alert, darken, Divider, lighten, Menu, MenuItem, Popper, styled, SxProps, Tooltip, useTheme } from "@mui/material";
 import React from "react";
 import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import { SettingTypeUnion } from "@renderer/components/settings/SettingsTypes";
@@ -11,7 +11,6 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { InputDecoratorContext, InputDecoratorContextType } from "../inputs/decorators/InputDecoratorContext";
 import clsx from "@renderer/utils/clsx";
 import { themeColors } from "@renderer/types/colors";
-import { Height } from "@mui/icons-material";
 
 export interface SettingDecoratorProps {
     children?: React.ReactElement<BaseInputProps>;
@@ -28,7 +27,7 @@ export interface SettingDecoratorProps {
      * Można zdefiniować funkcję, która zwróci informację o ograniczeniach
      * @default true
      */
-    restrictions?: React.ReactNode;
+    restrictions?: FormattedContentItem[];
     /**
      * Funkcja wywoływana po kliknięciu w dowolną część pola
      */
@@ -67,6 +66,7 @@ const StyledSettingDecorator = styled('div', {
     name: "SettingDecorator",
     slot: "root",
 })<{}>((props) => ({
+    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "row",
     width: "100%",
@@ -134,19 +134,27 @@ const StyledSettingDecoratorLabel = styled('div', {
     minWidth: 0,
     width: "100%",
     paddingBottom: 4,
+    gap: 4,
+}));
+
+const StyledSettingDecoratorGrow = styled('div', {
+    name: "SettingDecorator",
+    slot: "grow",
+})(({ }) => ({
+    display: "flex",
+    flexGrow: 1,
 }));
 
 const StyledSettingDecoratorLabelText = styled('span', {
     name: "SettingDecorator",
     slot: "labelText",
 })(({ theme }) => ({
-    flexGrow: 1,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
-            color: theme.palette[color].main,
+            color: theme.palette.mode === 'dark' ? lighten(theme.palette[color].main, 0.8) : darken(theme.palette[color].main, 0.5),
         };
         return acc;
     }, {}),
@@ -155,9 +163,14 @@ const StyledSettingDecoratorLabelText = styled('span', {
 const StyledSettingDecoratorCategory = styled('span', {
     name: "SettingDecorator",
     slot: "category",
-})(() => ({
+})(({ theme }) => ({
     fontWeight: 600,
-    marginRight: 4,
+    ...themeColors.reduce((acc, color) => {
+        acc[`&.color-${color}`] = {
+            color: theme.palette[color].main,
+        };
+        return acc;
+    }, {}),
 }));
 
 const StyledSettingDecoratorRequired = styled('span', {
@@ -165,7 +178,6 @@ const StyledSettingDecoratorRequired = styled('span', {
     slot: "required",
 })(({ theme }) => ({
     color: theme.palette.error.main,
-    marginLeft: 2,
 }));
 
 const StyledSettingDecoratorFlags = styled('span', {
@@ -173,13 +185,20 @@ const StyledSettingDecoratorFlags = styled('span', {
     slot: "flags",
 })(({ theme }) => ({
     display: "flex",
-    gap: theme.spacing(0.5),
-    marginLeft: theme.spacing(1),
-    '& .flag': {
-        fontSize: '0.875em',
-        fontStyle: 'italic',
-        opacity: 0.7,
+    marginLeft: 8,
+    '& :not(:last-child)::after': {
+        content: '"·"',
+        margin: '0 4px',
+        color: theme.palette.text.secondary,
     },
+}));
+
+const StyledSettingDecoratorFlag = styled('em', {
+    name: "SettingDecorator",
+    slot: "flag",
+})(({ }) => ({
+    fontSize: '0.875em',
+    opacity: 0.8,
 }));
 
 const StyledSettingDecoratorTags = styled('span', {
@@ -225,14 +244,31 @@ const StyledSettingDecoratorInput = styled('div', {
     flexGrow: 1,
     minWidth: 0,
     width: "100%",
+    gap: 8,
 }));
 
 const StyledSettingDecoratorRestrictions = styled('div', {
     name: "SettingDecorator",
     slot: "restrictions",
+})(({  }) => ({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "end",
+    height: "100%",
+    gap: 4,
+    flexWrap: "wrap",
+}));
+
+const StyledSettingDecoratorRestriction = styled('span', {
+    name: "SettingDecorator",
+    slot: "restriction",
 })(({ theme }) => ({
-    ...theme.typography.caption,
+    fontSize: '0.65em',
     color: theme.palette.text.secondary,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: theme.shape.borderRadius,
+    paddingLeft: 4,
+    paddingRight: 4,
 }));
 
 const StyledSettingDecoratorEffect = styled('div', {
@@ -240,7 +276,6 @@ const StyledSettingDecoratorEffect = styled('div', {
     slot: "effect",
 })(({ theme }) => ({
     ...theme.typography.description,
-    color: theme.palette.info.main,
 }));
 
 const StyledSettingDecoratorValidity = styled(Popper, {
@@ -266,7 +301,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
 
     const theme = useTheme();
     const { t } = useTranslation();
-    const [inputRestrictions, setInputRestrictions] = React.useState<React.ReactNode>(null);
+    const [inputRestrictions, setInputRestrictions] = React.useState<FormattedContentItem[]>([]);
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [visibleInputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [focused, setFocused] = React.useState<boolean>(false);
@@ -281,7 +316,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
-            setInputRestrictions(restrictions);
+            setInputRestrictions(restrictions ?? []);
         },
         invalid: invalid,
         setInvalid: (invalid) => {
@@ -475,7 +510,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                         <StyledSettingDecoratorLabelText
                             className={clsx("SettingDecorator-labelText", classes)}
                         >
-                            {setting.label}
+                            <FormattedText text={setting.label} />
                         </StyledSettingDecoratorLabelText>
 
                         {required && (
@@ -491,18 +526,30 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                                 className={clsx("SettingDecorator-flags", classes)}
                             >
                                 {setting.advanced && (
-                                    <em className="flag advanced">{t('advanced', "Advanced")}</em>
+                                    <StyledSettingDecoratorFlag
+                                        className={clsx("SettingDecorator-flag", "advanced", classes)}
+                                    >
+                                        {t('advanced', "Advanced")}
+                                    </StyledSettingDecoratorFlag>
                                 )}
                                 {setting.experimental && (
-                                    <em className="flag experimental">{t('experimental', "Experimental")}</em>
+                                    <StyledSettingDecoratorFlag
+                                        className={clsx("SettingDecorator-flag", "experimental", classes)}
+                                    >
+                                        {t('experimental', "Experimental")}
+                                    </StyledSettingDecoratorFlag>
                                 )}
                                 {setting.administrated && (
-                                    <em className="flag administrated">{t('administrated', "Administrated")}</em>
+                                    <StyledSettingDecoratorFlag
+                                        className={clsx("SettingDecorator-flag", "administrated", classes)}
+                                    >
+                                        {t('administrated', "Administrated")}
+                                    </StyledSettingDecoratorFlag>
                                 )}
                             </StyledSettingDecoratorFlags>
                         )}
 
-                        <span style={{ flexGrow: 1 }} />
+                        <StyledSettingDecoratorGrow />
 
                         {setting.tags && setting.tags.length > 0 && (
                             <StyledSettingDecoratorTags
@@ -540,10 +587,18 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                     >
                         {clonedChildren}
 
-                        {restrictions && inputRestrictions && (
-                            <StyledSettingDecoratorRestrictions className="SettingDecorator-restrictions">
-                                {restrictions}
-                                {inputRestrictions}
+                        {((restrictions ?? []).length > 0 || inputRestrictions.length > 0) && (
+                            <StyledSettingDecoratorRestrictions
+                                className={clsx("SettingDecorator-restrictions", classes)}
+                            >
+                                {[...(restrictions ?? []), ...inputRestrictions].map((item, index) => (
+                                    <StyledSettingDecoratorRestriction
+                                        key={index}
+                                        className={clsx("SettingDecorator-restriction", classes)}
+                                    >
+                                        <FormattedText text={item} />
+                                    </StyledSettingDecoratorRestriction>
+                                ))}
                             </StyledSettingDecoratorRestrictions>
                         )}
                     </StyledSettingDecoratorInput>

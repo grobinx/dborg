@@ -39,7 +39,7 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
-            decorator.setRestrictions(`${(value ?? "").length}/${maxLength}`);
+            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
         });
     }
 

@@ -1,4 +1,4 @@
-import { FormattedContent } from "@renderer/components/useful/FormattedText";
+import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
 import React from "react";
 
 export interface InputDecoratorContextType {
@@ -8,7 +8,7 @@ export interface InputDecoratorContextType {
      * Elementy będą opakowane w komponent Restriction lub inny podobny
      * @param restriction Nowa restrykcja do ustawienia
      */
-    setRestrictions: (restriction: React.ReactNode) => void;
+    setRestrictions: (restriction: FormattedContentItem[] | undefined) => void;
     /**
      * Przechowuje aktualne ograniczenia dla elementu
      */

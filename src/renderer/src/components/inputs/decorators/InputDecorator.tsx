@@ -4,7 +4,7 @@ import { BaseInputProps } from "../base/BaseInputProps";
 import { InputDecoratorContext, InputDecoratorContextType } from "./InputDecoratorContext";
 import React from "react";
 import { useVisibleState } from "../../../hooks/useVisibleState";
-import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
+import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import { Adornment } from "../base/BaseInputField";
 
 /**
@@ -27,7 +27,7 @@ export interface InputDecoratorProps {
      * Można zdefiniować funkcję, która zwróci informację o ograniczeniach
      * @default true
      */
-    restrictions?: React.ReactNode;
+    restrictions?: FormattedContentItem[];
     /**
      * Etykieta elementu
      * @default undefined
@@ -126,7 +126,7 @@ interface InputDecoratorLabelProps {
     className?: string;
     children?: React.ReactNode;
     label?: FormattedContentItem;
-    restrictions?: React.ReactNode;
+    restrictions?: FormattedContentItem[];
 }
 
 export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: InputDecoratorLabelProps) => {
@@ -154,7 +154,7 @@ export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: I
                         className
                     )}
                 >
-                    {React.Children.toArray(restrictions).map((restriction, index) => {
+                    {restrictions.map((restriction, index) => {
                         return (
                             <Restriction
                                 key={`restriction-${index}`}
@@ -163,7 +163,7 @@ export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: I
                                     className
                                 )}
                             >
-                                {restriction}
+                                <FormattedText text={restriction} />
                             </Restriction>
                         );
                     })}
@@ -247,7 +247,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     } = props;
 
     const theme = useTheme();
-    const [inputRestrictions, setInputRestrictions] = React.useState<React.ReactNode>(null);
+    const [inputRestrictions, setInputRestrictions] = React.useState<FormattedContentItem[]>([]);
     const [invalid, setInvalid] = React.useState<FormattedContent>(undefined);
     const [visibleInputRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [focused, setFocused] = React.useState<boolean>(false);
@@ -263,7 +263,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
-            setInputRestrictions(restrictions);
+            setInputRestrictions(restrictions ?? []);
         },
         invalid: invalid,
         setInvalid: (invalid) => {
@@ -462,7 +462,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                                 classes,
                             )}
                             label={label}
-                            restrictions={[restrictions, inputRestrictions]}
+                            restrictions={[...(restrictions ?? []), ...(inputRestrictions ?? [])]}
                         />
                     )}
                     <StyledInputDecoratorInput

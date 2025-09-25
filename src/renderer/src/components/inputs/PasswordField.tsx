@@ -36,7 +36,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
 
     if (decorator && maxLength) {
         Promise.resolve().then(() => {
-            decorator.setRestrictions(`${(value ?? "").length}/${maxLength}`);
+            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
         });
     }
 
