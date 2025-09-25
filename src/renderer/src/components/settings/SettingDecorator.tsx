@@ -188,14 +188,18 @@ const StyledSettingDecoratorTags = styled('span', {
 })(({ theme }) => ({
     display: "flex",
     gap: 4,
+    height: '100%',
     '& .tag': {
         fontSize: '0.75em',
-        paddingLeft: 4,
-        paddingRight: 4,
-        Height: '100%',
+        fontWeight: 500,
+        paddingLeft: 8,
+        paddingRight: 8,
+        height: '100%',
         backgroundColor: theme.palette.action.hover,
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: theme.shape.borderRadius,
+        alignContent: "center",
+        textTransform: "uppercase",
     },
 }));
 
