@@ -1,9 +1,11 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
+import { Size } from '@renderer/types/sizes';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
+import { rootSizeProperties } from '@renderer/themes/layouts/default/consts';
 
 export interface SelectOption<T = any> {
     label: FormattedContentItem;
@@ -22,11 +24,19 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     listHeight?: number;
 }
 
-const StyledMenuItem = styled(MenuItem)({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    //minHeight: 32,
+const StyledMenuItem = styled(MenuItem)<{ componentSize?: Size }>(({ componentSize = 'medium' }) => {
+    const sizeProps = rootSizeProperties[componentSize];
+    return {
+        display: 'flex',
+        alignItems: 'center',
+        gap: sizeProps.gap,
+        fontSize: sizeProps.fontSize,
+        padding: sizeProps.padding,
+        minHeight: sizeProps.height,
+        '&.Mui-dense': {
+            ...sizeProps['&.dense'],
+        }
+    };
 });
 
 /**
@@ -215,6 +225,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     >
                                         {children ? React.Children.toArray(children).map(child => {
                                             if (React.isValidElement(child) && child.type === MenuItem && 'value' in (child.props as any)) {
+                                                const sizeProps = rootSizeProperties[size || 'medium'];
                                                 return React.cloneElement(child, {
                                                     onClick: () => {
                                                         if (!Array.isArray(value)) {
@@ -224,6 +235,13 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                                         //anchorRef.current?.focus();
                                                     },
                                                     selected: Array.isArray(value) ? value.includes((child.props as any).value) : value === (child.props as any).value,
+                                                    sx: {
+                                                        fontSize: sizeProps.fontSize,
+                                                        padding: sizeProps.padding,
+                                                        minHeight: sizeProps.height,
+                                                        gap: sizeProps.gap,
+                                                        ...((child.props as any).sx || {})
+                                                    }
                                                 } as React.ComponentProps<typeof MenuItem>);
                                             }
                                             return child;
@@ -232,6 +250,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                                 <StyledMenuItem
                                                     key={option.value}
                                                     value={option.value}
+                                                    componentSize={size}
                                                     onClick={() => {
                                                         if (!Array.isArray(value)) {
                                                             setOpen(false);
@@ -260,10 +279,12 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     {optionDescription && (
                                         <Box
                                             sx={{
-                                                padding: 4,
+                                                padding: rootSizeProperties[size || 'medium'].gap,
                                                 display: 'flex',
                                                 width: '100%',
                                                 order: popperBelow ? 2 : -2,
+                                                fontSize: rootSizeProperties[size || 'medium'].fontSize,
+                                                color: 'text.secondary',
                                             }}
                                         >
                                             <FormattedText text={optionDescription} />
