@@ -85,12 +85,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         if (!anchorRef.current) return false;
 
         const anchorRect = anchorRef.current.getBoundingClientRect();
-        // Compare distances from anchor to viewport top and bottom
-        if (anchorRect.top > window.innerHeight - anchorRect.bottom) {
-            return false;
-        }
-
-        return true;
+        return anchorRect.top <= window.innerHeight - anchorRect.bottom;
     };
 
     const SelectValueRenderer = () => {
@@ -179,7 +174,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     inputProps?.onClick?.(e);
                 },
                 onKeyDown: (e) => {
-                    if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
                         e.preventDefault();
                         handleToggle();
                     }
