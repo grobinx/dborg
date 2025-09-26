@@ -58,7 +58,7 @@ export const TagsField: React.FC<TagsFieldProps> = ({
 
     if (decorator && maxTags) {
         Promise.resolve().then(() => {
-            decorator.setRestrictions(`${(tags ?? []).length}/${maxTags}`);
+            decorator.setRestrictions([`${(tags ?? []).length}/${maxTags}`]);
         });
     }
 
