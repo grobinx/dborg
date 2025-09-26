@@ -127,15 +127,6 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                         if (React.isValidElement(child) && child.props && 'children' in (child as any).props) {
                             return (child.props as any).children;
                         }
-                        //     return React.cloneElement(child, {
-                        //         disableGutters: true,
-                        //         disableRipple: true,
-                        //         dense: true,
-                        //         sx: {
-                        //             padding: 0,
-                        //         }
-                        //     } as React.ComponentProps<typeof MenuItem>);
-                        // }
                         return null;
                     })
             );

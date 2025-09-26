@@ -345,11 +345,12 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         onKeyUp={inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement>}
                         onMouseDown={inputProps?.onMouseDown as React.MouseEventHandler<HTMLDivElement>}
                         onMouseUp={(e: any) => {
-                            inputProps?.onClick?.(e);
                             inputProps?.onMouseUp?.(e);
+                        }}
+                        onClick={(e: any) => {
+                            inputProps?.onClick?.(e);
                             onClick?.();
                         }}
-                        onClick={undefined}
                         tabIndex={disabled ? -1 : 0}
                         aria-disabled={disabled}
                         disabled={disabled}

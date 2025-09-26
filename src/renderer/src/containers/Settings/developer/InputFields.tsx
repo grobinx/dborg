@@ -510,14 +510,21 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                                 key={value}
                                                 style={{ gap: 4, fontSize: "inherit", height: "100%" }}
                                                 size="small"
-                                                onDelete={(_e) => handleArraySelectChange(size, value)}
+                                                onDelete={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    handleArraySelectChange(size, value);
+                                                }}
+                                                onClick={(e) => {
+                                                    console.log('Chip onClick called', e.target);
+                                                    e.stopPropagation();
+                                                }}
                                                 label={
                                                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                                         {value}
                                                         <ColorBox color={value} />
                                                     </span>
                                                 }
-                                                data-ignore-toggle
                                             />
                                         ))}
                                     </>)} // Renderowanie wybranych wartości z kolorowymi boxami
