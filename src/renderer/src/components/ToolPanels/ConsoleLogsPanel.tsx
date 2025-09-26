@@ -7,9 +7,8 @@ import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
 import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab, Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { FixedSizeList, ListChildComponentProps } from "react-window";
+import { List, RowComponentProps, useListRef } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
-import ToolSelect from "../useful/ToolSelect";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
 import * as Messages from '../../app/Messages';
@@ -44,16 +43,17 @@ export const useConsoleLogState = create<ConsoleLogState>((set) => ({
 
 let searchTimeoutId: NodeJS.Timeout | undefined = undefined;
 
-const StyledConsoleLogPanel = styled(FixedSizeList, {
+const StyledConsoleLogPanel = styled(List, {
     name: "ConsoleLogPanel",
     slot: "root",
+    shouldForwardProp: (_prop) => true, // Przekazuj wszystkie właściwości do komponentu List
 })(({ /*theme*/ }) => ({
     // Add styles for the list container if needed
 }));
 
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
     slotProps?: {
-        list?: React.ComponentProps<typeof FixedSizeList>;
+        list?: React.ComponentProps<typeof List>;
         item?: React.ComponentProps<typeof ListItem>;
         itemIcon?: React.ComponentProps<typeof ListItemIcon>;
         itemText?: React.ComponentProps<typeof ListItemText>;
@@ -70,7 +70,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const theme = useTheme();
     const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
-    const listRef = useRef<FixedSizeList>(null);
+    const listRef = useListRef(null);
     const showTime = useConsoleLogState(state => state.showTime);
     const search = useConsoleLogState(state => state.search);
     const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
@@ -104,25 +104,41 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
         if (displayLogs.length > 0) {
             setTimeout(() => {
                 if (listRef.current && panelVisible) {
-                    listRef.current.scrollToItem(displayLogs.length - 1, "end");
+                    listRef.current.scrollToRow({ 
+                        index: displayLogs.length - 1, 
+                        align: "end" 
+                    });
                 }
             }, 100);
         }
     }, [displayLogs, panelVisible]);
 
-    // Render pojedynczego elementu listy
-    const renderRow = ({ index, style }: ListChildComponentProps) => {
+    // Render pojedynczego elementu listy - używając react-window 2.x API
+    const renderRow = ({ index, style, displayLogs, selectedItem, handleSelectItem, theme, showTime, getLogLevelColor, formatTime }: RowComponentProps<{
+        displayLogs: LogEntry[],
+        selectedItem: string | null,
+        handleSelectItem: (id: string) => void,
+        theme: any,
+        showTime: boolean,
+        getLogLevelColor: (level: LogLevel, palette: any) => string,
+        formatTime: (time: number) => string
+    }>) => {
         const log = displayLogs[index];
+        if (!log) return <div style={style}>No log</div>;
+        
         return (
-            <ListItem
+            <div
                 key={log.id}
-                style={style} // Ważne: styl przekazywany przez react-window
-                alignItems="flex-start"
-                disablePadding
-                disableGutters
+                style={{
+                    ...style,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    padding: 0,
+                    cursor: "pointer",
+                    backgroundColor: selectedItem === log.id ? theme.palette.action.selected : "transparent"
+                }}
                 onClick={() => handleSelectItem(log.id)}
                 className={`ConsoleLogPanel-item${selectedItem === log.id ? " Mui-selected" : ""}`}
-                {...slotProps?.item}
             >
                 <Typography
                     variant="monospace"
@@ -132,7 +148,8 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                         textOverflow: "ellipsis",
                         color: getLogLevelColor(log.level, theme.palette),
                         m: 0,
-                        px: 8
+                        px: 1,
+                        width: "100%"
                     }}
                 >
                     {showTime && log.time && (
@@ -154,7 +171,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                         }
                     }).join(" ") : String(log.message)}
                 </Typography>
-            </ListItem>
+            </div>
         );
     };
 
@@ -163,22 +180,26 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
             {panelVisible && (
                 <SplitPanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
                     <SplitPanel>
-                        <AutoSizer>
-                            {({ height, width }) => (
-                                <StyledConsoleLogPanel
-                                    className="ConsoleLogPanel-root"
-                                    ref={listRef} // Przypisanie referencji
-                                    height={height}
-                                    width={width}
-                                    itemSize={listItemSize} // Wysokość pojedynczego elementu (dostosuj do potrzeb)
-                                    itemCount={displayLogs.length}
-                                    overscanCount={overscanCount ?? 2} // Liczba dodatkowych elementów renderowanych poza widocznym obszarem
-                                    {...slotProps?.list}
-                                >
-                                    {renderRow}
-                                </StyledConsoleLogPanel>
-                            )}
-                        </AutoSizer>
+                        <div style={{ height: '100%', width: '100%' }}>
+                            <List
+                                listRef={listRef}
+                                className="ConsoleLogPanel-root"
+                                rowComponent={renderRow}
+                                rowCount={displayLogs.length}
+                                rowHeight={listItemSize}
+                                style={{ height: '100%', width: '100%' }}
+                                rowProps={{ 
+                                    displayLogs,
+                                    selectedItem, 
+                                    handleSelectItem,
+                                    theme,
+                                    showTime,
+                                    getLogLevelColor,
+                                    formatTime
+                                } as any}
+                                {...slotProps?.list}
+                            />
+                        </div>
                     </SplitPanel>
                     <Splitter />
                     <SplitPanel defaultSize={25} >

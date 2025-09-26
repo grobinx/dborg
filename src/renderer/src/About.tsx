@@ -174,6 +174,11 @@ const About: React.FC<{
                 <Typography><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</Typography>
                 <Typography><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</Typography>
                 <Typography><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</Typography>
+                <Typography><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
+                    E: {window.electron.versions.electron},
+                    N: {window.electron.versions.node},
+                    C: {window.electron.versions.chrome}
+                </Typography>
             </StyledAppInfoContainer>
         </div>
     );
