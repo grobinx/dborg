@@ -144,7 +144,7 @@ export const disabledControl = (
     return false;
 };
 
-export const SettingInputControlDescription: React.FC<React.ComponentProps<typeof StyledSettingInputControlDescription> & { description: React.ReactNode }> = (props) => {
+export const SettingInputControlDescription: React.FC<React.ComponentProps<typeof Typography> & { description: React.ReactNode }> = (props) => {
     const { description, ...other } = props;
     return (
         <StyledSettingInputControlDescription variant="description" {...other} className="SettingInputControl-description">
@@ -154,14 +154,7 @@ export const SettingInputControlDescription: React.FC<React.ComponentProps<typeo
     );
 };
 
-export interface SettingInputControlProps extends React.ComponentProps<typeof StyledSettingInputControlRoot> {
-    slotProps?: {
-        label?: React.ComponentProps<typeof StyledSettingInputControlLabel>;
-        description?: React.ComponentProps<typeof StyledSettingInputControlDescription>;
-        validity?: React.ComponentProps<typeof StyledSettingInputControlValidity>;
-        effect?: React.ComponentProps<typeof StyledSettingInputControlEffect>;
-        input?: React.ComponentProps<typeof StyledSettingInputControlInput>;
-    }
+export interface SettingInputControlProps extends React.ComponentProps<typeof Box> {
 }
 
 interface SettingInputControlOwnProps extends SettingInputControlProps {
@@ -180,7 +173,7 @@ interface SettingInputControlOwnProps extends SettingInputControlProps {
 const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const {
         children, className, setting, value, setValue,
-        onStore, onClick, validate, slotProps,
+        onStore, onClick, validate,
         selected, description, policy, ...other
     } = useThemeProps({ name: 'SettingInputControl', props });
     const { t } = useTranslation();
@@ -398,7 +391,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                 </Menu>
             </div>
             <StyledSettingInputControlInternal className="SettingInputControl-internal">
-                <StyledSettingInputControlLabel variant="label" className="SettingInputControl-label" {...slotProps?.label}>
+                <StyledSettingInputControlLabel variant="label" className="SettingInputControl-label">
                     {setting.category && (
                         <span key="group" className="group">
                             {setting.category}:
@@ -423,10 +416,10 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                     )}
                 </StyledSettingInputControlLabel>
                 {setting.description && (description ?? true) && (
-                    <SettingInputControlDescription description={setting.description} {...slotProps?.description} />
+                    <SettingInputControlDescription description={setting.description} />
                 )}
                 <Stack direction="row" ref={popperVisibilityRef}>
-                    <StyledSettingInputControlInput className="SettingInputControl-input" {...slotProps?.input}>
+                    <StyledSettingInputControlInput className="SettingInputControl-input">
                         <div ref={anchorElRef}>
                             {children}
                         </div>
@@ -449,14 +442,13 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
                         <StyledSettingInputControlValidity
                             className="SettingInputControl-validity"
                             severity="error"
-                            {...slotProps?.validity}
                         >
                             {!!validity && <FormattedText text={validity} />}
                         </StyledSettingInputControlValidity>
                     </Popper>
                 </Stack>
                 {effectContent && (
-                    <StyledSettingInputControlEffect variant="description" className="SettingInputControl-effect" {...slotProps?.effect}>
+                    <StyledSettingInputControlEffect variant="description" className="SettingInputControl-effect">
                         {effectContent}
                     </StyledSettingInputControlEffect>
                 )}

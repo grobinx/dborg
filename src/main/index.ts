@@ -5,11 +5,10 @@ import { init as initDborgFile } from './api/dborg-file'
 import { init as initSettings } from './api/settings'
 import { init as initElectron } from './api/electron'
 import { init as initDatabase } from './api/db'
-//import '../../plugins/pg/main';
-//import '../../plugins/sqlite/main';
 import path from 'node:path'
 import { init as initInternal } from './core/db/internal'
 import logo from '../../resources/dborg.png?asset'
+import debounce from 'src/renderer/src/utils/debounce'
 
 function createWindow(): BrowserWindow {
     // Create the browser window.
@@ -111,11 +110,3 @@ app.on('window-all-closed', () => {
         app.quit()
     }
 })
-
-function debounce(fn: () => void, delay: number): () => void {
-    let timer: NodeJS.Timeout | null = null;
-    return () => {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(fn, delay);
-    };
-}

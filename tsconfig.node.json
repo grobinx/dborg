@@ -6,7 +6,9 @@
     "src/api/**/*", 
     "src/preload/**/*",
     "plugins/*/main/**/*",
-    "plugins/*/preload/**/*", "plugins/pg/common/consts.ts",
+    "plugins/*/preload/**/*", 
+    "plugins/pg/common/consts.ts",
+    "src/renderer/src/utils/debounce.ts"
   ],
   "compilerOptions": {
     "composite": true,
