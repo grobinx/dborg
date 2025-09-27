@@ -14,7 +14,7 @@ import SchemaPatternField from "./SchemaPatternField";
 import SchemaGroupField from "./SchemaGroupField";
 import { SchemaParametersType } from "./SchemaTypes";
 import DriverSummary from "../DriverSelect/DriverSummary";
-//import { useTranslation } from "react-i18next";
+import debounce from '@renderer/utils/debounce';
 
 export interface SchemaParametersRef {
     getSchema: () => SchemaParametersType;
@@ -132,29 +132,35 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
         });
     }
 
-    React.useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            if (search && search !== '') {
-                const parts = search.toLowerCase().split(" ").map(value => value.trim()).filter(value => (value ?? '') !== '');
-                const result = driver?.properties
-                    .flatMap(group => group.properties)
-                    .filter(property =>
-                        parts.every(value =>
-                            property.name.toLowerCase().includes(value) ||
-                            property.title.toLowerCase().includes(value) ||
-                            (property.description ?? '').toLowerCase().includes(value)
-                        )
-                    )
-                    .map(property => property.name);
-                setSearchProperties(result ?? []);
-            }
-            else {
-                setSearchProperties([]);
-            }
-        }, 300);
+    // Zastępuje wcześniejszy useEffect z setTimeout
+    const runSearch = React.useMemo(
+        () =>
+            debounce((query: string) => {
+                if (query && query !== '') {
+                    const parts = query.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
+                    const result =
+                        driver?.properties
+                            .flatMap(group => group.properties)
+                            .filter(property =>
+                                parts.every(value =>
+                                    property.name.toLowerCase().includes(value) ||
+                                    property.title.toLowerCase().includes(value) ||
+                                    (property.description ?? '').toLowerCase().includes(value)
+                                )
+                            )
+                            .map(property => property.name) ?? [];
+                    setSearchProperties(result);
+                } else {
+                    setSearchProperties([]);
+                }
+            }, 300),
+        [driver]
+    );
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [search]);
+    React.useEffect(() => {
+        runSearch(search ?? '');
+        return () => runSearch.cancel();
+    }, [search, runSearch]);
 
     React.useEffect(() => {
         setSchemaName(schemaPatternToName(schemaPattern, properties));

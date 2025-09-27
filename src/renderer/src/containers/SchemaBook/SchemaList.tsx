@@ -25,6 +25,7 @@ import { IconButton } from "@renderer/components/buttons/IconButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
+import debounce from "@renderer/utils/debounce";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -171,86 +172,82 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         fetchData();
     }, [connectionList, drivers]); // Ensure connectionList is ready before fetching data
 
-    React.useEffect(() => {
-        const sort = (data: Schema[] | null): Schema[] | null => {
-            if (!data) {
-                return null;
-            }
+    // sort wyjęty poza useEffect i memoizowany względem groupList
+    const sort = React.useCallback((list: Schema[] | null): Schema[] | null => {
+        if (!list) return null;
 
-            if (groupList) {
-                // Grupowanie danych według `sch_group`
-                const groupedData = data.reduce<Record<string, Schema[]>>((groups, schema) => {
-                    const groupKey = schema.sch_group ?? "ungrouped";
-                    if (!groups[groupKey]) {
-                        groups[groupKey] = [];
+        if (groupList) {
+            const grouped = list.reduce<Record<string, Schema[]>>((acc, schema) => {
+                const key = schema.sch_group ?? "ungrouped";
+                (acc[key] ??= []).push(schema);
+                return acc;
+            }, {});
+
+            const sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
+                const latestA = Math.max(...a.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                const latestB = Math.max(...b.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                return latestB - latestA;
+            });
+
+            return sortedGroups.flatMap(([, group]) =>
+                group.sort((a, b) => {
+                    if (a.sch_last_selected !== b.sch_last_selected) {
+                        return (
+                            (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
+                            (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
+                        );
                     }
-                    groups[groupKey].push(schema);
-                    return groups;
-                }, {});
-
-                // Sortowanie grup na podstawie najnowszego `sch_last_selected` w każdej grupie
-                const sortedGroups = Object.entries(groupedData)
-                    .sort(([, groupA], [, groupB]) => {
-                        const latestA = Math.max(
-                            ...groupA.map(schema => DateTime.fromSQL(schema.sch_last_selected ?? '').toMillis() || 0)
+                    if (a.sch_updated !== b.sch_updated) {
+                        return (
+                            (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
+                            (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
                         );
-                        const latestB = Math.max(
-                            ...groupB.map(schema => DateTime.fromSQL(schema.sch_last_selected ?? '').toMillis() || 0)
-                        );
-                        return latestB - latestA; // Najnowsze grupy na górze
-                    });
+                    }
+                    return a.sch_name.localeCompare(b.sch_name);
+                })
+            );
+        }
 
-                // Spłaszczenie posortowanych grup do jednej listy
-                return sortedGroups.flatMap(([, group]) =>
-                    group.sort((a, b) => {
-                        if (a.sch_last_selected !== b.sch_last_selected) {
-                            return (
-                                (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
-                                (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
-                            );
-                        }
-                        if (a.sch_updated !== b.sch_updated) {
-                            return (
-                                (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
-                                (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
-                            );
-                        }
-                        return a.sch_name.localeCompare(b.sch_name);
-                    })
+        return [...list].sort((a, b) => {
+            if (a.sch_last_selected !== b.sch_last_selected) {
+                return (
+                    (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
+                    (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
                 );
             }
+            if (a.sch_updated !== b.sch_updated) {
+                return (
+                    (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
+                    (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
+                );
+            }
+            return a.sch_name.localeCompare(b.sch_name);
+        });
+    }, [groupList]);
 
-            // Sortowanie bez grupowania
-            return [...data].sort((a, b) => {
-                if (a.sch_last_selected !== b.sch_last_selected) {
-                    return (
-                        (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
-                        (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
-                    );
+    // Funkcja debounced do filtrowania + sortowania
+    const runSearch = React.useMemo(
+        () =>
+            debounce((query: string, src: Schema[] | null) => {
+                if (!query.trim()) {
+                    setDisplayData(sort(src));
+                    return;
                 }
-                if (a.sch_updated !== b.sch_updated) {
-                    return (
-                        (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
-                        (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
-                    );
-                }
-                return a.sch_name.localeCompare(b.sch_name);
-            });
-        };
+                const q = query.toLowerCase();
+                const filtered = src?.filter(record =>
+                    JSON.stringify([record.driverName, record.sch_group, record.sch_name])
+                        .toLowerCase()
+                        .includes(q)
+                );
+                setDisplayData(sort(filtered ?? null));
+            }, 300),
+        [sort]
+    );
 
-        if (!search.trim()) {
-            setDisplayData(sort(data));
-            return;
-        }
-        const delayDebounceFn = setTimeout(() => {
-            const filteredData = data?.filter(record =>
-                JSON.stringify([record.driverName, record.sch_group, record.sch_name]).toLowerCase().includes(search.toLowerCase())
-            );
-            setDisplayData(sort(filteredData ?? null));
-        }, 300);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [data, search, groupList]);
+    React.useEffect(() => {
+        runSearch(search, data);
+        return () => runSearch.cancel();
+    }, [search, data, runSearch]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         try {

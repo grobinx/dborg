@@ -282,7 +282,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                             <SearchField
                                 placeholder={t("search---", "Search...")}
                                 value={search}
-                                onChange={(event) => setSearch(event.target.value)}
+                                onChange={(value) => setSearch(value)}
                                 inputProps={{
                                     autoFocus: true,
                                 }}

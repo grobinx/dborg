@@ -15,6 +15,7 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
+import debounce from "@renderer/utils/debounce";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -33,7 +34,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
-    const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = React.useState<string>("100%");
@@ -67,25 +67,52 @@ const GridSlot: React.FC<GridSlotProps> = ({
         };
     }, [slot.id]);
 
+    // Debounced click handler
+    const rowClick = React.useMemo(
+        () =>
+            debounce((row: Record<string, any> | undefined) => {
+                slot.onRowClick?.(row, refreshSlot);
+            }, 250),
+        [slot.id, refreshSlot]
+    );
+
+    React.useEffect(() => {
+        return () => rowClick.cancel();
+    }, [rowClick]);
+
+    // Debounced height recalculation
+    const updateHeight = React.useMemo(
+        () =>
+            debounce(() => {
+                if (statusBarRef.current) {
+                    const statusBarHeight = statusBarRef.current.offsetHeight;
+                    setBoxHeight(`calc(100% - ${statusBarHeight}px)`);
+                } else {
+                    setBoxHeight("100%");
+                }
+            }, 50),
+        []
+    );
+
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (statusBarRef.current) {
-                const statusBarHeight = statusBarRef.current.offsetHeight;
-                setBoxHeight(`calc(100% - ${statusBarHeight}px)`);
-            }
+            updateHeight();
         });
 
         if (statusBarRef.current) {
             observer.observe(statusBarRef.current);
         }
+        // initial
+        updateHeight();
 
         return () => {
             if (statusBarRef.current) {
                 observer.unobserve(statusBarRef.current);
             }
             observer.disconnect();
+            updateHeight.cancel();
         };
-    }, []);
+    }, [updateHeight]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
         const actionGroups = resolveActionGroupDescriptorsFactory(slot.actionGroups, refreshSlot) ?? [];
@@ -102,14 +129,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }
 
     function handleRowClick(row: Record<string, any> | undefined) {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-        debounceRef.current = setTimeout(() => {
-            if (slot.onRowClick) {
-                slot.onRowClick(row, refreshSlot);
-            }
-        }, 250);
+        rowClick(row);
     }
 
     return (
