@@ -8,7 +8,7 @@ import { init as initDatabase } from './api/db'
 import path from 'node:path'
 import { init as initInternal } from './core/db/internal'
 import logo from '../../resources/dborg.png?asset'
-import debounce from 'src/renderer/src/utils/debounce'
+import debounce from '../renderer/src/utils/debounce'
 
 function createWindow(): BrowserWindow {
     // Create the browser window.

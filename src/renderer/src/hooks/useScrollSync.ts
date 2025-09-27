@@ -1,30 +1,40 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-interface ScrollState {
-    scrollTop: number;
-    scrollLeft: number;
-}
-
-export const useScrollSync = (ref: React.RefObject<HTMLDivElement | null>, disabled?: boolean) => {
-    const [scrollState, setScrollState] = useState<ScrollState>({ scrollTop: 0, scrollLeft: 0 });
+export function useScrollSync(
+    ref: React.RefObject<HTMLElement | null>,
+    paused = false
+) {
+    const [state, setState] = useState({ scrollTop: 0, scrollLeft: 0 });
+    const rafRef = useRef<number | null>(null);
 
     useEffect(() => {
-        const handleScroll = () => {
-            if (disabled || !ref.current) return;
+        const el = ref.current;
+        if (!el) return;
 
-            const { scrollTop, scrollLeft } = ref.current;
-            setScrollState({ scrollTop, scrollLeft });
+        const onScroll = () => {
+            if (paused) return;
+            if (rafRef.current != null) return;
+            rafRef.current = requestAnimationFrame(() => {
+                rafRef.current = null;
+                setState({
+                    scrollTop: el.scrollTop,
+                    scrollLeft: el.scrollLeft,
+                });
+            });
         };
 
-        const container = ref.current;
-        if (!container) return;
+        // initial
+        setState({ scrollTop: el.scrollTop, scrollLeft: el.scrollLeft });
 
-        container.addEventListener("scroll", handleScroll);
-
+        el.addEventListener('scroll', onScroll, { passive: true });
         return () => {
-            container.removeEventListener("scroll", handleScroll);
+            el.removeEventListener('scroll', onScroll);
+            if (rafRef.current != null) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
         };
-    }, [ref, disabled]);
+    }, [ref, paused]);
 
-    return scrollState;
-};
+    return state;
+}

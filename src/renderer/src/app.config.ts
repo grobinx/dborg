@@ -35,6 +35,7 @@ const settings_store_timeout = 1000; // 1 second
 const toast_timeout = 5000; // 5 seconds
 const data_grid_null_value = '{null}';
 const data_grid_colors_enabled = true;
+const data_grid_active_highlight = true;
 
 export const default_settings: ApplicationSettings = {
     app: {
@@ -47,7 +48,7 @@ export const default_settings: ApplicationSettings = {
     dborg: {
         "data_grid.null_value": data_grid_null_value,
         "data_grid.colors_enabled": data_grid_colors_enabled,
-        "data_grid.active_highlight": true,
+        "data_grid.active_highlight": data_grid_active_highlight,
     },
     ui: {
         theme: 'system',

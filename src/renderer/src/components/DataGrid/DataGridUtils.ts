@@ -74,7 +74,7 @@ export const calculateVisibleRows = (
     rowHeight: number,
     containerHeight: number,
     scrollTop: number,
-    containerRef: React.RefObject<HTMLDivElement | null>
+    containerRef: React.RefObject<HTMLElement | null>
 ) => {
     const scrollbarHeight = containerRef.current
         ? containerRef.current.offsetHeight - containerRef.current.clientHeight
@@ -87,7 +87,7 @@ export const calculateVisibleRows = (
 };
 
 export const scrollToCell = (
-    container: HTMLDivElement,
+    container: HTMLElement,
     rowIndex: number,
     columnIndex: number,
     columnLeft: number,

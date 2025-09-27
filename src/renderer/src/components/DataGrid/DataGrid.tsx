@@ -204,6 +204,15 @@ const StyledTableContainer = styled('div', {
     })
 );
 
+const StyledRowsContainer = styled("div", {
+    name: "DataGrid",
+    slot: "rowsContainer",
+})({
+    position: "relative",
+    willChange: "transform",
+    transform: "translateZ(0)", // promuje do warstwy GPU przy scrollu
+});
+
 const StyledRow = styled("div", {
     name: "DataGrid",
     slot: "row",
@@ -213,8 +222,10 @@ const StyledRow = styled("div", {
     top: 0,
     left: 0,
     width: "100%",
-    //transition: "background-color 0.2s ease", // Płynna zmiana koloru tła
     backgroundColor: theme.palette.background.table.container,
+    willChange: "transform, top",
+    //transition: "background-color 0.2s ease", // Płynna zmiana koloru tła
+    //backgroundColor: theme.palette.background.table.container,
     // "&.odd": {
     //     backgroundColor: theme.palette.mode === "dark" ?
     //         darken(theme.palette.background.table.container, 0.05) :
@@ -299,13 +310,6 @@ const StyledCell = styled("div", {
         };
     }
 );
-
-const StyledRowsContainer = styled("div", {
-    name: "DataGrid",
-    slot: "rowsContainer",
-})({
-    position: "relative",
-});
 
 const StyledFooter = styled('div', {
     name: "DataGrid",
@@ -468,7 +472,7 @@ export const DataGrid = <T extends object>({
     rowHeight: initialRowHeight = 20,
     mode = "defined",
     columnsResizable = true,
-    overscanRowCount = 3,
+    overscanRowCount = 5,
     columnRowNumber = false,
     onMount,
     onDismount,
@@ -484,7 +488,7 @@ export const DataGrid = <T extends object>({
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const containerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const commandManager = useRef<CommandManager<DataGridActionContext<T>> | null>(null);
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
@@ -535,6 +539,7 @@ export const DataGrid = <T extends object>({
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
+    const selectedCellRef = useRef<TableCellPosition | null>(null);
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
     const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber); // Dodano stan
@@ -559,6 +564,10 @@ export const DataGrid = <T extends object>({
             mode === "data" && colors_enabled && "color-enabled",
         );
     }, [mode, colors_enabled]);
+
+    useEffect(() => {
+        selectedCellRef.current = selectedCell;
+    }, [selectedCell]);
 
     useEffect(() => {
         console.debug("DataGrid mounted");
@@ -715,14 +724,15 @@ export const DataGrid = <T extends object>({
                     previousStatusRef.current = newStatus;
                     previousStatusStringRef.current = newStatusString;
                 }
-            }, 100);
+            }, 200);
 
             return () => clearTimeout(timeoutRef);
         }
         return;
     }, [
         filteredDataState,
-        selectedCell,
+        selectedCell?.row,
+        selectedCell?.column,
         loading,
         showRowNumberColumn,
         columnsState.current,
@@ -738,43 +748,48 @@ export const DataGrid = <T extends object>({
     const updateSelectedCell = React.useCallback((cell: TableCellPosition | null): TableCellPosition | null => {
         console.debug("DataGrid update selected cell", cell);
         if (!cell) {
-            setSelectedCell(null);
+            if (selectedCellRef.current !== null) setSelectedCell(null);
             return null;
         }
-        // Skoryguj indeksy, jeśli wykraczają poza zakres
         const maxRow = filteredDataState.length - 1;
         const maxCol = columnsState.current.length - 1;
-        const row = Math.max(0, Math.min(cell.row, maxRow));
-        const column = Math.max(0, Math.min(cell.column, maxCol));
-        // Jeśli nie ma żadnych wierszy lub kolumn, resetuj zaznaczenie
         if (maxRow < 0 || maxCol < 0) {
-            setSelectedCell(null);
+            if (selectedCellRef.current !== null) setSelectedCell(null);
             return null;
         }
-
-        setSelectedCell(prev => (prev?.row !== row || prev?.column !== column ? { row, column } : prev));
-        return { row, column };
+        const row = Math.max(0, Math.min(cell.row, maxRow));
+        const column = Math.max(0, Math.min(cell.column, maxCol));
+        const prev = selectedCellRef.current;
+        if (prev && prev.row === row && prev.column === column) {
+            return prev; // no-op
+        }
+        const next = { row, column };
+        setSelectedCell(next);
+        return next;
     }, [filteredDataState.length, columnsState.current.length]);
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
     useEffect(() => {
         console.debug("DataGrid set initial selected cell");
         if (filteredDataState.length > 0) {
-            const selected = updateSelectedCell(selectedCell);
-            if (containerRef.current) {
-                scrollToCell(
-                    containerRef.current,
-                    selected?.row ?? 0,
-                    selected?.column ?? 0,
-                    columnsState.columnLeft(selected?.column ?? 0),
-                    rowHeight,
-                    columnsState.current,
-                    columnsState.anySummarized);
+            if (!selectedCellRef.current) {
+                const selected = updateSelectedCell({ row: 0, column: 0 });
+                if (containerRef.current && selected) {
+                    scrollToCell(
+                        containerRef.current,
+                        selected.row,
+                        selected.column,
+                        columnsState.columnLeft(selected.column),
+                        rowHeight,
+                        columnsState.current,
+                        columnsState.anySummarized
+                    );
+                }
             }
-        } else {
-            updateSelectedCell(null); // Jeśli brak wyników, resetuj zaznaczenie
+        } else if (selectedCellRef.current) {
+            updateSelectedCell(null);
         }
-    }, [filteredDataState.length, rowHeight, columnsState.current, selectedCell, updateSelectedCell]);
+    }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
 
     const totalHeight = filteredDataState.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
