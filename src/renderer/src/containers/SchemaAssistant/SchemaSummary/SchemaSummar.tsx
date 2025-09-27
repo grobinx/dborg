@@ -1,4 +1,4 @@
-import { Grid2, List, ListItem, ListItemText, ListProps, Stack, StackProps, styled, Typography, useThemeProps } from '@mui/material';
+import { Grid2 as Grid, List, ListItem, ListItemText, ListProps, Stack, StackProps, styled, Typography, useThemeProps } from '@mui/material';
 import React from 'react';
 import { SchemaParametersType } from '../SchemaParameters/SchemaTypes';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
@@ -76,8 +76,8 @@ const SchemaSummary: React.FC<SchemaSummaryOwnProps> = (props) => {
                 <DriverSummary driver={driver} />
             </SchemaSummaryDriver>
             <SchemaSummarySchema key="schema" {...slotProps?.schema}>
-                <Grid2 container>
-                    <Grid2 size="grow">
+                <Grid container>
+                    <Grid size="grow">
                         <List {...slotProps?.list}>
                             <ListItem key="schema-name">
                                 <ListItemText
@@ -115,8 +115,8 @@ const SchemaSummary: React.FC<SchemaSummaryOwnProps> = (props) => {
                                 </ListItem>
                             }
                         </List>
-                    </Grid2>
-                    <Grid2 size="grow">
+                    </Grid>
+                    <Grid size="grow">
                         <List {...slotProps?.list}>
                             {properties.map(property => (
                                 <ListItem key={property.name}>
@@ -127,8 +127,8 @@ const SchemaSummary: React.FC<SchemaSummaryOwnProps> = (props) => {
                                 </ListItem>
                             ))}
                         </List>
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             </SchemaSummarySchema>
         </SchemaSummaryRoot>
     );

@@ -1,4 +1,4 @@
-import { Grid2, Stack, useTheme } from "@mui/material";
+import { Grid2 as Grid, Stack, useTheme } from "@mui/material";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Size, Sizes } from "@renderer/types/sizes";
 import React from "react";
@@ -41,8 +41,8 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         Button, size: {size}
-                        <Grid2 container gap={4} padding={4}>
-                            <Grid2>
+                        <Grid container gap={4} padding={4}>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <Button
                                         color="primary"
@@ -52,9 +52,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         Save Changes
                                     </Button>
                                 ), [size])}
-                            </Grid2>
+                            </Grid>
 
-                            <Grid2>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <Button
                                         color="secondary"
@@ -64,9 +64,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         Save File
                                     </Button>
                                 ), [size])}
-                            </Grid2>
+                            </Grid>
 
-                            <Grid2>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <IconButton
                                         color="error"
@@ -77,9 +77,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         <theme.icons.Delete />
                                     </IconButton>
                                 ), [size])}
-                            </Grid2>
+                            </Grid>
 
-                            <Grid2>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <Button
                                         loading="![](Loading) Saving..."
@@ -91,9 +91,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         Save state
                                     </Button>
                                 ), [size])}
-                            </Grid2>
+                            </Grid>
 
-                            <Grid2>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <Button
                                         color="info"
@@ -112,9 +112,9 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         </div>
                                     </Button>
                                 ), [size])}
-                            </Grid2>
+                            </Grid>
 
-                            <Grid2>
+                            <Grid>
                                 {React.useMemo(() => (
                                     <Button
                                         color="success"
@@ -127,8 +127,8 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         {buttonValues[size] || 'Power'}
                                     </Button>
                                 ), [size, buttonValues[size]])}
-                            </Grid2>
-                        </Grid2>
+                            </Grid>
+                        </Grid>
                     </Stack>
                 ))}
             </Stack>
@@ -138,28 +138,28 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         ButtonGroup, size: {size}
-                        <Grid2 container gap={4} padding={4}>
+                        <Grid container gap={4} padding={4}>
 
                             {/* Horizontal ButtonGroup */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup orientation="horizontal" size={size} color="primary" sameSize exclusive value="left">
                                     <Button toggle="left">Left</Button>
                                     <Button toggle="center">Center</Button>
                                     <Button toggle="right">Right</Button>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
                             {/* ButtonGroup z ikonami */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup orientation="horizontal" size={size} color="secondary" sameSize>
                                     <IconButton><theme.icons.Search /></IconButton>
                                     <IconButton><theme.icons.Delete /></IconButton>
                                     <IconButton><theme.icons.Info /></IconButton>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
                             {/* ButtonGroup z values (toggle buttons) */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup orientation="horizontal" size={size} color="success" sameSize>
                                     <IconButton toggle='bold' onChange={(v) => console.log('Bold:', v)}>
                                         <strong>B</strong>
@@ -174,33 +174,33 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                         <s>S</s>
                                     </IconButton>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
                             {/* Vertical ButtonGroup */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup orientation="vertical" size={size}>
                                     <Button color="primary">Top</Button>
                                     <Button color="secondary">Middle</Button>
                                     <Button color="error">Bottom</Button>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
                             {/* Single button w ButtonGroup */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup size={size} color="info">
                                     <Button>Single Button</Button>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
                             {/* Disabled ButtonGroup */}
-                            <Grid2>
+                            <Grid>
                                 <ButtonGroup orientation="horizontal" size={size} color="error" disabled>
                                     <Button>Disabled</Button>
                                     <Button>Group</Button>
                                 </ButtonGroup>
-                            </Grid2>
+                            </Grid>
 
-                        </Grid2>
+                        </Grid>
                     </Stack>
                 ))}
             </Stack>
@@ -210,30 +210,30 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         ToolButton, size: {size}
-                        <Grid2 container gap={4} padding={4}>
-                            <Grid2>
+                        <Grid container gap={4} padding={4}>
+                            <Grid>
                                 <ToolButton size={size} color="primary" onClick={() => console.log('Primary ToolButton clicked')}>
                                     <theme.icons.MaximizeWindow />
                                 </ToolButton>
-                            </Grid2>
-                            <Grid2>
+                            </Grid>
+                            <Grid>
                                 <ToolButton size={size} color="secondary" onClick={() => console.log('Secondary ToolButton clicked')}>
                                     <theme.icons.MinimizeWindow />
                                 </ToolButton>
-                            </Grid2>
-                            <Grid2>
+                            </Grid>
+                            <Grid>
                                 <ToolButton size={size} color="error" onClick={() => console.log('Error ToolButton clicked')}>
                                     <theme.icons.CloseWindow />
                                 </ToolButton>
-                            </Grid2>
-                            <Grid2>
+                            </Grid>
+                            <Grid>
                                 <ButtonGroup orientation="horizontal" size={size} color="warning">
                                     <ToolButton><theme.icons.Warning /></ToolButton>
                                     <ToolButton><theme.icons.Error /></ToolButton>
                                     <ToolButton><theme.icons.Info /></ToolButton>
                                 </ButtonGroup>
-                            </Grid2>
-                        </Grid2>
+                            </Grid>
+                        </Grid>
                     </Stack>
                 ))}
             </Stack>

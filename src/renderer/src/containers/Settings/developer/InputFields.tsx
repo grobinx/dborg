@@ -1,5 +1,4 @@
-import { Chip, Grid2, MenuItem, Stack, useTheme } from "@mui/material";
-import { BaseButton } from "@renderer/components/buttons/BaseButton";
+import { Chip, MenuItem, Stack, useTheme } from "@mui/material";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
@@ -10,10 +9,7 @@ import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { Sizes } from "@renderer/types/sizes";
 import React from "react";
-import Logo from "../../../../../../resources/dborg.png";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
-import { Button } from "@renderer/components/buttons/Button";
-import { IconButton } from "@renderer/components/buttons/IconButton";
 import { PasswordField } from "@renderer/components/inputs/PasswordField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
 import { SelectField } from "@renderer/components/inputs/SelectField";

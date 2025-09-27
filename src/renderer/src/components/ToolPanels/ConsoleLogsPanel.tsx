@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { styled, useTheme, useThemeProps } from "@mui/material/styles";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
@@ -8,7 +8,6 @@ import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelC
 import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab, Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { List, RowComponentProps, useListRef } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer"; // Optional for dynamic sizing
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
 import * as Messages from '../../app/Messages';

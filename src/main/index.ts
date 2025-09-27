@@ -21,10 +21,11 @@ function createWindow(): BrowserWindow {
         ...(process.platform === 'linux' ? { logo } : {}),
         webPreferences: {
             preload: path.join(__dirname, '../preload/index.js'),
-            sandbox: false
+            sandbox: false,
+            backgroundThrottling: false,
         },
         icon: logo,
-        titleBarStyle: 'hidden'
+        titleBarStyle: 'hidden',
     })
 
     mainWindow.on('ready-to-show', () => {
@@ -43,6 +44,10 @@ function createWindow(): BrowserWindow {
     } else {
         mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
     }
+    
+    mainWindow.on('resize', debounce(() => {
+        mainWindow.webContents.send('window-resized', mainWindow.getBounds());
+    }, 100));
 
     return mainWindow
 }
@@ -106,3 +111,11 @@ app.on('window-all-closed', () => {
         app.quit()
     }
 })
+
+function debounce(fn: () => void, delay: number): () => void {
+    let timer: NodeJS.Timeout | null = null;
+    return () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(fn, delay);
+    };
+}

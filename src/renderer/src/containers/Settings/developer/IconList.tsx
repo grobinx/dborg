@@ -1,4 +1,4 @@
-import { Box, Grid2, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Grid2 as Grid, Paper, Stack, Typography, useTheme } from "@mui/material";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import { ThemeIcons } from "@renderer/themes/icons";
 
@@ -10,9 +10,9 @@ export const IconListContent: React.FC<TabPanelContentOwnProps> = (props) => {
         <TabPanelContent {...props}
             sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}
         >
-            <Grid2 container spacing={4}>
+            <Grid container spacing={4}>
                 {Object.entries(icons).map(([name, IconComponent]) => (
-                    <Grid2 size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={name}>
+                    <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={name}>
                         <Paper
                             sx={{
                                 display: "flex",
@@ -47,9 +47,9 @@ export const IconListContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                 {name}
                             </Typography>
                         </Paper>
-                    </Grid2>
+                    </Grid>
                 ))}
-            </Grid2>
+            </Grid>
         </TabPanelContent >
     );
 };

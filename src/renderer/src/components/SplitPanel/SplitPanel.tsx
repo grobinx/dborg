@@ -1,6 +1,7 @@
 import { styled, useThemeProps } from '@mui/material';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
+// Usuń export - użyj tylko wewnętrznie
 const StyledSplitPanelGroup = styled(PanelGroup, {
     name: "SplitPanel",
     slot: "group",
@@ -22,25 +23,26 @@ const StyledSplitter = styled(PanelResizeHandle, {
 })(({ /*theme*/ }) => ({
 }));
 
-interface SplitPanelGroupProps extends React.ComponentProps<typeof StyledSplitPanelGroup> {
+// Interfejsy bazujące na oryginalnych komponentach
+interface SplitPanelGroupProps extends React.ComponentProps<typeof PanelGroup> {
 }
 
 interface SplitPanelGroupOwnProps extends SplitPanelGroupProps {
 }
 
-interface SplitPanelProps extends React.ComponentProps<typeof StyledSplitPanel> {
+interface SplitPanelProps extends React.ComponentProps<typeof Panel> {
 }
 
 interface SplitPanelOwnProps extends SplitPanelProps {
 }
 
-interface SplitterProps extends React.ComponentProps<typeof StyledSplitter> {
+interface SplitterProps extends React.ComponentProps<typeof PanelResizeHandle> {
 }
 
 interface SplitterOwnProps extends SplitterProps {
 }
 
-// Komponenty React z obsługą propsów
+// Komponenty pozostają takie same
 export const SplitPanelGroup: React.FC<SplitPanelGroupOwnProps> = (props) => {
     const { className, children, ref, ...other } = useThemeProps({
         props,

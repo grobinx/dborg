@@ -1,7 +1,5 @@
-import { Paper, styled, SxProps, Theme, useThemeProps } from "@mui/material";
+import { styled, SxProps, Theme, useThemeProps } from "@mui/material";
 import React from "react";
-import { useTheme } from "@mui/material/styles";
-import { Grid2, Box, Typography } from "@mui/material";
 import { ThemeColor } from "@renderer/types/colors";
 
 export type IconWrapperSize = "small" | "medium" | "large";
@@ -15,7 +13,7 @@ export interface IconWrapperOwnProps extends IconWrapperProps {
     color?: ThemeColor;
 }
 
-export const IconWrapperRoot = styled('span', {
+const StyledIconWrapper = styled('span', {
     name: 'IconWrapper',
     slot: 'root',
     shouldForwardProp: (prop) => prop !== 'color',
@@ -29,8 +27,12 @@ export const IconWrapperRoot = styled('span', {
 }));
 
 export function IconWrapper(props: IconWrapperOwnProps): React.ReactElement<IconWrapperOwnProps> {
-    const { className, ...other } = useThemeProps({ name: 'IconWrapper', props });
-    return (<IconWrapperRoot {...other} className={(className ?? "") + " IconWrapper-root"}>{props.children}</IconWrapperRoot>);
+    const { className, color } = useThemeProps({ name: 'IconWrapper', props });
+    return (
+        <StyledIconWrapper color={color} className={(className ?? "") + " IconWrapper-root"}>
+            {props.children}
+        </StyledIconWrapper>
+    );
 }
 
 interface OverlayIconProps {

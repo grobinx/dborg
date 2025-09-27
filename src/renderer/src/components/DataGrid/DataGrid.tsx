@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect, useImperativeHandle, useMemo, useCallback } from "react"; // Dodaj import useMemo
-import { alpha, Box, darken, lighten, Stack, styled, useTheme } from "@mui/material";
+import React, { useRef, useState, useEffect, useImperativeHandle, useMemo } from "react"; // Dodaj import useMemo
+import { alpha, darken, lighten, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import * as actions from "./actions";
-import { columnDataTypeClassMap, ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { createDataGridCommands } from "./DataGridCommands";
