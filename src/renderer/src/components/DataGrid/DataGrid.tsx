@@ -767,10 +767,14 @@ export const DataGrid = <T extends object>({
             return prev; // no-op
         }
         const next = { row, column };
-        setSelectedCell(next);
-        if (containerRef.current) {
-            scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
-        }
+        requestAnimationFrame(() => {
+            setSelectedCell(next);
+            queueMicrotask(() => {
+                if (containerRef.current) {
+                    scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
+                }
+            });
+        });
         return next;
     }, [filteredDataState.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
