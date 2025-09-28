@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useImperativeHandle, useMemo } from "react"; // Dodaj import useMemo
+import React, { useRef, useState, useEffect, useImperativeHandle, useMemo, useLayoutEffect } from "react"; // Dodaj import useMemo
 import { alpha, darken, lighten, styled, useTheme } from "@mui/material";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import { ActionManager } from "../CommandPalette/ActionManager";
@@ -22,6 +22,7 @@ import { filterToString, isColumnFilter, useColumnFilterState } from "./useColum
 import Tooltip from "../Tooltip";
 import calculateTextWidth from "@renderer/utils/canvas";
 import clsx from "@renderer/utils/clsx";
+import { flushSync } from "react-dom";
 
 export type DataGridMode = "defined" | "data";
 
@@ -223,7 +224,7 @@ const StyledRow = styled("div", {
     left: 0,
     width: "100%",
     backgroundColor: theme.palette.background.table.container,
-    willChange: "transform, top",
+    willChange: "transform", // było: "transform, top"
     //transition: "background-color 0.2s ease", // Płynna zmiana koloru tła
     //backgroundColor: theme.palette.background.table.container,
     // "&.odd": {
@@ -253,13 +254,12 @@ const StyledCell = styled("div", {
     paddingY: number;
 }>(
     ({ theme, paddingX, paddingY }) => {
-
         return {
             overflow: "hidden",
             whiteSpace: "pre",
             textOverflow: "ellipsis",
             position: "absolute",
-            userSelect: "none", // Wyłączenie zaznaczania tekstu
+            userSelect: "none",
             boxSizing: "border-box",
             height: "100%",
             padding: `${paddingY}px ${paddingX}px`,
@@ -268,6 +268,7 @@ const StyledCell = styled("div", {
             alignItems: "center",
             zIndex: 1,
             color: "inherit",
+            willChange: "transform", // GPU-friendly dla translate3d
             '&.color-enabled': {
                 ...columnBaseTypes.reduce((acc, color) => {
                     acc[`&.data-type-${color}`] = {
@@ -550,6 +551,8 @@ export const DataGrid = <T extends object>({
     const [dataFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [userData, setUserData] = useState<Record<string, any>>({});
     const columnsRef = useRef<ColumnDefinition[]>(columns);
+    const [isScrolling, setIsScrolling] = useState(false);
+    const scrollStopTimer = useRef<number | null>(null);
 
     const fontFamily = mode === "data" ? dataFontFamily : definedFontFamily;
     const fontSize = Math.max(12, (rowHeight * 0.8 - cellPaddingY * 2));
@@ -588,7 +591,7 @@ export const DataGrid = <T extends object>({
             searchState.resetSearch();
             //filterColumns.clearFilters();
             //columnsState.resetHiddenColumns();
-            setSelectedCell({ row: 0, column: 0 });
+            updateSelectedCell({ row: 0, column: 0 });
         }
     }, [columns]);
 
@@ -666,10 +669,10 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         console.debug("DataGrid row correction");
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
-        if (selectedCell?.row !== undefined && selectedCell.row >= filteredDataState.length) {
-            updateSelectedCell(filteredDataState.length > 0 ? { row: filteredDataState.length - 1, column: selectedCell.column ?? 0 } : null);
+        if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= filteredDataState.length) {
+            updateSelectedCell(filteredDataState.length > 0 ? { row: filteredDataState.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
         }
-    }, [filteredDataState.length, selectedCell?.row]);
+    }, [filteredDataState.length]);
 
     const summaryRow = React.useMemo<Record<string, any>>(() => {
         if (!columnsState.anySummarized) return {};
@@ -769,19 +772,19 @@ export const DataGrid = <T extends object>({
             scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
         }
         return next;
-    }, [filteredDataState.length, columnsState.current.length]);
+    }, [filteredDataState.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
-    useEffect(() => {
-        console.debug("DataGrid set initial selected cell");
-        if (filteredDataState.length > 0) {
-            if (!selectedCellRef.current) {
-                updateSelectedCell({ row: 0, column: 0 });
-            }
-        } else if (selectedCellRef.current) {
-            updateSelectedCell(null);
-        }
-    }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
+    // useEffect(() => {
+    //     console.debug("DataGrid set initial selected cell");
+    //     if (filteredDataState.length > 0) {
+    //         if (!selectedCellRef.current) {
+    //             updateSelectedCell({ row: 0, column: 0 });
+    //         }
+    //     } else if (selectedCellRef.current) {
+    //         updateSelectedCell(null);
+    //     }
+    // }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
 
     const totalHeight = filteredDataState.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
@@ -981,9 +984,15 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         if (mode === "data" && adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
             console.debug("DataGrid adjust width to data");
-            actionManager.current.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
-            setAdjustWidthExecuted(false); // Resetuj flagę po wykonaniu akcji
+            let canceled = false;
+            requestAnimationFrame(() => {
+                if (canceled) return;
+                actionManager.current!.executeAction(actions.AdjustWidthToData_ID, dataGridActionContext);
+                setAdjustWidthExecuted(false);
+            });
+            return () => { canceled = true; };
         }
+        return;
     }, [adjustWidthExecuted, actionManager.current, filteredDataState.length, mode, startRow]);
 
     useEffect(() => {
@@ -1089,9 +1098,9 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    const handleCellClick = React.useCallback((rowIndex: number, columnIndex: number) => {
+    const handleCellClick = (rowIndex: number, columnIndex: number) => {
         updateSelectedCell({ row: rowIndex, column: columnIndex });
-    }, [updateSelectedCell]);
+    };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (loading) return; // Ignoruj zdarzenia klawiatury, gdy loading jest aktywne
@@ -1144,6 +1153,12 @@ export const DataGrid = <T extends object>({
         updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
     };
 
+    const onScroll = React.useCallback(() => {
+        if (!isScrolling) setIsScrolling(true);
+        if (scrollStopTimer.current) window.clearTimeout(scrollStopTimer.current);
+        scrollStopTimer.current = window.setTimeout(() => setIsScrolling(false), 80);
+    }, [isScrolling]);
+
     useEffect(() => {
         console.debug("DataGrid mouse move and up listeners");
         if (resizingColumn !== null) {
@@ -1155,6 +1170,15 @@ export const DataGrid = <T extends object>({
             window.removeEventListener("mouseup", handleMouseUp);
         };
     }, [resizingColumn]);
+
+    // Delegacja klików z kontenera wierszy
+    const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-r][data-c]');
+        if (!el) return;
+        const r = Number(el.dataset.r);
+        const c = Number(el.dataset.c);
+        updateSelectedCell({ row: r, column: c });
+    }, [updateSelectedCell]);
 
     const content = (
         <StyledTable
@@ -1219,6 +1243,7 @@ export const DataGrid = <T extends object>({
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
                 onFocus={handleFocus}
+                onScroll={onScroll}
                 style={{
                     marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
@@ -1239,7 +1264,7 @@ export const DataGrid = <T extends object>({
                 >
                     {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
                         <StyledHeaderCell
-                            key={colIndex}
+                            key={col.key}
                             className={clsx(
                                 "DataGrid-headerCell",
                                 classes,
@@ -1338,12 +1363,12 @@ export const DataGrid = <T extends object>({
                 <StyledRowsContainer
                     style={{ height: totalHeight, width: columnsState.totalWidth }}
                     className={clsx("DataGrid-rowsContainer", classes)}
+                    onMouseDown={onRowsContainerMouseDown} // delegacja
                 >
                     {filteredDataState.slice(overscanFrom, overscanTo).map((row, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const isRowSelected = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
-                        let left = columnsState.columnLeft(startColumn);
 
                         return (
                             <StyledRow
@@ -1356,7 +1381,7 @@ export const DataGrid = <T extends object>({
                                     mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
                                 )}
                                 style={{
-                                    top: absoluteRowIndex * rowHeight,
+                                    transform: `translate3d(0, ${absoluteRowIndex * rowHeight}px, 0)`, // zamiast top
                                     height: rowHeight,
                                 }}
                             >
@@ -1384,7 +1409,8 @@ export const DataGrid = <T extends object>({
                                             null_value,
                                             { maxLength: displayMaxLengh }
                                         );
-                                        if (typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
+                                        if (!isScrolling && typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
+                                            // pauzuj highlight podczas scrollu
                                             formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                         }
                                     } catch {
@@ -1392,9 +1418,12 @@ export const DataGrid = <T extends object>({
                                         styleDataType = "error";
                                     }
 
-                                    const result = (
+                                    const left = columnsState.columnLeft(absoluteColIndex);
+                                    return (
                                         <StyledCell
                                             key={col.key}
+                                            data-r={absoluteRowIndex} // potrzebne do delegacji
+                                            data-c={absoluteColIndex} // potrzebne do delegacji
                                             className={clsx(
                                                 "DataGrid-cell",
                                                 classes,
@@ -1407,19 +1436,15 @@ export const DataGrid = <T extends object>({
                                             )}
                                             style={{
                                                 width: col.width || 150,
-                                                left: left,
+                                                transform: `translate3d(${left}px, 0, 0)`, // zamiast left
                                             }}
-                                            onMouseDown={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
+                                            // onMouseDown={() => handleCellClick(absoluteRowIndex, absoluteColIndex)} // usunięte: delegacja
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                         >
                                             {formattedValue}
                                         </StyledCell>
                                     );
-
-                                    left += (col.width || 150);
-
-                                    return result;
                                 })}
                             </StyledRow>
                         );
@@ -1436,7 +1461,7 @@ export const DataGrid = <T extends object>({
 
                             return (
                                 <StyledFooterCell
-                                    key={colIndex}
+                                    key={col.key}
                                     className={clsx(
                                         'DataGrid-footerCell',
                                         classes,

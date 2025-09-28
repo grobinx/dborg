@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { produce } from "immer";
 import { ColumnDefinition, SummaryOperation } from "./DataGridTypes";
 import { DataGridMode } from "./DataGrid";
@@ -251,7 +251,7 @@ export const useColumnsState = (
     }, [displayColumns]);
 
     // Funkcja do sortowania kolumny
-    const sortColumn = (displayColumnIndex: number) => {
+    const sortColumn = React.useCallback((displayColumnIndex: number) => {
         setColumnsState((prevColumns) =>
             produce(prevColumns, (draft) => {
                 // Pobierz klucz kolumny z displayColumns
@@ -293,10 +293,10 @@ export const useColumnsState = (
                 });
             })
         );
-    };
+    }, []);
 
     // Funkcja do ukrywania/odkrywania kolumn
-    const toggleHidden = (columnKey: string) => {
+    const toggleHidden = React.useCallback((columnKey: string) => {
         setColumnsState(prevColumns => {
             return prevColumns.map(col => {
                 if (col.key === columnKey) {
@@ -305,23 +305,23 @@ export const useColumnsState = (
                 return col;
             });
         });
-    };
+    }, []);
 
-    const resetHiddenColumns = () => {
+    const resetHiddenColumns = React.useCallback(() => {
         setColumnsState(prevColumns => {
             return prevColumns.map(col => {
                 return { ...col, hidden: false };
             });
         });
-    };
+    }, []);
 
     // Funkcja do resetowania stanu kolumn
-    const resetColumns = () => {
+    const resetColumns = React.useCallback(() => {
         setColumnsState(initialColumns);
-    };
+    }, [initialColumns]);
 
     // Funkcja do przenoszenia kolumn
-    const moveColumn = (fromDisplayIndex: number, toDisplayIndex: number) => {
+    const moveColumn = React.useCallback((fromDisplayIndex: number, toDisplayIndex: number) => {
         setColumnsState(prevColumns =>
             produce(prevColumns, draft => {
                 // Pobierz klucze kolumn z displayColumns
@@ -343,10 +343,10 @@ export const useColumnsState = (
                 draft.splice(toIndex, 0, movedColumn);
             })
         );
-    };
+    }, []);
 
     // Funkcja do częściowej aktualizacji kolumny
-    const updateColumn = (displayIndex: number, updatedValues: Partial<ColumnDefinition>) => {
+    const updateColumn = React.useCallback((displayIndex: number, updatedValues: Partial<ColumnDefinition>) => {
         setColumnsState(prevColumns => 
             produce(prevColumns, draft => {
                 // Pobierz klucz kolumny z displayColumns
@@ -360,14 +360,14 @@ export const useColumnsState = (
                 }
             })
         );
-    };
+    }, [displayColumns]);
 
-    const saveColumnsLayout = () => {
+    const saveColumnsLayout = React.useCallback(() => {
         storeColumnsLayout(columnsState, layoutKey, mode === "data", onSave);
-    };
+    }, [columnsState, layoutKey, mode, onSave]);
 
     // Funkcja do resetowania sortowania
-    const resetSorting = () => {
+    const resetSorting = React.useCallback(() => {
         setColumnsState(prevColumns =>
             produce(prevColumns, draft => {
                 draft.forEach(column => {
@@ -376,15 +376,15 @@ export const useColumnsState = (
                 });
             })
         );
-    };
+    }, []);
 
-    const columnLeft = (displayColumnIndex: number): number => {
+    const columnLeft = React.useCallback((displayColumnIndex: number): number => {
         return displayColumns
             .slice(0, displayColumnIndex)
             .reduce((sum, col) => sum + (col.width || 150), 0);
-    };
+    }, [displayColumns]);
 
-    const setSummary = (columnKey: string, operation?: SummaryOperation) => {
+    const setSummary = React.useCallback((columnKey: string, operation?: SummaryOperation) => {
         setColumnsState(prevColumns =>
             produce(prevColumns, draft => {
                 const column = draft.find(col => col.key === columnKey);
@@ -393,9 +393,9 @@ export const useColumnsState = (
                 }
             })
         );
-    }
+    }, []);
 
-    const resetSummary = () => {
+    const resetSummary = React.useCallback(() => {
         setColumnsState(prevColumns =>
             produce(prevColumns, draft => {
                 draft.forEach(col => {
@@ -403,7 +403,7 @@ export const useColumnsState = (
                 });
             })
         );
-    };
+    }, []);
 
     return {
         current: displayColumns,

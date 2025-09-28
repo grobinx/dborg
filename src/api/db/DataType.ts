@@ -382,174 +382,218 @@ export interface ValueToStringOptions {
 
 const cache = new LRUCache<string, string>({ max: 10000 }); // Cache dla sformatowanych wartości
 
-export const valueToString = (value: any, dataType: ColumnDataType, options?: ValueToStringOptions): string => {
-    // Obsługa wartości null/undefined
-    if (value === null || value === undefined) {
-        return '';
-    }
+// Prostsza normalizacja opcji i generowanie klucza cache
+const DEFAULT_V2S_OPTIONS: Required<Pick<ValueToStringOptions, 'display' | 'thousandsSeparator'>> = {
+    display: true,
+    thousandsSeparator: true,
+};
 
-    options = Object.assign({ display: true, thousandsSeparator: true }, options);
+function makeCacheKey(value: any, dataType: ColumnDataType, baseType?: ColumnBaseType, opts?: ValueToStringOptions): string {
+    const dt = Array.isArray(dataType) ? dataType[0] : dataType;
+    const t = typeof value;
+    const canInline =
+        (t === 'string' && value.length < 200) ||
+        t === 'number' ||
+        t === 'boolean' ||
+        t === 'bigint';
+    // dla liczb uwzględnij separator tysięcy w kluczu cache
+    const sep = baseType === 'number' ? `|ts:${opts?.thousandsSeparator ? 1 : 0}` : '';
+    return (canInline ? String(value) : generateHash(value)) + '-' + dt + sep;
+}
+
+export const valueToString = (value: any, dataType: ColumnDataType, opts?: ValueToStringOptions): string => {
+    if (value === null || value === undefined) return '';
+
+    const options: ValueToStringOptions = { ...DEFAULT_V2S_OPTIONS, ...opts };
     const { maxLength, display } = options;
 
     if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
     }
 
-    dataType = Array.isArray(dataType) ? dataType[0] : dataType; // Obsługa tablicy typów
+    const resolvedType = Array.isArray(dataType) ? dataType[0] : dataType;
 
-    // Obsługa tablic
     if (Array.isArray(value)) {
-        const dt = Array.isArray(dataType) ? dataType[0] : dataType; // Typ elementów tablicy
-        const formattedArray: string[] = [];
-        let currentLength = 0;
+        const itemType: ColumnDataType = Array.isArray(resolvedType) ? resolvedType[0] : resolvedType;
+        const out: string[] = [];
+        let currentLen = 0;
 
         for (let i = 0; i < value.length; i++) {
-            const itemString = valueToString(value[i], dt, options);
-            currentLength += itemString.length + (i > 0 ? 2 : 0); // Dodaj długość elementu + separator (", ")
-
-            if (maxLength !== undefined && currentLength > maxLength && i > 0) {
-                formattedArray.push('...');
+            const s = valueToString(value[i], itemType, options);
+            const addLen = (i > 0 ? 2 : 0) + s.length;
+            if (maxLength !== undefined && i > 0 && currentLen + addLen > maxLength) {
+                out.push('...');
                 break;
             }
-
-            formattedArray.push(itemString);
+            out.push(s);
+            currentLen += addLen;
         }
-
-        return `[${formattedArray.join(', ')}]`;
+        return `[${out.join(', ')}]`;
     }
 
+    const baseType = toBaseType(resolvedType);
+
+    // Cache tylko dla trybu display
     let cacheKey: string | undefined;
     if (display) {
-        cacheKey = (typeof value === 'string' && value.length < 200) || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint'
-            ? `${value}-${dataType}`
-            : `${generateHash(value)}-${dataType}`;
-        const cachedValue = cache.get(cacheKey);
-        if (cachedValue) {
-            return cachedValue;
+        cacheKey = makeCacheKey(value, resolvedType, baseType, options);
+        const hit = cache.get(cacheKey);
+        if (hit) return hit;
+    }
+
+    let formatted: string;
+
+    switch (baseType) {
+        case 'string': {
+            const s = typeof value === 'string' ? value : String(value);
+            formatted = display ? s : `'${s}'`;
+            break;
+        }
+        case 'number': {
+            formatted = formatNumber(value, resolvedType, options);
+            break;
+        }
+        case 'boolean': {
+            formatted = formatBoolean(value, resolvedType, options);
+            break;
+        }
+        case 'datetime': {
+            const s = formatDateTime(value, resolvedType, options);
+            formatted = display ? s : `'${s}'`;
+            break;
+        }
+        case 'object': {
+            formatted = formatObject(value, resolvedType, options);
+            break;
+        }
+        case 'binary': {
+            formatted = formatBinary(value, resolvedType, options);
+            break;
+        }
+        default: {
+            formatted = String(value);
         }
     }
 
-    // Obsługa typów bazowych
-    const baseType = toBaseType(dataType);
-    let formattedValue: string;
-
-    switch (baseType) {
-        case 'string':
-            if (typeof value === 'string') {
-                formattedValue = display ? value : `'${value}'`;
-            } else {
-                formattedValue = display ? String(value) : `'${String(value)}'`;
-            }
-            break;
-
-        case 'number':
-            formattedValue = formatNumber(value, dataType, options);
-            break;
-
-        case 'boolean':
-            formattedValue = formatBoolean(value, dataType, options);
-            break;
-
-        case 'datetime':
-            formattedValue = display ? formatDateTime(value, dataType, options) : `'${formatDateTime(value, dataType, options)}'`;
-            break;
-
-        case 'object':
-            formattedValue = formatObject(value, dataType, options);
-            break;
-
-        case 'binary':
-            formattedValue = formatBinary(value, dataType, options);
-            break;
-
-        default:
-            formattedValue = String(value);
-    }
-
-    if (display && cacheKey) {
-        // Dodanie do cache
-        cache.set(cacheKey, formattedValue);
-    }
-
-    return formattedValue;
+    if (display && cacheKey) cache.set(cacheKey, formatted);
+    return formatted;
 };
 
+// Pomocnicze: normalizacja DateTime/Duration i bezpieczne JSON
+function normalizeDateTime(value: any): DateTime {
+    if (DateTime.isDateTime(value)) return value;
+    if (value instanceof Date) return DateTime.fromJSDate(value);
+    if (typeof value === 'number' || typeof value === 'bigint') return DateTime.fromMillis(Number(value));
+    if (typeof value === 'string') {
+        const iso = DateTime.fromISO(value, { setZone: true });
+        return iso.isValid ? iso : DateTime.fromSQL(value);
+    }
+    if (value && typeof value === 'object') return DateTime.fromObject(value);
+    return DateTime.invalid('Invalid');
+}
+
+function normalizeDuration(value: any): Duration {
+    if (Duration.isDuration(value)) return value;
+    if (typeof value === 'number' || typeof value === 'bigint') return Duration.fromMillis(Number(value));
+    if (typeof value === 'string') {
+        const iso = Duration.fromISO(value);
+        return iso.isValid ? iso : Duration.invalid('Invalid');
+    }
+    if (value && typeof value === 'object') return Duration.fromObject(value);
+    return Duration.invalid('Invalid');
+}
+
+function safeStringify(value: any): string {
+    try {
+        const seen = new WeakSet();
+        return JSON.stringify(value, (_k, v) => {
+            if (typeof v === 'object' && v !== null) {
+                if (seen.has(v)) return '[Circular]';
+                seen.add(v);
+            }
+            return v;
+        });
+    } catch {
+        return String(value);
+    }
+}
+
 // Funkcja pomocnicza do formatowania liczb
-const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringOptions): string => {
-    if (!options.display || !options.thousandsSeparator) {
-        return value.toString();
+const formatNumber = (value: any, _dataType: ColumnDataType, options: ValueToStringOptions): string => {
+    // szybkie ścieżki dla number/bigint
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        if (options.display && options.thousandsSeparator && Number.isInteger(value)) {
+            return formatIntWithThousandsSeparator(value);
+        }
+        return String(value);
     }
-    switch (dataType) {
-        case 'decimal':
-            return value instanceof Decimal
-                ? formatDecimalWithThousandsSeparator(value)
-                : formatDecimalWithThousandsSeparator(new Decimal(value));
-        case 'money':
-            return Number(value).toLocaleString(undefined, { style: 'currency' });
+    if (typeof value === 'bigint') {
+        const s = value.toString();
+        return options.display && options.thousandsSeparator ? formatIntWithThousandsSeparator(s) : s;
     }
-    return value.toString();
+    // ogólna ścieżka: Decimal
+    try {
+        const dec = value instanceof Decimal ? value : new Decimal(value);
+        if (!options.display || !options.thousandsSeparator) return dec.toString();
+        return formatDecimalWithThousandsSeparator(dec);
+    } catch {
+        return String(value);
+    }
 };
 
 // Funkcja pomocnicza do formatowania wartości boolean
 const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    if (typeof value === 'boolean') {
-        return value ? 'true' : 'false';
-    }
-    return String(value);
+    return value === true ? 'true' : value === false ? 'false' : String(value);
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
 const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    const dateTime = () => {
-        if (value instanceof Date) return DateTime.fromJSDate(value);
-        if (typeof value === 'number' || typeof value === 'bigint') return DateTime.fromMillis(Number(value));
-        if (typeof value === 'string') {
-            // Sprawdzenie, czy wartość jest w formacie ISO
-            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/.test(value)) {
-                return DateTime.fromISO(value);
-            }
-            return DateTime.fromSQL(value);
-        }
-        return DateTime.fromObject(value);
-    };
+    const t = Array.isArray(dataType) ? dataType[0] : dataType;
 
-    switch (dataType) {
+    if (t === 'duration') {
+        const dur = normalizeDuration(value);
+        if (!dur.isValid) return String(value);
+        // Zachowanie: krótszy format dla <24h, dłuższy dla >=24h
+        return dur.as('hours') >= 24
+            ? dur.toFormat("d:hh:mm:ss SSS") || ''
+            : dur.toFormat("hh:mm:ss SSS") || '';
+    }
+
+    const dt = normalizeDateTime(value);
+    if (!dt.isValid) return String(value);
+
+    switch (t) {
         case 'date':
-            return dateTime().toISODate() ?? '';
-
+            return dt.toISODate() || '';
         case 'time':
-            return dateTime().toFormat('HH:mm:ss') ?? '';
-
-        case 'duration':
-            const duration = typeof value === 'number' || typeof value === 'bigint'
-                ? Duration.fromMillis(Number(value))
-                : Duration.fromObject(value);
-
-            return duration.as('hours') >= 24
-                ? duration.toFormat("yyyy-MM-dd hh:mm:ss SSS") ?? ''
-                : duration.toFormat('hh:mm:ss SSS') ?? '';
-
+            return dt.toFormat('HH:mm:ss') || '';
         default:
-            return dateTime().toSQL() ?? '';
+            // domyślnie SQL-friendly
+            return dt.toSQL() || '';
     }
 };
 
 // Funkcja pomocnicza do formatowania obiektów
 const formatObject = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    if (dataType === 'json') {
-        return JSON.stringify(value);
-    }
-    if (dataType === 'xml' || dataType === 'enum' || dataType === 'geometry') {
-        return String(value);
-    }
-    return JSON.stringify(value);
+    const t = Array.isArray(dataType) ? dataType[0] : dataType;
+    if (t === 'xml' || t === 'enum' || t === 'geometry') return String(value);
+    // json i inne obiekty – bezpieczne stringify
+    return safeStringify(value);
 };
 
 // Funkcja pomocnicza do formatowania danych binarnych
 const formatBinary = (value: any, _dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    return value instanceof Blob ? URL.createObjectURL(value) : String(value);
+    // unikanie createObjectURL (wycieki). Zwracaj krótką informację tekstową.
+    if (typeof Blob !== 'undefined' && value instanceof Blob) {
+        return `Blob(${value.size}B)`;
+    }
+    if (typeof Buffer !== 'undefined' && typeof (value?.length) === 'number') {
+        return `Binary(${value.length}B)`;
+    }
+    return String(value);
 };
 
+// Lokalno-zależne separatory
 const sample = (1000000.1).toLocaleString();
 const match = sample.match(/1(.?)000(.?)000(.?)1/);
 const thousandSeparator = match ? match[1] : ",";
@@ -562,9 +606,14 @@ function formatDecimalWithThousandsSeparator(value: Decimal): string {
     return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
 }
 
+function formatIntWithThousandsSeparator(n: number | string | bigint): string {
+    const s = typeof n === 'string' ? n : n.toString();
+    return s.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+}
+
 // Funkcja pomocnicza do generowania haszy
 export const generateHash = (value: any): string => {
-    const stringifiedValue = typeof value === 'string' ? value : JSON.stringify(value);
+    const stringifiedValue = typeof value === 'string' ? value : safeStringify(value);
     return SparkMD5.hash(stringifiedValue);
 };
 
@@ -572,52 +621,50 @@ export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDa
     const baseType = toBaseType(dataType);
 
     switch (baseType) {
-        case 'string':
-            return (typeof value1 === "string" ? value1 : String(value1)).localeCompare(
-                typeof value2 === "string" ? value2 : String(value2)
-            );
-
-        case 'number':
+        case 'string': {
+            const a = typeof value1 === "string" ? value1 : String(value1);
+            const b = typeof value2 === "string" ? value2 : String(value2);
+            return a < b ? -1 : a > b ? 1 : 0;
+        }
+        case 'number': {
+            // szybka ścieżka gdy to zwykłe liczby
+            if (typeof value1 === 'number' && typeof value2 === 'number' && Number.isFinite(value1) && Number.isFinite(value2)) {
+                return value1 < value2 ? -1 : value1 > value2 ? 1 : 0;
+            }
             try {
                 const num1 = new Decimal(value1);
                 const num2 = new Decimal(value2);
                 return num1.lessThan(num2) ? -1 : num1.greaterThan(num2) ? 1 : 0;
-            } catch (e) {
+            } catch {
                 return 0;
             }
-
-        case 'boolean':
-            try {
-                const bool1 = Boolean(value1);
-                const bool2 = Boolean(value2);
-                return bool1 === bool2 ? 0 : bool1 ? 1 : -1;
-            } catch (e) {
-                return 0;
-            }
-
-        case 'datetime':
-            try {
-                const dateTime1 = value1 instanceof Date
-                    ? DateTime.fromJSDate(value1)
-                    : DateTime.fromISO(String(value1));
-                const dateTime2 = value2 instanceof Date
-                    ? DateTime.fromJSDate(value2)
-                    : DateTime.fromISO(String(value2));
-                return dateTime1.toMillis() < dateTime2.toMillis() ? -1 : dateTime1.toMillis() > dateTime2.toMillis() ? 1 : 0;
-            } catch (e) {
-                return 0;
-            }
-
-        case 'object':
-            const str1 = JSON.stringify(value1);
-            const str2 = JSON.stringify(value2);
-            return str1.localeCompare(str2);
-
-        case 'binary':
-            const bin1 = value1 instanceof Blob ? value1.size : String(value1).length;
-            const bin2 = value2 instanceof Blob ? value2.size : String(value2).length;
-            return bin1 < bin2 ? -1 : bin1 > bin2 ? 1 : 0;
-
+        }
+        case 'boolean': {
+            const a = value1 === true ? 1 : value1 ? 1 : 0;
+            const b = value2 === true ? 1 : value2 ? 1 : 0;
+            return a - b;
+        }
+        case 'datetime': {
+            const d1 = normalizeDateTime(value1);
+            const d2 = normalizeDateTime(value2);
+            const a = d1.isValid ? d1.toMillis() : Number.NaN;
+            const b = d2.isValid ? d2.toMillis() : Number.NaN;
+            if (Number.isNaN(a) || Number.isNaN(b)) return String(value1).localeCompare(String(value2));
+            return a < b ? -1 : a > b ? 1 : 0;
+        }
+        case 'object': {
+            const a = safeStringify(value1);
+            const b = safeStringify(value2);
+            return a < b ? -1 : a > b ? 1 : 0;
+        }
+        case 'binary': {
+            const len = (v: any) =>
+                (typeof Blob !== 'undefined' && v instanceof Blob) ? v.size :
+                (typeof Buffer !== 'undefined' && typeof v?.length === 'number') ? v.length :
+                String(v).length;
+            const a = len(value1), b = len(value2);
+            return a < b ? -1 : a > b ? 1 : 0;
+        }
         default:
             return String(value1).localeCompare(String(value2));
     }
