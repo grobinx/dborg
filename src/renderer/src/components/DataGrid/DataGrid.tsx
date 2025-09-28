@@ -472,7 +472,7 @@ export const DataGrid = <T extends object>({
     rowHeight: initialRowHeight = 20,
     mode = "defined",
     columnsResizable = true,
-    overscanRowCount = 5,
+    overscanRowCount = 2,
     columnRowNumber = false,
     onMount,
     onDismount,
@@ -561,7 +561,7 @@ export const DataGrid = <T extends object>({
     const classes = React.useMemo(() => {
         return clsx(
             `mode-${mode}`,
-            mode === "data" && colors_enabled && "color-enabled",
+            (mode === "defined" ? colors_enabled : true) && 'color-enabled',
         );
     }, [mode, colors_enabled]);
 
@@ -765,6 +765,9 @@ export const DataGrid = <T extends object>({
         }
         const next = { row, column };
         setSelectedCell(next);
+        if (containerRef.current) {
+            scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
+        }
         return next;
     }, [filteredDataState.length, columnsState.current.length]);
 
@@ -773,18 +776,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid set initial selected cell");
         if (filteredDataState.length > 0) {
             if (!selectedCellRef.current) {
-                const selected = updateSelectedCell({ row: 0, column: 0 });
-                if (containerRef.current && selected) {
-                    scrollToCell(
-                        containerRef.current,
-                        selected.row,
-                        selected.column,
-                        columnsState.columnLeft(selected.column),
-                        rowHeight,
-                        columnsState.current,
-                        columnsState.anySummarized
-                    );
-                }
+                updateSelectedCell({ row: 0, column: 0 });
             }
         } else if (selectedCellRef.current) {
             updateSelectedCell(null);
@@ -794,39 +786,8 @@ export const DataGrid = <T extends object>({
     const totalHeight = filteredDataState.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
-
-    // PO obliczeniu: totalHeight, startRow, endRow, startColumn, endColumn
-    const overscanFrom = useMemo(
-        () => Math.max(startRow - overscanRowCount, 0),
-        [startRow, overscanRowCount]
-    );
-    const overscanTo = useMemo(
-        () => Math.min(endRow + overscanRowCount, filteredDataState.length),
-        [endRow, overscanRowCount, filteredDataState.length]
-    );
-
-    // Widoczne wiersze z overscan – jeden slice zamiast kilku
-    const visibleRows = useMemo(
-        () => filteredDataState.slice(overscanFrom, overscanTo),
-        [filteredDataState, overscanFrom, overscanTo]
-    );
-
-    // Widoczne kolumny
-    const visibleColumns = useMemo(
-        () => columnsState.current.slice(startColumn, endColumn),
-        [columnsState.current, startColumn, endColumn]
-    );
-
-    // Prekomputacja lewych pozycji (opcjonalnie)
-    const visibleColumnLefts = useMemo(() => {
-        const arr: number[] = [];
-        let left = columnsState.columnLeft(startColumn);
-        for (const col of visibleColumns) {
-            arr.push(left);
-            left += col.width || 150;
-        }
-        return arr;
-    }, [visibleColumns, startColumn, columnsState]);
+    const overscanFrom = Math.max(startRow - overscanRowCount, 0);
+    const overscanTo = Math.min(endRow + overscanRowCount, filteredDataState.length);
 
     useEffect(() => {
         console.debug("DataGrid row click");
@@ -868,10 +829,7 @@ export const DataGrid = <T extends object>({
         },
         getPosition: () => selectedCell,
         setPosition: ({ row, column }) => {
-            const position = updateSelectedCell({ row, column });
-            if (containerRef.current && position) {
-                scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, columnsState.anySummarized);
-            }
+            updateSelectedCell({ row, column });
         },
         getRowHeight: () => rowHeight,
         setRowHeight: (height) => {
@@ -1131,13 +1089,9 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    const handleCellClick = (rowIndex: number, columnIndex: number) => {
-        const position = updateSelectedCell({ row: rowIndex, column: columnIndex });
-
-        if (containerRef.current && position) {
-            scrollToCell(containerRef.current, position.row, position.column, columnsState.columnLeft(position.column), rowHeight, columnsState.current, columnsState.anySummarized);
-        }
-    };
+    const handleCellClick = React.useCallback((rowIndex: number, columnIndex: number) => {
+        updateSelectedCell({ row: rowIndex, column: columnIndex });
+    }, [updateSelectedCell]);
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (loading) return; // Ignoruj zdarzenia klawiatury, gdy loading jest aktywne
@@ -1188,15 +1142,6 @@ export const DataGrid = <T extends object>({
 
         toggleRowSelection(absoluteRowIndex, event.ctrlKey, event.shiftKey);
         updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
-        scrollToCell(
-            containerRef.current!,
-            absoluteRowIndex,
-            0,
-            columnsState.columnLeft(0),
-            rowHeight,
-            columnsState.current,
-            columnsState.anySummarized
-        );
     };
 
     useEffect(() => {
@@ -1237,14 +1182,14 @@ export const DataGrid = <T extends object>({
                             top: rowHeight + -scrollTop,
                         }}
                     >
-                        {visibleRows.map((_, localIndex) => {
+                        {filteredDataState.slice(overscanFrom, overscanTo).map((_, localIndex) => {
                             const absoluteRowIndex = overscanFrom + localIndex;
                             return (
                                 <StyledRowNumberCell
                                     key={absoluteRowIndex}
                                     className={clsx(
                                         `DataGrid-rowNumberCell`,
-                                        { selected: selectedRows.includes(absoluteRowIndex) },
+                                        selectedRows.includes(absoluteRowIndex) && 'selected',
                                         classes
                                     )}
                                     rowHeight={rowHeight}
@@ -1292,13 +1237,13 @@ export const DataGrid = <T extends object>({
                     className={clsx("DataGrid-header", classes)}
                     style={{ width: columnsState.totalWidth, height: rowHeight }}
                 >
-                    {visibleColumns.map((col, colIndex) => (
+                    {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
                         <StyledHeaderCell
                             key={colIndex}
                             className={clsx(
                                 "DataGrid-headerCell",
                                 classes,
-                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                             )}
                             style={{
                                 width: col.width || 150,
@@ -1317,7 +1262,7 @@ export const DataGrid = <T extends object>({
                                 className={clsx(
                                     "DataGrid-headerCellContent",
                                     classes,
-                                    { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                    mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                                 )}
                             >
                                 <StyledLabel>
@@ -1394,10 +1339,11 @@ export const DataGrid = <T extends object>({
                     style={{ height: totalHeight, width: columnsState.totalWidth }}
                     className={clsx("DataGrid-rowsContainer", classes)}
                 >
-                    {visibleRows.map((row, localRowIndex) => {
+                    {filteredDataState.slice(overscanFrom, overscanTo).map((row, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const isRowSelected = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
+                        let left = columnsState.columnLeft(startColumn);
 
                         return (
                             <StyledRow
@@ -1407,14 +1353,14 @@ export const DataGrid = <T extends object>({
                                     classes,
                                     rowClass,
                                     selectedRows.includes(absoluteRowIndex) && "selected",
-                                    { 'active-row': mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row }
+                                    mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
                                 )}
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
                                 }}
                             >
-                                {visibleColumns.map((col, vcIndex) => {
+                                {columnsState.current.slice(startColumn, endColumn).map((col, vcIndex) => {
                                     const absoluteColIndex = startColumn + vcIndex;
                                     const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
                                     const columnDataType = (col.summary && groupingColumns.columns.length
@@ -1446,7 +1392,7 @@ export const DataGrid = <T extends object>({
                                         styleDataType = "error";
                                     }
 
-                                    return (
+                                    const result = (
                                         <StyledCell
                                             key={col.key}
                                             className={clsx(
@@ -1455,24 +1401,25 @@ export const DataGrid = <T extends object>({
                                                 isCellSelected && "selected",
                                                 isCellSelected && isFocused && "focused",
                                                 `data-type-${styleDataType}`,
-                                                (mode === "defined" ? colors_enabled : true) && 'color-enabled',
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                {
-                                                    'active-column': mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column,
-                                                    'active-row': mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row
-                                                },
+                                                mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                                mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
                                             )}
                                             style={{
                                                 width: col.width || 150,
-                                                left: visibleColumnLefts[vcIndex],
+                                                left: left,
                                             }}
-                                            onClick={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
+                                            onMouseDown={() => handleCellClick(absoluteRowIndex, absoluteColIndex)}
                                             paddingX={cellPaddingX}
                                             paddingY={cellPaddingY}
                                         >
                                             {formattedValue}
                                         </StyledCell>
                                     );
+
+                                    left += (col.width || 150);
+
+                                    return result;
                                 })}
                             </StyledRow>
                         );
@@ -1483,7 +1430,7 @@ export const DataGrid = <T extends object>({
                         style={{ width: columnsState.totalWidth, height: (rowHeight * footerCaptionHeightFactor) + rowHeight }}
                         className={clsx("DataGrid-footer", classes)}
                     >
-                        {visibleColumns.map((col, colIndex) => {
+                        {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
                             const absoluteColIndex = startColumn + colIndex;
                             let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
 
@@ -1495,7 +1442,7 @@ export const DataGrid = <T extends object>({
                                         classes,
                                         `data-type-${styleDataType}`,
                                         styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                        { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                        mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                                     )}
                                     style={{
                                         width: col.width || 150,
@@ -1516,7 +1463,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             <StyledLabel>
@@ -1543,7 +1490,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                { 'active-column': mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column }
+                                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
