@@ -1376,7 +1376,7 @@ export const DataGrid = <T extends object>({
 
                         return (
                             <StyledRow
-                                key={absoluteRowIndex}
+                                key={localRowIndex}
                                 className={clsx(
                                     'DataGrid-row',
                                     classes,
@@ -1425,7 +1425,7 @@ export const DataGrid = <T extends object>({
                                     const left = columnsState.columnLeft(absoluteColIndex);
                                     return (
                                         <StyledCell
-                                            key={col.key}
+                                            key={vcIndex}
                                             data-r={absoluteRowIndex} // potrzebne do delegacji
                                             data-c={absoluteColIndex} // potrzebne do delegacji
                                             className={clsx(
