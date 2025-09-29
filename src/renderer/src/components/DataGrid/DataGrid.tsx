@@ -748,23 +748,23 @@ export const DataGrid = <T extends object>({
         columnsState.anySummarized
     ]);
 
-    const updateSelectedCell = React.useCallback((cell: TableCellPosition | null): TableCellPosition | null => {
+    const updateSelectedCell = React.useCallback((cell: TableCellPosition | null) => {
         console.debug("DataGrid update selected cell", cell);
         if (!cell) {
             if (selectedCellRef.current !== null) setSelectedCell(null);
-            return null;
+            return;
         }
         const maxRow = filteredDataState.length - 1;
         const maxCol = columnsState.current.length - 1;
         if (maxRow < 0 || maxCol < 0) {
             if (selectedCellRef.current !== null) setSelectedCell(null);
-            return null;
+            return;
         }
         const row = Math.max(0, Math.min(cell.row, maxRow));
         const column = Math.max(0, Math.min(cell.column, maxCol));
         const prev = selectedCellRef.current;
         if (prev && prev.row === row && prev.column === column) {
-            return prev; // no-op
+            return; // no-op
         }
         const next = { row, column };
         requestAnimationFrame(() => {
@@ -775,7 +775,6 @@ export const DataGrid = <T extends object>({
                 }
             });
         });
-        return next;
     }, [filteredDataState.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
