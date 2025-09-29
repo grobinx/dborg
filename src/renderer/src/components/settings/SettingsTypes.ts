@@ -174,7 +174,7 @@ export interface SettingTypeBase {
      * Return value can be a string or a React node for more complex content.
      * String will be rendered as markdown.
      */
-    effect?: () => FormattedContent;
+    effect?: (value: any) => FormattedContent;
     /**
      * A function that is called when the value of the setting changes.
      * This can be used to perform additional actions when the setting value changes and store.

@@ -1080,12 +1080,6 @@ export const DataGrid = <T extends object>({
         };
     }, []);
 
-    const handleFocus = () => {
-        if (!selectedCell && filteredDataState.length > 0) {
-            updateSelectedCell({ row: 0, column: 0 });
-        }
-    };
-
     const handleRowNumberColumnScroll = (event: React.WheelEvent) => {
         if (containerRef.current) {
             const container = containerRef.current;
@@ -1177,11 +1171,24 @@ export const DataGrid = <T extends object>({
     // Delegacja klików z kontenera wierszy
     const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-r][data-c]');
-        if (!el) return;
+        if (!el) {
+            if (!selectedCell && filteredDataState.length > 0) {
+                updateSelectedCell({ row: 0, column: 0 });
+            }
+            return;
+        }
         const r = Number(el.dataset.r);
         const c = Number(el.dataset.c);
         updateSelectedCell({ row: r, column: c });
     }, [updateSelectedCell]);
+
+    function focusHandler(): void {
+        setTimeout(() => {
+            if (!selectedCellRef.current && filteredDataState.length > 0) {
+                updateSelectedCell({ row: 0, column: 0 });
+            }
+        }, 10);
+    }
 
     const content = (
         <StyledTable
@@ -1245,8 +1252,8 @@ export const DataGrid = <T extends object>({
                 className={clsx("DataGrid-tableContainer", classes)}
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
                 onScroll={onScroll}
+                onFocus={focusHandler}
                 style={{
                     marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne

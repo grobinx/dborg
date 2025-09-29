@@ -23,7 +23,7 @@ const StyledFormattedTextParagraph = styled('span', {
     alignItems: "center",
 }));
 
-export interface FormattedTextProps extends React.ComponentProps<typeof StyledFormattedTextParagraph> {
+export interface FormattedTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     children?: ReactNode;
 }
 

@@ -1,16 +1,17 @@
-import { Alert, darken, Divider, lighten, Menu, MenuItem, Popper, styled, SxProps, Tooltip, useTheme } from "@mui/material";
+import { Alert, alpha, darken, Divider, lighten, Menu, MenuItem, Popper, styled, SxProps, Tooltip, useTheme } from "@mui/material";
 import React from "react";
 import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import { SettingTypeUnion } from "@renderer/components/settings/SettingsTypes";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useTranslation } from "react-i18next";
-import { getSetting, getSettingDefault } from "@renderer/contexts/SettingsContext";
+import { getSetting, getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import { calculateWidth, disabledControl } from "@renderer/components/settings/SettingInputControl";
 import { BaseInputProps } from "../inputs/base/BaseInputProps";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { InputDecoratorContext, InputDecoratorContextType } from "../inputs/decorators/InputDecoratorContext";
 import clsx from "@renderer/utils/clsx";
 import { themeColors } from "@renderer/types/colors";
+import { borderRadius } from "@renderer/themes/layouts/default/consts";
 
 export interface SettingDecoratorProps {
     children?: React.ReactElement<BaseInputProps>;
@@ -71,8 +72,14 @@ const StyledSettingDecorator = styled('div', {
     flexDirection: "row",
     width: "100%",
     margin: props.theme.spacing(1),
-    gap: 4,
+    gap: 8,
     padding: 8,
+    ...themeColors.reduce((acc, color) => {
+        acc[`&.color-${color}`] = {
+            backgroundColor: alpha(props.theme.palette[color].main, 0.03),
+        };
+        return acc;
+    }, {}),
     '&.hover': {
         backgroundColor: props.theme.palette.action.hover,
     },
@@ -91,10 +98,16 @@ const StyledSettingDecorator = styled('div', {
 const StyledSettingDecoratorIndicator = styled('div', {
     name: "SettingDecorator",
     slot: "indicator",
-})(() => ({
+})(({ theme }) => ({
     display: "flex",
     minWidth: 4,
-    cursor: "pointer",
+    borderRadius: borderRadius,
+    '&.changed': {
+        backgroundColor: alpha(theme.palette.warning.main, 0.3),
+    },
+    '&.default': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.3),
+    },
 }));
 
 const StyledSettingDecoratorMenu = styled('div', {
@@ -313,6 +326,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
     const isMenuOpen = Boolean(menuAnchorEl);
     const [previousValue] = React.useState<any>(value);
     const defaultValue = getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue] = useSetting(setting.storageGroup, setting.key, setting.defaultValue);
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
@@ -343,14 +357,14 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                 required: children.props.required ?? setting.required ?? false,
                 disabled: children.props.disabled ?? disabledControl(setting),
                 size: children.props.size ?? "medium",
-                color: children.props.color ?? "primary",
+                color: children.props.color ?? "main",
             };
         }
         return {
             required: setting.required ?? false,
             disabled: disabledControl(setting),
             size: "medium",
-            color: "primary",
+            color: "main",
         };
     }, [children, setting]);
 
@@ -386,13 +400,13 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
 
     // Effect content
     React.useEffect(() => {
-        const effect = setting.effect?.();
+        const effect = setting.effect?.(settingValue);
         if (effect) {
             setEffectContent(<FormattedText text={effect} />);
         } else {
             setEffectContent(undefined);
         }
-    }, [value, setting]);
+    }, [settingValue]);
 
     const classes = clsx(
         `size-${size}`,
@@ -581,9 +595,6 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                             classes,
                         )}
                         ref={visibleInputRef}
-                        style={{
-                            width: calculateWidth(setting),
-                        }}
                     >
                         {clonedChildren}
 
@@ -601,6 +612,8 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                                 ))}
                             </StyledSettingDecoratorRestrictions>
                         )}
+
+                        <StyledSettingDecoratorGrow />
                     </StyledSettingDecoratorInput>
 
                     {effectContent && (

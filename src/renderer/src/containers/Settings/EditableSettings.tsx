@@ -12,6 +12,7 @@ import { SelectSetting } from "@renderer/components/settings/inputs/SelectSettin
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import { SettingDecorator } from "@renderer/components/settings/SettingDecorator";
+import { SettingItem } from "@renderer/components/settings/SettingsForm";
 import { escape } from "@renderer/components/useful/FormattedText";
 import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
@@ -75,7 +76,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
             </StyledEditableSettingsTitle>
             <StyledEditableSettingsContent>
                 <StyledEditableSettingsList>
-                    <NumberSetting
+                    <SettingItem
+                        key="toast.max"
                         setting={{
                             type: "number",
                             storageGroup: "app",
@@ -87,7 +89,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             max: 10,
                         }}
                     />
-                    <NumberSetting
+                    <SettingItem
+                        key="fontSize"
                         setting={{
                             type: "number",
                             storageGroup: "ui",
@@ -100,7 +103,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["font", "size", "ui"],
                         }}
                     />
-                    <StringSetting
+                    <SettingItem
+                        key="fontFamily"
                         setting={{
                             type: "string",
                             storageGroup: "ui",
@@ -111,22 +115,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["font", "ui"],
                         }}
                     />
-                    <SettingDecorator
-                        setting={{
-                            type: "string",
-                            storageGroup: "ui",
-                            key: "monospaceFontFamily",
-                            category: "UI",
-                            label: "Base Monospace Font Family",
-                            description: "Select the base monospace font family for the application",
-                            tags: ["font", "ui"],
-                        }}
-                    >
-                        <TextField
-                            color="success"
-                        />
-                    </SettingDecorator>
-                    <StringSetting
+                    <SettingItem
+                        key="monospaceFontFamily"
                         setting={{
                             type: "string",
                             storageGroup: "ui",
@@ -137,7 +127,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["font", "ui"],
                         }}
                     />
-                    <StringSetting
+                    <SettingItem
+                        key="theme"
                         setting={{
                             type: "string",
                             storageGroup: "ui",
@@ -148,7 +139,8 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             tags: ["theme", "ui"],
                         }}
                     />
-                    <SettingDecorator
+                    <SettingItem
+                        key="some-setting"
                         setting={{
                             type: "string",
                             storageGroup: "test",
@@ -161,15 +153,10 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             advanced: true,
                             maxLength: 180,
                             //minLength: 3,
-                            effect: () => `Jakiś efekt wartości: **${escape(getSetting("test", "some-setting"))}**`,
+                            effect: (value) => `Jakiś efekt wartości: **${escape(value)}**`,
                             tags: ["example", "editable"],
                         }}
-                    >
-                        <TextField
-                            color="main"
-                            maxLength={180}
-                        />
-                    </SettingDecorator>
+                    />
                     <TextSetting
                         setting={{
                             type: "text",
