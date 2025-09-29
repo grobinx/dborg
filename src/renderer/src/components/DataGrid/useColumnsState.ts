@@ -293,7 +293,7 @@ export const useColumnsState = (
                 });
             })
         );
-    }, []);
+    }, [displayColumns]);
 
     // Funkcja do ukrywania/odkrywania kolumn
     const toggleHidden = React.useCallback((columnKey: string) => {
@@ -343,7 +343,7 @@ export const useColumnsState = (
                 draft.splice(toIndex, 0, movedColumn);
             })
         );
-    }, []);
+    }, [displayColumns]);
 
     // Funkcja do częściowej aktualizacji kolumny
     const updateColumn = React.useCallback((displayIndex: number, updatedValues: Partial<ColumnDefinition>) => {
