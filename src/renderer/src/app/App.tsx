@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import FocusContainerHandler from '@renderer/components/useful/FocusContainerHandler';
+import AppContainers from './AppContainers';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -73,7 +74,6 @@ const App: React.FC = () => {
     });
     const [middleHeight, setMiddleHeight] = React.useState(height - 60);
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
-    const { containers, selectedContainer, selectedView } = useContainers();
     const { emit, subscribe, unsubscribe } = useMessages();
     const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
 
@@ -127,6 +127,7 @@ const App: React.FC = () => {
         };
     }, []);
 
+    const middleHeightRef = React.useRef(0);
     // Adjust middle height based on window and sidebar dimensions
     React.useEffect(() => {
         const calculateMiddleHeight = () => {
@@ -138,7 +139,10 @@ const App: React.FC = () => {
                 middleHeight -= sideBarRef.current.offsetHeight;
             }
 
-            setMiddleHeight(middleHeight);
+            if (middleHeightRef.current !== middleHeight) {
+                middleHeightRef.current = middleHeight;
+                setMiddleHeight(middleHeight);
+            }
         };
 
         calculateMiddleHeight();
@@ -164,32 +168,8 @@ const App: React.FC = () => {
             <Stack key="stack-direction" direction={stackDirection}>
                 <SideBar key="side-bar" placement={placement} ref={sideBarRef} />
                 <SplitPanelGroup key="split-group" direction="vertical" style={{ height: middleHeight }} autoSaveId="tools-panel">
-                    <SplitPanel key="split-main-panel">
-                        {containers?.map((container) => {
-                            if (["new-connection", "connection-list", "connections"].includes(container.type)) {
-                                return (
-                                    <Container key={container.type} hidden={container !== selectedContainer}>
-                                        {container.container !== undefined && <container.container key={container.id} />}
-                                    </Container>
-                                );
-                            }
-                            if (container !== selectedContainer) {
-                                return null; // Skip rendering if the container is not selected
-                            }
-                            return (
-                                <Container key={container.type}>
-                                    {container.container !== undefined &&
-                                        <container.container key={container.id} >
-                                            {
-                                                selectedView?.type === "rendered" &&
-                                                selectedView?.render &&
-                                                <selectedView.render key={selectedView.id} />
-                                            }
-                                        </container.container>
-                                    }
-                                </Container>
-                            );
-                        })}
+                    <SplitPanel key="split-app-containers">
+                        <AppContainers />
                     </SplitPanel>
                     <Splitter key="splitter" hidden={!toolsTabsPanelVisible} />
                     <SplitPanel key="split-tools-panel" defaultSize={20} hidden={!toolsTabsPanelVisible}>

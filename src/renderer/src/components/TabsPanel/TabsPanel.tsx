@@ -45,13 +45,7 @@ const StyledTabsContent = styled(Box, {
     flex: 1,
 }));
 
-export interface TabsPanelProps extends React.ComponentProps<typeof StyledTabsPanel> {
-    slotProps?: {
-        header?: React.ComponentProps<typeof StyledTabsHeader>;
-        content?: React.ComponentProps<typeof StyledTabsContent>;
-        tabs?: React.ComponentProps<typeof Tabs>;
-        tab?: React.ComponentProps<typeof Tab>;
-    };
+export interface TabsPanelProps extends React.ComponentProps<typeof Stack> {
 }
 
 interface TabsPanelOwnProps extends TabsPanelProps {
@@ -62,7 +56,7 @@ interface TabsPanelOwnProps extends TabsPanelProps {
 
 export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const {
-        children, buttons, slotProps, className, tabPosition = "top", 
+        children, buttons, className, tabPosition = "top",
         onMove, ...other
     } = useThemeProps({ name: "TabsPanel", props: props });
     const { queueMessage, subscribe, unsubscribe } = useMessages();
@@ -180,11 +174,14 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         };
     }, [tabs]);
 
+    const headerHeightRef = React.useRef(0);
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
             if (headerRef.current) {
                 const headerHeight = headerRef.current.offsetHeight;
-                setContentHeight(`calc(100% - ${headerHeight}px)`);
+                if (headerHeightRef.current !== headerHeight) {
+                    setContentHeight(`calc(100% - ${headerHeight}px)`);
+                }
             }
         });
 
@@ -238,7 +235,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             ref={headerRef}
             className={`TabsPanel-header ${tabPosition === "top" ? "position-top" : "position-bottom"}`}
             sx={{ zIndex: 3 }}
-            {...slotProps?.header}
         >
             <AppBar position="static" sx={{ flexDirection: "row" }}>
                 {buttons}
@@ -299,7 +295,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             <StyledTabsContent
                 className="TabsPanel-content"
                 style={{ height: contentHeight }}
-                {...slotProps?.content}
             >
                 {tabs.map((tab, index) => (
                     <Box

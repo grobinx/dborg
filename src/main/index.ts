@@ -21,7 +21,7 @@ function createWindow(): BrowserWindow {
         webPreferences: {
             preload: path.join(__dirname, '../preload/index.js'),
             sandbox: false,
-            //backgroundThrottling: false,
+            backgroundThrottling: false,
         },
         icon: logo,
         titleBarStyle: 'hidden',
@@ -44,9 +44,9 @@ function createWindow(): BrowserWindow {
         mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
     }
     
-    mainWindow.on('resize', debounce(() => {
-        mainWindow.webContents.send('window-resized', mainWindow.getBounds());
-    }, 40));
+    // mainWindow.on('resize', debounce(() => {
+    //     mainWindow.webContents.send('window-resized', mainWindow.getBounds());
+    // }, 40));
 
     return mainWindow
 }
