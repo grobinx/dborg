@@ -769,7 +769,7 @@ export const DataGrid = <T extends object>({
         const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
-            queueMicrotask(() => {
+            requestAnimationFrame(() => {
                 if (containerRef.current) {
                     scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
                 }
