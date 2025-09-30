@@ -102,8 +102,8 @@ interface DataGridProps<T extends object> {
 const StyledTable = styled('div', {
     name: "DataGrid",
     slot: "root",
-})<{ }>(
-    ({  }) => ({
+})<{}>(
+    ({ }) => ({
         position: "relative",
         display: "flex",
         height: "100%",
@@ -242,61 +242,63 @@ const StyledRow = styled("div", {
 const StyledCell = styled("div", {
     name: "DataGrid",
     slot: "cell",
-})<{}>(({ theme }) => ({
-    overflow: "hidden",
-    whiteSpace: "pre",
-    textOverflow: "ellipsis",
-    position: "absolute",
-    userSelect: "none",
-    boxSizing: "border-box",
-    height: "100%",
-    padding: 'var(--dg-cell-py) var(--dg-cell-px)',
-    lineHeight: "1rem",
-    alignContent: "center",
-    alignItems: "center",
-    zIndex: 1,
-    color: "inherit",
-    willChange: "transform", // GPU-friendly dla translate3d
-    '&.color-enabled': {
-        ...columnBaseTypes.reduce((acc, color) => {
-            acc[`&.data-type-${color}`] = {
-                color: theme.palette?.dataType?.[color],
-            };
-            return acc;
-        }, {}),
-        '&.data-type-null': {
-            color: theme.palette?.dataType?.["null"],
+})<{}>(
+    ({ theme }) => ({
+        overflow: "hidden",
+        whiteSpace: "pre",
+        textOverflow: "ellipsis",
+        position: "absolute",
+        userSelect: "none",
+        boxSizing: "border-box",
+        height: "100%",
+        padding: 'var(--dg-cell-py) var(--dg-cell-px)',
+        lineHeight: "1rem",
+        alignContent: "center",
+        alignItems: "center",
+        zIndex: 1,
+        color: "inherit",
+        willChange: "transform", // GPU-friendly dla translate3d
+        '&.color-enabled': {
+            ...columnBaseTypes.reduce((acc, color) => {
+                acc[`&.data-type-${color}`] = {
+                    color: theme.palette?.dataType?.[color],
+                };
+                return acc;
+            }, {}),
+            '&.data-type-null': {
+                color: theme.palette?.dataType?.["null"],
+            },
         },
-    },
-    "&.align-start": {
-        textAlign: "left",
-    },
-    "&.align-end": {
-        textAlign: "right",
-    },
-    "&.align-center": {
-        textAlign: "center",
-    },
-    "&.focused": {
-        outline: `2px solid ${theme.palette.primary.main}`,
-        outlineOffset: -2,
-    },
-    "&:not(:first-of-type)": {
-        borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
-    },
-    "&:hover": {
-        backgroundColor: theme.palette.action.hover, // Efekt hover
-    },
-    '&.active-column': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.05),
-    },
-    '&.active-row': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-    },
-    "&.selected": {
-        backgroundColor: alpha(theme.palette.primary.main, 0.2),
-    },
-})
+        "&.align-start": {
+            textAlign: "left",
+        },
+        "&.align-end": {
+            textAlign: "right",
+        },
+        "&.align-center": {
+            textAlign: "center",
+        },
+        "&:not(:first-of-type)": {
+            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        },
+        "&:hover": {
+            backgroundColor: theme.palette.action.hover, // Efekt hover
+        },
+        '&.active-column': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+        },
+        '&.active-row': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        },
+        "&.active-cell": {
+            outline: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            outlineOffset: -2,
+        },
+        "&.focused": {
+            outline: `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: -2,
+        },
+    })
 );
 
 const StyledFooter = styled('div', {
@@ -392,7 +394,6 @@ const StyledRowNumberColumn = styled('div', {
     height: "100%",
     borderRight: "1px solid #ddd", // Dodanie prawego obramowania
     boxSizing: "border-box",
-    //fontSize: "0.9em",
     textAlign: "center",
     userSelect: "none",
     backgroundColor: theme.palette.background.table.container,
@@ -402,13 +403,13 @@ const StyledRowNumberColumn = styled('div', {
 const StyledRowNumberCell = styled('div', {
     name: "DataGrid",
     slot: "rowNumberCell",
-})<{ }>(({ theme }) => ({
+})<{}>(({ theme }) => ({
     position: "absolute",
     width: "100%",
     borderBottom: `1px solid ${theme.palette.divider}`, // Dodanie dolnego obramowania
     boxSizing: "border-box",
     "&.selected": {
-        backgroundColor: theme.palette.action.selected,
+        backgroundColor: theme.palette.background.table.selected,
     },
 }));
 
@@ -1284,55 +1285,59 @@ export const DataGrid = <T extends object>({
                                 </StyledLabel>
                                 <StyledGrow />
                                 {(filterColumns.getFilter(col.key, true) !== null) && (
-                                    <StyledIconContainer
-                                        onClick={(event) => {
-                                            filterColumns.filterActive(col.key, false)
-                                            event.stopPropagation();
-                                        }}
+                                    <Tooltip
+                                        title={t("filter-description", 'Filter {{column}} {{filter}}', {
+                                            column: col.label,
+                                            filter: filterToString(filterColumns.getFilter(col.key, true)!)
+                                        })}
                                     >
-                                        <Tooltip
-                                            title={t("filter-description", 'Filter {{column}} {{filter}}', {
-                                                column: col.label,
-                                                filter: filterToString(filterColumns.getFilter(col.key, true)!)
-                                            })}
+                                        <StyledIconContainer
+                                            onClick={(event) => {
+                                                filterColumns.filterActive(col.key, false)
+                                                event.stopPropagation();
+                                            }}
                                         >
                                             <theme.icons.Filter />
-                                        </Tooltip>
-                                    </StyledIconContainer>
+                                        </StyledIconContainer>
+                                    </Tooltip>
                                 )}
                                 {groupingColumns.isInGroup(col.key) && (
-                                    <StyledIconContainer
-                                        onClick={(event) => {
-                                            groupingColumns.toggleColumn(col.key);
-                                            event.stopPropagation();
-                                        }}
+                                    <Tooltip
+                                        title={t("grouped-column", "Grouped column")}
                                     >
-                                        <Tooltip
-                                            title={t("grouped-column", "Grouped column")}
+                                        <StyledIconContainer
+                                            onClick={(event) => {
+                                                groupingColumns.toggleColumn(col.key);
+                                                event.stopPropagation();
+                                            }}
                                         >
                                             <span className="group-icon">[]</span>
-                                        </Tooltip>
-                                    </StyledIconContainer>
+                                        </StyledIconContainer>
+                                    </Tooltip>
                                 )}
                                 {columnsState.showHiddenColumns && (
-                                    <StyledIconContainer
-                                        onClick={(event) => {
-                                            columnsState.toggleHidden(col.key);
-                                            event.stopPropagation();
-                                        }}
+                                    <Tooltip
+                                        title={t("toggle-hidden", "Toggle hidden")}
                                     >
-                                        <Tooltip
-                                            title={t("toggle-hidden", "Toggle hidden")}
+                                        <StyledIconContainer
+                                            onClick={(event) => {
+                                                columnsState.toggleHidden(col.key);
+                                                event.stopPropagation();
+                                            }}
                                         >
                                             {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                        </Tooltip>
-                                    </StyledIconContainer>
+                                        </StyledIconContainer>
+                                    </Tooltip>
                                 )}
                                 {col.sortDirection && (
-                                    <StyledIconContainer>
-                                        <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
-                                        {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
-                                    </StyledIconContainer>
+                                    <Tooltip
+                                        title={t("toggle-sort", "Toggle sort")}
+                                    >
+                                        <StyledIconContainer>
+                                            <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
+                                            {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
+                                        </StyledIconContainer>
+                                    </Tooltip>
                                 )}
                             </StyledHeaderCellContent>
                             {(col.resizable ?? columnsResizable) && (
@@ -1359,7 +1364,7 @@ export const DataGrid = <T extends object>({
                 >
                     {filteredDataState.slice(overscanFrom, overscanTo).map((row, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
-                        const isRowSelected = selectedCell?.row === absoluteRowIndex;
+                        const isRowActive = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
 
                         return (
@@ -1379,7 +1384,7 @@ export const DataGrid = <T extends object>({
                             >
                                 {columnsState.current.slice(startColumn, endColumn).map((col, vcIndex) => {
                                     const absoluteColIndex = startColumn + vcIndex;
-                                    const isCellSelected = isRowSelected && selectedCell?.column === absoluteColIndex;
+                                    const isCellActive = isRowActive && selectedCell?.column === absoluteColIndex;
                                     const columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
                                         : undefined) ?? col.dataType ?? 'string';
@@ -1418,8 +1423,8 @@ export const DataGrid = <T extends object>({
                                             className={clsx(
                                                 "DataGrid-cell",
                                                 classes,
-                                                isCellSelected && "selected",
-                                                isCellSelected && isFocused && "focused",
+                                                isCellActive && "active-cell",
+                                                isCellActive && isFocused && "focused",
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
                                                 mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
@@ -1481,18 +1486,18 @@ export const DataGrid = <T extends object>({
                                                 {summaryOperationDisplayMap[col.summary] || ""}
                                             </StyledLabel>
                                             <StyledGrow />
-                                            <StyledIconContainer
-                                                onClick={(event) => {
-                                                    columnsState.setSummary(col.key);
-                                                    event.stopPropagation();
-                                                }}
+                                            <Tooltip
+                                                title={t("summary-off", "Toggle summary off")}
                                             >
-                                                <Tooltip
-                                                    title={t("summary-off", "Toggle summary off")}
+                                                <StyledIconContainer
+                                                    onClick={(event) => {
+                                                        columnsState.setSummary(col.key);
+                                                        event.stopPropagation();
+                                                    }}
                                                 >
                                                     <theme.icons.Close />
-                                                </Tooltip>
-                                            </StyledIconContainer>
+                                                </StyledIconContainer>
+                                            </Tooltip>
                                         </StyledFooterCellHeader>,
                                         <StyledFooterCellContent
                                             key="content"
