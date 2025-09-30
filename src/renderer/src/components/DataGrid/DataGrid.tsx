@@ -102,16 +102,13 @@ interface DataGridProps<T extends object> {
 const StyledTable = styled('div', {
     name: "DataGrid",
     slot: "root",
-    shouldForwardProp: (prop) => prop !== 'fontSize' && prop !== 'fontFamily',
-})<{ fontSize: number | string; fontFamily: string }>(
-    ({ fontSize, fontFamily }) => ({
+})<{ }>(
+    ({  }) => ({
         position: "relative",
         display: "flex",
         height: "100%",
         width: "100%",
         userSelect: "none", // Wyłączenie zaznaczania tekstu
-        fontFamily: fontFamily,
-        fontSize: fontSize,
     })
 );
 
@@ -1173,11 +1170,11 @@ export const DataGrid = <T extends object>({
     const content = (
         <StyledTable
             className={clsx("DataGrid-table", classes)}
-            fontFamily={fontFamily}
-            fontSize={fontSize}
             style={{
                 ['--dg-cell-px' as any]: `${cellPaddingX}px`,
                 ['--dg-cell-py' as any]: `${cellPaddingY}px`,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
             }}
         >
             {/* Kolumna z numerami wierszy */}
