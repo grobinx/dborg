@@ -7,6 +7,7 @@ export const SideBarLayout = (palette: Palette, _root: ThemeOptions): SideBarCom
             root: {
                 gap: 4,
                 padding: 4,
+                fontSize: "1rem",
                 '& .MuiStack-root': {
                     gap: 4,
                 },

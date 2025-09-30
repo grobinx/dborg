@@ -61,6 +61,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                             component="div"
                             noWrap={true}
                             maxWidth="inherit"
+                            fontSize="inherit"
                         >
                             {label}
                         </Typography> :
@@ -68,8 +69,8 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                             <Typography
                                 component="div"
                                 noWrap={false}
-                                minWidth="5.6rem"
                                 width="min-content"
+                                fontSize="inherit"
                             >
                                 {label}
                             </Typography>

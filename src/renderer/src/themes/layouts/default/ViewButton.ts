@@ -20,7 +20,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 padding: 4,
                 backgroundColor: palette.background.sideBar,
                 '& .IconWrapper-root': {
-                    fontSize: "1.8em",
+                    fontSize: "2em",
                 },
                 '&.placement-right': {
                     justifyContent: "flex-end",

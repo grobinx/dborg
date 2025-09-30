@@ -20,7 +20,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 padding: 4,
                 backgroundColor: palette.background.sideBar,
                 '& .IconWrapper-root': {
-                    fontSize: "1.8em",
+                    fontSize: "2em",
                 },
                 '&.placement-right': {
                     justifyContent: "flex-end",

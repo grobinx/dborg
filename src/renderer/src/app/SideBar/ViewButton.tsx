@@ -62,6 +62,7 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                                 component="div"
                                 noWrap={true}
                                 maxWidth="inherit"
+                                fontSize="inherit"
                             >
                                 {label}
                             </Typography> :
@@ -69,8 +70,8 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                                 <Typography
                                     component="div"
                                     noWrap={false}
-                                    minWidth="5.6rem"
                                     width="min-content"
+                                    fontSize="inherit"
                                 >
                                     {label}
                                 </Typography>

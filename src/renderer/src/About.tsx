@@ -122,7 +122,7 @@ const About: React.FC<{
             justifyContent: 'center',
             flexDirection: 'column',
             alignItems: 'center',
-            height: '100vh',
+            height: '100%',
             fontSize: '24px',
             color: '#fff',
             overflow: 'hidden',
