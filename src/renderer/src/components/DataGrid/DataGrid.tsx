@@ -131,41 +131,38 @@ const StyledHeaderCell = styled('div', {
     name: "DataGrid",
     slot: "headerCell",
     shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
-})<{ paddingX: number; paddingY: number }>(
-    ({ theme, paddingX, paddingY }) => {
-
-        return {
-            fontWeight: "bold",
-            textAlign: "left",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
+})<{}>(
+    ({ theme }) => ({
+        fontWeight: "bold",
+        textAlign: "left",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+        position: "absolute",
+        userSelect: "none", // Wyłączenie zaznaczania tekstu
+        boxSizing: "border-box",
+        height: "100%",
+        padding: 'var(--dg-cell-py) var(--dg-cell-px)',
+        lineHeight: "1rem",
+        alignContent: "center",
+        borderRadius: 0, // Ustawienie zaokrąglenia na 0
+        alignItems: "center",
+        "&:not(:first-of-type)": {
+            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        },
+        "& .resize-handle": {
             position: "absolute",
-            userSelect: "none", // Wyłączenie zaznaczania tekstu
-            boxSizing: "border-box",
+            top: 0,
+            right: 0,
+            width: "5px",
             height: "100%",
-            padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: "1rem",
-            alignContent: "center",
-            borderRadius: 0, // Ustawienie zaokrąglenia na 0
-            alignItems: "center",
-            "&:not(:first-of-type)": {
-                borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
-            },
-            "& .resize-handle": {
-                position: "absolute",
-                top: 0,
-                right: 0,
-                width: "5px",
-                height: "100%",
-                cursor: "col-resize",
-                zIndex: 2,
-            },
-            '&.active-column': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            },
-        };
-    }
+            cursor: "col-resize",
+            zIndex: 2,
+        },
+        '&.active-column': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        },
+    })
 );
 
 const StyledHeaderCellContent = styled('div', {
@@ -248,68 +245,61 @@ const StyledRow = styled("div", {
 const StyledCell = styled("div", {
     name: "DataGrid",
     slot: "cell",
-    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
-})<{
-    paddingX: number;
-    paddingY: number;
-}>(
-    ({ theme, paddingX, paddingY }) => {
-        return {
-            overflow: "hidden",
-            whiteSpace: "pre",
-            textOverflow: "ellipsis",
-            position: "absolute",
-            userSelect: "none",
-            boxSizing: "border-box",
-            height: "100%",
-            padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: "1rem",
-            alignContent: "center",
-            alignItems: "center",
-            zIndex: 1,
-            color: "inherit",
-            willChange: "transform", // GPU-friendly dla translate3d
-            '&.color-enabled': {
-                ...columnBaseTypes.reduce((acc, color) => {
-                    acc[`&.data-type-${color}`] = {
-                        color: theme.palette?.dataType?.[color],
-                    };
-                    return acc;
-                }, {}),
-                '&.data-type-null': {
-                    color: theme.palette?.dataType?.["null"],
-                },
-            },
-            "&.align-start": {
-                textAlign: "left",
-            },
-            "&.align-end": {
-                textAlign: "right",
-            },
-            "&.align-center": {
-                textAlign: "center",
-            },
-            "&.focused": {
-                outline: `2px solid ${theme.palette.primary.main}`,
-                outlineOffset: -2,
-            },
-            "&:not(:first-of-type)": {
-                borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
-            },
-            "&:hover": {
-                backgroundColor: theme.palette.action.hover, // Efekt hover
-            },
-            '&.active-column': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            },
-            '&.active-row': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            },
-            "&.selected": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.2),
-            },
-        };
-    }
+})<{}>(({ theme }) => ({
+    overflow: "hidden",
+    whiteSpace: "pre",
+    textOverflow: "ellipsis",
+    position: "absolute",
+    userSelect: "none",
+    boxSizing: "border-box",
+    height: "100%",
+    padding: 'var(--dg-cell-py) var(--dg-cell-px)',
+    lineHeight: "1rem",
+    alignContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+    color: "inherit",
+    willChange: "transform", // GPU-friendly dla translate3d
+    '&.color-enabled': {
+        ...columnBaseTypes.reduce((acc, color) => {
+            acc[`&.data-type-${color}`] = {
+                color: theme.palette?.dataType?.[color],
+            };
+            return acc;
+        }, {}),
+        '&.data-type-null': {
+            color: theme.palette?.dataType?.["null"],
+        },
+    },
+    "&.align-start": {
+        textAlign: "left",
+    },
+    "&.align-end": {
+        textAlign: "right",
+    },
+    "&.align-center": {
+        textAlign: "center",
+    },
+    "&.focused": {
+        outline: `2px solid ${theme.palette.primary.main}`,
+        outlineOffset: -2,
+    },
+    "&:not(:first-of-type)": {
+        borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+    },
+    "&:hover": {
+        backgroundColor: theme.palette.action.hover, // Efekt hover
+    },
+    '&.active-column': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    },
+    '&.active-row': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    },
+    "&.selected": {
+        backgroundColor: alpha(theme.palette.primary.main, 0.2),
+    },
+})
 );
 
 const StyledFooter = styled('div', {
@@ -328,47 +318,40 @@ const StyledFooter = styled('div', {
 const StyledFooterCell = styled('div', {
     name: "DataGrid",
     slot: "footerCell",
-    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
-})<{
-    paddingX: number;
-    paddingY: number;
-}>(
-    ({ theme, paddingX, paddingY }) => {
-
-        return {
-            fontWeight: "bold",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            position: "absolute",
-            userSelect: "none", // Wyłączenie zaznaczania tekstu
-            boxSizing: "border-box",
-            height: "100%",
-            padding: `${paddingY}px ${paddingX}px`,
-            lineHeight: "1rem",
-            alignContent: "center",
-            borderRadius: 0, // Ustawienie zaokrąglenia na 0
-            alignItems: "center",
-            flexDirection: "column",
+})<{}>(
+    ({ theme }) => ({
+        fontWeight: "bold",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+        position: "absolute",
+        userSelect: "none", // Wyłączenie zaznaczania tekstu
+        boxSizing: "border-box",
+        height: "100%",
+        padding: 'var(--dg-cell-py) var(--dg-cell-px)',
+        lineHeight: "1rem",
+        alignContent: "center",
+        borderRadius: 0, // Ustawienie zaokrąglenia na 0
+        alignItems: "center",
+        flexDirection: "column",
+        textAlign: "center",
+        color: "gray",
+        "&:not(:first-of-type)": {
+            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        },
+        "&.align-start": {
+            textAlign: "left",
+        },
+        "&.align-end": {
+            textAlign: "right",
+        },
+        "&.align-center": {
             textAlign: "center",
-            color: "gray",
-            "&:not(:first-of-type)": {
-                borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
-            },
-            "&.align-start": {
-                textAlign: "left",
-            },
-            "&.align-end": {
-                textAlign: "right",
-            },
-            "&.align-center": {
-                textAlign: "center",
-            },
-            '&.active-column': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            },
-        };
-    }
+        },
+        '&.active-column': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        },
+    })
 );
 
 const StyledFooterCellHeader = styled('div', {
@@ -422,12 +405,9 @@ const StyledRowNumberColumn = styled('div', {
 const StyledRowNumberCell = styled('div', {
     name: "DataGrid",
     slot: "rowNumberCell",
-    shouldForwardProp: (prop) => prop !== 'rowHeight' && prop !== 'paddingY',
-})<{ rowHeight: number }>(({ theme, rowHeight }) => ({
+})<{ }>(({ theme }) => ({
     position: "absolute",
     width: "100%",
-    height: rowHeight,
-    lineHeight: `${rowHeight}px`,
     borderBottom: `1px solid ${theme.palette.divider}`, // Dodanie dolnego obramowania
     boxSizing: "border-box",
     "&.selected": {
@@ -1195,6 +1175,10 @@ export const DataGrid = <T extends object>({
             className={clsx("DataGrid-table", classes)}
             fontFamily={fontFamily}
             fontSize={fontSize}
+            style={{
+                ['--dg-cell-px' as any]: `${cellPaddingX}px`,
+                ['--dg-cell-py' as any]: `${cellPaddingY}px`,
+            }}
         >
             {/* Kolumna z numerami wierszy */}
             {showRowNumberColumn && (
@@ -1226,9 +1210,9 @@ export const DataGrid = <T extends object>({
                                         selectedRows.includes(absoluteRowIndex) && 'selected',
                                         classes
                                     )}
-                                    rowHeight={rowHeight}
                                     style={{
                                         top: absoluteRowIndex * rowHeight,
+                                        height: rowHeight,
                                     }}
                                     onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
                                 >
@@ -1284,8 +1268,6 @@ export const DataGrid = <T extends object>({
                                 width: col.width || 150,
                                 left: columnsState.columnLeft(startColumn + colIndex),
                             }}
-                            paddingX={cellPaddingX}
-                            paddingY={cellPaddingY}
                             onClick={() => {
                                 if (!resizingColumn) {
                                     updateSelectedCell({ row: selectedCell?.row ?? startRow, column: startColumn + colIndex });
@@ -1371,7 +1353,10 @@ export const DataGrid = <T extends object>({
                     </StyledNoRowsInfo>
                 )}
                 <StyledRowsContainer
-                    style={{ height: totalHeight, width: columnsState.totalWidth }}
+                    style={{
+                        height: totalHeight,
+                        width: columnsState.totalWidth,
+                    }}
                     className={clsx("DataGrid-rowsContainer", classes)}
                     onMouseDown={onRowsContainerMouseDown} // delegacja
                 >
@@ -1420,7 +1405,6 @@ export const DataGrid = <T extends object>({
                                             { maxLength: displayMaxLengh }
                                         );
                                         if (!isScrolling && typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
-                                            // pauzuj highlight podczas scrollu
                                             formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                         }
                                     } catch {
@@ -1448,9 +1432,6 @@ export const DataGrid = <T extends object>({
                                                 width: col.width || 150,
                                                 transform: `translate3d(${left}px, 0, 0)`, // zamiast left
                                             }}
-                                            // onMouseDown={() => handleCellClick(absoluteRowIndex, absoluteColIndex)} // usunięte: delegacja
-                                            paddingX={cellPaddingX}
-                                            paddingY={cellPaddingY}
                                         >
                                             {formattedValue}
                                         </StyledCell>
@@ -1483,8 +1464,6 @@ export const DataGrid = <T extends object>({
                                         width: col.width || 150,
                                         left: columnsState.columnLeft(startColumn + colIndex),
                                     }}
-                                    paddingX={cellPaddingX}
-                                    paddingY={cellPaddingY}
                                     onClick={() => {
                                         handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
                                         actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
