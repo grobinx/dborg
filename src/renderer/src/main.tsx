@@ -33,7 +33,9 @@ const AppWrapper: React.FC = () => {
     if (!settingsContext || settingsContext.isLoading || pause) {
         return (
             <ThemeWrapper>
-                <About loading={true} />
+                <div style={{ height: '100vh', width: '100vw' }}>
+                    <About loading={true} />
+                </div>
             </ThemeWrapper>
         );
     }

@@ -1,6 +1,7 @@
 import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { TextField } from "@renderer/components/inputs/TextField";
+import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
 import { BooleanSetting } from "@renderer/components/settings/inputs/BooleanSetting";
 import { ColorSetting } from "@renderer/components/settings/inputs/ColorSetting";
 import { EmailSetting } from "@renderer/components/settings/inputs/EmailSetting";
@@ -12,7 +13,7 @@ import { SelectSetting } from "@renderer/components/settings/inputs/SelectSettin
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import { SettingDecorator } from "@renderer/components/settings/SettingDecorator";
-import { SettingItem } from "@renderer/components/settings/SettingsForm";
+import { SettingItem, SettingsGroupForm } from "@renderer/components/settings/SettingsForm";
 import { escape } from "@renderer/components/useful/FormattedText";
 import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
@@ -38,7 +39,9 @@ const StyledEditableSettingsTitle = styled(Box, {
     slot: 'title', // The slot name
 })(() => ({
     width: "100%",
-    display: "flex"
+    display: "flex",
+    paddingLeft: 8,
+    marginBottom: 8,
 }));
 
 const StyledEditableSettingsContent = styled(Stack, {
@@ -63,7 +66,10 @@ const StyledEditableSettingsList = styled(Stack, {
 
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
-    const [selected, setSelected] = React.useState(false);
+    const [settingsCollections, setSettingsCollections] = React.useState(() => {
+        editableSettingsRegistry.executeRegistrations();
+        return editableSettingsRegistry.getCollections();
+    });
 
     return (
         <StyledEditableSettingsRoot
@@ -71,11 +77,18 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
         >
             <StyledEditableSettingsTitle>
                 <Typography variant="h4">
-                    Editable Settings
+                    Settings
                 </Typography>
             </StyledEditableSettingsTitle>
             <StyledEditableSettingsContent>
                 <StyledEditableSettingsList>
+                    {settingsCollections.map((collection) => (
+                        <SettingsGroupForm
+                            key={collection.key}
+                            collection={collection}
+                        />
+                    ))}
+                    <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid #eee" }} />
                     <SettingItem
                         key="toast.max"
                         setting={{
@@ -130,13 +143,18 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     <SettingItem
                         key="theme"
                         setting={{
-                            type: "string",
+                            type: "select",
                             storageGroup: "ui",
                             key: "theme",
                             category: "UI",
                             label: "Theme",
                             description: "Select the application theme.",
                             tags: ["theme", "ui"],
+                            options: [
+                                { value: "light", label: "Light" },
+                                { value: "dark", label: "Dark" },
+                                { value: "system", label: "System Default" },
+                            ]
                         }}
                     />
                     <SettingItem
@@ -280,7 +298,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                             description: "Select a color",
                         }}
                     />
-                    <BooleanSetting
+                    <SettingItem
                         setting={{
                             type: "boolean",
                             storageGroup: "test",

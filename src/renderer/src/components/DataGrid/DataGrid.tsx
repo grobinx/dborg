@@ -472,7 +472,8 @@ export const DataGrid = <T extends object>({
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
     const [null_value] = useSetting("dborg", "data_grid.null_value");
-    const [colors_enabled] = useSetting<boolean>("dborg", "data_grid.colors_enabled");
+    const [data_colors_enabled] = useSetting<boolean>("dborg", "data_grid.data.colors_enabled");
+    const [defined_colors_enabled] = useSetting<boolean>("dborg", "data_grid.defined.colors_enabled");
     const [active_highlight] = useSetting<boolean>("dborg", "data_grid.active_highlight");
     const [rowHeight, setRowHeight] = useState(initialRowHeight);
     const [dataState, setDataState] = useState<T[] | null>(null);
@@ -542,9 +543,9 @@ export const DataGrid = <T extends object>({
     const classes = React.useMemo(() => {
         return clsx(
             `mode-${mode}`,
-            (mode === "defined" ? colors_enabled : true) && 'color-enabled',
+            (mode === "defined" ? defined_colors_enabled : data_colors_enabled) && 'color-enabled',
         );
-    }, [mode, colors_enabled]);
+    }, [mode, data_colors_enabled, defined_colors_enabled]);
 
     useEffect(() => {
         selectedCellRef.current = selectedCell;

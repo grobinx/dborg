@@ -182,6 +182,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 alignItems: "center",
                 backgroundColor: 'transparent',
                 border: 'none',
+                outline: 'none',
                 cursor: 'pointer',
                 padding: 0,
                 color: palette.text.primary,

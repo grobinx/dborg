@@ -113,6 +113,8 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
                 return Math.max(Math.min((setting.max.toString().length) * widthPerChar + 16, maxWidth), minWidth);
             }
             return defaultNumberWidth;
+        case "boolean":
+            return "80%";
         case "color":
             return defaultTextWidth;
     }

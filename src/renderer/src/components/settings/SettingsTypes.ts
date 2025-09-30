@@ -195,6 +195,12 @@ export interface SettingTypeBoolean extends SettingTypeBase {
         false: string | number | null;
     }
     defaultValue?: boolean | number | string;
+    /**
+     * Whether the boolean field can have an indeterminate (null) state.
+     * If true, clicking the field will cycle the value between true, false, and null.
+     * @default false
+     */
+    indeterminate?: boolean;
 }
 
 export interface SettingTypeStringBase extends SettingTypeBase {

@@ -30,6 +30,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
         onChange,
         inputProps,
         defaultValue,
+        required,
         ...other
     } = props;
 
@@ -66,7 +67,8 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
 
     const handleIncrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
-        const newValue = Math.min((valueRef.current ?? 0) + amount, max ?? Infinity);
+        const newValue = Math.max(Math.min((valueRef.current ?? 0) + amount, max ?? Infinity), min ?? -Infinity);
+
         if (isControlled) {
             onChange?.(newValue);
         } else {
@@ -76,7 +78,8 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
 
     const handleDecrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
-        const newValue = Math.max((valueRef.current ?? 0) - amount, min ?? -Infinity);
+        const newValue = Math.min(Math.max((valueRef.current ?? 0) - amount, min ?? -Infinity), max ?? Infinity);
+
         if (isControlled) {
             onChange?.(newValue);
         } else {
@@ -119,12 +122,12 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
                 ...inputProps,
             }}
             validations={[
-                (value: any) => validateMinValue(value, min),
+                (value: any) => (!value && !required) || validateMinValue(value, min),
                 (value: any) => validateMaxValue(value, max),
             ]}
             onConvertToValue={(value: string) => {
                 const numValue = parseFloat(value);
-                return isNaN(numValue) ? undefined : numValue;
+                return isNaN(numValue) ? (isControlled ? null : undefined) : numValue;
             }}
             onConvertToInput={(value: number | undefined | null) => {
                 return value !== undefined && value !== null ? String(value) : '';

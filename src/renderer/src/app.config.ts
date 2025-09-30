@@ -34,7 +34,8 @@ const toast_max = 5;
 const settings_store_timeout = 1000; // 1 second
 const toast_timeout = 5000; // 5 seconds
 const data_grid_null_value = '{null}';
-const data_grid_colors_enabled = true;
+const data_grid_data_colors_enabled = true;
+const data_grid_dafined_colors_enabled = true;
 const data_grid_active_highlight = true;
 
 export const default_settings: ApplicationSettings = {
@@ -47,7 +48,8 @@ export const default_settings: ApplicationSettings = {
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
-        "data_grid.colors_enabled": data_grid_colors_enabled,
+        "data_grid.data.colors_enabled": data_grid_data_colors_enabled,
+        "data_grid.defined.colors_enabled": data_grid_dafined_colors_enabled,
         "data_grid.active_highlight": data_grid_active_highlight,
     },
     ui: {
@@ -111,20 +113,32 @@ editableSettingsRegistry.register((context) => {
                     type: 'string',
                     storageGroup: 'dborg',
                     key: 'data_grid.null_value',
+                    category: t('content', 'Content'),
                     label: t('null-value-representation', 'Null Value Representation'),
                     description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
                 },
                 {
                     type: 'boolean',
                     storageGroup: 'dborg',
-                    key: 'data_grid.colors_enabled',
-                    label: t('enable-colors', 'Enable Colors'),
-                    description: t('enable-colors-description', 'Enable or disable color coding in the data grid.'),
+                    key: 'data_grid.data.colors_enabled',
+                    category: t('appearance', 'Appearance'),
+                    label: t('data_grid.data-enable-colors', 'Enable Colors in data grid'),
+                    description: t('data_grid.data-enable-colors-description', 'Enable or disable color coding based on the field type in the data grid.'),
+                },
+
+                {
+                    type: 'boolean',
+                    storageGroup: 'dborg',
+                    key: 'data_grid.defined.colors_enabled',
+                    category: t('appearance', 'Appearance'),
+                    label: t('data_grid.defined-enable-colors', 'Enable Colors in defined grid'),
+                    description: t('data_grid.defined-enable-colors-description', 'Enable or disable color coding based on the field type in the defined grid.'),
                 },
                 {
                     type: 'boolean',
                     storageGroup: 'dborg',
                     key: 'data_grid.active_highlight',
+                    category: t('appearance', 'Appearance'),
                     label: t('highlight-active-cell', 'Highlight Active row and column'),
                     description: t('highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
                 },
@@ -142,11 +156,16 @@ editableSettingsRegistry.register((context) => {
             description: t('theme-description', 'Settings for the application theme.'),
             settings: [
                 {
-                    type: 'string',
+                    type: 'select',
                     storageGroup: 'ui',
                     key: 'theme',
                     label: t('theme', 'Theme'),
                     description: t('theme-description', 'Select the application theme.'),
+                    options: [
+                        { value: "light", label: t('light-theme', 'Light') },
+                        { value: "dark", label: t('dark-theme', 'Dark') },
+                        { value: "system", label: t('system-theme', 'System Default') },
+                    ],
                 },
             ],
         }],

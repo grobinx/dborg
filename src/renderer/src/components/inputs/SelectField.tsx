@@ -24,20 +24,26 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     listHeight?: number;
 }
 
-const StyledMenuItem = styled(MenuItem)<{ componentSize?: Size }>(({ componentSize = 'medium' }) => {
-    const sizeProps = rootSizeProperties[componentSize];
-    return {
-        display: 'flex',
-        alignItems: 'center',
-        gap: sizeProps.gap,
-        fontSize: sizeProps.fontSize,
-        padding: sizeProps.padding,
-        minHeight: sizeProps.height,
-        '&.Mui-dense': {
-            ...sizeProps['&.dense'],
-        }
-    };
-});
+const StyledMenuItem = styled(MenuItem, {
+    name: "SelectField",
+    slot: "MenuItem",
+    shouldForwardProp: (prop) => prop !== 'componentSize',
+})<{ componentSize?: Size }>(
+    ({ componentSize = 'medium' }) => {
+        const sizeProps = rootSizeProperties[componentSize];
+        return {
+            display: 'flex',
+            alignItems: 'center',
+            gap: sizeProps.gap,
+            fontSize: sizeProps.fontSize,
+            padding: sizeProps.padding,
+            minHeight: sizeProps.height,
+            '&.Mui-dense': {
+                ...sizeProps['&.dense'],
+            }
+        };
+    }
+);
 
 /**
  * 
@@ -177,6 +183,9 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     <span
                         onClick={handleToggle}
                         color={color}
+                        style={{
+                            cursor: 'pointer',
+                        }}
                     >
                         {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                     </span>
