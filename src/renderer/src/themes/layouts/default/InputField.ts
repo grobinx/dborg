@@ -2,10 +2,9 @@ import { alpha, Palette, ThemeOptions } from "@mui/material";
 import { borderRadius, paddingLarge, paddingMedium, paddingSmall, rootSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
-import zIndex from "@mui/material/styles/zIndex";
 
 
-export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFieldComponent => {
+export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFieldComponent => {
     return {
         styleOverrides: {
             root: {
