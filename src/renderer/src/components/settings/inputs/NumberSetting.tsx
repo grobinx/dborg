@@ -11,11 +11,11 @@ export const NumberSetting: React.FC<{
     onClick?: () => void;
     selected?: boolean;
 }> = ({ setting, selected, onClick }) => {
-    const [settingValue, setSettingValue] = useSetting<number>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<number>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<number | undefined>(settingValue);
 
     React.useEffect(() => {
-        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue));
     }, [settingValue]);
 
     return (
@@ -45,7 +45,7 @@ export const NumberSetting: React.FC<{
             }}
         >
             <NumberField
-                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
+                id={`SettingEditor-${setting.storageGroup}-${setting.storageKey}`}
                 width={calculateWidth(setting)}
                 min={setting.min}
                 max={setting.max}
@@ -54,7 +54,7 @@ export const NumberSetting: React.FC<{
                 onChange={(value: number | null | undefined) => {
                     setValue(value ?? undefined);
                 }}
-                defaultValue={getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue)}
+                defaultValue={getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue)}
                 disabled={disabledControl(setting)}
                 onClick={onClick}
             />

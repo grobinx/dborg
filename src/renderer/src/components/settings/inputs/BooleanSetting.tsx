@@ -9,13 +9,13 @@ export const BooleanSetting: React.FC<{
     onClick?: () => void;
     selected?: boolean;
 }> = ({ setting, selected, onClick }) => {
-    const [settingValue, setSettingValue] = useSetting<boolean | string | number | null | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<boolean | string | number | null | undefined>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<boolean | undefined>(() => {
         if (typeof settingValue === "boolean") return settingValue;
         if (setting.values) {
             return settingValue === setting.values.true ? true : settingValue === setting.values.false ? false : undefined;
         }
-        console.error(`BooleanSetting: Invalid value for setting ${setting.storageGroup}.${setting.key}: ${settingValue}. Expected boolean or string matching true/false values.`);
+        console.error(`BooleanSetting: Invalid value for setting ${setting.storageGroup}.${setting.storageKey}: ${settingValue}. Expected boolean or string matching true/false values.`);
         return undefined;
     });
     const checkboxRef = useRef<HTMLInputElement>(null);
@@ -31,7 +31,7 @@ export const BooleanSetting: React.FC<{
                 result = value === setting.values.true ? true : (value === setting.values.false ? false : undefined);
             }
             else {
-                console.error(`BooleanSetting: Invalid value for setting ${setting.storageGroup}.${setting.key}: ${settingValue}. Expected boolean or string matching true/false values.`);
+                console.error(`BooleanSetting: Invalid value for setting ${setting.storageGroup}.${setting.storageKey}: ${settingValue}. Expected boolean or string matching true/false values.`);
             }
             return result;
         });
@@ -54,7 +54,7 @@ export const BooleanSetting: React.FC<{
                 } else if (typeof value === "string" || typeof value === "number") {
                     setValue(value === setting.values?.true);
                 } else {
-                    console.error(`BooleanSetting: Invalid value type for setting ${setting.storageGroup}.${setting.key}: ${value}. Expected boolean, string, or number.`);
+                    console.error(`BooleanSetting: Invalid value type for setting ${setting.storageGroup}.${setting.storageKey}: ${value}. Expected boolean, string, or number.`);
                 }
             }}
             onStore={(value: boolean | string | number | null | undefined) => {
@@ -73,7 +73,7 @@ export const BooleanSetting: React.FC<{
                 onClick={handleDescriptionClick} // Obsługa kliknięcia na opis
             >
                 <BaseCheckbox
-                    id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
+                    id={`SettingEditor-${setting.storageGroup}-${setting.storageKey}`}
                     value={value ?? false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setValue(e.target.checked);

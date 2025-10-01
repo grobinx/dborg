@@ -7,16 +7,16 @@ import { calculateWidth } from "./SettingInputControl";
 import { NumberField } from "../inputs/NumberField";
 import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 function useSettingBinding(setting: SettingTypeUnion) {
-    const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<any>(settingValue);
 
     React.useEffect(() => {
         setValue(settingValue);
-    }, [setting.storageGroup, setting.key, settingValue]);
+    }, [setting.storageGroup, setting.storageKey, settingValue]);
 
     const fieldSetValue = React.useCallback((value: any) => {
         setValue(value);
@@ -121,76 +121,174 @@ export const SettingItem: React.FC<{ setting: SettingTypeUnion }> = ({ setting }
 };
 
 export const SettingsList: React.FC<{ settings: SettingTypeUnion[] | undefined }> = ({ settings }) => {
-    if (!settings || settings.length === 0) return null;
+    if (!settings || settings.length === 0) {
+        return null;
+    }
+
     return (
         <Stack
-            gap={8}
+            gap={4}
             width="100%"
         >
             {settings.map((s, i) => (
-                <SettingItem key={`${s.storageGroup}/${s.key}/${i}`} setting={s} />
+                <SettingItem key={`${s.storageGroup}/${s.storageKey}/${i}`} setting={s} />
             ))}
         </Stack>
     );
 };
 
-export const SettingsGroupForm: React.FC<{ collection?: SettingsCollection; groups?: SettingsGroup[]; settings?: SettingTypeUnion[]; title?: React.ReactNode }> = ({ collection, groups, settings, title }) => {
-    const g = groups ?? collection?.groups ?? [];
-    const s = settings ?? collection?.settings ?? [];
-    const [collectionRef, isCollectionVisible] = useVisibleState<HTMLDivElement>({ threshold: 0.1 });
-    const [groupRef, isGroupVisible] = useVisibleState<HTMLDivElement>({ threshold: 0.1 });
+const SettingGroupForm: React.FC<{
+    group: SettingsGroup;
+    titleHeight?: number;
+}> = ({ group, titleHeight }) => {
+    const groupTitleRef = React.useRef<HTMLDivElement>(null);
+    const [groupTitleHeight, setGroupTitleHeight] = React.useState(0);
+    const sentinelRef = React.useRef<HTMLDivElement>(null);
+    const [isPinned, setIsPinned] = React.useState(false);
+    const theme = useTheme();
+
+    if (!group) {
+        return null;
+    }
+
+    React.useLayoutEffect(() => {
+        if (groupTitleRef.current) {
+            setGroupTitleHeight(groupTitleRef?.current?.clientHeight ?? 0);
+        }
+    }, [group.title, isPinned]);
+
+    React.useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsPinned(!entry.isIntersecting),
+            { threshold: [0] }
+        );
+        observer.observe(sentinel);
+
+        return () => observer.disconnect();
+    }, [group.title]);
 
     return (
-        <Paper
-            style={{ display: "flex", flexDirection: "column", padding: "8px 16px", gap: 8 }}
-            elevation={1}
+        <>
+            {/* Sentinel przed nagłówkiem */}
+            <div ref={sentinelRef} style={{ height: 1, margin: 0, padding: 0 }} />
+            <Typography
+                variant="h6"
+                sx={{
+                    position: 'sticky',
+                    top: titleHeight,
+                    backgroundColor: theme.palette.background.paper,
+                    zIndex: 5,
+                    padding: 4,
+                }}
+                ref={groupTitleRef}
+            >
+                {group.title}
+            </Typography>
+
+            {group.description && (
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                >
+                    {group.description}
+                </Typography>
+            )}
+
+            <SettingsList settings={group.settings} />
+
+            <SettingsGroupList
+                groups={group.groups}
+                titleHeight={(titleHeight ?? 0) + (groupTitleHeight ?? 0)}
+            />
+        </>
+    )
+};
+
+const SettingsGroupList: React.FC<{
+    groups?: SettingsGroup[];
+    titleHeight?: number;
+}> = ({ groups, titleHeight }) => {
+    if (!groups || groups.length === 0) {
+        return null;
+    }
+    return (
+        groups.map((grp, idx) => (
+            <SettingGroupForm
+                key={`${grp.key}-group-${idx}`}
+                group={grp}
+                titleHeight={titleHeight}
+            />
+        ))
+    );
+};
+
+export const SettingsCollectionForm: React.FC<{
+    collection: SettingsCollection;
+}> = ({ collection }) => {
+    const titleRef = React.useRef<HTMLDivElement>(null);
+    const collectionRef = React.useRef<HTMLDivElement>(null);
+    const [titleHeight, setTitleHeight] = React.useState(0);
+    const sentinelRef = React.useRef<HTMLDivElement>(null);
+    const [isPinned, setIsPinned] = React.useState(false);
+    const theme = useTheme();
+
+    React.useLayoutEffect(() => {
+        if (titleRef.current) {
+            setTitleHeight(titleRef.current?.clientHeight ?? 0);
+        }
+    }, [collection.title, isPinned]);
+
+    React.useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsPinned(!entry.isIntersecting),
+            { threshold: [0] }
+        );
+        observer.observe(sentinel);
+
+        return () => observer.disconnect();
+    }, [collection.title]);
+
+    return (
+        <Stack
+            style={{ display: "flex", flexDirection: "column", gap: 4 }}
             ref={collectionRef}
         >
-            <Stack>
-                {(title ?? collection?.title) && (
-                    <Typography
-                        variant="h5"
-                    >
-                        {title ?? collection?.title}
-                    </Typography>
-                )}
-                {collection?.description && (
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                    >
-                        {collection.description}
-                    </Typography>
-                )}
-            </Stack>
+            {/* Sentinel przed nagłówkiem */}
+            <div ref={sentinelRef} style={{ height: 1, margin: 0, padding: 0 }} />
+            <Typography
+                variant="h5"
+                sx={{
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: theme.palette.background.paper,
+                    zIndex: 10,
+                    transition: 'box-shadow 0.2s',
+                    padding: 4,
+                }}
+                ref={titleRef}
+                className={isPinned ? "is-pinned" : ""}
+            >
+                {collection.title}
+            </Typography>
 
-            <SettingsList settings={s} />
+            {collection?.description && (
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                >
+                    {collection.description}
+                </Typography>
+            )}
 
-            {g.map((grp, idx) => (
-                <Stack key={grp.key ?? idx} sx={{ gap: 8 }} ref={groupRef}>
-                    <Stack>
-                        <Typography
-                            variant="h6"
-                        >
-                            {grp.title}
-                        </Typography>
-                        {grp.description && (
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                            >
-                                {grp.description}
-                            </Typography>
-                        )}
-                    </Stack>
+            <SettingsList settings={collection.settings} />
 
-                    <SettingsList settings={grp.settings} />
-                    
-                    {grp.groups && grp.groups.length > 0 && (
-                        <SettingsGroupForm groups={grp.groups} />
-                    )}
-                </Stack>
-            ))}
-        </Paper>
+            <SettingsGroupList groups={collection.groups} titleHeight={titleHeight} />
+        </Stack>
     );
 };

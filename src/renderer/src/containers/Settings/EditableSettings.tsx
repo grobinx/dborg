@@ -13,7 +13,7 @@ import { SelectSetting } from "@renderer/components/settings/inputs/SelectSettin
 import { StringSetting } from "@renderer/components/settings/inputs/StringSetting";
 import { TextSetting } from "@renderer/components/settings/inputs/TextSetting";
 import { SettingDecorator } from "@renderer/components/settings/SettingDecorator";
-import { SettingItem, SettingsGroupForm } from "@renderer/components/settings/SettingsForm";
+import { SettingItem, SettingsCollectionForm } from "@renderer/components/settings/SettingsForm";
 import { escape } from "@renderer/components/useful/FormattedText";
 import { getSetting, setSetting, settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
 import React from "react";
@@ -67,6 +67,7 @@ const StyledEditableSettingsList = styled(Stack, {
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
     const [settingsCollections, setSettingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
+    const settingsCollectionsRef = React.useRef<HTMLDivElement>(null);
 
     return (
         <StyledEditableSettingsRoot
@@ -77,10 +78,12 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                     Settings
                 </Typography>
             </StyledEditableSettingsTitle>
-            <StyledEditableSettingsContent>
+            <StyledEditableSettingsContent 
+                ref={settingsCollectionsRef}
+            >
                 <StyledEditableSettingsList>
                     {settingsCollections.map((collection) => (
-                        <SettingsGroupForm
+                        <SettingsCollectionForm
                             key={collection.key}
                             collection={collection}
                         />
@@ -91,7 +94,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "string",
                             storageGroup: "test",
-                            key: "some-setting",
+                            storageKey: "some-setting",
                             category: "General",
                             label: "Jakieś ustawienie",
                             description: "This is a string setting",
@@ -108,7 +111,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "text",
                             storageGroup: "test",
-                            key: "some-text-setting",
+                            storageKey: "some-text-setting",
                             category: "General",
                             label: "Jakieś ustawienie tekstowe",
                             description: "This is a text setting with multiple lines",
@@ -126,7 +129,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "password",
                             storageGroup: "test",
-                            key: "some-password-setting",
+                            storageKey: "some-password-setting",
                             category: "Security",
                             label: "Jakieś ustawienie hasła",
                             description: "This is a password setting with validation",
@@ -150,7 +153,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "pattern",
                             storageGroup: "test",
-                            key: "phone-number",
+                            storageKey: "phone-number",
                             category: "General",
                             label: "Phone Number",
                             description: "Enter your phone number",
@@ -165,7 +168,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "string",
                             storageGroup: "test",
-                            key: "phone",
+                            storageKey: "phone",
                             category: "General",
                             label: "Phone",
                             description: "This is a phone setting",
@@ -176,7 +179,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "number",
                             storageGroup: "test",
-                            key: "age",
+                            storageKey: "age",
                             category: "General",
                             label: "Age",
                             description: "Select your age",
@@ -191,7 +194,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "email",
                             storageGroup: "test",
-                            key: "email",
+                            storageKey: "email",
                             category: "General",
                             label: "Email Address",
                             description: "Enter your email address",
@@ -201,7 +204,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "range",
                             storageGroup: "test",
-                            key: "age-range",
+                            storageKey: "age-range",
                             category: "General",
                             label: "Age Range",
                             description: "Select your age range",
@@ -221,7 +224,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "color",
                             storageGroup: "test",
-                            key: "color",
+                            storageKey: "color",
                             category: "General",
                             label: "Color",
                             description: "Select a color",
@@ -231,7 +234,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "boolean",
                             storageGroup: "test",
-                            key: "notifications",
+                            storageKey: "notifications",
                             category: "General",
                             label: "Enable Notifications",
                             description: "Receive notifications for important updates\nBlended with the app theme",
@@ -248,7 +251,7 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         setting={{
                             type: "select",
                             storageGroup: "test",
-                            key: "favorite-color",
+                            storageKey: "favorite-color",
                             category: "General",
                             label: "Favorite Color",
                             description: "Select your favorite color",

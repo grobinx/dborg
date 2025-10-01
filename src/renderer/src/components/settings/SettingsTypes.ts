@@ -90,7 +90,7 @@ export interface SettingTypeBase {
     /**
      * A key for the setting.
      */
-    key: string;
+    storageKey: string;
     /**
      * Optional group for categorization of settings.
      * This will be placed before title in the UI.

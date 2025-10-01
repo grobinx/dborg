@@ -37,6 +37,8 @@ const data_grid_null_value = '{null}';
 const data_grid_data_colors_enabled = true;
 const data_grid_dafined_colors_enabled = true;
 const data_grid_active_highlight = true;
+const data_grid_data_font_size = 14;
+const data_grid_defined_font_size = 14;
 
 export const default_settings: ApplicationSettings = {
     app: {
@@ -51,6 +53,8 @@ export const default_settings: ApplicationSettings = {
         "data_grid.data.colors_enabled": data_grid_data_colors_enabled,
         "data_grid.defined.colors_enabled": data_grid_dafined_colors_enabled,
         "data_grid.active_highlight": data_grid_active_highlight,
+        "data_grid.data.font_size": data_grid_data_font_size,
+        "data_grid.defined.font_size": data_grid_defined_font_size,
     },
     ui: {
         theme: 'system',
@@ -79,7 +83,7 @@ editableSettingsRegistry.register((context) => {
                 {
                     type: 'number',
                     storageGroup: 'app',
-                    key: 'toast.max',
+                    storageKey: 'toast.max',
                     label: t('maximum-toasts', 'Maximum Toasts'),
                     description: t('maximum-toasts-description', 'Maximum number of toast notifications to display at once.'),
                     min: 1,
@@ -89,7 +93,7 @@ editableSettingsRegistry.register((context) => {
                 {
                     type: 'number',
                     storageGroup: 'app',
-                    key: 'toast.timeout',
+                    storageKey: 'toast.timeout',
                     label: t('toast-timeout', 'Toast Timeout'),
                     description: t('toast-timeout-description', 'Timeout for each toast notification in milliseconds.'),
                     min: 1000,
@@ -105,42 +109,82 @@ editableSettingsRegistry.register((context) => {
         title: t('orbada-settings', 'Orbada Settings'),
         description: t('orbada-settings-description', 'Settings related to the Orbada database management.'),
         groups: [{
-            key: 'data_grid',
-            title: t('data-grid', 'Data Grid'),
+            key: 'grid',
+            title: t('grid', 'Grid'),
             description: t('data-grid-description', 'Settings for the data grid display.'),
             settings: [
                 {
                     type: 'string',
                     storageGroup: 'dborg',
-                    key: 'data_grid.null_value',
+                    storageKey: 'data_grid.null_value',
                     category: t('content', 'Content'),
                     label: t('null-value-representation', 'Null Value Representation'),
                     description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
                 },
+            ],
+            groups: [
                 {
-                    type: 'boolean',
-                    storageGroup: 'dborg',
-                    key: 'data_grid.data.colors_enabled',
-                    category: t('appearance', 'Appearance'),
-                    label: t('data_grid.data-enable-colors', 'Enable Colors in data grid'),
-                    description: t('data_grid.data-enable-colors-description', 'Enable or disable color coding based on the field type in the data grid.'),
+                    key: 'data-grid',
+                    title: t('settings.data-grid', 'Data grid'),
+                    description: t('settings.data-grid-description', 'Settings for the main data grid display.'),
+                    settings: [
+                        {
+                            type: 'boolean',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.active_highlight',
+                            category: t('appearance', 'Appearance'),
+                            label: t('settings.highlight-active-cell', 'Highlight active row and column'),
+                            description: t('settings.highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
+                        },
+                        {
+                            type: 'boolean',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.data.colors_enabled',
+                            category: t('appearance', 'Appearance'),
+                            label: t('settings.enable-colors', 'Enable colors in grid'),
+                            description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
+                        },
+                        {
+                            type: 'number',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.data.font_size',
+                            category: t('appearance', 'Appearance'),
+                            label: t('settings.font-size', 'Grid font size'),
+                            description: t('settings.font-size-description', 'Font size for the grid.'),
+                            min: 10,
+                            max: 20,
+                            step: 1,
+                        },
+                    ],
                 },
-
                 {
-                    type: 'boolean',
-                    storageGroup: 'dborg',
-                    key: 'data_grid.defined.colors_enabled',
-                    category: t('appearance', 'Appearance'),
-                    label: t('data_grid.defined-enable-colors', 'Enable Colors in defined grid'),
-                    description: t('data_grid.defined-enable-colors-description', 'Enable or disable color coding based on the field type in the defined grid.'),
-                },
-                {
-                    type: 'boolean',
-                    storageGroup: 'dborg',
-                    key: 'data_grid.active_highlight',
-                    category: t('appearance', 'Appearance'),
-                    label: t('highlight-active-cell', 'Highlight Active row and column'),
-                    description: t('highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
+                    key: 'defined-grid',
+                    title: t('settings.defined-grid', 'Defined grid'),
+                    description: t(
+                        'settings.defined-grid-description', 
+                        'Settings for the defined grid display. Defined grid is the grid with predefined columns, like in table list or foreign keys.'
+                    ),
+                    settings: [
+                        {
+                            type: 'boolean',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.defined.colors_enabled',
+                            category: t('appearance', 'Appearance'),
+                            label: t('settings.enable-colors', 'Enable colors in grid'),
+                            description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
+                        },
+                        {
+                            type: 'number',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.defined.font_size',
+                            category: t('appearance', 'Appearance'),
+                            label: t('settings.font-size', 'Grid font size'),
+                            description: t('settings.font-size-description', 'Font size for the grid.'),
+                            min: 10,
+                            max: 20,
+                            step: 1,
+                        },
+                    ],
                 },
             ],
         }],
@@ -158,7 +202,7 @@ editableSettingsRegistry.register((context) => {
                 {
                     type: 'select',
                     storageGroup: 'ui',
-                    key: 'theme',
+                    storageKey: 'theme',
                     label: t('theme', 'Theme'),
                     description: t('theme-description', 'Select the application theme.'),
                     options: [
@@ -182,24 +226,24 @@ editableSettingsRegistry.register((context) => {
                 {
                     type: 'number',
                     storageGroup: 'ui',
-                    key: 'fontSize',
+                    storageKey: 'fontSize',
                     label: t('font-size', 'Font Size'),
                     description: t('font-size-description', 'Set the base font size for the application.'),
-                    min: 8,
-                    max: 32,
+                    min: 10,
+                    max: 20,
                     step: 1,
                 },
                 {
                     type: 'string',
                     storageGroup: 'ui',
-                    key: 'fontFamily',
+                    storageKey: 'fontFamily',
                     label: t('font-family', 'Font Family'),
                     description: t('font-family-description', 'Set the base font family for the application.'),
                 },
                 {
                     type: 'string',
                     storageGroup: 'ui',
-                    key: 'monospaceFontFamily',
+                    storageKey: 'monospaceFontFamily',
                     label: t('monospace-font-family', 'Monospace Font Family'),
                     description: t('monospace-font-family-description', 'Set the monospace font family for code and other monospaced text.'),
                 },

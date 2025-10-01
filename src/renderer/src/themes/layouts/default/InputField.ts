@@ -2,9 +2,10 @@ import { alpha, Palette, ThemeOptions } from "@mui/material";
 import { borderRadius, paddingLarge, paddingMedium, paddingSmall, rootSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
+import zIndex from "@mui/material/styles/zIndex";
 
 
-export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFieldComponent => {
+export const InputFieldLayout = (palette: Palette, root: ThemeOptions): InputFieldComponent => {
     return {
         styleOverrides: {
             root: {
@@ -120,6 +121,17 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 outline: "none",
                 '&.type-boolean': {
                     alignItems: "flex-start",
+                    padding: 2,
+                    '.focused & .checkbox-icon': {
+                        outline: "2px solid",
+                        borderRadius: borderRadius,
+                        ...themeColors.reduce((acc, color) => {
+                            acc[`.color-${color} &`] = {
+                                outlineColor: palette[color].main,
+                            };
+                            return acc;
+                        }, {}),
+                    }
                 },
             },
             main: {

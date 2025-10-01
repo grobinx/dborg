@@ -16,11 +16,11 @@ export const PasswordSetting: React.FC<{
     const [showPassword, setShowPassword] = React.useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
-    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
 
     React.useEffect(() => {
-        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue));
     }, [settingValue]);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -109,7 +109,7 @@ export const PasswordSetting: React.FC<{
             }}
         >
             <BaseTextField
-                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
+                id={`SettingEditor-${setting.storageGroup}-${setting.storageKey}`}
                 type={showPassword ? "text" : "password"}
                 sx={{
                     width: calculateWidth(setting)

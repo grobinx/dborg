@@ -325,8 +325,8 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
 
     const isMenuOpen = Boolean(menuAnchorEl);
     const [previousValue] = React.useState<any>(value);
-    const defaultValue = getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue);
-    const [settingValue] = useSetting(setting.storageGroup, setting.key, setting.defaultValue);
+    const defaultValue = getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue);
+    const [settingValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
 
     const contextValue = React.useMemo<InputDecoratorContextType>(() => ({
         setRestrictions: (restrictions) => {
@@ -389,12 +389,12 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
     }, [setValue, defaultValue]);
 
     const handleCopyPath = React.useCallback(() => {
-        navigator.clipboard.writeText(`${setting.storageGroup}/${setting.key}`);
+        navigator.clipboard.writeText(`${setting.storageGroup}/${setting.storageKey}`);
         handleMenuClose();
     }, [setting]);
 
     const handleCopySetting = React.useCallback(() => {
-        navigator.clipboard.writeText(JSON.stringify({ [setting.key]: value }, null, 2));
+        navigator.clipboard.writeText(JSON.stringify({ [setting.storageKey]: value }, null, 2));
         handleMenuClose();
     }, [setting, value]);
 

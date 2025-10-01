@@ -72,8 +72,8 @@ export class EditableSettingsRegistry {
                 throw new Error(`Group with key "${groupKey}" does not exist in collection "${collectionKey}".`);
             }
 
-            if (group.settings.some(s => s.key === setting.key)) {
-                throw new Error(`Setting with key "${setting.key}" already exists in group "${groupKey}".`);
+            if (group.settings.some(s => s.storageKey === setting.storageKey)) {
+                throw new Error(`Setting with key "${setting.storageKey}" already exists in group "${groupKey}".`);
             }
 
             group.settings.push(setting);
@@ -82,8 +82,8 @@ export class EditableSettingsRegistry {
             if (!collection.settings) {
                 collection.settings = [];
             }
-            if (collection.settings.some(s => s.key === setting.key)) {
-                throw new Error(`Setting with key "${setting.key}" already exists in collection "${collectionKey}".`);
+            if (collection.settings.some(s => s.storageKey === setting.storageKey)) {
+                throw new Error(`Setting with key "${setting.storageKey}" already exists in collection "${collectionKey}".`);
             }
 
             collection.settings.push(setting);

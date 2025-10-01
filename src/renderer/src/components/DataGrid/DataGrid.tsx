@@ -534,7 +534,7 @@ export const DataGrid = <T extends object>({
     const scrollStopTimer = useRef<number | null>(null);
 
     const fontFamily = mode === "data" ? dataFontFamily : definedFontFamily;
-    const fontSize = Math.max(12, (rowHeight * 0.8 - cellPaddingY * 2));
+    const fontSize = Math.max(10, (rowHeight * 0.8 - cellPaddingY * 2));
 
     useImperativeHandle(ref, () => dataGridActionContext);
 

@@ -10,11 +10,11 @@ export const RangeSetting: React.FC<{
     onClick?: () => void;
     selected?: boolean;
 }> = ({ setting, selected, onClick }) => {
-    const [settingValue, setSettingValue] = useSetting<[number, number] | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<[number, number] | undefined>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<[number, number] | undefined>(settingValue);
 
     React.useEffect(() => {
-        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue));
     }, [settingValue]);
 
     const handleChange = (_e, newValue: number[], activeThumb: number) => {
@@ -57,7 +57,7 @@ export const RangeSetting: React.FC<{
             }}
         >
             <BaseSlider
-                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
+                id={`SettingEditor-${setting.storageGroup}-${setting.storageKey}`}
                 width={calculateWidth(setting)}
                 onChange={handleChange}
                 disableSwap

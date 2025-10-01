@@ -11,11 +11,11 @@ export const TextSetting: React.FC<{
     onClick?: () => void;
     selected?: boolean;
 }> = ({ setting, selected, onClick }) => {
-    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
 
     React.useEffect(() => {
-        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue));
     }, [settingValue]);
 
     return (
@@ -40,7 +40,7 @@ export const TextSetting: React.FC<{
             }}
         >
             <TextareaField
-                id={`SettingEditor-${setting.storageGroup}-${setting.key}`}
+                id={`SettingEditor-${setting.storageGroup}-${setting.storageKey}`}
                 value={value}
                 onChange={(value) => {
                     setValue(value);

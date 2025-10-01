@@ -13,11 +13,11 @@ export const ColorSetting: React.FC<{
 }> = ({ setting, selected, onClick }) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.key, setting.defaultValue);
+    const [settingValue, setSettingValue] = useSetting<string | undefined>(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<string | undefined>(settingValue);
 
     React.useEffect(() => {
-        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue));
+        setValue(settingValue ?? getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue));
     }, [settingValue]);
 
     return (

@@ -188,7 +188,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const [popperVisibilityRef, isPopperVisible] = useVisibleState<HTMLDivElement>();
     const [policyContent, setPolicyContent] = useState<React.ReactNode>(undefined);
     const [refresh, setRefresh] = useState<boolean>(false);
-    const defaultValue = getSettingDefault(setting.storageGroup, setting.key, setting.defaultValue);
+    const defaultValue = getSettingDefault(setting.storageGroup, setting.storageKey, setting.defaultValue);
 
     const getEffectContent = () => {
         const effect = setting.effect?.();
@@ -218,12 +218,12 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     };
 
     const handleCopyPath = () => {
-        navigator.clipboard.writeText(`${setting.storageGroup}/${setting.key}`);
+        navigator.clipboard.writeText(`${setting.storageGroup}/${setting.storageKey}`);
         handleMenuClose();
     };
 
     const handleCopySetting = () => {
-        navigator.clipboard.writeText(JSON.stringify({ [setting.key]: value }, null, 2));
+        navigator.clipboard.writeText(JSON.stringify({ [setting.storageKey]: value }, null, 2));
         handleMenuClose();
     };
 
@@ -331,7 +331,7 @@ const SettingInputControl: React.FC<SettingInputControlOwnProps> = (props) => {
     const isDefault = JSON.stringify(defaultValue) === JSON.stringify(value);
     const isDisabled = disabledControl(setting);
 
-    console.count(`SettingInputControl render: ${setting.key}`);
+    console.count(`SettingInputControl render: ${setting.storageKey}`);
     return (
         <StyledSettingInputControlRoot
             className={clsx(
