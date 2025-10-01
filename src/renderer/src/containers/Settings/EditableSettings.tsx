@@ -66,10 +66,7 @@ const StyledEditableSettingsList = styled(Stack, {
 
 const EditableSettings = (props: EditableSettingsOwnProps) => {
     const { ...other } = props;
-    const [settingsCollections, setSettingsCollections] = React.useState(() => {
-        editableSettingsRegistry.executeRegistrations();
-        return editableSettingsRegistry.getCollections();
-    });
+    const [settingsCollections, setSettingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
 
     return (
         <StyledEditableSettingsRoot
@@ -89,74 +86,6 @@ const EditableSettings = (props: EditableSettingsOwnProps) => {
                         />
                     ))}
                     <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid #eee" }} />
-                    <SettingItem
-                        key="toast.max"
-                        setting={{
-                            type: "number",
-                            storageGroup: "app",
-                            key: "toast.max",
-                            category: "General",
-                            label: "Max Toasts",
-                            description: "Select the maximum number of toasts to display",
-                            min: 1,
-                            max: 10,
-                        }}
-                    />
-                    <SettingItem
-                        key="fontSize"
-                        setting={{
-                            type: "number",
-                            storageGroup: "ui",
-                            key: "fontSize",
-                            category: "UI",
-                            label: "Base Font Size",
-                            description: "Select the base font size for the application",
-                            min: 10,
-                            max: 20,
-                            tags: ["font", "size", "ui"],
-                        }}
-                    />
-                    <SettingItem
-                        key="fontFamily"
-                        setting={{
-                            type: "string",
-                            storageGroup: "ui",
-                            key: "fontFamily",
-                            category: "UI",
-                            label: "Base Font Family",
-                            description: "Select the base font family for the application",
-                            tags: ["font", "ui"],
-                        }}
-                    />
-                    <SettingItem
-                        key="monospaceFontFamily"
-                        setting={{
-                            type: "string",
-                            storageGroup: "ui",
-                            key: "monospaceFontFamily",
-                            category: "UI",
-                            label: "Base Monospace Font Family",
-                            description: "Select the base monospace font family for the application",
-                            tags: ["font", "ui"],
-                        }}
-                    />
-                    <SettingItem
-                        key="theme"
-                        setting={{
-                            type: "select",
-                            storageGroup: "ui",
-                            key: "theme",
-                            category: "UI",
-                            label: "Theme",
-                            description: "Select the application theme.",
-                            tags: ["theme", "ui"],
-                            options: [
-                                { value: "light", label: "Light" },
-                                { value: "dark", label: "Dark" },
-                                { value: "system", label: "System Default" },
-                            ]
-                        }}
-                    />
                     <SettingItem
                         key="some-setting"
                         setting={{

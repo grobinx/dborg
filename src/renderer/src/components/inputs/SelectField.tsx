@@ -68,12 +68,12 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         ...other
     } = props;
 
-    const decorator = useInputDecorator();
     const [open, setOpen] = React.useState(false);
     const [optionDescription, setOptionDescription] = React.useState<FormattedContent>(options?.find(option => option.value === value)?.description || null);
     const anchorRef = React.useRef<HTMLDivElement>(null);
     const menuListRef = React.useRef<HTMLUListElement>(null);
     const [popperBelow, setPopperBelow] = React.useState(false);
+    const [optionsHasDescription, setOptionsHasDescription] = React.useState(false);
     const theme = useTheme();
 
     const handleToggle = () => {
@@ -138,12 +138,15 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             );
         }
 
-        return <></>; // równoważne z "" w poprzedniej wersji
+        return <></>;
     };
 
     React.useEffect(() => {
         if (open) {
-            setPopperBelow(isPopperBelow());
+            const hasDescription = options?.some(option => option.description);
+            setOptionsHasDescription(!!hasDescription);
+            const isBelow = isPopperBelow();
+            setPopperBelow(isBelow);
             setOptionDescription(options?.find(option => option.value === value)?.description || null);
             setTimeout(() => {
                 menuListRef.current?.focus();
@@ -192,7 +195,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     <Popper
                         open={open}
                         anchorEl={anchorRef.current}
-                        placement={popperBelow ? "bottom-start" : "top-start"}
+                        placement={optionsHasDescription ? (popperBelow ? "bottom-start" : "top-start") : "auto"}
                         style={{
                             zIndex: 1300,
                             width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",

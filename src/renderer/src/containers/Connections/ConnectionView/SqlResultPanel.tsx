@@ -416,6 +416,12 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
         };
     }, [tabsItemID, itemID]);
 
+    React.useEffect(() => {
+        if (highlight && tabIsActive) {
+            setHighlight(false); // Usuń kolor, gdy zakładka stanie się aktywna
+        }
+    }, [tabIsActive, highlight]);
+
     return (
         <TabPanelLabel>
             {executing ? (

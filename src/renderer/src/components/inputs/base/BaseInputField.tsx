@@ -35,7 +35,6 @@ const StyledBaseInputField = styled('div', {
 })(() => ({
     display: "flex",
     flexDirection: "column",
-    flexGrow: 1,
     position: "relative",
     minWidth: 0,
     width: "100%",
@@ -308,7 +307,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
-            sx={{ width, maxWidth: width }}
+            sx={{ width }}
         >
             <StyledBaseInputFieldMain
                 className={clsx(

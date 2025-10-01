@@ -499,7 +499,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={arraySelectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="warning"
-                                    width={200}
                                     renderValue={(selected) => (<>
                                         {selected.map((value) => (
                                             <Chip

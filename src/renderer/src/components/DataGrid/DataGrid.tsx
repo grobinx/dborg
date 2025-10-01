@@ -615,7 +615,14 @@ export const DataGrid = <T extends object>({
         // Sortowanie wielokolumnowe
         const sortedColumns = columnsState.current
             .filter(c => c.sortDirection)
-            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            .map(col => ({
+                key: col.key,
+                sortDirection: col.sortDirection!,
+                dataType: col.dataType,
+                summary: col.summary,
+                grouped: groupingColumns.isInGroup(col.key),
+            }));
 
         if (sortedColumns.length) {
             resultSet.sort((a, b) => {
@@ -625,7 +632,7 @@ export const DataGrid = <T extends object>({
                     if (va === vb) continue;
                     const cmp = compareValuesByType(
                         va, vb,
-                        col.summary !== undefined
+                        (col.summary !== undefined && col.grouped)
                             ? (summaryOperationToBaseTypeMap[col.summary] ?? col.dataType)
                             : col.dataType
                     );
