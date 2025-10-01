@@ -10,6 +10,34 @@ interface ColumnsGroup {
     groupData<T extends object>(data: T[], columnsState: ColumnDefinition[]): T[]
 }
 
+// Zamiast createInterners → zbuduj od razu builder klucza bez alokacji tablicy na każdy wiersz
+function createKeyBuilder(keys: string[]) {
+    const dicts = keys.map(() => new Map<any, number>());
+    const nextIds = keys.map(() => 0);
+    const ids = new Array<number>(keys.length); // bufor wielokrotnego użytku
+
+    return (row: any): string => {
+        for (let k = 0; k < keys.length; k++) {
+            const col = keys[k];
+            const dict = dicts[k];
+            const v = row[col];
+            let id = dict.get(v);
+            if (id === undefined) {
+                id = nextIds[k]++;
+                dict.set(v, id);
+            }
+            ids[k] = id;
+        }
+        // szybkie sklejanie bez join (brak alokacji tablicy po drodze)
+        let key = "";
+        for (let k = 0; k < ids.length; k++) {
+            if (k) key += "|";
+            key += ids[k];
+        }
+        return key;
+    };
+}
+
 export const useColumnsGroup = (): ColumnsGroup => {
     const [columns, setColumns] = useState<string[]>([]);
 
@@ -31,23 +59,23 @@ export const useColumnsGroup = (): ColumnsGroup => {
         data: T[],
         columnsState: ColumnDefinition[],
     ): T[] => {
-        if (columns.length === 0 || data.length === 0) {
-            return data;
-        }
+        if (columns.length === 0 || data.length === 0) return data;
 
-        // Użycie Map zamiast obiektu
-        const groupedResultSet = new Map<string, { rows: T[]; summary: Record<string, any> }>();
+        const toKey = createKeyBuilder(columns);
 
-        data.forEach((row) => {
-            // Budowanie klucza grupy raz
-            const groupKey = columns.map((col) => row[col]?.toString() ?? '').join('|');
-
-            if (!groupedResultSet.has(groupKey)) {
-                groupedResultSet.set(groupKey, { rows: [], summary: {} });
-            }
-
-            groupedResultSet.get(groupKey)!.rows.push(row);
-        });
+        const groupedResultSet = data.reduce(
+            (acc, row) => {
+                const groupKey = toKey(row);
+                let bucket = acc.get(groupKey);
+                if (!bucket) {
+                    bucket = { rows: [] as T[], summary: {} as Record<string, any> };
+                    acc.set(groupKey, bucket);
+                }
+                bucket.rows.push(row);
+                return acc;
+            },
+            new Map<string, { rows: T[]; summary: Record<string, any> }>()
+        );
 
         // Oblicz podsumowanie dla każdej grupy w jednej iteracji
         groupedResultSet.forEach((group) => {
