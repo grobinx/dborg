@@ -31,7 +31,7 @@ const StyledConnection = styled(Stack, {
     height: "100%",
 }));
 
-export interface ConnectionProps extends React.ComponentProps<typeof StyledConnection> {
+export interface ConnectionProps extends React.ComponentProps<typeof Stack> {
 }
 
 interface ConnectionsOwnProps extends ConnectionProps {
