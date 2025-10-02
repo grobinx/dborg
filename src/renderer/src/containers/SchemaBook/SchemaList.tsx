@@ -97,7 +97,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         onSelect: (item) => handleConnect(item.sch_id),
     });
 
-    const t_connectionSchema = t("connection-schemas", "Connection schemas");
+    console.count("SchemaList render");
+
+    const t_connectionSchema = t("connection-profiles", "Connection profiles");
 
     const connectionStatus = (data: Schema[] | null): Schema[] | null => {
         if (!data) {
@@ -465,10 +467,12 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                     )}
                                     <ListItem {...slotProps?.item} id={record.sch_id}>
                                         <ListItemButton
-                                            onClick={() => handleConnect(record.sch_id)}
+                                            onClick={() => setSelectedItem(record.sch_id)}
+                                            onDoubleClick={() => handleConnect(record.sch_id)}
                                             {...slotProps?.itemButton}
                                             selected={record.sch_id === selectedItem}
                                             disabled={connecting.includes(record.sch_id)}
+                                            disableRipple
                                         >
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
                                                 {record.driverIcon && <img src={record.driverIcon} />}

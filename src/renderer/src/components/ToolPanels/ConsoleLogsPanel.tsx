@@ -13,7 +13,6 @@ import { create } from "zustand";
 import * as Messages from '../../app/Messages';
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { useMessages } from "@renderer/contexts/MessageContext";
-import { appStatusBarButtons } from "@renderer/app/App";
 import TabsPanel from "../TabsPanel/TabsPanel";
 import TabPanel from "../TabsPanel/TabPanel";
 import { ConsoleLogDetailsButtons, ConsoleLogDetailsContent, ConsoleLogDetailsLabel, ConsoleLogStackTraceButtons, ConsoleLogStackTraceContent, ConsoleLogStackTraceLabel, formatLogDetails, formatTime, StyledConsoleLogDetailsPanel } from "./ConsoleLogTabs";
@@ -23,6 +22,7 @@ import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
 import { IconButton } from "../buttons/IconButton";
 import { SelectField } from "../inputs/SelectField";
+import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 
 interface ConsoleLogState {
     showTime: boolean;

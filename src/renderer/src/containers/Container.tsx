@@ -17,6 +17,7 @@ const ContainerRoot = styled(Box, {
 
 const Container: React.FC<ContainerOwnProps> = (props) => {
     const { className, children, ...other } = useThemeProps({ name: 'Container', props });
+    console.count("Container Render");
     return (
         <ContainerRoot
             {...other}

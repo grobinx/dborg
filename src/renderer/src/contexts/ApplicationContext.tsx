@@ -32,6 +32,7 @@ export interface IContainer {
     type: ContainerType; // Type of container
     icon: React.ReactNode; // Icon for the button, can be a string or a React node
     label: string; // Title of the button
+    tooltip?: string; // Optional tooltip for the button
     section: SidebarSection;
     container?: ({ children }: { children?: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
 }
@@ -43,6 +44,7 @@ export interface IView {
     id: string; // Unique identifier for the view
     icon: React.ReactNode; // Icon for the button, can be a string (theme.icon) or a React node
     label: string; // Title of the button
+    tooltip?: string; // Optional tooltip for the button
 }
 
 // Union type for all view types
@@ -106,27 +108,30 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const initialContainersRef = React.useRef<SpecificContainer[]>([
         {
             id: uuidv7(),
-            type: "new-connection",
-            icon: <theme.icons.NewConnection />,
-            label: t("new-connection", "New Connection"),
+            type: "connections",
+            icon: <theme.icons.Connections />,
+            label: t("sessions", "Sessions"), // było: "Connections"
+            tooltip: t("active-database-sessions", "Active database sessions"),
             section: "first",
-            container: () => <SchemaAssistant />,
+            container: ({ children }) => <Connections>{children}</Connections>,
         },
         {
             id: uuidv7(),
             type: "connection-list",
             icon: <theme.icons.ConnectionList />,
-            label: t("connection-list", "Connection List"),
+            label: t("profiles", "Profiles"), // było: "Lista połączeń"
+            tooltip: t("manage-connection-profiles", "Manage connection profiles"),
             section: "first",
             container: () => <SchemaBook />,
         },
         {
             id: uuidv7(),
-            type: "connections",
-            icon: <theme.icons.Connections />,
-            label: t("connections", "Connections"),
+            type: "new-connection",
+            icon: <theme.icons.NewConnection />,
+            label: t("new", "New"), // było: "Nowe połączenie"
+            tooltip: t("create-new-connection-profile", "Create new connection profile"),
             section: "first",
-            container: ({ children }) => <Connections>{children}</Connections>,
+            container: () => <SchemaAssistant />,
         },
         {
             id: uuidv7(),
@@ -156,7 +161,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             id: uuidv7(),
             type: "settings",
             icon: <theme.icons.Settings />,
-            label: t("settings", "Settings"),
+            label: t("manage", "Manage"),
             section: "last",
             container: ({ children }) => children,
             views: [
@@ -171,14 +176,15 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     type: "rendered",
                     id: "settings",
                     icon: <theme.icons.Settings />,
-                    label: t("application-settings", "Application settings"),
+                    label: t("settings", "Settings"),
                     render: () => <EditableSettings />,
                 },
                 {
                     type: "rendered",
                     id: "developer-options",
                     icon: <theme.icons.Developer />,
-                    label: t("developer-options", "Developer options"),
+                    label: t("developer-options", "Developer"),
+                    tooltip: t("manage-developer-options", "Manage developer options"),
                     render: () => <DeveloperOptions />,
                 },
             ]
@@ -279,7 +285,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     useEffect(() => {
         setContainers(initialContainersRef.current);
-        setSelectedContainer(initialContainersRef.current[1]);
+        // zamiast indeksu – znajdź po typie, żeby nie zależeć od kolejności
+        setSelectedContainer(initialContainersRef.current.find(c => c.type === "connections") || initialContainersRef.current[0]);
     }, []);
 
     useEffect(() => {

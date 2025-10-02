@@ -22,6 +22,7 @@ import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import FocusContainerHandler from '@renderer/components/useful/FocusContainerHandler';
 import AppContainers from './AppContainers';
+import { appStatusBarButtons } from './AppStatusBarRegistry';
 
 const App_toolsTabsPanelVisible = 'App.toolsTabsPanelVisible';
 
@@ -55,14 +56,6 @@ function useWindowDimensions(): Size {
     return windowDimensions;
 }
 
-export const appStatusBarButtons: {
-    static: Map<string, React.FC>;
-    hidden: Map<string, React.FC>;
-} = {
-    static: new Map(),
-    hidden: new Map(),
-};
-
 const App: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -80,6 +73,8 @@ const App: React.FC = () => {
     const menuBarRef = React.useRef<HTMLDivElement>(null);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const sideBarRef = React.useRef<HTMLDivElement>(null);
+
+    console.count("App Render");
 
     React.useEffect(() => {
         window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(toolsTabsPanelVisible));

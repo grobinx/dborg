@@ -1,10 +1,10 @@
 import { useTheme } from "@mui/material";
-import { appStatusBarButtons } from "@renderer/app/App";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { useQueryHistory } from "@renderer/contexts/QueryHistoryContext";
 import { useTranslation } from "react-i18next";
 import * as Messages from '../../app/Messages';
 import { useMessages } from "@renderer/contexts/MessageContext";
+import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 
 const QueryHistoryStatusButton: React.FC = () => {
     const { t } = useTranslation();

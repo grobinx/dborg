@@ -180,6 +180,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             if (headerRef.current) {
                 const headerHeight = headerRef.current.offsetHeight;
                 if (headerHeightRef.current !== headerHeight) {
+                    headerHeightRef.current = headerHeight;
                     setContentHeight(`calc(100% - ${headerHeight}px)`);
                 }
             }

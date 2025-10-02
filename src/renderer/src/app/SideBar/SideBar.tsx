@@ -74,7 +74,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
 
     const renderViewButtons = (views: View[]) => {
         return ([
-            ...views.map(({ id, icon, label }, index) => (
+            ...views.map(({ id, icon, label, tooltip }, index) => (
                 <ViewButton
                     key={id}
                     selected={selectedView?.id === id}
@@ -84,6 +84,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                     expanded={expanded}
                     placement={placement}
                     index={index}
+                    toolTip={tooltip}
                 />
             ))
         ]);
@@ -124,6 +125,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         placement={placement}
                         icon={resolveIcon(theme, container.icon)}
                         label={container.label}
+                        toolTip={container.tooltip}
                     />
                 );
             })}
@@ -148,6 +150,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         placement={placement}
                         icon={resolveIcon(theme, container.icon)}
                         label={container.label}
+                        toolTip={container.tooltip}
                     />
                 );
             })}

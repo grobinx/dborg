@@ -480,6 +480,8 @@ export const DataGrid = <T extends object>({
     const { scrollTop, scrollLeft } = useScrollSync(containerRef, !!loading);
     const [containerHeight, setContainerHeight] = useState(0);
     const [containerWidth, setContainerWidth] = useState(0);
+    const containerWidthRef = useRef(0);
+    const containerHeightRef = useRef(0);
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
     const filterColumns = useColumnFilterState();
     const groupingColumns = useColumnsGroup();
@@ -991,8 +993,14 @@ export const DataGrid = <T extends object>({
         const resizeObserver = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 if (entry.contentRect) {
-                    setContainerHeight(entry.contentRect.height);
-                    setContainerWidth(entry.contentRect.width);
+                    if (containerWidthRef.current !== entry.contentRect.width) {
+                        containerWidthRef.current = entry.contentRect.width;
+                        setContainerWidth(entry.contentRect.width);
+                    }
+                    if (containerHeightRef.current !== entry.contentRect.height) {
+                        containerHeightRef.current = entry.contentRect.height;
+                        setContainerHeight(entry.contentRect.height);
+                    }
                 }
             }
         });

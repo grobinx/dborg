@@ -3,8 +3,8 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { useTheme, Menu, ListItem, ListItemIcon, ListItemText, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { appStatusBarButtons } from "@renderer/app/App";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 
 interface GetMetadataStatus {
     status: "start" | "process" | "error" | "success" | "end";
