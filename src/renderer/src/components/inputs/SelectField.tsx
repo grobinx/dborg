@@ -195,7 +195,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     <Popper
                         open={open}
                         anchorEl={anchorRef.current}
-                        placement={optionsHasDescription ? (popperBelow ? "bottom-start" : "top-start") : "auto"}
+                        placement={optionsHasDescription ? (popperBelow ? "bottom-start" : "top-start") : undefined}
                         style={{
                             zIndex: 1300,
                             width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
