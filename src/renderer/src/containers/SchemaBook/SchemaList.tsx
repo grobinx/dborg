@@ -276,8 +276,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, []);
 
     const handleConnect = React.useCallback((schemaId: string) => {
-        let timeoutId: NodeJS.Timeout;
-
         const connect = async () => {
             const schemaName = data?.find((record) => record.sch_id === schemaId)?.sch_name;
             try {
@@ -292,15 +290,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     }
                 );
             } finally {
-                clearTimeout(timeoutId);
                 setConnecting((prev) => prev.filter((id) => id !== schemaId));
             }
         };
 
-        const delay = 300;
-        timeoutId = setTimeout(() => {
-            setConnecting((prev) => [...prev, schemaId]);
-        }, delay);
+        setConnecting((prev) => [...prev, schemaId]);
 
         connect();
     }, [data, refreshConnectionList, connectionStatus, t_connectionSchema]);
@@ -471,7 +465,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             //onDoubleClick={() => handleConnect(record.sch_id)}
                                             {...slotProps?.itemButton}
                                             selected={record.sch_id === selectedItem}
-                                            disabled={connecting.includes(record.sch_id)}
                                             disableRipple
                                         >
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
@@ -509,6 +502,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                             handleConnect(record.sch_id);
                                                         }}
                                                         color="info"
+                                                        loading={connecting.includes(record.sch_id)}
                                                     >
                                                         <theme.icons.Connected {...slotProps?.icon} />
                                                     </ToolButton>
