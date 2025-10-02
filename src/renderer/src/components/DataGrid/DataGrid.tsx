@@ -22,7 +22,6 @@ import { filterToString, isColumnFilter, useColumnFilterState } from "./useColum
 import Tooltip from "../Tooltip";
 import calculateTextWidth from "@renderer/utils/canvas";
 import clsx from "@renderer/utils/clsx";
-import { flushSync } from "react-dom";
 
 export type DataGridMode = "defined" | "data";
 
