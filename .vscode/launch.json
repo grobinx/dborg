@@ -32,12 +32,41 @@
       "name": "Update consts",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/scripts/updateConsts.js"
+    },
+    {
+      "name": "Dev Main (fast, no renderer debug)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
+      "windows": {
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
+      },
+      "autoAttachChildProcesses": false,
+      "runtimeArgs": [],
+      "env": {}
+    },
+    {
+      "name": "Run dev (npm, no debug)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": false
     }
   ],
   "compounds": [
     {
       "name": "Debug All",
       "configurations": ["Update consts", "Debug Main Process", "Debug Renderer Process"],
+      "presentation": {
+        "order": 2
+      }
+    },
+    {
+      "name": "Run Fast",
+      "configurations": ["Dev Main (fast, no renderer debug)"],
       "presentation": {
         "order": 1
       }
