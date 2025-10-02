@@ -48,7 +48,13 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 }, {}),
                 '& .MuiTypography-root': {
                     padding: "2px 6px",
-                }
+                },
+                "&.disabled": {
+                    cursor: "not-allowed",
+                    opacity: 0.6,
+                    pointerEvents: "none",
+                    backgroundColor: palette.background.sideBar,
+                },
             },
             content: {
                 display: "flex",

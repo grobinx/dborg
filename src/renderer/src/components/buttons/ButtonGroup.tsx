@@ -107,7 +107,7 @@ const StyledButtonGroup = styled('div', {
 
 // Props dla ButtonGroup
 export interface ButtonGroupProps {
-    children?: React.ReactElement<BaseButtonProps> | React.ReactElement<BaseButtonProps>[];
+    children?: React.ReactNode;
     orientation?: 'horizontal' | 'vertical';
     size?: Size;
     color?: ThemeColor;

@@ -35,6 +35,7 @@ export interface IContainer {
     tooltip?: string; // Optional tooltip for the button
     section: SidebarSection;
     container?: ({ children }: { children?: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
+    disabled?: () => boolean; // Optional function to determine if the container is disabled
 }
 
 export type ViewType = "rendered" | "connection" | "custom"; // Define the types of views
@@ -108,12 +109,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const initialContainersRef = React.useRef<SpecificContainer[]>([
         {
             id: uuidv7(),
-            type: "connections",
-            icon: <theme.icons.Connections />,
-            label: t("sessions", "Sessions"), // było: "Connections"
-            tooltip: t("active-database-sessions", "Active database sessions"),
+            type: "new-connection",
+            icon: <theme.icons.NewConnection />,
+            label: t("new", "New"), // było: "Nowe połączenie"
+            tooltip: t("create-new-connection-profile", "Create new connection profile"),
             section: "first",
-            container: ({ children }) => <Connections>{children}</Connections>,
+            container: () => <SchemaAssistant />,
         },
         {
             id: uuidv7(),
@@ -126,12 +127,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         },
         {
             id: uuidv7(),
-            type: "new-connection",
-            icon: <theme.icons.NewConnection />,
-            label: t("new", "New"), // było: "Nowe połączenie"
-            tooltip: t("create-new-connection-profile", "Create new connection profile"),
+            type: "connections",
+            icon: <theme.icons.Connections />,
+            label: t("sessions", "Sessions"), // było: "Connections"
+            tooltip: t("active-database-sessions", "Active database sessions"),
             section: "first",
-            container: () => <SchemaAssistant />,
+            container: ({ children }) => <Connections>{children}</Connections>,
+            disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0)
         },
         {
             id: uuidv7(),
@@ -195,15 +197,27 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [selectedContainer, setSelectedContainer] = useState<SpecificContainer | null>(null);
     const [views, setViews] = useState<View[] | null>(null);
     const [selectedView, setSelectedView] = useState<View | null>(null);
-    const { connections: databaseConnections } = useDatabase();
+    const { initialized: contextInitialized, connections: databaseConnections } = useDatabase();
     const [sessions, setSessions] = React.useState<IDatabaseSession[] | null>(null);
+    const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
     const [selectedSession, setSelectedSession] = React.useState<IDatabaseSession | null>(null);
     const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
     const plugins = usePluginManager();
 
+    const chooseContainer = (list: IDatabaseSession[] | null) => {
+        if (list && list.length) {
+            return initialContainersRef.current.find(c => c.type === "connections") || initialContainersRef.current[0];
+        }
+        return initialContainersRef.current.find(c => c.type === "connection-list") || initialContainersRef.current[0];
+    };
+
     // Initialize the containers and set the default selected container
     // this call is after application init or reset webcontent, so we restore connections from main process
     React.useEffect(() => {
+        if (!contextInitialized) {
+            return;
+        }
+
         databaseConnections.list().then(async (list) => {
             const connectionsList = await Promise.all(list.map(async (conn) => {
                 const newSession = new DatabaseSession(conn);
@@ -211,10 +225,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 initMetadata(newSession);
                 return newSession;
             }));
+            console.log('connectionsList', connectionsList.length);
             setSessions(connectionsList);
             setSelectedSession(connectionsList[connectionsList.length - 1] || null);
+
+            setSelectedContainer(prev => {
+                if (prev) return prev;
+                return chooseContainer(connectionsList);
+            });
         });
-    }, [databaseConnections]);
+    }, [contextInitialized, databaseConnections]);
 
     const updateViewsForSession = React.useCallback((session: IDatabaseSession | null) => {
         if (session) {
@@ -285,8 +305,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     useEffect(() => {
         setContainers(initialContainersRef.current);
-        // zamiast indeksu – znajdź po typie, żeby nie zależeć od kolejności
-        setSelectedContainer(initialContainersRef.current.find(c => c.type === "connections") || initialContainersRef.current[0]);
     }, []);
 
     useEffect(() => {
@@ -305,6 +323,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setSelectedView(null);
         }
     }, [selectedContainer, selectedSession, updateViewsForSession]);
+
+    useEffect(() => {
+        sessionsRef.current = sessions;
+    }, [sessions]);
 
     const handleSwitchContainer = React.useCallback((containerType: ContainerType) => {
         const targetContainer = containers?.find(c => c.type === containerType);
@@ -394,6 +416,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
                 // Zaktualizuj widoki dla nowo wybranej sesji
                 updateViewsForSession(newSelectedSession);
+            }
+
+            if (updatedSessions === null || updatedSessions.length === 0) {
+                setSelectedContainer(chooseContainer(updatedSessions));
             }
 
             return updatedSessions;

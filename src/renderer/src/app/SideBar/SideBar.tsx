@@ -126,6 +126,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         icon={resolveIcon(theme, container.icon)}
                         label={container.label}
                         toolTip={container.tooltip}
+                        disabled={container.disabled ? container.disabled() : false}
                     />
                 );
             })}
@@ -151,6 +152,7 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                         icon={resolveIcon(theme, container.icon)}
                         label={container.label}
                         toolTip={container.tooltip}
+                        disabled={container.disabled ? container.disabled() : false}
                     />
                 );
             })}

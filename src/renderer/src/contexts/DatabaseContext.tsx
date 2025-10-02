@@ -28,6 +28,7 @@ export interface DatabaseInternalContext {
 }
 
 export interface DatabaseContextType {
+    readonly initialized: boolean,
     readonly drivers: DatabaseDriversContext,
     readonly connections: DatabaseConnectionsContext,
     readonly internal: DatabaseInternalContext,
@@ -42,9 +43,10 @@ export interface DatabaseProviderProps {
 export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
     const { children } = props;
     const [driverList, setDriverList] = React.useState<api.DriverInfo[]>([]);
+    const [initialized, setInitialized] = React.useState<boolean>(false);
     const { t } = useTranslation();
 
-    const loadDriverList = async (): Promise<void> => {
+    const loadDriverList = React.useCallback(async (): Promise<void> => {
         window.dborg.database.driver.getDrivers().then((driverList) => {
             for (const driver of driverList) {
                 const driverKey = `${driver.uniqueId}.driver`;
@@ -63,58 +65,64 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
                 }
             }
             setDriverList(driverList);
+            setInitialized(true);
         });
-    };
+    }, []);
 
-    const internalQuery = (sql: string, values?: unknown[]): Promise<api.QueryResult> => {
+    const internalQuery = React.useCallback((sql: string, values?: unknown[]): Promise<api.QueryResult> => {
         return window.dborg.database.internal.query(sql, values ?? []);
-    }
+    }, []);
 
-    const internalExecute = (sql: string, values?: unknown[]): Promise<api.CommandResult> => {
+    const internalExecute = React.useCallback((sql: string, values?: unknown[]): Promise<api.CommandResult> => {
         return window.dborg.database.internal.execute(sql, values ?? []);
-    }
+    }, []);
 
-    const driverConnect = (driverUniqueId: string, properties: api.Properties): Promise<api.ConnectionInfo> => {
+    const driverConnect = React.useCallback((driverUniqueId: string, properties: api.Properties): Promise<api.ConnectionInfo> => {
         return window.dborg.database.driver.connect(driverUniqueId, properties);
-    }
+    }, []);
 
-    const driverFind = (driverUniqueId: string): api.DriverInfo => {
+    const driverFind = React.useCallback((driverUniqueId: string): api.DriverInfo => {
         return driverList.filter(driver => driver.uniqueId === driverUniqueId)[0];
-    }
+    }, [driverList]);
 
-    const connectionClose = (uniqueId: string): Promise<void> => {
+    const connectionClose = React.useCallback((uniqueId: string): Promise<void> => {
         return window.dborg.database.connection.close(uniqueId);
-    }
+    }, []);
 
-    const connectionList = async (): Promise<api.ConnectionInfo[]> => {
+    const connectionList = React.useCallback(async (): Promise<api.ConnectionInfo[]> => {
         const result: api.ConnectionInfo[] = [];
         for (const driver of driverList) {
             result.push(...await window.dborg.database.driver.getConnections(driver.uniqueId));
         }
         return result;
-    }
+    }, [driverList]);
 
-    const connectionGetUserData = (uniqueId: string, property: string): Promise<unknown> => {
+    const connectionGetUserData = React.useCallback((uniqueId: string, property: string): Promise<unknown> => {
         return window.dborg.database.connection.userData.get(uniqueId, property);
-    }
+    }, []);
 
-    const connectionSetUserData = (uniqueId: string, property: string, value: unknown): Promise<void> => {
+    const connectionSetUserData = React.useCallback((uniqueId: string, property: string, value: unknown): Promise<void> => {
         return window.dborg.database.connection.userData.set(uniqueId, property, value);
-    }
+    }, []);
 
-    const connectionStore = (uniqueId: string, sql: string): Promise<api.StatementResult> => {
+    const connectionStore = React.useCallback((uniqueId: string, sql: string): Promise<api.StatementResult> => {
         return window.dborg.database.connection.store(uniqueId, sql);
-    }
+    }, []);
 
-    const connectionQuery = <R extends api.QueryResultRow = api.QueryResultRow>(uniqueId: string, sql: string, values?: unknown[]): Promise<api.QueryResult<R>> => {
+    const connectionQuery = React.useCallback(<R extends api.QueryResultRow = api.QueryResultRow>(uniqueId: string, sql: string, values?: unknown[]): Promise<api.QueryResult<R>> => {
         return window.dborg.database.connection.query<R>(uniqueId, sql, values ?? []);
-    }
+    }, []);
 
-    const connectionExecute = (uniqueId: string, sql: string, values?: unknown[]): Promise<api.CommandResult> => {
+    const connectionExecute = React.useCallback((uniqueId: string, sql: string, values?: unknown[]): Promise<api.CommandResult> => {
         return window.dborg.database.connection.execute(uniqueId, sql, values ?? []);
-    }
+    }, []);
+
+    React.useEffect(() => {
+        loadDriverList();
+    }, []);
 
     const value = {
+        initialized: initialized,
         drivers: {
             list: driverList,
             find: driverFind,
@@ -137,10 +145,6 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
             execute: internalExecute,
         }
     } as DatabaseContextType;
-
-    React.useEffect(() => {
-        loadDriverList();
-    }, []);
 
     return (
         <DatabaseContext.Provider value={value}>

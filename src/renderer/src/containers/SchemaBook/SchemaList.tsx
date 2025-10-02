@@ -468,7 +468,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                     <ListItem {...slotProps?.item} id={record.sch_id}>
                                         <ListItemButton
                                             onClick={() => setSelectedItem(record.sch_id)}
-                                            onDoubleClick={() => handleConnect(record.sch_id)}
+                                            //onDoubleClick={() => handleConnect(record.sch_id)}
                                             {...slotProps?.itemButton}
                                             selected={record.sch_id === selectedItem}
                                             disabled={connecting.includes(record.sch_id)}
@@ -486,6 +486,34 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, search, theme)}</span>}
                                                 secondary={renderSecondaryText(record)}
                                             />
+                                            <ButtonGroup className="actions">
+                                                {((record.connected ?? 0) > 0) && (
+                                                    <Tooltip title={t("disconnect", "Disconnect from database")}>
+                                                        <ToolButton
+                                                            className="connect"
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                //handleDisconnect(record.sch_id);
+                                                            }}
+                                                            color="info"
+                                                        >
+                                                            <theme.icons.Disconnected {...slotProps?.icon} />
+                                                        </ToolButton>
+                                                    </Tooltip>
+                                                )}
+                                                <Tooltip title={t("connect", "Connect to database")}>
+                                                    <ToolButton
+                                                        className="connect"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleConnect(record.sch_id);
+                                                        }}
+                                                        color="info"
+                                                    >
+                                                        <theme.icons.Connected {...slotProps?.icon} />
+                                                    </ToolButton>
+                                                </Tooltip>
+                                            </ButtonGroup>
                                             <ButtonGroup className="actions">
                                                 <Tooltip title={t("text-connection", "Test connection")}>
                                                     <ToolButton
