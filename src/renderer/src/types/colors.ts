@@ -14,7 +14,8 @@ export type ThemeColor =
     /** Kolor informacji */
     | 'info'
     /** Kolor sukcesu */
-    | 'success';
+    | 'success'
+    ;
 
 export const themeColors: ThemeColor[] = [
     'main',

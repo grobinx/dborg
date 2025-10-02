@@ -90,6 +90,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { addToast } = useToast();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
+    const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
     const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation<Schema>({
         items: displayData ?? [],
@@ -297,7 +298,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         setConnecting((prev) => [...prev, schemaId]);
 
         connect();
-    }, [data, refreshConnectionList, connectionStatus, t_connectionSchema]);
+    }, [data, t_connectionSchema]);
+
+    const handleDisconnectAll = React.useCallback(async (schemaId: string) => {
+        setDisconnecting((prev) => [...prev, schemaId]);
+        try {
+        await sendMessage(Messages.SCHEMA_DISCONNECT_ALL, schemaId);
+        } finally {
+            setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
+        }
+    }, []);
 
     const handleConnectSuccess = React.useCallback((connection: ConnectionInfo) => {
         if (connection) {
@@ -481,14 +491,20 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             />
                                             <ButtonGroup className="actions">
                                                 {((record.connected ?? 0) > 0) && (
-                                                    <Tooltip title={t("disconnect", "Disconnect from database")}>
+                                                    <Tooltip
+                                                        title={
+                                                            (record.connected ?? 0) > 1 ?
+                                                                t("disconnect-multiple", "Disconnect all connections to database")
+                                                                : t("disconnect", "Disconnect from database")}
+                                                    >
                                                         <ToolButton
-                                                            className="connect"
+                                                            className="disconnect"
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
-                                                                //handleDisconnect(record.sch_id);
+                                                                handleDisconnectAll(record.sch_id);
                                                             }}
                                                             color="info"
+                                                            loading={disconnecting.includes(record.sch_id)}
                                                         >
                                                             <theme.icons.Disconnected {...slotProps?.icon} />
                                                         </ToolButton>

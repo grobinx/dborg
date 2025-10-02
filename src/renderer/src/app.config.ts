@@ -161,7 +161,7 @@ editableSettingsRegistry.register((context) => {
                     key: 'defined-grid',
                     title: t('settings.defined-grid', 'Defined grid'),
                     description: t(
-                        'settings.defined-grid-description', 
+                        'settings.defined-grid-description',
                         'Settings for the defined grid display. Defined grid is the grid with predefined columns, like in table list or foreign keys.'
                     ),
                     settings: [
@@ -212,13 +212,8 @@ editableSettingsRegistry.register((context) => {
                     ],
                 },
             ],
-        }],
-    });
-    context.registerCollection({
-        key: 'typography',
-        title: t('typography-settings', 'Typography Settings'),
-        description: t('typography-settings-description', 'Settings related to typography, including font size and family.'),
-        groups: [{
+        },
+        {
             key: 'font',
             title: t('font-settings', 'Font Settings'),
             description: t('font-settings-description', 'Settings for font size and family.'),

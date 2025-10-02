@@ -88,7 +88,7 @@ const SchemaConnectionManager: React.FC = () => {
     const reloadSchemas = useCallback(async () => {
         setSchemasLoaded(false); // Zresetuj flagę załadowania
         await fetchSchemas(); // Ponownie załaduj schematy
-        queueMessage(Messages.RELOAD_SCHEMAS_SUCCESS); 
+        queueMessage(Messages.RELOAD_SCHEMAS_SUCCESS);
     }, [fetchSchemas]);
 
     const passwordPrompt = useCallback(async (
@@ -108,7 +108,7 @@ const SchemaConnectionManager: React.FC = () => {
         const existingConnection = (await connections.list()).find(
             (conn) => (conn.userData?.schema as SchemaRecord)?.sch_id === schemaId
         );
-    
+
         if (existingConnection) {
             const confirm = await dialogs.confirm(
                 t(
@@ -125,7 +125,7 @@ const SchemaConnectionManager: React.FC = () => {
             );
             return confirm; // Zwraca true, jeśli użytkownik potwierdził, false w przeciwnym razie
         }
-    
+
         return true; // Brak istniejącego połączenia, można kontynuować
     }, [connections, dialogs, t]);
 
@@ -174,6 +174,16 @@ const SchemaConnectionManager: React.FC = () => {
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         await connections.close(uniqueId);
         queueMessage(Messages.SCHEMA_DISCONNECT_SUCCESS, uniqueId);
+    }, [connections]);
+
+    const disconnectFromAllDatabases = useCallback(async (schemaId: string) => {
+        const allConnections = (await connections.list()).filter(
+            (conn) => (conn.userData?.schema as SchemaRecord)?.sch_id === schemaId
+        );
+        for (const conn of allConnections) {
+            await connections.close(conn.uniqueId);
+            queueMessage(Messages.SCHEMA_DISCONNECT_SUCCESS, conn.uniqueId);
+        }
     }, [connections]);
 
     const testConnection = useCallback(async (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => {
@@ -358,7 +368,7 @@ const SchemaConnectionManager: React.FC = () => {
         subscribe(Messages.SCHEMA_UPDATE, updateSchema);
         subscribe(Messages.RELOAD_SCHEMAS, reloadSchemas);
         subscribe(Messages.SCHEMA_DISCONNECT, disconnectFromDatabase);
-        
+        subscribe(Messages.SCHEMA_DISCONNECT_ALL, disconnectFromAllDatabases);
 
         return () => {
             unsubscribe(Messages.SCHEMA_TEST_CONNECTION, testConnection);
@@ -370,19 +380,21 @@ const SchemaConnectionManager: React.FC = () => {
             unsubscribe(Messages.SCHEMA_UPDATE, updateSchema);
             unsubscribe(Messages.RELOAD_SCHEMAS, reloadSchemas);
             unsubscribe(Messages.SCHEMA_DISCONNECT, disconnectFromDatabase);
+            unsubscribe(Messages.SCHEMA_DISCONNECT_ALL, disconnectFromAllDatabases);
         };
     }, [
-        subscribe, 
-        unsubscribe, 
-        testConnection, 
-        connectToDatabase, 
-        fetchSchema, 
-        fetchSchemas, 
-        deleteSchema, 
-        createSchema, 
-        updateSchema, 
-        reloadSchemas, 
-        disconnectFromDatabase
+        subscribe,
+        unsubscribe,
+        testConnection,
+        connectToDatabase,
+        fetchSchema,
+        fetchSchemas,
+        deleteSchema,
+        createSchema,
+        updateSchema,
+        reloadSchemas,
+        disconnectFromDatabase,
+        disconnectFromAllDatabases,
     ]);
 
     return <></>;

@@ -30,9 +30,9 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 border: `1px solid ${palette.divider}`,
 
                 "&.disabled": {
-                    cursor: "not-allowed",
                     opacity: 0.6,
                     pointerEvents: "none",
+                    cursor: "not-allowed",
                 },
 
                 "&.selected": {

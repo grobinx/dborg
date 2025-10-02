@@ -13,7 +13,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 },
                 item: {
                     sx: {
-                        paddingY: 4,
+                        paddingY: 2,
                         '& .status': {
                             marginRight: 12,
                             fontSize: "1.2em",

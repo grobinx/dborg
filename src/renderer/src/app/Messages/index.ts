@@ -164,6 +164,12 @@ export const SCHEMA_CONNECT_CANCEL = "schema-connect-cancel";
  * @param connectionUniqueId The unique ID of the connection to disconnect from.
  */
 export const SCHEMA_DISCONNECT = "schema-disconnect";
+
+/**
+ * Disconnect from all connections to a database.
+ * @param schemaId The ID of the schema to disconnect all connections from.
+ */
+export const SCHEMA_DISCONNECT_ALL = "schema-disconnect-all";
 /**
  * Disconnect from a database successfully.
  * @param connectionUniqueId The unique ID of the connection that was disconnected.
