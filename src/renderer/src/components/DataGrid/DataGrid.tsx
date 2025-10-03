@@ -545,10 +545,6 @@ export const DataGrid = <T extends object>({
     }, [mode, data_colors_enabled, defined_colors_enabled]);
 
     useEffect(() => {
-        selectedCellRef.current = selectedCell;
-    }, [selectedCell]);
-
-    useEffect(() => {
         setFontSize(settingFontSize);
     }, [settingFontSize]);
 
@@ -742,13 +738,19 @@ export const DataGrid = <T extends object>({
     const updateSelectedCell = React.useCallback((cell: TableCellPosition | null) => {
         console.debug("DataGrid update selected cell", cell);
         if (!cell) {
-            if (selectedCellRef.current !== null) setSelectedCell(null);
+            if (selectedCellRef.current !== null) {
+                setSelectedCell(null);
+                selectedCellRef.current = null;
+            }
             return;
         }
         const maxRow = filteredDataState.length - 1;
         const maxCol = columnsState.current.length - 1;
         if (maxRow < 0 || maxCol < 0) {
-            if (selectedCellRef.current !== null) setSelectedCell(null);
+            if (selectedCellRef.current !== null) {
+                setSelectedCell(null);
+                selectedCellRef.current = null;
+            }
             return;
         }
         const row = Math.max(0, Math.min(cell.row, maxRow));
@@ -760,6 +762,7 @@ export const DataGrid = <T extends object>({
         const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
+            selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
                     scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
