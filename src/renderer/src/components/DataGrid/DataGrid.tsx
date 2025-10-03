@@ -549,7 +549,7 @@ export const DataGrid = <T extends object>({
     }, [settingFontSize]);
 
     const rowHeight = useMemo(() => {
-        return (fontSize * 1.3) + cellPaddingY * 2;
+        return Math.round((fontSize * 1.3) + cellPaddingY * 2);
     }, [fontSize, cellPaddingY]);
 
     useEffect(() => {
@@ -1428,7 +1428,7 @@ export const DataGrid = <T extends object>({
                                             null_value,
                                             { maxLength: displayMaxLengh }
                                         );
-                                        if (!isScrolling && typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
+                                        if (typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
                                             formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
                                         }
                                     } catch {
