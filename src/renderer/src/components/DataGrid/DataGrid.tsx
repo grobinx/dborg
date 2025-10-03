@@ -1217,10 +1217,10 @@ export const DataGrid = <T extends object>({
                     <div
                         style={{
                             position: "relative",
-                            top: rowHeight + -scrollTop,
+                            top: rowHeight - scrollTop,
                         }}
                     >
-                        {filteredDataState.slice(overscanFrom, overscanTo).map((_, localIndex) => {
+                        {Array.from({ length: overscanTo - overscanFrom }, (_, localIndex) => {
                             const absoluteRowIndex = overscanFrom + localIndex;
                             return (
                                 <StyledRowNumberCell
@@ -1384,8 +1384,9 @@ export const DataGrid = <T extends object>({
                     className={clsx("DataGrid-rowsContainer", classes)}
                     onMouseDown={onRowsContainerMouseDown} // delegacja
                 >
-                    {filteredDataState.slice(overscanFrom, overscanTo).map((row, localRowIndex) => {
+                    {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
+                        const row = filteredDataState[absoluteRowIndex];
                         const isRowActive = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
 
