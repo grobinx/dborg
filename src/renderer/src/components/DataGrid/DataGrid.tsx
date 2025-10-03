@@ -1190,7 +1190,7 @@ export const DataGrid = <T extends object>({
         }, 10);
     }
 
-    const content = (
+    return (
         <StyledTable
             className={clsx("DataGrid-table", classes)}
             style={{
@@ -1224,7 +1224,7 @@ export const DataGrid = <T extends object>({
                             const absoluteRowIndex = overscanFrom + localIndex;
                             return (
                                 <StyledRowNumberCell
-                                    key={absoluteRowIndex}
+                                    key={localIndex}
                                     className={clsx(
                                         `DataGrid-rowNumberCell`,
                                         selectedRows.includes(absoluteRowIndex) && 'selected',
@@ -1400,7 +1400,7 @@ export const DataGrid = <T extends object>({
                                     mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
                                 )}
                                 style={{
-                                    transform: `translate3d(0, ${absoluteRowIndex * rowHeight}px, 0)`, // zamiast top
+                                    top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
                                 }}
                             >
@@ -1436,7 +1436,6 @@ export const DataGrid = <T extends object>({
                                         styleDataType = "error";
                                     }
 
-                                    const left = columnsState.columnLeft(absoluteColIndex);
                                     return (
                                         <StyledCell
                                             key={vcIndex}
@@ -1454,7 +1453,7 @@ export const DataGrid = <T extends object>({
                                             )}
                                             style={{
                                                 width: col.width || 150,
-                                                transform: `translate3d(${left}px, 0, 0)`, // zamiast left
+                                                left: columnsState.columnLeft(absoluteColIndex),
                                             }}
                                         >
                                             {formattedValue}
@@ -1542,6 +1541,4 @@ export const DataGrid = <T extends object>({
             </StyledTableContainer>
         </StyledTable>
     );
-
-    return content;
 };
