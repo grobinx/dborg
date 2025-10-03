@@ -447,7 +447,6 @@ const StyledLabel = styled('span', {
 export const DataGrid = <T extends object>({
     columns,
     data,
-    rowHeight: initialRowHeight = 20,
     mode = "defined",
     columnsResizable = true,
     overscanRowCount = 2,
@@ -474,7 +473,6 @@ export const DataGrid = <T extends object>({
     const [data_colors_enabled] = useSetting<boolean>("dborg", "data_grid.data.colors_enabled");
     const [defined_colors_enabled] = useSetting<boolean>("dborg", "data_grid.defined.colors_enabled");
     const [active_highlight] = useSetting<boolean>("dborg", "data_grid.active_highlight");
-    const [rowHeight, setRowHeight] = useState(initialRowHeight);
     const [dataState, setDataState] = useState<T[] | null>(null);
     const searchState = useSearchState();
     const { scrollTop, scrollLeft } = useScrollSync(containerRef, !!loading);
@@ -527,15 +525,13 @@ export const DataGrid = <T extends object>({
     const previousStatusRef = useRef<DataGridStatus | null>(null);
     const previousStatusStringRef = useRef<string | null>(null);
     const { selectedRows, toggleRowSelection, setSelectedRows } = useRowSelection();
-    const [definedFontFamily] = useSetting("ui", "fontFamily");
-    const [dataFontFamily] = useSetting("ui", "monospaceFontFamily");
+    const [fontFamily] = useSetting("ui", mode === "data" ? "monospaceFontFamily" : "fontFamily");
+    const [settingFontSize] = useSetting<number>("dborg", mode === "data" ? "data_grid.data.font_size" : "data_grid.defined.font_size");
     const [userData, setUserData] = useState<Record<string, any>>({});
     const columnsRef = useRef<ColumnDefinition[]>(columns);
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollStopTimer = useRef<number | null>(null);
-
-    const fontFamily = mode === "data" ? dataFontFamily : definedFontFamily;
-    const fontSize = Math.max(10, (rowHeight * 0.8 - cellPaddingY * 2));
+    const [fontSize, setFontSize] = useState(settingFontSize);
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
@@ -551,6 +547,14 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         selectedCellRef.current = selectedCell;
     }, [selectedCell]);
+
+    useEffect(() => {
+        setFontSize(settingFontSize);
+    }, [settingFontSize]);
+
+    const rowHeight = useMemo(() => {
+        return (fontSize * 1.3) + cellPaddingY * 2;
+    }, [fontSize, cellPaddingY]);
 
     useEffect(() => {
         console.debug("DataGrid mounted");
@@ -824,9 +828,9 @@ export const DataGrid = <T extends object>({
         setPosition: ({ row, column }) => {
             updateSelectedCell({ row, column });
         },
-        getRowHeight: () => rowHeight,
-        setRowHeight: (height) => {
-            setRowHeight(height); // Funkcja do zmiany rowHeight
+        getFontSize: () => fontSize,
+        setFontSize: (height) => {
+            setFontSize(height); // Funkcja do zmiany fontSize
             if (containerRef.current && selectedCell) {
                 const { row, column } = selectedCell;
                 scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized);
@@ -1027,7 +1031,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.DecreaseColumnWidth());
             actionManager.current.registerAction(actions.MoveColumnToEnd());
             actionManager.current.registerAction(actions.MoveColumnFromEnd());
-            actionManager.current.registerAction(actions.ResetFontSize(initialRowHeight));
+            actionManager.current.registerAction(actions.ResetFontSize(settingFontSize));
             actionManager.current.registerAction(actions.CopyValueToClipboard());
             actionManager.current.registerAction(actions.GeneralReset());
             actionManager.current.registerAction(actions.SearchReset());

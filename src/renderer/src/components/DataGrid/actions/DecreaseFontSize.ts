@@ -2,15 +2,16 @@ import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionMana
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const ResetFontSize = (initialRowHeight: number): ActionDescriptor<DataGridActionContext<any>> => {
+export const DecreaseFontSize = (): ActionDescriptor<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
-    const id = "dataGrid.actions.resetFontSize";
+    const id = "dataGrid.actions.decreaseFontSize";
 
     return {
         id: id,
-        label: t(id, "Reset font size"),
+        label: t(id, "Decrease font size"),
         run: (context) => {
-            context.setRowHeight(initialRowHeight);
+            const newHeight = Math.max(context.getFontSize() - 2, 10);
+            context.setFontSize(newHeight);
         },
     };
 }

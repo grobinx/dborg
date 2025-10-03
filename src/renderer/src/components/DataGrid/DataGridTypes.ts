@@ -189,8 +189,8 @@ export interface DataGridActionContext<T extends object> {
     getPosition: () => TableCellPosition | null;
     setPosition: (position: TableCellPosition) => void;
     getValue: () => any | null;
-    getRowHeight: () => number;
-    setRowHeight: (height: number) => void;
+    getFontSize: () => number;
+    setFontSize: (height: number) => void;
     getColumnWidth: () => number | null;
     setColumnWidth: (newWidth: number) => void;
     getVisibleRows: () => { start: number; end: number };
