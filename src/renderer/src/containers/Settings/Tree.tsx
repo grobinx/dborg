@@ -2,7 +2,7 @@ import { FormattedContentItem, FormattedText } from '@renderer/components/useful
 import React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import clsx from '@renderer/utils/clsx';
-import Collapse from '@mui/material/Collapse'; // Importuj Collapse
+import Collapse from '@mui/material/Collapse';
 
 export interface TreeNode {
     key: string;
@@ -11,15 +11,18 @@ export interface TreeNode {
 }
 
 interface TreeProps {
+    autoExpand?: number | boolean; // Dodano obsługę autoExpand
     data: TreeNode[];
     onSelect: (key: string) => void;
 }
 
 // Styled components
 const StyledTree = styled('div', { name: 'Tree', slot: 'root' })({
+    transition: "all 0.2s ease-in-out",
 });
 
 const StyledTreeNode = styled('div', { name: 'Tree', slot: 'node' })(({ theme }) => ({
+    transition: "all 0.2s ease-in-out",
     display: 'flex',
     alignItems: 'center',
     cursor: 'pointer',
@@ -54,9 +57,7 @@ const TreeNode: React.FC<React.PropsWithChildren<{
         >
             <div style={{ width: '1.5em' }}>
                 {toggle && (
-                    isOpen ?
-                        <theme.icons.ExpandMore />
-                        : <theme.icons.ChevronRight />
+                    isOpen ? <theme.icons.ExpandMore /> : <theme.icons.ChevronRight />
                 )}
             </div>
             {children}
@@ -64,15 +65,42 @@ const TreeNode: React.FC<React.PropsWithChildren<{
     );
 };
 
-const Tree: React.FC<TreeProps> = ({ data, onSelect }) => {
+const Tree: React.FC<TreeProps> = ({ data, onSelect, autoExpand }) => {
     const [selected, setSelected] = React.useState<string | null>(null);
-    const [openNodes, setOpenNodes] = React.useState<string[]>([]);
 
-    const toggleNode = (key: string) => {
+    const expandLevel = (level?: number | boolean) => {
+        // Inicjalizuj openNodes na podstawie autoExpand
+        if (level === true) {
+            return data.map(node => node.key); // Rozwiń wszystkie węzły
+        } else if (typeof level === 'number') {
+            const expandKeys: string[] = [];
+            const expandLevel = level;
+
+            const expandNodes = (nodes: TreeNode[], level: number) => {
+                if (level > expandLevel) return;
+                nodes.forEach(node => {
+                    expandKeys.push(node.key);
+                    if (node.children && node.children.length > 0) {
+                        expandNodes(node.children, level + 1);
+                    }
+                });
+            };
+
+            expandNodes(data, 1);
+            return expandKeys; // Rozwiń węzły do określonego poziomu
+        }
+        return []; // Domyślnie nie rozwijaj żadnych węzłów
+    };
+
+    const [openNodes, setOpenNodes] = React.useState<string[]>(() => {
+        return expandLevel(autoExpand);
+    });
+
+    const toggleNode = React.useCallback((key: string) => {
         setOpenNodes(prev =>
             prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
         );
-    };
+    }, []);
 
     const renderTreeNodes = (nodes: TreeNode[], level: number = 0) => {
         return nodes.map(node => {
@@ -94,11 +122,12 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect }) => {
                     >
                         <FormattedText text={node.title} />
                     </TreeNode>
-                    <Collapse in={isOpen} unmountOnExit>
-                        {node.children && node.children.length > 0 && (
-                            renderTreeNodes(node.children, level + 1)
-                        )}
-                    </Collapse>
+
+                    {node.children && node.children.length > 0 && (
+                        <Collapse in={isOpen} unmountOnExit>
+                            {renderTreeNodes(node.children, level + 1)}
+                        </Collapse>
+                    )}
                 </React.Fragment>
             );
         });

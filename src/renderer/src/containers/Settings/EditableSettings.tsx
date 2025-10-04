@@ -93,7 +93,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
                     <Box sx={{ width: '100%', flexShrink: 0, padding: 8 }}>
-                        <Tree data={treeData} onSelect={handleSelect} />
+                        <Tree data={treeData} onSelect={handleSelect} autoExpand={1} />
                     </Box>
                 </SplitPanel>
                 <Splitter />
