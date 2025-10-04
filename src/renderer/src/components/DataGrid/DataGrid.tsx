@@ -1029,7 +1029,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.SearchReset());
             actionManager.current.registerAction(actions.AdjustWidthToData());
             actionManager.current.registerAction(actions.SwitchColumnSort());
-            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());
+            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn(!settingRowNumberColumn));
             actionManager.current.registerAction(actions.ResetColumnsLayout());
             actionManager.current.registerAction(actions.ToggleShowHiddenColumns());
             actionManager.current.registerAction(actions.ToggleHideColumn());
