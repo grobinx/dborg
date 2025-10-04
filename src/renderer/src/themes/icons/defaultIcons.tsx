@@ -121,6 +121,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             CheckBoxChecked: (props) => <IconWrapper {...props} className="checkbox-checked"><MuiIcons.CheckBox fontSize="inherit" /></IconWrapper>,
             CheckBoxIndeterminate: (props) => <IconWrapper {...props} className="checkbox-indeterminate"><MuiIcons.IndeterminateCheckBoxOutlined fontSize="inherit" /></IconWrapper>,
             Add: (props) => <IconWrapper {...props} className="add"><MuiIcons.Add fontSize="inherit" /></IconWrapper>,
+            ChevronRight: (props) => <IconWrapper {...props} className="chevron-right"><MuiIcons.ChevronRight fontSize="inherit" /></IconWrapper>,
+            ChevronLeft: (props) => <IconWrapper {...props} className="chevron-left"><MuiIcons.ChevronLeft fontSize="inherit" /></IconWrapper>,
         }
     }
 }

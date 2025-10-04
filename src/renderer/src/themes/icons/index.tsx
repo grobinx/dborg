@@ -27,9 +27,9 @@ const StyledIconWrapper = styled('span', {
 }));
 
 export function IconWrapper(props: IconWrapperOwnProps): React.ReactElement<IconWrapperOwnProps> {
-    const { className, color } = useThemeProps({ name: 'IconWrapper', props });
+    const { className, color, sx, style } = useThemeProps({ name: 'IconWrapper', props });
     return (
-        <StyledIconWrapper color={color} className={(className ?? "") + " IconWrapper-root"}>
+        <StyledIconWrapper color={color} className={(className ?? "") + " IconWrapper-root"} sx={sx} style={style}>
             {props.children}
         </StyledIconWrapper>
     );
@@ -155,6 +155,8 @@ export interface ThemeIcons {
     CheckBoxChecked: IconWrapperFC;
     CheckBoxIndeterminate: IconWrapperFC;
     Add: IconWrapperFC;
+    ChevronRight: IconWrapperFC;
+    ChevronLeft: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {
