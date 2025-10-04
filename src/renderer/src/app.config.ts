@@ -55,6 +55,8 @@ export const default_settings: ApplicationSettings = {
         "data_grid.active_highlight": data_grid_active_highlight,
         "data_grid.data.font_size": data_grid_data_font_size,
         "data_grid.defined.font_size": data_grid_defined_font_size,
+        "data_grid.data.row_number_column": true,
+        "data_grid.defined.row_number_column": false,
     },
     ui: {
         theme: 'system',
@@ -155,6 +157,14 @@ editableSettingsRegistry.register((context) => {
                             max: 24,
                             step: 1,
                         },
+                        {
+                            type: 'boolean',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.data.row_number_column',
+                            category: t('behavior', 'Behavior'),
+                            label: t('settings.show-row-numbers', 'Show row numbers column'),
+                            description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
+                        },
                     ],
                 },
                 {
@@ -183,6 +193,14 @@ editableSettingsRegistry.register((context) => {
                             min: 10,
                             max: 24,
                             step: 1,
+                        },
+                        {
+                            type: 'boolean',
+                            storageGroup: 'dborg',
+                            storageKey: 'data_grid.defined.row_number_column',
+                            category: t('behavior', 'Behavior'),
+                            label: t('settings.show-row-numbers', 'Show row numbers column'),
+                            description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
                         },
                     ],
                 },

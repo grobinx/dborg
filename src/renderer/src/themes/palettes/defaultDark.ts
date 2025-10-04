@@ -18,7 +18,7 @@ const theme = createTheme({
                 header: darken(colors.teal[900], 0.2),
                 container: darken(colors.blueGrey[900], 0.2),
                 footer: colors.brown[900],
-                selected: alpha(colors.amber[100], 0.2),
+                selected: darken(colors.lime[900], 0.5),
             },
             tooltip: darken(colors.blueGrey[900], 0.2),
         },

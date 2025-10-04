@@ -1,6 +1,7 @@
 import { alpha, lighten, createTheme } from "@mui/material/styles";
 import { createPaletteColor } from "../../utils/colors";
 import { colors } from "@mui/material";
+import { light } from "@mui/material/styles/createPalette";
 
 // Użyj createTheme zamiast createPalette
 const theme = createTheme({
@@ -19,7 +20,7 @@ const theme = createTheme({
                 header: colors.green[200],
                 container: lighten(colors.blueGrey[50], 0.6),
                 footer: colors.brown[100],
-                selected: alpha(colors.amber[900], 0.2),
+                selected: colors.amber[100],
             },
             tooltip: colors.blueGrey[800],
         },

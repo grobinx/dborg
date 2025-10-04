@@ -1,27 +1,26 @@
-import React, { useRef, useState, useEffect, useImperativeHandle, useMemo, useLayoutEffect } from "react"; // Dodaj import useMemo
 import { alpha, darken, lighten, styled, useTheme } from "@mui/material";
-import { CommandManager } from "../CommandPalette/CommandManager";
-import { ActionManager } from "../CommandPalette/ActionManager";
-import CommandPalette from "../CommandPalette/CommandPalette";
-import * as actions from "./actions";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, SummaryOperation, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { useSetting } from "@renderer/contexts/SettingsContext";
-import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
-import { createDataGridCommands } from "./DataGridCommands";
-import { highlightText } from "../CommandPalette/CommandPalette"; // Import funkcji highlightText
-import LoadingOverlay from "../useful/LoadingOverlay";
-import useRowSelection from "./useRowSelection";
-import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
-import { useSearchState } from "@renderer/hooks/useSearchState";
-import { useScrollSync } from "@renderer/hooks/useScrollSync";
 import { useFocus } from "@renderer/hooks/useFocus";
-import { useTranslation } from "react-i18next";
-import { ColumnBaseType, columnBaseTypes, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
-import { useColumnsGroup } from "./useColumnsGroup";
-import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
-import Tooltip from "../Tooltip";
+import { useScrollSync } from "@renderer/hooks/useScrollSync";
+import { useSearchState } from "@renderer/hooks/useSearchState";
 import calculateTextWidth from "@renderer/utils/canvas";
 import clsx from "@renderer/utils/clsx";
+import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"; // Dodaj import useMemo
+import { useTranslation } from "react-i18next";
+import { ColumnBaseType, columnBaseTypes, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { ActionManager } from "../CommandPalette/ActionManager";
+import { CommandManager } from "../CommandPalette/CommandManager";
+import CommandPalette, { highlightText } from "../CommandPalette/CommandPalette";
+import Tooltip from "../Tooltip";
+import LoadingOverlay from "../useful/LoadingOverlay";
+import * as actions from "./actions";
+import { createDataGridCommands } from "./DataGridCommands";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
+import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
+import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
+import { useColumnsGroup } from "./useColumnsGroup";
+import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
+import useRowSelection from "./useRowSelection";
 
 export type DataGridMode = "defined" | "data";
 
@@ -126,7 +125,6 @@ const StyledHeader = styled('div', {
 const StyledHeaderCell = styled('div', {
     name: "DataGrid",
     slot: "headerCell",
-    shouldForwardProp: (prop) => prop !== 'paddingX' && prop !== 'paddingY',
 })<{}>(
     ({ theme }) => ({
         fontWeight: "bold",
@@ -143,8 +141,8 @@ const StyledHeaderCell = styled('div', {
         alignContent: "center",
         borderRadius: 0, // Ustawienie zaokrąglenia na 0
         alignItems: "center",
-        "&:not(:first-of-type)": {
-            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        "&:not(:last-of-type)": {
+            borderRight: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
         },
         "& .resize-handle": {
             position: "absolute",
@@ -157,6 +155,9 @@ const StyledHeaderCell = styled('div', {
         },
         '&.active-column': {
             backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        },
+        '&.row-number-cell': {
+            backgroundColor: theme.palette.background.table.container,
         },
     })
 );
@@ -277,8 +278,8 @@ const StyledCell = styled("div", {
         "&.align-center": {
             textAlign: "center",
         },
-        "&:not(:first-of-type)": {
-            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        "&:not(:last-of-type)": {
+            borderRight: `1px solid ${theme.palette.divider}`, // Dodanie prawego borderu z wyjątkiem ostatniego
         },
         "&:hover": {
             backgroundColor: theme.palette.action.hover, // Efekt hover
@@ -296,6 +297,18 @@ const StyledCell = styled("div", {
         "&.focused": {
             outline: `2px solid ${theme.palette.primary.main}`,
             outlineOffset: -2,
+        },
+        '&.row-number-cell': {
+            backgroundColor: theme.palette.background.table.container,
+            '.selected &': {
+                backgroundColor: theme.palette.background.table.selected,
+            },
+            fontWeight: "bold",
+            borderBottom: `1px solid ${theme.palette.divider}`,
+        },
+        borderBottom: `1px solid transparent`,
+        '.selected &': {
+            borderBottom: `1px solid ${theme.palette.divider}`,
         },
     })
 );
@@ -334,8 +347,8 @@ const StyledFooterCell = styled('div', {
         flexDirection: "column",
         textAlign: "center",
         color: "gray",
-        "&:not(:first-of-type)": {
-            borderLeft: `1px solid ${theme.palette.divider}`, // Dodanie lewego borderu z wyjątkiem pierwszego
+        "&:not(:last-of-type)": {
+            borderRight: `1px solid ${theme.palette.divider}`, // Dodanie prawego borderu z wyjątkiem ostatniego
         },
         "&.align-start": {
             textAlign: "left",
@@ -348,6 +361,9 @@ const StyledFooterCell = styled('div', {
         },
         '&.active-column': {
             backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        },
+        '&.row-number-cell': {
+            backgroundColor: theme.palette.background.table.container,
         },
     })
 );
@@ -381,36 +397,6 @@ const StyledFooterCellContent = styled('div', {
         textAlign: "center",
     },
 });
-
-// Dodaj styled komponent dla kolumny z numerami wierszy
-const StyledRowNumberColumn = styled('div', {
-    name: "DataGrid",
-    slot: "rowNumberColumn",
-})(({ theme }) => ({
-    position: "absolute",
-    top: 0,
-    left: 0,
-    height: "100%",
-    borderRight: "1px solid #ddd", // Dodanie prawego obramowania
-    boxSizing: "border-box",
-    textAlign: "center",
-    userSelect: "none",
-    backgroundColor: theme.palette.background.table.container,
-    overflow: "hidden",
-}));
-
-const StyledRowNumberCell = styled('div', {
-    name: "DataGrid",
-    slot: "rowNumberCell",
-})<{}>(({ theme }) => ({
-    position: "absolute",
-    width: "100%",
-    borderBottom: `1px solid ${theme.palette.divider}`, // Dodanie dolnego obramowania
-    boxSizing: "border-box",
-    "&.selected": {
-        backgroundColor: theme.palette.background.table.selected,
-    },
-}));
 
 const StyledNoRowsInfo = styled('div', {
     name: "DataGrid",
@@ -450,7 +436,7 @@ export const DataGrid = <T extends object>({
     mode = "defined",
     columnsResizable = true,
     overscanRowCount = 2,
-    columnRowNumber = false,
+    columnRowNumber,
     onMount,
     onDismount,
     onChange,
@@ -470,8 +456,7 @@ export const DataGrid = <T extends object>({
     const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
     const [null_value] = useSetting("dborg", "data_grid.null_value");
-    const [data_colors_enabled] = useSetting<boolean>("dborg", "data_grid.data.colors_enabled");
-    const [defined_colors_enabled] = useSetting<boolean>("dborg", "data_grid.defined.colors_enabled");
+    const [colors_enabled] = useSetting<boolean>("dborg", `data_grid.${mode}.colors_enabled`);
     const [active_highlight] = useSetting<boolean>("dborg", "data_grid.active_highlight");
     const [dataState, setDataState] = useState<T[] | null>(null);
     const searchState = useSearchState();
@@ -514,19 +499,20 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState);
+    const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
+    const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState, rowNumberColumnWidth);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
     const selectedCellRef = useRef<TableCellPosition | null>(null);
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
-    const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
-    const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber); // Dodano stan
     const previousStatusRef = useRef<DataGridStatus | null>(null);
     const previousStatusStringRef = useRef<string | null>(null);
     const { selectedRows, toggleRowSelection, setSelectedRows } = useRowSelection();
     const [fontFamily] = useSetting("ui", mode === "data" ? "monospaceFontFamily" : "fontFamily");
-    const [settingFontSize] = useSetting<number>("dborg", mode === "data" ? "data_grid.data.font_size" : "data_grid.defined.font_size");
+    const [settingFontSize] = useSetting<number>("dborg", `data_grid.${mode}.font_size`);
+    const [settingRowNumberColumn] = useSetting<boolean>("dborg", `data_grid.${mode}.row_number_column`);
+    const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber ?? settingRowNumberColumn); // Dodano stan
     const [userData, setUserData] = useState<Record<string, any>>({});
     const columnsRef = useRef<ColumnDefinition[]>(columns);
     const [isScrolling, setIsScrolling] = useState(false);
@@ -540,9 +526,9 @@ export const DataGrid = <T extends object>({
     const classes = React.useMemo(() => {
         return clsx(
             `mode-${mode}`,
-            (mode === "defined" ? defined_colors_enabled : data_colors_enabled) && 'color-enabled',
+            colors_enabled && 'color-enabled',
         );
-    }, [mode, data_colors_enabled, defined_colors_enabled]);
+    }, [mode, colors_enabled]);
 
     useEffect(() => {
         setFontSize(settingFontSize);
@@ -765,7 +751,7 @@ export const DataGrid = <T extends object>({
             selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
-                    scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized);
+                    scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth);
                 }
             });
         });
@@ -807,11 +793,14 @@ export const DataGrid = <T extends object>({
             if (containerRef.current) {
                 const maxRowNumber = filteredDataState.length; // Maksymalny numer wiersza
                 const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
-                const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily) ?? 40, 40);
-                setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2); // Minimalna szerokość to 50px
+                const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily, 'bold') ?? 30, 30);
+                setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2 + 4); // Minimalna szerokość to 50px
             }
         }
-    }, [filteredDataState.length, fontSize, showRowNumberColumn]);
+        else {
+            setRowNumberColumnWidth(0);
+        }
+    }, [filteredDataState.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -836,7 +825,7 @@ export const DataGrid = <T extends object>({
             setFontSize(height); // Funkcja do zmiany fontSize
             if (containerRef.current && selectedCell) {
                 const { row, column } = selectedCell;
-                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized);
+                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth);
             }
         },
         getColumnWidth: () => columnsState.current[selectedCell?.column ?? 0]?.width || null,
@@ -1080,21 +1069,6 @@ export const DataGrid = <T extends object>({
         };
     }, []);
 
-    const handleRowNumberColumnScroll = (event: React.WheelEvent) => {
-        if (containerRef.current) {
-            const container = containerRef.current;
-            const maxScrollTop = container.scrollHeight - container.clientHeight;
-
-            // Oblicz nową wartość scrollTop
-            let newScrollTop = container.scrollTop + event.deltaY;
-
-            // Ogranicz wartość scrollTop do zakresu [0, maxScrollTop]
-            newScrollTop = Math.max(0, Math.min(newScrollTop, maxScrollTop));
-
-            container.scrollTop = newScrollTop;
-        }
-    };
-
     const handleCellClick = (rowIndex: number, columnIndex: number) => {
         updateSelectedCell({ row: rowIndex, column: columnIndex });
     };
@@ -1172,9 +1146,9 @@ export const DataGrid = <T extends object>({
     const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-r][data-c]');
         if (!el) {
-            if (!selectedCell && filteredDataState.length > 0) {
-                updateSelectedCell({ row: 0, column: 0 });
-            }
+            // if (!selectedCell && filteredDataState.length > 0) {
+            //     updateSelectedCell({ row: 0, column: 0 });
+            // }
             return;
         }
         const r = Number(el.dataset.r);
@@ -1200,49 +1174,6 @@ export const DataGrid = <T extends object>({
                 fontSize: fontSize,
             }}
         >
-            {/* Kolumna z numerami wierszy */}
-            {showRowNumberColumn && (
-                <StyledRowNumberColumn
-                    className={clsx("DataGrid-rowNumberColumn", classes)}
-                    style={{
-                        width: rowNumberColumnWidth,
-                        height: containerHeight + (
-                            containerRef.current?.offsetHeight !== undefined && containerRef.current?.clientHeight !== undefined
-                                ? containerRef.current.offsetHeight - containerRef.current.clientHeight
-                                : 0
-                        ), // wysokość kontenera, nie całej tabeli!
-                    }}
-                    onWheel={handleRowNumberColumnScroll}
-                >
-                    <div
-                        style={{
-                            position: "relative",
-                            top: rowHeight - scrollTop,
-                        }}
-                    >
-                        {Array.from({ length: overscanTo - overscanFrom }, (_, localIndex) => {
-                            const absoluteRowIndex = overscanFrom + localIndex;
-                            return (
-                                <StyledRowNumberCell
-                                    key={localIndex}
-                                    className={clsx(
-                                        `DataGrid-rowNumberCell`,
-                                        selectedRows.includes(absoluteRowIndex) && 'selected',
-                                        classes
-                                    )}
-                                    style={{
-                                        top: absoluteRowIndex * rowHeight,
-                                        height: rowHeight,
-                                    }}
-                                    onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
-                                >
-                                    {absoluteRowIndex + 1}
-                                </StyledRowNumberCell>
-                            );
-                        })}
-                    </div>
-                </StyledRowNumberColumn>
-            )}
 
             {loading && (
                 <LoadingOverlay
@@ -1259,7 +1190,6 @@ export const DataGrid = <T extends object>({
                 onScroll={onScroll}
                 onFocus={focusHandler}
                 style={{
-                    marginLeft: showRowNumberColumn ? `${rowNumberColumnWidth}px` : "0px",
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
                 }}
             >
@@ -1274,102 +1204,130 @@ export const DataGrid = <T extends object>({
                 />
                 <StyledHeader
                     className={clsx("DataGrid-header", classes)}
-                    style={{ width: columnsState.totalWidth, height: rowHeight }}
+                    style={{
+                        width: columnsState.totalWidth,
+                        height: rowHeight
+                    }}
                 >
-                    {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => (
+                    {showRowNumberColumn && (filteredDataState.length > 0) && (
                         <StyledHeaderCell
-                            key={col.key}
+                            key="row-number-cell"
                             className={clsx(
                                 "DataGrid-headerCell",
+                                "row-number-cell",
                                 classes,
-                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
                             )}
                             style={{
-                                width: col.width || 150,
-                                left: columnsState.columnLeft(startColumn + colIndex),
-                            }}
-                            onClick={() => {
-                                if (!resizingColumn) {
-                                    updateSelectedCell({ row: selectedCell?.row ?? startRow, column: startColumn + colIndex });
-                                    dataGridActionContext.sortData(startColumn + colIndex);
-                                }
+                                position: 'sticky',
+                                zIndex: 5,
+                                width: rowNumberColumnWidth,
+                                left: 0,
+                                textAlign: 'center',
+                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                borderRight: `1px solid ${theme.palette.divider}`,
                             }}
                         >
-                            <StyledHeaderCellContent
-                                className={clsx(
-                                    "DataGrid-headerCellContent",
-                                    classes,
-                                    mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
-                                )}
-                            >
-                                <StyledLabel>
-                                    {col.label}
-                                </StyledLabel>
-                                <StyledGrow />
-                                {(filterColumns.getFilter(col.key, true) !== null) && (
-                                    <Tooltip
-                                        title={t("filter-description", 'Filter {{column}} {{filter}}', {
-                                            column: col.label,
-                                            filter: filterToString(filterColumns.getFilter(col.key, true)!)
-                                        })}
-                                    >
-                                        <StyledIconContainer
-                                            onClick={(event) => {
-                                                filterColumns.filterActive(col.key, false)
-                                                event.stopPropagation();
-                                            }}
-                                        >
-                                            <theme.icons.Filter />
-                                        </StyledIconContainer>
-                                    </Tooltip>
-                                )}
-                                {groupingColumns.isInGroup(col.key) && (
-                                    <Tooltip
-                                        title={t("grouped-column", "Grouped column")}
-                                    >
-                                        <StyledIconContainer
-                                            onClick={(event) => {
-                                                groupingColumns.toggleColumn(col.key);
-                                                event.stopPropagation();
-                                            }}
-                                        >
-                                            <span className="group-icon">[]</span>
-                                        </StyledIconContainer>
-                                    </Tooltip>
-                                )}
-                                {columnsState.showHiddenColumns && (
-                                    <Tooltip
-                                        title={t("toggle-hidden", "Toggle hidden")}
-                                    >
-                                        <StyledIconContainer
-                                            onClick={(event) => {
-                                                columnsState.toggleHidden(col.key);
-                                                event.stopPropagation();
-                                            }}
-                                        >
-                                            {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                        </StyledIconContainer>
-                                    </Tooltip>
-                                )}
-                                {col.sortDirection && (
-                                    <Tooltip
-                                        title={t("toggle-sort", "Toggle sort")}
-                                    >
-                                        <StyledIconContainer>
-                                            <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
-                                            {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
-                                        </StyledIconContainer>
-                                    </Tooltip>
-                                )}
-                            </StyledHeaderCellContent>
-                            {(col.resizable ?? columnsResizable) && (
-                                <div
-                                    className="resize-handle"
-                                    onMouseDown={(event) => handleMouseDown(startColumn + colIndex, event)}
-                                />
-                            )}
+                            #
                         </StyledHeaderCell>
-                    ))}
+                    )}
+                    {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                        const absoluteColIndex = startColumn + localColIndex;
+                        const col = columnsState.current[absoluteColIndex];
+                        return (
+                            <StyledHeaderCell
+                                key={localColIndex}
+                                className={clsx(
+                                    "DataGrid-headerCell",
+                                    classes,
+                                    mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                )}
+                                style={{
+                                    width: col.width || 150,
+                                    left: columnsState.columnLeft(absoluteColIndex),
+                                }}
+                                onClick={() => {
+                                    if (!resizingColumn) {
+                                        updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
+                                        dataGridActionContext.sortData(absoluteColIndex);
+                                    }
+                                }}
+                            >
+                                <StyledHeaderCellContent
+                                    className={clsx(
+                                        "DataGrid-headerCellContent",
+                                        classes,
+                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                    )}
+                                >
+                                    <StyledLabel>
+                                        {col.label}
+                                    </StyledLabel>
+                                    <StyledGrow />
+                                    {(filterColumns.getFilter(col.key, true) !== null) && (
+                                        <Tooltip
+                                            title={t("filter-description", 'Filter {{column}} {{filter}}', {
+                                                column: col.label,
+                                                filter: filterToString(filterColumns.getFilter(col.key, true)!)
+                                            })}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    filterColumns.filterActive(col.key, false)
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                <theme.icons.Filter />
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {groupingColumns.isInGroup(col.key) && (
+                                        <Tooltip
+                                            title={t("grouped-column", "Grouped column")}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    groupingColumns.toggleColumn(col.key);
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                <span className="group-icon">[]</span>
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {columnsState.showHiddenColumns && (
+                                        <Tooltip
+                                            title={t("toggle-hidden", "Toggle hidden")}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    columnsState.toggleHidden(col.key);
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {col.sortDirection && (
+                                        <Tooltip
+                                            title={t("toggle-sort", "Toggle sort")}
+                                        >
+                                            <StyledIconContainer>
+                                                <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
+                                                {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                </StyledHeaderCellContent>
+                                {(col.resizable ?? columnsResizable) && (
+                                    <div
+                                        className="resize-handle"
+                                        onMouseDown={(event) => handleMouseDown(startColumn + localColIndex, event)}
+                                    />
+                                )}
+                            </StyledHeaderCell>
+                        )
+                    })}
                 </StyledHeader>
                 {filteredDataState.length === 0 && (
                     <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
@@ -1405,8 +1363,30 @@ export const DataGrid = <T extends object>({
                                     height: rowHeight,
                                 }}
                             >
-                                {columnsState.current.slice(startColumn, endColumn).map((col, vcIndex) => {
-                                    const absoluteColIndex = startColumn + vcIndex;
+                                {showRowNumberColumn && (filteredDataState.length > 0) && (
+                                    <StyledCell
+                                        key="row-number-cell"
+                                        className={clsx(
+                                            "DataGrid-cell",
+                                            'row-number-cell',
+                                            classes,
+                                            'align-center',
+                                            mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
+                                        )}
+                                        style={{
+                                            position: 'sticky',
+                                            zIndex: 5,
+                                            width: rowNumberColumnWidth,
+                                            left: 0,
+                                        }}
+                                        onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
+                                    >
+                                        {absoluteRowIndex + 1}
+                                    </StyledCell>
+                                )}
+                                {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                                    const absoluteColIndex = startColumn + localColIndex;
+                                    const col = columnsState.current[absoluteColIndex];
                                     const isCellActive = isRowActive && selectedCell?.column === absoluteColIndex;
                                     const columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
@@ -1439,7 +1419,7 @@ export const DataGrid = <T extends object>({
 
                                     return (
                                         <StyledCell
-                                            key={vcIndex}
+                                            key={localColIndex}
                                             data-r={absoluteRowIndex} // potrzebne do delegacji
                                             data-c={absoluteColIndex} // potrzebne do delegacji
                                             className={clsx(
@@ -1467,11 +1447,34 @@ export const DataGrid = <T extends object>({
                 </StyledRowsContainer>
                 {columnsState.anySummarized && (
                     <StyledFooter
-                        style={{ width: columnsState.totalWidth, height: (rowHeight * footerCaptionHeightFactor) + rowHeight }}
+                        style={{
+                            width: columnsState.totalWidth,
+                            height: (rowHeight * footerCaptionHeightFactor) + rowHeight
+                        }}
                         className={clsx("DataGrid-footer", classes)}
                     >
-                        {columnsState.current.slice(startColumn, endColumn).map((col, colIndex) => {
-                            const absoluteColIndex = startColumn + colIndex;
+                        {showRowNumberColumn && (filteredDataState.length > 0) && (
+                            <StyledFooterCell
+                                key="row-number-cell"
+                                className={clsx(
+                                    'DataGrid-footerCell',
+                                    "row-number-cell",
+                                    classes,
+                                )}
+                                style={{
+                                    position: 'sticky',
+                                    zIndex: 5,
+                                    width: rowNumberColumnWidth,
+                                    height: "100%",
+                                    left: 0,
+                                    borderTop: `1px solid ${theme.palette.divider}`,
+                                    borderRight: `1px solid ${theme.palette.divider}`,
+                                }}
+                            />
+                        )}
+                        {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                            const absoluteColIndex = startColumn + localColIndex;
+                            const col = columnsState.current[absoluteColIndex];
                             let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
 
                             return (
@@ -1482,11 +1485,11 @@ export const DataGrid = <T extends object>({
                                         classes,
                                         `data-type-${styleDataType}`,
                                         styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                        mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
+                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                     )}
                                     style={{
                                         width: col.width || 150,
-                                        left: columnsState.columnLeft(startColumn + colIndex),
+                                        left: columnsState.columnLeft(startColumn + localColIndex),
                                     }}
                                     onClick={() => {
                                         handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
@@ -1501,7 +1504,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
+                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             <StyledLabel>
@@ -1528,7 +1531,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                mode === "data" && active_highlight && startColumn + colIndex === selectedCell?.column && 'active-column',
+                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}

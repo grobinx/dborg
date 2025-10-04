@@ -163,7 +163,8 @@ export const useColumnsState = (
     mode: DataGridMode,
     autoSaveId?: string,
     onSave?: () => Record<string, any>,
-    onRestore?: (data: Record<string, any> | null) => void
+    onRestore?: (data: Record<string, any> | null) => void,
+    rowNumberColumnWidth?: number,
 ): UseColumnsState => {
     const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
@@ -247,8 +248,8 @@ export const useColumnsState = (
 
     useEffect(() => {
         const newTotalWidth = displayColumns.reduce((sum, col) => sum + (col.width || 150), 0);
-        setTotalWidth(newTotalWidth);
-    }, [displayColumns]);
+        setTotalWidth(newTotalWidth + (rowNumberColumnWidth || 0));
+    }, [displayColumns, rowNumberColumnWidth]);
 
     // Funkcja do sortowania kolumny
     const sortColumn = React.useCallback((displayColumnIndex: number) => {
@@ -381,8 +382,9 @@ export const useColumnsState = (
     const columnLeft = React.useCallback((displayColumnIndex: number): number => {
         return displayColumns
             .slice(0, displayColumnIndex)
-            .reduce((sum, col) => sum + (col.width || 150), 0);
-    }, [displayColumns]);
+            .reduce((sum, col) => sum + (col.width || 150), 0) +
+            (rowNumberColumnWidth || 0);
+    }, [displayColumns, rowNumberColumnWidth]);
 
     const setSummary = React.useCallback((columnKey: string, operation?: SummaryOperation) => {
         setColumnsState(prevColumns =>
