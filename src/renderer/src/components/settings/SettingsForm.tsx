@@ -166,7 +166,7 @@ export const SettingsList: React.FC<{
             gap={4}
             width="100%"
         >
-            {settings.map((setting, i) => (
+            {settings.map((setting) => (
                 <SettingItem
                     key={`${setting.storageGroup}-${setting.storageKey}`} 
                     setting={setting}
