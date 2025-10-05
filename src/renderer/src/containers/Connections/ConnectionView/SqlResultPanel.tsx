@@ -459,9 +459,9 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
 
     return (
         <TabPanelButtons>
-            <ToolLabel label={t("Fetch", "Fetch")} />
             <InputDecorator indicator={false}>
                 <NumberField
+                    placeholder={t("Fetch", "Fetch")}
                     width={6 * 12 + 8}
                     value={maxFetchSize}
                     onChange={(value) => {
