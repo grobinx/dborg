@@ -53,6 +53,8 @@ const notifyChange = (group: string, key: string, value: any) => {
 };
 
 const storeGroups = (name: string, newSettings: TSettings) => {
+    const storeTimeout = getSetting("app", "settings.store_timeout");
+
     // Debouncing zapisu na dysku
     if (debounceMap[name]) {
         clearTimeout(debounceMap[name]);
@@ -65,7 +67,7 @@ const storeGroups = (name: string, newSettings: TSettings) => {
         } catch (error) {
             console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
         }
-    }, settings["app"]["settings.store_timeout"] ?? settingsGroupDefaults["app"]["settings.store_timeout"]);
+    }, storeTimeout);
 };
 
 export const setSetting = (group: string, key: string, value: any): void => {

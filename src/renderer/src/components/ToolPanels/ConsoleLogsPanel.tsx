@@ -5,7 +5,7 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
-import { ListItem, ListItemText, ListItemIcon, MenuItem, SelectChangeEvent, Divider, Tab, Typography } from "@mui/material";
+import { ListItem, ListItemText, ListItemIcon, MenuItem, Divider, Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { List, RowComponentProps, useListRef } from "react-window";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
@@ -23,6 +23,7 @@ import { InputDecorator } from "../inputs/decorators/InputDecorator";
 import { IconButton } from "../buttons/IconButton";
 import { SelectField } from "../inputs/SelectField";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
+import debounce from "@renderer/utils/debounce";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -76,6 +77,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [fontSize] = useSetting<number>("ui", "fontSize", 20);
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5));
+    const [searchDelay] = useSetting<number>("app", "search.delay");
 
     const handleSelectItem = (id: string) => {
         setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
@@ -89,23 +91,32 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     useEffect(() => {
         if ((search ?? "").trim() === "") {
             setDisplayLogs(logs);
+        } else {
+            const debounced = debounce(() => {
+                const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
+                setDisplayLogs(
+                    logs.filter(entry => {
+                        const logDetails = formatLogDetails(entry)?.toLowerCase();
+                        return parts.every(value =>
+                            logDetails?.includes(value)
+                        )
+                    })
+                );
+            }, searchDelay);
+            debounced();
+            return () => debounced.cancel();
         }
-        else {
-            clearTimeout(searchTimeoutId);
-            searchTimeoutId = setTimeout(() => {
-                setDisplayLogs(logs.filter(entry => formatLogDetails(entry)?.toLowerCase().includes(search.toLowerCase())));
-            }, 250);
-        }
-    }, [logs, search]);
+        return;
+    }, [logs, search, searchDelay]);
 
     // Przewijanie do ostatniego elementu po zmianie logów
     useEffect(() => {
         if (displayLogs.length > 0) {
             setTimeout(() => {
                 if (listRef.current && panelVisible) {
-                    listRef.current.scrollToRow({ 
-                        index: displayLogs.length - 1, 
-                        align: "end" 
+                    listRef.current.scrollToRow({
+                        index: displayLogs.length - 1,
+                        align: "end"
                     });
                 }
             }, 100);
@@ -124,7 +135,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     }>) => {
         const log = displayLogs[index];
         if (!log) return <div style={style}>No log</div>;
-        
+
         return (
             <div
                 key={log.id}
@@ -187,9 +198,9 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                                 rowCount={displayLogs.length}
                                 rowHeight={listItemSize}
                                 style={{ height: '100%', width: '100%' }}
-                                rowProps={{ 
+                                rowProps={{
                                     displayLogs,
-                                    selectedItem, 
+                                    selectedItem,
                                     handleSelectItem,
                                     theme,
                                     showTime,

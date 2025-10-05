@@ -2,7 +2,7 @@ import { Box, CheckboxProps, MenuProps, Stack, StackProps, styled, TextFieldProp
 import { IconWrapperProps } from "@renderer/themes/icons";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import * as React from 'react';
-import { Properties, PropertyInfo } from "src/api/db";
+import { Properties, PropertiesInfo, PropertyInfo } from "src/api/db";
 import DriverPropertyFile from "./DriverPropertyFile";
 import DriverPropertyString from "./DriverPropertyString";
 import { schemaPatternToName, setPropertyValue } from "./Utils";
@@ -15,6 +15,7 @@ import SchemaGroupField from "./SchemaGroupField";
 import { SchemaParametersType } from "./SchemaTypes";
 import DriverSummary from "../DriverSelect/DriverSummary";
 import debounce from '@renderer/utils/debounce';
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export interface SchemaParametersRef {
     getSchema: () => SchemaParametersType;
@@ -82,6 +83,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
     const [schemaUsePassword, setSchemaUsePassword] = React.useState<SchemaUsePasswordType>(schema.usePassword);
     const [searchProperties, setSearchProperties] = React.useState<string[]>([]);
     const passwordRef = React.useRef<HTMLInputElement | null>(null);
+    const [searchDelay] = useSetting<number>("app", "search.delay");
 
     React.useEffect(() => {
         setSchemaPattern(schema.schemaPattern ?? '');
@@ -132,35 +134,32 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
         });
     }
 
-    // Zastępuje wcześniejszy useEffect z setTimeout
-    const runSearch = React.useMemo(
-        () =>
-            debounce((query: string) => {
-                if (query && query !== '') {
-                    const parts = query.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
-                    const result =
-                        driver?.properties
-                            .flatMap(group => group.properties)
-                            .filter(property =>
-                                parts.every(value =>
-                                    property.name.toLowerCase().includes(value) ||
-                                    property.title.toLowerCase().includes(value) ||
-                                    (property.description ?? '').toLowerCase().includes(value)
-                                )
-                            )
-                            .map(property => property.name) ?? [];
-                    setSearchProperties(result);
-                } else {
-                    setSearchProperties([]);
-                }
-            }, 300),
-        [driver]
-    );
+    const searchList = (search: string, properties: PropertiesInfo | undefined): string[] => {
+        if (search.trim() === '' || !properties) {
+            return [];
+        }
+        const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
+        const result =
+            properties
+                .flatMap(group => group.properties)
+                .filter(property =>
+                    parts.every(value =>
+                        property.name.toLowerCase().includes(value) ||
+                        property.title.toLowerCase().includes(value) ||
+                        (property.description ?? '').toLowerCase().includes(value)
+                    )
+                )
+                .map(property => property.name) ?? [];
+        return result;
+    }
 
     React.useEffect(() => {
-        runSearch(search ?? '');
-        return () => runSearch.cancel();
-    }, [search, runSearch]);
+        const debouncedSearch = debounce(() => {
+            setSearchProperties(searchList(search ?? '', driver?.properties));
+        }, searchDelay);
+        debouncedSearch();
+        return () => debouncedSearch.cancel();
+    }, [search, searchDelay, driver]);
 
     React.useEffect(() => {
         setSchemaName(schemaPatternToName(schemaPattern, properties));

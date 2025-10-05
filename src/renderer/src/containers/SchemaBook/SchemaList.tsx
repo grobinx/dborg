@@ -26,6 +26,7 @@ import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import debounce from "@renderer/utils/debounce";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -79,6 +80,7 @@ const SchemaListTitle = styled(Box, {
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
     const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
+    const [searchDelay] = useSetting<number>("app", "search.delay");
     const [loading, setLoading] = React.useState(true);
     const [groupList, setGroupList] = React.useState(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [data, setData] = React.useState<Schema[] | null>(null);
@@ -228,29 +230,28 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         });
     }, [groupList]);
 
-    // Funkcja debounced do filtrowania + sortowania
-    const runSearch = React.useMemo(
-        () =>
-            debounce((query: string, src: Schema[] | null) => {
-                if (!query.trim()) {
-                    setDisplayData(sort(src));
-                    return;
-                }
-                const q = query.toLowerCase();
-                const filtered = src?.filter(record =>
-                    JSON.stringify([record.driverName, record.sch_group, record.sch_name])
-                        .toLowerCase()
-                        .includes(q)
-                );
-                setDisplayData(sort(filtered ?? null));
-            }, 300),
-        [sort]
-    );
+    const searchList = (search: string, list: Schema[] | null): Schema[] | null => {
+        if (search.trim() === '') {
+            return list;
+        }
+        const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
+        const filtered = list?.filter(record =>
+            parts.every(value =>
+                JSON.stringify([record.driverName, record.sch_group, record.sch_name])
+                    .toLowerCase()
+                    .includes(value)
+            )
+        );
+        return filtered ?? null;
+    }
 
     React.useEffect(() => {
-        runSearch(search, data);
-        return () => runSearch.cancel();
-    }, [search, data, runSearch]);
+        const debouncedSearch = debounce(() => {
+            setDisplayData(sort(searchList(search, data)));
+        }, searchDelay);
+        debouncedSearch();
+        return () => debouncedSearch.cancel();
+    }, [search, data, sort, searchDelay]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         try {
@@ -303,7 +304,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const handleDisconnectAll = React.useCallback(async (schemaId: string) => {
         setDisconnecting((prev) => [...prev, schemaId]);
         try {
-        await sendMessage(Messages.SCHEMA_DISCONNECT_ALL, schemaId);
+            await sendMessage(Messages.SCHEMA_DISCONNECT_ALL, schemaId);
         } finally {
             setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
         }

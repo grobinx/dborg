@@ -5,7 +5,7 @@
  * - flush(): natychmiast wykonuje ostatnie zaplanowane wywołanie
  */
 export type Debounced<T extends (...args: any[]) => void> =
-    ((...args: Parameters<T>) => void) & { cancel: () => void; flush: () => void };
+    ((...args: Parameters<T>) => void) & { cancel: () => void; clear: () => void; flush: () => void };
 
 /**
  * Tworzy zdławioną (debounced) wersję funkcji, która opóźnia wykonanie
@@ -66,6 +66,8 @@ export default function debounce<T extends (...args: any[]) => void>(fn: T, dela
         timer = null;
         lastArgs = null;
     };
+
+    debounced.clear = debounced.cancel;
 
     debounced.flush = () => {
         if (!timer) return;

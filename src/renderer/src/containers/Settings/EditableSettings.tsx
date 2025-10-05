@@ -5,6 +5,11 @@ import React from "react";
 import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import { SettingsCollection, SettingsGroup } from "@renderer/components/settings/SettingsTypes";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { SearchField } from "@renderer/components/inputs/SearchField";
+import { useTranslation } from "react-i18next";
+import debounce from "@renderer/utils/debounce";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export interface EditableSettingsProps extends StackProps {
 }
@@ -30,6 +35,8 @@ const StyledEditableSettingsTitle = styled(Box, {
     paddingBottom: 8,
     marginBottom: 8,
     borderBottom: `1px solid ${theme.palette.divider}`,
+    alignItems: "center",
+    gap: 8,
 }));
 
 const StyledEditableSettingsContent = styled(Stack, {
@@ -70,11 +77,72 @@ const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
     }));
 };
 
+const searchSettings = (search: string, collections: SettingsCollection[]): SettingsCollection[] => {
+    if (search.trim() === '') {
+        return collections;
+    }
+    const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
+
+    // Rekurencyjna funkcja do filtrowania grup i podgrup
+    const filterGroups = (groups: SettingsGroup[] | undefined): SettingsGroup[] | undefined => {
+        if (!groups) return undefined;
+        const filtered = groups.map(group => {
+            // Filtrowanie ustawień w grupie
+            const matchedSettings = group.settings?.filter(setting =>
+                parts.every(part =>
+                    (typeof setting.label === 'string' && setting.label.toLowerCase().includes(part)) ||
+                    (typeof setting.description === 'string' && setting.description.toLowerCase().includes(part))
+                )
+            );
+
+            // Rekurencyjne filtrowanie podgrup
+            const matchedGroups = filterGroups(group.groups);
+
+            // Zwróć grupę tylko jeśli ma pasujące ustawienia lub podgrupy
+            if ((matchedSettings && matchedSettings.length > 0) || (matchedGroups && matchedGroups.length > 0)) {
+                return {
+                    ...group,
+                    settings: matchedSettings,
+                    groups: matchedGroups
+                };
+            }
+            return null;
+        }).filter(Boolean) as SettingsGroup[];
+        return filtered.length > 0 ? filtered : undefined;
+    };
+
+    const filtered = collections
+        .map(collection => {
+            const matchedGroups = filterGroups(collection.groups);
+            return matchedGroups && matchedGroups.length > 0 ? {
+                ...collection,
+                groups: matchedGroups
+            } : null;
+        })
+        .filter(Boolean) as SettingsCollection[];
+
+    return filtered;
+}
+
 const EditableSettings = (props: EditableSettingsProps) => {
     const { ...other } = props;
     const [settingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
+    const [displaySettings, setDisplaySettings] = React.useState<SettingsCollection[]>(settingsCollections);
+    const { t } = useTranslation();
+    const [search, setSearch] = React.useState('');
+    const [searchDelay] = useSetting<number>("app", "search.delay");
 
-    const treeData = React.useMemo(() => buildTreeData(settingsCollections), [settingsCollections]);
+    React.useEffect(() => {
+        const debouncedSearch = debounce(() => {
+            setDisplaySettings(searchSettings(search, settingsCollections));
+        }, searchDelay);
+        debouncedSearch();
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [search, settingsCollections]);
+
+    const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
 
     const handleSelect = (key: string) => {
         console.log("Wybrano:", key);
@@ -89,6 +157,18 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 <Typography variant="h4">
                     Settings
                 </Typography>
+                <Stack flexGrow={1} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <InputDecorator indicator={false}>
+                        <SearchField
+                            placeholder={t("search---", "Search...")}
+                            size="large"
+                            autoFocus
+                            value={search}
+                            onChange={setSearch}
+                        />
+                    </InputDecorator>
+                </Box>
             </StyledEditableSettingsTitle>
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
@@ -98,9 +178,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>
-                    <StyledEditableSettingsContent >
+                    <StyledEditableSettingsContent>
                         <StyledEditableSettingsList>
-                            {settingsCollections.map((collection) => (
+                            {displaySettings.length === 0 ? (
+                                <StyledEditableSettingsContent>
+                                    <Typography>
+                                        {t("no-setting-results", "No settings found")}
+                                    </Typography>
+                                </StyledEditableSettingsContent>
+                            ) : displaySettings.map((collection) => (
                                 <SettingsCollectionForm
                                     key={collection.key}
                                     collection={collection}
@@ -109,8 +195,8 @@ const EditableSettings = (props: EditableSettingsProps) => {
                         </StyledEditableSettingsList>
                     </StyledEditableSettingsContent>
                 </SplitPanel>
-            </SplitPanelGroup>
-        </StyledEditableSettingsRoot>
+            </SplitPanelGroup >
+        </StyledEditableSettingsRoot >
     );
 };
 

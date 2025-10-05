@@ -31,7 +31,6 @@ export interface ApplicationSettings extends TSettings {
 }
 
 const toast_max = 5;
-const settings_store_timeout = 1000; // 1 second
 const toast_timeout = 5000; // 5 seconds
 const data_grid_null_value = '{null}';
 const data_grid_data_colors_enabled = true;
@@ -40,13 +39,19 @@ const data_grid_active_highlight = true;
 const data_grid_data_font_size = 14;
 const data_grid_defined_font_size = 14;
 
+/* general settings */
+const settings_store_timeout = 1000; // 1 second
+const search_delay = 300; // 300 ms
+
 export const default_settings: ApplicationSettings = {
     app: {
         placement: 'left',
         "toast.max": toast_max,
         "toast.timeout": toast_timeout,
 
+        /* General settings */
         "settings.store_timeout": settings_store_timeout,
+        "search.delay": search_delay,
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
@@ -78,6 +83,35 @@ editableSettingsRegistry.register((context) => {
         title: t('application-settings', 'Application Settings'),
         description: t('application-settings-description', 'Settings related to the application behavior and appearance.'),
         groups: [{
+            key: 'general',
+            title: t('general-settings', 'General Settings'),
+            description: t('general-settings-description', 'Settings that apply to the entire application.'),
+            settings: [
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'settings.store_timeout',
+                    label: t('settings.store-timeout', 'Settings Store Timeout'),
+                    description: t('settings.store-timeout-description', 'Timeout for storing settings in milliseconds.'),
+                    category: t('behavior', 'Behavior'),
+                    min: 100,
+                    max: 10000,
+                    step: 100,
+                },
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'search.delay',
+                    label: t('search.delay', 'Search Delay'),
+                    description: t('search.delay.description', 'Delay for search input in milliseconds.'),
+                    category: t('behavior', 'Behavior'),
+                    min: 100,
+                    max: 10000,
+                    step: 100,
+                },
+            ],
+        },
+        {
             key: 'toast',
             title: t('toast-notifications', 'Toast Notifications'),
             description: t('toast-notifications-description', 'Settings for toast notifications.'),
@@ -109,7 +143,10 @@ editableSettingsRegistry.register((context) => {
     context.registerCollection({
         key: 'dborg',
         title: t('orbada-settings', 'Orbada Settings'),
-        description: t('orbada-settings-description', 'Settings related to the Orbada database management.'),
+        description: t(
+            'orbada-settings-description',
+            'Settings related to the Orbada database management. That is, settings concerning elements that display and process data.'
+        ),
         groups: [{
             key: 'grid',
             title: t('grid', 'Grid'),
