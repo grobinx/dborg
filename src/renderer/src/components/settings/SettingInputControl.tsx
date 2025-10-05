@@ -72,7 +72,7 @@ export const calculateWidth = (setting: SettingTypeUnion) => {
     const defaultTextWidth = 30 * widthPerChar; // Default width
     const defaultNumberWidth = 20 * widthPerChar; // Default width for number inputs
     const maxWidth = 50 * widthPerChar; // Maximum width
-    const minWidth = 10 * widthPerChar; // Minimum width
+    const minWidth = 8 * widthPerChar; // Minimum width
 
     if (setting.width) {
         if (typeof setting.width === "number") {

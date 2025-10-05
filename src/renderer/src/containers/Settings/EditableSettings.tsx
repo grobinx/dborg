@@ -4,7 +4,7 @@ import { SettingsCollectionForm } from "@renderer/components/settings/SettingsFo
 import React from "react";
 import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
-import { SettingsCollection, SettingsGroup } from "@renderer/components/settings/SettingsTypes";
+import { SettingsCollection, SettingsGroup, SettingTypeUnion } from "@renderer/components/settings/SettingsTypes";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { useTranslation } from "react-i18next";
@@ -124,17 +124,51 @@ const searchSettings = (search: string, collections: SettingsCollection[]): Sett
     return filtered;
 }
 
+const flattenSettings = (collections: SettingsCollection[]): SettingTypeUnion[] => {
+    const flatList: SettingTypeUnion[] = [];
+
+    const flatten = (groups?: SettingsGroup[]) => {
+        if (!groups) return;
+        groups.forEach(group => {
+            // Dodaj ustawienia z grupy
+            if (group.settings) {
+                flatList.push(...group.settings);
+            }
+            // Rekurencyjnie spłaszcz podgrupy
+            if (group.groups) flatten(group.groups);
+        });
+    };
+
+    collections.forEach(collection => {
+        // Dodaj ustawienia z kolekcji
+        if (collection.settings) {
+            flatList.push(...collection.settings);
+        }
+        // Spłaszcz grupy w kolekcji
+        flatten(collection.groups);
+    });
+
+    return flatList;
+}
+
 const EditableSettings = (props: EditableSettingsProps) => {
     const { ...other } = props;
     const [settingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
     const [displaySettings, setDisplaySettings] = React.useState<SettingsCollection[]>(settingsCollections);
+    const [flatSettings, setFlatSettings] = React.useState<SettingTypeUnion[]>(() => flattenSettings(settingsCollections));
     const { t } = useTranslation();
     const [search, setSearch] = React.useState('');
     const [searchDelay] = useSetting<number>("app", "search.delay");
+    const [selected, setSelected] = React.useState<string | null>(null);
+    const selectedRef = React.useRef<string | null>(null);
+    const settingsContentRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
-            setDisplaySettings(searchSettings(search, settingsCollections));
+            const settings = searchSettings(search, settingsCollections);
+            setDisplaySettings(settings);
+            setFlatSettings(flattenSettings(settings));
+            setSelected(null);
         }, searchDelay);
         debouncedSearch();
         return () => {
@@ -144,10 +178,45 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
 
-    const handleSelect = (key: string) => {
-        console.log("Wybrano:", key);
-        // Możesz dodać logikę do obsługi wyboru
-    };
+    const handleSelectNode = React.useCallback((key: string) => {
+        console.log("Wybrano węzeł:", key);
+    }, []);
+
+    const handleSelectSetting = React.useCallback((key: string) => {
+        console.log("Wybrano ustawienie:", key);
+        setSelected(key);
+    }, []);
+
+    React.useEffect(() => {
+        selectedRef.current = selected;
+    }, [selected]);
+
+    const keyDownHandler = React.useCallback((event: React.KeyboardEvent) => {
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            event.preventDefault();
+
+            if (selectedRef.current === null && flatSettings.length > 0) {
+                setSelected(`${flatSettings[0].storageGroup}-${flatSettings[0].storageKey}`);
+                return;
+            }
+            if (selectedRef.current === null) {
+                return;
+            }
+            const currentIndex = flatSettings.findIndex(item => `${item.storageGroup}-${item.storageKey}` === selectedRef.current);
+            const nextIndex = event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
+            const nextKey = flatSettings[nextIndex];
+            if (nextKey) {
+                setSelected(`${nextKey.storageGroup}-${nextKey.storageKey}`);
+            }
+            else if (flatSettings.length > 0) {
+                setSelected(
+                    event.key === 'ArrowDown' ?
+                        `${flatSettings[0].storageGroup}-${flatSettings[0].storageKey}`
+                        : `${flatSettings[flatSettings.length - 1].storageGroup}-${flatSettings[flatSettings.length - 1].storageKey}`
+                );
+            }
+        }
+    }, [flatSettings]);
 
     return (
         <StyledEditableSettingsRoot
@@ -166,6 +235,9 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             autoFocus
                             value={search}
                             onChange={setSearch}
+                            inputProps={{
+                                onKeyDown: keyDownHandler
+                            }}
                         />
                     </InputDecorator>
                 </Box>
@@ -173,12 +245,12 @@ const EditableSettings = (props: EditableSettingsProps) => {
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
                     <Box sx={{ width: '100%', flexShrink: 0, padding: 8 }}>
-                        <Tree data={treeData} onSelect={handleSelect} autoExpand={1} />
+                        <Tree data={treeData} onSelect={handleSelectNode} autoExpand={1} />
                     </Box>
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>
-                    <StyledEditableSettingsContent>
+                    <StyledEditableSettingsContent ref={settingsContentRef}>
                         <StyledEditableSettingsList>
                             {displaySettings.length === 0 ? (
                                 <StyledEditableSettingsContent>
@@ -189,7 +261,10 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             ) : displaySettings.map((collection) => (
                                 <SettingsCollectionForm
                                     key={collection.key}
+                                    contentRef={settingsContentRef}
                                     collection={collection}
+                                    selected={selected ?? undefined}
+                                    onSelect={handleSelectSetting}
                                 />
                             ))}
                         </StyledEditableSettingsList>

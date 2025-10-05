@@ -310,6 +310,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
         setValue,
         showDescription = true,
         showMenu = true,
+        ...other
     } = props;
 
     const theme = useTheme();
@@ -448,6 +449,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                 onMouseLeave={handleMouseLeave}
                 sx={sx}
                 data-focus-container={true}
+                {...other}
             >
                 <StyledSettingDecoratorIndicator
                     className={clsx(

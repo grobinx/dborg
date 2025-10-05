@@ -313,47 +313,47 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     const scheduleIdleOff = React.useCallback(() => {
         const ATTENTION_MS = 2000;
         offTimerRef.current = setTimeout(() => {
-            if (!focused) return;
+            if (!focused || type === "search") return;
             setIdleAttention(false);
             // restart cycle “from the beginning”
             lastActivityRef.current = Date.now();
             // schedule next idle on
             scheduleIdleOn();
         }, ATTENTION_MS);
-    }, [focused]);
+    }, [focused, type]);
 
     const scheduleIdleOn = React.useCallback(() => {
         const IDLE_MS = 30000;
         const elapsed = Date.now() - lastActivityRef.current;
         const delay = Math.max(0, IDLE_MS - elapsed);
         onTimerRef.current = setTimeout(() => {
-            if (!focused) return;
+            if (!focused || type === "search") return;
             // ensure no activity happened in the meantime
             if (Date.now() - lastActivityRef.current < IDLE_MS) return;
             setIdleAttention(true);
             scheduleIdleOff();
         }, delay);
-    }, [focused, scheduleIdleOff]);
+    }, [focused, type, scheduleIdleOff]);
 
     // restart cycle on focus change
     React.useEffect(() => {
         clearIdleTimers();
         setIdleAttention(false);
-        if (focused) {
+        if (focused && type !== "search") {
             lastActivityRef.current = Date.now();
             scheduleIdleOn();
         }
         return () => clearIdleTimers();
-    }, [focused, clearIdleTimers, scheduleIdleOn]);
+    }, [focused, type, clearIdleTimers, scheduleIdleOn]);
 
     // restart cycle on value change (activity)
     React.useEffect(() => {
         lastActivityRef.current = Date.now();
-        if (!focused) return;
+        if (!focused || type === "search") return;
         clearIdleTimers();
         setIdleAttention(false);
         scheduleIdleOn();
-    }, [/* activity */ value, focused, clearIdleTimers, scheduleIdleOn]);
+    }, [type, value, focused, clearIdleTimers, scheduleIdleOn]);
 
     const [previousValue] = React.useState(value);
 
