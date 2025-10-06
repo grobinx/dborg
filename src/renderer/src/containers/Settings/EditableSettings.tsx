@@ -62,18 +62,22 @@ const StyledEditableSettingsList = styled(Stack, {
 }));
 
 const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
-    const mapGroupsToTreeNodes = (groups: SettingsGroup[]): TreeNode[] => {
-        return groups.map(group => ({
-            key: group.key,
-            title: group.title,
-            children: group.groups ? mapGroupsToTreeNodes(group.groups) : [], // Rekurencyjne wywołanie dla podgrup
-        }));
+    const mapGroupsToTreeNodes = (groups: SettingsGroup[], parent?: TreeNode | null): TreeNode[] => {
+        return groups.map(group => {
+            const node: TreeNode = {
+                key: group.key,
+                title: group.title,
+                parent
+            };
+            node.children = group.groups ? mapGroupsToTreeNodes(group.groups, node) : [];
+            return node;
+        });
     };
 
     return collections.map(collection => ({
         key: collection.key,
         title: collection.title,
-        children: collection.groups ? mapGroupsToTreeNodes(collection.groups) : [], // Wywołanie dla grup
+        children: collection.groups ? mapGroupsToTreeNodes(collection.groups, null) : [], // Wywołanie dla grup
     }));
 };
 

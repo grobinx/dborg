@@ -4,10 +4,18 @@ import { styled, useTheme } from '@mui/material/styles';
 import clsx from '@renderer/utils/clsx';
 import Collapse from '@mui/material/Collapse';
 
+/**
+ * Tree node structure
+ */
 export interface TreeNode {
+    /** Unique key for the node */
     key: string;
+    /** Title of the node */
     title: FormattedContentItem;
+    /** Child nodes */
     children?: TreeNode[];
+    /** Parent node - optional, useful for certain operations, not used in tree component. Null if root. */
+    parent?: TreeNode | null;
 }
 
 interface TreeProps {

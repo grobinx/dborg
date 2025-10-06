@@ -170,15 +170,13 @@ export const SettingsList: React.FC<{
             gap={4}
             width="100%"
         >
-            {settings.map((setting) => React.useMemo(() =>
-            (
+            {settings.map((setting) => (
                 <SettingItem
                     key={createKey(setting)}
                     setting={setting}
                     selected={createKey(setting) === selected}
                     onSelect={() => onSelect?.(createKey(setting))}
-                />
-            ), [setting, selected === createKey(setting), onSelect])
+                />)
             )}
         </Stack>
     );
@@ -266,7 +264,7 @@ const SettingGroupForm: React.FC<{
                 className={isPinned ? "pinned" : ""}
             >
                 {group.title}
-                 {/* - {isPinned ? "pinned" : "not pinned"} */}
+                {/* - {isPinned ? "pinned" : "not pinned"} */}
             </Typography>
 
             {group.description && (
