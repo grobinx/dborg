@@ -10,6 +10,10 @@ import { BooleanField } from "../inputs/BooleanField";
 import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
+export function createKey(setting: SettingTypeUnion) {
+    return `${setting.storageGroup}-${setting.storageKey}`;
+}
+
 function useSettingBinding(setting: SettingTypeUnion) {
     const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
     const [value, setValue] = React.useState<any>(settingValue);
@@ -38,9 +42,9 @@ const StringSetting: React.FC<{
     const [value, onChange, onChanged] = useSettingBinding(setting);
 
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={`${setting.storageGroup}-${setting.storageKey}`}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
             <TextField
-                id={`${setting.storageGroup}-${setting.storageKey}`}
+                id={createKey(setting)}
                 value={value}
                 onChange={onChange}
                 onChanged={onChanged}
@@ -62,9 +66,9 @@ const NumberSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={`${setting.storageGroup}-${setting.storageKey}`}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
             <NumberField
-                id={`${setting.storageGroup}-${setting.storageKey}`}
+                id={createKey(setting)}
                 value={value}
                 onChange={onChange}
                 onChanged={onChanged}
@@ -87,9 +91,9 @@ const SelectSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={`${setting.storageGroup}-${setting.storageKey}`}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
             <SelectField
-                id={`${setting.storageGroup}-${setting.storageKey}`}
+                id={createKey(setting)}
                 value={value}
                 onChange={onChange}
                 onChanged={onChanged}
@@ -110,9 +114,9 @@ const BooleanSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} showDescription={false} selected={selected} data-setting-key={`${setting.storageGroup}-${setting.storageKey}`}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} showDescription={false} selected={selected} data-setting-key={createKey(setting)}>
             <BooleanField
-                id={`${setting.storageGroup}-${setting.storageKey}`}
+                id={createKey(setting)}
                 value={value}
                 onChange={onChange}
                 onChanged={onChanged}
@@ -166,14 +170,16 @@ export const SettingsList: React.FC<{
             gap={4}
             width="100%"
         >
-            {settings.map((setting) => (
+            {settings.map((setting) => React.useMemo(() =>
+            (
                 <SettingItem
-                    key={`${setting.storageGroup}-${setting.storageKey}`} 
+                    key={createKey(setting)}
                     setting={setting}
-                    selected={`${setting.storageGroup}-${setting.storageKey}` === selected}
-                    onSelect={() => onSelect?.(`${setting.storageGroup}-${setting.storageKey}`)}
+                    selected={createKey(setting) === selected}
+                    onSelect={() => onSelect?.(createKey(setting))}
                 />
-            ))}
+            ), [setting, selected === createKey(setting), onSelect])
+            )}
         </Stack>
     );
 };
@@ -225,10 +231,14 @@ const SettingGroupForm: React.FC<{
                     backgroundColor: theme.palette.background.paper,
                     zIndex: 5,
                     padding: 4,
+                    '&.pinned': {
+                        visibility: 'hidden',
+                    }
                 }}
                 ref={groupTitleRef}
+                className={isPinned ? "pinned" : ""}
             >
-                {group.title}
+                {group.title} - {isPinned ? "pinned" : "not pinned"}
             </Typography>
 
             {group.description && (
@@ -293,14 +303,14 @@ export const SettingsCollectionForm: React.FC<{
         }
     }, [collection.title, isPinned]);
 
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         if (contentRef?.current && selected) {
             const selectedElement = contentRef.current.querySelector(`[data-setting-key="${selected}"]`);
             if (selectedElement) {
                 selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
-    }, [selected, contentRef]);
+    }, [selected]);
 
 
     React.useEffect(() => {
@@ -334,9 +344,9 @@ export const SettingsCollectionForm: React.FC<{
                     padding: 4,
                 }}
                 ref={titleRef}
-                className={isPinned ? "is-pinned" : ""}
+                className={isPinned ? "pinned" : ""}
             >
-                {collection.title}
+                {collection.title} - {isPinned ? "pinned" : "not pinned"}
             </Typography>
 
             {collection?.description && (

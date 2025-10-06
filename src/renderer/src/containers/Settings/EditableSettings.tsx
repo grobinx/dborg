@@ -1,6 +1,6 @@
 import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
 import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
-import { SettingsCollectionForm } from "@renderer/components/settings/SettingsForm";
+import { createKey, SettingsCollectionForm } from "@renderer/components/settings/SettingsForm";
 import React from "react";
 import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
@@ -196,23 +196,23 @@ const EditableSettings = (props: EditableSettingsProps) => {
             event.preventDefault();
 
             if (selectedRef.current === null && flatSettings.length > 0) {
-                setSelected(`${flatSettings[0].storageGroup}-${flatSettings[0].storageKey}`);
+                setSelected(createKey(flatSettings[0]));
                 return;
             }
             if (selectedRef.current === null) {
                 return;
             }
-            const currentIndex = flatSettings.findIndex(item => `${item.storageGroup}-${item.storageKey}` === selectedRef.current);
+            const currentIndex = flatSettings.findIndex(item => createKey(item) === selectedRef.current);
             const nextIndex = event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
             const nextKey = flatSettings[nextIndex];
             if (nextKey) {
-                setSelected(`${nextKey.storageGroup}-${nextKey.storageKey}`);
+                setSelected(createKey(nextKey));
             }
             else if (flatSettings.length > 0) {
                 setSelected(
                     event.key === 'ArrowDown' ?
-                        `${flatSettings[0].storageGroup}-${flatSettings[0].storageKey}`
-                        : `${flatSettings[flatSettings.length - 1].storageGroup}-${flatSettings[flatSettings.length - 1].storageKey}`
+                        createKey(flatSettings[0])
+                        : createKey(flatSettings[flatSettings.length - 1])
                 );
             }
         }
