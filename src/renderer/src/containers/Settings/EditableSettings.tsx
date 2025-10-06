@@ -265,6 +265,9 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     collection={collection}
                                     selected={selected ?? undefined}
                                     onSelect={handleSelectSetting}
+                                    onPinned={(pinned) => {
+                                        console.log("Pinned", pinned);
+                                     }}
                                 />
                             ))}
                         </StyledEditableSettingsList>
