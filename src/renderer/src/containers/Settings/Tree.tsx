@@ -21,6 +21,7 @@ export interface TreeNode {
 interface TreeProps {
     autoExpand?: number | boolean; // Dodano obsługę autoExpand
     data: TreeNode[];
+    selected?: string | null;
     onSelect: (key: string) => void;
 }
 
@@ -73,9 +74,8 @@ const TreeNode: React.FC<React.PropsWithChildren<{
     );
 };
 
-const Tree: React.FC<TreeProps> = ({ data, onSelect, autoExpand }) => {
-    const [selected, setSelected] = React.useState<string | null>(null);
-
+const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand }) => {
+    const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const expandLevel = (level?: number | boolean) => {
         // Inicjalizuj openNodes na podstawie autoExpand
         if (level === true) {
@@ -104,6 +104,12 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, autoExpand }) => {
         return expandLevel(autoExpand);
     });
 
+    React.useEffect(() => {
+        if (selected !== undefined) {
+            setUncontrolledSelected(selected ?? null);
+        }
+    }, [selected, openNodes, data]);
+
     const toggleNode = React.useCallback((key: string) => {
         setOpenNodes(prev =>
             prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
@@ -119,12 +125,12 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, autoExpand }) => {
                         level={level}
                         onClick={() => {
                             onSelect(node.key);
-                            setSelected(node.key);
+                            setUncontrolledSelected(node.key);
                             if (node.children && node.children.length > 0) {
                                 toggleNode(node.key);
                             }
                         }}
-                        selected={selected === node.key}
+                        selected={uncontrolledSelected === node.key}
                         isOpen={isOpen}
                         toggle={node.children && node.children.length > 0}
                     >

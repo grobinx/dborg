@@ -1,6 +1,6 @@
-import { Box, Stack, StackProps, styled, Typography } from "@mui/material";
+import { Box, Stack, StackProps, styled, Typography, useTheme } from "@mui/material";
 import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
-import { createKey, SettingsCollectionForm } from "@renderer/components/settings/SettingsForm";
+import SettingsCollectionForm from "@renderer/components/settings/SettingsForm";
 import React from "react";
 import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
@@ -10,6 +10,8 @@ import { SearchField } from "@renderer/components/inputs/SearchField";
 import { useTranslation } from "react-i18next";
 import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import createKey from "@renderer/components/settings/createKey";
+import { FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 
 export interface EditableSettingsProps extends StackProps {
 }
@@ -69,16 +71,19 @@ const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
                 title: group.title,
                 parent
             };
-            node.children = group.groups ? mapGroupsToTreeNodes(group.groups, node) : [];
+            node.children = group.groups ? mapGroupsToTreeNodes(group.groups, node) : undefined;
             return node;
         });
     };
 
-    return collections.map(collection => ({
-        key: collection.key,
-        title: collection.title,
-        children: collection.groups ? mapGroupsToTreeNodes(collection.groups, null) : [], // Wywołanie dla grup
-    }));
+    return collections.map(collection => {
+        const node: TreeNode = {
+            key: collection.key,
+            title: collection.title,
+        };
+        node.children = collection.groups ? mapGroupsToTreeNodes(collection.groups, node) : undefined;
+        return node;
+    });
 };
 
 const searchSettings = (search: string, collections: SettingsCollection[]): SettingsCollection[] => {
@@ -175,6 +180,10 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [selected, setSelected] = React.useState<string | null>(null);
     const selectedRef = React.useRef<string | null>(null);
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
+    const [pinnedMap, setPinnedMap] = React.useState(() => ({} as Record<string, number>));
+    const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
+    const theme = useTheme();
+    const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -194,16 +203,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
         return () => {
             debouncedSearch.cancel();
         };
-    }, [search, settingsCollections]);
+    }, [searchDelay, search, settingsCollections]);
 
     const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
 
     const handleSelectNode = React.useCallback((key: string) => {
-        console.log("Wybrano węzeł:", key);
+        setSelectedNode(key);
     }, []);
 
     const handleSelectSetting = React.useCallback((key: string) => {
-        console.log("Wybrano ustawienie:", key);
         setSelected(key);
     }, []);
 
@@ -238,6 +246,57 @@ const EditableSettings = (props: EditableSettingsProps) => {
         }
     }, [flatSettings]);
 
+    React.useEffect(() => {
+        const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
+            const path: TreeNode[] = [];
+            while (node) {
+                path.unshift(node);
+                node = node.parent; // Przechodzimy do rodzica
+            }
+            return path;
+        };
+
+        let deepestPath: TreeNode[] | null = null;
+        let maxDepth = -1;
+
+        const findNodeByKey = (nodes: TreeNode[], key: string): TreeNode | null => {
+            for (const node of nodes) {
+                if (node.key === key) return node;
+                if (node.children && node.children.length > 0) {
+                    const found = findNodeByKey(node.children, key);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        const updateBreadcrumb = debounce(() => {
+            Object.entries(pinnedMap).forEach(([key]) => {
+                const foundNode = findNodeByKey(treeData, key);
+                if (foundNode) {
+                    const path = getPath(foundNode);
+                    if (path.length > maxDepth) {
+                        maxDepth = path.length;
+                        deepestPath = path; // Zapisz najgłębszy węzeł
+                    }
+                }
+            });
+
+            if (deepestPath) {
+                setBreadcrumb((deepestPath as TreeNode[]).map(node => node.title)); // Ustaw tytuł najgłębszego węzła w breadcrumb
+                setSelectedNode(deepestPath[deepestPath.length - 1].key);
+            } else {
+                setBreadcrumb([]); // Jeśli nie znaleziono, ustaw pustą ścieżkę
+            }
+        }, 100); // Ustaw opóźnienie debouncingu, np. 100 ms
+
+        updateBreadcrumb(); // Wywołaj funkcję debouncing
+
+        return () => {
+            updateBreadcrumb.cancel(); // Anuluj debouncing przy odmontowywaniu
+        };
+    }, [pinnedMap, treeData]);
+
     return (
         <StyledEditableSettingsRoot
             className="EditableSettings-root" {...other}
@@ -265,33 +324,65 @@ const EditableSettings = (props: EditableSettingsProps) => {
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
                     <Box sx={{ width: '100%', flexShrink: 0, padding: 8 }}>
-                        <Tree data={treeData} onSelect={handleSelectNode} autoExpand={1} />
+                        <Tree data={treeData} onSelect={handleSelectNode} selected={selectedNode} autoExpand={1} />
                     </Box>
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>
-                    <StyledEditableSettingsContent ref={settingsContentRef}>
-                        <StyledEditableSettingsList>
-                            {displaySettings.length === 0 ? (
-                                <StyledEditableSettingsContent>
-                                    <Typography>
-                                        {t("no-setting-results", "No settings found")}
-                                    </Typography>
-                                </StyledEditableSettingsContent>
-                            ) : displaySettings.map((collection) => (
-                                <SettingsCollectionForm
-                                    key={collection.key}
-                                    contentRef={settingsContentRef}
-                                    collection={collection}
-                                    selected={selected ?? undefined}
-                                    onSelect={handleSelectSetting}
-                                    onPinned={(pinned) => {
-                                        //console.log("Pinned", pinned);
+                    {displaySettings.length === 0 ? (
+                        <StyledEditableSettingsContent>
+                            <StyledEditableSettingsList>
+                                {t("no-setting-results", "No settings found")}
+                            </StyledEditableSettingsList>
+                        </StyledEditableSettingsContent>
+                    ) : (
+                        <Stack direction="column" sx={{ height: "100%" }}>
+                            <Typography variant="h6">
+                                <Stack
+                                    direction="row"
+                                    sx={{
+                                        padding: "0 8px",
+                                        width: "100%",
+                                        height: "48px",
+                                        borderBottom: `1px solid ${theme.palette.divider}`,
+                                        boxShadow: "0 4px 8px -4px rgba(0,0,0,0.12)",
+                                        gap: 4,
+                                        alignItems: "center",
                                     }}
-                                />
-                            ))}
-                        </StyledEditableSettingsList>
-                    </StyledEditableSettingsContent>
+                                    flexShrink={1}
+                                    divider={<span>/</span>}
+                                >
+                                    {breadCrumb.length > 0 && breadCrumb.map((item, index) => (
+                                        <FormattedText key={index} text={item} />
+                                    ))}
+                                </Stack>
+                            </Typography>
+                            <StyledEditableSettingsContent ref={settingsContentRef} sx={{ flexGrow: 1, overflowY: "auto" }}>
+                                <StyledEditableSettingsList>
+                                    {displaySettings.map((collection) => (
+                                        <SettingsCollectionForm
+                                            key={collection.key}
+                                            contentRef={settingsContentRef}
+                                            collection={collection}
+                                            selected={selected ?? undefined}
+                                            onSelect={handleSelectSetting}
+                                            onPinned={(operation, key, top) => {
+                                                if (operation === 'add') {
+                                                    setPinnedMap((prev) => ({ ...prev, [key]: top }));
+                                                } else {
+                                                    setPinnedMap((prev) => {
+                                                        const newMap = { ...prev };
+                                                        delete newMap[key];
+                                                        return newMap;
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </StyledEditableSettingsList>
+                            </StyledEditableSettingsContent>
+                        </Stack>
+                    )}
                 </SplitPanel>
             </SplitPanelGroup >
         </StyledEditableSettingsRoot >

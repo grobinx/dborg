@@ -230,7 +230,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 initMetadata(newSession);
                 return newSession;
             }));
-            console.log('connectionsList', connectionsList.length);
             setSessions(connectionsList);
             setSelectedSession(connectionsList[connectionsList.length - 1] || null);
 
