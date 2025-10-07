@@ -87,17 +87,22 @@ const searchSettings = (search: string, collections: SettingsCollection[]): Sett
     }
     const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
 
+    const filterSettings = (settings: SettingTypeUnion[] | undefined, parts: string[]): SettingTypeUnion[] | undefined => {
+        if (!settings) return undefined;
+        return settings.filter(setting =>
+            parts.every(part =>
+                (typeof setting.label === 'string' && setting.label.toLowerCase().includes(part)) ||
+                (typeof setting.description === 'string' && setting.description.toLowerCase().includes(part))
+            )
+        );
+    };
+
     // Rekurencyjna funkcja do filtrowania grup i podgrup
     const filterGroups = (groups: SettingsGroup[] | undefined): SettingsGroup[] | undefined => {
         if (!groups) return undefined;
         const filtered = groups.map(group => {
-            // Filtrowanie ustawień w grupie
-            const matchedSettings = group.settings?.filter(setting =>
-                parts.every(part =>
-                    (typeof setting.label === 'string' && setting.label.toLowerCase().includes(part)) ||
-                    (typeof setting.description === 'string' && setting.description.toLowerCase().includes(part))
-                )
-            );
+            // Filtrowanie ustawień w grupie za pomocą nowej funkcji
+            const matchedSettings = filterSettings(group.settings, parts);
 
             // Rekurencyjne filtrowanie podgrup
             const matchedGroups = filterGroups(group.groups);
@@ -117,9 +122,13 @@ const searchSettings = (search: string, collections: SettingsCollection[]): Sett
 
     const filtered = collections
         .map(collection => {
+            // Filtrowanie ustawień w kolekcji za pomocą nowej funkcji
+            const matchedSettings = filterSettings(collection.settings, parts);
+
             const matchedGroups = filterGroups(collection.groups);
-            return matchedGroups && matchedGroups.length > 0 ? {
+            return (matchedSettings && matchedSettings.length > 0) || (matchedGroups && matchedGroups.length > 0) ? {
                 ...collection,
+                settings: matchedSettings,
                 groups: matchedGroups
             } : null;
         })
@@ -171,8 +180,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
         const debouncedSearch = debounce(() => {
             const settings = searchSettings(search, settingsCollections);
             setDisplaySettings(settings);
-            setFlatSettings(flattenSettings(settings));
-            setSelected(null);
+            const flatSettings = flattenSettings(settings);
+            setFlatSettings(flatSettings);
+            setSelected(prev => {
+                // Jeśli poprzednio zaznaczone ustawienie nie istnieje w nowych wynikach, ustaw na null
+                if (prev && !flatSettings.some(item => createKey(item) === prev)) {
+                    return null;
+                }
+                return prev;
+            });
         }, searchDelay);
         debouncedSearch();
         return () => {
@@ -270,8 +286,8 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     selected={selected ?? undefined}
                                     onSelect={handleSelectSetting}
                                     onPinned={(pinned) => {
-                                        console.log("Pinned", pinned);
-                                     }}
+                                        //console.log("Pinned", pinned);
+                                    }}
                                 />
                             ))}
                         </StyledEditableSettingsList>
