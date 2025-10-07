@@ -196,6 +196,7 @@ const StyledTableContainer = styled('div', {
         userSelect: "none",
         borderRadius: 0,
         outline: "none",
+        scrollBehavior: "auto",
     })
 );
 
@@ -1191,6 +1192,7 @@ export const DataGrid = <T extends object>({
                 onFocus={focusHandler}
                 style={{
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
+
                 }}
             >
                 <CommandPalette
