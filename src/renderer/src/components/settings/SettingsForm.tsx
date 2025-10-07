@@ -255,7 +255,6 @@ const SettingGroupForm: React.FC<{
                     top: titleHeight,
                     backgroundColor: theme.palette.background.paper,
                     zIndex: 99 - (groupLevel ?? 1),
-                    padding: 4,
                     // '&.pinned': {
                     //     visibility: 'hidden',
                     // }
@@ -399,7 +398,6 @@ export const SettingsCollectionForm: React.FC<{
                     backgroundColor: theme.palette.background.paper,
                     zIndex: 100,
                     transition: 'box-shadow 0.2s',
-                    padding: 4,
                 }}
                 ref={titleRef}
                 className={isPinned ? "pinned" : ""}

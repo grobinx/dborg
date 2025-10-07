@@ -17,6 +17,7 @@ import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugi
 import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
+import { useSetting } from './SettingsContext';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -105,8 +106,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const { t } = useTranslation();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { addToast } = useToast();
+    const [iAmDeveloper] = useSetting("app", "i_am_developer");
 
-    const initialContainersRef = React.useRef<SpecificContainer[]>([
+    const initialContainers = (): SpecificContainer[] => [
         {
             id: uuidv7(),
             type: "new-connection",
@@ -181,19 +183,19 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     label: t("settings", "Settings"),
                     render: () => <EditableSettings />,
                 },
-                {
+                iAmDeveloper && {
                     type: "rendered",
-                    id: "developer-options",
+                    id: "developer-view",
                     icon: <theme.icons.Developer />,
-                    label: t("developer-options", "Developer"),
+                    label: t("developer-view", "Developer"),
                     tooltip: t("manage-developer-options", "Manage developer options"),
                     render: () => <DeveloperOptions />,
                 },
-            ]
+            ].filter(Boolean) as View[],
         },
-    ]);
+    ];
 
-    const [containers, setContainers] = useState<SpecificContainer[] | null>(null);
+    const [containers, setContainers] = React.useState<SpecificContainer[] | null>(null);
     const [selectedContainer, setSelectedContainer] = useState<SpecificContainer | null>(null);
     const [views, setViews] = useState<View[] | null>(null);
     const [selectedView, setSelectedView] = useState<View | null>(null);
@@ -204,12 +206,15 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
     const plugins = usePluginManager();
 
-    const chooseContainer = (list: IDatabaseSession[] | null) => {
-        if (list && list.length) {
-            return initialContainersRef.current.find(c => c.type === "connections") || initialContainersRef.current[0];
+    const chooseContainer = React.useCallback((list: IDatabaseSession[] | null) => {
+        if (containers) {
+            if (list && list.length) {
+                return containers.find(c => c.type === "connections") || containers[0];
+            }
+            return containers.find(c => c.type === "connection-list") || containers[0];
         }
-        return initialContainersRef.current.find(c => c.type === "connection-list") || initialContainersRef.current[0];
-    };
+        return null;
+    }, [containers]);
 
     // Initialize the containers and set the default selected container
     // this call is after application init or reset webcontent, so we restore connections from main process
@@ -234,7 +239,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 return chooseContainer(connectionsList);
             });
         });
-    }, [contextInitialized, databaseConnections]);
+    }, [contextInitialized, databaseConnections, chooseContainer]);
 
     const updateViewsForSession = React.useCallback((session: IDatabaseSession | null) => {
         if (session) {
@@ -304,8 +309,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
 
     useEffect(() => {
-        setContainers(initialContainersRef.current);
-    }, []);
+        setContainers(initialContainers());
+        updateViewsForSession(null);
+    }, [iAmDeveloper]);
 
     useEffect(() => {
         if (selectedContainer?.type === "connections") {
@@ -364,7 +370,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 }));
             }
         }
-    }, [views, selectedSession, selectedView]);
+    }, [views, selectedContainer, selectedSession, selectedView]);
 
     const handleEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
@@ -431,7 +437,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             delete newState[connectionId];
             return newState;
         });
-    }, [selectedSession, updateViewsForSession]);
+    }, [selectedSession, updateViewsForSession, chooseContainer]);
 
     const handleRefreshMetadata = React.useCallback((message: RefreshMetadata) => {
         if (selectedSession && selectedSession.info.uniqueId === message.connectionId) {

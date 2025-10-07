@@ -52,6 +52,8 @@ export const default_settings: ApplicationSettings = {
         /* General settings */
         "settings.store_timeout": settings_store_timeout,
         "search.delay": search_delay,
+
+        "i_am_developer": false,
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
@@ -299,5 +301,21 @@ editableSettingsRegistry.register((context) => {
                 },
             ],
         }],
+    });
+
+    context.registerCollection({
+        key: 'developer',
+        title: t('developer-options', 'Developer Options'),
+        description: t('developer-options-description', 'Settings related to developer options.'),
+        settings: [
+            {
+                type: 'boolean',
+                storageGroup: 'app',
+                storageKey: 'i_am_developer',
+                label: t('i-am-developer', 'I am a developer'),
+                description: t('i-am-developer-description', 'Enable developer options and features.'),
+                category: t('developer', 'Developer'),
+            }
+        ]
     });
 });
