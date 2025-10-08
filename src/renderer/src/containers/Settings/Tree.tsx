@@ -90,6 +90,51 @@ const TreeNode: React.FC<React.PropsWithChildren<{
     );
 };
 
+const TreeNodes: React.FC<{
+    nodes: TreeNode[];
+    level: number;
+    openNodes: string[];
+    selected: string | null;
+    focused?: boolean;
+    handleClick: (node: TreeNode) => void;
+    renderNode?: (node: TreeNode) => React.ReactNode;
+}> = ({ nodes, level, openNodes, selected, focused, handleClick, renderNode }) => {
+    return (
+        nodes.map((node, index) => {
+            const isOpen = openNodes.includes(node.key);
+            return (
+                <React.Fragment key={index}>
+                    <TreeNode
+                        level={level}
+                        onClick={() => handleClick(node)}
+                        selected={selected === node.key}
+                        isOpen={isOpen}
+                        toggle={node.children && node.children.length > 0}
+                        focused={focused && selected === node.key}
+                        data-node-key={node.key}
+                    >
+                        {renderNode ? renderNode(node) : <FormattedText text={node.title} />}
+                    </TreeNode>
+
+                    {node.children && node.children.length > 0 && (
+                        <Collapse in={isOpen} unmountOnExit>
+                            <TreeNodes
+                                nodes={node.children}
+                                level={level + 1}
+                                openNodes={openNodes}
+                                selected={selected}
+                                handleClick={handleClick}
+                                renderNode={renderNode}
+                                focused={focused}
+                            />
+                        </Collapse>
+                    )}
+                </React.Fragment>
+            );
+        })
+    );
+};
+
 const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, renderNode }) => {
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const [focused, setFocused] = React.useState<boolean>(false);
@@ -171,13 +216,13 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
         );
     }, []);
 
-    const handleClick = (node: TreeNode) => {
+    const handleClick = React.useCallback((node: TreeNode) => {
         onSelect(node.key);
         setUncontrolledSelected(node.key);
         if (node.children && node.children.length > 0) {
             toggleNode(node.key);
         }
-    };
+    }, [onSelect, toggleNode]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
         const node = treeRef.current?.querySelector('[data-node-key].selected');
@@ -254,33 +299,6 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
         }
     };
 
-    const renderTreeNodes = (nodes: TreeNode[], level: number = 0) => {
-        return nodes.map(node => {
-            const isOpen = openNodes.includes(node.key);
-            return (
-                <React.Fragment key={node.key}>
-                    <TreeNode
-                        level={level}
-                        onClick={() => handleClick(node)}
-                        selected={uncontrolledSelected === node.key}
-                        isOpen={isOpen}
-                        toggle={node.children && node.children.length > 0}
-                        focused={focused && uncontrolledSelected === node.key}
-                        data-node-key={node.key}
-                    >
-                        {renderNode ? renderNode(node) : <FormattedText text={node.title} />}
-                    </TreeNode>
-
-                    {node.children && node.children.length > 0 && (
-                        <Collapse in={isOpen} unmountOnExit>
-                            {renderTreeNodes(node.children, level + 1)}
-                        </Collapse>
-                    )}
-                </React.Fragment>
-            );
-        });
-    };
-
     return (
         <StyledTree
             ref={treeRef}
@@ -294,7 +312,15 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
         >
-            {renderTreeNodes(data)}
+            <TreeNodes
+                nodes={data}
+                level={0}
+                openNodes={openNodes}
+                selected={uncontrolledSelected}
+                focused={focused}
+                handleClick={handleClick}
+                renderNode={renderNode}
+            />
         </StyledTree>
     );
 };

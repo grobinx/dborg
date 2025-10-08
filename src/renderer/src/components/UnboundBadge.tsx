@@ -4,7 +4,7 @@ import { Size } from "@renderer/types/sizes";
 import { ThemeColor } from "@renderer/types/colors";
 
 export interface UnboundBadgeProps {
-    content?: React.ReactNode; // The content to display inside the badge
+    content?: number; // The content to display inside the badge
     size?: Size; // Diameter of the badge
     border?: string; // Optional border for the badge
     color?: ThemeColor; // Color type from MUI theme
@@ -13,6 +13,7 @@ export interface UnboundBadgeProps {
     sx?: SxProps; // MUI sx prop for styling
     className?: string; // Additional class names
     [key: `data-${string}`]: any; // Data attributes
+    [key: `aria-${string}`]: any; // ARIA attributes
 }
 
 // Styled UnboundBadge container

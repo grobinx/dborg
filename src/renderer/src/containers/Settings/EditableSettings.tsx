@@ -311,6 +311,20 @@ const EditableSettings = (props: EditableSettingsProps) => {
         };
     }, [pinnedMap, treeData, flatSettings]);
 
+    const renderNode = React.useCallback((node: TreeNode) => {
+        return <FormattedText
+            text={[[
+                node.title,
+                <UnboundBadge
+                    content={node.children?.length ?? 0}
+                    unmountOnHide
+                    style={{ opacity: 0.1 }}
+                    size="small"
+                />
+            ]]}
+        />
+    }, []);
+
     return (
         <StyledEditableSettingsRoot
             className="EditableSettings-root" {...other}
@@ -344,17 +358,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                 onSelect={handleSelectNode}
                                 selected={selectedNode}
                                 autoExpand={1}
-                                renderNode={(node) => {
-                                    return <FormattedText
-                                        text={[[
-                                            node.title,
-                                            <UnboundBadge
-                                                content={node.children?.length ?? 0}
-                                                unmountOnHide
-                                                style={{ opacity: 0.1 }}
-                                            />
-                                        ]]} />
-                                }}
+                                renderNode={renderNode}
                             />
                         </Box>
                     </StyledEditableSettingsContent>

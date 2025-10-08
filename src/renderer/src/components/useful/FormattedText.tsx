@@ -67,18 +67,17 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
 
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return <FormattedTextElement key={counter++}>{text}</FormattedTextElement>;
+        return <FormattedTextElement>{text}</FormattedTextElement>;
     } else if (isValidElement(text)) {
         return text;
     } else if (Array.isArray(text)) {
         // Obsługa przypadku, gdy `text` jest tablicą
         return (
             <Stack
-                key={counter++}
                 direction="column"
                 divider={<hr style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />}
                 gap={1}
-                sx={{ whiteSpace: "pre-wrap" }}
+                sx={{ whiteSpace: "pre-wrap", alignItems: "center" }}
                 width={"100%"}
             >
                 {text.map((item, index) => {
@@ -98,6 +97,7 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
                                 gap={8}
                                 justifyContent="space-between"
                                 width={"100%"}
+                                sx={{ alignItems: "center" }}
                             >
                                 {item.map((subItem, index) => {
                                     if (typeof subItem === 'string') {
