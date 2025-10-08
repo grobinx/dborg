@@ -446,3 +446,15 @@ export interface SettingsCollection {
      */
     settings?: SettingTypeUnion[];
 }
+
+export const isSettingType = (obj: any): obj is SettingTypeUnion => {
+    return obj && typeof obj === 'object' && 'type' in obj && typeof obj.type === 'string';
+}
+
+export const isSettingsGroup = (obj: any): obj is SettingsGroup => {
+    return obj && typeof obj === 'object' && 'key' in obj && typeof obj.key === 'string' && 'settings' in obj && Array.isArray(obj.settings);
+}
+
+export const isSettingsCollection = (obj: any): obj is SettingsCollection => {
+    return obj && typeof obj === 'object' && 'key' in obj && typeof obj.key === 'string' && ('groups' in obj && Array.isArray(obj.groups) || 'settings' in obj && Array.isArray(obj.settings));
+}

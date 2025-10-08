@@ -16,6 +16,11 @@ import { FormattedContentItem, FormattedText } from "@renderer/components/useful
 export interface EditableSettingsProps extends StackProps {
 }
 
+type SettingWithIndex = SettingTypeUnion & {
+    _group: SettingsGroup | SettingsCollection;
+    _index: number;
+};
+
 const StyledEditableSettingsRoot = styled(Stack, {
     name: 'EditableSettings',
     slot: 'root',
@@ -142,15 +147,20 @@ const searchSettings = (search: string, collections: SettingsCollection[]): Sett
     return filtered;
 }
 
-const flattenSettings = (collections: SettingsCollection[]): SettingTypeUnion[] => {
-    const flatList: SettingTypeUnion[] = [];
+const flattenSettings = (collections: SettingsCollection[]): SettingWithIndex[] => {
+    const flatList: SettingWithIndex[] = [];
+    let index = 0;
 
     const flatten = (groups?: SettingsGroup[]) => {
         if (!groups) return;
         groups.forEach(group => {
             // Dodaj ustawienia z grupy
             if (group.settings) {
-                flatList.push(...group.settings);
+                flatList.push(...group.settings.map(setting => ({
+                    ...setting,
+                    _group: group,
+                    _index: index++
+                })));
             }
             // Rekurencyjnie spłaszcz podgrupy
             if (group.groups) flatten(group.groups);
@@ -160,7 +170,11 @@ const flattenSettings = (collections: SettingsCollection[]): SettingTypeUnion[] 
     collections.forEach(collection => {
         // Dodaj ustawienia z kolekcji
         if (collection.settings) {
-            flatList.push(...collection.settings);
+            flatList.push(...collection.settings.map(setting => ({
+                ...setting,
+                _group: collection,
+                _index: index++
+            })));
         }
         // Spłaszcz grupy w kolekcji
         flatten(collection.groups);
@@ -173,14 +187,14 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const { ...other } = props;
     const [settingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
     const [displaySettings, setDisplaySettings] = React.useState<SettingsCollection[]>(settingsCollections);
-    const [flatSettings, setFlatSettings] = React.useState<SettingTypeUnion[]>(() => flattenSettings(settingsCollections));
+    const [flatSettings, setFlatSettings] = React.useState<SettingWithIndex[]>(() => flattenSettings(settingsCollections));
     const { t } = useTranslation();
     const [search, setSearch] = React.useState('');
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [selected, setSelected] = React.useState<string | null>(null);
     const selectedRef = React.useRef<string | null>(null);
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
-    const [pinnedMap, setPinnedMap] = React.useState(() => ({} as Record<string, number>));
+    const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
     const theme = useTheme();
     const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
@@ -256,9 +270,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
             return path;
         };
 
-        let deepestPath: TreeNode[] | null = null;
-        let maxDepth = -1;
-
         const findNodeByKey = (nodes: TreeNode[], key: string): TreeNode | null => {
             for (const node of nodes) {
                 if (node.key === key) return node;
@@ -271,31 +282,33 @@ const EditableSettings = (props: EditableSettingsProps) => {
         };
 
         const updateBreadcrumb = debounce(() => {
-            Object.entries(pinnedMap).forEach(([key]) => {
-                const foundNode = findNodeByKey(treeData, key);
-                if (foundNode) {
-                    const path = getPath(foundNode);
-                    if (path.length > maxDepth) {
-                        maxDepth = path.length;
-                        deepestPath = path; // Zapisz najgłębszy węzeł
-                    }
-                }
+            const pinnedSettings = pinnedMap.map(key => {
+                return flatSettings.find(item => createKey(item) === key);
             });
+            const minIndexSetting = pinnedSettings.reduce<SettingWithIndex | null>((min, curr) => {
+                if (!curr) return min;
+                if (!min || curr._index < min._index) return curr;
+                return min;
+            }, null);
 
-            if (deepestPath) {
-                setBreadcrumb((deepestPath as TreeNode[]).map(node => node.title)); // Ustaw tytuł najgłębszego węzła w breadcrumb
-                setSelectedNode(deepestPath[deepestPath.length - 1].key);
-            } else {
-                setBreadcrumb([]); // Jeśli nie znaleziono, ustaw pustą ścieżkę
+            if (minIndexSetting) {
+                const groupNode = findNodeByKey(treeData, minIndexSetting._group.key);
+                const path = getPath(groupNode);
+                setBreadcrumb(path.map(node => node.title));
+                setSelectedNode(path[path.length - 1].key);
             }
-        }, 100); // Ustaw opóźnienie debouncingu, np. 100 ms
+            else {
+                setBreadcrumb([]); 
+                setSelectedNode(null);
+            }
+        }, 100); 
 
-        updateBreadcrumb(); // Wywołaj funkcję debouncing
+        updateBreadcrumb(); 
 
         return () => {
-            updateBreadcrumb.cancel(); // Anuluj debouncing przy odmontowywaniu
+            updateBreadcrumb.cancel(); 
         };
-    }, [pinnedMap, treeData]);
+    }, [pinnedMap, treeData, flatSettings]);
 
     return (
         <StyledEditableSettingsRoot
@@ -352,7 +365,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     flexShrink={1}
                                     divider={<span>/</span>}
                                 >
-                                    {breadCrumb.length > 0 && breadCrumb.map((item, index) => (
+                                    {breadCrumb.map((item, index) => (
                                         <FormattedText key={index} text={item} />
                                     ))}
                                 </Stack>
@@ -366,13 +379,14 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                             collection={collection}
                                             selected={selected ?? undefined}
                                             onSelect={handleSelectSetting}
-                                            onPinned={(operation, key, top) => {
+                                            onPinned={(operation, key) => {
                                                 if (operation === 'add') {
-                                                    setPinnedMap((prev) => ({ ...prev, [key]: top }));
+                                                    setPinnedMap((prev) => [...prev, key]);
                                                 } else {
                                                     setPinnedMap((prev) => {
-                                                        const newMap = { ...prev };
-                                                        delete newMap[key];
+                                                        if (!prev.includes(key)) return prev;
+                                                        const newMap = [...prev];
+                                                        newMap.splice(newMap.indexOf(key), 1);
                                                         return newMap;
                                                     });
                                                 }

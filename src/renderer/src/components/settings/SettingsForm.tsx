@@ -9,6 +9,7 @@ import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
 import { Stack, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
+import { create } from "@mui/material/styles/createTransitions";
 
 function useSettingBinding(setting: SettingTypeUnion) {
     const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
@@ -38,7 +39,7 @@ const StringSetting: React.FC<{
     const [value, onChange, onChanged] = useSettingBinding(setting);
 
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <TextField
                 id={createKey(setting)}
                 value={value}
@@ -62,7 +63,7 @@ const NumberSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <NumberField
                 id={createKey(setting)}
                 value={value}
@@ -87,7 +88,7 @@ const SelectSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected} data-setting-key={createKey(setting)}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <SelectField
                 id={createKey(setting)}
                 value={value}
@@ -110,7 +111,7 @@ const BooleanSetting: React.FC<{
 }> = ({ setting, selected, onSelect }) => {
     const [value, onChange, onChanged] = useSettingBinding(setting);
     return (
-        <SettingDecorator setting={setting} value={value} setValue={onChange} showDescription={false} selected={selected} data-setting-key={createKey(setting)}>
+        <SettingDecorator setting={setting} value={value} setValue={onChange} showDescription={false} selected={selected}>
             <BooleanField
                 id={createKey(setting)}
                 value={value}
@@ -142,19 +143,50 @@ export const SettingItem: React.FC<{
     setting: SettingTypeUnion,
     selected?: boolean,
     onSelect?: () => void,
-}> = React.memo(({ setting, selected, onSelect }) => {
+    onPinned?: (operation: 'add' | 'remove', key: string) => void;
+}> = ({ setting, selected, onSelect, onPinned }) => {
     const Renderer = registry[setting.type];
     if (!Renderer) {
         return <>Unsupported setting type: {setting.type}</>;
     }
-    return <Renderer setting={setting} selected={selected} onSelect={onSelect} />;
-});
+
+    const itemRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (!itemRef.current) return;
+
+        const itemObserver = new IntersectionObserver(enteries => {
+            for (const entry of enteries) {
+                if (entry.isIntersecting) {
+                    onPinned?.('add', createKey(setting));
+                }
+                else {
+                    onPinned?.('remove', createKey(setting));
+                }
+            }
+        },
+            { threshold: [0.1], rootMargin: '0px 0px -50% 0px' }
+        );
+        itemObserver.observe(itemRef.current);
+
+        return () => {
+            itemObserver.disconnect();
+        };
+    }, []);
+
+    return (
+        <div ref={itemRef} data-setting-key={createKey(setting)}>
+            <Renderer setting={setting} selected={selected} onSelect={onSelect} />
+        </div>
+    );
+};
 
 export const SettingsList: React.FC<{
     settings: SettingTypeUnion[] | undefined,
     selected?: string,
     onSelect?: (key: string) => void,
-}> = ({ settings, selected, onSelect }) => {
+    onPinned?: (operation: 'add' | 'remove', key: string) => void;
+}> = ({ settings, selected, onSelect, onPinned }) => {
     if (!settings || settings.length === 0) {
         return null;
     }
@@ -170,6 +202,7 @@ export const SettingsList: React.FC<{
                     setting={setting}
                     selected={createKey(setting) === selected}
                     onSelect={() => onSelect?.(createKey(setting))}
+                    onPinned={onPinned}
                 />)
             )}
         </Stack>
@@ -183,14 +216,10 @@ const SettingGroupForm: React.FC<{
     titleText?: string[];
     selected?: string;
     onSelect?: (key: string) => void;
-    onPinned?: (operation: 'add' | 'remove', key: string, top: number) => void;
+    onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ group, groupLevel, titleHeight, titleText, selected, onSelect, onPinned }) => {
-    const groupRef = React.useRef<HTMLDivElement>(null);
     const groupTitleRef = React.useRef<HTMLDivElement>(null);
     const [groupTitleHeight, setGroupTitleHeight] = React.useState(0);
-    const sentinelRef = React.useRef<HTMLDivElement>(null);
-    const [isPinned, setIsPinned] = React.useState(false);
-    const theme = useTheme();
 
     if (!group) {
         return null;
@@ -200,62 +229,16 @@ const SettingGroupForm: React.FC<{
         if (groupTitleRef.current) {
             setGroupTitleHeight(groupTitleRef?.current?.clientHeight ?? 0);
         }
-    }, [group.title, isPinned]);
-
-    React.useEffect(() => {
-        if (!sentinelRef.current || !groupRef.current) return;
-
-        let parentVisible = false;
-        let sentinelPinned = false;
-
-        const groupObserver = new IntersectionObserver(enteries => {
-            for (const entry of enteries) {
-                if (entry.isIntersecting) {
-                    onPinned?.('add', group.key, entry.target.getBoundingClientRect().top);
-                }
-                else {
-                    onPinned?.('remove', group.key, entry.target.getBoundingClientRect().top);
-                }
-            }
-            //setIsPinned(entry.isIntersecting);
-            //parentVisible = entry.isIntersecting;
-        },
-            { threshold: [0, 0.01], rootMargin: '0px 0px -50% 0px' }
-        );
-        groupObserver.observe(groupRef.current);
-
-        return () => {
-            //sentinelObserver.disconnect();
-            groupObserver.disconnect();
-        };
     }, [group.title]);
 
-    React.useEffect(() => {
-        if (onPinned) {
-            //onPinned(isPinned ? [...(titleText ?? []), group.title] : [...(titleText ?? [])]);
-        }
-    }, [onPinned, isPinned]);
-
     return (
-        <Stack ref={groupRef} direction={"column"}>
+        <Stack direction={"column"}>
             {/* Sentinel przed nagłówkiem */}
-            <div ref={sentinelRef} style={{ height: 1, margin: 0, padding: 0 }} />
             <Typography
                 variant="h6"
-                sx={{
-                    // position: 'sticky',
-                    // top: titleHeight,
-                    // backgroundColor: theme.palette.background.paper,
-                    // zIndex: 99 - (groupLevel ?? 1),
-                    // '&.pinned': {
-                    //     visibility: 'hidden',
-                    // }
-                }}
                 ref={groupTitleRef}
-                className={isPinned ? "pinned" : ""}
             >
                 {group.title}
-                {/* - {isPinned ? "pinned" : "not pinned"} */}
             </Typography>
 
             {group.description && (
@@ -267,7 +250,7 @@ const SettingGroupForm: React.FC<{
                 </Typography>
             )}
 
-            <SettingsList settings={group.settings} selected={selected} onSelect={onSelect} />
+            <SettingsList settings={group.settings} selected={selected} onSelect={onSelect} onPinned={onPinned} />
 
             <SettingsGroupList
                 groups={group.groups}
@@ -289,7 +272,7 @@ const SettingsGroupList: React.FC<{
     titleText?: string[];
     selected?: string;
     onSelect?: (key: string) => void;
-    onPinned?: (operation: 'add' | 'remove', key: string, top: number) => void;
+    onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ groups, groupLevel, titleHeight, titleText, selected, onSelect, onPinned }) => {
     if (!groups || groups.length === 0) {
         return null;
@@ -315,20 +298,16 @@ export const SettingsCollectionForm: React.FC<{
     collection: SettingsCollection;
     selected?: string;
     onSelect?: (key: string) => void;
-    onPinned?: (operation: 'add' | 'remove', key: string, top: number) => void;
+    onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ contentRef, collection, selected, onSelect, onPinned }) => {
     const titleRef = React.useRef<HTMLDivElement>(null);
-    const collectionRef = React.useRef<HTMLDivElement>(null);
     const [titleHeight, setTitleHeight] = React.useState(0);
-    const sentinelRef = React.useRef<HTMLDivElement>(null);
-    const [isPinned, setIsPinned] = React.useState(false);
-    const theme = useTheme();
 
     React.useLayoutEffect(() => {
         if (titleRef.current) {
             setTitleHeight(titleRef.current?.clientHeight ?? 0);
         }
-    }, [collection.title, isPinned]);
+    }, [collection.title]);
 
     React.useLayoutEffect(() => {
         if (contentRef?.current && selected) {
@@ -339,70 +318,15 @@ export const SettingsCollectionForm: React.FC<{
         }
     }, [selected]);
 
-    React.useEffect(() => {
-        if (!sentinelRef.current || !collectionRef.current) return;
-
-        let parentVisible = false;
-        let sentinelPinned = false;
-
-        // const sentinelObserver = new IntersectionObserver(
-        //     ([entry]) => {
-        //         setIsPinned(!entry.isIntersecting && parentVisible);
-        //         sentinelPinned = !entry.isIntersecting;
-        //     },
-        //     { threshold: [0] }
-        // );
-        // sentinelObserver.observe(sentinelRef.current);
-
-        const collectionObserver = new IntersectionObserver(enteries => {
-            for (const entry of enteries) {
-                if (entry.isIntersecting) {
-                    onPinned?.('add', collection.key, entry.target.getBoundingClientRect().top);
-                }
-                else {
-                    onPinned?.('remove', collection.key, entry.target.getBoundingClientRect().top);
-                }
-            }
-            //setIsPinned(entry.isIntersecting);
-            //parentVisible = entry.isIntersecting;
-        },
-            { threshold: [0, 0.01], rootMargin: '0px 0px -50% 0px' }
-        );
-        collectionObserver.observe(collectionRef.current);
-
-        return () => {
-            //            sentinelObserver.disconnect();
-            collectionObserver.disconnect();
-        };
-    }, [collection.title]);
-
-    React.useEffect(() => {
-        if (onPinned) {
-            //onPinned(isPinned ? [collection.title] : []);
-        }
-    }, [onPinned, isPinned]);
-
     return (
         <Stack
             style={{ display: "flex", flexDirection: "column", gap: 4 }}
-            ref={collectionRef}
         >
-            {/* Sentinel przed nagłówkiem */}
-            <div ref={sentinelRef} style={{ height: 1, margin: 0, padding: 0 }} />
             <Typography
                 variant="h5"
-                sx={{
-                    // position: 'sticky',
-                    // top: 0,
-                    // backgroundColor: theme.palette.background.paper,
-                    // zIndex: 100,
-                    // transition: 'box-shadow 0.2s',
-                }}
                 ref={titleRef}
-                className={isPinned ? "pinned" : ""}
             >
                 {collection.title}
-                {/* - {isPinned ? "pinned" : "not pinned"} */}
             </Typography>
 
             {collection?.description && (
@@ -414,7 +338,7 @@ export const SettingsCollectionForm: React.FC<{
                 </Typography>
             )}
 
-            <SettingsList settings={collection.settings} selected={selected} onSelect={onSelect} />
+            <SettingsList settings={collection.settings} selected={selected} onSelect={onSelect} onPinned={onPinned} />
 
             <SettingsGroupList
                 groups={collection.groups}
