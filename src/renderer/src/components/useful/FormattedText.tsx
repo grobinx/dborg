@@ -4,8 +4,6 @@ import React, { isValidElement, ReactNode } from "react";
 import Code from "../Code";
 import ReactMarkdown from "react-markdown";
 
-let counter: bigint = 0n;
-
 export type FormattedContentItem = React.ReactNode | string;
 export type FormattedContent =
     FormattedContentItem // pojedynczy element
