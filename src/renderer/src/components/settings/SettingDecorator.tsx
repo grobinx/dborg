@@ -74,6 +74,8 @@ const StyledSettingDecorator = styled('div', {
     margin: props.theme.spacing(1),
     gap: 8,
     padding: 8,
+    outline: "1px solid transparent",
+    outlineOffset: -1,
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
             backgroundColor: alpha(props.theme.palette[color].main, 0.03),
@@ -84,7 +86,7 @@ const StyledSettingDecorator = styled('div', {
         backgroundColor: props.theme.palette.action.hover,
     },
     '&.focused': {
-        backgroundColor: props.theme.palette.action.focus,
+        outlineColor: props.theme.palette.action.focus,
     },
     '&.selected': {
         backgroundColor: props.theme.palette.action.selected,
@@ -263,7 +265,7 @@ const StyledSettingDecoratorInput = styled('div', {
 const StyledSettingDecoratorRestrictions = styled('div', {
     name: "SettingDecorator",
     slot: "restrictions",
-})(({  }) => ({
+})(({ }) => ({
     display: "flex",
     flexDirection: "row",
     alignItems: "end",

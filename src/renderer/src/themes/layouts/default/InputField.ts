@@ -9,6 +9,8 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
+                outline: "2px solid transparent",
+                outlineOffset: -2,
                 lineHeight: 1.5,
                 '&:not(.type-boolean)': {
                     border: `1px solid ${palette.divider}`,
@@ -22,7 +24,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     },
                     ...themeColors.reduce((acc, color) => {
                         acc[`&.color-${color}`] = {
-                            backgroundColor: alpha(palette[color].main, 0.2),
+                            backgroundColor: alpha(palette[color].main, 0.1),
                         };
                         return acc;
                     }, {}),
@@ -30,7 +32,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 '&.focused:not(.type-boolean)': {
                     outlineWidth: 2,
                     outlineStyle: 'solid',
-                    outlineOffset: -2,
                     borderColor: 'transparent',
                     transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     ...themeColors.reduce((acc, color) => {

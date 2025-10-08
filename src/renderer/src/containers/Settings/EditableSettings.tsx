@@ -12,6 +12,7 @@ import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import createKey from "@renderer/components/settings/createKey";
 import { FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
+import UnboundBadge from "@renderer/components/UnboundBadge";
 
 export interface EditableSettingsProps extends StackProps {
 }
@@ -298,15 +299,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 setSelectedNode(path[path.length - 1].key);
             }
             else {
-                setBreadcrumb([]); 
+                setBreadcrumb([]);
                 setSelectedNode(null);
             }
-        }, 100); 
+        }, 100);
 
-        updateBreadcrumb(); 
+        updateBreadcrumb();
 
         return () => {
-            updateBreadcrumb.cancel(); 
+            updateBreadcrumb.cancel();
         };
     }, [pinnedMap, treeData, flatSettings]);
 
@@ -336,9 +337,27 @@ const EditableSettings = (props: EditableSettingsProps) => {
             </StyledEditableSettingsTitle>
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
-                    <Box sx={{ width: '100%', flexShrink: 0, padding: 8 }}>
-                        <Tree data={treeData} onSelect={handleSelectNode} selected={selectedNode} autoExpand={1} />
-                    </Box>
+                    <StyledEditableSettingsContent>
+                        <Box sx={{ width: '100%', height: '100%', flexShrink: 0, padding: 8 }}>
+                            <Tree
+                                data={treeData}
+                                onSelect={handleSelectNode}
+                                selected={selectedNode}
+                                autoExpand={1}
+                                renderNode={(node) => {
+                                    return <FormattedText
+                                        text={[[
+                                            node.title,
+                                            <UnboundBadge
+                                                content={node.children?.length ?? 0}
+                                                unmountOnHide
+                                                style={{ opacity: 0.1 }}
+                                            />
+                                        ]]} />
+                                }}
+                            />
+                        </Box>
+                    </StyledEditableSettingsContent>
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>

@@ -37,7 +37,19 @@ const theme = createTheme({
             primary: '#f0f0f0',
             secondary: colors.grey[400],
             //icon: '#ffee58'
-        }
+        },
+        action: {
+            focus: alpha(colors.lightBlue[200], 0.25),
+            hover: alpha(colors.lightBlue[200], 0.1),
+            selected: alpha(colors.lightBlue[200], 0.25),
+            disabled: colors.grey[800],
+            disabledBackground: colors.grey[900],
+            hoverOpacity: 0.1,
+            focusOpacity: 0.25,
+            selectedOpacity: 0.25,
+            activatedOpacity: 0.25,
+        },
+        divider: colors.grey[800],
     }
 });
 

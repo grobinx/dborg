@@ -39,7 +39,19 @@ const theme = createTheme({
             primary: '#0f0f0f',
             secondary: colors.grey[600],
             //icon: '#ffee58'
-        }
+        },
+        action: {
+            focus: alpha(colors.blueGrey[900], 0.2),
+            hover: alpha(colors.blueGrey[900], 0.04),
+            selected: alpha(colors.blueGrey[900], 0.08),
+            disabled: colors.grey[300],
+            disabledBackground: colors.grey[100],
+            hoverOpacity: 0.04,
+            focusOpacity: 0.12,
+            selectedOpacity: 0.08,
+            activatedOpacity: 0.12,
+        },
+        divider: colors.grey[400],
     }
 });
 
