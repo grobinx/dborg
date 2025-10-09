@@ -514,7 +514,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 className="SchemaList-content"
             >
                 {!loading &&
-                    <List {...slotProps?.list}>
+                    <List {...slotProps?.list} onKeyDown={handleSearchKeyDown}>
                         {data !== null && displayData?.map((record) => {
                             const group = record.sch_group ?? t("ungrouped", "Ungrouped");
                             return (
