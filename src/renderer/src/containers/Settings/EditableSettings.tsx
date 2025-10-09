@@ -198,7 +198,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
         items: flatSettings,
         getId: (item) => createKey(item),
         onSelect: (item) => {
-            console.log('Selected item:', item);
             if (settingsContentRef.current) {
                 const element = settingsContentRef.current?.querySelector(`[data-setting-key="${createKey(item)}"] :first-child`);
                 if (element) {
