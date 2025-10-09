@@ -318,8 +318,8 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 <UnboundBadge
                     content={node.children?.length ?? 0}
                     unmountOnHide
-                    style={{ opacity: 0.1 }}
-                    size="small"
+                    style={{ opacity: 0.5 }}
+                    size="medium"
                 />
             ]]}
         />

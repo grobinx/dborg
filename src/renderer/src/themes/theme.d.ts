@@ -55,6 +55,7 @@ import { TabPanelComponent, TabPanelComponentSlots } from "./theme.d/TabPanel";
 import { ContainerButtonComponent, ContainerButtonComponentProps, ContainerButtonComponentSlots } from "./theme.d/ContainerButton";
 import { ViewButtonComponent, ViewButtonComponentProps, ViewButtonComponentSlots } from "./theme.d/ViewButton";
 import { ShortcutComponent, ShortcutComponentProps, ShortcutComponentSlots } from "./theme.d/Shortcut";
+import { UnboundBadgeComponent, UnboundBadgeComponentProps, UnboundBadgeComponentSlots } from "./theme.d/UnboundBadge";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -146,7 +147,7 @@ declare module "@mui/material/styles" {
         ToastList: ToastListComponentSlots;
         TabsPanel: TabsPanelComponentSlots;
         TabPanel: TabPanelComponentSlots;
-        UnboundBadge: "root";
+        UnboundBadge: UnboundBadgeComponentSlots;
         SplitPanel: SplitPanelComponentSlots;
         ToolTextField: "root";
         ToolSelect: "root";
@@ -184,7 +185,7 @@ declare module "@mui/material/styles" {
         TabPanel: TabPanelComponent;
         ToolTextField: Partial<ToolTextFieldProps>;
         ToolSelect: Partial<ToolSelectProps>;
-        UnboundBadge: Partial<UnboundBadgeProps>;
+        UnboundBadge: Partial<UnboundBadgeComponentProps>;
         SplitPanel: SplitPanelComponentProps;
         ConsoleLogPanel: ConsoleLogPanelComponentProps;
         SettingInputControl: Partial<SettingInputControlProps>;
@@ -231,11 +232,7 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['ToolSelect'];
             //variants?: ComponentsVariants['ToolSelect'];
         };
-        UnboundBadge?: {
-            defaultProps?: ComponentsPropsList['UnboundBadge'];
-            styleOverrides?: ComponentsOverrides<Theme>['UnboundBadge'];
-            //variants?: ComponentsVariants['UnboundBadge'];
-        };
+        UnboundBadge?: UnboundBadgeComponent;
         SplitPanel?: SplitPanelComponent;
         ConsoleLogPanel?: ConsoleLogPanelComponent;
         SettingInputControl?: {

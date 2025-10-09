@@ -1,59 +1,40 @@
-import React from "react";
-import { styled, Box, Theme, useThemeProps, SxProps } from "@mui/material";
+import { styled, SxProps, useThemeProps } from "@mui/material";
+import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
-import { ThemeColor } from "@renderer/types/colors";
+import clsx from "@renderer/utils/clsx";
+import React from "react";
 
 export interface UnboundBadgeProps {
-    content?: number; // The content to display inside the badge
+    content?: React.ReactNode; // The content to display inside the badge
     size?: Size; // Diameter of the badge
-    border?: string; // Optional border for the badge
     color?: ThemeColor; // Color type from MUI theme
     unmountOnHide?: boolean; // Whether to unmount the badge when hidden
     style?: React.CSSProperties; // Additional styles
     sx?: SxProps; // MUI sx prop for styling
     className?: string; // Additional class names
     [key: `data-${string}`]: any; // Data attributes
-    [key: `aria-${string}`]: any; // ARIA attributes
 }
 
 // Styled UnboundBadge container
-const StyledUnboundBadgeRoot = styled(Box, {
+const StyledUnboundBadgeRoot = styled("div", {
     name: "UnboundBadge",
     slot: "root",
-})<UnboundBadgeProps>(({ theme, size, border, color }) => {
-    const sizeMap = {
-        small: 0.8,
-        medium: 1,
-        large: 1.2,
-    };
-
-    const badgeSize = sizeMap[size as keyof typeof sizeMap] || sizeMap.medium;
-
-    return {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: `${badgeSize * 1.6}em`,
-        height: `${badgeSize * 1.6}em`,
-        borderRadius: "50%",
-        backgroundColor: theme.palette[color as keyof Theme["palette"]]?.["main"] || theme.palette.primary.main,
-        color: theme.palette[color as keyof Theme["palette"]]?.["contrastText"] || theme.palette.primary.contrastText,
-        fontSize: `${badgeSize * 0.9}em`,
-        fontWeight: theme.typography.fontWeightBold,
-        border: border || "none",
-        paddingLeft: "0.4em",
-        paddingRight: "0.4em",
-        transition: "opacity 0.3s ease, transform 0.3s ease", // Smooth transition
-    };
-});
+})<UnboundBadgeProps>(({ }) => ({
+}));
 
 const UnboundBadge: React.FC<UnboundBadgeProps> = (props) => {
-    const { content, size = "medium", color, border, unmountOnHide = false, style, sx, ...other } = useThemeProps({ name: "UnboundBadge", props: props, });
-    const [isVisible, setIsVisible] = React.useState(content !== 0); // Controls rendering
-    const [isAnimating, setIsAnimating] = React.useState(content !== 0); // Controls animation
+    const {
+        content,
+        size = "medium",
+        color = "primary",
+        unmountOnHide = false,
+        ...other 
+    } = useThemeProps({ name: "UnboundBadge", props: props, });
+    const [isVisible, setIsVisible] = React.useState(content); // Controls rendering
+    const [isAnimating, setIsAnimating] = React.useState(content); // Controls animation
 
     React.useEffect(() => {
-        if (content === 0) {
+        if (!content) {
             setIsAnimating(false); // Trigger fade-out animation
             setTimeout(() => setIsVisible(false), 300); // Remove from DOM after animation
         } else {
@@ -66,16 +47,12 @@ const UnboundBadge: React.FC<UnboundBadgeProps> = (props) => {
         <>
             {(isVisible || !unmountOnHide) && (
                 <StyledUnboundBadgeRoot
-                    className="UnboundBadge-root"
-                    size={size}
-                    color={color}
-                    border={border}
-                    style={{
-                        opacity: isAnimating ? 1 : 0,
-                        transform: isAnimating ? "scale(1)" : "scale(0.8)",
-                        ...style,
-                    }}
-                    sx={sx}
+                    className={clsx(
+                        "UnboundBadge-root",
+                        isAnimating && "visible",
+                        `size-${size}`,
+                        `color-${color}`
+                    )}
                     {...other}
                 >
                     {content}

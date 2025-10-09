@@ -28,6 +28,7 @@ import { TabPanelLayout } from "./default/TabPanel";
 import { ContainerButtonLayout } from "./default/ContainerButton";
 import { ViewButtonLayout } from "./default/ViewButton";
 import { ShortcutLayout } from "./default/Shortcut";
+import { UnboundBadgeLayout } from "./default/UnboundBadge";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -312,11 +313,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
-            UnboundBadge: {
-                defaultProps: {
-                    unmountOnHide: true,
-                }
-            },
+            UnboundBadge: UnboundBadgeLayout(palette, root),
             ToastList: ToastListLayout(palette, root),
             ConsoleLogPanel: ConsoleLogPanelLayout(palette, root),
             SplitPanel: SplitPanelLayout(palette, root),

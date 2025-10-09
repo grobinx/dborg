@@ -274,6 +274,8 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
                     if (!openNodes.includes(currentNode.key)) {
                         // Rozwiń węzeł
                         toggleNode(currentNode.key);
+                    }
+                    else {
                         const firstChild = currentNode.children[0];
                         if (firstChild) {
                             onSelect(firstChild.key);

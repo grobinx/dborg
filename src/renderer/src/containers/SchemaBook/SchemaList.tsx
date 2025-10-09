@@ -5,7 +5,6 @@ import {
     ListProps,
     ListItemProps,
     ListSubheader,
-    Badge,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
@@ -27,6 +26,7 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import UnboundBadge from "@renderer/components/UnboundBadge";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 
@@ -369,12 +369,18 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
         if (record.connected ?? 0 > 0) {
             return (
-                <Badge
-                    badgeContent={(record.connected ?? 0) > 1 ? record.connected : 0}
-                    color="primary"
-                >
+                <div style={{ position: "relative" }}>
                     <theme.icons.Connected {...slotProps?.icon} />
-                </Badge>
+                    <UnboundBadge
+                        content={(record.connected ?? 0) > 1 ? record.connected : 0}
+                        sx={{
+                            position: "absolute",
+                            top: '-1em',
+                            right: '-1em',
+                        }}
+                        size="small"
+                    />
+                </div>
             );
         }
         return <theme.icons.Disconnected {...slotProps?.icon} />;

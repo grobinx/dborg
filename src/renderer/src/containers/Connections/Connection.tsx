@@ -252,7 +252,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
             {executingFromList.length > 0 ? (
                 <>
                     <theme.icons.Loading key="icon" />
-                    {executingFromList.length > 1 && <UnboundBadge key="badge" content={executingFromList.length} size="small" />}
+                    {executingFromList.length > 1 && <UnboundBadge content={executingFromList.length} size="small" />}
                 </>
             ) : session.info.connected ? (
                 <theme.icons.Connected /> // Wyświetl ikonę Connected, gdy połączenie jest aktywne
