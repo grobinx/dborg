@@ -272,7 +272,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
         const filtered = list?.filter(record =>
             parts.every(value =>
-                JSON.stringify([record.driverName, record.sch_group, record.sch_name])
+                JSON.stringify([record.driverName, record.sch_group ?? t("ungrouped", "Ungrouped"), record.sch_name])
                     .toLowerCase()
                     .includes(value)
             )
