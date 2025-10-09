@@ -237,7 +237,7 @@ const SchemaConnectionManager: React.FC = () => {
         )) {
             await internal.execute("delete from schemas where sch_id = ?", [schemaId]);
             await updateOrder();
-            setSchemas((prev) => prev.filter((s) => s.sch_id !== schemaId)); // Usuń schemat z listy
+            await fetchSchemas();
             queueMessage(Messages.SCHEMA_DELETE_SUCCESS, schema.sch_id);
             return true;
         }
