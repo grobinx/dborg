@@ -4,8 +4,8 @@ import dborgPackage from '../../package.json';
 export const version: Version = {
     major: 1,
     minor: 0,
-    release: 2,
-    build: 359,
+    release: 5,
+    build: 362,
 
     toString: function () {
         return `${this.major}.${this.minor}.${this.release}.${this.build}`;
@@ -14,6 +14,6 @@ export const version: Version = {
 
 export const dborgReleaseName: string = "Quantum Banana";
 export const dborgDuration: string = "2024-2025";
-export const dborgDate: string = "2025-10-08 18:17:04";
+export const dborgDate: string = "2025-10-09 20:36:27";
 
 export const DBORG_DATABASE_DRIVER = "sqlite3";

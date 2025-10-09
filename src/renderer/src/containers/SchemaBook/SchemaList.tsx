@@ -195,11 +195,21 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 return acc;
             }, {});
 
-            const sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
-                const latestA = Math.max(...a.map(s => sortList && DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
-                const latestB = Math.max(...b.map(s => sortList && DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
-                return latestB - latestA;
-            });
+            let sortedGroups: [string, Schema[]][] = [];
+            if (sortList) {
+                sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
+                    const latestA = Math.max(...a.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                    const latestB = Math.max(...b.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                    return latestB - latestA;
+                });
+            }
+            else {
+                sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
+                    const latestA = Math.min(...a.map(s => s.sch_order || 0));
+                    const latestB = Math.min(...b.map(s => s.sch_order || 0));
+                    return latestA - latestB;
+                });
+            }
 
             return sortedGroups.flatMap(([, group]) =>
                 group.sort((a, b) => {
@@ -432,6 +442,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     {t("schema-db-version", "Version: {{version}}", { version: record.sch_db_version })}
                 </span>
             ),
+            <span key="order" className="order">
+                {t("schema-order", "Order: {{order}}", { order: record.sch_order })}
+            </span>,
         ];
     };
 

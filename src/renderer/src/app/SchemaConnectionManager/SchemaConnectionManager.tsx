@@ -216,6 +216,19 @@ const SchemaConnectionManager: React.FC = () => {
         }
     }, [internal, drivers, connections, passwordPrompt]);
 
+    const updateOrder = useCallback(async () => {
+        await internal.execute(
+            "WITH ordered AS (\n" +
+            "    SELECT sch_id, ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
+            "    FROM schemas\n" +
+            ")\n" +
+            "UPDATE schemas\n" +
+            "SET sch_order = (\n" +
+            "    SELECT new_order FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
+            ")"
+        );
+    }, [internal]);
+
     const deleteSchema = useCallback(async (schemaId: string) => {
         const schema = await fetchSchema(schemaId);
         if (await dialogs.confirm(
@@ -223,6 +236,7 @@ const SchemaConnectionManager: React.FC = () => {
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
             await internal.execute("delete from schemas where sch_id = ?", [schemaId]);
+            await updateOrder();
             setSchemas((prev) => prev.filter((s) => s.sch_id !== schemaId)); // Usuń schemat z listy
             queueMessage(Messages.SCHEMA_DELETE_SUCCESS, schema.sch_id);
             return true;
@@ -291,8 +305,8 @@ const SchemaConnectionManager: React.FC = () => {
             "insert into schemas (\n" +
             "  sch_id, sch_created, sch_updated, sch_drv_unique_id, \n" +
             "  sch_group, sch_pattern, sch_name, sch_color, sch_use_password, \n" +
-            "  sch_properties, sch_script)\n" +
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  sch_properties, sch_script, sch_order)\n" +
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (select ifnull(max(sch_order), 0) + 1 from schemas))",
             [
                 newSchema.sch_id,
                 newSchema.sch_created,
@@ -307,6 +321,10 @@ const SchemaConnectionManager: React.FC = () => {
                 newSchema.sch_script,
             ]
         );
+        const { rows } = await internal.query("select sch_order from schemas where sch_id = ?", [newSchema.sch_id]);
+        if (rows.length) {
+            newSchema.sch_order = Number.parseInt(rows[0].sch_order as string);
+        }
         setSchemas((prev) => [...prev, newSchema]); // Dodaj nowy schemat do listy
         queueMessage(Messages.SCHEMA_CREATE_SUCCESS, newSchema);
         return uniqueId;

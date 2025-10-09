@@ -133,6 +133,19 @@ export async function init(): Promise<void> {
         await internal.execute("alter table schemas add column sch_order varchar");
     }
     
+    if (Number(lastVersion.release ?? 0) < 5) {
+        await internal.execute(
+            "WITH ordered AS (\n" +
+            "    SELECT sch_id, ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
+            "    FROM schemas\n" +
+            ")\n" +
+            "UPDATE schemas\n" +
+            "SET sch_order = (\n" +
+            "    SELECT new_order FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
+            ")"
+        );
+    }
+    
     const exclude: string[] = [];
     for (const driver of Driver.getDrivers()) {
         await internal.execute(
