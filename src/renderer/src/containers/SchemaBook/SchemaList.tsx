@@ -507,7 +507,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         <ToolButton
                                                             className="disconnect"
                                                             onClick={(event) => {
-                                                                event.stopPropagation();
                                                                 handleDisconnectAll(record.sch_id);
                                                             }}
                                                             color="info"
@@ -521,7 +520,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     <ToolButton
                                                         className="connect"
                                                         onClick={(event) => {
-                                                            event.stopPropagation();
                                                             handleConnect(record.sch_id);
                                                         }}
                                                         color="info"
@@ -536,7 +534,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     <ToolButton
                                                         className="test"
                                                         onClick={(event) => {
-                                                            event.stopPropagation();
                                                             if (!testing.includes(record.sch_id)) {
                                                                 handleTestConnection(record);
                                                             }
@@ -553,7 +550,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     <ToolButton
                                                         className="edit"
                                                         onClick={(event) => {
-                                                            event.stopPropagation();
                                                             queueMessage(Messages.EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
@@ -565,7 +561,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     <ToolButton
                                                         className="clone"
                                                         onClick={(event) => {
-                                                            event.stopPropagation();
                                                             queueMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
@@ -579,7 +574,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     <ToolButton
                                                         className="delete"
                                                         onClick={(event) => {
-                                                            event.stopPropagation();
                                                             handleDelete(record.sch_id);
                                                         }}
                                                         color="error"
