@@ -506,7 +506,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     >
                                                         <ToolButton
                                                             className="disconnect"
-                                                            onClick={(event) => {
+                                                            onClick={(_event) => {
                                                                 handleDisconnectAll(record.sch_id);
                                                             }}
                                                             color="info"
@@ -519,7 +519,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 <Tooltip title={t("connect", "Connect to database")}>
                                                     <ToolButton
                                                         className="connect"
-                                                        onClick={(event) => {
+                                                        onClick={(_event) => {
                                                             handleConnect(record.sch_id);
                                                         }}
                                                         color="info"
@@ -533,7 +533,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 <Tooltip title={t("text-connection", "Test connection")}>
                                                     <ToolButton
                                                         className="test"
-                                                        onClick={(event) => {
+                                                        onClick={(_event) => {
                                                             if (!testing.includes(record.sch_id)) {
                                                                 handleTestConnection(record);
                                                             }
@@ -549,7 +549,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 <Tooltip title={t("edit-schema", "Edit Schema")}>
                                                     <ToolButton
                                                         className="edit"
-                                                        onClick={(event) => {
+                                                        onClick={(_event) => {
                                                             queueMessage(Messages.EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
@@ -560,7 +560,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 <Tooltip title={t("clone-edit-schema", "Clone and edit as new schema")}>
                                                     <ToolButton
                                                         className="clone"
-                                                        onClick={(event) => {
+                                                        onClick={(_event) => {
                                                             queueMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
                                                         }}
                                                         color="primary"
@@ -573,7 +573,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 <Tooltip title={t("delete-schema", "Delete schema")}>
                                                     <ToolButton
                                                         className="delete"
-                                                        onClick={(event) => {
+                                                        onClick={(_event) => {
                                                             handleDelete(record.sch_id);
                                                         }}
                                                         color="error"

@@ -197,7 +197,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         });
 
         // Przywróć klasę
-        if (hadSameWidth) group.classList.add('same-width');
+        if (hadSameWidth) group.classList.add('same-size');
 
         const next = max > 0 ? Math.ceil(max) : undefined;
         if (next !== maxWidth) setMaxWidth(next);
