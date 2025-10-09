@@ -427,13 +427,6 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
     const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefaultValue = JSON.stringify(defaultValue) === JSON.stringify(value);
 
-    const clonedChildren = React.useMemo(() => {
-        if (!React.isValidElement(children)) {
-            return children;
-        }
-        return children;
-    }, [children]);
-
     const handleMouseEnter = React.useCallback(() => setHover(true), []);
     const handleMouseLeave = React.useCallback(() => setHover(false), []);
     const handleClick = React.useCallback(() => onClick?.(), [onClick]);
@@ -600,7 +593,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                         )}
                         ref={visibleInputRef}
                     >
-                        {clonedChildren}
+                        {children}
 
                         {((restrictions ?? []).length > 0 || inputRestrictions.length > 0) && (
                             <StyledSettingDecoratorRestrictions

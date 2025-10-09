@@ -13,6 +13,8 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import createKey from "@renderer/components/settings/createKey";
 import { FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import UnboundBadge from "@renderer/components/UnboundBadge";
+import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
+import { focusElement } from "@renderer/components/useful/FocusContainerHandler";
 
 export interface EditableSettingsProps extends StackProps {
 }
@@ -192,7 +194,19 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const { t } = useTranslation();
     const [search, setSearch] = React.useState('');
     const [searchDelay] = useSetting<number>("app", "search.delay");
-    const [selected, setSelected] = React.useState<string | null>(null);
+    const [selected, setSelected, handleSearchKeyDown] = useKeyboardNavigation({
+        items: flatSettings,
+        getId: (item) => createKey(item),
+        onSelect: (item) => {
+            console.log('Selected item:', item);
+            if (settingsContentRef.current) {
+                const element = settingsContentRef.current?.querySelector(`[data-setting-key="${createKey(item)}"] :first-child`);
+                if (element) {
+                    focusElement(element as HTMLElement);
+                }
+            }
+        },
+    });
     const selectedRef = React.useRef<string | null>(null);
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
     const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
@@ -233,33 +247,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
     React.useEffect(() => {
         selectedRef.current = selected;
     }, [selected]);
-
-    const keyDownHandler = React.useCallback((event: React.KeyboardEvent) => {
-        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-            event.preventDefault();
-
-            if (selectedRef.current === null && flatSettings.length > 0) {
-                setSelected(createKey(flatSettings[0]));
-                return;
-            }
-            if (selectedRef.current === null) {
-                return;
-            }
-            const currentIndex = flatSettings.findIndex(item => createKey(item) === selectedRef.current);
-            const nextIndex = event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
-            const nextKey = flatSettings[nextIndex];
-            if (nextKey) {
-                setSelected(createKey(nextKey));
-            }
-            else if (flatSettings.length > 0) {
-                setSelected(
-                    event.key === 'ArrowDown' ?
-                        createKey(flatSettings[0])
-                        : createKey(flatSettings[flatSettings.length - 1])
-                );
-            }
-        }
-    }, [flatSettings]);
 
     React.useEffect(() => {
         const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
@@ -343,7 +330,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             value={search}
                             onChange={setSearch}
                             inputProps={{
-                                onKeyDown: keyDownHandler
+                                onKeyDown: handleSearchKeyDown
                             }}
                         />
                     </InputDecorator>

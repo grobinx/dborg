@@ -94,7 +94,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
-    const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation<Schema>({
+    const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation({
         items: displayData ?? [],
         getId: (item) => item.sch_id,
         onSelect: (item) => handleConnect(item.sch_id),

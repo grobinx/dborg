@@ -104,4 +104,13 @@ const FocusContainerHandler: React.FC<FocusContainerHandlerProps> = ({
     return null;
 };
 
+export const focusElement = (targetElement: HTMLElement) => {
+    const event = new MouseEvent("pointerup", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+    });
+    targetElement.dispatchEvent(event);
+};
+
 export default FocusContainerHandler;

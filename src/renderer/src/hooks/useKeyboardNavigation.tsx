@@ -32,15 +32,15 @@ export function useKeyboardNavigation<T, V = string>({
             const currentIndex = items.findIndex(item => getId(item) === selectedId);
             let nextIndex = currentIndex;
 
-            if (event.key === "ArrowDown") {
+            if (isKeybindingMatch("ArrowDown", event)) {
                 nextIndex = (currentIndex + 1) % items.length;
                 setSelectedId(getId(items[nextIndex]));
                 event.preventDefault();
-            } else if (event.key === "ArrowUp") {
+            } else if (isKeybindingMatch("ArrowUp", event)) {
                 nextIndex = (currentIndex - 1 + items.length) % items.length;
                 setSelectedId(getId(items[nextIndex]));
                 event.preventDefault();
-            } else if (event.key === "Enter" && currentIndex >= 0) {
+            } else if (isKeybindingMatch("Enter", event) && currentIndex >= 0) {
                 onSelect?.(items[currentIndex]);
                 event.preventDefault();
             } else if (currentIndex >= 0) {
