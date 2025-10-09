@@ -26,6 +26,7 @@ export interface SchemaRecord {
     sch_last_selected?: string;
     sch_db_version?: string;
     sch_script?: string;
+    sch_order?: number;
 }
 
 const SchemaConnectionManager: React.FC = () => {
@@ -55,6 +56,7 @@ const SchemaConnectionManager: React.FC = () => {
             sch_last_selected: row.sch_last_selected as string,
             sch_db_version: row.sch_db_version as string,
             sch_script: row.sch_script as string,
+            sch_order: Number.parseInt(row.sch_order as string),
         };
     };
 

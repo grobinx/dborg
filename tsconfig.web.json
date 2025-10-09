@@ -10,6 +10,8 @@
     "plugins/*/common/**/*"
   ],
   "compilerOptions": {
+    "skipLibCheck": true,
+    "incremental": true,
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",

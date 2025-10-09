@@ -157,6 +157,9 @@ export interface ThemeIcons {
     Add: IconWrapperFC;
     ChevronRight: IconWrapperFC;
     ChevronLeft: IconWrapperFC;
+    Sort: IconWrapperFC;
+    DragHandle: IconWrapperFC;
+    DragIndicator: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {

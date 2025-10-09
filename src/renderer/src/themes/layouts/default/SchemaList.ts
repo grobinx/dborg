@@ -27,6 +27,9 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                         '&:not(:hover) :not(.Mui-selected)': {
                             '& .actions': {
                                 visibility: "hidden",
+                            },
+                            '& .drag': {
+                                visibility: "hidden",
                             }
                         }
                     },

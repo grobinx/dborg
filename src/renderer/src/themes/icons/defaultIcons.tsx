@@ -123,6 +123,9 @@ const icons = (_palette: Palette): ThemeOptions => {
             Add: (props) => <IconWrapper {...props} className="add"><MuiIcons.Add fontSize="inherit" /></IconWrapper>,
             ChevronRight: (props) => <IconWrapper {...props} className="chevron-right"><MuiIcons.ChevronRight fontSize="inherit" /></IconWrapper>,
             ChevronLeft: (props) => <IconWrapper {...props} className="chevron-left"><MuiIcons.ChevronLeft fontSize="inherit" /></IconWrapper>,
+            Sort: (props) => <IconWrapper {...props} className="sort"><MuiIcons.SortByAlpha fontSize="inherit" /></IconWrapper>,
+            DragHandle: (props) => <IconWrapper {...props} className="drag-handle"><MuiIcons.DragHandle fontSize="inherit" /></IconWrapper>,
+            DragIndicator: (props) => <IconWrapper {...props} className="drag-indicator"><MuiIcons.DragIndicator fontSize="inherit" /></IconWrapper>,
         }
     }
 }

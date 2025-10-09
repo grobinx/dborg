@@ -21,8 +21,7 @@ interface ZoomStateOwnProps extends ZoomStateProps {
 const ZoomStateRoot = styled(Stack, {
     name: 'ZoomState',
     slot: 'root',
-})(({ theme }) => ({
-    ...theme.typography.body1,
+})(({ }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: "center",

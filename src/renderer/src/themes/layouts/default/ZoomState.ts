@@ -1,12 +1,15 @@
 import { darken, lighten, Palette, ThemeOptions } from "@mui/material";
 import { ZoomStateComponent } from "@renderer/themes/theme.d/ZoomState";
 
-export const ZoomStateLayout = (palette: Palette, _root: ThemeOptions): ZoomStateComponent => {
+export const ZoomStateLayout = (palette: Palette, root: ThemeOptions): ZoomStateComponent => {
     return {
         defaultProps: {
         },
         styleOverrides: {
             root: {
+                ...(typeof root.typography === "function"
+                    ? root.typography(palette)?.caption
+                    : root.typography?.caption),
                 //fontSize: "0.8rem"
                 backgroundColor:
                     palette.mode === "dark" ?
@@ -17,11 +20,12 @@ export const ZoomStateLayout = (palette: Palette, _root: ThemeOptions): ZoomStat
                 paddingTop: 2,
                 paddingBottom: 2,
                 margin: 2,
-                borderRadius: 4
+                borderRadius: 4,
             },
             value: {
                 //fontSize: "0.8rem",
-                paddingLeft: 4
+                paddingLeft: 4,
+                lineHeight: 1.4,
             }
         }
     }

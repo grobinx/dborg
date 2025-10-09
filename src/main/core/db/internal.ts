@@ -129,8 +129,8 @@ export async function init(): Promise<void> {
         await internal.execute("alter table schemas add column sch_script varchar");
     }
     
-    if (Number(lastVersion.release ?? 0) < 2) {
-        // ... next changes
+    if (Number(lastVersion.release ?? 0) < 3) {
+        await internal.execute("alter table schemas add column sch_order varchar");
     }
     
     const exclude: string[] = [];

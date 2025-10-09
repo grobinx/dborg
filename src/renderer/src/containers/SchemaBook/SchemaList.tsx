@@ -5,6 +5,7 @@ import {
     ListProps,
     ListItemProps,
     ListSubheader,
+    Button,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
@@ -29,6 +30,7 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
+const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
 
 interface Schema extends SchemaRecord {
     driverName?: string;
@@ -82,7 +84,8 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [loading, setLoading] = React.useState(true);
-    const [groupList, setGroupList] = React.useState(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
+    const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
+    const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [displayData, setDisplayData] = React.useState<Schema[] | null>();
     const { drivers, connections } = useDatabase();
@@ -153,6 +156,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [groupList]);
 
     React.useEffect(() => {
+        window.localStorage.setItem(Store_SchemaList_sortList, JSON.stringify(sortList));
+    }, [sortList]);
+
+    React.useEffect(() => {
         const fetchData = async () => {
             try {
                 if (!connectionList) {
@@ -163,7 +170,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             } catch (error) {
                 addToast(
                     "error",
-                    t("schema-list-load-error", "Failed to load schema list!"),
+                    t("profile-list-load-error", "Failed to load profile list!"),
                     {
                         source: t_connectionSchema,
                         reason: error,
@@ -189,13 +196,22 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             }, {});
 
             const sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
-                const latestA = Math.max(...a.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
-                const latestB = Math.max(...b.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                const latestA = Math.max(...a.map(s => sortList && DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
+                const latestB = Math.max(...b.map(s => sortList && DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
                 return latestB - latestA;
             });
 
             return sortedGroups.flatMap(([, group]) =>
                 group.sort((a, b) => {
+                    if (!sortList) {
+                        const orderA = a.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
+                        const orderB = b.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
+
+                        if (orderA !== orderB) {
+                            return orderA - orderB; // Sortuj według sch_order
+                        }
+                    }
+
                     if (a.sch_last_selected !== b.sch_last_selected) {
                         return (
                             (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
@@ -214,6 +230,15 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
 
         return [...list].sort((a, b) => {
+            if (!sortList) {
+                const orderA = a.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
+                const orderB = b.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
+
+                if (orderA !== orderB) {
+                    return orderA - orderB; // Sortuj według sch_order
+                }
+            }
+
             if (a.sch_last_selected !== b.sch_last_selected) {
                 return (
                     (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
@@ -228,7 +253,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             }
             return a.sch_name.localeCompare(b.sch_name);
         });
-    }, [groupList]);
+    }, [groupList, sortList]);
 
     const searchList = (search: string, list: Schema[] | null): Schema[] | null => {
         if (search.trim() === '') {
@@ -251,7 +276,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, searchDelay);
         debouncedSearch();
         return () => debouncedSearch.cancel();
-    }, [search, data, sort, searchDelay]);
+    }, [search, data, sort, searchDelay, groupList, sortList]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         try {
@@ -437,17 +462,29 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             size="large"
                         />
                     </InputDecorator>
-                    <Tooltip title={t("group-schema-list", "Group schema list")}>
-                        <IconButton
-                            toggle="group"
-                            value={groupList ? "group" : null}
-                            onClick={() => setGroupList(!groupList)}
-                            size="large"
-                        >
-                            <theme.icons.GroupList />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title={t("refresh-schema-list", "Refresh schema list")}>
+                    <ButtonGroup>
+                        <Tooltip title={t("group-profile-list", "Group profile list")}>
+                            <IconButton
+                                toggle="group"
+                                value={groupList ? "group" : null}
+                                onClick={() => setGroupList(!groupList)}
+                                size="large"
+                            >
+                                <theme.icons.GroupList />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t("sort-profile-list", "Sort profile list by last selected, updated and name")}>
+                            <IconButton
+                                toggle="sort"
+                                value={sortList ? "sort" : null}
+                                onClick={() => setSortList(!sortList)}
+                                size="large"
+                            >
+                                <theme.icons.Sort />
+                            </IconButton>
+                        </Tooltip>
+                    </ButtonGroup>
+                    <Tooltip title={t("refresh-profile-list", "Refresh profile list")}>
                         <IconButton
                             onClick={() => {
                                 queueMessage(Messages.RELOAD_SCHEMAS);
@@ -484,6 +521,22 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             selected={record.sch_id === selectedItem}
                                             disableRipple
                                         >
+                                            {!sortList &&
+                                                <ButtonGroup className="drag" size="small" dense orientation="vertical">
+                                                    <Tooltip title={t("move-up", "Move up")} placement="left">
+                                                        <ToolButton
+                                                        >
+                                                            <theme.icons.ExpandLess {...slotProps?.icon} />
+                                                        </ToolButton>
+                                                    </Tooltip>
+                                                    <Tooltip title={t("move-down", "Move down")} placement="left">
+                                                        <ToolButton
+                                                        >
+                                                            <theme.icons.ExpandMore {...slotProps?.icon} />
+                                                        </ToolButton>
+                                                    </Tooltip>
+                                                </ButtonGroup>
+                                            }
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
                                                 {record.driverIcon && <img src={record.driverIcon} />}
                                                 <Typography variant="caption" className="name">{highlightText(record.driverName!, search, theme)}</Typography>
