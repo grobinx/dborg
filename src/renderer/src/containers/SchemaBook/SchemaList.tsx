@@ -561,6 +561,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 {...slotProps?.itemText}
                                                 primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, search, theme)}</span>}
                                                 secondary={renderSecondaryText(record)}
+                                                slotProps={{
+                                                    primary: {
+                                                        variant: "h6",
+                                                    }
+                                                }}
                                             />
                                             <ButtonGroup className="actions">
                                                 {((record.connected ?? 0) > 0) && (
