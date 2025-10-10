@@ -1,3 +1,4 @@
+import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { isKeybindingMatch, normalizeKeybinding } from "@renderer/components/CommandPalette/KeyBinding";
 import React from "react";
 
@@ -10,19 +11,23 @@ export interface KeyBindingHandler<T> {
     handler: (item: T) => void;
 }
 
-export interface UseKeyboardNavigationProps<T, V = string> {
+export interface UseKeyboardNavigationProps<T, V = string, A = any> {
     items: T[];
     getId: (item: T) => V;
     onSelect?: (item: T) => void;
     keyBindings?: KeyBindingHandler<T>[];
+    actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
+    getContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
 }
 
-export function useKeyboardNavigation<T, V = string>({
+export function useKeyboardNavigation<T, V = string, A = any>({
     items,
     getId,
     onSelect,
     keyBindings = [],
-}: UseKeyboardNavigationProps<T, V>) {
+    actionManager,
+    getContext,
+}: UseKeyboardNavigationProps<T, V, A>) {
     const [selectedId, setSelectedId] = React.useState<V | null>(null);
 
     const handleKeyDown = React.useCallback(
@@ -36,13 +41,16 @@ export function useKeyboardNavigation<T, V = string>({
                 nextIndex = (currentIndex + 1) % items.length;
                 setSelectedId(getId(items[nextIndex]));
                 event.preventDefault();
+                return;
             } else if (isKeybindingMatch("ArrowUp", event)) {
                 nextIndex = (currentIndex - 1 + items.length) % items.length;
                 setSelectedId(getId(items[nextIndex]));
                 event.preventDefault();
-            } else if (isKeybindingMatch("Enter", event) && currentIndex >= 0) {
-                onSelect?.(items[currentIndex]);
+                return;
+            } else if (onSelect && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
+                onSelect(items[currentIndex]);
                 event.preventDefault();
+                return;
             } else if (currentIndex >= 0) {
                 // Obsługa custom keybindings
                 for (const binding of keyBindings) {
@@ -52,6 +60,9 @@ export function useKeyboardNavigation<T, V = string>({
                         return;
                     }
                 }
+            }
+            if (actionManager && getContext) {
+                actionManager.executeActionByKeybinding(event, getContext());
             }
         },
         [items, selectedId, getId, onSelect, keyBindings]

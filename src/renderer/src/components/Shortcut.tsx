@@ -2,6 +2,7 @@ import { styled, SxProps } from "@mui/material";
 import clsx from "@renderer/utils/clsx";
 import { splitKeybinding } from "./CommandPalette/KeyBinding";
 import React from "react";
+import { Size } from "@renderer/types/sizes";
 
 const ShortcutKeyStyled = styled('kbd', {
     name: "Shortcut",
@@ -72,17 +73,26 @@ interface ShortcutProps {
     keybindings: string[] | string;
     active?: boolean;
     hidden?: boolean;
+    size?: Size;
     sx?: SxProps;
     style?: React.CSSProperties;
 }
 
-export function Shortcut({ keybindings, active = true, hidden = false, sx, style }: ShortcutProps) {
+export function Shortcut({
+    keybindings,
+    active = true,
+    hidden = false,
+    sx,
+    style,
+    size = "small"
+}: ShortcutProps) {
     return (
         <ShortcutRootStyled
             className={clsx(
                 "Shortcut-root",
                 active && "active",
-                hidden && "hidden"
+                hidden && "hidden",
+                `size-${size}`
             )}
             sx={sx}
             style={style}

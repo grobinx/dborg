@@ -75,7 +75,7 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
                 direction="column"
                 divider={<hr style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />}
                 gap={1}
-                sx={{ whiteSpace: "pre-wrap", alignItems: "center" }}
+                sx={{ whiteSpace: "pre-wrap", alignItems: "flex-start" }}
                 width={"100%"}
             >
                 {text.map((item, index) => {

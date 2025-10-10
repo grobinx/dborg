@@ -6,6 +6,7 @@ import {
     ListItemProps,
     ListSubheader,
     Button,
+    ListSubheaderProps,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
@@ -28,6 +29,8 @@ import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
+import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -44,6 +47,7 @@ export interface SchemaListProps extends StackProps {
         content?: BoxProps,
         list?: ListProps,
         item?: ListItemProps,
+        subheader?: ListSubheaderProps,
         icon?: IconWrapperOwnProps,
         itemButton?: ListItemButtonProps,
         itemIcon?: ListItemIconProps,
@@ -52,6 +56,13 @@ export interface SchemaListProps extends StackProps {
 }
 
 interface SchemaListOwnProps extends SchemaListProps {
+}
+
+interface SchemaListContext {
+    isGroupList: () => boolean;
+    isSortList: () => boolean;
+    connectToSelected: (schemaId: string) => void;
+    deleteSelected: (schemaId: string) => void;
 }
 
 const SchemaListRoot = styled(Stack, {
@@ -79,6 +90,12 @@ const SchemaListTitle = styled(Box, {
     slot: 'title', // The slot name
 })();
 
+const refreshActionId = "schema-list-refresh";
+const groupActionId = "schema-list-group";
+const sortActionId = "schema-list-sort";
+const connectActionId = "schema-list-connect";
+const deleteActionId = "schema-list-delete";
+
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
     const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
@@ -96,16 +113,80 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
+    const [deleting, setDeleting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
+    const actions = React.useRef<ActionManager<SchemaListContext>>(new ActionManager());
     const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation({
         items: displayData ?? [],
         getId: (item) => item.sch_id,
-        onSelect: (item) => handleConnect(item.sch_id),
+        actionManager: actions.current,
+        getContext: () => (context),
     });
 
     console.count("SchemaList render");
 
     const t_connectionSchema = t("connection-profiles", "Connection profiles");
+
+    React.useEffect(() => {
+        actions.current.registerAction({
+            id: refreshActionId,
+            label: t("refresh-profile-list", "Refresh profile list"),
+            keybindings: ["F5"],
+            icon: "Refresh",
+            run: () => {
+                queueMessage(Messages.RELOAD_SCHEMAS);
+            }
+        }, {
+            id: groupActionId,
+            label: t("group-profile-list", "Group profile list"),
+            keybindings: ["Ctrl+K", "Ctrl+G"],
+            icon: "GroupList",
+            run: () => {
+                setGroupList(prev => !prev);
+            },
+            selected: (context) => context.isGroupList()
+        }, {
+            id: sortActionId,
+            label: t("sort-profile-list", "Sort profile list"),
+            keybindings: ["Ctrl+K", "Ctrl+S"],
+            icon: "Sort",
+            run: () => {
+                setSortList(prev => !prev);
+            },
+            selected: (context) => context.isSortList()
+        }, {
+            id: connectActionId,
+            label: t("connect-to-database", "Connect to database"),
+            keybindings: ["Enter"],
+            icon: "Connected",
+            run: (context, schemaId) => {
+                context.connectToSelected(schemaId);
+            }
+        }, {
+            id: deleteActionId,
+            label: t("delete-profile", "Delete profile"),
+            keybindings: ["F8"],
+            icon: "Delete",
+            run: (context, schemaId) => {
+                context.deleteSelected(schemaId);
+            },
+        });
+    }, []);
+
+    const context: SchemaListContext = {
+        isGroupList: () => !!groupList,
+        isSortList: () => !!sortList,
+        connectToSelected: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                handleConnect((schemaId ?? selectedItem) as string);
+            }
+        },
+        deleteSelected: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                handleDelete((schemaId ?? selectedItem) as string);
+            }
+        }
+    };
 
     const connectionStatus = (data: Schema[] | null): Schema[] | null => {
         if (!data) {
@@ -289,6 +370,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [search, data, sort, searchDelay, groupList, sortList]);
 
     const handleDelete = React.useCallback(async (id: string) => {
+        setDeleting((prev) => [...prev, id]);
         try {
             await sendMessage(Messages.SCHEMA_DELETE, id);
         } catch (error) {
@@ -300,6 +382,8 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     reason: error,
                 }
             );
+        } finally {
+            setDeleting((prev) => prev.filter((schemaId) => schemaId !== id));
         }
     }, [t_connectionSchema]);
 
@@ -476,37 +560,25 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         />
                     </InputDecorator>
                     <ButtonGroup>
-                        <Tooltip title={t("group-profile-list", "Group profile list")}>
-                            <IconButton
-                                toggle="group"
-                                value={groupList ? "group" : null}
-                                onClick={() => setGroupList(!groupList)}
-                                size="large"
-                            >
-                                <theme.icons.GroupList />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t("sort-profile-list", "Sort profile list by last selected, updated and name")}>
-                            <IconButton
-                                toggle="sort"
-                                value={sortList ? "sort" : null}
-                                onClick={() => setSortList(!sortList)}
-                                size="large"
-                            >
-                                <theme.icons.Sort />
-                            </IconButton>
-                        </Tooltip>
-                    </ButtonGroup>
-                    <Tooltip title={t("refresh-profile-list", "Refresh profile list")}>
-                        <IconButton
-                            onClick={() => {
-                                queueMessage(Messages.RELOAD_SCHEMAS);
-                            }}
+                        <ActionButton
+                            actionManager={actions.current}
+                            actionId={groupActionId}
+                            getContext={() => context}
                             size="large"
-                        >
-                            <theme.icons.Refresh {...slotProps?.icon} />
-                        </IconButton>
-                    </Tooltip>
+                        />
+                        <ActionButton
+                            actionManager={actions.current}
+                            actionId={sortActionId}
+                            getContext={() => context}
+                            size="large"
+                        />
+                    </ButtonGroup>
+                    <ActionButton
+                        actionManager={actions.current}
+                        actionId={refreshActionId}
+                        getContext={() => context}
+                        size="large"
+                    />
                 </Box>
             </SchemaListTitle>
             <SchemaListContent
@@ -520,8 +592,26 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             return (
                                 <React.Fragment key={record.sch_id}>
                                     {(groupList && (displayData.findIndex(r => r.sch_group === record.sch_group) === displayData.indexOf(record))) && (
-                                        <ListSubheader>
+                                        <ListSubheader {...slotProps?.subheader}>
                                             <Typography variant="h6" style={{ width: "100%" }}>
+                                                {!sortList &&
+                                                    <ButtonGroup className="drag" size="small" dense sx={{ marginRight: 8 }}>
+                                                        <Tooltip title={t("move-up", "Move up")} placement="left">
+                                                            <ToolButton
+                                                                height={"2em"}
+                                                            >
+                                                                <theme.icons.ExpandLess {...slotProps?.icon} />
+                                                            </ToolButton>
+                                                        </Tooltip>
+                                                        <Tooltip title={t("move-down", "Move down")} placement="right">
+                                                            <ToolButton
+                                                                height={"2em"}
+                                                            >
+                                                                <theme.icons.ExpandMore {...slotProps?.icon} />
+                                                            </ToolButton>
+                                                        </Tooltip>
+                                                    </ButtonGroup>
+                                                }
                                                 {highlightText(group, search, theme)}
                                             </Typography>
                                         </ListSubheader>
@@ -587,18 +677,15 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         </ToolButton>
                                                     </Tooltip>
                                                 )}
-                                                <Tooltip title={t("connect", "Connect to database")}>
-                                                    <ToolButton
-                                                        className="connect"
-                                                        onClick={(_event) => {
-                                                            handleConnect(record.sch_id);
-                                                        }}
-                                                        color="info"
-                                                        loading={connecting.includes(record.sch_id)}
-                                                    >
-                                                        <theme.icons.Connected {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                </Tooltip>
+                                                <ActionButton
+                                                    actionManager={actions.current}
+                                                    actionId={connectActionId}
+                                                    actionArgs={[record.sch_id]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="info"
+                                                    loading={connecting.includes(record.sch_id)}
+                                                />
                                             </ButtonGroup>
                                             <ButtonGroup className="actions">
                                                 <Tooltip title={t("text-connection", "Test connection")}>
@@ -617,7 +704,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         }
                                                     </ToolButton>
                                                 </Tooltip>
-                                                <Tooltip title={t("edit-schema", "Edit Schema")}>
+                                                <Tooltip title={t("edit-profile", "Edit Profile")}>
                                                     <ToolButton
                                                         className="edit"
                                                         onClick={(_event) => {
@@ -628,7 +715,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         <theme.icons.EditConnectionSchema {...slotProps?.icon} />
                                                     </ToolButton>
                                                 </Tooltip>
-                                                <Tooltip title={t("clone-edit-schema", "Clone and edit as new schema")}>
+                                                <Tooltip title={t("clone-edit-profile", "Clone and edit as new profile")}>
                                                     <ToolButton
                                                         className="clone"
                                                         onClick={(_event) => {
@@ -641,17 +728,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 </Tooltip>
                                             </ButtonGroup>
                                             <ButtonGroup className="actions">
-                                                <Tooltip title={t("delete-schema", "Delete schema")}>
-                                                    <ToolButton
-                                                        className="delete"
-                                                        onClick={(_event) => {
-                                                            handleDelete(record.sch_id);
-                                                        }}
-                                                        color="error"
-                                                    >
-                                                        <theme.icons.Delete {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                </Tooltip>
+                                                <ActionButton
+                                                    className="delete"
+                                                    actionManager={actions.current}
+                                                    actionId={deleteActionId}
+                                                    actionArgs={[record.sch_id]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="error"
+                                                    loading={deleting.includes(record.sch_id)}
+                                                />
                                             </ButtonGroup>
                                         </ListItemButton>
                                     </ListItem>

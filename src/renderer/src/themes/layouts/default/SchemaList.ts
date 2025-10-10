@@ -34,6 +34,18 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                         }
                     },
                 },
+                subheader: {
+                    sx: {
+                        '&:not(:hover) :not(.Mui-selected)': {
+                            '& .actions': {
+                                visibility: "hidden",
+                            },
+                            '& .drag': {
+                                visibility: "hidden",
+                            }
+                        }
+                    }
+                },
                 itemButton: {
                     sx: {
                         gap: 8,

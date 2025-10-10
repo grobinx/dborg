@@ -3,6 +3,7 @@ import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
 import { SxProps } from "@mui/material";
 import { Theme } from "@mui/system";
+import { ActionDescriptor } from "../CommandPalette/ActionManager";
 
 export interface BaseButtonProps {
     /**
@@ -120,6 +121,9 @@ export interface BaseButtonProps {
      */
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
+
+    width?: string | number;
+    height?: string | number;
 }
 
 export interface BaseButtonLoadingProps {

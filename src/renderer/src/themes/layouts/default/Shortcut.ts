@@ -1,14 +1,13 @@
 import { Palette, ThemeOptions } from "@mui/material";
 import { ShortcutComponent } from "@renderer/themes/theme.d/Shortcut";
 
-export const ShortcutLayout = (palette: Palette, _root: ThemeOptions): ShortcutComponent => {
+export const ShortcutLayout = (_palette: Palette, _root: ThemeOptions): ShortcutComponent => {
     return {
         styleOverrides: {
             root: {
                 transition: "all 0.2s ease-in-out",
                 display: 'flex',
                 alignItems: 'center',
-                fontSize: '0.75em',
                 fontFamily: "monospace",
                 fontWeight: 600,
                 lineHeight: 1,
@@ -18,6 +17,15 @@ export const ShortcutLayout = (palette: Palette, _root: ThemeOptions): ShortcutC
                 },
                 '&:not(.active)': {
                     opacity: 0.5,
+                },
+                '&.size-small': {
+                    fontSize: '0.6em',
+                },
+                '&.size-medium': {
+                    fontSize: '0.75em',
+                },
+                '&.size-large': {
+                    fontSize: '0.9em',
                 }
             },
             chord: {

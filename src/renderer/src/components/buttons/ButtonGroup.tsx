@@ -135,6 +135,10 @@ export interface ButtonGroupProps {
     onChange?: (value: string | null) => void;
     className?: string;
     sx?: SxProps<Theme>;
+    style?: React.CSSProperties;
+
+    width?: string | number;
+    height?: string | number;
 }
 
 // Główny komponent ButtonGroup
@@ -150,7 +154,8 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     value,
     onChange,
     className,
-    sx,
+    width, height, style,
+    ...other
 }) => {
     const [maxWidth, setMaxWidth] = React.useState<number | undefined>(undefined);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(value);
@@ -256,7 +261,8 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
                 className
             )}
             maxWidth={maxWidth}
-            sx={sx}
+            style={{ width, height, ...style }}
+            {...other}
         >
             {processedChildren}
         </StyledButtonGroup>

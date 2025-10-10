@@ -136,6 +136,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         color = 'main',
         value, toggle, defaultValue, showLoadingIndicator, dense,
         onFocus, onBlur, onClick, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, onKeyDown, onKeyUp, onChange,
+        width, height, style,
         ...otherProps
     } = props;
 
@@ -302,6 +303,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
                 `${componentName}-root`,
                 classes,
             )}
+            style={{ width, height, ...style }}
             //disabled={disabled || !!loading}
             type={type}
             onClick={handleClick}
