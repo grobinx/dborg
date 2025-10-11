@@ -110,6 +110,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [data, setData] = React.useState<Schema[] | null>(null);
+    const [sortedData, setSortedData] = React.useState<Schema[] | null>(null);
     const [displayData, setDisplayData] = React.useState<Schema[] | null>();
     const { drivers, connections } = useDatabase();
     const { t } = useTranslation();
@@ -156,7 +157,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, {
             id: sortActionId,
             label: t("sort-profile-list", "Sort profile list"),
-            keybindings: ["Ctrl+K", "Ctrl+S"],
+            keybindings: ["Ctrl+K", "Ctrl+O"],
             icon: "Sort",
             run: () => {
                 setSortList(prev => !prev);
@@ -426,12 +427,20 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }
 
     React.useEffect(() => {
+        const sortedData = sort(data);
+        setSortedData(sortedData);
+        if (search.trim() === '') {
+            setDisplayData(sortedData);
+        }
+    }, [data, sortList, groupList, sort]);
+
+    React.useEffect(() => {
         const debouncedSearch = debounce(() => {
-            setDisplayData(sort(searchList(search, data)));
+            setDisplayData(searchList(search, sortedData));
         }, searchDelay);
         debouncedSearch();
         return () => debouncedSearch.cancel();
-    }, [search, data, sort, searchDelay, groupList, sortList]);
+    }, [search, sortedData, searchDelay]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         setDeleting((prev) => [...prev, id]);
@@ -499,6 +508,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             setData(connectionStatus(data));
         }
     }, [refreshConnectionList, connectionStatus, data]);
+
+    const moveDown = (shchemaId: string) => {
+    }
 
     //document.getElementById(displayData[nextIndex].sch_id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 

@@ -506,46 +506,55 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                         maxHeight={listMaxHeight} // Ustaw dynamiczną maksymalną wysokość
                     >
                         {selectedGroup
-                            ? filteredCommands.map((action, index) => (
-                                <ListItem
-                                    key={action.id}
-                                    disablePadding
-                                    dense
-                                    ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
-                                    className="command-list-item"
-                                >
-                                    <ListItemButton
-                                        onClick={() => handleCommandClick(action)}
-                                        selected={
-                                            index === selectedIndex ||
-                                            (typeof action.selected === 'function' ? (
-                                                getContext ? action.selected(getContext()) : false
-                                            ) : false)
-                                        }
-                                    >
-                                        <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
-                                        <ListItemText
-                                            primary={highlightText(
-                                                typeof action.label === "function" ? action.label(context) : action.label,
-                                                searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
-                                                theme
-                                            )}
-                                            {...(action.secondaryLabel
-                                                ? {
-                                                    secondary: highlightText(
-                                                        typeof action.secondaryLabel === "function"
-                                                            ? action.secondaryLabel(context)
-                                                            : action.secondaryLabel,
+                            ? filteredCommands
+                                .filter(action => {
+                                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+                                    return visible;
+                                })
+                                .map((action, index) => {
+                                    const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+                                    return (
+                                        <ListItem
+                                            key={action.id}
+                                            disablePadding
+                                            dense
+                                            ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
+                                            className="command-list-item"
+                                        >
+                                            <ListItemButton
+                                                onClick={() => handleCommandClick(action)}
+                                                selected={
+                                                    index === selectedIndex ||
+                                                    (typeof action.selected === 'function' ? (
+                                                        getContext ? action.selected(getContext()) : false
+                                                    ) : false)
+                                                }
+                                                disabled={disabled}
+                                            >
+                                                <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
+                                                <ListItemText
+                                                    primary={highlightText(
+                                                        typeof action.label === "function" ? action.label(context) : action.label,
                                                         searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
                                                         theme
-                                                    ),
-                                                }
-                                                : {})}
-                                        />
-                                        {action.keybindings && <Shortcut keybindings={action.keybindings} />}
-                                    </ListItemButton>
-                                </ListItem>
-                            ))
+                                                    )}
+                                                    {...(action.secondaryLabel
+                                                        ? {
+                                                            secondary: highlightText(
+                                                                typeof action.secondaryLabel === "function"
+                                                                    ? action.secondaryLabel(context)
+                                                                    : action.secondaryLabel,
+                                                                searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
+                                                                theme
+                                                            ),
+                                                        }
+                                                        : {})}
+                                                />
+                                                {action.keybindings && <Shortcut keybindings={action.keybindings} />}
+                                            </ListItemButton>
+                                        </ListItem>
+                                    )
+                                })
                             : manager.getRegisteredActionGroups().map((group, index) => (
                                 <ListItem
                                     key={group.prefix || index}
@@ -570,36 +579,38 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 </CommandPaletteContainer>
             )}
             {/* Context Menu */}
-            <Menu
-                open={contextMenu !== null}
-                onClose={handleContextMenuClose}
-                anchorReference="anchorPosition"
-                anchorPosition={
-                    contextMenu !== null
-                        ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-                        : undefined
-                }
-            >
-                {groupedContextMenuActions.flatMap(({ groupId, actions }, groupIndex) => [
-                    groupIndex > 0 && <Divider key={`divider-${groupId}`} />,
-                    ...actions.map(action => (
-                        <MenuItem
-                            key={action.id}
-                            onClick={() => {
-                                handleContextMenuClose();
-                                handleCommandClick(action);
-                            }}
-                            dense
-                        >
-                            <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
-                            <ListItemText>
-                                {typeof action.label === "function" ? action.label(context) : action.label}
-                            </ListItemText>
-                            {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
-                        </MenuItem>
-                    )),
-                ])}
-            </Menu>
+            {(groupedContextMenuActions.length > 0) && (
+                <Menu
+                    open={contextMenu !== null}
+                    onClose={handleContextMenuClose}
+                    anchorReference="anchorPosition"
+                    anchorPosition={
+                        contextMenu !== null
+                            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                            : undefined
+                    }
+                >
+                    {groupedContextMenuActions.flatMap(({ groupId, actions }, groupIndex) => [
+                        groupIndex > 0 && <Divider key={`divider-${groupId}`} />,
+                        ...actions.map(action => (
+                            <MenuItem
+                                key={action.id}
+                                onClick={() => {
+                                    handleContextMenuClose();
+                                    handleCommandClick(action);
+                                }}
+                                dense
+                            >
+                                <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
+                                <ListItemText>
+                                    {typeof action.label === "function" ? action.label(context) : action.label}
+                                </ListItemText>
+                                {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
+                            </MenuItem>
+                        )),
+                    ])}
+                </Menu>
+            )}
         </>
     );
 };

@@ -174,16 +174,27 @@ export interface ActionDescriptor<T> {
     run: (context: T, ...args: any[]) => void | Promise<void>;
 
     /**
-     * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.
-     * Używane do zarządzania porządkiem listy akcji.
-     */
-    _LastSelected?: number;
-
-    /**
      * Czy akcja jest aktualnie wybrana.
      * Używane do oznaczania akcji jako wybranej w interfejsie użytkownika.
      */
     selected?: boolean | ((context: T) => boolean);
+
+    /**
+     * Czy akcja jest aktualnie wyłączona.
+     */
+    disabled?: boolean | ((context: T) => boolean);
+
+    /**
+     * Czy akcja jest widoczna w interfejsie użytkownika.
+     * Jeśli nie jest widoczna, nie będzie się pojawiać w palecie poleceń ani w menu kontekstowym. Również nie będzie można jej wywołać skrótem klawiszowym.
+     */
+    visible?: boolean | ((context: T) => boolean);
+
+    /**
+     * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.
+     * Używane do zarządzania porządkiem listy akcji.
+     */
+    _LastSelected?: number;
 }
 
 export function isActionDescriptor(obj: any): obj is ActionDescriptor<any> {
@@ -289,8 +300,11 @@ export class ActionManager<T> {
             action = actionOrId;
         }
 
+        const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+        const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+
         // Sprawdź warunek wstępny (precondition), jeśli istnieje
-        if (action.precondition && !action.precondition(context)) {
+        if (disabled || !visible || action.precondition && !action.precondition(context)) {
             return;
         }
 
@@ -325,7 +339,10 @@ export class ActionManager<T> {
         );
 
         if (action) {
-            if (action.precondition && !action.precondition(context)) {
+            const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+            const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+
+            if (disabled || !visible || action.precondition && !action.precondition(context)) {
                 this.resetSequence();
                 return true; // Sekwencja jest poprawna, ale akcja nie została wykonana
             }

@@ -46,6 +46,13 @@ const ActionButton = <T,>({
     if (!resolvedAction) {
         return null;
     }
+    
+    const context = getContext();
+    
+    const visible = typeof resolvedAction.visible === 'function' ? resolvedAction.visible(context) : (resolvedAction.visible ?? true);
+    if (!visible) {
+        return null;
+    }
 
     const handleClick = () => {
         const context = getContext(); // Pobierz kontekst za pomocą funkcji
@@ -57,11 +64,11 @@ const ActionButton = <T,>({
         resolvedAction.run(context, ...(actionArgs || []));
     };
 
-    const context = getContext();
     const VariantedButton = variant === "tool" ? ToolButton : variant === "icon" ? IconButton : Button;
     const showLabelFinal = variant === "standard" ? true : showLabel;
     const showShortcutFinal = variant === "standard" ? true : showShortcut;
     const labelFinal = typeof resolvedAction.label === "function" ? resolvedAction.label(context, ...(actionArgs || [])) : resolvedAction.label;
+    const disabled = typeof resolvedAction.disabled === 'function' ? resolvedAction.disabled(context) : (resolvedAction.disabled ?? false);
 
     return (
         <Tooltip title={
@@ -78,7 +85,7 @@ const ActionButton = <T,>({
                 )}
                 size={size}
                 onClick={handleClick}
-                disabled={resolvedAction.precondition ? !resolvedAction.precondition(context) : false}
+                disabled={disabled}
                 selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(context) : resolvedAction.selected}
             >
                 {showShortcutFinal && resolvedAction.keybindings && <Shortcut keybindings={resolvedAction.keybindings} />}

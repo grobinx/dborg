@@ -73,6 +73,15 @@ export function useKeyboardNavigation<T, V = string, A = any>({
         if (items.length > 0 && selectedId === null) {
             setSelectedId(getId(items[0]));
         }
+        else if (items.length > 0 && selectedId !== null) {
+            const exists = items.some(item => getId(item) === selectedId);
+            if (!exists) {
+                setSelectedId(getId(items[0]));
+            }
+        }
+        else {
+            setSelectedId(null);
+        }
     }, [items, getId, selectedId]);
 
     return [
