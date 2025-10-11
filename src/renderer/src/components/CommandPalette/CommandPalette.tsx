@@ -189,6 +189,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     useEffect(() => {
         const controller = new AbortController();
         const signal = controller.signal;
+        const context = getContext?.();
 
         const fetchCommands = async () => {
             if (!open || !manager) {
@@ -204,7 +205,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             if (selectedGroup && (selectedGroup?.mode ?? "actions") === "actions") {
                 // Tryb "actions": pobierz akcje tylko raz na zmianę `open`
                 if (!cachedActions.current[selectedGroup.prefix || ""]) {
-                    const actions = await manager.getRegisteredActions(selectedGroup.prefix, getContext?.());
+                    const actions = await manager.getRegisteredActions(selectedGroup.prefix, context);
                     cachedActions.current[selectedGroup.prefix || ""] = actions; // Zapisz w pamięci podręcznej
                 }
                 if (!signal.aborted) {
@@ -212,17 +213,19 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     const queryParts = queryWithoutPrefix.toLocaleLowerCase().split(' ').filter(Boolean);
 
                     const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
+                        const label = typeof command.label === "function" ? command.label(context) : command.label;
+                        const secondaryLabel = command.secondaryLabel ? (typeof command.secondaryLabel === "function" ? command.secondaryLabel(context) : command.secondaryLabel) : '';
                         // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
                         return queryParts.every((part) =>
-                            command.label.toLocaleLowerCase().includes(part) ||
-                            (command.secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
+                            label.toLocaleLowerCase().includes(part) ||
+                            (secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
                         );
                     });
                     setFilteredCommands(actions);
                 }
             } else {
                 // Tryb "filter": pobierz akcje za każdym razem
-                const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContext?.(), queryWithoutPrefix);
+                const actions = await manager.getRegisteredActions(selectedGroup?.prefix, context, queryWithoutPrefix);
                 if (!signal.aborted) {
                     setFilteredCommands(actions);
                 }
@@ -373,6 +376,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     useEffect(() => {
         let isMounted = true;
+        const context = getContext?.();
+
         const fetchContextMenuActions = async () => {
             if (!manager) {
                 if (isMounted) setGroupedContextMenuActions([]);
@@ -403,7 +408,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     actions: actions.sort((a, b) => {
                         const orderA = a.contextMenuOrder || 0;
                         const orderB = b.contextMenuOrder || 0;
-                        return orderA - orderB || a.label.localeCompare(b.label); // Sortowanie po contextMenuOrder, a potem po label
+                        const labelA = typeof a.label === 'function' ? a.label(context) : a.label;
+                        const labelB = typeof b.label === 'function' ? b.label(context) : b.label;
+                        return orderA - orderB || labelA.localeCompare(labelB); // Sortowanie po contextMenuOrder, a potem po label
                     }),
                 }));
 
@@ -448,6 +455,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setPosition({ top, left });
         }
     }, [open, listMaxHeight, filteredCommands, selectedGroup]);
+
+    const context = getContext?.();
 
     return (
         <>
@@ -517,14 +526,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
                                         <ListItemText
                                             primary={highlightText(
-                                                action.label,
+                                                typeof action.label === "function" ? action.label(context) : action.label,
                                                 searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
                                                 theme
                                             )}
                                             {...(action.secondaryLabel
                                                 ? {
                                                     secondary: highlightText(
-                                                        action.secondaryLabel,
+                                                        typeof action.secondaryLabel === "function"
+                                                            ? action.secondaryLabel(context)
+                                                            : action.secondaryLabel,
                                                         searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
                                                         theme
                                                     ),
@@ -581,7 +592,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                             dense
                         >
                             <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
-                            <ListItemText>{action.label}</ListItemText>
+                            <ListItemText>
+                                {typeof action.label === "function" ? action.label(context) : action.label}
+                            </ListItemText>
                             {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
                         </MenuItem>
                     )),

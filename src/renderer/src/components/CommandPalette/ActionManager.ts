@@ -125,13 +125,17 @@ export interface ActionDescriptor<T> {
 
     /**
      * Etykieta akcji, która będzie prezentowana użytkownikowi.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args to dodatkowe argumenty przekazywane do funkcji, które mogą być użyte do dynamicznego generowania etykiety. Przygotuj się na to, że mogą być puste.
      */
-    label: string;
+    label: string | ((context: T, ...args: any[]) => string);
 
     /**
      * Etykieta dodatkowa akcji, która może być prezentowana użytkownikowi.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args to dodatkowe argumenty przekazywane do funkcji, które mogą być użyte do dynamicznego generowania etykiety. Przygotuj się na to, że mogą być puste.
      */
-    secondaryLabel?: string;
+    secondaryLabel?: string | ((context: T, ...args: any[]) => string);
 
     /**
      * Ikona akcji, która będzie prezentowana użytkownikowi.
@@ -165,7 +169,7 @@ export interface ActionDescriptor<T> {
     /**
      * Funkcja, która zostanie wykonana, gdy akcja zostanie wywołana.
      * @param context Obiekt, na którym akcja ma być wykonana.
-     * @param args Dodatkowe argumenty przekazywane do funkcji.
+     * @param args Dodatkowe argumenty przekazywane do funkcji. Przygotuj się na to, że mogą być puste.
      */
     run: (context: T, ...args: any[]) => void | Promise<void>;
 
@@ -173,7 +177,7 @@ export interface ActionDescriptor<T> {
      * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.
      * Używane do zarządzania porządkiem listy akcji.
      */
-    internalLastSelected?: number;
+    _LastSelected?: number;
 
     /**
      * Czy akcja jest aktualnie wybrana.
@@ -291,7 +295,7 @@ export class ActionManager<T> {
         }
 
         if (action.contextMenuGroupId !== "commandPalette") {
-            action.internalLastSelected = Date.now();
+            action._LastSelected = Date.now();
         }
         // Wykonaj akcję
         return action.run(context, ...args);
@@ -327,7 +331,7 @@ export class ActionManager<T> {
             }
 
             if (action.contextMenuGroupId !== "commandPalette") {
-                action.internalLastSelected = Date.now();
+                action._LastSelected = Date.now();
             }
             action.run(context, ...args);
             this.resetSequence(); // Zresetuj sekwencję po wykonaniu akcji
@@ -410,12 +414,14 @@ export class ActionManager<T> {
         if ((actionGroup.mode ?? 'actions') === 'actions' && actionGroup.id === 'default') {
             actions = actions.sort((a, b) => {
                 // Najpierw sortuj według internalLastSelected (najnowsze na górze), potem alfabetycznie
-                const lastSelectedA = a.internalLastSelected || 0;
-                const lastSelectedB = b.internalLastSelected || 0;
+                const lastSelectedA = a._LastSelected || 0;
+                const lastSelectedB = b._LastSelected || 0;
                 if (lastSelectedA !== lastSelectedB) {
                     return lastSelectedB - lastSelectedA; // Najnowsze wybory na górze
                 }
-                return a.label.localeCompare(b.label); // Sortowanie alfabetyczne
+                const labelA = typeof a.label === "function" ? a.label(context!) : a.label;
+                const labelB = typeof b.label === "function" ? b.label(context!) : b.label;
+                return labelA.localeCompare(labelB); // Sortowanie alfabetyczne
             });
         }
 

@@ -73,7 +73,6 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
         return (
             <Stack
                 direction="column"
-                divider={<hr style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />}
                 gap={1}
                 sx={{ whiteSpace: "pre-wrap", alignItems: "flex-start" }}
                 width={"100%"}
@@ -81,6 +80,9 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
                 {text.map((item, index) => {
                     if (!Array.isArray(item)) {
                         if (typeof item === 'string') {
+                            if (item.trim() === "-") {
+                                return <hr key={`hr-${index}`} style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />;
+                            }
                             return <FormattedTextElement key={`text-${index}`}>{item}</FormattedTextElement>;
                         }
                         if (isValidElement(item)) {

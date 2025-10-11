@@ -61,8 +61,12 @@ interface SchemaListOwnProps extends SchemaListProps {
 interface SchemaListContext {
     isGroupList: () => boolean;
     isSortList: () => boolean;
-    connectToSelected: (schemaId: string) => void;
-    deleteSelected: (schemaId: string) => void;
+    connect: (schemaId: string) => void;
+    delete: (schemaId: string) => void;
+    test: (schemaId: string) => void;
+    edit: (schemaId: string) => void;
+    clone: (schemaId: string) => void;
+    disconnect: (schemaId: string) => void;
 }
 
 const SchemaListRoot = styled(Stack, {
@@ -90,11 +94,15 @@ const SchemaListTitle = styled(Box, {
     slot: 'title', // The slot name
 })();
 
-const refreshActionId = "schema-list-refresh";
-const groupActionId = "schema-list-group";
-const sortActionId = "schema-list-sort";
-const connectActionId = "schema-list-connect";
-const deleteActionId = "schema-list-delete";
+const refreshActionId = "profile-list-refresh";
+const groupActionId = "profile-list-group";
+const sortActionId = "profile-list-sort";
+const connectActionId = "profile-list-connect";
+const deleteActionId = "profile-list-delete";
+const testActionId = "profile-list-test";
+const editActionId = "profile-list-edit";
+const cloneActionId = "profile-list-clone";
+const disconnectAllActionId = "profile-list-disconnect-all";
 
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
@@ -160,7 +168,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             keybindings: ["Enter"],
             icon: "Connected",
             run: (context, schemaId) => {
-                context.connectToSelected(schemaId);
+                context.connect(schemaId);
             }
         }, {
             id: deleteActionId,
@@ -168,22 +176,81 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             keybindings: ["F8"],
             icon: "Delete",
             run: (context, schemaId) => {
-                context.deleteSelected(schemaId);
+                context.delete(schemaId);
             },
+        }, {
+            id: testActionId,
+            label: t("test-connection", "Test connection"),
+            keybindings: ["Ctrl+T"],
+            icon: "ConnectionTest",
+            run: (context, schemaId) => {
+                context.test(schemaId);
+            }
+        }, {
+            id: editActionId,
+            label: t("edit-profile", "Edit profile"),
+            keybindings: ["Ctrl+E"],
+            icon: "EditConnectionSchema",
+            run: (context, schemaId) => {
+                context.edit(schemaId);
+            }
+        }, {
+            id: cloneActionId,
+            label: t("clone-profile", "Clone profile"),
+            keybindings: ["Ctrl+D"],
+            icon: "CloneConnectionSchema",
+            run: (context, schemaId) => {
+                context.clone(schemaId);
+            }
+        }, {
+            id: disconnectAllActionId,
+            label: (_context, _schemaId, connected) => {
+                return (connected ?? 0) > 1 ?
+                    t("disconnect-multiple", "Disconnect all connections to database")
+                    : t("disconnect", "Disconnect from database")
+            },
+            keybindings: ["Ctrl+Shift+D"],
+            icon: "Disconnected",
+            run: (context, schemaId) => {
+                context.disconnect(schemaId);
+            }
         });
     }, []);
 
     const context: SchemaListContext = {
         isGroupList: () => !!groupList,
         isSortList: () => !!sortList,
-        connectToSelected: (schemaId?: string) => {
+        connect: (schemaId?: string) => {
             if ((schemaId ?? selectedItem) != null) {
                 handleConnect((schemaId ?? selectedItem) as string);
             }
         },
-        deleteSelected: (schemaId?: string) => {
+        delete: (schemaId?: string) => {
             if ((schemaId ?? selectedItem) != null) {
                 handleDelete((schemaId ?? selectedItem) as string);
+            }
+        },
+        test: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                const record = data?.find(r => r.sch_id === (schemaId ?? selectedItem));
+                if (record) {
+                    handleTestConnection(record);
+                }
+            }
+        },
+        edit: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                queueMessage(Messages.EDIT_SCHEMA, (schemaId ?? selectedItem) as string);
+            }
+        },
+        clone: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                queueMessage(Messages.CLONE_EDIT_SCHEMA, (schemaId ?? selectedItem) as string);
+            }
+        },
+        disconnect: (schemaId?: string) => {
+            if ((schemaId ?? selectedItem) != null) {
+                handleDisconnectAll((schemaId ?? selectedItem) as string);
             }
         }
     };
@@ -659,23 +726,15 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             />
                                             <ButtonGroup className="actions">
                                                 {((record.connected ?? 0) > 0) && (
-                                                    <Tooltip
-                                                        title={
-                                                            (record.connected ?? 0) > 1 ?
-                                                                t("disconnect-multiple", "Disconnect all connections to database")
-                                                                : t("disconnect", "Disconnect from database")}
-                                                    >
-                                                        <ToolButton
-                                                            className="disconnect"
-                                                            onClick={(_event) => {
-                                                                handleDisconnectAll(record.sch_id);
-                                                            }}
-                                                            color="info"
-                                                            loading={disconnecting.includes(record.sch_id)}
-                                                        >
-                                                            <theme.icons.Disconnected {...slotProps?.icon} />
-                                                        </ToolButton>
-                                                    </Tooltip>
+                                                    <ActionButton
+                                                        actionManager={actions.current}
+                                                        actionId={disconnectAllActionId}
+                                                        actionArgs={[record.sch_id, record.connected]}
+                                                        getContext={() => context}
+                                                        size="medium"
+                                                        color="info"
+                                                        loading={disconnecting.includes(record.sch_id)}
+                                                    />
                                                 )}
                                                 <ActionButton
                                                     actionManager={actions.current}
@@ -688,44 +747,31 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 />
                                             </ButtonGroup>
                                             <ButtonGroup className="actions">
-                                                <Tooltip title={t("text-connection", "Test connection")}>
-                                                    <ToolButton
-                                                        className="test"
-                                                        onClick={(_event) => {
-                                                            if (!testing.includes(record.sch_id)) {
-                                                                handleTestConnection(record);
-                                                            }
-                                                        }}
-                                                        color="success"
-                                                    >
-                                                        {testing.includes(record.sch_id) ?
-                                                            <theme.icons.Loading {...slotProps?.icon} /> :
-                                                            <theme.icons.ConnectionTest {...slotProps?.icon} />
-                                                        }
-                                                    </ToolButton>
-                                                </Tooltip>
-                                                <Tooltip title={t("edit-profile", "Edit Profile")}>
-                                                    <ToolButton
-                                                        className="edit"
-                                                        onClick={(_event) => {
-                                                            queueMessage(Messages.EDIT_SCHEMA, record.sch_id);
-                                                        }}
-                                                        color="primary"
-                                                    >
-                                                        <theme.icons.EditConnectionSchema {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                </Tooltip>
-                                                <Tooltip title={t("clone-edit-profile", "Clone and edit as new profile")}>
-                                                    <ToolButton
-                                                        className="clone"
-                                                        onClick={(_event) => {
-                                                            queueMessage(Messages.CLONE_EDIT_SCHEMA, record.sch_id);
-                                                        }}
-                                                        color="primary"
-                                                    >
-                                                        <theme.icons.CloneConnectionSchema {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                </Tooltip>
+                                                <ActionButton
+                                                    actionManager={actions.current}
+                                                    actionId={testActionId}
+                                                    actionArgs={[record.sch_id]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="success"
+                                                    loading={testing.includes(record.sch_id)}
+                                                />
+                                                <ActionButton
+                                                    actionManager={actions.current}
+                                                    actionId={editActionId}
+                                                    actionArgs={[record.sch_id]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="primary"
+                                                />
+                                                <ActionButton
+                                                    actionManager={actions.current}
+                                                    actionId={cloneActionId}
+                                                    actionArgs={[record.sch_id]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="primary"
+                                                />
                                             </ButtonGroup>
                                             <ButtonGroup className="actions">
                                                 <ActionButton

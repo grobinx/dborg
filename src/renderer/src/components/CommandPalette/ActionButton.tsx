@@ -6,8 +6,14 @@ import { ToolButton, ToolButtonOwnProps } from "../buttons/ToolButton";
 import { Shortcut } from "../Shortcut";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
+import { Button } from "../buttons/Button";
+import { IconButton } from "../buttons/IconButton";
+import { get } from "http";
 
-interface ActionButtonProps<T> extends Omit<ToolButtonOwnProps, "action"> {
+type ButtonVariant = 'standard' | 'tool' | 'icon';
+
+interface ActionButtonProps<T> extends ToolButtonOwnProps {
+    variant?: ButtonVariant; // Typ przycisku
     actionManager?: ActionManager<T>; // Menedżer akcji
     actionId?: string; // Identyfikator akcji
     action?: ActionDescriptor<T>; // Opis akcji
@@ -23,6 +29,7 @@ interface ActionButtonProps<T> extends Omit<ToolButtonOwnProps, "action"> {
  * Działa dla zarejestrowanych akcji w menedżerze akcji. Nie działa dla akcji z grup.
  */
 const ActionButton = <T,>({
+    variant = "tool",
     actionManager,
     actionId,
     getContext,
@@ -50,13 +57,19 @@ const ActionButton = <T,>({
         resolvedAction.run(context, ...(actionArgs || []));
     };
 
+    const context = getContext();
+    const VariantedButton = variant === "tool" ? ToolButton : variant === "icon" ? IconButton : Button;
+    const showLabelFinal = variant === "standard" ? true : showLabel;
+    const showShortcutFinal = variant === "standard" ? true : showShortcut;
+    const labelFinal = typeof resolvedAction.label === "function" ? resolvedAction.label(context, ...(actionArgs || [])) : resolvedAction.label;
+
     return (
         <Tooltip title={
             resolvedAction.keybindings
-                ? <>{resolvedAction.label}<br /><Shortcut keybindings={resolvedAction.keybindings} /></>
-                : resolvedAction.label
+                ? <>{labelFinal}<br /><Shortcut keybindings={resolvedAction.keybindings} /></>
+                : labelFinal
         }>
-            <ToolButton
+            <VariantedButton
                 {...other}
                 className={clsx(
                     'ActionButton-root',
@@ -65,13 +78,13 @@ const ActionButton = <T,>({
                 )}
                 size={size}
                 onClick={handleClick}
-                disabled={resolvedAction.precondition ? !resolvedAction.precondition(getContext()) : false}
-                selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(getContext()) : resolvedAction.selected}
+                disabled={resolvedAction.precondition ? !resolvedAction.precondition(context) : false}
+                selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(context) : resolvedAction.selected}
             >
-                {showShortcut && resolvedAction.keybindings && <Shortcut keybindings={resolvedAction.keybindings} />}
+                {showShortcutFinal && resolvedAction.keybindings && <Shortcut keybindings={resolvedAction.keybindings} />}
                 {resolveIcon(theme, resolvedAction.icon)}
-                {showLabel && resolvedAction.label}
-            </ToolButton>
+                {showLabelFinal && labelFinal}
+            </VariantedButton>
         </Tooltip>
     );
 };
