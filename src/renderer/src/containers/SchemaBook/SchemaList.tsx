@@ -518,9 +518,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     }, [refreshConnectionList, connectionStatus, data]);
 
-    const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string) => {
+    const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         try {
-            await sendMessage(Messages.SCHEMA_SWAP_ORDER, sourceSchemaId, targetSchemaId);
+            await sendMessage(Messages.SCHEMA_SWAP_ORDER, sourceSchemaId, targetSchemaId, group);
         } catch (error) {
             addToast(
                 "error",
@@ -572,7 +572,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             const currentGroup = groupData[currentIndex][1];
             const previousGroup = groupData[previousIndex][1];
             if (currentGroup.length > 0 && previousGroup.length > 0) {
-                swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id);
+                swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
             }
         }
     }
@@ -586,7 +586,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             const currentGroup = groupData[currentIndex][1];
             const nextGroup = groupData[nextIndex][1];
             if (currentGroup.length > 0 && nextGroup.length > 0) {
-                swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id);
+                swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
             }
         }
     }

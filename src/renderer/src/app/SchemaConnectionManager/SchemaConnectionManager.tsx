@@ -244,7 +244,7 @@ const SchemaConnectionManager: React.FC = () => {
         return false;
     }, [internal, dialogs, fetchSchema, t]);
 
-    const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string) => {
+    const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         const sourceSchema = schemas.find(s => s.sch_id === sourceSchemaId);
         const targetSchema = schemas.find(s => s.sch_id === targetSchemaId);
         if (!sourceSchema || !targetSchema) {
@@ -255,14 +255,38 @@ const SchemaConnectionManager: React.FC = () => {
         if (sourceOrder === undefined || targetOrder === undefined) {
             throw new Error(t("profile-order-undefined", "Profile order is undefined!"));
         }
-        await internal.execute(
-            "update schemas set sch_order = case \n" +
-            "  when sch_id = ? then ? \n" +
-            "  when sch_id = ? then ? \n" +
-            "end \n" +
-            "where sch_id in (?, ?)",
-            [sourceSchemaId, targetOrder, targetSchemaId, sourceOrder, sourceSchemaId, targetSchemaId]
-        );
+        if (group) {
+            const updateGroupOrder = async (schemaId: string, order: number) => {
+                await internal.execute(
+                    "WITH ordered AS (\n" +
+                    "    SELECT \n" +
+                    "        sch_id,\n" +
+                    "        ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
+                    "    FROM schemas\n" +
+                    "    WHERE coalesce(sch_group, 'ungrouped') = (SELECT coalesce(sch_group, 'ungrouped') FROM schemas WHERE sch_id = ?)\n" +
+                    ")\n" +
+                    "UPDATE schemas\n" +
+                    "SET sch_order = (\n" +
+                    "    SELECT ? + new_order / 1000.0 FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
+                    ")\n" +
+                    "WHERE sch_id IN (SELECT sch_id FROM ordered)",
+                    [schemaId, order]
+                );
+            }
+            await updateGroupOrder(sourceSchemaId, targetOrder);
+            await updateGroupOrder(targetSchemaId, sourceOrder);
+            await updateOrder();
+        }
+        else {
+            await internal.execute(
+                "update schemas set sch_order = case \n" +
+                "  when sch_id = ? then ? \n" +
+                "  when sch_id = ? then ? \n" +
+                "end \n" +
+                "where sch_id in (?, ?)",
+                [sourceSchemaId, targetOrder, targetSchemaId, sourceOrder, sourceSchemaId, targetSchemaId]
+            );
+        }
         await reloadSchemas();
     }, [internal, fetchSchemas, schemas, t]);
 
