@@ -220,6 +220,13 @@ export const SCHEMA_UPDATE = "schema-update";
  */
 export const SCHEMA_UPDATE_SUCCESS = "schema-update-success";
 
+/**
+ * Swap two schemas order.
+ * @param sourceSchemaId The source schema id to swap.
+ * @param targetSchemaId The target schema id to swap.
+ */
+export const SCHEMA_SWAP_ORDER = "schema-swap-order";
+
 export const SESSION_GET_METADATA_START = "session:get-metadata:start";
 export type SessionGetMetadataStart = {
     connectionId: string; // Unique identifier for the connection

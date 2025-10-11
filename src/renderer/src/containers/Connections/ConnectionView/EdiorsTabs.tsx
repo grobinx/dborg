@@ -30,7 +30,7 @@ const StyledEditorsTabs = styled(Stack, {
     width: "100%",
 }));
 
-interface EditorsTabsProps extends React.ComponentProps<typeof StyledEditorsTabs> {
+interface EditorsTabsProps extends React.ComponentProps<typeof Stack> {
 }
 
 interface EditorsTabsOwnProps extends EditorsTabsProps {

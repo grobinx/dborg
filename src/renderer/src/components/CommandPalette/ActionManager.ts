@@ -138,6 +138,13 @@ export interface ActionDescriptor<T> {
     secondaryLabel?: string | ((context: T, ...args: any[]) => string);
 
     /**
+     * Podpowiedź (tooltip) akcji, która będzie prezentowana użytkownikowi.
+     * @param context Obiekt, na którym akcja ma być wykonana.
+     * @param args to dodatkowe argumenty przekazywane do funkcji, które mogą być użyte do dynamicznego generowania etykiety. Przygotuj się na to, że mogą być puste.
+     */
+    tooltip?: string | ((context: T, ...args: any[]) => string);
+
+    /**
      * Ikona akcji, która będzie prezentowana użytkownikowi.
      * Może być to komponent React lub inny element reprezentujący ikonę.
      */
@@ -145,6 +152,7 @@ export interface ActionDescriptor<T> {
 
     /**
      * Warunek wstępny (precondition), który musi być spełniony, aby akcja mogła zostać wykonana.
+     * Wywoływane tuż przed uruchomieniem akcji.
      * @param context Obiekt, na którym akcja ma być wykonana.
      * @return true, jeśli akcja może zostać wykonana; w przeciwnym razie false.
      */
@@ -177,12 +185,12 @@ export interface ActionDescriptor<T> {
      * Czy akcja jest aktualnie wybrana.
      * Używane do oznaczania akcji jako wybranej w interfejsie użytkownika.
      */
-    selected?: boolean | ((context: T) => boolean);
+    selected?: boolean | ((context: T, ...args: any[]) => boolean);
 
     /**
      * Czy akcja jest aktualnie wyłączona.
      */
-    disabled?: boolean | ((context: T) => boolean);
+    disabled?: boolean | ((context: T, ...args: any[]) => boolean);
 
     /**
      * Czy akcja jest widoczna w interfejsie użytkownika.

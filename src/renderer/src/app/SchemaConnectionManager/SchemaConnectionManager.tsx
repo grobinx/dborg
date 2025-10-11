@@ -199,7 +199,7 @@ const SchemaConnectionManager: React.FC = () => {
             const connection = await drivers.connect(driverUniqueId, properties);
             await connections.close(connection.uniqueId);
 
-            addToast("success", t("schema-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }), {
+            addToast("success", t("profile-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }), {
                 source: t_connectionSchemaManager,
             });
 
@@ -207,7 +207,7 @@ const SchemaConnectionManager: React.FC = () => {
         }
         catch (error) {
             addToast("error",
-                t("schema-test-error", "An error occurred while testing the connection to \"{{name}}\".", { name: schemaName }),
+                t("profile-test-error", "An error occurred while testing the connection to \"{{name}}\".", { name: schemaName }),
                 {
                     source: t_connectionSchemaManager, reason: error,
                 }
@@ -232,7 +232,7 @@ const SchemaConnectionManager: React.FC = () => {
     const deleteSchema = useCallback(async (schemaId: string) => {
         const schema = await fetchSchema(schemaId);
         if (await dialogs.confirm(
-            t("delete-schema-q", 'Delete schema "{{name}}" ?', { name: schema.sch_name }),
+            t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: schema.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
             await internal.execute("delete from schemas where sch_id = ?", [schemaId]);
@@ -243,6 +243,28 @@ const SchemaConnectionManager: React.FC = () => {
         }
         return false;
     }, [internal, dialogs, fetchSchema, t]);
+
+    const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string) => {
+        const sourceSchema = schemas.find(s => s.sch_id === sourceSchemaId);
+        const targetSchema = schemas.find(s => s.sch_id === targetSchemaId);
+        if (!sourceSchema || !targetSchema) {
+            throw new Error(t("profile-id-not-found", "Profile not found!"));
+        }
+        const sourceOrder = sourceSchema.sch_order;
+        const targetOrder = targetSchema.sch_order;
+        if (sourceOrder === undefined || targetOrder === undefined) {
+            throw new Error(t("profile-order-undefined", "Profile order is undefined!"));
+        }
+        await internal.execute(
+            "update schemas set sch_order = case \n" +
+            "  when sch_id = ? then ? \n" +
+            "  when sch_id = ? then ? \n" +
+            "end \n" +
+            "where sch_id in (?, ?)",
+            [sourceSchemaId, targetOrder, targetSchemaId, sourceOrder, sourceSchemaId, targetSchemaId]
+        );
+        await reloadSchemas();
+    }, [internal, fetchSchemas, schemas, t]);
 
     /**
      * Check if a schema with the same name already exists.
@@ -389,6 +411,7 @@ const SchemaConnectionManager: React.FC = () => {
         subscribe(Messages.RELOAD_SCHEMAS, reloadSchemas);
         subscribe(Messages.SCHEMA_DISCONNECT, disconnectFromDatabase);
         subscribe(Messages.SCHEMA_DISCONNECT_ALL, disconnectFromAllDatabases);
+        subscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
 
         return () => {
             unsubscribe(Messages.SCHEMA_TEST_CONNECTION, testConnection);
@@ -401,6 +424,7 @@ const SchemaConnectionManager: React.FC = () => {
             unsubscribe(Messages.RELOAD_SCHEMAS, reloadSchemas);
             unsubscribe(Messages.SCHEMA_DISCONNECT, disconnectFromDatabase);
             unsubscribe(Messages.SCHEMA_DISCONNECT_ALL, disconnectFromAllDatabases);
+            unsubscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
         };
     }, [
         subscribe,
@@ -415,6 +439,7 @@ const SchemaConnectionManager: React.FC = () => {
         reloadSchemas,
         disconnectFromDatabase,
         disconnectFromAllDatabases,
+        swapSchemasOrder,
     ]);
 
     return <></>;

@@ -111,6 +111,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData, setSortedData] = React.useState<Schema[] | null>(null);
+    const [groupData, setGroupData] = React.useState<[string, Schema[]][] | null>(null);
     const [displayData, setDisplayData] = React.useState<Schema[] | null>();
     const { drivers, connections } = useDatabase();
     const { t } = useTranslation();
@@ -149,6 +150,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, {
             id: groupActionId,
             label: t("group-profile-list", "Group profile list"),
+            tooltip: t("group-profile-list-tooltip", "Group profile list by group name"),
             keybindings: ["Ctrl+K", "Ctrl+G"],
             icon: "GroupList",
             run: () => {
@@ -157,6 +159,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, {
             id: sortActionId,
             label: t("sort-profile-list", "Sort profile list"),
+            tooltip: t("sort-profile-list-tooltip", "Sort profile list by last used"),
             keybindings: ["Ctrl+K", "Ctrl+O"],
             icon: "Sort",
             run: () => {
@@ -357,6 +360,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 });
             }
 
+            setGroupData(sortedGroups);
             return sortedGroups.flatMap(([, group]) =>
                 group.sort((a, b) => {
                     if (!sortList) {
@@ -384,6 +388,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 })
             );
         }
+        setGroupData(null);
 
         return [...list].sort((a, b) => {
             if (!sortList) {
@@ -426,12 +431,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         return filtered ?? null;
     }
 
-    React.useEffect(() => {
+    const sortData = () => {
         const sortedData = sort(data);
         setSortedData(sortedData);
         if (search.trim() === '') {
             setDisplayData(sortedData);
         }
+    };
+
+    React.useEffect(() => {
+        sortData();
     }, [data, sortList, groupList, sort]);
 
     React.useEffect(() => {
@@ -509,10 +518,78 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     }, [refreshConnectionList, connectionStatus, data]);
 
-    const moveDown = (shchemaId: string) => {
+    const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string) => {
+        try {
+            await sendMessage(Messages.SCHEMA_SWAP_ORDER, sourceSchemaId, targetSchemaId);
+        } catch (error) {
+            addToast(
+                "error",
+                t("schema-order-update-error", "Failed to update schema order!"),
+                {
+                    source: t_connectionSchema,
+                    reason: error,
+                }
+            );
+            return;
+        }
     }
 
-    //document.getElementById(displayData[nextIndex].sch_id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const moveDown = (schemaId: string) => {
+        if (!sortedData || sortedData.length === 0 || !schemaId) return;
+
+        const currentIndex = sortedData.findIndex((schema) => schema.sch_id === schemaId);
+        const nextIndex = currentIndex + 1;
+
+        if (nextIndex < sortedData.length) {
+            const nextSchema = sortedData[nextIndex];
+            if (groupList && (nextSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
+                return; // Prevent moving to a different group
+            }
+            swapSchemaOrder(schemaId, nextSchema.sch_id);
+        }
+    }
+
+    const moveUp = (schemaId: string) => {
+        if (!sortedData || sortedData.length === 0 || !schemaId) return;
+
+        const currentIndex = sortedData.findIndex((schema) => schema.sch_id === schemaId);
+        const previousIndex = currentIndex - 1;
+        if (previousIndex >= 0) {
+            const previousSchema = sortedData[previousIndex];
+            if (groupList && (previousSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
+                return; // Prevent moving to a different group
+            }
+            swapSchemaOrder(schemaId, previousSchema.sch_id);
+        }
+    }
+
+    const moveGroupUp = (schemaId: string) => {
+        if (!groupData || groupData.length === 0 || !schemaId) return;
+
+        const currentIndex = groupData.findIndex(([, group]) => group.some(schema => schema.sch_id === schemaId));
+        const previousIndex = currentIndex - 1;
+        if (previousIndex >= 0) {
+            const currentGroup = groupData[currentIndex][1];
+            const previousGroup = groupData[previousIndex][1];
+            if (currentGroup.length > 0 && previousGroup.length > 0) {
+                swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id);
+            }
+        }
+    }
+
+    const moveDownGroup = (schemaId: string) => {
+        if (!groupData || groupData.length === 0 || !schemaId) return;
+
+        const currentIndex = groupData.findIndex(([, group]) => group.some(schema => schema.sch_id === schemaId));
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < groupData.length) {
+            const currentGroup = groupData[currentIndex][1];
+            const nextGroup = groupData[nextIndex][1];
+            if (currentGroup.length > 0 && nextGroup.length > 0) {
+                swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id);
+            }
+        }
+    }
 
     React.useEffect(() => {
         const handleSchemaCreateSuccess = (newSchema: Schema) => {
@@ -684,20 +761,18 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             <Typography variant="h6" style={{ width: "100%" }}>
                                                 {!sortList &&
                                                     <ButtonGroup className="drag" size="small" dense sx={{ marginRight: 8 }}>
-                                                        <Tooltip title={t("move-up", "Move up")} placement="left">
-                                                            <ToolButton
-                                                                height={"2em"}
-                                                            >
-                                                                <theme.icons.ExpandLess {...slotProps?.icon} />
-                                                            </ToolButton>
-                                                        </Tooltip>
-                                                        <Tooltip title={t("move-down", "Move down")} placement="right">
-                                                            <ToolButton
-                                                                height={"2em"}
-                                                            >
-                                                                <theme.icons.ExpandMore {...slotProps?.icon} />
-                                                            </ToolButton>
-                                                        </Tooltip>
+                                                        <ToolButton
+                                                            height={"2em"}
+                                                            onClick={(_e) => { moveGroupUp(record.sch_id); }}
+                                                        >
+                                                            <theme.icons.ExpandLess {...slotProps?.icon} />
+                                                        </ToolButton>
+                                                        <ToolButton
+                                                            height={"2em"}
+                                                            onClick={(_e) => { moveDownGroup(record.sch_id); }}
+                                                        >
+                                                            <theme.icons.ExpandMore {...slotProps?.icon} />
+                                                        </ToolButton>
                                                     </ButtonGroup>
                                                 }
                                                 {highlightText(group, search, theme)}
@@ -714,18 +789,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                         >
                                             {!sortList &&
                                                 <ButtonGroup className="drag" size="small" dense orientation="vertical">
-                                                    <Tooltip title={t("move-up", "Move up")} placement="left">
-                                                        <ToolButton
-                                                        >
-                                                            <theme.icons.ExpandLess {...slotProps?.icon} />
-                                                        </ToolButton>
-                                                    </Tooltip>
-                                                    <Tooltip title={t("move-down", "Move down")} placement="left">
-                                                        <ToolButton
-                                                        >
-                                                            <theme.icons.ExpandMore {...slotProps?.icon} />
-                                                        </ToolButton>
-                                                    </Tooltip>
+                                                    <ToolButton
+                                                        onClick={(_e) => { moveUp(record.sch_id); }}
+                                                    >
+                                                        <theme.icons.ExpandLess {...slotProps?.icon} />
+                                                    </ToolButton>
+                                                    <ToolButton
+                                                        onClick={(_e) => { moveDown(record.sch_id); }}
+                                                    >
+                                                        <theme.icons.ExpandMore {...slotProps?.icon} />
+                                                    </ToolButton>
                                                 </ButtonGroup>
                                             }
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>

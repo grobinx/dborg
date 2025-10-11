@@ -22,6 +22,7 @@ interface ActionButtonProps<T> extends ToolButtonOwnProps {
     size?: Size; // Rozmiar przycisku
     showLabel?: boolean; // Czy pokazywać etykietę (domyślnie false)
     showShortcut?: boolean; // Czy pokazywać skrót klawiszowy w etykiecie (domyślnie true)
+    showTooltip?: boolean; // Czy pokazywać podpowiedź (domyślnie true)
 }
 
 /**
@@ -38,6 +39,7 @@ const ActionButton = <T,>({
     size = "small",
     showLabel = false,
     showShortcut = false,
+    showTooltip = true,
     ...other
 }: ActionButtonProps<T>) => {
     const theme = useTheme();
@@ -46,9 +48,9 @@ const ActionButton = <T,>({
     if (!resolvedAction) {
         return null;
     }
-    
+
     const context = getContext();
-    
+
     const visible = typeof resolvedAction.visible === 'function' ? resolvedAction.visible(context) : (resolvedAction.visible ?? true);
     if (!visible) {
         return null;
@@ -68,13 +70,16 @@ const ActionButton = <T,>({
     const showLabelFinal = variant === "standard" ? true : showLabel;
     const showShortcutFinal = variant === "standard" ? true : showShortcut;
     const labelFinal = typeof resolvedAction.label === "function" ? resolvedAction.label(context, ...(actionArgs || [])) : resolvedAction.label;
-    const disabled = typeof resolvedAction.disabled === 'function' ? resolvedAction.disabled(context) : (resolvedAction.disabled ?? false);
+    const disabled = typeof resolvedAction.disabled === 'function' ? resolvedAction.disabled(context, ...(actionArgs || [])) : (resolvedAction.disabled ?? false);
+    const tooltip = typeof resolvedAction.tooltip === "function" ? resolvedAction.tooltip(context, ...(actionArgs || [])) : resolvedAction.tooltip;
 
     return (
         <Tooltip title={
-            resolvedAction.keybindings
-                ? <>{labelFinal}<br /><Shortcut keybindings={resolvedAction.keybindings} /></>
-                : labelFinal
+            showTooltip && (
+                resolvedAction.keybindings
+                    ? <>{tooltip ?? labelFinal}<br /><Shortcut keybindings={resolvedAction.keybindings} /></>
+                    : (tooltip ?? labelFinal)
+            )
         }>
             <VariantedButton
                 {...other}
