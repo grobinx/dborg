@@ -18,7 +18,7 @@ import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
-import { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
+import CommandPalette, { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
 import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
@@ -59,8 +59,6 @@ interface SchemaListOwnProps extends SchemaListProps {
 }
 
 interface SchemaListContext {
-    isGroupList: () => boolean;
-    isSortList: () => boolean;
     connect: (schemaId: string) => void;
     delete: (schemaId: string) => void;
     test: (schemaId: string) => void;
@@ -129,7 +127,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         getId: (item) => item.sch_id,
         actionManager: actions.current,
         getContext: () => (context),
+        keyBindings: [{ key: "F1", handler: () => setOpenCommandPalette(true) }],
     });
+    const [openCommandPalette, setOpenCommandPalette] = React.useState(false);
+    const searchRef = React.useRef<HTMLInputElement>(null);
 
     console.count("SchemaList render");
 
@@ -152,7 +153,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             run: () => {
                 setGroupList(prev => !prev);
             },
-            selected: (context) => context.isGroupList()
         }, {
             id: sortActionId,
             label: t("sort-profile-list", "Sort profile list"),
@@ -161,7 +161,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             run: () => {
                 setSortList(prev => !prev);
             },
-            selected: (context) => context.isSortList()
         }, {
             id: connectActionId,
             label: t("connect-to-database", "Connect to database"),
@@ -218,8 +217,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, []);
 
     const context: SchemaListContext = {
-        isGroupList: () => !!groupList,
-        isSortList: () => !!sortList,
         connect: (schemaId?: string) => {
             if ((schemaId ?? selectedItem) != null) {
                 handleConnect((schemaId ?? selectedItem) as string);
@@ -613,6 +610,13 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 <Typography variant="h4">{t_connectionSchema}</Typography>
                 <Stack flexGrow={1} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <CommandPalette
+                        manager={actions.current!}
+                        open={openCommandPalette}
+                        onClose={() => setOpenCommandPalette(false)}
+                        getContext={() => context}
+                        parentRef={searchRef}
+                    />
                     <InputDecorator indicator={false}>
                         <SearchField
                             placeholder={t("search---", "Search...")}
@@ -622,6 +626,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                 autoFocus: true,
                                 onKeyDown: handleSearchKeyDown,
                             }}
+                            inputRef={searchRef}
                             autoFocus
                             size="large"
                         />
@@ -632,12 +637,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             actionId={groupActionId}
                             getContext={() => context}
                             size="large"
+                            toggle={"true"}
+                            value={groupList ? "true" : null}
                         />
                         <ActionButton
                             actionManager={actions.current}
                             actionId={sortActionId}
                             getContext={() => context}
                             size="large"
+                            toggle={"true"}
+                            value={sortList ? "true" : null}
                         />
                     </ButtonGroup>
                     <ActionButton
