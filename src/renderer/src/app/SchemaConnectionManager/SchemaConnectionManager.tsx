@@ -10,6 +10,7 @@ import * as api from "../../../../api/db";
 import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
+import { DBORG_DATA_PATH_NAME } from "../../../../../src/api/dborg-path";
 
 // Define the schema structure
 export interface SchemaRecord {
@@ -27,6 +28,15 @@ export interface SchemaRecord {
     sch_db_version?: string;
     sch_script?: string;
     sch_order?: number;
+}
+
+export interface AggregatedSchemas {
+    indexes: {
+        [index: string]: {
+            fields: string[],
+            ids: string[],
+        }
+    },
 }
 
 const SchemaConnectionManager: React.FC = () => {
@@ -465,6 +475,37 @@ const SchemaConnectionManager: React.FC = () => {
         disconnectFromAllDatabases,
         swapSchemasOrder,
     ]);
+
+    React.useEffect(() => {
+        const groups = schemas.reduce((acc, schema) => {
+            const groupName = schema.sch_group ?? "ungrouped"; // Użyj "ungrouped" dla schematów bez grupy
+            if (!acc[groupName]) {
+                acc[groupName] = {
+                    min_order: Infinity, // Ustawienie początkowe dla minimalnego sch_order
+                    max_selected: "",
+                    schema_ids: [] // Lista sch_id
+                };
+            }
+            // Dodaj sch_id do grupy
+            acc[groupName].schema_ids.push(schema.sch_id);
+            // Aktualizuj minimalny sch_order
+            if (schema.sch_order !== undefined && schema.sch_order < acc[groupName].min_order) {
+                acc[groupName].min_order = schema.sch_order;
+            }
+            if (schema.sch_last_selected !== undefined && schema.sch_last_selected > acc[groupName].max_selected) {
+                acc[groupName].max_selected = schema.sch_last_selected;
+            }
+            return acc;
+        }, {} as Record<string, { min_order: number; max_selected: string; schema_ids: string[] }>);
+
+        (async () => {
+            const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+            await window.dborg.path.ensureDir(dataPath);
+            await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
+
+            await window.dborg.file.writeFile(`${dataPath}/groups.json`, JSON.stringify(groups, null, 2));
+        })();
+    }, [schemas]);
 
     return <></>;
 };

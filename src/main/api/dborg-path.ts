@@ -15,16 +15,16 @@ export const EVENT_ENSURE_PATH = "dborg:path:ensure"
 /**
  * Root dborg root data path in userData directory
  */
-export const DBORG_DATA_PATH = ".dborg"
+export const DBORG_USER_DATA_PATH = ".dborg"
 /**
  * Is subfolder of DBORG_DATA_PATH where settings will be stored
  */
 export const DBORG_SETTINGS_PATH = "settings"
-
 export const DBORG_EDITORS_PATH = "editors"
+export const DBORG_DATA_PATH = "data"
 
 export function dataPath(subPath : string | undefined = undefined) : string {
-    let result = join(app.getPath("home"), DBORG_DATA_PATH);
+    let result = join(app.getPath("home"), DBORG_USER_DATA_PATH);
     if (subPath !== undefined) {
         result = join(result, subPath)
     }
@@ -36,7 +36,7 @@ export function dataPath(subPath : string | undefined = undefined) : string {
 
 export function init(ipc: typeof ipcMain) : void {
     ipc.handle(EVENT_CORE_GET_PATH, (_ : IpcMainInvokeEvent, name: dborgPath.DBORG_PATHS) : string => {
-        if (name === dborgPath.DBORG_DATA_PATH_NAME) {
+        if (name === dborgPath.DBORG_USER_DATA_PATH_NAME) {
             return dataPath()
         }
         else if (name === dborgPath.DBORG_SETTINGS_PATH_NAME) {
@@ -44,6 +44,9 @@ export function init(ipc: typeof ipcMain) : void {
         }
         else if (name === dborgPath.DBORG_EDITORS_PATH_NAME) {
             return dataPath(DBORG_EDITORS_PATH)
+        }
+        else if (name === dborgPath.DBORG_DATA_PATH_NAME) {
+            return dataPath(DBORG_DATA_PATH)
         }
         return app.getPath(name)
     })
