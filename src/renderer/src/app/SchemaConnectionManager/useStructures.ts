@@ -4,7 +4,7 @@ import React from "react";
 export type SortOrder = 'asc' | 'desc';
 
 /**
- * Opcje sortowania dla struktur danych typu T.
+ * Definicja pola indeksu dla struktur danych typu T.
  */
 export interface IndexField<T> {
     /** Pole, po którym sortujemy */
@@ -13,7 +13,7 @@ export interface IndexField<T> {
     order?: SortOrder;
     /** Czy wartości null powinny być traktowane jako największe (true) czy najmniejsze (false) */
     nullsLast?: boolean;
-    /** Czy sortowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie false */
+    /** Czy sortowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
     caseSensitive?: boolean;
     /**
      * Funkcja do pobierania wartości dla grupy danego pola.
@@ -36,7 +36,58 @@ export interface Index<T> {
     cache?: boolean;
 }
 
-const sortData = <T,>(data: T[], index: Index<T>): T[] => {
+export type Indexes<T> = Record<string, Index<T>>;
+
+/**
+ * Definicja pola grupowania dla struktur danych typu T.
+ */
+export interface GroupField<T> {
+    /** Pole po którym grupujemy */
+    name: keyof T;
+    /** Czy sortowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
+    caseSensitive?: boolean;
+    /** Wartość zastępcza dla pustych wartości, null, undefined oraz "" */
+    emptyValue?: string;
+}
+
+/**
+ * Definicja grupowania dla struktury danych T
+ */
+export interface Group<T> {
+    /** Pola, po których grupujemy */
+    fields: GroupField<T>[];
+    cache?: boolean;
+}
+
+/**
+ * Definicje grupowań dla struktur danych typu T.
+ */
+export type Groups<T> = Record<string, Group<T>>;
+
+/**
+ * Struktura przechowująca zgrupowane dane.
+ */
+export interface GroupedData<T> {
+    /** Klucze grupowania */
+    group: string[];
+    /** Zgrupowane dane */
+    data: T[];
+};
+
+/**
+ * Typ reprezentujący wynik grupowania danych typu T.
+ */
+export type GroupResult<T> = GroupedData<T>[];
+
+/**
+ * Funkcja sortująca tablicę danych na podstawie zdefiniowanego indeksu.
+ * Obsługuje różne typy danych, wartości null, unikalność oraz grupowanie.
+ * @param data Tablica struktur danych typu T do posortowania
+ * @param index Definicja indeksu określająca sposób sortowania
+ * @returns Posortowana tablica struktur danych typu T
+ * @throws Błąd, jeśli indeks jest unikalny i znaleziono duplikaty
+ */
+export const sortData = <T,>(data: T[], index: Index<T>): T[] => {
     if (index.unique) {
         const seen = new Set<string>();
         for (const item of data) {
@@ -71,9 +122,9 @@ const sortData = <T,>(data: T[], index: Index<T>): T[] => {
         let comparison: number;
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-            comparison = field.caseSensitive
+            comparison = ((field.caseSensitive ?? true)
                 ? aValue.localeCompare(bValue)
-                : aValue.localeCompare(bValue, undefined, { sensitivity: 'base' });
+                : aValue.localeCompare(bValue, undefined, { sensitivity: 'base' }));
         } else if (typeof aValue === 'number' || typeof aValue === 'bigint') {
             comparison = Number(aValue) - Number(bValue);
         } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
@@ -106,26 +157,64 @@ const sortData = <T,>(data: T[], index: Index<T>): T[] => {
 
     return [...data].sort((a, b) => {
         for (const field of index.fields) {
-            const aValue = a[field.name];
-            const bValue = b[field.name];
-
-            const comparison = compareValues(aValue, bValue, field);
-            if (comparison !== 0) return comparison;
+            if (cachedGroupedData[field.name as string]) {
+                const aKey = String(a[field.name]);
+                const bKey = String(b[field.name]);
+                const aGroup = cachedGroupedData[field.name as string][aKey];
+                const bGroup = cachedGroupedData[field.name as string][bKey];
+                const aValue = aGroup?.value;
+                const bValue = bGroup?.value;
+                const comparison = compareValues(aValue, bValue, field);
+                if (comparison !== 0) return comparison;
+            } else {
+                const aValue = a[field.name];
+                const bValue = b[field.name];
+                const comparison = compareValues(aValue, bValue, field);
+                if (comparison !== 0) return comparison;
+            }
         }
-        
+
         return 0; // Równe
     });
+}
+
+export const groupData = <T,>(data: T[], group: Group<T>): GroupResult<T> => {
+    const groupsMap = new Map<string, GroupedData<T>>();
+
+    for (const item of data) {
+        // Tworzymy klucz grupowania z wszystkich pól grupy
+        const groupKeys = group.fields.map(field => {
+            const value = item[field.name];
+            if (value === null || value === undefined || value === '') {
+                return field.emptyValue ?? 'NULL';
+            }
+            return (field.caseSensitive ?? true) ? String(value) : String(value).toLowerCase();
+        });
+        
+        const groupKey = groupKeys.join('|');
+        
+        if (!groupsMap.has(groupKey)) {
+            groupsMap.set(groupKey, {
+                group: groupKeys,
+                data: []
+            });
+        }
+        
+        groupsMap.get(groupKey)!.data.push(item);
+    }
+
+    return Array.from(groupsMap.values());
 }
 
 /**
  * Hook do sortowania tablic z wykorzystaniem indeksów
  * @param data 
  * @param indexes
- * @returns
+ * @returns {sortBy} funkcja sortBy do sortowania danych wg zadanego indeksu
  */
-const useSortData = <T,>(
+export const useSortData = <T,>(
     data: T[],
-    indexes: Record<string, Index<T>>,
+    indexes: Indexes<T>,
 ) => {
     const [cache, setCache] = React.useState<Record<string, T[]>>({});
 
@@ -152,4 +241,38 @@ const useSortData = <T,>(
     return { sortBy };
 }
 
-export default useSortData;
+/**
+ * Hook do grupowania danych
+ * Zwracana funkcja groupBy grupuje dane wg zadanego grupowania zachowując sortowanie
+ * @param data 
+ * @param groups 
+ * @returns {groupBy} funkcja groupBy do grupowania danych wg zadanego grupowania
+ */
+export const useGroupData = <T,>(
+    data: T[],
+    groups: Groups<T>,
+) => {
+    const [cache, setCache] = React.useState<Record<string, GroupResult<T>>>({});
+
+    const groupBy = React.useCallback((groupName: string): GroupResult<T> => {
+        const group = groups[groupName];
+        if (!group) return [];
+
+        if (group.cache && cache[groupName] && cache[groupName].length === data.length) {
+            return cache[groupName];
+        }
+
+        const grouped = groupData(data, group);
+
+        if (group.cache) {
+            setCache((prev) => ({ ...prev, [groupName]: grouped }));
+        }
+        return grouped;
+    }, [cache]);
+
+    React.useEffect(() => {
+        setCache({});
+    }, [data]);
+
+    return { groupBy };
+}
