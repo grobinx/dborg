@@ -12,7 +12,6 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 cursor: "pointer",
                 display: "flex",
                 color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                minWidth: "4rem",
                 lineHeight: 0,
                 fontSize: "inherit",
                 border: 'none',
@@ -53,6 +52,9 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 },
                 '&.orientation-vertical': {
                     maxWidth: "7rem",
+                },
+                '&.expanded': {
+                    minWidth: "4rem",
                 },
             },
             content: {

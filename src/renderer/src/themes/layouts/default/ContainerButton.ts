@@ -12,7 +12,6 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 cursor: "pointer",
                 display: "flex",
                 color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                minWidth: "4rem",
                 lineHeight: 0,
                 fontSize: "inherit",
                 border: 'none',
@@ -60,6 +59,9 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 },
                 '&.orientation-vertical': {
                     maxWidth: "7rem",
+                },
+                '&.expanded': {
+                    minWidth: "4rem",
                 },
             },
             content: {
