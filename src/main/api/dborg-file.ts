@@ -127,13 +127,12 @@ export const preload = {
     unwatchFile: async (filePath: string): Promise<void> => {
         return ipcRenderer.invoke(EVENT_FILE_WATCH_STOP, filePath);
     },
-    onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, events?: FileChangeEvent[], filePath?: string): (() => void) => {
-        const filterFilePath = filePath;
+    onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, options?: { events?: FileChangeEvent[], filePath?: string }): (() => void) => {
         const subscription = (_event: any, filePath: string, eventType?: FileChangeEvent) => {
-            if (events && eventType && !events.includes(eventType)) {
+            if (options?.events && eventType && !options.events.includes(eventType)) {
                 return;
             }
-            if (filterFilePath && filePath !== filterFilePath) {
+            if (options?.filePath && filePath !== options?.filePath) {
                 return;
             }
             callback(filePath, eventType);

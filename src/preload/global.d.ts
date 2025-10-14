@@ -59,7 +59,7 @@ declare global {
                  * 
                  * eventType can be: 'changed' | 'deleted' | 'added' | 'dir-added' | 'dir-deleted'
                  */
-                onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, events?: FileChangeEvent[], filePath?: string) => () => void,
+                onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, options?: { events?: FileChangeEvent[], filePath?: string }) => () => void,
             },
             settings: {
                 get: (name: string) => Promise<TSettings>,

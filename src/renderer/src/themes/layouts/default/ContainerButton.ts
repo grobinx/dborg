@@ -63,6 +63,9 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 '&.expanded': {
                     minWidth: "4rem",
                 },
+                '&:not(.expanded)': {
+                    minWidth: 0,
+                },
             },
             content: {
                 display: "flex",

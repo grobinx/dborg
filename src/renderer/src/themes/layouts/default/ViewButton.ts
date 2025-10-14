@@ -56,6 +56,9 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 '&.expanded': {
                     minWidth: "4rem",
                 },
+                '&:not(.expanded)': {
+                    minWidth: 0,
+                },
             },
             content: {
                 display: "flex",

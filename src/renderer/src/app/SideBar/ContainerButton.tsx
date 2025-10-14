@@ -56,7 +56,7 @@ const ContainerButton: React.FC<ContainerButtonOwnProps> = (props) => {
                 )}
             >
                 {icon}
-                <Collapse in={expanded} orientation="horizontal" timeout={100} sx={{ width: "100%" }}>
+                <Collapse in={expanded} orientation="horizontal" timeout={100}>
                     {position.horizontal ?
                         <Typography
                             component="div"
