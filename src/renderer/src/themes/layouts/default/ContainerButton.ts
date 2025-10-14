@@ -12,7 +12,7 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                 cursor: "pointer",
                 display: "flex",
                 color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                minWidth: 0,
+                minWidth: "4rem",
                 lineHeight: 0,
                 fontSize: "inherit",
                 border: 'none',
@@ -55,12 +55,22 @@ export const ContainerButtonLayout = (palette: Palette, _root: ThemeOptions): Co
                     pointerEvents: "none",
                     backgroundColor: palette.background.sideBar,
                 },
+                '&.orientation-horizontal': {
+                    maxWidth: "10rem",
+                },
+                '&.orientation-vertical': {
+                    maxWidth: "7rem",
+                },
             },
             content: {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-start",
                 transition: "all 0.1s ease-in-out",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
                 '&.placement-left': {
                     flexDirection: "row",
                 },

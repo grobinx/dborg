@@ -5,6 +5,7 @@
 import { OnMovedFn, OnResizedFn, OnStateFn } from "@api/electron"
 import { Dialog, OpenDialogOptions, OpenDialogReturnValue, Rectangle, Size } from "electron"
 import { CommandResult, ConnectionInfo, Cursor, CursorInfo, DatabasesMetadata, DriverInfo, Properties, QueryResult, StatementResult } from "src/api/db"
+import { FileChangeEvent } from "src/main/api/dborg-file"
 
 declare global {
     interface Window {
@@ -43,6 +44,22 @@ declare global {
                 writeFile: (path: string, content: string, charCode?: BufferEncoding) => Promise<void>,
                 deleteFile: (path: string) => Promise<void>,
                 exists: (path: string) => Promise<boolean>,
+                /**
+                 * Watch file or directory for changes, when directory is watched all subdirectorys are watched too
+                 * @param filePath Can be file or directory path with parent directorys (eg c:/temp or c:/temp/file.txt or c:/temp/*.txt)
+                 */
+                watchFile: (filePath: string) => Promise<void>,
+                unwatchFile: (filePath: string) => Promise<void>,
+                /** 
+                 * Subscribe to file changes, return unsubscribe function.
+                 * First must be called watchFile(filePath) to start watching.
+                 * @param callback (filePath, eventType) => void
+                 * @param events optional filter events, if not set all events are listened to
+                 * @param filePath optional filter filePath, if set only this filePath is listened to
+                 * 
+                 * eventType can be: 'changed' | 'deleted' | 'added' | 'dir-added' | 'dir-deleted'
+                 */
+                onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, events?: FileChangeEvent[], filePath?: string) => () => void,
             },
             settings: {
                 get: (name: string) => Promise<TSettings>,

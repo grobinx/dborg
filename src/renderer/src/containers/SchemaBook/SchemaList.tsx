@@ -681,7 +681,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             ),
             <span key="order" className="order">
                 {t("schema-order", "Order: {{order}}", { order: record.sch_order })}
-            </span>,
+            </span>
         ];
     };
 

@@ -52,15 +52,15 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                     {...other}
                     className={clsx(
                         `placement-${placement}`,
+                        `orientation-${position.horizontal ? "horizontal" : "vertical"}`,
                         expanded && 'expanded'
                     )}
                 >
                     {icon}
-                    <Collapse in={expanded} orientation="horizontal" timeout={100}>
+                    <Collapse in={expanded} orientation="horizontal" timeout={100} sx={{ width: "100%" }}>
                         {position.horizontal ?
                             <Typography
                                 component="div"
-                                noWrap={true}
                                 maxWidth="inherit"
                                 fontSize="inherit"
                             >
@@ -69,8 +69,6 @@ const ViewButton: React.FC<ViewButtonOwnProps> = (props) => {
                             <Collapse in={expanded} orientation="vertical" timeout={100}>
                                 <Typography
                                     component="div"
-                                    noWrap={false}
-                                    width="min-content"
                                     fontSize="inherit"
                                 >
                                     {label}

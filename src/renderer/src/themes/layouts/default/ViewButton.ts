@@ -12,7 +12,7 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 cursor: "pointer",
                 display: "flex",
                 color: palette.mode === "dark" ? darken(palette.sideBar.contrastText, 0.2) : lighten(palette.sideBar.contrastText, 0.2),
-                minWidth: 0,
+                minWidth: "4rem",
                 lineHeight: 0,
                 fontSize: "inherit",
                 border: 'none',
@@ -47,13 +47,22 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 }, {}),
                 '& .MuiTypography-root': {
                     padding: "2px 6px",
-                }
+                },
+                '&.orientation-horizontal': {
+                    maxWidth: "10rem",
+                },
+                '&.orientation-vertical': {
+                    maxWidth: "7rem",
+                },
             },
             content: {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-start",
-                transition: "all 0.1s ease-in-out",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
                 '&.placement-left': {
                     flexDirection: "row",
                 },
