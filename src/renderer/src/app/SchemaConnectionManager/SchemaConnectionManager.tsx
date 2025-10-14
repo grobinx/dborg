@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { DBORG_DATA_PATH_NAME } from "../../../../../src/api/dborg-path";
-import { groupData, sortData } from "./useStructures";
+import { groupArray, sortArray } from "./useStructures";
 
 // Define the schema structure
 export interface SchemaRecord {
@@ -482,7 +482,7 @@ const SchemaConnectionManager: React.FC = () => {
             const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
             await window.dborg.path.ensureDir(dataPath);
             await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
-            const sorted = sortData(schemas, {
+            const sorted = sortArray(schemas, {
                 fields: [{
                     name: 'sch_group',
                     getGroupedValue: (data) => {
@@ -494,7 +494,7 @@ const SchemaConnectionManager: React.FC = () => {
                 }]
             });
             await window.dborg.file.writeFile(`${dataPath}/sorted.json`, JSON.stringify(sorted, null, 2));
-            const grouped = groupData(sorted, {
+            const grouped = groupArray(sorted, {
                 fields: [{
                     name: 'sch_group',
                     emptyValue: 'Ungrouped',

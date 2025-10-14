@@ -34,6 +34,12 @@ export interface Index<T> {
     unique?: boolean;
     /** Czy indeks powinien być pamiętany w pamięci podręcznej, domyślnie false */
     cache?: boolean;
+    /** Etykieta indeksu, dla celów UI */
+    label?: string;
+    /** Podpowiedź indeksu, dla celów UI */
+    tooltip?: string;
+    /** Opis indeksu, dla celów UI */
+    description?: string;
 }
 
 export type Indexes<T> = Record<string, Index<T>>;
@@ -44,7 +50,7 @@ export type Indexes<T> = Record<string, Index<T>>;
 export interface GroupField<T> {
     /** Pole po którym grupujemy */
     name: keyof T;
-    /** Czy sortowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
+    /** Czy grupowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
     caseSensitive?: boolean;
     /** Wartość zastępcza dla pustych wartości, null, undefined oraz "" */
     emptyValue?: string;
@@ -80,6 +86,35 @@ export interface GroupedData<T> {
 export type GroupResult<T> = GroupedData<T>[];
 
 /**
+ * Tryb dopasowania tekstu w wyszukiwaniu.
+ * 'contains' - dowolne dopasowanie zawartości (domyślnie)
+ * 'wholeWord' - dopasowanie całych słów
+ * 'start' - dopasowanie na początku tekstu
+ * 'end' - dopasowanie na końcu tekstu
+ */
+export type MatchMode = 'contains' | 'wholeWord' | 'start' | 'end';
+
+/**
+ * Definicje pól wyszukiwania dla struktur danych.
+ */
+export interface SearchOptions {
+    /** Tryb dopasowania tekstu w wyszukiwaniu */
+    matchMode?: MatchMode;
+    /** Czy wszystkie części wyszukiwanego tekstu muszą pasować (true) czy dowolna (false), domyślnie true */
+    matchAll?: boolean;
+    /** Czy uwzględniać wielkość liter, domyślnie false */
+    caseSensitive?: boolean;
+    /** Czy wykluczać dopasowania, domyślnie false */
+    exclude?: boolean;
+    /** Czy ignorować diakrytyki, domyślnie true */
+    ignoreDiacritics?: boolean;
+    /** Minimalna długość wyszukiwanego tekstu */
+    minLength?: number;
+    /** Czy dzielić tekst wyszukiwania spacją i wyszukiwać wszystkie części w dowolnej kolejności, domyślnie true */
+    splitWords?: boolean;
+}
+
+/**
  * Funkcja sortująca tablicę danych na podstawie zdefiniowanego indeksu.
  * Obsługuje różne typy danych, wartości null, unikalność oraz grupowanie.
  * @param data Tablica struktur danych typu T do posortowania
@@ -87,7 +122,7 @@ export type GroupResult<T> = GroupedData<T>[];
  * @returns Posortowana tablica struktur danych typu T
  * @throws Błąd, jeśli indeks jest unikalny i znaleziono duplikaty
  */
-export const sortData = <T,>(data: T[], index: Index<T>): T[] => {
+export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
     if (index.unique) {
         const seen = new Set<string>();
         for (const item of data) {
@@ -178,7 +213,7 @@ export const sortData = <T,>(data: T[], index: Index<T>): T[] => {
     });
 }
 
-export const groupData = <T,>(data: T[], group: Group<T>): GroupResult<T> => {
+export const groupArray = <T,>(data: T[], group: Group<T>): GroupResult<T> => {
     const groupsMap = new Map<string, GroupedData<T>>();
 
     for (const item of data) {
@@ -190,55 +225,145 @@ export const groupData = <T,>(data: T[], group: Group<T>): GroupResult<T> => {
             }
             return (field.caseSensitive ?? true) ? String(value) : String(value).toLowerCase();
         });
-        
+
         const groupKey = groupKeys.join('|');
-        
+
         if (!groupsMap.has(groupKey)) {
             groupsMap.set(groupKey, {
                 group: groupKeys,
                 data: []
             });
         }
-        
+
         groupsMap.get(groupKey)!.data.push(item);
     }
 
     return Array.from(groupsMap.values());
 }
 
+export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchText: string | null, options?: SearchOptions): T[] => {
+    const {
+        matchMode = 'contains',
+        matchAll = true,
+        caseSensitive = false,
+        exclude = false,
+        ignoreDiacritics = true,
+        minLength = 1,
+        splitWords = true,
+    } = options || {};
+
+    if (data.length === 0) return data;
+    if (!searchText || searchText.length === 0) return data;
+    if (searchText.length < minLength) return data;
+
+    const normalize = (s: string) => {
+        if (ignoreDiacritics) {
+            s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+        if (!caseSensitive) {
+            s = s.toLowerCase();
+        }
+        return s;
+    };
+
+    const searchParts =
+        (splitWords ? searchText.split(' ') : [searchText])
+            .map(part => ignoreDiacritics ? part.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : part);
+
+    if (searchParts.length === 0) return data;
+
+    const matches = (value: string): boolean => {
+        let v = normalize(value);
+
+        let matched: boolean;
+
+        if (matchMode === 'start') {
+            matched = matchAll
+                ? searchParts.every(p => v.startsWith(p))
+                : searchParts.some(p => v.startsWith(p));
+        } else if (matchMode === 'end') {
+            matched = matchAll
+                ? searchParts.every(p => v.endsWith(p))
+                : searchParts.some(p => v.endsWith(p));
+        } else if (matchMode === 'wholeWord') {
+            const wordSet = new Set(v.split(/\s+/));
+            matched = matchAll
+                ? searchParts.every(p => wordSet.has(p))
+                : searchParts.some(p => wordSet.has(p));
+        } else { // contains
+            matched = matchAll
+                ? searchParts.every(p => v.includes(p))
+                : searchParts.some(p => v.includes(p));
+        }
+
+        if (exclude) matched = !matched;
+        return matched;
+    };
+
+    let resolvedFields: (keyof T)[];
+    if (Array.isArray(fields)) {
+        resolvedFields = fields;
+    } else {
+        resolvedFields = Object.keys(data[0] as object) as (keyof T)[];
+    }
+
+    return data.filter(item => {
+        for (const field of resolvedFields) {
+            if (item[field] === null || item[field] === undefined) continue;
+            const value = String(item[field]);
+            if (matches(value)) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
 /**
  * Hook do sortowania tablic z wykorzystaniem indeksów
  * @param data 
  * @param indexes
- * @returns {sortBy} funkcja sortBy do sortowania danych wg zadanego indeksu
+ * @param indexName
+ * @returns {[sortBy]} funkcja sortBy do sortowania danych wg zadanego indeksu
  */
-export const useSortData = <T,>(
-    data: T[],
-    indexes: Indexes<T>,
-) => {
-    const [cache, setCache] = React.useState<Record<string, T[]>>({});
+export const useSortArray = <T, I extends Indexes<T>>(
+    data: T[] | null,
+    indexes: I,
+    indexName: keyof I | null,
+): [T[] | null] => {
+    const [sortedData, setSortedData] = React.useState<T[] | null>(null);
+    const [cache, setCache] = React.useState<Partial<Record<keyof I, T[] | null>>>({});
 
-    const sortBy = React.useCallback((indexName: string): T[] => {
+    React.useEffect(() => {
+        if (!indexes || !data || !indexName) {
+            setSortedData(null);
+            return;
+        }
         const index = indexes[indexName];
-        if (!index) return [];
-
-        if (index.cache && cache[indexName] && cache[indexName].length === data.length) {
-            return cache[indexName];
+        if (!index) {
+            setSortedData(null);
+            return;
         }
-
-        const sorted = sortData(data, index);
-
+        if (index.cache && cache[indexName]) {
+            setSortedData(cache[indexName]);
+            return;
+        }
+        const sortedData = sortArray(data, index);
+        setSortedData(sortedData);
         if (index.cache) {
-            setCache((prev) => ({ ...prev, [indexName]: sorted }));
+            setCache((prev) => ({ ...prev, [indexName]: sortedData }));
         }
-        return sorted;
-    }, [cache]);
+    }, [data, indexes, indexName]);
 
     React.useEffect(() => {
         setCache({});
-    }, [data]);
+    }, [data, indexes]);
 
-    return { sortBy };
+    return [sortedData];
+}
+
+export interface UseGroupDataCache<T> {
+    [groupName: string]: GroupResult<T>;
 }
 
 /**
@@ -246,33 +371,54 @@ export const useSortData = <T,>(
  * Zwracana funkcja groupBy grupuje dane wg zadanego grupowania zachowując sortowanie
  * @param data 
  * @param groups 
- * @returns {groupBy} funkcja groupBy do grupowania danych wg zadanego grupowania
+ * @returns {[groupBy]} funkcja groupBy do grupowania danych wg zadanego grupowania
  */
-export const useGroupData = <T,>(
-    data: T[],
+export const useGroupArray = <T,>(
+    data: T[] | null,
     groups: Groups<T>,
-) => {
-    const [cache, setCache] = React.useState<Record<string, GroupResult<T>>>({});
+): [(groupName: string) => GroupResult<T> | null] => {
+    const [cache, setCache] = React.useState<UseGroupDataCache<T>>({});
 
-    const groupBy = React.useCallback((groupName: string): GroupResult<T> => {
+    const groupBy = React.useCallback((groupName: string): GroupResult<T> | null => {
         const group = groups[groupName];
-        if (!group) return [];
+        if (!group || !data) return null;
 
-        if (group.cache && cache[groupName] && cache[groupName].length === data.length) {
+        if (group.cache && cache[groupName]) {
             return cache[groupName];
         }
 
-        const grouped = groupData(data, group);
+        const grouped: GroupResult<T> = groupArray(data, group);
 
         if (group.cache) {
-            setCache((prev) => ({ ...prev, [groupName]: grouped }));
+            setCache((prev: UseGroupDataCache<T>) => ({ ...prev, [groupName]: grouped }));
         }
         return grouped;
-    }, [cache]);
+    }, [cache, data, groups]);
 
     React.useEffect(() => {
         setCache({});
-    }, [data]);
+    }, [data, groups]);
 
-    return { groupBy };
+    return [groupBy];
+}
+
+/**
+ * Hook do wyszukiwania danych
+ * @param data 
+ * @param fields wszystkie pola, lub tablica nazw pól, domyślnie '*' - wszystkie pola
+ * @param options 
+ * @returns 
+ */
+export const useSearchArray = <T>(
+    data: T[],
+    fields: ((keyof T)[]) | '*' = '*',
+    options?: SearchOptions,
+): [(searchText: string) => T[]] => {
+    const search = React.useCallback((searchText: string): T[] => {
+        if (!searchText) return data;
+
+        return searchArray(data, fields, searchText, options);
+    }, [data, fields, options]);
+
+    return [search];
 }

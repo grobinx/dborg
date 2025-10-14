@@ -31,6 +31,8 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
+import { GroupResult, Groups, Index, Indexes, useGroupArray, useSortArray } from "@renderer/app/SchemaConnectionManager/useStructures";
+import { t } from "i18next";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -102,19 +104,71 @@ const editActionId = "profile-list-edit";
 const cloneActionId = "profile-list-clone";
 const disconnectAllActionId = "profile-list-disconnect-all";
 
+const schemaIndexes: Indexes<Schema> = {
+    lastUsed: {
+        fields: [
+            { name: 'sch_last_selected', nullsLast: false, order: 'desc' },
+            { name: 'sch_updated' },
+            { name: 'sch_name' },
+        ],
+        cache: true,
+    },
+    order: {
+        fields: [
+            { name: 'sch_order' },
+        ],
+        cache: true,
+    },
+    groupLastUsed: {
+        fields: [
+            {
+                name: 'sch_group',
+                getGroupedValue: (data) => {
+                    return Math.max(...data.map(d => DateTime.fromSQL(d.sch_last_selected ?? '').toMillis() || 0));
+                },
+                order: 'desc',
+            },
+            { name: 'sch_last_selected', nullsLast: false, order: 'desc', }
+        ],
+        cache: true,
+    },
+    groupOrder: {
+        fields: [
+            {
+                name: 'sch_group',
+                getGroupedValue: (data) => {
+                    return Math.min(...data.map(d => d.sch_order ?? Infinity));
+                },
+            },
+            { name: 'sch_order' }
+        ],
+        cache: true,
+    },
+};
+
+const schemaGroups: Groups<Schema> = {
+    groupName: {
+        fields: [{
+            name: 'sch_group',
+            emptyValue: t("ungrouped", "Ungrouped"),
+        }],
+    }
+}
+
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
+    const { t } = useTranslation();
     const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [loading, setLoading] = React.useState(true);
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [data, setData] = React.useState<Schema[] | null>(null);
-    const [sortedData, setSortedData] = React.useState<Schema[] | null>(null);
-    const [groupData, setGroupData] = React.useState<[string, Schema[]][] | null>(null);
+    const [sortedData] = useSortArray(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
+    const [groupSchemas] = useGroupArray(sortedData, schemaGroups);
+    const [groupData, setGroupData] = React.useState<GroupResult<Schema> | null>(null);
     const [displayData, setDisplayData] = React.useState<Schema[] | null>();
     const { drivers, connections } = useDatabase();
-    const { t } = useTranslation();
     const [connectionList, setConnectionList] = React.useState<ConnectionInfo[] | null>();
     const [search, setSearch] = React.useState('');
     const { addToast } = useToast();
@@ -333,89 +387,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         fetchData();
     }, [connectionList, drivers]); // Ensure connectionList is ready before fetching data
 
-    // sort wyjęty poza useEffect i memoizowany względem groupList
-    const sort = React.useCallback((list: Schema[] | null): Schema[] | null => {
-        if (!list) return null;
-
-        if (groupList) {
-            const grouped = list.reduce<Record<string, Schema[]>>((acc, schema) => {
-                const key = schema.sch_group ?? "ungrouped";
-                (acc[key] ??= []).push(schema);
-                return acc;
-            }, {});
-
-            let sortedGroups: [string, Schema[]][] = [];
-            if (sortList) {
-                sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
-                    const latestA = Math.max(...a.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
-                    const latestB = Math.max(...b.map(s => DateTime.fromSQL(s.sch_last_selected ?? '').toMillis() || 0));
-                    return latestB - latestA;
-                });
-            }
-            else {
-                sortedGroups = Object.entries(grouped).sort(([, a], [, b]) => {
-                    const latestA = Math.min(...a.map(s => s.sch_order || 0));
-                    const latestB = Math.min(...b.map(s => s.sch_order || 0));
-                    return latestA - latestB;
-                });
-            }
-
-            setGroupData(sortedGroups);
-            return sortedGroups.flatMap(([, group]) =>
-                group.sort((a, b) => {
-                    if (!sortList) {
-                        const orderA = a.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
-                        const orderB = b.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
-
-                        if (orderA !== orderB) {
-                            return orderA - orderB; // Sortuj według sch_order
-                        }
-                    }
-
-                    if (a.sch_last_selected !== b.sch_last_selected) {
-                        return (
-                            (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
-                            (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
-                        );
-                    }
-                    if (a.sch_updated !== b.sch_updated) {
-                        return (
-                            (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
-                            (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
-                        );
-                    }
-                    return a.sch_name.localeCompare(b.sch_name);
-                })
-            );
-        }
-        setGroupData(null);
-
-        return [...list].sort((a, b) => {
-            if (!sortList) {
-                const orderA = a.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
-                const orderB = b.sch_order ?? 0; // Użyj 0, jeśli sch_order jest undefined
-
-                if (orderA !== orderB) {
-                    return orderA - orderB; // Sortuj według sch_order
-                }
-            }
-
-            if (a.sch_last_selected !== b.sch_last_selected) {
-                return (
-                    (DateTime.fromSQL(b.sch_last_selected ?? '').toMillis() || 0) -
-                    (DateTime.fromSQL(a.sch_last_selected ?? '').toMillis() || 0)
-                );
-            }
-            if (a.sch_updated !== b.sch_updated) {
-                return (
-                    (DateTime.fromSQL(b.sch_updated ?? '').toMillis() || 0) -
-                    (DateTime.fromSQL(a.sch_updated ?? '').toMillis() || 0)
-                );
-            }
-            return a.sch_name.localeCompare(b.sch_name);
-        });
-    }, [groupList, sortList]);
-
     const searchList = (search: string, list: Schema[] | null): Schema[] | null => {
         if (search.trim() === '') {
             return list;
@@ -431,17 +402,17 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         return filtered ?? null;
     }
 
-    const sortData = () => {
-        const sortedData = sort(data);
-        setSortedData(sortedData);
+    React.useEffect(() => {
+        if (groupList) {
+            setGroupData(groupSchemas('groupName'));
+        }
+        else {
+            setGroupData(null);
+        }
         if (search.trim() === '') {
             setDisplayData(sortedData);
         }
-    };
-
-    React.useEffect(() => {
-        sortData();
-    }, [data, sortList, groupList, sort]);
+    }, [sortedData]);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
