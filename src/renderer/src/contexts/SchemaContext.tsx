@@ -34,9 +34,8 @@ export interface SchemaRecord {
 
 interface SchemaContextValue {
     schemas: SchemaRecord[];
-    schemasLoaded: boolean;
     fetchSchema: (schemaId: string) => Promise<SchemaRecord>;
-    fetchSchemas: (query?: string) => Promise<SchemaRecord[]>;
+    fetchSchemas: (query?: string) => Promise<void>;
     reloadSchemas: () => Promise<void>;
     createSchema: (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<string | undefined>;
     updateSchema: (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<boolean | undefined>;
@@ -61,7 +60,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { t } = useTranslation();
 
     const [schemas, setSchemas] = useState<SchemaRecord[]>([]);
-    const [schemasLoaded, setSchemasLoaded] = useState(false);
 
     const t_connectionSchemaManager = t("connection-schemas-manager", "Connection schemas Manager");
 
@@ -100,20 +98,17 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, [internal, schemas]);
 
     const fetchSchemas = useCallback(async (query?: string) => {
-        if (schemasLoaded) {
-            return [...schemas]; // Nie ładuj ponownie, jeśli schematy są już załadowane
-        }
-
         const { rows } = await internal.query(query ?? "select * from schemas");
         const loadedSchemas = rows.map(rowToSchemaRecord);
-        setSchemas(loadedSchemas); // Zaktualizuj stan załadowanych schematów
-        setSchemasLoaded(true); // Ustaw flagę, że schematy zostały załadowane
-        return loadedSchemas;
-    }, [internal, schemasLoaded, schemas]);
+        setSchemas(loadedSchemas);
+    }, [internal]);
+
+    React.useEffect(() => {
+        fetchSchemas();
+    }, [fetchSchemas]);
 
     const reloadSchemas = useCallback(async () => {
-        setSchemasLoaded(false); // Zresetuj flagę załadowania
-        await fetchSchemas(); // Ponownie załaduj schematy
+        await fetchSchemas();
         queueMessage(Messages.RELOAD_SCHEMAS_SUCCESS);
     }, [fetchSchemas]);
 
@@ -500,7 +495,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         <SchemaContext.Provider
             value={{
                 schemas,
-                schemasLoaded,
                 fetchSchema,
                 fetchSchemas,
                 reloadSchemas,

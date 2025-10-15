@@ -34,7 +34,7 @@ import { t } from "i18next";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { GroupResult, Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
-import { SchemaRecord } from "@renderer/contexts/SchemaContext";
+import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -169,6 +169,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
+    const { schemas } = useSchema();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
@@ -333,7 +334,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         });
 
         return updatedData;
-    }, []);
+    }, [drivers, connectionList]);
 
     /**
      * Refresh the connection list and update the state.
@@ -372,7 +373,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 if (!connectionList) {
                     return; // Ensure connectionList is available before fetching data
                 }
-                const schemas = await sendMessage(Messages.FETCH_SCHEMAS) as Schema[];
                 setData(connectionStatus(schemas));
             } catch (error) {
                 addToast(
@@ -389,7 +389,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         };
 
         fetchData();
-    }, [connectionList, drivers]); // Ensure connectionList is ready before fetching data
+    }, [connectionList, drivers, schemas]); // Ensure connectionList is ready before fetching data
 
     const handleDelete = React.useCallback(async (id: string) => {
         setDeleting((prev) => [...prev, id]);
