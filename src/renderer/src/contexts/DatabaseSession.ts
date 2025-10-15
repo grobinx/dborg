@@ -1,7 +1,7 @@
-import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../api/db";
 import { View } from "./ApplicationContext";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { SchemaRecord } from "./SchemaContext";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information

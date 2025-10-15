@@ -3,9 +3,9 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
+import { SchemaRecord } from "@renderer/contexts/SchemaContext";
 
 interface ConnectionStatus {
     status: "connecting" | "connected" | "error";

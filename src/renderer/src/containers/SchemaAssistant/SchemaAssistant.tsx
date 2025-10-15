@@ -11,11 +11,11 @@ import SchemaSummary from "./SchemaSummary/SchemaSummar";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import { ContainerType, useContainers } from "@renderer/contexts/ApplicationContext";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
+import { SchemaRecord } from "@renderer/contexts/SchemaContext";
 
 export interface SchemaAssistantProps extends BoxProps {
     slotProps?: {
