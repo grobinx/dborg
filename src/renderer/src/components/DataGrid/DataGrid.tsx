@@ -1398,7 +1398,7 @@ export const DataGrid = <T extends object>({
                                     if (row[col.key] === undefined || row[col.key] === null) {
                                         styleDataType = "null";
                                     }
-                                    if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(row[col.key])) {
+                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(row[col.key])) {
                                         styleDataType = "null";
                                     }
 

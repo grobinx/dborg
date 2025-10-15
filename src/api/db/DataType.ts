@@ -388,8 +388,7 @@ const DEFAULT_V2S_OPTIONS: Required<Pick<ValueToStringOptions, 'display' | 'thou
     thousandsSeparator: true,
 };
 
-function makeCacheKey(value: any, dataType: ColumnDataType, baseType?: ColumnBaseType, opts?: ValueToStringOptions): string {
-    const dt = Array.isArray(dataType) ? dataType[0] : dataType;
+function makeCacheKey(value: any, dataType: UnionDataType, baseType: ColumnBaseType, thousandsSeparator: boolean): string {
     const t = typeof value;
     const canInline =
         (t === 'string' && value.length < 200) ||
@@ -397,31 +396,30 @@ function makeCacheKey(value: any, dataType: ColumnDataType, baseType?: ColumnBas
         t === 'boolean' ||
         t === 'bigint';
     // dla liczb uwzględnij separator tysięcy w kluczu cache
-    const sep = baseType === 'number' ? `|ts:${opts?.thousandsSeparator ? 1 : 0}` : '';
-    return (canInline ? String(value) : generateHash(value)) + '-' + dt + sep;
+    const sep = baseType === 'number' ? `|ts:${thousandsSeparator ? 1 : 0}` : '';
+    return (canInline ? String(value) : generateHash(value)) + '-' + dataType + sep;
 }
 
 export const valueToString = (value: any, dataType: ColumnDataType, opts?: ValueToStringOptions): string => {
     if (value === null || value === undefined) return '';
 
     const options: ValueToStringOptions = { ...DEFAULT_V2S_OPTIONS, ...opts };
-    const { maxLength, display } = options;
+    const { maxLength = Infinity, display, thousandsSeparator = true } = options;
 
-    if (maxLength !== undefined && typeof value === 'string' && value.length > maxLength) {
+    if (typeof value === 'string' && value.length > maxLength) {
         value = value.substring(0, maxLength);
     }
 
     const resolvedType = Array.isArray(dataType) ? dataType[0] : dataType;
 
     if (Array.isArray(value)) {
-        const itemType: ColumnDataType = Array.isArray(resolvedType) ? resolvedType[0] : resolvedType;
         const out: string[] = [];
         let currentLen = 0;
 
         for (let i = 0; i < value.length; i++) {
-            const s = valueToString(value[i], itemType, options);
+            const s = valueToString(value[i], resolvedType, options);
             const addLen = (i > 0 ? 2 : 0) + s.length;
-            if (maxLength !== undefined && i > 0 && currentLen + addLen > maxLength) {
+            if (i > 0 && currentLen + addLen > maxLength) {
                 out.push('...');
                 break;
             }
@@ -436,7 +434,7 @@ export const valueToString = (value: any, dataType: ColumnDataType, opts?: Value
     // Cache tylko dla trybu display
     let cacheKey: string | undefined;
     if (display) {
-        cacheKey = makeCacheKey(value, resolvedType, baseType, options);
+        cacheKey = makeCacheKey(value, resolvedType, baseType, thousandsSeparator);
         const hit = cache.get(cacheKey);
         if (hit) return hit;
     }
