@@ -11,8 +11,6 @@ import TabsPanel from '../components/TabsPanel/TabsPanel';
 import TabPanel from '../components/TabsPanel/TabPanel';
 import { useMessages } from '@renderer/contexts/MessageContext';
 import * as Messages from './Messages';
-import { useContainers } from '@renderer/contexts/ApplicationContext';
-import Container from '@renderer/containers/Container';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
 import QueryHistoryPanel, { QueryHistoryPanelButtons, QueryHistoryPanelLabel } from '@renderer/components/ToolPanels/QueryHistoryPanel';
 import { ConsoleLogPanel, ConsoleLogsPanelButtons, ConsoleLogsPanelLabel } from '@renderer/components/ToolPanels/ConsoleLogsPanel';

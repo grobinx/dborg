@@ -15,7 +15,6 @@ import { ConnectionInfo } from "src/api/db";
 import { IconWrapperOwnProps, IconWrapperProps } from "@renderer/themes/icons";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { SchemaRecord } from "@renderer/app/SchemaConnectionManager";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
 import CommandPalette, { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
@@ -31,8 +30,11 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
-import { GroupResult, Groups, Index, Indexes, useGroupArray, useSortArray } from "@renderer/app/SchemaConnectionManager/useStructures";
 import { t } from "i18next";
+import { Indexes, useSort } from "@renderer/hooks/useSort";
+import { GroupResult, Groups, useGroup } from "@renderer/hooks/useGroup";
+import { useSearch } from "@renderer/hooks/useSearch";
+import { SchemaRecord } from "@renderer/contexts/SchemaContext";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -152,8 +154,11 @@ const schemaGroups: Groups<Schema> = {
             name: 'sch_group',
             emptyValue: t("ungrouped", "Ungrouped"),
         }],
+        cache: true,
     }
 }
+
+const searchFields: (keyof Schema)[] = ['driverName', 'sch_group', 'sch_name'];
 
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
@@ -163,14 +168,13 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [loading, setLoading] = React.useState(true);
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
+    const [search, setSearch] = React.useState('');
     const [data, setData] = React.useState<Schema[] | null>(null);
-    const [sortedData] = useSortArray(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
-    const [groupSchemas] = useGroupArray(sortedData, schemaGroups);
-    const [groupData, setGroupData] = React.useState<GroupResult<Schema> | null>(null);
-    const [displayData, setDisplayData] = React.useState<Schema[] | null>();
+    const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
+    const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
+    const [displayData, searchedText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
     const [connectionList, setConnectionList] = React.useState<ConnectionInfo[] | null>();
-    const [search, setSearch] = React.useState('');
     const { addToast } = useToast();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
@@ -310,7 +314,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     };
 
-    const connectionStatus = (data: Schema[] | null): Schema[] | null => {
+    const connectionStatus = React.useCallback((data: Schema[] | null): Schema[] | null => {
         if (!data) {
             return null;
         }
@@ -329,12 +333,12 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         });
 
         return updatedData;
-    };
+    }, []);
 
     /**
      * Refresh the connection list and update the state.
      */
-    const refreshConnectionList = async () => {
+    const refreshConnectionList = React.useCallback(async () => {
         try {
             setConnectionList(await connections.list());
         }
@@ -348,7 +352,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 }
             );
         }
-    };
+    }, [connections]);
 
     React.useEffect(() => {
         refreshConnectionList();
@@ -386,41 +390,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
 
         fetchData();
     }, [connectionList, drivers]); // Ensure connectionList is ready before fetching data
-
-    const searchList = (search: string, list: Schema[] | null): Schema[] | null => {
-        if (search.trim() === '') {
-            return list;
-        }
-        const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
-        const filtered = list?.filter(record =>
-            parts.every(value =>
-                JSON.stringify([record.driverName, record.sch_group ?? t("ungrouped", "Ungrouped"), record.sch_name])
-                    .toLowerCase()
-                    .includes(value)
-            )
-        );
-        return filtered ?? null;
-    }
-
-    React.useEffect(() => {
-        if (groupList) {
-            setGroupData(groupSchemas('groupName'));
-        }
-        else {
-            setGroupData(null);
-        }
-        if (search.trim() === '') {
-            setDisplayData(sortedData);
-        }
-    }, [sortedData]);
-
-    React.useEffect(() => {
-        const debouncedSearch = debounce(() => {
-            setDisplayData(searchList(search, sortedData));
-        }, searchDelay);
-        debouncedSearch();
-        return () => debouncedSearch.cancel();
-    }, [search, sortedData, searchDelay]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         setDeleting((prev) => [...prev, id]);
@@ -535,30 +504,26 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }
 
     const moveGroupUp = (schemaId: string) => {
-        if (!groupData || groupData.length === 0 || !schemaId) return;
+        if (!groupedData || groupedData.length === 0 || !schemaId) return;
 
-        const currentIndex = groupData.findIndex(([, group]) => group.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.data.some(schema => schema.sch_id === schemaId));
         const previousIndex = currentIndex - 1;
         if (previousIndex >= 0) {
-            const currentGroup = groupData[currentIndex][1];
-            const previousGroup = groupData[previousIndex][1];
-            if (currentGroup.length > 0 && previousGroup.length > 0) {
-                swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
-            }
+            const currentGroup = groupedData[currentIndex].data;
+            const previousGroup = groupedData[previousIndex].data;
+            swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
         }
     }
 
     const moveDownGroup = (schemaId: string) => {
-        if (!groupData || groupData.length === 0 || !schemaId) return;
+        if (!groupedData || groupedData.length === 0 || !schemaId) return;
 
-        const currentIndex = groupData.findIndex(([, group]) => group.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.data.some(schema => schema.sch_id === schemaId));
         const nextIndex = currentIndex + 1;
-        if (nextIndex < groupData.length) {
-            const currentGroup = groupData[currentIndex][1];
-            const nextGroup = groupData[nextIndex][1];
-            if (currentGroup.length > 0 && nextGroup.length > 0) {
-                swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
-            }
+        if (nextIndex < groupedData.length) {
+            const currentGroup = groupedData[currentIndex].data;
+            const nextGroup = groupedData[nextIndex].data;
+            swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
         }
     }
 
@@ -604,7 +569,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             unsubscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
             unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleConnectSuccess);
         };
-    }, [subscribe, unsubscribe, connectionStatus, setData, handleConnectSuccess]);
+    }, [connectionStatus, handleConnectSuccess]);
 
     const renderStatusIcon = (record: Schema) => {
         if (connecting.includes(record.sch_id)) {
@@ -746,7 +711,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         </ToolButton>
                                                     </ButtonGroup>
                                                 }
-                                                {highlightText(group, search, theme)}
+                                                {highlightText(group, searchedText, theme)}
                                             </Typography>
                                         </ListSubheader>
                                     )}
@@ -774,14 +739,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             }
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
                                                 {record.driverIcon && <img src={record.driverIcon} />}
-                                                <Typography variant="caption" className="name">{highlightText(record.driverName!, search, theme)}</Typography>
+                                                <Typography variant="caption" className="name">{highlightText(record.driverName!, searchedText, theme)}</Typography>
                                             </ListItemIcon>
                                             <ListItemIcon className="status" {...slotProps?.itemIcon}>
                                                 {renderStatusIcon(record)}
                                             </ListItemIcon>
                                             <ListItemText
                                                 {...slotProps?.itemText}
-                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, search, theme)}</span>}
+                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, searchedText, theme)}</span>}
                                                 secondary={renderSecondaryText(record)}
                                                 slotProps={{
                                                     primary: {

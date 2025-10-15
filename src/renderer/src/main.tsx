@@ -8,7 +8,6 @@ import { DatabaseProvider } from './contexts/DatabaseContext';
 import { SettingsContext, SettingsProvider } from './contexts/SettingsContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { MessageProvider } from './contexts/MessageContext';
-import SchemaConnectionManager from './app/SchemaConnectionManager';
 import ToastList from './components/notifications/ToastList';
 import ThemeWrapper from './themes/ThemeWrapper';
 import { ApplicationProvider } from './contexts/ApplicationContext';
@@ -18,6 +17,7 @@ import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
 import About from './About';
 import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 import { ConsoleProvider } from './contexts/ConsoleContext';
+import { SchemaProvider } from './contexts/SchemaContext';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -48,14 +48,15 @@ const AppWrapper: React.FC = () => {
                     <ThemeWrapper>
                         <DialogsProvider>
                             <ToastList />
-                            <SchemaConnectionManager />
-                            <PluginManagerProvider>
-                                <ApplicationProvider>
-                                    <QueryHistoryProvider>
-                                        <App />
-                                    </QueryHistoryProvider>
-                                </ApplicationProvider>
-                            </PluginManagerProvider>
+                            <SchemaProvider>
+                                <PluginManagerProvider>
+                                    <ApplicationProvider>
+                                        <QueryHistoryProvider>
+                                            <App />
+                                        </QueryHistoryProvider>
+                                    </ApplicationProvider>
+                                </PluginManagerProvider>
+                            </SchemaProvider>
                         </DialogsProvider>
                     </ThemeWrapper>
                 </DatabaseProvider>

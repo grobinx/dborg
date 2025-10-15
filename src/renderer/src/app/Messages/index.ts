@@ -1,5 +1,5 @@
 import { DatabasesMetadata } from "src/api/db";
-import { SchemaRecord } from "../SchemaConnectionManager";
+import { SchemaRecord } from "../../contexts/SchemaContext";
 
 /**
  * Toggle the visibility of the tools panel.

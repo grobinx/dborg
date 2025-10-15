@@ -1,17 +1,18 @@
-import React, { useEffect, useCallback } from "react";
-import { Messages, useMessages } from "@renderer/contexts/MessageContext";
+import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
-import PasswordDialog from "@renderer/dialogs/PasswordDialog";
+import { useMessages, Messages } from "@renderer/contexts/MessageContext";
+import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { uuidv7 } from "uuidv7";
+import { DBORG_DATA_PATH_NAME } from "../../../api/dborg-path";
+import { sortArray } from "@renderer/hooks/useSort";
+import { groupArray } from "@renderer/hooks/useGroup";
+import * as api from "../../../api/db";
+import { useTranslation } from "react-i18next";
+import PasswordDialog from "@renderer/dialogs/PasswordDialog";
 import { SchemaUsePasswordType } from "@renderer/containers/SchemaAssistant/SchemaParameters/DriverPropertyPassword";
 import { Properties } from "src/api/db";
-import * as api from "../../../../api/db";
-import { useTranslation } from "react-i18next";
-import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { DBORG_DATA_PATH_NAME } from "../../../../../src/api/dborg-path";
-import { groupArray, sortArray } from "./useStructures";
 
 // Define the schema structure
 export interface SchemaRecord {
@@ -31,24 +32,36 @@ export interface SchemaRecord {
     sch_order?: number;
 }
 
-export interface AggregatedSchemas {
-    indexes: {
-        [index: string]: {
-            fields: string[],
-            ids: string[],
-        }
-    },
+interface SchemaContextValue {
+    schemas: SchemaRecord[];
+    schemasLoaded: boolean;
+    fetchSchema: (schemaId: string) => Promise<SchemaRecord>;
+    fetchSchemas: (query?: string) => Promise<SchemaRecord[]>;
+    reloadSchemas: () => Promise<void>;
+    createSchema: (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<string | undefined>;
+    updateSchema: (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<boolean | undefined>;
+    deleteSchema: (schemaId: string) => Promise<boolean>;
+    swapSchemasOrder: (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => Promise<void>;
+    connectToDatabase: (schemaId: string) => Promise<api.ConnectionInfo | undefined>;
+    disconnectFromDatabase: (uniqueId: string) => Promise<void>;
+    disconnectFromAllDatabases: (schemaId: string) => Promise<void>;
+    testConnection: (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => Promise<boolean | undefined>;
 }
 
-const SchemaConnectionManager: React.FC = () => {
+const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
+
+export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Przenieś całą logikę ze SchemaConnectionManager tutaj!
+    // Zmień setSchemas na useState, itd.
+    // Przykład:
     const { subscribe, unsubscribe, queueMessage } = useMessages();
     const { internal, drivers, connections } = useDatabase();
     const { addToast } = useToast();
     const dialogs = useDialogs();
     const { t } = useTranslation();
 
-    const [schemas, setSchemas] = React.useState<SchemaRecord[]>([]); // Stan przechowujący załadowane schematy
-    const [schemasLoaded, setSchemasLoaded] = React.useState(false); // Flaga wskazująca, czy schematy zostały załadowane
+    const [schemas, setSchemas] = useState<SchemaRecord[]>([]);
+    const [schemasLoaded, setSchemasLoaded] = useState(false);
 
     const t_connectionSchemaManager = t("connection-schemas-manager", "Connection schemas Manager");
 
@@ -462,8 +475,6 @@ const SchemaConnectionManager: React.FC = () => {
             unsubscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
         };
     }, [
-        subscribe,
-        unsubscribe,
         testConnection,
         connectToDatabase,
         fetchSchema,
@@ -477,34 +488,39 @@ const SchemaConnectionManager: React.FC = () => {
         swapSchemasOrder,
     ]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         (async () => {
             const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
             await window.dborg.path.ensureDir(dataPath);
             await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
-            const sorted = sortArray(schemas, {
-                fields: [{
-                    name: 'sch_group',
-                    getGroupedValue: (data) => {
-                        return Math.min(...data.map(d => d.sch_order ?? Infinity));
-                    },
-                },
-                {
-                    name: 'sch_order'
-                }]
-            });
-            await window.dborg.file.writeFile(`${dataPath}/sorted.json`, JSON.stringify(sorted, null, 2));
-            const grouped = groupArray(sorted, {
-                fields: [{
-                    name: 'sch_group',
-                    emptyValue: 'Ungrouped',
-                }],
-            });
-            await window.dborg.file.writeFile(`${dataPath}/grouped.json`, JSON.stringify(grouped, null, 2));
         })();
     }, [schemas]);
 
-    return <></>;
+    return (
+        <SchemaContext.Provider
+            value={{
+                schemas,
+                schemasLoaded,
+                fetchSchema,
+                fetchSchemas,
+                reloadSchemas,
+                createSchema,
+                updateSchema,
+                deleteSchema,
+                swapSchemasOrder,
+                connectToDatabase,
+                disconnectFromDatabase,
+                disconnectFromAllDatabases,
+                testConnection,
+            }}
+        >
+            {children}
+        </SchemaContext.Provider>
+    );
 };
 
-export default SchemaConnectionManager;
+export const useSchema = () => {
+    const ctx = useContext(SchemaContext);
+    if (!ctx) throw new Error("useSchema must be used within a SchemaProvider");
+    return ctx;
+};
