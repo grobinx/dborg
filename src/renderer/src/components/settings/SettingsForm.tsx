@@ -1,15 +1,67 @@
 import React from "react";
 import { SettingsCollection, SettingsGroup, SettingType, SettingTypeUnion } from "./SettingsTypes";
-import { useSetting } from "@renderer/contexts/SettingsContext";
+import { getSetting, useSetting } from "@renderer/contexts/SettingsContext";
 import { SettingDecorator } from "./SettingDecorator";
 import { TextField } from "../inputs/TextField";
-import { calculateWidth } from "./SettingInputControl";
 import { NumberField } from "../inputs/NumberField";
 import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
-import { Stack, Typography, useTheme } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import createKey from "./createKey";
-import { create } from "@mui/material/styles/createTransitions";
+
+export const calculateWidth = (setting: SettingTypeUnion) => {
+    const widthPerChar = getSetting("ui", "fontSize") * 0.8; // Approximate width per character in pixels
+    const defaultTextWidth = 30 * widthPerChar; // Default width
+    const defaultNumberWidth = 20 * widthPerChar; // Default width for number inputs
+    const maxWidth = 50 * widthPerChar; // Maximum width
+    const minWidth = 8 * widthPerChar; // Minimum width
+
+    if (setting.width) {
+        if (typeof setting.width === "number") {
+            return Math.max(Math.min(setting.width, maxWidth), minWidth);
+        }
+        return setting.width;
+    }
+
+    switch (setting.type) {
+        case "string":
+            if (setting.maxLength) {
+                // Każdy znak zajmuje około 11px, dodajemy margines
+                return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
+            }
+            return defaultTextWidth;
+        case "text":
+            if (setting.maxLength) {
+                const rows = setting.maxRows || 4; // Jeśli `maxRows` nie jest zdefiniowane, ustaw na 4
+                return Math.max(Math.min(Math.floor((setting.maxLength / rows / 10) * 10 * widthPerChar + 16) * 1.25, maxWidth), minWidth); // Oblicz szerokość na podstawie `maxLength` i `rows`
+            }
+            return defaultTextWidth;
+        case "password":
+            if (setting.maxLength) {
+                // Każdy znak zajmuje około 11px, dodajemy margines
+                return Math.max(Math.min(Math.floor(setting.maxLength / 10) * 10 * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
+            }
+            return defaultTextWidth;
+        case "pattern":
+            if (setting.mask) {
+                // Każdy znak maski zajmuje około 11px, dodajemy margines
+                return Math.max(Math.min(setting.mask.length * widthPerChar + 16, maxWidth), minWidth); // Maksymalna szerokość 600px
+            }
+            return defaultTextWidth;
+        case "range":
+            return maxWidth;
+        case "number":
+            if (setting.max) {
+                return Math.max(Math.min((setting.max.toString().length) * widthPerChar + 16, maxWidth), minWidth);
+            }
+            return defaultNumberWidth;
+        case "boolean":
+            return "80%";
+        case "color":
+            return defaultTextWidth;
+    }
+    return defaultTextWidth;
+};
 
 function useSettingBinding(setting: SettingTypeUnion) {
     const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);

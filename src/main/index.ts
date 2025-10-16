@@ -8,7 +8,6 @@ import { init as initDatabase } from './api/db'
 import path from 'node:path'
 import { init as initInternal } from './core/db/internal'
 import logo from '../../resources/dborg.png?asset'
-import debounce from '../renderer/src/utils/debounce'
 
 function createWindow(): BrowserWindow {
     // Create the browser window.
@@ -90,7 +89,7 @@ app.whenReady().then(async () => {
 
     initSettings(ipcMain)
     initDborgPath(ipcMain)
-    initDborgFile(ipcMain)
+    initDborgFile(ipcMain, mainWindow)
     initElectron(mainWindow)
     initDatabase()
 

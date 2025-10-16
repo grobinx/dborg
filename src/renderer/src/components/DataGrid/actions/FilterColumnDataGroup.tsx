@@ -28,7 +28,7 @@ export const FilterColumnDataGroup = (): ActionGroupDescriptor<DataGridActionCon
             if (!filter) return '';
             return (filter.values ?? []).join(' ');
         },
-        onOpen: (context) => {
+        onOpen: (_context) => {
             oldSearchText = '';
         },
         actions: (context, searchText) => {

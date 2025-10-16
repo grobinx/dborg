@@ -4,8 +4,7 @@ import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer
 import { SettingTypeUnion } from "@renderer/components/settings/SettingsTypes";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useTranslation } from "react-i18next";
-import { getSetting, getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
-import { calculateWidth, disabledControl } from "@renderer/components/settings/SettingInputControl";
+import { getSettingDefault, useSetting } from "@renderer/contexts/SettingsContext";
 import { BaseInputProps } from "../inputs/base/BaseInputProps";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { InputDecoratorContext, InputDecoratorContextType } from "../inputs/decorators/InputDecoratorContext";
@@ -297,6 +296,31 @@ const StyledSettingDecoratorValidity = styled(Popper, {
     name: "SettingDecorator",
     slot: "validity",
 })(() => ({}));
+
+export const disabledControl = (
+    setting: SettingTypeUnion
+): boolean => {
+    // Sprawdź, czy `administrated` jest ustawione i zwraca `true`
+    if (typeof setting.administrated === "function") {
+        if (setting.administrated()) {
+            return true; // Wyłączone, jeśli administrated zwraca true
+        }
+    } else if (setting.administrated === true) {
+        return true; // Wyłączone, jeśli administrated jest true
+    }
+
+    // Sprawdź, czy `disabled` jest ustawione i zwraca `true`
+    if (typeof setting.disabled === "function") {
+        if (setting.disabled()) {
+            return true; // Wyłączone, jeśli disabled zwraca true
+        }
+    } else if (setting.disabled === true) {
+        return true; // Wyłączone, jeśli disabled jest true
+    }
+
+    // Jeśli żaden warunek nie został spełniony, kontrolka nie jest wyłączona
+    return false;
+};
 
 export const SettingDecorator = (props: SettingDecoratorProps): React.ReactElement => {
     const {

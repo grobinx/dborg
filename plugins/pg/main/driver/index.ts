@@ -75,13 +75,13 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, function (val) {
 pg.types.setTypeParser(pg.types.builtins.MONEY, function (val) {
     return val;
 });
-pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY, function (val) {
+pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY as unknown as number, function (val: string) {
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
-pg.types.setTypeParser(pgTypes.INT8_ARRAY, function (val) {
+pg.types.setTypeParser(pgTypes.INT8_ARRAY as unknown as number, function (val: string) {
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
-pg.types.setTypeParser(pgTypes.MONEY_ARRAY, function (val) {
+pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: string) {
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
 

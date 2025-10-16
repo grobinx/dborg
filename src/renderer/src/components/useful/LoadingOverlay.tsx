@@ -34,7 +34,7 @@ function shuffleArray<T>(array: T[]): T[] {
     return arr;
 }
 
-const LoadingSpinner = styled("div")<{ speed: number; delays?: string[]; colors: string[] }>(({ speed, theme, delays, colors }) => {
+const LoadingSpinner = styled("div")<{ speed: number; delays?: string[]; colors: string[] }>(({ speed, delays, colors }) => {
     return {
         width: "54px",
         height: "54px",
