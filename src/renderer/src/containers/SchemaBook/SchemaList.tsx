@@ -26,7 +26,6 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
-import { t } from "i18next";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
@@ -148,7 +147,6 @@ const schemaGroups: Groups<Schema> = {
     groupName: {
         fields: [{
             name: 'sch_group',
-            emptyValue: t("ungrouped", "Ungrouped"),
         }],
         cache: true,
     }
