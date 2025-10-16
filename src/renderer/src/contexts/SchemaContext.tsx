@@ -184,7 +184,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         const schema = await fetchSchema(schemaId);
-        queueMessage(Messages.SCHEMA_CONNECT_INFO, schema);
         emitEvent("connecting", { schema, status: "started" });
         const driverId = schema.sch_drv_unique_id as string;
         const properties = schema.sch_properties;
@@ -193,7 +192,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         const passwordHandled = await passwordPrompt(usePassword, passwordProperty, properties);
         if (!passwordHandled) {
-            queueMessage(Messages.SCHEMA_CONNECT_CANCEL, schema);
             emitEvent("connecting", { schema, status: "cancel" });
             return;
         }
@@ -203,7 +201,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             connection = await drivers.connect(driverId, properties);
         }
         catch (error) {
-            queueMessage(Messages.SCHEMA_CONNECT_ERROR, error, schema);
             emitEvent("connecting", { schema, status: "error", error });
             throw error;
         }
@@ -222,7 +219,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const otherSchemas = prev.filter((s) => s.sch_id !== schemaId);
             return [...otherSchemas, schema];
         });
-        queueMessage(Messages.SCHEMA_CONNECT_SUCCESS, connection);
         emitEvent("connecting", { schema, status: "success", connection });
         return connection;
     }, [fetchSchema, drivers, internal, connections, dialogs, t, passwordPrompt, checkExistingConnection]);

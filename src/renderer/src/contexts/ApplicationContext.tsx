@@ -452,12 +452,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 handleSchemaDisconnectSuccess(event.connectionUniqueId);
             }
         });
+        const connecting = onEvent("connecting", (event) => {
+            if (event.status === "success") {
+                handleSchemaConnectSuccess(event.connection!);
+            }
+        });
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
         subscribe(Messages.EDIT_SCHEMA, handleEditSchema);
         subscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
         subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
-        subscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
         subscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
 
         return () => {
@@ -466,9 +470,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.EDIT_SCHEMA, handleEditSchema);
             unsubscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
-            unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
             unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
             disconnecting();
+            connecting();
         };
     }, [
         handleSwitchContainer,

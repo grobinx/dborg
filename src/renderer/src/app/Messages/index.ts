@@ -123,28 +123,6 @@ export const FETCH_SCHEMA = "fetch-schema";
  * @returns ConnectionInfo object containing connection details.
  */
 export const SCHEMA_CONNECT = "schema-connect";
-/**
- * Connect schema info object.
- * Sending after SCHEMA_CONNECT 
- * @param schema The schema object containing connection details.
- */
-export const SCHEMA_CONNECT_INFO = "schema-connect-info";
-/**
- * Connect to a database successfully.
- * @param connectionInfo The connection information object.
- */
-export const SCHEMA_CONNECT_SUCCESS = "schema-connect-success";
-/**
- * Connect to a database error.
- * @param error The error message.
- * @param schema The schema object containing connection details.
- */
-export const SCHEMA_CONNECT_ERROR = "schema-connect-error";
-/**
- * Cancel the connection to a database.
- * @param schema The schema object containing connection details.
- */
-export const SCHEMA_CONNECT_CANCEL = "schema-connect-cancel";
 
 /**
  * Test the connection to a database.
