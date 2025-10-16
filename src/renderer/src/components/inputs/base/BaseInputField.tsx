@@ -239,7 +239,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         if ((autoFocus ?? inputProps?.autoFocus) && textInputRef.current) {
             textInputRef.current.focus();
         }
-    }, [autoFocus ?? inputProps?.autoFocus]);
+    }, []);
 
     React.useEffect(() => {
         const element = customInputRef.current ?? textInputRef.current;
