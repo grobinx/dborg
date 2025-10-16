@@ -8,8 +8,6 @@ export interface GroupField<T> {
     name: keyof T;
     /** Czy grupowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
     caseSensitive?: boolean;
-    /** Wartość zastępcza dla pustych wartości, null, undefined oraz "" */
-    emptyValue?: string;
 }
 
 /**
@@ -26,33 +24,15 @@ export interface Group<T> {
  */
 export type Groups<T> = Record<string, Group<T>>;
 
-/**
- * Struktura przechowująca zgrupowane dane.
- */
-export interface GroupedData<T> {
-    /** Klucze grupowania */
-    group: (string | null)[];
-    /** Zgrupowane dane */
-    data: T[];
-};
-
-/**
- * Typ reprezentujący wynik grupowania danych typu T.
- */
-export type GroupResult<T> = GroupedData<T>[];
-
-export const groupArray = <T,>(data: T[], group: Group<T>): GroupedData<T>[] => {
-    const groupsMap = new Map<string, GroupedData<T>>();
+export const groupArray = <T,>(data: T[], group: Group<T>): T[][] => {
+    const groupsMap = new Map<string, T[]>();
 
     for (const item of data) {
         // Tworzymy klucz grupowania z wszystkich pól grupy
         const groupKeys = group.fields.map(field => {
             const value = item[field.name];
             if (value === null || value === undefined || value === '') {
-                if (field.emptyValue !== undefined) {
-                    return field.emptyValue;
-                }
-                return null;
+                return value;
             }
             return (field.caseSensitive ?? true) ? String(value) : String(value).toLowerCase();
         });
@@ -60,13 +40,10 @@ export const groupArray = <T,>(data: T[], group: Group<T>): GroupedData<T>[] => 
         const groupKey = groupKeys.join('|');
 
         if (!groupsMap.has(groupKey)) {
-            groupsMap.set(groupKey, {
-                group: groupKeys,
-                data: []
-            });
+            groupsMap.set(groupKey, []);
         }
 
-        groupsMap.get(groupKey)!.data.push(item);
+        groupsMap.get(groupKey)!.push(item);
     }
 
     return Array.from(groupsMap.values());
@@ -74,21 +51,23 @@ export const groupArray = <T,>(data: T[], group: Group<T>): GroupedData<T>[] => 
 
 /**
  * Hook do grupowania danych
- * Zwracana funkcja groupBy grupuje dane wg zadanego grupowania zachowując sortowanie
- * @param data 
- * @param groups 
- * @returns {[groupBy]} funkcja groupBy do grupowania danych wg zadanego grupowania
+ * Zwracana jest tablica pogrupowanych elementów lub null jeśli brak grupowania
+ * Funkcja zachowuje porządek elementów źródłowych w ramach grup
+ * @param data tablica danych do pogrupowania
+ * @param groups definicje grupowań
+ * @param groupName nazwa grupowania zdefiniowanego w groups
+ * @returns {T[][]} pogrupowana tablica lub null jeśli brak grupowania
  */
 export const useGroup = <T,>(
     data: T[] | null,
     groups: Groups<T>,
     groupName: string | null = null
-): [GroupedData<T>[] | null] => {
-    const [cache, setCache] = React.useState<Record<string, GroupedData<T>[]>>({});
-    const [groupedData, setGroupedData] = React.useState<GroupedData<T>[] | null>(null);
+): [T[][] | null] => {
+    const [cache, setCache] = React.useState<Record<string, T[][]>>({});
+    const [groupedData, setGroupedData] = React.useState<T[][] | null>(null);
 
     React.useEffect(() => {
-        if (!data || !groups || !groupName) {
+        if (!data || !groupName) {
             setGroupedData(null);
             return;
         }
@@ -104,7 +83,7 @@ export const useGroup = <T,>(
             return;
         }
 
-        const grouped: GroupResult<T> = groupArray(data, group);
+        const grouped = groupArray(data, group);
         setGroupedData(grouped);
         if (group.cache) {
             setCache((prev) => ({ ...prev, [groupName]: grouped }));

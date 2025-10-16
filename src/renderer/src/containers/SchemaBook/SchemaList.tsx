@@ -5,34 +5,30 @@ import {
     ListProps,
     ListItemProps,
     ListSubheader,
-    Button,
     ListSubheaderProps,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionInfo } from "src/api/db";
-import { IconWrapperOwnProps, IconWrapperProps } from "@renderer/themes/icons";
+import { IconWrapperOwnProps } from "@renderer/themes/icons";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
 import CommandPalette, { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
-import Tooltip from "@renderer/components/Tooltip";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import { IconButton } from "@renderer/components/buttons/IconButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
-import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { t } from "i18next";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
-import { GroupResult, Groups, useGroup } from "@renderer/hooks/useGroup";
+import { Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 
@@ -506,11 +502,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const moveGroupUp = (schemaId: string) => {
         if (!groupedData || groupedData.length === 0 || !schemaId) return;
 
-        const currentIndex = groupedData.findIndex(group => group.data.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.some(schema => schema.sch_id === schemaId));
         const previousIndex = currentIndex - 1;
         if (previousIndex >= 0) {
-            const currentGroup = groupedData[currentIndex].data;
-            const previousGroup = groupedData[previousIndex].data;
+            const currentGroup = groupedData[currentIndex];
+            const previousGroup = groupedData[previousIndex];
             swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
         }
     }
@@ -518,11 +514,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const moveDownGroup = (schemaId: string) => {
         if (!groupedData || groupedData.length === 0 || !schemaId) return;
 
-        const currentIndex = groupedData.findIndex(group => group.data.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.some(schema => schema.sch_id === schemaId));
         const nextIndex = currentIndex + 1;
         if (nextIndex < groupedData.length) {
-            const currentGroup = groupedData[currentIndex].data;
-            const nextGroup = groupedData[nextIndex].data;
+            const currentGroup = groupedData[currentIndex];
+            const nextGroup = groupedData[nextIndex];
             swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
         }
     }
