@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import * as api from "../../../../api/db";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
-import { SchemaEvent, SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 
 interface ConnectionStatus {
     status: "connecting" | "connected" | "error";
