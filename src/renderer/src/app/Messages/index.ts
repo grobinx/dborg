@@ -116,21 +116,7 @@ export const CHANGE_SIDE_BAR_PLACEMENT = "change-side-bar-placement";
  * @returns The fetched schema.
  */
 export const FETCH_SCHEMA = "fetch-schema";
-/**
- * Fetch all schemas.
- * @param query The SQL query to fetch schemas.
- * @returns The fetched schemas.
- */
-export const FETCH_SCHEMAS = "fetch-schemas";
 
-/**
- * Reload all schemas.
- */
-export const RELOAD_SCHEMAS = "reload-schemas";
-/**
- * Reload all schemas successfully.
- */
-export const RELOAD_SCHEMAS_SUCCESS = "reload-schemas-success";
 /**
  * Connect to a database.
  * @param schemaId The ID of the schema to connect to.
@@ -159,22 +145,7 @@ export const SCHEMA_CONNECT_ERROR = "schema-connect-error";
  * @param schema The schema object containing connection details.
  */
 export const SCHEMA_CONNECT_CANCEL = "schema-connect-cancel";
-/**
- * Disconnect from a database.
- * @param connectionUniqueId The unique ID of the connection to disconnect from.
- */
-export const SCHEMA_DISCONNECT = "schema-disconnect";
 
-/**
- * Disconnect from all connections to a database.
- * @param schemaId The ID of the schema to disconnect all connections from.
- */
-export const SCHEMA_DISCONNECT_ALL = "schema-disconnect-all";
-/**
- * Disconnect from a database successfully.
- * @param connectionUniqueId The unique ID of the connection that was disconnected.
- */
-export const SCHEMA_DISCONNECT_SUCCESS = "schema-disconnect-success";
 /**
  * Test the connection to a database.
  * @param driverUniqueId The unique ID of the driver to use for the connection.

@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import * as api from "../../../../api/db";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
-import { SchemaRecord } from "@renderer/contexts/SchemaContext";
+import { SchemaEvent, SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 
 interface ConnectionStatus {
     status: "connecting" | "connected" | "error";
@@ -14,10 +14,9 @@ interface ConnectionStatus {
 
 const ConnectionStatusBar: React.FC = () => {
     const theme = useTheme();
-    const { subscribe, unsubscribe } = useMessages();
     const [connectionStatuses, setConnectionStatuses] = React.useState<Record<string, ConnectionStatus>>({});
     const [iconStates, setIconStates] = React.useState<Record<string, boolean>>({}); // Przechowuje stan ikon (true = Connected, false = Disconnected)
-    const { t } = useTranslation();
+    const { onEvent } = useSchema();
 
     React.useEffect(() => {
         const connectionInfoHandle = (schema: SchemaRecord) => {
@@ -36,8 +35,7 @@ const ConnectionStatusBar: React.FC = () => {
             }));
         };
 
-        const connectionSuccessHandle = (connectionInfo: api.ConnectionInfo) => {
-            const schema = (connectionInfo.userData['schema'] as SchemaRecord)
+        const connectionSuccessHandle = (schema: SchemaRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
                 [schema.sch_id]: {
@@ -99,20 +97,25 @@ const ConnectionStatusBar: React.FC = () => {
             });
         };
 
-        // Rejestracja wiadomości
-        subscribe(Messages.SCHEMA_CONNECT_INFO, connectionInfoHandle);
-        subscribe(Messages.SCHEMA_CONNECT_SUCCESS, connectionSuccessHandle);
-        subscribe(Messages.SCHEMA_CONNECT_ERROR, connectionErrorHandle);
-        subscribe(Messages.SCHEMA_CONNECT_CANCEL, connectionCancelHandle);
-
-        return () => {
-            // Wyrejestrowanie wiadomości
-            unsubscribe(Messages.SCHEMA_CONNECT_INFO, connectionInfoHandle);
-            unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, connectionSuccessHandle);
-            unsubscribe(Messages.SCHEMA_CONNECT_ERROR, connectionErrorHandle);
-            unsubscribe(Messages.SCHEMA_CONNECT_CANCEL, connectionCancelHandle);
-        };
-    }, [subscribe, unsubscribe]);
+        const offEvent = onEvent("connecting", (event) => {
+            const schema = event.schema;
+            switch (event.status) {
+                case "started":
+                    connectionInfoHandle(schema);
+                    break;
+                case "success":
+                    connectionSuccessHandle(schema);
+                    break;
+                case "error":
+                    connectionErrorHandle(event.error, schema);
+                    break;
+                case "cancel":
+                    connectionCancelHandle(schema);
+                    break;
+            }
+        });
+        return offEvent;
+    }, []);
 
     // Ustaw interwał do przełączania ikon dla statusu "connecting"
     React.useEffect(() => {

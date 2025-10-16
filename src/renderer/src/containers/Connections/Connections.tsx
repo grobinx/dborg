@@ -4,7 +4,7 @@ import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import React from "react";
 import { ConnectionButtons, ConnectionContent, ConnectionLabel } from "./Connection";
 import { useSessions } from "@renderer/contexts/ApplicationContext";
-import useListeners from "@renderer/hooks/useListeners";
+import { useSchema } from "@renderer/contexts/SchemaContext";
 
 const ConnectionsRoot = styled(Box, {
     name: 'Connections', // The component name

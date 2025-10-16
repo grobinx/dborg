@@ -244,15 +244,15 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                     throw new Error(t("driver-unique-id-required", "Driver unique ID is required"));
                 }
                 if (!schema.properties) {
-                    throw new Error(t("schema-properties-required", "Schema properties are required"));
+                    throw new Error(t("profile-properties-required", "Profile properties are required"));
                 }
                 await sendMessage(Messages.SCHEMA_TEST_CONNECTION, schema.driverUniqueId, schema.usePassword, schema.properties, schema.schemaName);
             }
             catch (error) {
                 addToast("error",
-                    t("schema-test-error", "An error occurred while testing the schema connection \"{{name}}\".", { name: schema.schemaName }),
+                    t("profile-test-error", "An error occurred while testing the profile connection \"{{name}}\".", { name: schema.schemaName }),
                     {
-                        source: t("schema-assistant", "Schema assistant"), reason: error,
+                        source: t("profile-assistant", "Profile assistant"), reason: error,
                     }
                 );
             }

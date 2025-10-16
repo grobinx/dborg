@@ -1,50 +1,47 @@
-import { useMemo, useRef } from "react";
+import React from "react";
 
-type ListenerMap = {
-    [key: string]: ((...args: any[]) => void)[];
+type ListenerMap<T = any,> = {
+    [key: string]: ((event: T) => void)[];
 };
 
-export interface UseListenersType {
-    addListener: (type: string, callback: (...args: any[]) => void) => void;
-    removeListener: (type: string, callback: (...args: any[]) => void) => void;
-    callListeners: (type: string, ...args: any[]) => void;
-    emit: (type: string, ...args: any[]) => void;
+export interface UseListenersType<T = any,> {
+    onEvent: (type: string, callback: (event: T) => void) => () => void;
+    emitEvent: (type: string, event: T) => void;
 }
 
-const useListeners = (): UseListenersType => {
-    const listenersRef = useRef<ListenerMap>({});
+const useListeners = <T,>(): UseListenersType<T> => {
+    const listeners = React.useRef<ListenerMap<T>>({});
 
-    const addListener = (type: string, callback: (...args: any[]) => void) => {
-        if (!listenersRef.current[type]) {
-            listenersRef.current[type] = [];
+    const onEvent = React.useCallback((type: string, callback: (event: T) => void) => {
+        if (!listeners.current[type]) {
+            listeners.current[type] = [];
         }
-        if (!listenersRef.current[type].includes(callback)) {
-            listenersRef.current[type] = [...listenersRef.current[type], callback];
+        if (!listeners.current[type].includes(callback)) {
+            listeners.current[type] = [...listeners.current[type], callback];
         }
-    };
 
-    const removeListener = (type: string, callback: (...args: any[]) => void) => {
-        if (listenersRef.current[type]) {
-            listenersRef.current[type] = listenersRef.current[type].filter(
+        return () => { offEvent(type, callback); }
+    }, []);
+
+    const offEvent = React.useCallback((type: string, callback: (event: T) => void) => {
+        if (listeners.current[type]) {
+            listeners.current[type] = listeners.current[type].filter(
                 (listener) => listener !== callback
             );
         }
-    };
+    }, []);
 
-    const callListeners = (type: string, ...args: any[]) => {
-        if (listenersRef.current[type]) {
+    const emitEvent = (type: string, event: T) => {
+        if (listeners.current[type]) {
             // opóźnienie jest spowodowane tym, że niektóre komponenty mogą być renderowane w tym samym cyklu, co wywołanie emit
             // i nie zdążą się zaktualizować, więc wywołanie emit jest opóźnione
             setTimeout(() => {
-                listenersRef.current[type].forEach((listener) => listener(...args));
+                listeners.current[type].forEach((listener) => listener(event));
             }, 0);
         }
     };
 
-    return useMemo(
-        () => ({ addListener, removeListener, callListeners, emit: callListeners }),
-        []
-    );
+    return { onEvent, emitEvent };
 };
 
 export default useListeners;

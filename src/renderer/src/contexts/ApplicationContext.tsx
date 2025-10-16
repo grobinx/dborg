@@ -18,6 +18,7 @@ import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 import { useSetting } from './SettingsContext';
+import { useSchema } from './SchemaContext';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -107,6 +108,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { addToast } = useToast();
     const [iAmDeveloper] = useSetting("app", "i_am_developer");
+    const { onEvent } = useSchema();
 
     const initialContainers = (): SpecificContainer[] => [
         {
@@ -445,13 +447,17 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }, [selectedSession]);
 
     React.useEffect(() => {
+        const disconnecting = onEvent("disconnecting", (event) => {
+            if (event.status === "success") {
+                handleSchemaDisconnectSuccess(event.connectionUniqueId);
+            }
+        });
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
         subscribe(Messages.EDIT_SCHEMA, handleEditSchema);
         subscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
         subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
         subscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
-        subscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
         subscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
 
         return () => {
@@ -461,12 +467,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
             unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleSchemaConnectSuccess);
-            unsubscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
             unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
+            disconnecting();
         };
     }, [
-        subscribe,
-        unsubscribe,
         handleSwitchContainer,
         handleSwitchView,
         handleEditSchema,

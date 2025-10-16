@@ -22,6 +22,7 @@ import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
 import ActionsBar from "../ViewSlots/ActionsBar";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { useSchema } from "@renderer/contexts/SchemaContext";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -166,6 +167,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
     const theme = useTheme();
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
+    const { disconnectFromDatabase } = useSchema();
 
     React.useEffect(() => {
         const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
@@ -207,7 +209,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             )}
             <Tooltip title={t("disconnect", "Close connection")}>
                 <ToolButton
-                    onClick={() => queueMessage(Messages.SCHEMA_DISCONNECT, session.info.uniqueId)}
+                    onClick={() => disconnectFromDatabase(session.info.uniqueId)}
                     color="main"
                     size="small"
                 >

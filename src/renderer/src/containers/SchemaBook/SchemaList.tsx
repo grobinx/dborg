@@ -30,6 +30,7 @@ import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -163,13 +164,13 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { schemas } = useSchema();
+    const { schemas, disconnectFromAllDatabases, reloadSchemas } = useSchema();
+    const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
     const [displayData, searchedText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
-    const [connectionList, setConnectionList] = React.useState<ConnectionInfo[] | null>();
     const { addToast } = useToast();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
@@ -198,7 +199,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             keybindings: ["F5"],
             icon: "Refresh",
             run: () => {
-                queueMessage(Messages.RELOAD_SCHEMAS);
+                reloadSchemas();
             }
         }, {
             id: groupActionId,
@@ -309,8 +310,12 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     };
 
-    const connectionStatus = React.useCallback((data: Schema[] | null): Schema[] | null => {
+    const connectionStatus = React.useCallback(async (data: Schema[] | null): Promise<Schema[] | null> => {
         if (!data) {
+            return null;
+        }
+        const connectionList = await connections.list();
+        if (!connectionList) {
             return null;
         }
 
@@ -328,30 +333,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         });
 
         return updatedData;
-    }, [drivers, connectionList]);
-
-    /**
-     * Refresh the connection list and update the state.
-     */
-    const refreshConnectionList = React.useCallback(async () => {
-        try {
-            setConnectionList(await connections.list());
-        }
-        catch (error) {
-            addToast(
-                "error",
-                t("connection-list-load-error", "Failed to load connection list!"),
-                {
-                    source: t_connectionSchema,
-                    reason: error,
-                }
-            );
-        }
-    }, [connections]);
-
-    React.useEffect(() => {
-        refreshConnectionList();
-    }, [connections]);
+    }, [drivers]);
 
     React.useEffect(() => {
         window.localStorage.setItem(Store_SchemaList_groupList, JSON.stringify(groupList));
@@ -362,28 +344,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [sortList]);
 
     React.useEffect(() => {
-        const fetchData = async () => {
-            try {
-                if (!connectionList) {
-                    return; // Ensure connectionList is available before fetching data
-                }
-                setData(connectionStatus(schemas));
-            } catch (error) {
-                addToast(
-                    "error",
-                    t("profile-list-load-error", "Failed to load profile list!"),
-                    {
-                        source: t_connectionSchema,
-                        reason: error,
-                    }
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [connectionList, drivers, schemas]); // Ensure connectionList is ready before fetching data
+        connectionStatus(schemas).then((data) => {
+            setData(data);
+            setLoading(false);
+        });
+    }, [schemas, sessions, connectionStatus]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         setDeleting((prev) => [...prev, id]);
@@ -439,18 +404,12 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const handleDisconnectAll = React.useCallback(async (schemaId: string) => {
         setDisconnecting((prev) => [...prev, schemaId]);
         try {
-            await sendMessage(Messages.SCHEMA_DISCONNECT_ALL, schemaId);
+            await disconnectFromAllDatabases(schemaId);
+            setData(await connectionStatus(schemas));
         } finally {
             setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
         }
-    }, []);
-
-    const handleConnectSuccess = React.useCallback((connection: ConnectionInfo) => {
-        if (connection) {
-            refreshConnectionList();
-            setData(connectionStatus(data));
-        }
-    }, [refreshConnectionList, connectionStatus, data]);
+    }, [schemas, connectionStatus]);
 
     const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         try {
@@ -523,47 +482,31 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
 
     React.useEffect(() => {
         const handleSchemaCreateSuccess = (newSchema: Schema) => {
-            setData((prevData) => connectionStatus([...(prevData ?? []), newSchema]));
+            connectionStatus([...(data ?? []), newSchema]).then((updated) => {
+                setData(updated);
+            });
         };
 
         const handleSchemaUpdate = (updatedSchema: Schema) => {
-            setData((prevData) =>
-                connectionStatus(
-                    prevData?.map((schema) =>
-                        schema.sch_id === updatedSchema.sch_id ? updatedSchema : schema
-                    ) ?? null
-                )
-            );
+            connectionStatus([...(data ?? []), updatedSchema]).then((updated) => {
+                setData(updated);
+            });
         };
 
         const handleSchemaDeleteSuccess = (deletedSchemaId: string) => {
             setData((prevData) => prevData?.filter((schema) => schema.sch_id !== deletedSchemaId) ?? null);
         };
 
-        const handleReloadSchemasSuccess = () => {
-            refreshConnectionList();
-        }
-
-        const handleSchemaDisconnectSuccess = () => {
-            refreshConnectionList();
-        }
-
         subscribe(Messages.SCHEMA_CREATE_SUCCESS, handleSchemaCreateSuccess);
         subscribe(Messages.SCHEMA_UPDATE_SUCCESS, handleSchemaUpdate);
         subscribe(Messages.SCHEMA_DELETE_SUCCESS, handleSchemaDeleteSuccess);
-        subscribe(Messages.RELOAD_SCHEMAS_SUCCESS, handleReloadSchemasSuccess);
-        subscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
-        subscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleConnectSuccess);
 
         return () => {
             unsubscribe(Messages.SCHEMA_CREATE_SUCCESS, handleSchemaCreateSuccess);
             unsubscribe(Messages.SCHEMA_UPDATE_SUCCESS, handleSchemaUpdate);
             unsubscribe(Messages.SCHEMA_DELETE_SUCCESS, handleSchemaDeleteSuccess);
-            unsubscribe(Messages.RELOAD_SCHEMAS_SUCCESS, handleReloadSchemasSuccess);
-            unsubscribe(Messages.SCHEMA_DISCONNECT_SUCCESS, handleSchemaDisconnectSuccess);
-            unsubscribe(Messages.SCHEMA_CONNECT_SUCCESS, handleConnectSuccess);
         };
-    }, [connectionStatus, handleConnectSuccess]);
+    }, [connectionStatus]);
 
     const renderStatusIcon = (record: Schema) => {
         if (connecting.includes(record.sch_id)) {
