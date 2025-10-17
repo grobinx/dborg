@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { BlockPicker, ChromePicker, CompactPicker, GithubPicker, MaterialPicker, PhotoshopPicker, SketchPicker, SwatchesPicker, TwitterPicker } from "react-color";
 import { Popover } from "@mui/material";
-import { p } from "react-router/dist/development/fog-of-war-CvttGpNz";
 
 export type ColorPickerType = "block" | "swatches" | "compact" | "material" | "sketch" | "twitter" | "gitchub" | "chrome" | "photoshop";
 
