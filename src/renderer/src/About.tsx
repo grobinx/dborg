@@ -3,10 +3,87 @@ import logo from '../../../resources/dborg.png';
 import { useTranslation } from 'react-i18next';
 import dborgPackage from '../../../package.json';
 import { dborgDate, dborgDuration, dborgReleaseName, version } from '../../api/consts';
-import { styled, Typography, useTheme } from '@mui/material';
+import { alpha, keyframes, styled, Typography, useTheme } from '@mui/material';
 import { MorphingSvgPaths } from './components/MorphingSvgs';
+import { TextDecorator } from './components/useful/TextDecorator';
+import clsx from './utils/clsx';
 
-// Styled component for the application info container
+const ORBADA = 'ORBADA';
+const DATABASE_ORGANIZER = 'Database Organizer';
+
+const StyledAppTitle = styled('div')({
+    transition: "all 0.2s ease-in-out",
+    marginBottom: '24px',
+    textAlign: 'center',
+    alignContent: 'center',
+    fontSize: '16px',
+    color: '#fff',
+    background: 'rgba(0, 0, 0, 0.5)',
+    padding: '16px',
+    borderRadius: '8px',
+    boxShadow: '0 0 0 3px rgba(50, 197, 62, 0.6)',
+    zIndex: 2,
+    width: 750,
+    height: 100,
+    position: 'relative',
+    border: '2px solid #fff',
+    '&.char-animation-finished': {
+        animation: 'outline-effect 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    },
+    '@keyframes outline-effect': {
+        '0%': {
+            transform: 'scale(0.95)',
+            boxShadow: `
+                0px 4px 10px rgba(0, 0, 0, 0.5),
+                0 0 0 2px #fff,
+                0 0 0 3px rgba(50, 197, 62, 0.6)
+            `,
+        },
+        '10%': {
+            transform: 'scale(1.1)',
+        },
+        '20%': {
+            boxShadow: `
+                0px 4px 10px rgba(0, 0, 0, 0.5),
+                0 0 0 20px rgba(0, 255, 0, 0.6)
+            `,
+        },
+        '100%': {
+            transform: 'scale(1)',
+            boxShadow: `
+                0px 4px 10px rgba(0, 0, 0, 0.5),
+                0 0 0 150px rgba(0, 255, 0, 0),
+                0 0 0 3px rgba(50, 197, 62, 0.6)
+            `,
+        },
+    },
+});
+
+const zoomIn = keyframes`
+  0% {
+    transform: scale(3);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  85% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+const AnimatedChar = styled('span')({
+    display: 'inline-block',
+    animation: `${zoomIn} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)`,
+});
+
 const StyledAppInfoContainer = styled('div')({
     marginBottom: '24px',
     textAlign: 'left',
@@ -85,7 +162,7 @@ const StackedWaves = () => {
                     { d: "M0 179L20 193.5C40 208 80 237 120 251.5C160 266 200 266 240 255.2C280 244.3 320 222.7 360 228C400 233.3 440 265.7 480 272C520 278.3 560 258.7 600 253.3C640 248 680 257 720 257C760 257 800 248 840 245.2C880 242.3 920 245.7 940 247.3L960 249L960 204L940 192.3C920 180.7 880 157.3 840 157.3C800 157.3 760 180.7 720 185.2C680 189.7 640 175.3 600 175.3C560 175.3 520 189.7 480 187C440 184.3 400 164.7 360 157.5C320 150.3 280 155.7 240 159.2C200 162.7 160 164.3 120 154.5C80 144.7 40 123.3 20 112.7L0 102Z", fill: "#870b0a" },
                     { d: "M0 249L20 264.3C40 279.7 80 310.3 120 326.7C160 343 200 345 240 344.2C280 343.3 320 339.7 360 340.5C400 341.3 440 346.7 480 343C520 339.3 560 326.7 600 333C640 339.3 680 364.7 720 363.8C760 363 800 336 840 332.3C880 328.7 920 348.3 940 358.2L960 368L960 247L940 245.3C920 243.7 880 240.3 840 243.2C800 246 760 255 720 255C680 255 640 246 600 251.3C560 256.7 520 276.3 480 270C440 263.7 400 231.3 360 226C320 220.7 280 242.3 240 253.2C200 264 160 264 120 249.5C80 235 40 206 20 191.5L0 177Z", fill: "#a72621" },
                     { d: "M0 503L20 502.2C40 501.3 80 499.7 120 497.8C160 496 200 494 240 489.5C280 485 320 478 360 473.5C400 469 440 467 480 466C520 465 560 465 600 471.3C640 477.7 680 490.3 720 494C760 497.7 800 492.3 840 487.8C880 483.3 920 479.7 940 477.8L960 476L960 366L940 356.2C920 346.3 880 326.7 840 330.3C800 334 760 361 720 361.8C680 362.7 640 337.3 600 331C560 324.7 520 337.3 480 341C440 344.7 400 339.3 360 338.5C320 337.7 280 341.3 240 342.2C200 343 160 341 120 324.7C80 308.3 40 277.7 20 262.3L0 247Z", fill: "#870b0a" },
-                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 474L940 475.8C920 477.7 880 481.3 840 485.8C800 490.3 760 495.7 720 492C680 488.3 640 475.7 600 469.3C560 463 520 463 480 464C440 465 400 467 360 471.5C320 476 280 483 240 487.5C200 492 160 494 120 495.8C80 497.7 40 499.3 20 500.2L0 501Z", fill: "#5d0308" },
+                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 474L940 475.8C920 477.7 880 481.3 840 485.8C800 490.3 760 495.7 720 492C680 488.3 640 475.7 600 469.3C560 463 520 463 480 467.5C440 472 400 481 360 483.8C320 486.7 280 483.3 240 485.2C200 487 160 494 120 492.2C80 490.3 40 479.7 20 474.3L0 469Z", fill: "#5d0308" },
                 ],
                 [
                     { d: "M0 82L20 90.2C40 98.3 80 114.7 120 115.5C160 116.3 200 101.7 240 90.8C280 80 320 73 360 75.8C400 78.7 440 91.3 480 94.8C520 98.3 560 92.7 600 85.3C640 78 680 69 720 67.3C760 65.7 800 71.3 840 78.7C880 86 920 95 940 99.5L960 104L960 0L940 0C920 0 880 0 840 0C800 0 760 0 720 0C680 0 640 0 600 0C560 0 520 0 480 0C440 0 400 0 360 0C320 0 280 0 240 0C200 0 160 0 120 0C80 0 40 0 20 0L0 0Z", fill: "#001a5e" },
@@ -114,6 +191,41 @@ const About: React.FC<{
 }> = ({ loading, loadingText }) => {
     const { t } = useTranslation();
     const theme = useTheme();
+    const [displayText, setDisplayText] = React.useState<React.ReactNode[]>([]);
+    const [charAnimationFinished, setCharAnimationFinished] = React.useState(false);
+
+    React.useEffect(() => {
+        const orbadaText = ORBADA;
+        let currentIndex = 0;
+
+        const interval = setInterval(() => {
+            if (currentIndex < orbadaText.length) {
+                setDisplayText(prev => [
+                    ...prev,
+                    <AnimatedChar key={currentIndex}>
+                        {orbadaText.charAt(currentIndex)}
+                    </AnimatedChar>
+                ]);
+
+            } else {
+                clearInterval(interval);
+                setTimeout(() => {
+                    setDisplayText(prev => [
+                        ...prev,
+                        <AnimatedChar key={currentIndex}>
+                            {'\u00A0- '}{DATABASE_ORGANIZER}
+                        </AnimatedChar>
+                    ]);
+                    setTimeout(() => {
+                        setCharAnimationFinished(true);
+                    }, 300);
+                }, 500);
+            }
+            currentIndex++;
+        }, 150); // 150ms opóźnienie między literami
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div style={{
@@ -133,11 +245,17 @@ const About: React.FC<{
                 <LayeredWaves />
             </AnimatedWaves>
 
-            <StyledAppInfoContainer>
-                <Typography style={{ textAlign: 'center', fontSize: '24px' }}>
-                    {dborgPackage.description}
+            <StyledAppTitle
+                className={clsx(
+                    charAnimationFinished && 'char-animation-finished'
+                )}
+            >
+                <Typography variant="h4">
+                    <TextDecorator variant="NeonText">
+                        {displayText}
+                    </TextDecorator>
                 </Typography>
-            </StyledAppInfoContainer>
+            </StyledAppTitle>
 
             {/* Logo */}
             <img src={logo} alt="Logo" style={{
@@ -148,22 +266,24 @@ const About: React.FC<{
                 zIndex: 2
             }} />
 
-            {loading && (
-                <StyledAppInfoContainer>
-                    <span style={{
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        textShadow: '0px 0px 8px rgba(0, 0, 0, 0.5)',
-                        zIndex: 2,
-                        display: 'inline-flex',
-                        gap: '8px',
-                        alignItems: 'center',
-                    }}>
-                        <theme.icons.Loading />
-                        {loadingText ?? t('loading---', 'Loading...')}
-                    </span>
-                </StyledAppInfoContainer>
-            )}
+            {
+                loading && (
+                    <StyledAppInfoContainer>
+                        <span style={{
+                            fontSize: '20px',
+                            fontWeight: 'bold',
+                            textShadow: '0px 0px 8px rgba(0, 0, 0, 0.5)',
+                            zIndex: 2,
+                            display: 'inline-flex',
+                            gap: '8px',
+                            alignItems: 'center',
+                        }}>
+                            <theme.icons.Loading />
+                            {loadingText ?? t('loading---', 'Loading...')}
+                        </span>
+                    </StyledAppInfoContainer>
+                )
+            }
 
             {/* Informacje o aplikacji */}
             <StyledAppInfoContainer>
@@ -180,7 +300,7 @@ const About: React.FC<{
                     C: {window.electron.versions.chrome}
                 </Typography>
             </StyledAppInfoContainer>
-        </div>
+        </div >
     );
 };
 

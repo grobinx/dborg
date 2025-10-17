@@ -130,7 +130,3 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ text, style, sx })
 
     return null;
 };
-
-export function escape(text: string): string {
-    return text.replace(/([*_`[\]()#+\-!])/g, '\\$1');
-}

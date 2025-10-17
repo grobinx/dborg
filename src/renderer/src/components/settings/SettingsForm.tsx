@@ -9,7 +9,7 @@ import { BooleanField } from "../inputs/BooleanField";
 import { Stack, Typography } from "@mui/material";
 import createKey from "./createKey";
 
-export const calculateWidth = (setting: SettingTypeUnion) => {
+const calculateWidth = (setting: SettingTypeUnion) => {
     const widthPerChar = getSetting("ui", "fontSize") * 0.8; // Approximate width per character in pixels
     const defaultTextWidth = 30 * widthPerChar; // Default width
     const defaultNumberWidth = 20 * widthPerChar; // Default width for number inputs
