@@ -16,7 +16,6 @@ const StyledAppTitle = styled('div')({
     marginBottom: '24px',
     textAlign: 'center',
     alignContent: 'center',
-    fontSize: '16px',
     color: '#fff',
     background: 'rgba(0, 0, 0, 0.5)',
     padding: '16px',
@@ -24,7 +23,7 @@ const StyledAppTitle = styled('div')({
     boxShadow: '0 0 0 3px rgba(50, 197, 62, 0.6)',
     zIndex: 2,
     width: 750,
-    height: 100,
+    height: 120,
     position: 'relative',
     border: '2px solid #fff',
     '&.char-animation-finished': {
@@ -48,8 +47,10 @@ const StyledAppTitle = styled('div')({
                 0 0 0 20px rgba(0, 255, 0, 0.6)
             `,
         },
-        '100%': {
+        '90%': {
             transform: 'scale(1)',
+        },
+        '100%': {
             boxShadow: `
                 0px 4px 10px rgba(0, 0, 0, 0.5),
                 0 0 0 150px rgba(0, 255, 0, 0),
@@ -146,45 +147,6 @@ const LayeredWaves = () => {
     );
 }
 
-const StackedWaves = () => {
-    return (
-        <MorphingSvgPaths
-            paths={[
-                [
-                    { d: "M0 114L20 115C40 116 80 118 120 110.8C160 103.7 200 87.3 240 82.8C280 78.3 320 85.7 360 85.7C400 85.7 440 78.3 480 81.8C520 85.3 560 99.7 600 107.8C640 116 680 118 720 116.3C760 114.7 800 109.3 840 106.7C880 104 920 104 940 104L960 104L960 0L940 0C920 0 880 0 840 0C800 0 760 0 720 0C680 0 640 0 600 0C560 0 520 0 480 0C440 0 400 0 360 0C320 0 280 0 240 0C200 0 160 0 120 0C80 0 40 0 20 0L0 0Z", fill: "#5b5907" },
-                    { d: "M0 287L20 279.8C40 272.7 80 258.3 120 245.8C160 233.3 200 222.7 240 228C280 233.3 320 254.7 360 259.2C400 263.7 440 251.3 480 246.8C520 242.3 560 245.7 600 250.2C640 254.7 680 260.3 720 252.3C760 244.3 800 222.7 840 211.8C880 201 920 201 940 201L960 201L960 102L940 102C920 102 880 102 840 104.7C800 107.3 760 112.7 720 114.3C680 116 640 114 600 105.8C560 97.7 520 83.3 480 79.8C440 76.3 400 83.7 360 83.7C320 83.7 280 76.3 240 80.8C200 85.3 160 101.7 120 108.8C80 116 40 114 20 113L0 112Z", fill: "#88830b" },
-                    { d: "M0 422L20 417.5C40 413 80 404 120 397.7C160 391.3 200 387.7 240 386.8C280 386 320 388 360 391.7C400 395.3 440 400.7 480 404.2C520 407.7 560 409.3 600 401.2C640 393 680 375 720 374.2C760 373.3 800 389.7 840 392.5C880 395.3 920 384.7 940 379.3L960 374L960 199L940 199C920 199 880 199 840 209.8C800 220.7 760 242.3 720 250.3C680 258.3 640 252.7 600 248.2C560 243.7 520 240.3 480 244.8C440 249.3 400 261.7 360 257.2C320 252.7 280 231.3 240 226C200 220.7 160 231.3 120 243.8C80 256.3 40 270.7 20 277.8L0 285Z", fill: "#a8a226" },
-                    { d: "M0 498L20 496.2C40 494.3 80 490.7 120 483.5C160 476.3 200 465.7 240 465.7C280 465.7 320 476.3 360 483.5C400 490.7 440 494.3 480 497C520 499.7 560 501.3 600 494.2C640 487 680 471 720 463C760 455 800 455 840 455C880 455 920 455 940 455L960 455L960 372L940 377.3C920 382.7 880 393.3 840 390.5C800 387.7 760 371.3 720 372.2C680 373 640 391 600 399.2C560 407.3 520 405.7 480 402.2C440 398.7 400 393.3 360 389.7C320 386 280 384 240 384.8C200 385.7 160 389.3 120 395.7C80 402 40 411 20 415.5L0 420Z", fill: "#88830b" },
-                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 453L940 453C920 453 880 453 840 453C800 453 760 453 720 461C680 469 640 485 600 492.2C560 499.3 520 497.7 480 495C440 492.3 400 488.7 360 481.5C320 474.3 280 463.7 240 463.7C200 463.7 160 474.3 120 481.5C80 488.7 40 492.3 20 494.2L0 496Z", fill: "#5b5907" },
-                ],
-                [
-                    { d: "M0 104L20 114.7C40 125.3 80 146.7 120 156.5C160 166.3 200 164.7 240 161.2C280 157.7 320 152.3 360 159.5C400 166.7 440 186.3 480 189C520 191.7 560 177.3 600 177.3C640 177.3 680 191.7 720 187.2C760 182.7 800 159.3 840 159.3C880 159.3 920 182.7 940 194.3L960 206L960 0L940 0C920 0 880 0 840 0C800 0 760 0 720 0C680 0 640 0 600 0C560 0 520 0 480 0C440 0 400 0 360 0C320 0 280 0 240 0C200 0 160 0 120 0C80 0 40 0 20 0L0 0Z", fill: "#5d0308" },
-                    { d: "M0 179L20 193.5C40 208 80 237 120 251.5C160 266 200 266 240 255.2C280 244.3 320 222.7 360 228C400 233.3 440 265.7 480 272C520 278.3 560 258.7 600 253.3C640 248 680 257 720 257C760 257 800 248 840 245.2C880 242.3 920 245.7 940 247.3L960 249L960 204L940 192.3C920 180.7 880 157.3 840 157.3C800 157.3 760 180.7 720 185.2C680 189.7 640 175.3 600 175.3C560 175.3 520 189.7 480 187C440 184.3 400 164.7 360 157.5C320 150.3 280 155.7 240 159.2C200 162.7 160 164.3 120 154.5C80 144.7 40 123.3 20 112.7L0 102Z", fill: "#870b0a" },
-                    { d: "M0 249L20 264.3C40 279.7 80 310.3 120 326.7C160 343 200 345 240 344.2C280 343.3 320 339.7 360 340.5C400 341.3 440 346.7 480 343C520 339.3 560 326.7 600 333C640 339.3 680 364.7 720 363.8C760 363 800 336 840 332.3C880 328.7 920 348.3 940 358.2L960 368L960 247L940 245.3C920 243.7 880 240.3 840 243.2C800 246 760 255 720 255C680 255 640 246 600 251.3C560 256.7 520 276.3 480 270C440 263.7 400 231.3 360 226C320 220.7 280 242.3 240 253.2C200 264 160 264 120 249.5C80 235 40 206 20 191.5L0 177Z", fill: "#a72621" },
-                    { d: "M0 503L20 502.2C40 501.3 80 499.7 120 497.8C160 496 200 494 240 489.5C280 485 320 478 360 473.5C400 469 440 467 480 466C520 465 560 465 600 471.3C640 477.7 680 490.3 720 494C760 497.7 800 492.3 840 487.8C880 483.3 920 479.7 940 477.8L960 476L960 366L940 356.2C920 346.3 880 326.7 840 330.3C800 334 760 361 720 361.8C680 362.7 640 337.3 600 331C560 324.7 520 337.3 480 341C440 344.7 400 339.3 360 338.5C320 337.7 280 341.3 240 342.2C200 343 160 341 120 324.7C80 308.3 40 277.7 20 262.3L0 247Z", fill: "#870b0a" },
-                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 474L940 475.8C920 477.7 880 481.3 840 485.8C800 490.3 760 495.7 720 492C680 488.3 640 475.7 600 469.3C560 463 520 463 480 467.5C440 472 400 481 360 483.8C320 486.7 280 483.3 240 485.2C200 487 160 494 120 492.2C80 490.3 40 479.7 20 474.3L0 469Z", fill: "#5d0308" },
-                ],
-                [
-                    { d: "M0 82L20 90.2C40 98.3 80 114.7 120 115.5C160 116.3 200 101.7 240 90.8C280 80 320 73 360 75.8C400 78.7 440 91.3 480 94.8C520 98.3 560 92.7 600 85.3C640 78 680 69 720 67.3C760 65.7 800 71.3 840 78.7C880 86 920 95 940 99.5L960 104L960 0L940 0C920 0 880 0 840 0C800 0 760 0 720 0C680 0 640 0 600 0C560 0 520 0 480 0C440 0 400 0 360 0C320 0 280 0 240 0C200 0 160 0 120 0C80 0 40 0 20 0L0 0Z", fill: "#001a5e" },
-                    { d: "M0 147L20 150.5C40 154 80 161 120 159.2C160 157.3 200 146.7 240 136.8C280 127 320 118 360 127C400 136 440 163 480 172.8C520 182.7 560 175.3 600 165.5C640 155.7 680 143.3 720 142.5C760 141.7 800 152.3 840 155C880 157.7 920 152.3 940 149.7L960 147L960 102L940 97.5C920 93 880 84 840 76.7C800 69.3 760 63.7 720 65.3C680 67 640 76 600 83.3C560 90.7 520 96.3 480 92.8C440 89.3 400 76.7 360 73.8C320 71 280 78 240 88.8C200 99.7 160 114.3 120 113.5C80 112.7 40 96.3 20 88.2L0 80Z", fill: "#0e2487" },
-                    { d: "M0 330L20 336.3C40 342.7 80 355.3 120 348.2C160 341 200 314 240 302.3C280 290.7 320 294.3 360 312.3C400 330.3 440 362.7 480 360.8C520 359 560 323 600 317.7C640 312.3 680 337.7 720 336.8C760 336 800 309 840 292.8C880 276.7 920 271.3 940 268.7L960 266L960 145L940 147.7C920 150.3 880 155.7 840 153C800 150.3 760 139.7 720 140.5C680 141.3 640 153.7 600 163.5C560 173.3 520 180.7 480 170.8C440 161 400 134 360 125C320 116 280 125 240 134.8C200 144.7 160 155.3 120 157.2C80 159 40 152 20 148.5L0 145Z", fill: "#2a3da7" },
-                    { d: "M0 422L20 423.8C40 425.7 80 429.3 120 417.7C160 406 200 379 240 368.2C280 357.3 320 362.7 360 378.8C400 395 440 422 480 424.7C520 427.3 560 405.7 600 398.5C640 391.3 680 398.7 720 389.7C760 380.7 800 355.3 840 343.7C880 332 920 334 940 335L960 336L960 264L940 266.7C920 269.3 880 274.7 840 290.8C800 307 760 334 720 334.8C680 335.7 640 310.3 600 315.7C560 321 520 357 480 358.8C440 360.7 400 328.3 360 310.3C320 292.3 280 288.7 240 300.3C200 312 160 339 120 346.2C80 353.3 40 340.7 20 334.3L0 328Z", fill: "#0e2487" },
-                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 334L940 333C920 332 880 330 840 341.7C800 353.3 760 378.7 720 387.7C680 396.7 640 389.3 600 396.5C560 403.7 520 425.3 480 422.7C440 420 400 393 360 376.8C320 360.7 280 355.3 240 366.2C200 377 160 404 120 415.7C80 427.3 40 423.7 20 421.8L0 420Z", fill: "#001a5e" }
-                ],
-                [
-                    { d: "M0 222L20 212.2C40 202.3 80 182.7 120 163C160 143.3 200 123.7 240 130.8C280 138 320 172 360 183.7C400 195.3 440 184.7 480 169.3C520 154 560 134 600 122.3C640 110.7 680 107.3 720 119.2C760 131 800 158 840 159.7C880 161.3 920 137.7 940 125.8L960 114L960 0L940 0C920 0 880 0 840 0C800 0 760 0 720 0C680 0 640 0 600 0C560 0 520 0 480 0C440 0 400 0 360 0C320 0 280 0 240 0C200 0 160 0 120 0C80 0 40 0 20 0L0 0Z", fill: "#005c0d" },
-                    { d: "M0 287L20 277.2C40 267.3 80 247.7 120 235.2C160 222.7 200 217.3 240 227.2C280 237 320 262 360 273.7C400 285.3 440 283.7 480 263.8C520 244 560 206 600 186.2C640 166.3 680 164.7 720 180C760 195.3 800 227.7 840 234.8C880 242 920 224 940 215L960 206L960 112L940 123.8C920 135.7 880 159.3 840 157.7C800 156 760 129 720 117.2C680 105.3 640 108.7 600 120.3C560 132 520 152 480 167.3C440 182.7 400 193.3 360 181.7C320 170 280 136 240 128.8C200 121.7 160 141.3 120 161C80 180.7 40 200.3 20 210.2L0 220Z", fill: "#0e870e" },
-                    { d: "M0 330L20 331C40 332 80 334 120 321.5C160 309 200 282 240 287.3C280 292.7 320 330.3 360 350.2C400 370 440 372 480 352.2C520 332.3 560 290.7 600 272.7C640 254.7 680 260.3 720 276.7C760 293 800 320 840 319C880 318 920 289 940 274.5L960 260L960 204L940 213C920 222 880 240 840 232.8C800 225.7 760 193.3 720 178C680 162.7 640 164.3 600 184.2C560 204 520 242 480 261.8C440 281.7 400 283.3 360 271.7C320 260 280 235 240 225.2C200 215.3 160 220.7 120 233.2C80 245.7 40 265.3 20 275.2L0 285Z", fill: "#2aa628" },
-                    { d: "M0 471L20 476.3C40 481.7 80 492.3 120 494.2C160 496 200 489 240 487.2C280 485.3 320 488.7 360 485.8C400 483 440 474 480 469.5C520 465 560 465 600 469.5C640 474 680 483 720 484C760 485 800 478 840 471.8C880 465.7 920 460.3 940 457.7L960 455L960 258L940 272.5C920 287 880 316 840 317C800 318 760 291 720 274.7C680 258.3 640 252.7 600 270.7C560 288.7 520 330.3 480 350.2C440 370 400 368 360 348.2C320 328.3 280 290.7 240 285.3C200 280 160 307 120 319.5C80 332 40 330 20 329L0 328Z", fill: "#0e870e" },
-                    { d: "M0 541L20 541C40 541 80 541 120 541C160 541 200 541 240 541C280 541 320 541 360 541C400 541 440 541 480 541C520 541 560 541 600 541C640 541 680 541 720 541C760 541 800 541 840 541C880 541 920 541 940 541L960 541L960 453L940 455.7C920 458.3 880 463.7 840 469.8C800 476 760 483 720 482C680 481 640 472 600 467.5C560 463 520 463 480 467.5C440 472 400 481 360 483.8C320 486.7 280 483.3 240 485.2C200 487 160 494 120 492.2C80 490.3 40 479.7 20 474.3L0 469Z", fill: "#005c0d" }
-                ]
-            ]}
-            duration={20}
-            viewBox='0 0 960 541'
-        />
-    );
-}
-
 const About: React.FC<{
     loading?: boolean,
     loadingText?: string
@@ -193,23 +155,36 @@ const About: React.FC<{
     const theme = useTheme();
     const [displayText, setDisplayText] = React.useState<React.ReactNode[]>([]);
     const [charAnimationFinished, setCharAnimationFinished] = React.useState(false);
+    const [showRelease, setShowRelease] = React.useState(false);
 
     React.useEffect(() => {
         const orbadaText = ORBADA;
         let currentIndex = 0;
 
         const interval = setInterval(() => {
-            if (currentIndex < orbadaText.length) {
+            if (currentIndex < orbadaText.length - 1) {
                 setDisplayText(prev => [
                     ...prev,
                     <AnimatedChar key={currentIndex}>
                         {orbadaText.charAt(currentIndex)}
                     </AnimatedChar>
                 ]);
-
             } else {
                 clearInterval(interval);
+                setDisplayText(prev => [
+                    ...prev,
+                    <AnimatedChar key={currentIndex}>
+                        <img src={logo} alt="Logo" style={{
+                            width: '48px',
+                            height: '48px',
+                            verticalAlign: 'middle',
+                            marginLeft: '8px',
+                            marginBottom: '4px',
+                        }} />
+                    </AnimatedChar>
+                ]);
                 setTimeout(() => {
+                    currentIndex++;
                     setDisplayText(prev => [
                         ...prev,
                         <AnimatedChar key={currentIndex}>
@@ -218,6 +193,9 @@ const About: React.FC<{
                     ]);
                     setTimeout(() => {
                         setCharAnimationFinished(true);
+                        setTimeout(() => {
+                            setShowRelease(true);
+                        }, 50);
                     }, 300);
                 }, 500);
             }
@@ -250,51 +228,47 @@ const About: React.FC<{
                     charAnimationFinished && 'char-animation-finished'
                 )}
             >
-                <Typography variant="h4">
+                <Typography variant="h4" height={50} marginBottom={10} fontSize="40px">
                     <TextDecorator variant="NeonText">
                         {displayText}
                     </TextDecorator>
                 </Typography>
+                {showRelease && (
+                    <AnimatedChar>
+                        {dborgReleaseName}
+                    </AnimatedChar>
+                )}
             </StyledAppTitle>
 
-            {/* Logo */}
-            <img src={logo} alt="Logo" style={{
-                marginBottom: '16px',
-                width: '150px',
-                height: '150px',
-                animation: 'bounce 2s infinite',
-                zIndex: 2
-            }} />
-
             {
-                loading && (
-                    <StyledAppInfoContainer>
-                        <span style={{
-                            fontSize: '20px',
-                            fontWeight: 'bold',
-                            textShadow: '0px 0px 8px rgba(0, 0, 0, 0.5)',
-                            zIndex: 2,
-                            display: 'inline-flex',
-                            gap: '8px',
-                            alignItems: 'center',
-                        }}>
-                            <theme.icons.Loading />
-                            {loadingText ?? t('loading---', 'Loading...')}
-                        </span>
-                    </StyledAppInfoContainer>
-                )
+                <StyledAppInfoContainer style={{
+                    visibility: loading ? 'visible' : 'hidden',
+                }}>
+                    <span style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        textShadow: '0px 0px 8px rgba(0, 0, 0, 0.5)',
+                        zIndex: 2,
+                        display: 'inline-flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                    }}>
+                        <theme.icons.Loading />
+                        {loadingText ?? t('loading---', 'Loading...')}
+                    </span>
+                </StyledAppInfoContainer>
             }
 
             {/* Informacje o aplikacji */}
             <StyledAppInfoContainer>
-                <Typography><strong>{t('release-dd', 'Release:')}</strong> {dborgReleaseName}</Typography>
-                <Typography><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</Typography>
-                <Typography><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</Typography>
-                <Typography><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></Typography>
-                <Typography><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</Typography>
-                <Typography><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</Typography>
-                <Typography><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</Typography>
-                <Typography><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
+                {/*<Typography><strong>{t('release-dd', 'Release:')}</strong> {dborgReleaseName}</Typography>*/}
+                <Typography fontSize="20px"><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</Typography>
+                <Typography fontSize="20px"><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</Typography>
+                <Typography fontSize="20px"><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></Typography>
+                <Typography fontSize="20px"><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</Typography>
+                <Typography fontSize="20px"><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</Typography>
+                <Typography fontSize="20px"><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</Typography>
+                <Typography fontSize="20px"><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
                     E: {window.electron.versions.electron},
                     N: {window.electron.versions.node},
                     C: {window.electron.versions.chrome}

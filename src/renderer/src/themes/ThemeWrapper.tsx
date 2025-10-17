@@ -6,7 +6,6 @@ import defaultLightPalette from '../themes/palettes/defaultLight';
 import defaultLayout from '../themes/layouts/defaultLayout';
 import defaultIcons from '../themes/icons/defaultIcons';
 import rootLayout from '../themes/layouts/root';
-import { UiSettings } from "@renderer/app.config";
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [uiTheme] = useSetting("ui", "theme");
