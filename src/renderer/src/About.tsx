@@ -10,6 +10,7 @@ import clsx from './utils/clsx';
 
 const ORBADA = 'ORBADA';
 const DATABASE_ORGANIZER = 'Database Organizer';
+const ANIMATION_SPEED = 1;
 
 const StyledAppTitle = styled('div')({
     transition: "all 0.2s ease-in-out",
@@ -27,7 +28,7 @@ const StyledAppTitle = styled('div')({
     position: 'relative',
     border: '2px solid #fff',
     '&.char-animation-finished': {
-        animation: 'outline-effect 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        animation: `outline-effect ${ANIMATION_SPEED * 0.5}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
     },
     '@keyframes outline-effect': {
         '0%': {
@@ -41,7 +42,7 @@ const StyledAppTitle = styled('div')({
         '10%': {
             transform: 'scale(1.1)',
         },
-        '20%': {
+        '11%': {
             boxShadow: `
                 0px 4px 10px rgba(0, 0, 0, 0.5),
                 0 0 0 20px rgba(0, 255, 0, 0.6)
@@ -60,30 +61,43 @@ const StyledAppTitle = styled('div')({
     },
 });
 
-const zoomIn = keyframes`
-  0% {
-    transform: scale(3);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  70% {
-    transform: scale(0.95);
-  }
-  85% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+const zoomIn = (initialScale: number = 3) => keyframes`
+  0% { transform: scale(${initialScale}); opacity: 0; }
+  50% { opacity: 1; }
+  70% { transform: scale(0.95); }
+  85% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 `;
 
-const AnimatedChar = styled('span')({
+// DODANE: animacja z utrzymanym przesunięciem na środek
+const zoomInCentered = keyframes`
+  0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  50% { opacity: 1; }
+  70% { transform: translateX(-50%) scale(0.95); }
+  85% { transform: translateX(-50%) scale(1.05); }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+`;
+
+const AnimatedZoomIn = styled('span')<{ delay: number, initialScale?: number }>(({ delay, initialScale = 3 }) => ({
     display: 'inline-block',
-    animation: `${zoomIn} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)`,
-});
+    opacity: 0,
+    animation: `${zoomIn(initialScale)} ${ANIMATION_SPEED * 0.6}s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${delay}s forwards`,
+}));
+
+const AnimatedReleaseName = styled('span')<{ delay: number }>(({ delay, theme }) => ({
+    fontSize: '18px',
+    display: 'inline-block',
+    opacity: 0,
+    animation: `${zoomInCentered} ${ANIMATION_SPEED * 0.6}s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${delay}s forwards`,
+    position: 'absolute',
+    bottom: '8px',
+    left: '50%',
+    transform: 'translateX(-50%)', // DODANE: bazowe przesunięcie na środek
+    textAlign: 'center',
+    width: 'max-content',
+    color: theme.palette.error.light,
+    fontWeight: 'bold',
+}));
 
 const StyledAppInfoContainer = styled('div')({
     marginBottom: '24px',
@@ -153,56 +167,69 @@ const About: React.FC<{
 }> = ({ loading, loadingText }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const [displayText, setDisplayText] = React.useState<React.ReactNode[]>([]);
     const [charAnimationFinished, setCharAnimationFinished] = React.useState(false);
     const [showRelease, setShowRelease] = React.useState(false);
 
+    const orbadaText = ORBADA;
+    const displayText = React.useMemo(() => {
+        const chars: React.ReactNode[] = [];
+
+        // Dodaj litery ORBADA
+        for (let i = 0; i < orbadaText.length; i++) {
+            chars.push(
+                <AnimatedZoomIn key={i} delay={i * ANIMATION_SPEED * 0.15}>
+                    {orbadaText.charAt(i)}
+                </AnimatedZoomIn>
+            );
+        }
+
+        // Dodaj logo
+        chars.push(
+            <AnimatedZoomIn
+                key="logo"
+                delay={orbadaText.length * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.4}
+                initialScale={5}
+            >
+                <img src={logo} alt="Logo" style={{
+                    width: '48px',
+                    height: '48px',
+                    verticalAlign: 'middle',
+                    marginLeft: '8px',
+                    marginRight: '8px',
+                    marginBottom: '6px',
+                }} />
+            </AnimatedZoomIn>
+        );
+
+        // Dodaj "- Database Organizer"
+        chars.push(
+            <AnimatedZoomIn
+                key="subtitle"
+                delay={orbadaText.length * ANIMATION_SPEED * 0.15}
+                initialScale={2}
+            >
+                {DATABASE_ORGANIZER}
+            </AnimatedZoomIn>
+        );
+
+        return chars;
+    }, []);
+
     React.useEffect(() => {
-        const orbadaText = ORBADA;
-        let currentIndex = 0;
+        const totalDelay = (orbadaText.length + 2) * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.8;
 
-        const interval = setInterval(() => {
-            if (currentIndex < orbadaText.length - 1) {
-                setDisplayText(prev => [
-                    ...prev,
-                    <AnimatedChar key={currentIndex}>
-                        {orbadaText.charAt(currentIndex)}
-                    </AnimatedChar>
-                ]);
-            } else {
-                clearInterval(interval);
-                setDisplayText(prev => [
-                    ...prev,
-                    <AnimatedChar key={currentIndex}>
-                        <img src={logo} alt="Logo" style={{
-                            width: '48px',
-                            height: '48px',
-                            verticalAlign: 'middle',
-                            marginLeft: '8px',
-                            marginBottom: '4px',
-                        }} />
-                    </AnimatedChar>
-                ]);
-                setTimeout(() => {
-                    currentIndex++;
-                    setDisplayText(prev => [
-                        ...prev,
-                        <AnimatedChar key={currentIndex}>
-                            {'\u00A0- '}{DATABASE_ORGANIZER}
-                        </AnimatedChar>
-                    ]);
-                    setTimeout(() => {
-                        setCharAnimationFinished(true);
-                        setTimeout(() => {
-                            setShowRelease(true);
-                        }, 50);
-                    }, 300);
-                }, 500);
-            }
-            currentIndex++;
-        }, 150); // 150ms opóźnienie między literami
+        const timer1 = setTimeout(() => {
+            setCharAnimationFinished(true);
+        }, totalDelay * 800);
 
-        return () => clearInterval(interval);
+        const timer2 = setTimeout(() => {
+            setShowRelease(true);
+        }, (totalDelay + ANIMATION_SPEED * 0.05) * 1000);
+
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+        };
     }, []);
 
     return (
@@ -234,9 +261,9 @@ const About: React.FC<{
                     </TextDecorator>
                 </Typography>
                 {showRelease && (
-                    <AnimatedChar>
+                    <AnimatedReleaseName delay={0}>
                         {dborgReleaseName}
-                    </AnimatedChar>
+                    </AnimatedReleaseName>
                 )}
             </StyledAppTitle>
 

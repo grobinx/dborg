@@ -12,12 +12,12 @@ const GradientText = styled('span')(({ theme }) => ({
 
 /* 2) Neon (mocna poświata) */
 const NeonText = styled('span')(({ theme }) => ({
-    color: theme.palette.info.light,
+    color: '#51A2FF',
     textShadow: `
-    0 0 2px ${theme.palette.info.light},
-    0 0 6px ${theme.palette.info.light},
-    0 0 12px ${theme.palette.info.main},
-    0 0 24px ${theme.palette.info.main}
+    0 0 2px #51A2FF,
+    0 0 6px #51A2FF,
+    0 0 12px #155DFC,
+    0 0 24px #155DFC
   `,
     fontWeight: 700,
     letterSpacing: '0.06em',
