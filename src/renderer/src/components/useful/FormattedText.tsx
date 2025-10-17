@@ -1,4 +1,4 @@
-import { Stack, styled, Theme, Typography, useTheme } from "@mui/material";
+import { Stack, styled, SxProps, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import React, { isValidElement, ReactNode } from "react";
 import Code from "../Code";
@@ -21,11 +21,11 @@ const StyledFormattedTextParagraph = styled('span', {
     alignItems: "center",
 }));
 
-export interface FormattedTextProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface FormattedTextParagraphProps extends React.HTMLAttributes<HTMLSpanElement> {
     children?: ReactNode;
 }
 
-const FormattedTextParagraph: React.FC<FormattedTextProps> = (props) => {
+const FormattedTextParagraph: React.FC<FormattedTextParagraphProps> = (props) => {
     return (
         <StyledFormattedTextParagraph
             className="FormattedText-root"
@@ -36,7 +36,12 @@ const FormattedTextParagraph: React.FC<FormattedTextProps> = (props) => {
     );
 }
 
-export const FormattedTextElement: React.FC<React.ComponentProps<typeof ReactMarkdown>> = (props) => {
+interface FormattedTextElementProps extends React.ComponentProps<typeof ReactMarkdown> {
+    style?: React.CSSProperties;
+    sx?: SxProps<Theme>;
+}
+
+export const FormattedTextElement: React.FC<FormattedTextElementProps> = (props) => {
     const theme = useTheme();
 
     return (
@@ -60,12 +65,18 @@ export const FormattedTextElement: React.FC<React.ComponentProps<typeof ReactMar
     );
 }
 
-export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) => {
+interface FormattedTextProps {
+    text: FormattedContent;
+    style?: React.CSSProperties;
+    sx?: SxProps<Theme>;
+}
+
+export const FormattedText: React.FC<FormattedTextProps> = ({ text, style, sx }) => {
     const theme = useTheme();
 
     if (typeof text === 'string') {
         // Obsługa przypadku, gdy `text` jest zwykłym ciągiem znaków
-        return <FormattedTextElement>{text}</FormattedTextElement>;
+        return <FormattedTextElement style={style} sx={sx}>{text}</FormattedTextElement>;
     } else if (isValidElement(text)) {
         return text;
     } else if (Array.isArray(text)) {
@@ -83,7 +94,7 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
                             if (item.trim() === "-") {
                                 return <hr key={`hr-${index}`} style={{ width: "100%", border: "none", borderTop: "1px solid", borderColor: theme.palette.divider, margin: 0 }} />;
                             }
-                            return <FormattedTextElement key={`text-${index}`}>{item}</FormattedTextElement>;
+                            return <FormattedTextElement key={`text-${index}`} style={style} sx={sx}>{item}</FormattedTextElement>;
                         }
                         if (isValidElement(item)) {
                             return React.cloneElement(item, { key: `element-${index}` });
@@ -101,7 +112,7 @@ export const FormattedText: React.FC<{ text: FormattedContent }> = ({ text }) =>
                             >
                                 {item.map((subItem, index) => {
                                     if (typeof subItem === 'string') {
-                                        return <FormattedTextElement key={index}>{subItem}</FormattedTextElement>;
+                                        return <FormattedTextElement key={index} style={style} sx={sx}>{subItem}</FormattedTextElement>;
                                     }
                                     if (isValidElement(subItem)) {
                                         return React.cloneElement(subItem, { key: `element-${index}` });
