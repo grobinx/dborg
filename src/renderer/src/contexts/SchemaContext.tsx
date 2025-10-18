@@ -59,7 +59,6 @@ type SchemaEventMethod = {
 interface SchemaContextValue {
     schemas: SchemaRecord[];
     fetchSchema: (schemaId: string) => Promise<SchemaRecord>;
-    fetchSchemas: (query?: string) => Promise<void>;
     reloadSchemas: () => Promise<void>;
     createSchema: (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<string | undefined>;
     updateSchema: (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<boolean | undefined>;
@@ -76,9 +75,6 @@ interface SchemaContextValue {
 const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
 
 export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Przenieś całą logikę ze SchemaConnectionManager tutaj!
-    // Zmień setSchemas na useState, itd.
-    // Przykład:
     const { subscribe, unsubscribe, queueMessage } = useMessages();
     const { internal, drivers, connections } = useDatabase();
     const { addToast } = useToast();
@@ -87,8 +83,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { onEvent, emitEvent } = useListeners<SchemaEvent>();
 
     const [schemas, setSchemas] = useState<SchemaRecord[]>([]);
-
-    const t_connectionSchemaManager = t("connection-schemas-manager", "Connection schemas Manager");
 
     const rowToSchemaRecord = (row: api.QueryResultRow): SchemaRecord => {
         return {
@@ -527,7 +521,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             value={{
                 schemas,
                 fetchSchema,
-                fetchSchemas,
                 reloadSchemas,
                 createSchema,
                 updateSchema,
