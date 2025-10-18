@@ -11,6 +11,7 @@ import clsx from './utils/clsx';
 const ORBADA = 'ORBADA';
 const DATABASE_ORGANIZER = 'Database Organizer';
 const ANIMATION_SPEED = 1;
+const totalDelay = (ORBADA.length + 2) * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.8;
 
 const StyledAppTitle = styled('div')({
     transition: "all 0.2s ease-in-out",
@@ -26,7 +27,7 @@ const StyledAppTitle = styled('div')({
     width: 750,
     height: 120,
     position: 'relative',
-    border: '2px solid #fff',
+    //border: '2px solid #fff',
     '&.char-animation-finished': {
         animation: `outline-effect ${ANIMATION_SPEED * 0.5}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
     },
@@ -69,6 +70,12 @@ const zoomIn = (initialScale: number = 3) => keyframes`
   100% { transform: scale(1); opacity: 1; }
 `;
 
+const afterWave = (initialScale: number = 1.05, translateY: number = 8) => keyframes`
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(${translateY}px) scale(${initialScale}); }
+  100% { transform: translateY(0) scale(1); }
+`;
+
 // DODANE: animacja z utrzymanym przesunięciem na środek
 const zoomInCentered = keyframes`
   0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
@@ -99,7 +106,7 @@ const AnimatedReleaseName = styled('span')<{ delay: number }>(({ delay, theme })
     fontWeight: 'bold',
 }));
 
-const StyledAppInfoContainer = styled('div')({
+const StyledAppInfoContainer = styled('div')<{ delayShift: number }>(({ delayShift = 0 }) => ({
     marginBottom: '24px',
     textAlign: 'left',
     fontSize: '16px',
@@ -107,9 +114,16 @@ const StyledAppInfoContainer = styled('div')({
     background: 'rgba(0, 0, 0, 0.5)',
     padding: '16px',
     borderRadius: '8px',
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.5)',
     zIndex: 2,
-});
+    boxShadow: '0 0 0 3px rgba(50, 197, 62, 0.6)',
+    animation: `${afterWave()} ${ANIMATION_SPEED * 0.8}s cubic-bezier(0.45, 0.05, 0.55, 0.95) ${totalDelay - 0.3 + ANIMATION_SPEED * delayShift}s`,
+}));
+
+const StyledTextInfo = styled('div')<{ index: number }>(({ index, theme }) => ({
+    ...theme.typography.body1,
+    fontSize: '20px',
+    animation: `${afterWave(1.025 - index * 0.003, 8 - index * 0.5)} ${ANIMATION_SPEED * (0.3 + index * 0.1)}s cubic-bezier(0.45, 0.05, 0.55, 0.95) ${totalDelay - 0.3 + index * 0.05}s`,
+}));
 
 const AnimatedWaves = styled('div')({
     position: 'absolute',
@@ -170,15 +184,14 @@ const About: React.FC<{
     const [charAnimationFinished, setCharAnimationFinished] = React.useState(false);
     const [showRelease, setShowRelease] = React.useState(false);
 
-    const orbadaText = ORBADA;
     const displayText = React.useMemo(() => {
         const chars: React.ReactNode[] = [];
 
         // Dodaj litery ORBADA
-        for (let i = 0; i < orbadaText.length; i++) {
+        for (let i = 0; i < ORBADA.length; i++) {
             chars.push(
                 <AnimatedZoomIn key={i} delay={i * ANIMATION_SPEED * 0.15}>
-                    {orbadaText.charAt(i)}
+                    {ORBADA.charAt(i)}
                 </AnimatedZoomIn>
             );
         }
@@ -187,7 +200,7 @@ const About: React.FC<{
         chars.push(
             <AnimatedZoomIn
                 key="logo"
-                delay={orbadaText.length * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.4}
+                delay={ORBADA.length * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.4}
                 initialScale={5}
             >
                 <img src={logo} alt="Logo" style={{
@@ -205,7 +218,7 @@ const About: React.FC<{
         chars.push(
             <AnimatedZoomIn
                 key="subtitle"
-                delay={orbadaText.length * ANIMATION_SPEED * 0.15}
+                delay={ORBADA.length * ANIMATION_SPEED * 0.15}
                 initialScale={2}
             >
                 {DATABASE_ORGANIZER}
@@ -216,8 +229,6 @@ const About: React.FC<{
     }, []);
 
     React.useEffect(() => {
-        const totalDelay = (orbadaText.length + 2) * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.8;
-
         const timer1 = setTimeout(() => {
             setCharAnimationFinished(true);
         }, totalDelay * 800);
@@ -268,7 +279,7 @@ const About: React.FC<{
             </StyledAppTitle>
 
             {
-                <StyledAppInfoContainer style={{
+                <StyledAppInfoContainer delayShift={0} style={{
                     visibility: loading ? 'visible' : 'hidden',
                 }}>
                     <span style={{
@@ -287,19 +298,18 @@ const About: React.FC<{
             }
 
             {/* Informacje o aplikacji */}
-            <StyledAppInfoContainer>
-                {/*<Typography><strong>{t('release-dd', 'Release:')}</strong> {dborgReleaseName}</Typography>*/}
-                <Typography fontSize="20px"><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</Typography>
-                <Typography fontSize="20px"><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</Typography>
-                <Typography fontSize="20px"><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></Typography>
-                <Typography fontSize="20px"><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</Typography>
-                <Typography fontSize="20px"><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</Typography>
-                <Typography fontSize="20px"><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</Typography>
-                <Typography fontSize="20px"><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
+            <StyledAppInfoContainer delayShift={0.1}>
+                <StyledTextInfo index={0}><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</StyledTextInfo>
+                <StyledTextInfo index={1}><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</StyledTextInfo>
+                <StyledTextInfo index={2}><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></StyledTextInfo>
+                <StyledTextInfo index={3}><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</StyledTextInfo>
+                <StyledTextInfo index={4}><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</StyledTextInfo>
+                <StyledTextInfo index={5}><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</StyledTextInfo>
+                <StyledTextInfo index={6}><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
                     E: {window.electron.versions.electron},
                     N: {window.electron.versions.node},
                     C: {window.electron.versions.chrome}
-                </Typography>
+                </StyledTextInfo>
             </StyledAppInfoContainer>
         </div >
     );
