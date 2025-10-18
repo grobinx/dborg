@@ -4,6 +4,8 @@ import { DialogProps } from '@toolpad/core';
 import { useTranslation } from 'react-i18next';
 import { DefaultDialogProps } from './DefaultDialogProps';
 import { Button } from '@renderer/components/buttons/Button';
+import { InputDecorator } from '@renderer/components/inputs/decorators/InputDecorator';
+import { PasswordField } from '@renderer/components/inputs/PasswordField';
 
 export interface PasswordDialogProps extends DefaultDialogProps {
 }
@@ -37,16 +39,19 @@ function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogPr
             <DialogTitle>{t("enter-password", "Enter Password")}</DialogTitle>
 
             <DialogContent>
-                <TextField
-                    inputRef={textFieldRef}
-                    label={t("password", "Password")}
-                    type="password"
-                    fullWidth
-                    value={password}
-                    onChange={(event) => setPassword(event.currentTarget.value)}
-                    onKeyDown={handleKeyDown} // Obsługa klawisza Enter
-                    {...slotProps?.textField}
-                />
+                <InputDecorator
+                    indicator={false}
+                >
+                    <PasswordField
+                        value={password}
+                        onChange={(value) => setPassword(value)}
+                        inputProps={{
+                            onKeyDown: handleKeyDown,
+                        }}
+                        size='large'
+                        autoFocus
+                    />
+                </InputDecorator>
             </DialogContent>
 
             <DialogActions>

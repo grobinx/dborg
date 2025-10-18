@@ -118,22 +118,6 @@ export const CHANGE_SIDE_BAR_PLACEMENT = "change-side-bar-placement";
 export const FETCH_SCHEMA = "fetch-schema";
 
 /**
- * Connect to a database.
- * @param schemaId The ID of the schema to connect to.
- * @returns ConnectionInfo object containing connection details.
- */
-export const SCHEMA_CONNECT = "schema-connect";
-
-/**
- * Test the connection to a database.
- * @param driverUniqueId The unique ID of the driver to use for the connection.
- * @param usePassword Whether to use a password for the connection.
- * @param properties The connection properties.
- * @returns A promise that resolves when the connection is tested, true or undefined
- */
-export const SCHEMA_TEST_CONNECTION = "schema-test-connection";
-
-/**
  * Delete a schema by its ID.
  * @param schemaId The ID of the schema to delete.
  * @returns A promise that resolves when the schema is deleted.

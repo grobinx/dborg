@@ -15,7 +15,7 @@ import { ContainerType, useContainers } from "@renderer/contexts/ApplicationCont
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
-import { SchemaRecord } from "@renderer/contexts/SchemaContext";
+import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 
 export interface SchemaAssistantProps extends BoxProps {
     slotProps?: {
@@ -93,6 +93,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
+    const { testConnection, connectToDatabase } = useSchema();
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -237,30 +238,30 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         })
     };
 
-    const testConnection = (schema: SchemaParametersType) => {
-        const test = async () => {
-            try {
-                if (!schema.driverUniqueId) {
-                    throw new Error(t("driver-unique-id-required", "Driver unique ID is required"));
-                }
-                if (!schema.properties) {
-                    throw new Error(t("profile-properties-required", "Profile properties are required"));
-                }
-                await sendMessage(Messages.SCHEMA_TEST_CONNECTION, schema.driverUniqueId, schema.usePassword, schema.properties, schema.schemaName);
-            }
-            catch (error) {
-                addToast("error",
-                    t("profile-test-error", "An error occurred while testing the profile connection \"{{name}}\".", { name: schema.schemaName }),
-                    {
-                        source: t("profile-assistant", "Profile assistant"), reason: error,
-                    }
-                );
-            }
-        }
+    const handleTestConnection = async (schema: SchemaParametersType) => {
         setTesting(true);
-        test().finally(() => {
+        try {
+            if (!schema.driverUniqueId) {
+                addToast("warning",
+                    t("driver-unique-id-required", "Driver unique ID is required"),
+                    { source: t("profile-assistant", "Profile assistant") }
+                );
+                return;
+            }
+            if (!schema.properties) {
+                addToast("warning",
+                    t("profile-properties-required", "Profile properties are required"),
+                    { source: t("profile-assistant", "Profile assistant") }
+                );
+                return;
+            }
+            await testConnection(schema.driverUniqueId, schema.usePassword, schema.properties, schema.schemaName ?? "-");
+        }
+        catch (error) {
+        }
+        finally {
             setTesting(false);
-        })
+        }
     };
 
     return (
@@ -315,7 +316,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                         {...slotProps?.button}
                         onClick={() => {
                             if (schemaRef.current) {
-                                testConnection(schemaRef.current.getSchema());
+                                handleTestConnection(schemaRef.current.getSchema());
                             }
                         }}
                         loading={testing}
@@ -341,8 +342,9 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 {(activeStep === 2) && ([
                     < Button
                         {...slotProps?.button}
-                        onClick={() => schemaParams.uniqueId && queueMessage(Messages.SCHEMA_CONNECT, schemaParams.uniqueId)}
+                        onClick={() => connectToDatabase(schemaParams.uniqueId!)}
                         key="connect"
+                        disabled={!schemaParams.uniqueId}
                     >
                         {t("connect", "Connect")}
                     </Button>,

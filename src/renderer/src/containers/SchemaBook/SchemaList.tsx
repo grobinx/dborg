@@ -164,7 +164,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { schemas, disconnectFromAllDatabases, reloadSchemas } = useSchema();
+    const { schemas, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection } = useSchema();
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
@@ -175,6 +175,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
+    const [erroring, setErroring] = React.useState<string[]>([]);
     const [deleting, setDeleting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
     const actions = React.useRef<ActionManager<SchemaListContext>>(new ActionManager());
@@ -369,47 +370,37 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [t_connectionSchema]);
 
     // Function to handle testing the schema connection
-    const handleTestConnection = React.useCallback((schema: Schema) => {
+    const handleTestConnection = React.useCallback(async (schema: Schema) => {
         setTesting((prev) => [...prev, schema.sch_id]);
-        sendMessage(Messages.SCHEMA_TEST_CONNECTION, schema.sch_drv_unique_id, schema.sch_use_password, schema.sch_properties, schema.sch_name)
-            .finally(() => {
-                setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
-            });
-    }, []);
+        try {
+            await testConnection(schema.sch_drv_unique_id, schema.sch_use_password, schema.sch_properties, schema.sch_name);
+        } catch (error) {
+        } finally {
+            setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
+        }
+    }, [testConnection]);
 
-    const handleConnect = React.useCallback((schemaId: string) => {
-        const connect = async () => {
-            const schemaName = data?.find((record) => record.sch_id === schemaId)?.sch_name;
-            try {
-                await sendMessage(Messages.SCHEMA_CONNECT, schemaId) as api.ConnectionInfo;
-            } catch (error) {
-                addToast(
-                    "error",
-                    t("schema-connection-error", "Failed to connect to {{name}}!", { name: schemaName ?? schemaId }),
-                    {
-                        source: t_connectionSchema,
-                        reason: error,
-                    }
-                );
-            } finally {
-                setConnecting((prev) => prev.filter((id) => id !== schemaId));
-            }
-        };
-
+    const handleConnect = React.useCallback(async (schemaId: string) => {
         setConnecting((prev) => [...prev, schemaId]);
-
-        connect();
-    }, [data, t_connectionSchema]);
+        setErroring((prev) => prev.filter((id) => id !== schemaId));
+        try {
+            await connectToDatabase(schemaId);
+        } catch (error) {
+            setErroring((prev) => [...prev, schemaId]);
+        } finally {
+            setConnecting((prev) => prev.filter((id) => id !== schemaId));
+        }
+    }, [connectToDatabase]);
 
     const handleDisconnectAll = React.useCallback(async (schemaId: string) => {
         setDisconnecting((prev) => [...prev, schemaId]);
         try {
             await disconnectFromAllDatabases(schemaId);
-            setData(await connectionStatus(schemas));
+        } catch (error) {
         } finally {
             setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
         }
-    }, [schemas, connectionStatus]);
+    }, [disconnectFromAllDatabases]);
 
     const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         try {
@@ -527,6 +518,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     />
                 </div>
             );
+        }
+        if (erroring.includes(record.sch_id)) {
+            return <theme.icons.Error {...slotProps?.icon} />;
         }
         return <theme.icons.Disconnected {...slotProps?.icon} />;
     };

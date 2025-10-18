@@ -201,6 +201,10 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             connection = await drivers.connect(driverId, properties);
         }
         catch (error) {
+            addToast("error",
+                t("profile-connection-error", "Failed to connect to {{name}}!", { name: schema.sch_name }),
+                { source: t("profile-context", "Profile context") }
+            );
             emitEvent("connecting", { schema, status: "error", error });
             throw error;
         }
@@ -226,8 +230,14 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         const schema = (await connections.userData.get(uniqueId, "schema")) as SchemaRecord;
         emitEvent("disconnecting", { schema, status: "started", connectionUniqueId: uniqueId });
-        await connections.close(uniqueId);
-        emitEvent("disconnecting", { schema, status: "success", connectionUniqueId: uniqueId });
+        try {
+            await connections.close(uniqueId);
+            emitEvent("disconnecting", { schema, status: "success", connectionUniqueId: uniqueId });
+        }
+        catch (error) {
+            emitEvent("disconnecting", { schema, status: "error", connectionUniqueId: uniqueId, error });
+            throw error;
+        }
     }, [connections]);
 
     const disconnectFromAllDatabases = useCallback(async (schemaId: string) => {
@@ -240,12 +250,13 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, [connections, disconnectFromDatabase]);
 
     const testConnection = useCallback(async (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => {
+        const schema = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties };
         try {
-            emitEvent("testing", { schema: { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties }, status: "started" });
+            emitEvent("testing", { schema, status: "started" });
             const passwordProperty = drivers.find(driverUniqueId)?.passwordProperty;
             const passwordHandled = await passwordPrompt(usePassword, passwordProperty, properties);
             if (!passwordHandled) {
-                emitEvent("testing", { schema: { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties }, status: "cancel" });
+                emitEvent("testing", { schema, status: "cancel" });
                 return;
             }
 
@@ -254,18 +265,18 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             addToast("success",
                 t("profile-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }),
-                { source: t("profile-assistant", "Profile assistant") }
+                { source: t("profile-context", "Profile context") }
             );
-            emitEvent("testing", { schema: { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties }, status: "success" });
+            emitEvent("testing", { schema, status: "success" });
 
             return true;
         }
         catch (error) {
             addToast("error",
                 t("profile-test-error", "An error occurred while testing the profile connection \"{{name}}\".", { name: schemaName }),
-                { source: t("profile-assistant", "Profile assistant"), reason: error }
+                { source: t("profile-context", "Profile context"), reason: error }
             );
-            emitEvent("testing", { schema: { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties }, status: "error", error });
+            emitEvent("testing", { schema, status: "error", error });
             throw error;
         }
     }, [internal, drivers, connections, passwordPrompt]);
@@ -479,8 +490,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, [internal, checkSchemaExists, passwordRetention, schemas]);
 
     useEffect(() => {
-        subscribe(Messages.SCHEMA_TEST_CONNECTION, testConnection);
-        subscribe(Messages.SCHEMA_CONNECT, connectToDatabase);
         subscribe(Messages.FETCH_SCHEMA, fetchSchema);
         subscribe(Messages.SCHEMA_DELETE, deleteSchema);
         subscribe(Messages.SCHEMA_CREATE, createSchema);
@@ -488,8 +497,6 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         subscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
 
         return () => {
-            unsubscribe(Messages.SCHEMA_TEST_CONNECTION, testConnection);
-            unsubscribe(Messages.SCHEMA_CONNECT, connectToDatabase);
             unsubscribe(Messages.FETCH_SCHEMA, fetchSchema);
             unsubscribe(Messages.SCHEMA_DELETE, deleteSchema);
             unsubscribe(Messages.SCHEMA_CREATE, createSchema);
@@ -497,16 +504,11 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             unsubscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
         };
     }, [
-        testConnection,
-        connectToDatabase,
         fetchSchema,
         fetchSchemas,
         deleteSchema,
         createSchema,
         updateSchema,
-        reloadSchemas,
-        disconnectFromDatabase,
-        disconnectFromAllDatabases,
         swapSchemasOrder,
     ]);
 
