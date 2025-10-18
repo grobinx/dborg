@@ -65,7 +65,7 @@ export const FormattedTextElement: React.FC<FormattedTextElementProps> = (props)
     );
 }
 
-interface FormattedTextProps {
+export interface FormattedTextProps {
     text: FormattedContent;
     style?: React.CSSProperties;
     sx?: SxProps<Theme>;
