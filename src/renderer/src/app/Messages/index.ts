@@ -108,58 +108,6 @@ export const SIDE_BAR_BUTTON_TOGGLE_EXPAND = "side-bar-button-toggle-expand";
  */
 export const CHANGE_SIDE_BAR_PLACEMENT = "change-side-bar-placement";
 
-// *** SchemaConnectionManager messages ***
-
-/**
- * Fetch a schema by its ID.
- * @param schemaId The ID of the schema to fetch.
- * @returns The fetched schema.
- */
-export const FETCH_SCHEMA = "fetch-schema";
-
-/**
- * Delete a schema by its ID.
- * @param schemaId The ID of the schema to delete.
- * @returns A promise that resolves when the schema is deleted.
- */
-export const SCHEMA_DELETE = "schema-delete";
-/**
- * Delete a schema successfully.
- * @param schemaId The ID of the schema that was deleted.
- */
-export const SCHEMA_DELETE_SUCCESS = "schema-delete-success";
-
-/**
- * Create a new schema.
- * @param {Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected">} schema The schema object to create. Omit the `sch_id` property.
- * @returns A schemaId or undefined if cancel.
- */
-export const SCHEMA_CREATE = "schema-create";
-/**
- * Create a new schema successfully.
- * @param {SchemaRecord} schema The schema object that was created. 
- */
-export const SCHEMA_CREATE_SUCCESS = "schema-create-success";
-
-/**
- * Update an existing schema.
- * @param {Omit<SchemaRecord, "sch_updated" | "sch_last_selected">} schema The schema object to update.
- * @returns A promise that resolves when the schema is updated.
- */
-export const SCHEMA_UPDATE = "schema-update";
-/**
- * Update an existing schema successfully.
- * @param {SchemaRecord} schema The schema object that was updated. 
- */
-export const SCHEMA_UPDATE_SUCCESS = "schema-update-success";
-
-/**
- * Swap two schemas order.
- * @param sourceSchemaId The source schema id to swap.
- * @param targetSchemaId The target schema id to swap.
- */
-export const SCHEMA_SWAP_ORDER = "schema-swap-order";
-
 export const SESSION_GET_METADATA_START = "session:get-metadata:start";
 export type SessionGetMetadataStart = {
     connectionId: string; // Unique identifier for the connection

@@ -3,7 +3,7 @@ import logo from '../../../resources/dborg.png';
 import { useTranslation } from 'react-i18next';
 import dborgPackage from '../../../package.json';
 import { dborgDate, dborgDuration, dborgReleaseName, version } from '../../api/consts';
-import { alpha, keyframes, styled, Typography, useTheme } from '@mui/material';
+import { keyframes, styled, Typography, useTheme } from '@mui/material';
 import { MorphingSvgPaths } from './components/MorphingSvgs';
 import { TextDecorator } from './components/useful/TextDecorator';
 import clsx from './utils/clsx';
@@ -29,19 +29,15 @@ const StyledAppTitle = styled('div')({
     position: 'relative',
     //border: '2px solid #fff',
     '&.char-animation-finished': {
-        animation: `outline-effect ${ANIMATION_SPEED * 0.5}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+        animation: `outline-effect ${ANIMATION_SPEED * 0.8}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
     },
     '@keyframes outline-effect': {
         '0%': {
             transform: 'scale(0.95)',
             boxShadow: `
                 0px 4px 10px rgba(0, 0, 0, 0.5),
-                0 0 0 2px #fff,
                 0 0 0 3px rgba(50, 197, 62, 0.6)
             `,
-        },
-        '10%': {
-            transform: 'scale(1.1)',
         },
         '11%': {
             boxShadow: `
@@ -49,20 +45,23 @@ const StyledAppTitle = styled('div')({
                 0 0 0 20px rgba(0, 255, 0, 0.6)
             `,
         },
+        '20%': {
+            transform: 'scale(1.1)',
+        },
         '90%': {
             transform: 'scale(1)',
         },
         '100%': {
             boxShadow: `
-                0px 4px 10px rgba(0, 0, 0, 0.5),
-                0 0 0 150px rgba(0, 255, 0, 0),
+                0px 4px 150px rgba(0, 0, 0, 0.5),
+                0 0 0 350px rgba(0, 255, 0, 0),
                 0 0 0 3px rgba(50, 197, 62, 0.6)
             `,
         },
     },
 });
 
-const zoomIn = (initialScale: number = 3) => keyframes`
+const zoomIn = (initialScale: number = 4) => keyframes`
   0% { transform: scale(${initialScale}); opacity: 0; }
   50% { opacity: 1; }
   70% { transform: scale(0.95); }

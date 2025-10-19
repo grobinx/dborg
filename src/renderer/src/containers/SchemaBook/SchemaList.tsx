@@ -160,11 +160,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { t } = useTranslation();
     const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
     const [searchDelay] = useSetting<number>("app", "search.delay");
-    const [loading, setLoading] = React.useState(true);
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { schemas, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection } = useSchema();
+    const { initialized, schemas, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection, deleteSchema, swapSchemasOrder } = useSchema();
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
@@ -172,7 +171,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [displayData, searchedText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
     const { addToast } = useToast();
-    const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
+    const { sendMessage, queueMessage } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
     const [erroring, setErroring] = React.useState<string[]>([]);
@@ -190,6 +189,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const searchRef = React.useRef<HTMLInputElement>(null);
 
     console.count("SchemaList render");
+    console.log("Schemas initialized", initialized);
 
     const t_connectionSchema = t("connection-profiles", "Connection profiles");
 
@@ -345,24 +345,22 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [sortList]);
 
     React.useEffect(() => {
+        if (!initialized) {
+            return;
+        }
         connectionStatus(schemas).then((data) => {
             setData(data);
-            setLoading(false);
         });
-    }, [schemas, sessions, connectionStatus]);
+    }, [initialized, schemas, sessions, connectionStatus]);
 
     const handleDelete = React.useCallback(async (id: string) => {
         setDeleting((prev) => [...prev, id]);
         try {
-            await sendMessage(Messages.SCHEMA_DELETE, id);
+            await deleteSchema(id);
         } catch (error) {
-            addToast(
-                "error",
+            addToast("error",
                 t("schema-delete-error", "Failed to delete the connection schema!"),
-                {
-                    source: t_connectionSchema,
-                    reason: error,
-                }
+                { source: t_connectionSchema, reason: error }
             );
         } finally {
             setDeleting((prev) => prev.filter((schemaId) => schemaId !== id));
@@ -404,15 +402,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
 
     const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         try {
-            await sendMessage(Messages.SCHEMA_SWAP_ORDER, sourceSchemaId, targetSchemaId, group);
+            await swapSchemasOrder(sourceSchemaId, targetSchemaId, group);
         } catch (error) {
-            addToast(
-                "error",
+            addToast("error",
                 t("schema-order-update-error", "Failed to update schema order!"),
-                {
-                    source: t_connectionSchema,
-                    reason: error,
-                }
+                { source: t_connectionSchema, reason: error }
             );
             return;
         }
@@ -470,34 +464,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
         }
     }
-
-    React.useEffect(() => {
-        const handleSchemaCreateSuccess = (newSchema: Schema) => {
-            connectionStatus([...(data ?? []), newSchema]).then((updated) => {
-                setData(updated);
-            });
-        };
-
-        const handleSchemaUpdate = (updatedSchema: Schema) => {
-            connectionStatus([...(data ?? []), updatedSchema]).then((updated) => {
-                setData(updated);
-            });
-        };
-
-        const handleSchemaDeleteSuccess = (deletedSchemaId: string) => {
-            setData((prevData) => prevData?.filter((schema) => schema.sch_id !== deletedSchemaId) ?? null);
-        };
-
-        subscribe(Messages.SCHEMA_CREATE_SUCCESS, handleSchemaCreateSuccess);
-        subscribe(Messages.SCHEMA_UPDATE_SUCCESS, handleSchemaUpdate);
-        subscribe(Messages.SCHEMA_DELETE_SUCCESS, handleSchemaDeleteSuccess);
-
-        return () => {
-            unsubscribe(Messages.SCHEMA_CREATE_SUCCESS, handleSchemaCreateSuccess);
-            unsubscribe(Messages.SCHEMA_UPDATE_SUCCESS, handleSchemaUpdate);
-            unsubscribe(Messages.SCHEMA_DELETE_SUCCESS, handleSchemaDeleteSuccess);
-        };
-    }, [connectionStatus]);
 
     const renderStatusIcon = (record: Schema) => {
         if (connecting.includes(record.sch_id)) {
@@ -617,7 +583,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 {...slotProps?.content}
                 className="SchemaList-content"
             >
-                {!loading &&
+                {initialized &&
                     <List {...slotProps?.list} onKeyDown={handleSearchKeyDown}>
                         {data !== null && displayData?.map((record) => {
                             const group = record.sch_group ?? t("ungrouped", "Ungrouped");
@@ -753,7 +719,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         })}
                     </List>
                 }
-                {loading && <Typography>Loading data...</Typography>}
+                {!initialized && <Typography>Loading data...</Typography>}
             </SchemaListContent>
         </SchemaListRoot>
     );

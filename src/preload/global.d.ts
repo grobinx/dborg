@@ -38,6 +38,7 @@ declare global {
             path: {
                 get: (name: dborgPath.DBORG_PATHS) => Promise<string>
                 ensureDir: (path: string) => Promise<void>
+                list: (path: string, mask?: string) => Promise<string[]>
             },
             file: {
                 readFile: (path: string, charCode?: BufferEncoding) => Promise<string>,

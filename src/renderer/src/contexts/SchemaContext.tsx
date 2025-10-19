@@ -15,6 +15,7 @@ import { SchemaUsePasswordType } from "@renderer/containers/SchemaAssistant/Sche
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
 import { emit } from "process";
+import { Add } from "@mui/icons-material";
 
 // Define the schema structure
 export interface SchemaRecord {
@@ -35,33 +36,54 @@ export interface SchemaRecord {
 }
 
 export type SchemaEventType =
-    | 'fetched'
-    | 'created'
-    | 'updated'
-    | 'deleted'
+    | 'creating'
+    | 'updating'
+    | 'deleting'
     | 'connecting'
     | 'disconnecting'
     | 'testing'
+    | 'fetching'
+    | 'storing'
     ;
 
 type SchemaEventConnecting = { schema: SchemaRecord; status: 'started' | 'cancel' | 'success' | 'error'; connection?: api.ConnectionInfo; error?: any };
 type SchemaEventDisconnecting = { schema: SchemaRecord; connectionUniqueId: string; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
 type SchemaEventTesting = { schema: SchemaRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type SchemaEventFetching = { status: 'started' | 'success' | 'error'; error?: any };
+type SchemaEventStoring = { status: 'started' | 'success' | 'error'; error?: any };
+type SchemaEventCreating = { schema: SchemaRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type SchemaEventUpdating = { schema: SchemaRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type SchemaEventDeleting = { schema: SchemaRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
 
-type SchemaEvent = SchemaEventConnecting | SchemaEventDisconnecting | SchemaEventTesting;
+type SchemaEvent =
+    | SchemaEventConnecting
+    | SchemaEventDisconnecting
+    | SchemaEventTesting
+    | SchemaEventFetching
+    | SchemaEventStoring
+    | SchemaEventCreating
+    | SchemaEventUpdating
+    | SchemaEventDeleting
+    ;
 
 type SchemaEventMethod = {
     (type: 'connecting', callback: (event: SchemaEventConnecting) => void): () => void;
     (type: 'disconnecting', callback: (event: SchemaEventDisconnecting) => void): () => void;
     (type: 'testing', callback: (event: SchemaEventTesting) => void): () => void;
+    (type: 'fetching', callback: (event: SchemaEventFetching) => void): () => void;
+    (type: 'storing', callback: (event: SchemaEventStoring) => void): () => void;
+    (type: 'creating', callback: (event: SchemaEventCreating) => void): () => void;
+    (type: 'updating', callback: (event: SchemaEventUpdating) => void): () => void;
+    (type: 'deleting', callback: (event: SchemaEventDeleting) => void): () => void;
 };
 
 interface SchemaContextValue {
+    initialized: boolean;
     schemas: SchemaRecord[];
-    fetchSchema: (schemaId: string) => Promise<SchemaRecord>;
+    getSchema: (schemaId: string, throwError?: boolean) => SchemaRecord | null;
     reloadSchemas: () => Promise<void>;
-    createSchema: (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<string | undefined>;
-    updateSchema: (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version">) => Promise<boolean | undefined>;
+    createSchema: (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<string | undefined>;
+    updateSchema: (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<boolean | undefined>;
     deleteSchema: (schemaId: string) => Promise<boolean>;
     swapSchemasOrder: (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => Promise<void>;
     connectToDatabase: (schemaId: string) => Promise<api.ConnectionInfo | undefined>;
@@ -75,63 +97,89 @@ interface SchemaContextValue {
 const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
 
 export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { subscribe, unsubscribe, queueMessage } = useMessages();
-    const { internal, drivers, connections } = useDatabase();
+    const { drivers, connections } = useDatabase();
     const { addToast } = useToast();
     const dialogs = useDialogs();
     const { t } = useTranslation();
     const { onEvent, emitEvent } = useListeners<SchemaEvent>();
-
     const [schemas, setSchemas] = useState<SchemaRecord[]>([]);
+    const [schemaInitialized, setSchemaInitialized] = useState<boolean>(false);
+    const schemasRef = React.useRef<SchemaRecord[]>(schemas);
+    const [justFetched, setJustFetched] = useState<boolean>(false);
 
-    const rowToSchemaRecord = (row: api.QueryResultRow): SchemaRecord => {
-        return {
-            sch_id: row.sch_id as string,
-            sch_created: row.sch_created as string,
-            sch_updated: row.sch_updated as string,
-            sch_drv_unique_id: row.sch_drv_unique_id as string,
-            sch_group: row.sch_group as string,
-            sch_pattern: row.sch_pattern as string,
-            sch_name: row.sch_name as string,
-            sch_color: row.sch_color as string,
-            sch_use_password: row.sch_use_password as SchemaUsePasswordType,
-            sch_properties: JSON.parse(row.sch_properties as string ?? "{}"),
-            sch_last_selected: row.sch_last_selected as string,
-            sch_db_version: row.sch_db_version as string,
-            sch_script: row.sch_script as string,
-            sch_order: Number.parseInt(row.sch_order as string),
-        };
-    };
-
-    const fetchSchema = useCallback(async (schemaId: string) => {
-        const existingSchema = schemas.find((s) => s.sch_id === schemaId);
-        if (existingSchema) {
-            return existingSchema; // Zwróć schemat z pamięci, jeśli już istnieje
+    const getSchema = useCallback((schemaId: string, throwError: boolean = true) => {
+        if (schemasRef.current) {
+            const schema = schemasRef.current.find((s) => s.sch_id === schemaId);
+            if (schema) {
+                return JSON.parse(JSON.stringify(schema)) as SchemaRecord;
+            }
         }
-
-        const { rows } = await internal.query("select * from schemas where sch_id = ?", [schemaId]);
-        if (!rows.length) {
-            throw new Error(t("schema-id-not-found", "Schema {{schemaId}} not found!", { schemaId }));
+        if (throwError) {
+            throw new Error(t("profile-id-not-found", "Profile not found!"));
         }
-        const schema = rowToSchemaRecord(rows[0]);
-        setSchemas((prev) => [...prev, schema]); // Dodaj nowy schemat do listy
-        return schema;
-    }, [internal, schemas]);
+        return null;
+    }, []);
 
-    const fetchSchemas = useCallback(async (query?: string) => {
-        const { rows } = await internal.query(query ?? "select * from schemas");
-        const loadedSchemas = rows.map(rowToSchemaRecord);
-        setSchemas(loadedSchemas);
-        //emitEvent("fetched", { type: "fetched", schema: loadedSchemas });
-    }, [internal]);
+    const loadSchemas = useCallback(async () => {
+        emitEvent('fetching', { status: 'started' });
+        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+        const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
+        if (data) {
+            try {
+                const loadedSchemas = JSON.parse(data);
+                setSchemas(loadedSchemas);
+                setJustFetched(true);
+                setSchemaInitialized(true);
+            } catch (error) {
+                addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
+                emitEvent('fetching', { status: 'error', error });
+                throw error;
+            }
+        }
+        emitEvent('fetching', { status: 'success' });
+    }, []);
+
+    const storeSchemas = useCallback(async (schemas: SchemaRecord[]) => {
+        emitEvent('storing', { status: 'started' });
+        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+        await window.dborg.path.ensureDir(dataPath);
+        const backupData = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
+        if (backupData) {
+            await window.dborg.path.ensureDir(`${dataPath}/backup`);
+            const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
+            await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, backupData);
+            const backupFiles =
+                (await window.dborg.path.list(`${dataPath}/backup`, "schemas.json.*"))
+                    .sort((a, b) => b.localeCompare(a));
+            if (backupFiles.length > 10) {
+                for (let i = 10; i < backupFiles.length; i++) {
+                    await window.dborg.file.deleteFile(`${dataPath}/backup/${backupFiles[i]}`);
+                }
+            }
+        }
+        await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
+        emitEvent('storing', { status: 'success' });
+    }, []);
+
+    useEffect(() => {
+        schemasRef.current = schemas;
+        if (!schemaInitialized) {
+            return;
+        }
+        if (justFetched) {
+            setJustFetched(false);
+            return;
+        }
+        storeSchemas(schemas);
+    }, [schemas, storeSchemas]);
 
     React.useEffect(() => {
-        fetchSchemas();
-    }, [fetchSchemas]);
+        loadSchemas();
+    }, [loadSchemas]);
 
     const reloadSchemas = useCallback(async () => {
-        await fetchSchemas();
-    }, [fetchSchemas]);
+        await loadSchemas();
+    }, [loadSchemas]);
 
     const passwordPrompt = useCallback(async (
         usePassword: SchemaUsePasswordType,
@@ -172,13 +220,16 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, [connections, dialogs, t]);
 
     const connectToDatabase = useCallback(async (schemaId: string) => {
+        const schema = getSchema(schemaId)!;
+
+        emitEvent("connecting", { schema, status: "started" });
+
         const confirm = await checkExistingConnection(schemaId);
         if (!confirm) {
-            return; // Użytkownik anulował operację
+            emitEvent("connecting", { schema, status: "cancel" });
+            return;
         }
 
-        const schema = await fetchSchema(schemaId);
-        emitEvent("connecting", { schema, status: "started" });
         const driverId = schema.sch_drv_unique_id as string;
         const properties = schema.sch_properties;
         const usePassword = schema.sch_use_password as SchemaUsePasswordType;
@@ -197,29 +248,23 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         catch (error) {
             addToast("error",
                 t("profile-connection-error", "Failed to connect to {{name}}!", { name: schema.sch_name }),
-                { source: t("profile-context", "Profile context") }
+                { source: t("profile-context", "Profile context"), reason: error }
             );
             emitEvent("connecting", { schema, status: "error", error });
             throw error;
         }
         schema.sch_last_selected = DateTime.now().toSQL();
         schema.sch_db_version = connection.version;
+        schema.sch_updated = DateTime.now().toSQL();
         connections.userData.set(connection.uniqueId, "schema", schema);
         connection.userData.schema = schema;
-        internal.execute(
-            "update schemas set \n" +
-            "  sch_last_selected = ?, \n" +
-            "  sch_db_version = ? \n" +
-            " where sch_id = ?",
-            [schema.sch_last_selected, schema.sch_db_version, schemaId]
-        );
         setSchemas((prev) => {
             const otherSchemas = prev.filter((s) => s.sch_id !== schemaId);
             return [...otherSchemas, schema];
         });
         emitEvent("connecting", { schema, status: "success", connection });
         return connection;
-    }, [fetchSchema, drivers, internal, connections, dialogs, t, passwordPrompt, checkExistingConnection]);
+    }, [getSchema, drivers, connections, dialogs, passwordPrompt, checkExistingConnection]);
 
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         const schema = (await connections.userData.get(uniqueId, "schema")) as SchemaRecord;
@@ -273,81 +318,29 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent("testing", { schema, status: "error", error });
             throw error;
         }
-    }, [internal, drivers, connections, passwordPrompt]);
+    }, [drivers, connections, passwordPrompt]);
 
-    const updateOrder = useCallback(async () => {
-        await internal.execute(
-            "WITH ordered AS (\n" +
-            "    SELECT sch_id, ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
-            "    FROM schemas\n" +
-            ")\n" +
-            "UPDATE schemas\n" +
-            "SET sch_order = (\n" +
-            "    SELECT new_order FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
-            ")"
-        );
-    }, [internal]);
+    const updateOrder = useCallback((schemas: SchemaRecord[]) => {
+        return schemas.slice()
+            .sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0))
+            .map((schema, index) => ({
+                ...schema,
+                sch_order: index + 1,
+                sch_updated: DateTime.now().toSQL(),
+            }));
+    }, []);
 
     const deleteSchema = useCallback(async (schemaId: string) => {
-        const schema = await fetchSchema(schemaId);
+        const schema = getSchema(schemaId)!;
         if (await dialogs.confirm(
             t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: schema.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
-            await internal.execute("delete from schemas where sch_id = ?", [schemaId]);
-            await updateOrder();
-            await fetchSchemas();
-            queueMessage(Messages.SCHEMA_DELETE_SUCCESS, schema.sch_id);
+            setSchemas(prev => updateOrder(prev.filter(s => s.sch_id !== schemaId)));
             return true;
         }
         return false;
-    }, [internal, dialogs, fetchSchema, t]);
-
-    const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
-        const sourceSchema = schemas.find(s => s.sch_id === sourceSchemaId);
-        const targetSchema = schemas.find(s => s.sch_id === targetSchemaId);
-        if (!sourceSchema || !targetSchema) {
-            throw new Error(t("profile-id-not-found", "Profile not found!"));
-        }
-        const sourceOrder = sourceSchema.sch_order;
-        const targetOrder = targetSchema.sch_order;
-        if (sourceOrder === undefined || targetOrder === undefined) {
-            throw new Error(t("profile-order-undefined", "Profile order is undefined!"));
-        }
-        if (group) {
-            const updateGroupOrder = async (schemaId: string, order: number) => {
-                await internal.execute(
-                    "WITH ordered AS (\n" +
-                    "    SELECT \n" +
-                    "        sch_id,\n" +
-                    "        ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
-                    "    FROM schemas\n" +
-                    "    WHERE coalesce(sch_group, 'ungrouped') = (SELECT coalesce(sch_group, 'ungrouped') FROM schemas WHERE sch_id = ?)\n" +
-                    ")\n" +
-                    "UPDATE schemas\n" +
-                    "SET sch_order = (\n" +
-                    "    SELECT ? + new_order / 1000.0 FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
-                    ")\n" +
-                    "WHERE sch_id IN (SELECT sch_id FROM ordered)",
-                    [schemaId, order]
-                );
-            }
-            await updateGroupOrder(sourceSchemaId, targetOrder);
-            await updateGroupOrder(targetSchemaId, sourceOrder);
-            await updateOrder();
-        }
-        else {
-            await internal.execute(
-                "update schemas set sch_order = case \n" +
-                "  when sch_id = ? then ? \n" +
-                "  when sch_id = ? then ? \n" +
-                "end \n" +
-                "where sch_id in (?, ?)",
-                [sourceSchemaId, targetOrder, targetSchemaId, sourceOrder, sourceSchemaId, targetSchemaId]
-            );
-        }
-        await reloadSchemas();
-    }, [internal, fetchSchemas, schemas, t]);
+    }, [dialogs]);
 
     /**
      * Check if a schema with the same name already exists.
@@ -356,13 +349,9 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
      * @returns True if the schema does not exist or the user confirms to continue.
      */
     const checkSchemaExists = useCallback(async (schemaName: string, schemaId?: string): Promise<boolean> => {
-        const { rows } = await internal.query(
-            "select count(*) as count from schemas where sch_name = ? and sch_id != ?",
-            [schemaName, schemaId ?? ""]
-        );
-        const exists = (rows[0]?.count as number) > 0;
+        const schema = schemasRef.current.find(s => s.sch_name === schemaName && s.sch_id !== schemaId);
 
-        if (exists) {
+        if (schema) {
             const confirm = await dialogs.confirm(
                 t("schema-exists-q", 'Schema "{{name}}" already exists. Do you want to continue?', { name: schemaName }),
                 { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
@@ -371,7 +360,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         return true;
-    }, [internal, dialogs, t]);
+    }, [dialogs]);
 
     /**
      * Remove the password property from the schema if the password is not saved.
@@ -393,8 +382,10 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
      * @param schema The schema to create.
      * @returns The ID of the created schema.
      */
-    const createSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version">) => {
+    const createSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+        emitEvent('creating', { schema: schema as SchemaRecord, status: 'started' });
         if (!(await checkSchemaExists(schema.sch_name))) {
+            emitEvent('creating', { schema: schema as SchemaRecord, status: 'cancel' });
             return;
         }
         passwordRetention(schema);
@@ -405,122 +396,95 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sch_id: uniqueId,
             sch_created: DateTime.now().toSQL(),
             sch_updated: DateTime.now().toSQL(),
+            sch_order: Infinity,
         };
-        await internal.execute(
-            "insert into schemas (\n" +
-            "  sch_id, sch_created, sch_updated, sch_drv_unique_id, \n" +
-            "  sch_group, sch_pattern, sch_name, sch_color, sch_use_password, \n" +
-            "  sch_properties, sch_script, sch_order)\n" +
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (select ifnull(max(sch_order), 0) + 1 from schemas))",
-            [
-                newSchema.sch_id,
-                newSchema.sch_created,
-                newSchema.sch_updated,
-                newSchema.sch_drv_unique_id,
-                newSchema.sch_group,
-                newSchema.sch_pattern,
-                newSchema.sch_name,
-                newSchema.sch_color,
-                newSchema.sch_use_password,
-                JSON.stringify(newSchema.sch_properties),
-                newSchema.sch_script,
-            ]
-        );
-        const { rows } = await internal.query("select sch_order from schemas where sch_id = ?", [newSchema.sch_id]);
-        if (rows.length) {
-            newSchema.sch_order = Number.parseInt(rows[0].sch_order as string);
-        }
-        setSchemas((prev) => [...prev, newSchema]); // Dodaj nowy schemat do listy
-        queueMessage(Messages.SCHEMA_CREATE_SUCCESS, newSchema);
+        setSchemas((prev) => updateOrder([...prev, newSchema]));
+        emitEvent('creating', { schema: newSchema, status: 'success' });
         return uniqueId;
-    }, [internal, checkSchemaExists, passwordRetention]);
+    }, [checkSchemaExists, passwordRetention]);
 
     /**
      * Update an existing schema.
      * @param schema The schema to update.
      * @returns True if the update was successful, false otherwise.
      */
-    const updateSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version">) => {
+    const updateSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+        const existsSchema = getSchema(schema.sch_id)!;
+
+        emitEvent('updating', { schema: existsSchema as SchemaRecord, status: 'started' });
         if (!(await checkSchemaExists(schema.sch_name, schema.sch_id))) {
-            return;
+            emitEvent('updating', { schema: existsSchema as SchemaRecord, status: 'cancel' });
+            return false;
         }
         passwordRetention(schema);
 
         const updatedSchema: SchemaRecord = {
-            ...schemas.find(s => s.sch_id === schema.sch_id), // fill missing properties
+            ...existsSchema,
             ...schema,
             sch_updated: DateTime.now().toSQL(),
         };
-        await internal.execute(
-            "update schemas set \n" +
-            "  sch_updated = ?, \n" +
-            "  sch_drv_unique_id = ?, \n" +
-            "  sch_group = ?, \n" +
-            "  sch_pattern = ?, \n" +
-            "  sch_name = ?, \n" +
-            "  sch_color = ?, \n" +
-            "  sch_use_password = ?, \n" +
-            "  sch_properties = ?, \n" +
-            "  sch_script = ? \n" +
-            "where sch_id = ?",
-            [
-                updatedSchema.sch_updated,
-                updatedSchema.sch_drv_unique_id,
-                updatedSchema.sch_group,
-                updatedSchema.sch_pattern,
-                updatedSchema.sch_name,
-                updatedSchema.sch_color,
-                updatedSchema.sch_use_password,
-                JSON.stringify(updatedSchema.sch_properties),
-                updatedSchema.sch_script,
-                updatedSchema.sch_id,
-            ]
-        );
         setSchemas((prev) =>
             prev.map((s) => (s.sch_id === updatedSchema.sch_id ? updatedSchema : s)) // Zaktualizuj schemat w liście
         );
-        queueMessage(Messages.SCHEMA_UPDATE_SUCCESS, updatedSchema);
+        emitEvent('updating', { schema: updatedSchema, status: 'success' });
         return true;
-    }, [internal, checkSchemaExists, passwordRetention, schemas]);
+    }, [checkSchemaExists, passwordRetention]);
 
-    useEffect(() => {
-        subscribe(Messages.FETCH_SCHEMA, fetchSchema);
-        subscribe(Messages.SCHEMA_DELETE, deleteSchema);
-        subscribe(Messages.SCHEMA_CREATE, createSchema);
-        subscribe(Messages.SCHEMA_UPDATE, updateSchema);
-        subscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
+    const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
+        if (!schemasRef.current) {
+            return;
+        }
 
-        return () => {
-            unsubscribe(Messages.FETCH_SCHEMA, fetchSchema);
-            unsubscribe(Messages.SCHEMA_DELETE, deleteSchema);
-            unsubscribe(Messages.SCHEMA_CREATE, createSchema);
-            unsubscribe(Messages.SCHEMA_UPDATE, updateSchema);
-            unsubscribe(Messages.SCHEMA_SWAP_ORDER, swapSchemasOrder);
-        };
-    }, [
-        fetchSchema,
-        fetchSchemas,
-        deleteSchema,
-        createSchema,
-        updateSchema,
-        swapSchemasOrder,
-    ]);
+        const sourceIndex = schemasRef.current.findIndex(s => s.sch_id === sourceSchemaId);
+        const targetIndex = schemasRef.current.findIndex(s => s.sch_id === targetSchemaId);
+        if (sourceIndex === -1 || targetIndex === -1) {
+            throw new Error(t("profile-not-found", "Profile not found!"));
+        }
 
-    useEffect(() => {
-        (async () => {
-            const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
-            await window.dborg.path.ensureDir(dataPath);
-            await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
-        })();
-    }, [schemas]);
+        const nextOrder = Math.max(...schemasRef.current.map(s => s.sch_order ?? 0)) + 1;
+        
+        let sourceOrder = schemasRef.current[sourceIndex].sch_order ?? (nextOrder);
+        let targetOrder = schemasRef.current[targetIndex].sch_order ?? (nextOrder + 1);
+
+        if (group) {
+            setSchemas(prev => {
+                const newSchemas = prev.slice().sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0));
+                const sourceGroup = newSchemas[sourceIndex].sch_group;
+                const targetGroup = newSchemas[targetIndex].sch_group;
+                for (let i = 0; i < newSchemas.length; i++) {
+                    if (newSchemas[i].sch_group === sourceGroup) {
+                        newSchemas[i].sch_order = targetOrder;
+                        newSchemas[i].sch_updated = DateTime.now().toSQL();
+                        targetOrder += 0.001;
+                    } else if (newSchemas[i].sch_group === targetGroup) {
+                        newSchemas[i].sch_order = sourceOrder;
+                        newSchemas[i].sch_updated = DateTime.now().toSQL();
+                        sourceOrder += 0.001;
+                    }
+                }
+                return updateOrder(newSchemas);
+            });
+        }
+        else {
+            setSchemas(prev => {
+                const newSchemas = prev.slice();
+                newSchemas[sourceIndex].sch_order = targetOrder;
+                newSchemas[sourceIndex].sch_updated = DateTime.now().toSQL();
+                newSchemas[targetIndex].sch_order = sourceOrder;
+                newSchemas[targetIndex].sch_updated = DateTime.now().toSQL();
+                return newSchemas;
+            });
+        }
+    }, []);
 
     console.count("SchemaProvider render");
 
     return (
         <SchemaContext.Provider
             value={{
+                initialized: schemaInitialized,
                 schemas,
-                fetchSchema,
+                getSchema,
                 reloadSchemas,
                 createSchema,
                 updateSchema,

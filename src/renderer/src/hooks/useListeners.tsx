@@ -31,7 +31,7 @@ const useListeners = <T,>(): UseListenersType<T> => {
         }
     }, []);
 
-    const emitEvent = (type: string, event: T) => {
+    const emitEvent = React.useCallback((type: string, event: T) => {
         if (listeners.current[type]) {
             // opóźnienie jest spowodowane tym, że niektóre komponenty mogą być renderowane w tym samym cyklu, co wywołanie emit
             // i nie zdążą się zaktualizować, więc wywołanie emit jest opóźnione
@@ -39,7 +39,7 @@ const useListeners = <T,>(): UseListenersType<T> => {
                 listeners.current[type].forEach((listener) => listener(event));
             }, 0);
         }
-    };
+    }, []);
 
     return { onEvent, emitEvent };
 };

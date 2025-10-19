@@ -16,6 +16,7 @@ import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { Properties } from "src/api/db";
 
 export interface SchemaAssistantProps extends BoxProps {
     slotProps?: {
@@ -90,10 +91,10 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { addToast } = useToast();
     const schemaRef = React.useRef<SchemaParametersRef>(null);
     const [search, setSearch] = React.useState('');
-    const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
+    const { queueMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
-    const { testConnection, connectToDatabase } = useSchema();
+    const { testConnection, connectToDatabase, getSchema, createSchema, updateSchema } = useSchema();
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -121,7 +122,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         }
 
         try {
-            const schema = await sendMessage(Messages.FETCH_SCHEMA, schemaId) as SchemaRecord;
+            const schema = getSchema(schemaId)!;
             setSchemaParams({
                 uniqueId: schemaId,
                 driverUniqueId: schema.sch_drv_unique_id,
@@ -143,7 +144,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
 
     const handleSetCloneSchemaIdMessage = React.useCallback(async (schemaId: string) => {
         try {
-            const schema = await sendMessage(Messages.FETCH_SCHEMA, schemaId) as SchemaRecord;
+            const schema = getSchema(schemaId)!;
             setSchemaParams({
                 driverUniqueId: schema.sch_drv_unique_id,
                 schemaGroup: schema.sch_group,
@@ -194,31 +195,30 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             if (schema) {
                 try {
                     if (!schema.uniqueId) {
-                        const uniqueId = await sendMessage(Messages.SCHEMA_CREATE, {
-                            sch_drv_unique_id: schema.driverUniqueId,
+                        const uniqueId = await createSchema({
+                            sch_drv_unique_id: schema.driverUniqueId!,
                             sch_group: schema.schemaGroup,
                             sch_pattern: schema.schemaPattern,
                             sch_name: schema.schemaName,
                             sch_color: schema.schemaColor,
                             sch_use_password: schema.usePassword,
-                            sch_properties: schema.properties
-                        }
-                        ) as string;
+                            sch_properties: schema.properties as Properties,
+                        }) as string;
                         if (!uniqueId) {
                             return;
                         }
                         schema.uniqueId = uniqueId;
                     }
                     else {
-                        const result = await sendMessage(Messages.SCHEMA_UPDATE, {
+                        const result = await updateSchema({
                             sch_id: schema.uniqueId,
-                            sch_drv_unique_id: schema.driverUniqueId,
+                            sch_drv_unique_id: schema.driverUniqueId!,
                             sch_group: schema.schemaGroup,
                             sch_pattern: schema.schemaPattern,
                             sch_name: schema.schemaName,
                             sch_color: schema.schemaColor,
                             sch_use_password: schema.usePassword,
-                            sch_properties: schema.properties
+                            sch_properties: schema.properties as Properties,
                         }) as boolean;
                         if (!result) {
                             return;
