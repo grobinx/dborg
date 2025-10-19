@@ -163,7 +163,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { initialized, schemas, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection, deleteSchema, swapSchemasOrder } = useSchema();
+    const { initialized, schemas, getSchema, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection, deleteSchema, swapSchemasOrder } = useSchema();
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
@@ -287,7 +287,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         },
         test: (schemaId?: string) => {
             if ((schemaId ?? selectedItem) != null) {
-                const record = data?.find(r => r.sch_id === (schemaId ?? selectedItem));
+                const record = getSchema((schemaId ?? selectedItem) as string);
                 if (record) {
                     handleTestConnection(record);
                 }

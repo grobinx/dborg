@@ -424,7 +424,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sch_updated: DateTime.now().toSQL(),
         };
         setSchemas((prev) =>
-            prev.map((s) => (s.sch_id === updatedSchema.sch_id ? updatedSchema : s)) // Zaktualizuj schemat w liście
+            prev.map((schema) => (schema.sch_id === updatedSchema.sch_id ? updatedSchema : schema)) // Zaktualizuj schemat w liście
         );
         emitEvent('updating', { schema: updatedSchema, status: 'success' });
         return true;
