@@ -97,7 +97,7 @@ interface SchemaContextValue {
 const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
 
 export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { drivers, connections } = useDatabase();
+    const { internal, drivers, connections } = useDatabase();
     const { addToast } = useToast();
     const dialogs = useDialogs();
     const { t } = useTranslation();
@@ -121,6 +121,25 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, []);
 
     const loadSchemas = useCallback(async () => {
+        const rowToSchemaRecord = (row: api.QueryResultRow): SchemaRecord => {
+            return {
+                sch_id: row.sch_id as string,
+                sch_created: row.sch_created as string,
+                sch_updated: row.sch_updated as string,
+                sch_drv_unique_id: row.sch_drv_unique_id as string,
+                sch_group: row.sch_group as string,
+                sch_pattern: row.sch_pattern as string,
+                sch_name: row.sch_name as string,
+                sch_color: row.sch_color as string,
+                sch_use_password: row.sch_use_password as SchemaUsePasswordType,
+                sch_properties: JSON.parse(row.sch_properties as string ?? "{}"),
+                sch_last_selected: row.sch_last_selected as string,
+                sch_db_version: row.sch_db_version as string,
+                sch_script: row.sch_script as string,
+                sch_order: Number.parseInt(row.sch_order as string),
+            };
+        };
+
         emitEvent('fetching', { status: 'started' });
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
         const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
@@ -135,6 +154,12 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 emitEvent('fetching', { status: 'error', error });
                 throw error;
             }
+        }
+        else {
+            const { rows } = await internal.query("select * from schemas");
+            const loadedSchemas = rows.map(rowToSchemaRecord);
+            setSchemas(loadedSchemas);
+            setSchemaInitialized(true);
         }
         emitEvent('fetching', { status: 'success' });
     }, []);
@@ -442,7 +467,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         const nextOrder = Math.max(...schemasRef.current.map(s => s.sch_order ?? 0)) + 1;
-        
+
         let sourceOrder = schemasRef.current[sourceIndex].sch_order ?? (nextOrder);
         let targetOrder = schemasRef.current[targetIndex].sch_order ?? (nextOrder + 1);
 
