@@ -175,11 +175,11 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     React.useEffect(() => {
         loadSchemas();
-    }, [loadSchemas]);
+    }, []);
 
     const reloadSchemas = useCallback(async () => {
         await loadSchemas();
-    }, [loadSchemas]);
+    }, []);
 
     const passwordPrompt = useCallback(async (
         usePassword: SchemaUsePasswordType,
@@ -192,7 +192,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             properties[passwordProperty] = password;
         }
         return true;
-    }, [dialogs]);
+    }, []);
 
     const checkExistingConnection = useCallback(async (schemaId: string): Promise<boolean> => {
         const existingConnection = (await connections.list()).find(
@@ -217,7 +217,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         return true; // Brak istniejącego połączenia, można kontynuować
-    }, [connections, dialogs, t]);
+    }, [connections]);
 
     const connectToDatabase = useCallback(async (schemaId: string) => {
         const schema = getSchema(schemaId)!;
@@ -264,7 +264,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
         emitEvent("connecting", { schema, status: "success", connection });
         return connection;
-    }, [getSchema, drivers, connections, dialogs, passwordPrompt, checkExistingConnection]);
+    }, [drivers, connections]);
 
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         const schema = (await connections.userData.get(uniqueId, "schema")) as SchemaRecord;
@@ -286,7 +286,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         for (const conn of allConnections) {
             disconnectFromDatabase(conn.uniqueId);
         }
-    }, [connections, disconnectFromDatabase]);
+    }, [connections]);
 
     const testConnection = useCallback(async (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => {
         const schema = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties };
@@ -318,7 +318,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent("testing", { schema, status: "error", error });
             throw error;
         }
-    }, [drivers, connections, passwordPrompt]);
+    }, [drivers, connections]);
 
     const updateOrder = useCallback((schemas: SchemaRecord[]) => {
         return schemas.slice()
@@ -340,7 +340,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return true;
         }
         return false;
-    }, [dialogs]);
+    }, []);
 
     /**
      * Check if a schema with the same name already exists.
@@ -360,7 +360,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         return true;
-    }, [dialogs]);
+    }, []);
 
     /**
      * Remove the password property from the schema if the password is not saved.
@@ -401,7 +401,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setSchemas((prev) => updateOrder([...prev, newSchema]));
         emitEvent('creating', { schema: newSchema, status: 'success' });
         return uniqueId;
-    }, [checkSchemaExists, passwordRetention]);
+    }, [passwordRetention]);
 
     /**
      * Update an existing schema.
@@ -428,7 +428,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         );
         emitEvent('updating', { schema: updatedSchema, status: 'success' });
         return true;
-    }, [checkSchemaExists, passwordRetention]);
+    }, [passwordRetention]);
 
     const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
         if (!schemasRef.current) {
