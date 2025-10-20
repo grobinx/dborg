@@ -31,29 +31,6 @@ const directionMap: Record<Placement, 'row' | 'row-reverse' | 'column' | 'column
     right: "row-reverse",
 };
 
-function getWindowDimensions(): Size {
-    const { innerWidth: width, innerHeight: height } = window;
-    return {
-        width,
-        height
-    };
-}
-
-function useWindowDimensions(): Size {
-    const [windowDimensions, setWindowDimensions] = React.useState(getWindowDimensions());
-
-    React.useEffect((): ReturnType<React.EffectCallback> => {
-        function handleResize(): void {
-            setWindowDimensions(getWindowDimensions());
-        }
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    return windowDimensions;
-}
-
 const App: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
