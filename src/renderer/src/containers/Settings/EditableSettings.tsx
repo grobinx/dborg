@@ -314,15 +314,16 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     const renderNode = React.useCallback((node: TreeNode) => {
         return <FormattedText
-            text={[[
-                node.title,
-                <UnboundBadge
-                    content={node.children?.length ?? 0}
-                    unmountOnHide
-                    style={{ opacity: 0.5 }}
-                    size="medium"
-                />
-            ]]}
+            text={node.title}
+            // text={[[
+            //     node.title,
+            //     <UnboundBadge
+            //         content={node.children?.length ?? 0}
+            //         unmountOnHide
+            //         style={{ opacity: 0.5 }}
+            //         size="medium"
+            //     />
+            // ]]}
         />
     }, []);
 
