@@ -643,6 +643,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             <ButtonGroup className="actions">
                                                 {((record.connected ?? 0) > 0) && (
                                                     <ActionButton
+                                                        key="disconnect"
                                                         actionManager={actions.current}
                                                         actionId={disconnectAllActionId}
                                                         actionArgs={[record.sch_id, record.connected]}
@@ -653,6 +654,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                     />
                                                 )}
                                                 <ActionButton
+                                                    key="connect"
                                                     actionManager={actions.current}
                                                     actionId={connectActionId}
                                                     actionArgs={[record.sch_id]}

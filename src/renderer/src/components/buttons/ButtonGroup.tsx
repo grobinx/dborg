@@ -4,112 +4,46 @@ import { Size } from '@renderer/types/sizes';
 import clsx from '@renderer/utils/clsx';
 import { BaseButtonProps } from '@renderer/components/buttons/BaseButtonProps';
 import { ThemeColor } from '@renderer/types/colors';
-import { useVisibleState } from '@renderer/hooks/useVisibleState';
 
 // Styled component dla grupy przycisków
-const StyledButtonGroup = styled('div', {
-    name: "ButtonGroup",
-    slot: "root",
-    shouldForwardProp: (prop) => !['maxWidth'].includes(prop as string),
-})<{
-    maxWidth?: number;
-}>(({ maxWidth }) => ({
-    display: 'inline-flex',
-    gap: 0,
-
-    // Pozycjonowanie przycisków - usuń border radius z środkowych
-    '&.orientation-horizontal': {
-        flexDirection: 'row',
-        '& .ButtonGroup-button': {
-            marginLeft: 0, // Nakładanie borders dla seamless look
-
-            '&:first-of-type': {
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                marginLeft: 0,
+const createStyledButtonGroup = (componentName: string) => {
+    return styled('div', {
+        name: componentName,
+        slot: "root",
+        shouldForwardProp: (prop) => !['maxWidth'].includes(prop as string),
+    })<{
+        maxWidth?: number;
+    }>(({ maxWidth }) => ({
+        // Same size modifier classes
+        '&.same-size': {
+            '&.orientation-horizontal': {
+                [`& .${componentName}-button`]: {
+                    ...(maxWidth && {
+                        width: `${maxWidth}px !important`,
+                        minWidth: `${maxWidth}px !important`,
+                        maxWidth: `${maxWidth}px !important`,
+                        flexShrink: 0,
+                        flexGrow: 0,
+                        flexBasis: 'auto',
+                    }),
+                },
             },
 
-            '&:last-of-type': {
-                borderTopLeftRadius: 0,
-                borderBottomLeftRadius: 0,
-            },
-
-            '&:not(:first-of-type):not(:last-of-type)': {
-                borderRadius: 0,
-            },
-
-            '&:only-of-type': {
-                marginLeft: 0,
-            },
-
-            // Z-index dla hover/focus effects
-            '&:hover, &:focus, &.selected': {
-                zIndex: 1,
+            '&.orientation-vertical': {
+                [`& .${componentName}-button`]: {
+                    ...(maxWidth && {
+                        width: `${maxWidth}px !important`,
+                        minWidth: `${maxWidth}px !important`,
+                    }),
+                },
             },
         },
-    },
-    '&.orientation-vertical': {
-        flexDirection: 'column',
-
-        '& .ButtonGroup-button': {
-            marginTop: -1, // Nakładanie borders dla seamless look
-
-            '&:first-of-type': {
-                borderBottomLeftRadius: 0,
-                borderBottomRightRadius: 0,
-                marginTop: 0,
-            },
-
-            '&:last-of-type': {
-                borderTopLeftRadius: 0,
-                borderTopRightRadius: 0,
-            },
-
-            '&:not(:first-of-type):not(:last-of-type)': {
-                borderRadius: 0,
-            },
-
-            '&:only-of-type': {
-                marginTop: 0,
-            },
-
-            // Z-index dla hover/focus effects
-            '&:hover, &:focus, &.selected': {
-                zIndex: 1,
-            },
-        },
-    },
-
-    // Same size modifier classes
-    '&.same-size': {
-        '&.orientation-horizontal': {
-            '& .ButtonGroup-button': {
-                ...(maxWidth && {
-                    width: `${maxWidth}px !important`,
-                    minWidth: `${maxWidth}px !important`,
-                    maxWidth: `${maxWidth}px !important`,
-                    flexShrink: 0,
-                    flexGrow: 0,
-                    flexBasis: 'auto',
-                }),
-            },
-        },
-
-        '&.orientation-vertical': {
-            alignItems: 'stretch',
-
-            '& .ButtonGroup-button': {
-                ...(maxWidth && {
-                    width: `${maxWidth}px !important`,
-                    minWidth: `${maxWidth}px !important`,
-                }),
-            },
-        },
-    },
-}));
+    }));
+};
 
 // Props dla ButtonGroup
 export interface ButtonGroupProps {
+    componentName?: string;
     children?: React.ReactNode;
     orientation?: 'horizontal' | 'vertical';
     size?: Size;
@@ -138,14 +72,11 @@ export interface ButtonGroupProps {
     onChange?: (value: string | null) => void;
     className?: string;
     sx?: SxProps<Theme>;
-    style?: React.CSSProperties;
-
-    width?: string | number;
-    height?: string | number;
 }
 
 // Główny komponent ButtonGroup
 export const ButtonGroup: React.FC<ButtonGroupProps> = ({
+    componentName = "ButtonGroup",
     children,
     orientation = 'horizontal',
     size = 'medium',
@@ -157,59 +88,67 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     value,
     onChange,
     className,
-    width, height, style,
-    ...other
+    sx,
 }) => {
     const [maxWidth, setMaxWidth] = React.useState<number | undefined>(undefined);
     const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(value);
-    const [groupRef, isVisible] = useVisibleState<HTMLDivElement>();
+    const [isCalculated, setIsCalculated] = React.useState(!sameWidth); // Ukryj do czasu obliczenia
+    const groupRef = React.useRef<HTMLDivElement>(null);
 
     React.useLayoutEffect(() => {
-        if (!sameWidth || !groupRef.current || !isVisible) {
+        if (!sameWidth) {
+            if (!isCalculated) setIsCalculated(true);
             if (maxWidth !== undefined) setMaxWidth(undefined);
             return;
         }
 
         const group = groupRef.current;
-        const hadSameWidth = group.classList.contains('same-size');
+        if (!group) return;
 
-        // Tymczasowo wyłącz wymuszanie szerokości
-        if (hadSameWidth) group.classList.remove('same-size');
+        const calculateMaxWidth = () => {
+            const buttons = group.querySelectorAll(`.${componentName}-button`);
+            if (!buttons.length) return;
 
-        const buttons = group.querySelectorAll('.ButtonGroup-button');
-        if (!buttons.length) {
-            if (hadSameWidth) group.classList.add('same-size');
-            return;
-        }
+            // Usuń wymuszenie szerokości na czas pomiaru
+            buttons.forEach((b) => {
+                const el = b as HTMLElement;
+                el.style.width = '';
+                el.style.minWidth = '';
+                el.style.maxWidth = '';
+            });
 
-        // Wyczyść inline width na czas pomiaru
-        buttons.forEach((b) => {
-            const el = b as HTMLElement;
-            el.style.width = '';
-            el.style.minWidth = '';
-            el.style.maxWidth = '';
-            el.style.flexGrow = '';
-            el.style.flexShrink = '';
-            el.style.flexBasis = '';
+            // Wymuś reflow i zmierz
+            group.getBoundingClientRect();
+
+            let max = 0;
+            buttons.forEach((b) => {
+                const el = b as HTMLElement;
+                const w = Math.max(el.scrollWidth, el.offsetWidth, el.getBoundingClientRect().width);
+                max = Math.max(max, w);
+            });
+
+            const next = max > 0 ? Math.ceil(max) : undefined;
+            if (next !== maxWidth) {
+                setMaxWidth(next);
+                setIsCalculated(true); // Pokaż przyciski po obliczeniu
+            }
+        };
+
+        // Użyj ResizeObserver do reaktywności
+        const resizeObserver = new ResizeObserver(() => {
+            calculateMaxWidth();
         });
 
-        // Wymuś reflow
-        group.getBoundingClientRect();
+        const buttons = group.querySelectorAll(`.${componentName}-button`);
+        buttons.forEach((b) => resizeObserver.observe(b as HTMLElement));
 
-        // Zmierz naturalne szerokości
-        let max = 0;
-        buttons.forEach((b) => {
-            const el = b as HTMLElement;
-            const w = Math.max(el.scrollWidth, el.offsetWidth);
-            max = Math.max(max, w);
-        });
+        // Pierwsza kalkulacja
+        calculateMaxWidth();
 
-        // Przywróć klasę
-        if (hadSameWidth) group.classList.add('same-size');
-
-        const next = max > 0 ? Math.ceil(max) : undefined;
-        if (next !== maxWidth) setMaxWidth(next);
-    }, [sameWidth, children, size, isVisible]); // usuń isCalculated z deps
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [sameWidth, children, size, maxWidth]);
 
     const handleExclusiveChange = React.useCallback((newValue: string | null) => {
         setCurrentValue(prev => {
@@ -218,7 +157,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
             }
             return newValue;
         });
-    }, []);
+    }, [onChange]);
 
     React.useEffect(() => {
         setCurrentValue(value);
@@ -229,11 +168,10 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         if (React.isValidElement<BaseButtonProps>(child)) {
             if (exclusive && typeof child.props.toggle !== 'string') {
                 console.error("<ButtonGroup> requires all children to be toggle (string) buttons when exclusive is true.");
-                exclusive = false;
             }
             return React.cloneElement(child, {
                 ...child.props,
-                className: clsx('ButtonGroup-button', child.props.className),
+                className: clsx(`${componentName}-button`, child.props.className),
                 size: child.props.size || size,
                 dense: child.props.dense || dense,
                 color: child.props.color || color,
@@ -250,22 +188,24 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         return child;
     });
 
+    const StyledButtonGroup = React.useMemo(() => createStyledButtonGroup(componentName), [componentName]);
+
     return (
         <StyledButtonGroup
             ref={groupRef}
             className={clsx(
-                'ButtonGroup-root',
+                `${componentName}-root`,
                 `size-${size}`,
                 `color-${color}`,
                 `orientation-${orientation}`,
                 disabled && 'disabled',
                 sameWidth && 'same-size',
                 exclusive && 'exclusive',
+                !isCalculated && 'calculating', // Ukryj podczas obliczania
                 className
             )}
             maxWidth={maxWidth}
-            style={{ width, height, ...style }}
-            {...other}
+            sx={sx}
         >
             {processedChildren}
         </StyledButtonGroup>

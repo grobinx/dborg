@@ -56,6 +56,7 @@ import { ContainerButtonComponent, ContainerButtonComponentProps, ContainerButto
 import { ViewButtonComponent, ViewButtonComponentProps, ViewButtonComponentSlots } from "./theme.d/ViewButton";
 import { ShortcutComponent, ShortcutComponentProps, ShortcutComponentSlots } from "./theme.d/Shortcut";
 import { UnboundBadgeComponent, UnboundBadgeComponentProps, UnboundBadgeComponentSlots } from "./theme.d/UnboundBadge";
+import { ButtonGroupComponent, ButtonGroupComponentProps, ButtonGroupComponentSlots } from "./theme.d/ButtonGroup";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -152,7 +153,6 @@ declare module "@mui/material/styles" {
         ToolTextField: "root";
         ToolSelect: "root";
         ConsoleLogPanel: ConsoleLogPanelComponentSlots;
-        SettingsInputControl: "root" | "internal" | "label" | "description" | "effect" | "validity" | "input";
         Code: CodeComponentSlots;
         FormattedText: FormattedTextComponentSlots;
         InputField: InputFieldComponentSlots;
@@ -161,6 +161,7 @@ declare module "@mui/material/styles" {
         IconButton: IconButtonComponentSlots;
         ToolButton: ToolButtonComponentSlots;
         Shortcut: ShortcutComponentSlots;
+        ButtonGroup: ButtonGroupComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -188,7 +189,6 @@ declare module "@mui/material/styles" {
         UnboundBadge: Partial<UnboundBadgeComponentProps>;
         SplitPanel: SplitPanelComponentProps;
         ConsoleLogPanel: ConsoleLogPanelComponentProps;
-        SettingInputControl: Partial<SettingInputControlProps>;
         Code: CodeComponentProps;
         FormattedText: FormattedTextComponentProps;
         InputField: InputFieldComponentProps;
@@ -197,6 +197,7 @@ declare module "@mui/material/styles" {
         IconButton: IconButtonComponentProps;
         ToolButton: ToolButtonComponentProps;
         Shortcut: ShortcutComponentProps;
+        ButtonGroup: ButtonGroupComponentProps;
     }
     interface Components {
         MenuBar?: MenuBarComponent;
@@ -235,11 +236,6 @@ declare module "@mui/material/styles" {
         UnboundBadge?: UnboundBadgeComponent;
         SplitPanel?: SplitPanelComponent;
         ConsoleLogPanel?: ConsoleLogPanelComponent;
-        SettingInputControl?: {
-            defaultProps?: ComponentsPropsList['SettingInputControl'];
-            styleOverrides?: ComponentsOverrides<Theme>['SettingInputControl'];
-            //variants?: ComponentsVariants['SettingInputControl'];
-        };
         Code?: CodeComponent;
         FormattedText?: FormattedTextComponent;
         InputField?: InputFieldComponent;
@@ -248,6 +244,7 @@ declare module "@mui/material/styles" {
         IconButton?: IconButtonComponent;
         ToolButton?: ToolButtonComponent;
         Shortcut?: ShortcutComponent;
+        ButtonGroup?: ButtonGroupComponent;
     }
 
 }

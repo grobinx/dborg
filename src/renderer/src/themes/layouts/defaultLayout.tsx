@@ -29,6 +29,7 @@ import { ContainerButtonLayout } from "./default/ContainerButton";
 import { ViewButtonLayout } from "./default/ViewButton";
 import { ShortcutLayout } from "./default/Shortcut";
 import { UnboundBadgeLayout } from "./default/UnboundBadge";
+import { ButtonGroupLayout } from "./default/ButtonGroup";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -317,147 +318,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             ToastList: ToastListLayout(palette, root),
             ConsoleLogPanel: ConsoleLogPanelLayout(palette, root),
             SplitPanel: SplitPanelLayout(palette, root),
-            SettingInputControl: {
-                styleOverrides: {
-                    root: {
-                        backgroundColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)",
-                        margin: 1,
-                        padding: 8,
-                        flexDirection: "row",
-                        '&:hover': {
-                            backgroundColor: palette.action.hover,
-                        },
-                        '&.Mui-selected': {
-                            outline: `1px solid ${palette.secondary.main}`,
-                            backgroundColor: palette.action.selected,
-                        },
-                        '& .menu': {
-                            order: 1,
-                        },
-                        '& .indicator': {
-                            width: 4,
-                            height: "100%",
-                            marginRight: 8,
-                            alignSelf: "center",
-                            borderRadius: 2,
-                        },
-                        '&.changed > .indicator': {
-                            backgroundColor: alpha(palette.warning.main, 0.3),
-                        },
-                        '&.default > .indicator': {
-                            backgroundColor: alpha(palette.primary.main, 0.3),
-                        },
-                        '&:not(:hover) .menu:not(.open)': {
-                            visibility: "hidden", // Ukrycie przycisku, ale zachowanie miejsca
-                        },
-                    },
-                    internal: {
-                        gap: 4,
-                        marginLeft: 0,
-                        marginRight: 8,
-                    },
-                    input: {
-                        gap: 8,
-                        '& .policy': {
-                            display: "flex",
-                            flexDirection: "row",
-                            height: "100%",
-                            fontSize: "0.7em",
-                            alignItems: "end",
-                            '& .block': {
-                                lineHeight: 1,
-                                marginLeft: 4,
-                                border: `1px solid ${palette.divider}`,
-                                borderRadius: 2,
-                                padding: 4,
-                                '&:hover': {
-                                    backgroundColor: palette.action.hover,
-                                    cursor: "default",
-                                },
-                            }
-                        },
-                        '& .BaseSlider': {
-                            '& .slider-value': {
-                                fontSize: "0.9rem",
-                                color: palette.text.primary,
-                                padding: 4,
-                                border: `1px solid ${palette.divider}`,
-                                borderRadius: 2,
-                                width: 50,
-                                textAlign: "center",
-                            },
-                            '& .slider-value.start': {
-                                marginRight: 16,
-                            },
-                            '& .slider-value.end': {
-                                marginLeft: 16,
-                            },
-                        },
-                        '& .BaseCheckbox': {
-                            paddingTop: 0,
-                            paddingLeft: 0,
-                            alignSelf: "start",
-                        },
-                        '& input': {
-                            fontSize: "inherit",
-                        }
-                    },
-                    label: {
-                        color: palette.text.primary,
-                        marginBottom: 4,
-                        '& .group': {
-                            color: palette.text.secondary,
-                            marginRight: 4,
-                        },
-                        '& .required': {
-                            color: palette.error.main,
-                            margin: "0 4px",
-                        },
-                        '& .flags': {
-                            marginLeft: 8,
-                            fontSize: "0.9em",
-                            '& em': {
-                                verticalAlign: "middle", // Wyrównanie do linii bazowej
-                            },
-                            '& em:not(:last-child)::after': {
-                                content: '"·"', // Kropka na środku
-                                margin: '0 4px', // Odstęp po bokach kropki
-                                color: palette.text.secondary, // Kolor kropki
-                            },
-                        },
-                        '& .tags': {
-                            display: "flex", // Ustawienie układu dla tagów
-                            justifyContent: "flex-end", // Wyrównanie do prawej
-                            gap: 4, // Odstęp między tagami
-                            '& .tag': {
-                                alignContent: "center", // Wyrównanie tekstu w tagach
-                                display: "inline-block", // Ustawienie jako elementy inline-block
-                                padding: "0px 8px", // Wewnętrzne odstępy
-                                fontSize: "0.75em", // Rozmiar czcionki
-                                fontWeight: 500, // Grubość czcionki
-                                color: palette.text.primary, // Kolor tekstu
-                                backgroundColor: palette.action.hover, // Tło
-                                borderRadius: 4, // Zaokrąglone rogi
-                                border: `1px solid ${palette.divider}`, // Obramowanie
-                                whiteSpace: "nowrap", // Zapobiega zawijaniu tekstu
-                                textTransform: "uppercase", // Opcjonalnie: tekst wielkimi literami
-                            },
-                        },
-                    },
-                    description: {
-                        color: palette.text.secondary,
-                        '&:has(>.BaseCheckbox)': {
-                            cursor: "pointer",
-                        },
-                    },
-                    effect: {
-                        color: palette.text.secondary,
-                        marginTop: 4,
-                    }
-                },
-                defaultProps: {
-                }
-            },
             Code: CodeLayout(palette, root),
             FormattedText: FormattedTextLayout(palette, root),
             InputField: InputFieldLayout(palette, root),
@@ -466,6 +326,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             IconButton: IconButtonLayout(palette, root),
             ToolButton: ToolButtonLayout(palette, root),
             Shortcut: ShortcutLayout(palette, root),
+            ButtonGroup: ButtonGroupLayout(palette, root),
         }
     }
 };
