@@ -355,13 +355,13 @@ export const SettingsCollectionForm: React.FC<{
     const titleRef = React.useRef<HTMLDivElement>(null);
     const [titleHeight, setTitleHeight] = React.useState(0);
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         if (titleRef.current) {
             setTitleHeight(titleRef.current?.clientHeight ?? 0);
         }
     }, [collection.title]);
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         if (contentRef?.current && selected) {
             const selectedElement = contentRef.current.querySelector(`[data-setting-key="${selected}"]`);
             if (selectedElement) {

@@ -196,15 +196,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [selected, setSelected, handleSearchKeyDown] = useKeyboardNavigation({
         items: flatSettings,
-        getId: (item) => createKey(item),
-        onSelect: (item) => {
+        getId: createKey,
+        onSelect: React.useCallback((item) => {
             if (settingsContentRef.current) {
                 const element = settingsContentRef.current?.querySelector(`[data-setting-key="${createKey(item)}"] :first-child`);
                 if (element) {
                     focusElement(element as HTMLElement);
                 }
             }
-        },
+        }, []),
     });
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
     const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
@@ -215,15 +215,18 @@ const EditableSettings = (props: EditableSettingsProps) => {
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
             const settings = searchSettings(search, settingsCollections);
-            setDisplaySettings(settings);
             const flatSettings = flattenSettings(settings);
-            setFlatSettings(flatSettings);
-            setSelected(prev => {
-                // Jeśli poprzednio zaznaczone ustawienie nie istnieje w nowych wynikach, ustaw na null
-                if (prev && !flatSettings.some(item => createKey(item) === prev)) {
-                    return null;
-                }
-                return prev;
+
+            React.startTransition(() => {
+                setDisplaySettings(settings);
+                setFlatSettings(flatSettings);
+                setSelected(prev => {
+                    // Jeśli poprzednio zaznaczone ustawienie nie istnieje w nowych wynikach, ustaw na null
+                    if (prev && !flatSettings.some(item => createKey(item) === prev)) {
+                        return null;
+                    }
+                    return prev;
+                });
             });
         }, searchDelay);
         debouncedSearch();
@@ -240,6 +243,21 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     const handleSelectSetting = React.useCallback((key: string) => {
         setSelected(key);
+    }, []);
+
+    const handlePinned = React.useCallback((operation: 'add' | 'remove', key: string) => {
+        setPinnedMap((prev) => {
+            if (operation === 'add') {
+                return [...prev, key];
+            } else {
+                if (!prev.includes(key)) {
+                    return prev;
+                }
+                const newMap = [...prev];
+                newMap.splice(newMap.indexOf(key), 1);
+                return newMap;
+            }
+        });
     }, []);
 
     React.useEffect(() => {
@@ -276,8 +294,10 @@ const EditableSettings = (props: EditableSettingsProps) => {
             if (minIndexSetting) {
                 const groupNode = findNodeByKey(treeData, minIndexSetting._group.key);
                 const path = getPath(groupNode);
-                setBreadcrumb(path.map(node => node.title));
-                setSelectedNode(path[path.length - 1].key);
+                React.startTransition(() => {
+                    setBreadcrumb(path.map(node => node.title));
+                    setSelectedNode(path[path.length - 1].key);
+                });
             }
             else {
                 setBreadcrumb([]);
@@ -383,18 +403,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                             collection={collection}
                                             selected={selected ?? undefined}
                                             onSelect={handleSelectSetting}
-                                            onPinned={(operation, key) => {
-                                                if (operation === 'add') {
-                                                    setPinnedMap((prev) => [...prev, key]);
-                                                } else {
-                                                    setPinnedMap((prev) => {
-                                                        if (!prev.includes(key)) return prev;
-                                                        const newMap = [...prev];
-                                                        newMap.splice(newMap.indexOf(key), 1);
-                                                        return newMap;
-                                                    });
-                                                }
-                                            }}
+                                            onPinned={handlePinned}
                                         />
                                     ))}
                                 </StyledEditableSettingsList>

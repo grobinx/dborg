@@ -7,17 +7,15 @@ import Collapse from '@mui/material/Collapse';
 /**
  * Tree node structure
  */
-export interface TreeNode<T = {}> {
+export interface TreeNode {
     /** Unique key for the node */
     key: string;
     /** Title of the node */
     title?: FormattedContentItem;
     /** Child nodes */
-    children?: TreeNode<T>[];
+    children?: TreeNode[];
     /** Parent node - null if root. */
-    parent?: TreeNode<T> | null;
-    /** Additional properties */
-    properties?: T; // Now you can add custom properties
+    parent?: TreeNode | null;
 }
 
 interface TreeProps {

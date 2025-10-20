@@ -480,7 +480,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         return <theme.icons.Disconnected {...slotProps?.icon} />;
     };
 
-    const renderSecondaryText = (record: Schema) => {
+    const renderSecondaryText = React.useCallback((record: Schema) => {
         const neverText = t("never", "Never");
         const groupText = record.sch_group ?? t("ungrouped", "Ungrouped");
         const lastSelectedText = record.sch_last_selected
@@ -505,7 +505,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 {t("schema-order", "Order: {{order}}", { order: record.sch_order })}
             </span>
         ];
-    };
+    }, []);
 
     React.useEffect(() => {
         if (!selectedItem) return;
