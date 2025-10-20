@@ -206,7 +206,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
             }
         },
     });
-    const selectedRef = React.useRef<string | null>(null);
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
     const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
@@ -242,10 +241,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const handleSelectSetting = React.useCallback((key: string) => {
         setSelected(key);
     }, []);
-
-    React.useEffect(() => {
-        selectedRef.current = selected;
-    }, [selected]);
 
     React.useEffect(() => {
         const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
@@ -379,7 +374,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     ))}
                                 </Stack>
                             </Typography>
-                            <StyledEditableSettingsContent ref={settingsContentRef} sx={{ flexGrow: 1, overflowY: "auto" }}>
+                            <StyledEditableSettingsContent ref={settingsContentRef}>
                                 <StyledEditableSettingsList>
                                     {displaySettings.map((collection) => (
                                         <SettingsCollectionForm

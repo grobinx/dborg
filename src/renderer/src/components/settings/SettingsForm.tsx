@@ -365,10 +365,12 @@ export const SettingsCollectionForm: React.FC<{
         if (contentRef?.current && selected) {
             const selectedElement = contentRef.current.querySelector(`[data-setting-key="${selected}"]`);
             if (selectedElement) {
-                selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                selectedElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
             }
         }
     }, [selected]);
+
+    console.count("SettingsCollectionForm Render");
 
     return (
         <Stack

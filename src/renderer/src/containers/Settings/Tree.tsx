@@ -7,15 +7,17 @@ import Collapse from '@mui/material/Collapse';
 /**
  * Tree node structure
  */
-export interface TreeNode {
+export interface TreeNode<T = {}> {
     /** Unique key for the node */
     key: string;
     /** Title of the node */
     title?: FormattedContentItem;
     /** Child nodes */
-    children?: TreeNode[];
-    /** Parent node - optional, useful for certain operations, not used in tree component. Null if root. */
-    parent?: TreeNode | null;
+    children?: TreeNode<T>[];
+    /** Parent node - null if root. */
+    parent?: TreeNode<T> | null;
+    /** Additional properties */
+    properties?: T; // Now you can add custom properties
 }
 
 interface TreeProps {
@@ -117,7 +119,7 @@ const TreeNodes: React.FC<{
                     </TreeNode>
 
                     {node.children && node.children.length > 0 && (
-                        <Collapse in={isOpen} unmountOnExit>
+                        <Collapse in={isOpen} timeout={100} unmountOnExit>
                             <TreeNodes
                                 nodes={node.children}
                                 level={level + 1}
