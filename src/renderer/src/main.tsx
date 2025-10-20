@@ -40,6 +40,8 @@ const AppWrapper: React.FC = () => {
         );
     }
 
+    console.count("AppWrapper Render");
+
     return (
         <ToastProvider>
             <ErrorBoundaryWrapper>

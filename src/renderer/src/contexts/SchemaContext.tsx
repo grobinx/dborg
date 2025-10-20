@@ -196,7 +196,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return;
         }
         storeSchemas(schemas);
-    }, [schemas, storeSchemas]);
+    }, [schemas]);
 
     React.useEffect(() => {
         loadSchemas();

@@ -401,18 +401,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     };
 
-    const swapSchemaOrder = async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
-        try {
-            await swapSchemasOrder(sourceSchemaId, targetSchemaId, group);
-        } catch (error) {
-            addToast("error",
-                t("schema-order-update-error", "Failed to update schema order!"),
-                { source: t_connectionSchema, reason: error }
-            );
-            return;
-        }
-    }
-
     const moveDown = (schemaId: string) => {
         if (!sortedData || sortedData.length === 0 || !schemaId) return;
 
@@ -424,7 +412,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             if (groupList && (nextSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
-            swapSchemaOrder(schemaId, nextSchema.sch_id);
+            swapSchemasOrder(schemaId, nextSchema.sch_id);
         }
     }
 
@@ -438,7 +426,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             if (groupList && (previousSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
-            swapSchemaOrder(schemaId, previousSchema.sch_id);
+            swapSchemasOrder(schemaId, previousSchema.sch_id);
         }
     }
 
@@ -450,7 +438,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         if (previousIndex >= 0) {
             const currentGroup = groupedData[currentIndex];
             const previousGroup = groupedData[previousIndex];
-            swapSchemaOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
+            swapSchemasOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
         }
     }
 
@@ -462,7 +450,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         if (nextIndex < groupedData.length) {
             const currentGroup = groupedData[currentIndex];
             const nextGroup = groupedData[nextIndex];
-            swapSchemaOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
+            swapSchemasOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
         }
     }
 

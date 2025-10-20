@@ -1,6 +1,5 @@
 import React from 'react';
 import { styled, SxProps, Theme } from '@mui/material';
-import { borderRadius } from '@renderer/themes/layouts/default/consts';
 import { Size } from '@renderer/types/sizes';
 import clsx from '@renderer/utils/clsx';
 import { BaseButtonProps } from '@renderer/components/buttons/BaseButtonProps';
@@ -22,22 +21,24 @@ const StyledButtonGroup = styled('div', {
     '&.orientation-horizontal': {
         flexDirection: 'row',
         '& .ButtonGroup-button': {
-            borderRadius: 0,
             marginLeft: 0, // Nakładanie borders dla seamless look
 
             '&:first-of-type': {
-                borderTopLeftRadius: borderRadius,
-                borderBottomLeftRadius: borderRadius,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
                 marginLeft: 0,
             },
 
             '&:last-of-type': {
-                borderTopRightRadius: borderRadius,
-                borderBottomRightRadius: borderRadius,
+                borderTopLeftRadius: 0,
+                borderBottomLeftRadius: 0,
+            },
+
+            '&:not(:first-of-type):not(:last-of-type)': {
+                borderRadius: 0,
             },
 
             '&:only-of-type': {
-                borderRadius: borderRadius,
                 marginLeft: 0,
             },
 
@@ -51,22 +52,24 @@ const StyledButtonGroup = styled('div', {
         flexDirection: 'column',
 
         '& .ButtonGroup-button': {
-            borderRadius: 0,
             marginTop: -1, // Nakładanie borders dla seamless look
 
             '&:first-of-type': {
-                borderTopLeftRadius: borderRadius,
-                borderTopRightRadius: borderRadius,
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
                 marginTop: 0,
             },
 
             '&:last-of-type': {
-                borderBottomLeftRadius: borderRadius,
-                borderBottomRightRadius: borderRadius,
+                borderTopLeftRadius: 0,
+                borderTopRightRadius: 0,
+            },
+
+            '&:not(:first-of-type):not(:last-of-type)': {
+                borderRadius: 0,
             },
 
             '&:only-of-type': {
-                borderRadius: borderRadius,
                 marginTop: 0,
             },
 

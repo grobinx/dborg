@@ -484,6 +484,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         handleRefreshMetadata,
     ]);
 
+    console.count("ApplicationContext Render");
+
     return (
         <ApplicationContext.Provider
             value={{
