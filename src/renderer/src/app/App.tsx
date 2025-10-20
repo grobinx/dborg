@@ -57,20 +57,14 @@ function useWindowDimensions(): Size {
 const App: React.FC = () => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const { height } = useWindowDimensions();
     const [placement, setPlacement] = useSetting<Placement>("app", "placement");
     const [toolsTabsPanelVisible, setToolsTabsPanelVisible] = React.useState<boolean>(() => {
         const storedValue = window.sessionStorage.getItem(App_toolsTabsPanelVisible);
         return storedValue !== null ? JSON.parse(storedValue) : false;
     });
-    const [middleHeight, setMiddleHeight] = React.useState(height - 60);
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
     const { emit, subscribe, unsubscribe } = useMessages();
     const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
-
-    const menuBarRef = React.useRef<HTMLDivElement>(null);
-    const statusBarRef = React.useRef<HTMLDivElement>(null);
-    const sideBarRef = React.useRef<HTMLDivElement>(null);
 
     console.count("App Render");
 
@@ -120,47 +114,13 @@ const App: React.FC = () => {
         };
     }, []);
 
-    const middleHeightRef = React.useRef(0);
-    // Adjust middle height based on window and sidebar dimensions
-    React.useEffect(() => {
-        const calculateMiddleHeight = () => {
-            if (!menuBarRef.current || !statusBarRef.current) return;
-
-            let middleHeight = height - menuBarRef.current.offsetHeight - statusBarRef.current.offsetHeight;
-
-            if (["top", "bottom"].includes(placement) && sideBarRef.current) {
-                middleHeight -= sideBarRef.current.offsetHeight;
-            }
-
-            if (middleHeightRef.current !== middleHeight) {
-                middleHeightRef.current = middleHeight;
-                setMiddleHeight(middleHeight);
-            }
-        };
-
-        calculateMiddleHeight();
-
-        // Add a resize observer to recalculate height dynamically
-        const resizeObserver = new ResizeObserver(() => {
-            calculateMiddleHeight();
-        });
-
-        if (menuBarRef.current) resizeObserver.observe(menuBarRef.current);
-        if (statusBarRef.current) resizeObserver.observe(statusBarRef.current);
-        if (sideBarRef.current) resizeObserver.observe(sideBarRef.current);
-
-        return () => {
-            resizeObserver.disconnect();
-        };
-    }, [placement, height]);
-
     return (
-        <div>
+        <Stack direction="column" style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
             <FocusContainerHandler />
-            <MenuBar key="menu-bar" ref={menuBarRef} />
-            <Stack key="stack-direction" direction={stackDirection}>
-                <SideBar key="side-bar" placement={placement} ref={sideBarRef} />
-                <SplitPanelGroup key="split-group" direction="vertical" style={{ height: middleHeight }} autoSaveId="tools-panel">
+            <MenuBar key="menu-bar" />
+            <Stack key="stack-direction" direction={stackDirection} style={{ flexGrow: 1, overflow: 'hidden' }}>
+                <SideBar key="side-bar" placement={placement} />
+                <SplitPanelGroup key="split-group" direction="vertical" style={{ height: "100%", flexGrow: 1 }} autoSaveId="tools-panel">
                     <SplitPanel key="split-app-containers">
                         <AppContainers />
                     </SplitPanel>
@@ -204,7 +164,6 @@ const App: React.FC = () => {
             </Stack>
             <StatusBar
                 key="status-bar"
-                ref={statusBarRef}
                 buttons={{
                     first: [
                         ...Array.from(appStatusBarButtons.static.values()).map((Button, index) => (<Button key={index} />)),
@@ -212,7 +171,7 @@ const App: React.FC = () => {
                     ],
                 }}
             />
-        </div >
+        </Stack>
     );
 };
 

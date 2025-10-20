@@ -41,16 +41,6 @@ export const useConsoleLogState = create<ConsoleLogState>((set) => ({
     setSearch: (search: string) => set(() => ({ search: search })),
 }));
 
-let searchTimeoutId: NodeJS.Timeout | undefined = undefined;
-
-const StyledConsoleLogPanel = styled(List, {
-    name: "ConsoleLogPanel",
-    slot: "root",
-    shouldForwardProp: (_prop) => true, // Przekazuj wszystkie właściwości do komponentu List
-})(({ /*theme*/ }) => ({
-    // Add styles for the list container if needed
-}));
-
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
     slotProps?: {
         list?: React.ComponentProps<typeof List>;

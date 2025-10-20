@@ -77,17 +77,32 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const logQueue = useRef<LogEntry[]>([]); // Kolejka logów
     const [timers, setTimers] = useState<Record<string, number>>({}); // Przechowywanie czasów dla console.time
-    const [logLevels, setLogLevels] = useState<LogLevelEntry[]>(DefaultLogLevels);
+    const [logLevels, setLogLevels] = useState<LogLevelEntry[]>(() => {
+        const stored = localStorage.getItem('consoleLogLevels');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                const levels = DefaultLogLevels.map(level => ({
+                    ...level,
+                    logged: parsed.includes(level.level)
+                }));
+                return levels;
+            } catch (error) {
+                console.error('Error parsing consoleLogLevels from localStorage:', error);
+            }
+        }
+        return DefaultLogLevels;
+    });
     const [loggedLevels, setLoggedLevels] = useState<LogLevel[]>(DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level));
     const originalConsole = useRef({ ...console });
     const logHandlerRef = useRef<((level: LogLevel, ...args: any[]) => void) | null>(null);
 
     logHandlerRef.current = (level: LogLevel, ...args: any[]) => {
         if (loggedLevels.includes(level)) {
-            logQueue.current.push({ 
-                id: uuidv7(), 
-                time: Date.now(), 
-                level, 
+            logQueue.current.push({
+                id: uuidv7(),
+                time: Date.now(),
+                level,
                 message: args,
                 stack: ["error", "warn", "trace", "debug"].includes(level)
                     ? removeUnnecessaryLines(new Error().stack)
@@ -101,7 +116,9 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     useEffect(() => {
-        setLoggedLevels(logLevels.filter(entry => entry.logged).map(entry => entry.level));
+        const levels = logLevels.filter(entry => entry.logged).map(entry => entry.level);
+        setLoggedLevels(levels);
+        localStorage.setItem('consoleLogLevels', JSON.stringify(levels));
     }, [logLevels]);
 
     useEffect(() => {
