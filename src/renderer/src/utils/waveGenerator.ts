@@ -40,8 +40,8 @@ export const generateWavePaths = (
             const path = generateWavePath(
                 900,
                 600,
-                15 + layer + Math.random() * 10,
-                0.008 + layer * Math.random() * 0.002,
+                8 + layer * 2 + Math.random() * 5,
+                0.008 + (layerCount - layer) * Math.random() * 0.004,
                 Math.random() * Math.PI * 2,
                 360 + layer * 40 + Math.random() * 20,
                 0.2 + Math.random() * 0.1

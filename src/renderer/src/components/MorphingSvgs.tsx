@@ -22,7 +22,7 @@ interface MorphingSvgPathsProps {
 }
 
 function getRandomDuration() {
-    return (Math.random() * 14 + 4).toFixed(2); // 4-18s
+    return (Math.random() * 20 + 20).toFixed(2); // 20-40s
 }
 
 export const MorphingSvgPaths: React.FC<MorphingSvgPathsProps> = ({

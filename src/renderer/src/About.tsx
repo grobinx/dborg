@@ -146,9 +146,9 @@ const AnimatedWaves = styled('div')({
 });
 
 const LayeredWaves = () => {
-    const paths = React.useMemo(() => generateWavePaths(10, 5), []);
+    const paths = React.useMemo(() => generateWavePaths(10,  5), []);
     
-    return <MorphingSvgPaths paths={paths} duration={25} />;
+    return <MorphingSvgPaths paths={paths} />;
 };
 
 const About: React.FC<{
@@ -275,13 +275,14 @@ const About: React.FC<{
 
             {/* Informacje o aplikacji */}
             <StyledAppInfoContainer delayShift={0.1}>
-                <StyledTextInfo index={0}><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</StyledTextInfo>
-                <StyledTextInfo index={1}><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</StyledTextInfo>
-                <StyledTextInfo index={2}><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></StyledTextInfo>
-                <StyledTextInfo index={3}><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</StyledTextInfo>
-                <StyledTextInfo index={4}><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</StyledTextInfo>
-                <StyledTextInfo index={5}><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</StyledTextInfo>
-                <StyledTextInfo index={6}><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
+                <StyledTextInfo index={0}><strong>{t('release-dd', 'Release:')}</strong> {dborgReleaseName}</StyledTextInfo>
+                <StyledTextInfo index={1}><strong>{t('version-dd', 'Version:')}</strong> {version.toString()}</StyledTextInfo>
+                <StyledTextInfo index={2}><strong>{t('author-dd', 'Author:')}</strong> {dborgPackage.author}</StyledTextInfo>
+                <StyledTextInfo index={3}><strong>{t('homepage-dd', 'Homepage:')}</strong> <a href={dborgPackage.homepage} target="_blank" rel="noopener noreferrer" style={{ color: '#00f2fe' }}>{dborgPackage.homepage}</a></StyledTextInfo>
+                <StyledTextInfo index={4}><strong>{t('license-dd', 'License:')}</strong> {dborgPackage.license}</StyledTextInfo>
+                <StyledTextInfo index={5}><strong>{t('date-dd', 'Date:')}</strong> {dborgDate}</StyledTextInfo>
+                <StyledTextInfo index={6}><strong>{t('duration-dd', 'Duration:')}</strong> {dborgDuration}</StyledTextInfo>
+                <StyledTextInfo index={7}><strong>{t('environment-dd', 'Environment:')}</strong>&nbsp;
                     E: {window.electron.versions.electron},
                     N: {window.electron.versions.node},
                     C: {window.electron.versions.chrome}
