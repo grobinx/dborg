@@ -6,7 +6,7 @@ import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
 import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, styled, Typography } from "@mui/material";
 import createKey from "./createKey";
 
 const calculateWidth = (setting: SettingTypeUnion) => {
@@ -273,21 +273,12 @@ const SettingGroupForm: React.FC<{
 
     return (
         <Stack direction={"column"}>
-            {/* Sentinel przed nagłówkiem */}
-            <Typography
-                variant="h6"
-            >
-                {group.title}
-            </Typography>
-
-            {group.description && (
-                <Typography
-                    variant="body2"
-                    color="text.secondary"
-                >
-                    {group.description}
-                </Typography>
-            )}
+            <Box data-setting-group-key={group.key}>
+                <Typography variant="h6">{group.title}</Typography>
+                {group.description && (
+                    <Typography variant="description">{group.description}</Typography>
+                )}
+            </Box>
 
             <SettingsList
                 settings={group.settings}
@@ -329,42 +320,22 @@ const SettingsGroupList: React.FC<{
 };
 
 export const SettingsCollectionForm: React.FC<{
-    contentRef?: React.RefObject<HTMLDivElement | null>;
     collection: SettingsCollection;
     selected?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ contentRef, collection, selected, onSelect, onPinned }) => {
-
-    React.useEffect(() => {
-        if (contentRef?.current && selected) {
-            const selectedElement = contentRef.current.querySelector(`[data-setting-key="${selected}"]`);
-            if (selectedElement) {
-                selectedElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-            }
-        }
-    }, [selected]);
-
-    console.count("SettingsCollectionForm Render");
+}> = ({ collection, selected, onSelect, onPinned }) => {
 
     return (
         <Stack
             style={{ display: "flex", flexDirection: "column", gap: 4 }}
         >
-            <Typography
-                variant="h5"
-            >
-                {collection.title}
-            </Typography>
-
-            {collection?.description && (
-                <Typography
-                    variant="body2"
-                    color="text.secondary"
-                >
-                    {collection.description}
-                </Typography>
-            )}
+            <Box data-setting-group-key={collection.key}>
+                <Typography variant="h5">{collection.title}</Typography>
+                {collection?.description && (
+                    <Typography variant="description">{collection.description}</Typography>
+                )}
+            </Box>
 
             <SettingsList
                 settings={collection.settings}
@@ -383,4 +354,68 @@ export const SettingsCollectionForm: React.FC<{
     );
 };
 
-export default SettingsCollectionForm;
+const StyledSettingsForm = styled(Stack, {
+    name: 'SettingsForm',
+    slot: 'list',
+})(() => ({
+    flexDirection: "column",
+    paddingLeft: 8,
+    paddingRight: 8,
+    gap: 8,
+}));
+
+export interface SettingsFormProps {
+    collections: SettingsCollection[];
+    selected?: string;
+    selectedGroup?: string;
+    contentRef?: React.RefObject<HTMLDivElement | null>;
+    onSelect: (key: string) => void;
+    onPinned: (operation: 'add' | 'remove', key: string) => void;
+    className?: string;
+}
+
+const SettingsForm: React.FC<SettingsFormProps> = ({
+    collections,
+    selected,
+    selectedGroup,
+    contentRef,
+    onSelect,
+    onPinned,
+    className,
+}) => {
+    console.count("SettingsForm Render");
+
+    React.useEffect(() => {
+        if (contentRef?.current && selected) {
+            const selectedElement = contentRef.current.querySelector(`[data-setting-key="${selected}"]`);
+            if (selectedElement) {
+                selectedElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+            }
+        }
+    }, [selected]);
+
+    React.useEffect(() => {
+        if (contentRef?.current && selectedGroup) {
+            const selectedElement = contentRef.current.querySelector(`[data-setting-group-key="${selectedGroup}"]`);
+            if (selectedElement) {
+                selectedElement.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        }
+    }, [selectedGroup]);
+
+    return (
+        <StyledSettingsForm className={className}>
+            {collections.map((collection) => (
+                <SettingsCollectionForm
+                    key={collection.key}
+                    collection={collection}
+                    selected={selected}
+                    onSelect={onSelect}
+                    onPinned={onPinned}
+                />
+            ))}
+        </StyledSettingsForm>
+    );
+};
+
+export default SettingsForm;

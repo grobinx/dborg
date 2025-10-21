@@ -1,6 +1,5 @@
 import { Box, Stack, StackProps, styled, Typography, useTheme } from "@mui/material";
 import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
-import SettingsCollectionForm from "@renderer/components/settings/SettingsForm";
 import React from "react";
 import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
@@ -12,9 +11,9 @@ import debounce from "@renderer/utils/debounce";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import createKey from "@renderer/components/settings/createKey";
 import { FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
-import UnboundBadge from "@renderer/components/UnboundBadge";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { focusElement } from "@renderer/components/useful/FocusContainerHandler";
+import SettingsForm from "@renderer/components/settings/SettingsForm";
 
 export interface EditableSettingsProps extends StackProps {
 }
@@ -59,16 +58,6 @@ const StyledEditableSettingsContent = styled(Stack, {
     overflowY: "auto",
     overflowX: "hidden",
     display: 'flex',
-}));
-
-const StyledEditableSettingsList = styled(Stack, {
-    name: 'EditableSettings',
-    slot: 'list',
-})(() => ({
-    flexDirection: "column",
-    paddingLeft: 8,
-    paddingRight: 8,
-    gap: 8,
 }));
 
 const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
@@ -211,6 +200,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
     const theme = useTheme();
     const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
+    const [clickedNode, setClickedNode] = React.useState<string | undefined>(undefined);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -315,15 +305,15 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const renderNode = React.useCallback((node: TreeNode) => {
         return <FormattedText
             text={node.title}
-            // text={[[
-            //     node.title,
-            //     <UnboundBadge
-            //         content={node.children?.length ?? 0}
-            //         unmountOnHide
-            //         style={{ opacity: 0.5 }}
-            //         size="medium"
-            //     />
-            // ]]}
+        // text={[[
+        //     node.title,
+        //     <UnboundBadge
+        //         content={node.children?.length ?? 0}
+        //         unmountOnHide
+        //         style={{ opacity: 0.5 }}
+        //         size="medium"
+        //     />
+        // ]]}
         />
     }, []);
 
@@ -358,6 +348,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             <Tree
                                 data={treeData}
                                 onSelect={handleSelectNode}
+                                onClick={(key) => setClickedNode(key)}
                                 selected={selectedNode}
                                 autoExpand={1}
                                 renderNode={renderNode}
@@ -369,9 +360,9 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 <SplitPanel>
                     {displaySettings.length === 0 ? (
                         <StyledEditableSettingsContent>
-                            <StyledEditableSettingsList>
+                            <Box sx={{ margin: "auto", opacity: 0.5, alignItems: "center" }}>
                                 {t("no-setting-results", "No settings found")}
-                            </StyledEditableSettingsList>
+                            </Box>
                         </StyledEditableSettingsContent>
                     ) : (
                         <Stack direction="column" sx={{ height: "100%" }}>
@@ -396,18 +387,14 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                 </Stack>
                             </Typography>
                             <StyledEditableSettingsContent ref={settingsContentRef}>
-                                <StyledEditableSettingsList>
-                                    {displaySettings.map((collection) => (
-                                        <SettingsCollectionForm
-                                            key={collection.key}
-                                            contentRef={settingsContentRef}
-                                            collection={collection}
-                                            selected={selected ?? undefined}
-                                            onSelect={handleSelectSetting}
-                                            onPinned={handlePinned}
-                                        />
-                                    ))}
-                                </StyledEditableSettingsList>
+                                <SettingsForm
+                                    collections={displaySettings}
+                                    contentRef={settingsContentRef}
+                                    selected={selected ?? undefined}
+                                    onSelect={handleSelectSetting}
+                                    onPinned={handlePinned}
+                                    selectedGroup={clickedNode}
+                                />
                             </StyledEditableSettingsContent>
                         </Stack>
                     )}

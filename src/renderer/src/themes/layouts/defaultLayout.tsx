@@ -59,7 +59,13 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             },
             button: {
                 textTransform: 'none',
-            }
+            },
+            h1: { lineHeight: 1.2 },
+            h2: { lineHeight: 1.25 },
+            h3: { lineHeight: 1.3 },
+            h4: { lineHeight: 1.35 },
+            h5: { lineHeight: 1.4 },
+            h6: { lineHeight: 1.45 },
         },
         components: {
             MuiCssBaseline: {
