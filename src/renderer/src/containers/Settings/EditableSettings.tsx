@@ -199,8 +199,8 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
     const theme = useTheme();
-    const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
-    const [clickedNode, setClickedNode] = React.useState<string | undefined>(undefined);
+    const [selectedNode, setSelectedNode] = React.useState<string | undefined>(undefined);
+    const manualSelectedNode = React.useRef(false);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -229,6 +229,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     const handleSelectNode = React.useCallback((key: string) => {
         setSelectedNode(key);
+        manualSelectedNode.current = true; // Zablokuj następną aktualizację
     }, []);
 
     const handleSelectSetting = React.useCallback((key: string) => {
@@ -286,12 +287,17 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 const path = getPath(groupNode);
                 React.startTransition(() => {
                     setBreadcrumb(path.map(node => node.title));
-                    setSelectedNode(path[path.length - 1].key);
+                    if (manualSelectedNode.current) {
+                        manualSelectedNode.current = false;
+                    }
+                    else {
+                        setSelectedNode(path[path.length - 1].key);
+                    }
                 });
             }
             else {
                 setBreadcrumb([]);
-                setSelectedNode(null);
+                setSelectedNode(undefined);
             }
         }, 100);
 
@@ -348,7 +354,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             <Tree
                                 data={treeData}
                                 onSelect={handleSelectNode}
-                                onClick={(key) => setClickedNode(key)}
                                 selected={selectedNode}
                                 autoExpand={1}
                                 renderNode={renderNode}
@@ -393,7 +398,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     selected={selected ?? undefined}
                                     onSelect={handleSelectSetting}
                                     onPinned={handlePinned}
-                                    selectedGroup={clickedNode}
+                                    selectedGroup={selectedNode}
                                 />
                             </StyledEditableSettingsContent>
                         </Stack>

@@ -23,7 +23,6 @@ interface TreeProps {
     data: TreeNode[];
     selected?: string | null;
     onSelect: (key: string) => void;
-    onClick?: (key: string) => void;
     renderNode?: (node: TreeNode) => React.ReactNode;
     [key: `data-${string}`]: any;
 }
@@ -136,7 +135,7 @@ const TreeNodes: React.FC<{
     );
 };
 
-const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpand, renderNode }) => {
+const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, renderNode }) => {
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const [focused, setFocused] = React.useState<boolean>(false);
     const treeRef = React.useRef<HTMLDivElement>(null);
@@ -219,12 +218,11 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpa
 
     const handleClick = React.useCallback((node: TreeNode) => {
         onSelect(node.key);
-        onClick?.(node.key);
         setUncontrolledSelected(node.key);
         if (node.children && node.children.length > 0) {
             toggleNode(node.key);
         }
-    }, [onSelect, onClick, toggleNode]);
+    }, [onSelect, toggleNode]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
         const node = treeRef.current?.querySelector('[data-node-key].selected');
@@ -243,13 +241,11 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpa
                 if (nodeIndex < flatOpenTree.length - 1) {
                     const nextNode = flatOpenTree[nodeIndex + 1];
                     onSelect(nextNode.key);
-                    onClick?.(nextNode.key);
                     setUncontrolledSelected(nextNode.key);
                 }
                 else if (nodeIndex === flatOpenTree.length - 1) {
                     const firstNode = flatOpenTree[0];
                     onSelect(firstNode.key);
-                    onClick?.(firstNode.key);
                     setUncontrolledSelected(firstNode.key);
                 }
             }
@@ -261,13 +257,11 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpa
                 if (nodeIndex > 0) {
                     const prevNode = flatOpenTree[nodeIndex - 1];
                     onSelect(prevNode.key);
-                    onClick?.(prevNode.key);
                     setUncontrolledSelected(prevNode.key);
                 }
                 else if (nodeIndex === 0) {
                     const lastNode = flatOpenTree[flatOpenTree.length - 1];
                     onSelect(lastNode.key);
-                    onClick?.(lastNode.key);
                     setUncontrolledSelected(lastNode.key);
                 }
             }
@@ -285,7 +279,6 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpa
                         const firstChild = currentNode.children[0];
                         if (firstChild) {
                             onSelect(firstChild.key);
-                            onClick?.(firstChild.key);
                             setUncontrolledSelected(firstChild.key);
                         }
                     }
@@ -302,7 +295,6 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, onClick, selected, autoExpa
                 } else if (currentNode.parent) {
                     // Przenieś zaznaczenie do rodzica
                     onSelect(currentNode.parent.key);
-                    onClick?.(currentNode.parent.key);
                     setUncontrolledSelected(currentNode.parent.key);
                 }
             }
