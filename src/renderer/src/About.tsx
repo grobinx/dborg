@@ -146,8 +146,8 @@ const AnimatedWaves = styled('div')({
 });
 
 const LayeredWaves = () => {
-    const paths = React.useMemo(() => generateWavePaths(10,  5), []);
-    
+    const paths = React.useMemo(() => generateWavePaths(10, 5), []);
+
     return <MorphingSvgPaths paths={paths} />;
 };
 
@@ -233,9 +233,11 @@ const About: React.FC<{
             background: '#181c24',
         }}>
             {/* Animowane fale SVG na dole */}
+            {/*
             <AnimatedWaves>
                 <LayeredWaves />
             </AnimatedWaves>
+            */}
 
             <StyledAppTitle
                 className={clsx(
