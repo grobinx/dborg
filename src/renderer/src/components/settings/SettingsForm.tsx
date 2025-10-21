@@ -264,16 +264,23 @@ export const SettingsList: React.FC<{
 const SettingGroupForm: React.FC<{
     group: SettingsGroup;
     selected?: string;
+    selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ group, selected, onSelect, onPinned }) => {
+}> = ({ group, selected, selectedGroup, onSelect, onPinned }) => {
     if (!group) {
         return null;
     }
 
     return (
         <Stack direction={"column"}>
-            <Box data-setting-group-key={group.key}>
+            <Box
+                data-setting-group-key={group.key}
+                sx={{
+                    backgroundColor: selectedGroup === group.key ? 'lightgray' : 'transparent',
+                    padding: 8,
+                }}
+            >
                 <Typography variant="h6">{group.title}</Typography>
                 {group.description && (
                     <Typography variant="description">{group.description}</Typography>
@@ -290,6 +297,7 @@ const SettingGroupForm: React.FC<{
             <SettingsGroupList
                 groups={group.groups}
                 selected={selected}
+                selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
@@ -300,9 +308,10 @@ const SettingGroupForm: React.FC<{
 const SettingsGroupList: React.FC<{
     groups?: SettingsGroup[];
     selected?: string;
+    selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ groups, selected, onSelect, onPinned }) => {
+}> = ({ groups, selected, selectedGroup, onSelect, onPinned }) => {
     if (!groups || groups.length === 0) {
         return null;
     }
@@ -312,6 +321,7 @@ const SettingsGroupList: React.FC<{
                 key={`${grp.key}-group-${idx}`}
                 group={grp}
                 selected={selected}
+                selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
@@ -322,15 +332,22 @@ const SettingsGroupList: React.FC<{
 export const SettingsCollectionForm: React.FC<{
     collection: SettingsCollection;
     selected?: string;
+    selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ collection, selected, onSelect, onPinned }) => {
+}> = ({ collection, selected, selectedGroup, onSelect, onPinned }) => {
 
     return (
         <Stack
             style={{ display: "flex", flexDirection: "column", gap: 4 }}
         >
-            <Box data-setting-group-key={collection.key}>
+            <Box
+                data-setting-group-key={collection.key}
+                sx={{
+                    backgroundColor: selectedGroup === collection.key ? 'lightgray' : 'transparent',
+                    padding: 8,
+                }}
+            >
                 <Typography variant="h5">{collection.title}</Typography>
                 {collection?.description && (
                     <Typography variant="description">{collection.description}</Typography>
@@ -347,6 +364,7 @@ export const SettingsCollectionForm: React.FC<{
             <SettingsGroupList
                 groups={collection.groups}
                 selected={selected}
+                selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
@@ -410,6 +428,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
                     key={collection.key}
                     collection={collection}
                     selected={selected}
+                    selectedGroup={selectedGroup}
                     onSelect={onSelect}
                     onPinned={onPinned}
                 />

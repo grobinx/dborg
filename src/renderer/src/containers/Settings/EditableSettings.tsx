@@ -200,7 +200,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
     const theme = useTheme();
     const [selectedNode, setSelectedNode] = React.useState<string | undefined>(undefined);
-    const manualSelectedNode = React.useRef(false);
+    const [manualSelectedNode, setManualSelectedNode] = React.useState<string | undefined>(undefined);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -229,7 +229,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     const handleSelectNode = React.useCallback((key: string) => {
         setSelectedNode(key);
-        manualSelectedNode.current = true; // Zablokuj następną aktualizację
+        setManualSelectedNode(key);
     }, []);
 
     const handleSelectSetting = React.useCallback((key: string) => {
@@ -272,7 +272,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
             return null;
         };
 
-        const updateBreadcrumb = debounce(() => {
+        //const updateBreadcrumb = debounce(() => {
             const pinnedSettings = pinnedMap.map(key => {
                 return flatSettings.find(item => createKey(item) === key);
             });
@@ -287,24 +287,19 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 const path = getPath(groupNode);
                 React.startTransition(() => {
                     setBreadcrumb(path.map(node => node.title));
-                    if (manualSelectedNode.current) {
-                        manualSelectedNode.current = false;
-                    }
-                    else {
-                        setSelectedNode(path[path.length - 1].key);
-                    }
+                    setSelectedNode(path[path.length - 1].key);
                 });
             }
             else {
                 setBreadcrumb([]);
                 setSelectedNode(undefined);
             }
-        }, 100);
+        //}, 100);
 
-        updateBreadcrumb();
+        //updateBreadcrumb();
 
         return () => {
-            updateBreadcrumb.cancel();
+            //updateBreadcrumb.cancel();
         };
     }, [pinnedMap, treeData, flatSettings]);
 
@@ -398,7 +393,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     selected={selected ?? undefined}
                                     onSelect={handleSelectSetting}
                                     onPinned={handlePinned}
-                                    selectedGroup={selectedNode}
+                                    selectedGroup={manualSelectedNode}
                                 />
                             </StyledEditableSettingsContent>
                         </Stack>
