@@ -10,13 +10,11 @@ import {
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { ConnectionInfo } from "src/api/db";
 import { IconWrapperOwnProps } from "@renderer/themes/icons";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import * as api from "../../../../api/db";
 import { DateTime } from "luxon";
-import CommandPalette, { highlightText } from "@renderer/components/CommandPalette/CommandPalette";
+import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
@@ -168,7 +166,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [data, setData] = React.useState<Schema[] | null>(null);
     const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
-    const [displayData, searchedText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
+    const [displayData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
     const { addToast } = useToast();
     const { queueMessage } = useMessages();
@@ -597,7 +595,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                         </ToolButton>
                                                     </ButtonGroup>
                                                 }
-                                                {highlightText(group, searchedText, theme)}
+                                                {highlightText(group)}
                                             </Typography>
                                         </ListSubheader>
                                     )}
@@ -625,14 +623,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             }
                                             <ListItemIcon className="driver" {...slotProps?.itemIcon}>
                                                 {record.driverIcon && <img src={record.driverIcon} />}
-                                                <Typography variant="caption" className="name">{highlightText(record.driverName!, searchedText, theme)}</Typography>
+                                                <Typography variant="caption" className="name">{highlightText(record.driverName!)}</Typography>
                                             </ListItemIcon>
                                             <ListItemIcon className="status" {...slotProps?.itemIcon}>
                                                 {renderStatusIcon(record)}
                                             </ListItemIcon>
                                             <ListItemText
                                                 {...slotProps?.itemText}
-                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name, searchedText, theme)}</span>}
+                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name!)}</span>}
                                                 secondary={renderSecondaryText(record)}
                                                 slotProps={{
                                                     primary: {

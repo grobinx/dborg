@@ -1,7 +1,8 @@
-import { red } from "@mui/material/colors";
+import { useTheme } from "@mui/material/styles";
+import { ThemeColor } from "@renderer/types/colors";
+import { resolveColor } from "@renderer/utils/colors";
 import debounce from "@renderer/utils/debounce";
 import React from "react";
-
 
 /**
  * Tryb dopasowania tekstu w wyszukiwaniu.
@@ -33,6 +34,20 @@ export interface SearchOptions {
 }
 
 
+const normalize = (s: string, ignoreDiacritics: boolean, caseSensitive: boolean) => {
+    let result = s;
+    if (ignoreDiacritics) {
+        result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        result = result
+            .replace(/ł/g, 'l')
+            .replace(/Ł/g, 'L');
+    }
+    if (!caseSensitive) {
+        result = result.toLowerCase();
+    }
+    return result;
+};
+
 export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchText: string | null, options?: SearchOptions): T[] => {
     const {
         matchMode = 'contains',
@@ -48,24 +63,14 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
     if (!searchText || searchText.length === 0) return data;
     if (searchText.length < minLength) return data;
 
-    const normalize = (s: string) => {
-        if (ignoreDiacritics) {
-            s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        }
-        if (!caseSensitive) {
-            s = s.toLowerCase();
-        }
-        return s;
-    };
-
     const searchParts =
         (splitWords ? searchText.split(' ') : [searchText])
-            .map(part => ignoreDiacritics ? part.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : part);
+            .map(part => normalize(part, ignoreDiacritics, caseSensitive));
 
     if (searchParts.length === 0) return data;
 
     const matches = (value: string): boolean => {
-        let v = normalize(value);
+        let v = normalize(value, ignoreDiacritics, caseSensitive);
 
         let matched: boolean;
 
@@ -118,17 +123,19 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
  * 
  * @param data 
  * @param fields wszystkie pola, lub tablica nazw pól, domyślnie '*' - wszystkie pola
- * @param searchText tekst do wyszukania, null lub pusty string oznacza brak wyszukiwania
+ * @param searchText tekst do wysukania, null lub pusty string oznacza brak wyszukiwania
  * @param options 
  * @returns T[] | null - przefiltrowane dane lub null jeżeli brak danych wejściowych, string - aktualny tekst po wyszukiwaniu
  */
-export const useSearch = <T>(
+export const useSearch = <T,>(
     data: T[] | null,
     fields: ((keyof T)[]) | '*' = '*',
     searchText: string | null,
     options?: SearchOptions,
     delay: number = 300,
-): [T[] | null, string] => {
+    highlightColor: ThemeColor = 'primary',
+): [T[] | null, (text: string | undefined | null) => React.ReactNode] => {
+    const theme = useTheme();
     const [searchedData, setSearchedData] = React.useState<T[] | null>(data);
     const [searchedText, setSearchedText] = React.useState<string>(searchText ?? '');
 
@@ -145,8 +152,60 @@ export const useSearch = <T>(
             setSearchedText(searchText ?? '');
         }, delay);
         debouncedSearch();
-        return () => debouncedSearch.cancel();
-    }, [data, fields, searchText, options]);
+        return () => debouncedSearch.clear();
+    }, [data, JSON.stringify(fields), searchText, options]);
 
-    return [searchedData, searchedText];
+    const renderHighlightedText = React.useCallback((text: string | undefined | null): React.ReactNode => {
+        return highlightText(
+            text,
+            searchedText,
+            options?.ignoreDiacritics ?? true,
+            options?.caseSensitive ?? false,
+            resolveColor(highlightColor, theme)?.main
+        );
+    }, [searchedText, highlightColor]);
+
+    return [searchedData, renderHighlightedText];
 }
+
+export const highlightText = (text: string | undefined | null, search: string, ignoreDiacritics: boolean, caseSensitive: boolean, color: string) => {
+    if (!search || search.trim() === '') return text;
+    if (!text || text.trim() === '') return text;
+
+    // Funkcja pomocnicza do escapowania znaków specjalnych w wyrażeniu regularnym
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Rozdziel query na części oddzielone spacją i escapuj znaki specjalne
+    const queryParts = search.split(' ').filter(Boolean).map(part => escapeRegExp(normalize(part, ignoreDiacritics, caseSensitive)));
+
+    // Funkcja pomocnicza do sprawdzania, czy część tekstu pasuje do dowolnej części query
+    const matchQuery = (part: string) => {
+        const normalizedPart = normalize(part, ignoreDiacritics, caseSensitive);
+        return queryParts.some((q) => normalizedPart.includes(q));
+    };
+
+    // Rozdziel tekst na części, które pasują lub nie pasują do query
+    const regex = new RegExp(`(${queryParts.join('|')})`, 'gi');
+    const normalizedText = normalize(text, ignoreDiacritics, caseSensitive);
+    const parts = normalizedText.split(regex);
+
+    // Znajdź odpowiadające oryginalne fragmenty tekstu
+    let currentIndex = 0;
+    const result = parts.map((part, index) => {
+        if (!part) return null;
+        
+        // Znajdź oryginalny fragment tekstu
+        const originalPart = text.slice(currentIndex, currentIndex + part.length);
+        currentIndex += part.length;
+
+        return matchQuery(part) ? (
+            <span key={index} style={{ fontWeight: 'bold', color: color ?? 'inherit' }}>
+                {originalPart}
+            </span>
+        ) : (
+            originalPart
+        );
+    });
+
+    return result;
+};
