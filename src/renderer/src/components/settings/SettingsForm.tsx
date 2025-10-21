@@ -263,32 +263,19 @@ export const SettingsList: React.FC<{
 
 const SettingGroupForm: React.FC<{
     group: SettingsGroup;
-    groupLevel?: number;
-    titleHeight?: number;
-    titleText?: string[];
     selected?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ group, groupLevel, titleHeight, titleText, selected, onSelect, onPinned }) => {
-    const groupTitleRef = React.useRef<HTMLDivElement>(null);
-    const [groupTitleHeight, setGroupTitleHeight] = React.useState(0);
-
+}> = ({ group, selected, onSelect, onPinned }) => {
     if (!group) {
         return null;
     }
-
-    React.useLayoutEffect(() => {
-        if (groupTitleRef.current) {
-            setGroupTitleHeight(groupTitleRef?.current?.clientHeight ?? 0);
-        }
-    }, [group.title]);
 
     return (
         <Stack direction={"column"}>
             {/* Sentinel przed nagłówkiem */}
             <Typography
                 variant="h6"
-                ref={groupTitleRef}
             >
                 {group.title}
             </Typography>
@@ -302,16 +289,18 @@ const SettingGroupForm: React.FC<{
                 </Typography>
             )}
 
-            <SettingsList settings={group.settings} selected={selected} onSelect={onSelect} onPinned={onPinned} />
-
-            <SettingsGroupList
-                groups={group.groups}
-                groupLevel={(groupLevel ?? 0) + 1}
-                titleHeight={(titleHeight ?? 0) + (groupTitleHeight ?? 0) - 1}
+            <SettingsList
+                settings={group.settings}
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
-                titleText={[...(titleText ?? []), group.title]}
+            />
+
+            <SettingsGroupList
+                groups={group.groups}
+                selected={selected}
+                onSelect={onSelect}
+                onPinned={onPinned}
             />
         </Stack>
     )
@@ -319,13 +308,10 @@ const SettingGroupForm: React.FC<{
 
 const SettingsGroupList: React.FC<{
     groups?: SettingsGroup[];
-    groupLevel?: number;
-    titleHeight?: number;
-    titleText?: string[];
     selected?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ groups, groupLevel, titleHeight, titleText, selected, onSelect, onPinned }) => {
+}> = ({ groups, selected, onSelect, onPinned }) => {
     if (!groups || groups.length === 0) {
         return null;
     }
@@ -334,12 +320,9 @@ const SettingsGroupList: React.FC<{
             <SettingGroupForm
                 key={`${grp.key}-group-${idx}`}
                 group={grp}
-                groupLevel={groupLevel}
-                titleHeight={titleHeight}
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
-                titleText={titleText}
             />
         ))
     );
@@ -352,14 +335,6 @@ export const SettingsCollectionForm: React.FC<{
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ contentRef, collection, selected, onSelect, onPinned }) => {
-    const titleRef = React.useRef<HTMLDivElement>(null);
-    const [titleHeight, setTitleHeight] = React.useState(0);
-
-    React.useEffect(() => {
-        if (titleRef.current) {
-            setTitleHeight(titleRef.current?.clientHeight ?? 0);
-        }
-    }, [collection.title]);
 
     React.useEffect(() => {
         if (contentRef?.current && selected) {
@@ -378,7 +353,6 @@ export const SettingsCollectionForm: React.FC<{
         >
             <Typography
                 variant="h5"
-                ref={titleRef}
             >
                 {collection.title}
             </Typography>
@@ -392,16 +366,18 @@ export const SettingsCollectionForm: React.FC<{
                 </Typography>
             )}
 
-            <SettingsList settings={collection.settings} selected={selected} onSelect={onSelect} onPinned={onPinned} />
-
-            <SettingsGroupList
-                groups={collection.groups}
-                groupLevel={1}
-                titleHeight={titleHeight}
+            <SettingsList
+                settings={collection.settings}
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
-                titleText={[collection.title]}
+            />
+
+            <SettingsGroupList
+                groups={collection.groups}
+                selected={selected}
+                onSelect={onSelect}
+                onPinned={onPinned}
             />
         </Stack>
     );
