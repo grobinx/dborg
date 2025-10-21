@@ -1,16 +1,15 @@
-import { Box, InputAdornment, InputLabel, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, Stack, useTheme } from '@mui/material';
+import { Box, InputLabel, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, Stack, useTheme } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PropertiesInfo } from 'src/api/db';
-import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import { textFieldWidth } from './Utils';
-import { useToast } from '@renderer/contexts/ToastContext';
 import ColorPicker from '@renderer/components/useful/ColorPicker';
 import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import { TextField } from '@renderer/components/inputs/TextField';
 import { Adornment } from '@renderer/components/inputs/base/BaseInputField';
 import ButtonGroup from '@renderer/components/buttons/ButtonGroup';
+import { useSchema } from '@renderer/contexts/SchemaContext';
 
 interface SchemaPatternFieldProps {
     properties: PropertiesInfo,
@@ -29,9 +28,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
-    const { addToast } = useToast();
-    const { internal } = useDatabase();
-    const [loadedPatterns, setLoadedPatterns] = React.useState<string[]>();
+    const { schemas } = useSchema();
     const [colorPickerAnchoreEl, setColorPickerAnchoreEl] = React.useState<null | HTMLElement>(null);
 
     const i18n_SchemaName = t("schema-name", "Schema name");
@@ -73,21 +70,15 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
         }
     };
 
-    React.useEffect(() => {
-        const load = async () => {
-            const result: string[] = [];
-            try {
-                const qResult = await internal.query("select distinct sch_pattern from schemas where sch_drv_unique_id = ? order by 1", [schemaDriverId]);
-                for (const row of qResult.rows) {
-                    result.push(row.sch_pattern as string);
-                }
-            } catch (error) {
-                addToast("error", (error as Error).message, { source: "SchemaAssistant", reason: error });
-            }
-            setLoadedPatterns(result);
-        };
-        load();
-    }, [schemaDriverId]);
+    const existingPatterns = React.useMemo(() => {
+        if (!schemaDriverId) return [];
+
+        return [...new Set(
+            schemas
+                .filter(sch => sch.sch_drv_unique_id === schemaDriverId && sch.sch_pattern)
+                .map(sch => sch.sch_pattern as string)
+        )].sort((a, b) => a.localeCompare(b));
+    }, [schemas, schemaDriverId]);
 
     const patterns = React.useMemo<string[]>(() => {
         const patterns: string[] = [];
@@ -201,9 +192,9 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                 open={openMenu}
                 onClose={handleMenuClose}
             >
-                {(loadedPatterns && loadedPatterns.length > 0) && [
+                {(existingPatterns.length > 0) && [
                     <ListSubheader key="loaded-patterns-header">{t("stored-patterns", "Stored patterns")}</ListSubheader>,
-                    ...loadedPatterns.map((pattern) => (
+                    ...existingPatterns.map((pattern) => (
                         <ListItem disablePadding key={pattern}>
                             <ListItemButton
                                 onClick={() => handleAddPropertyToPattern(pattern, true)}
