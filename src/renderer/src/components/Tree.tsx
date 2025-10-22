@@ -14,43 +14,35 @@ export interface TreeNode {
     title?: FormattedContentItem;
     /** Child nodes */
     children?: TreeNode[];
-    /** Parent node - null if root. */
-    parent?: TreeNode | null;
 }
 
 interface TreeProps {
-    autoExpand?: number | boolean; // Dodano obsługę autoExpand
+    /** Auto expand the tree to a specific level or true to expand all */
+    autoExpand?: number | boolean;
+    /** Data for the tree */
     data: TreeNode[];
+    /** Currently selected node key */
     selected?: string | null;
+    /** Callback when a node is selected */
     onSelect: (key: string) => void;
+    /** Custom render function for a node label */
     renderNode?: (node: TreeNode) => React.ReactNode;
+    /** Custom expand icons for the node */
+    expandIcons?: [React.ReactNode, React.ReactNode];
     [key: `data-${string}`]: any;
 }
 
 // Styled components
 const StyledTree = styled('div', { name: 'Tree', slot: 'root' })(({ }) => ({
-    transition: "all 0.2s ease-in-out",
-    outline: 'none',
-    height: '100%',
-    width: '100%',
-    overflowY: 'auto',
 }));
 
-const StyledTreeNode = styled('div', { name: 'Tree', slot: 'node' })(({ theme }) => ({
-    transition: "all 0.2s ease-in-out",
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-    userSelect: 'none',
-    outline: `1px solid transparent`,
-    border: 'none',
-    outlineOffset: -1,
-    '&.selected': {
-        backgroundColor: theme.palette.action.selected,
-        '&.focused': {
-            outline: `1px solid ${theme.palette.action.focus}`,
-        },
-    },
+const StyledTreeNode = styled('div', { name: 'Tree', slot: 'node' })(({ }) => ({
+}));
+
+const StyledTreeNodeToggleIcon = styled('div', { name: 'Tree', slot: 'toggleIcon' })(({ }) => ({
+}));
+
+const StyledTreeNodeLabel = styled('div', { name: 'Tree', slot: 'label' })(({ }) => ({
 }));
 
 const TreeNode: React.FC<React.PropsWithChildren<{
@@ -61,31 +53,50 @@ const TreeNode: React.FC<React.PropsWithChildren<{
     toggle?: boolean;
     isOpen: boolean;
     focused?: boolean;
+    expandIcons?: [React.ReactNode, React.ReactNode];
     [key: string]: any;
-}>> = ({ className, level, onClick, selected, children, toggle, isOpen, focused, ...other }) => {
+}>> = ({ className, level, onClick, selected, children, toggle, isOpen, focused, expandIcons, ...other }) => {
     const theme = useTheme();
+
+    const classes = clsx(
+        selected && 'selected',
+        focused && 'focused',
+        toggle ? (isOpen ? 'open' : 'closed') : 'none'
+    );
 
     return (
         <StyledTreeNode
             className={clsx(
                 "Tree-node",
                 className,
-                selected && 'selected',
-                focused && 'focused'
+                classes,
             )}
-            style={{
-                paddingLeft: level * 8 + 8,
-                paddingRight: 8,
+            sx={{
+                ['--node-level' as any]: level,
             }}
-            onClick={onClick}
+            onMouseUp={onClick}
             {...other}
         >
-            <div style={{ width: '1.5em' }}>
-                {toggle && (
-                    isOpen ? <theme.icons.ExpandMore /> : <theme.icons.ChevronRight />
+            <StyledTreeNodeToggleIcon
+                className={clsx(
+                    "Tree-toggleIcon",
+                    classes,
                 )}
-            </div>
-            {children}
+            >
+                {toggle && (
+                    isOpen ?
+                        <>{expandIcons?.[0] ?? <theme.icons.ExpandMore />}</>
+                        : <>{expandIcons?.[1] ?? <theme.icons.ChevronRight />}</>
+                )}
+            </StyledTreeNodeToggleIcon>
+            <StyledTreeNodeLabel
+                className={clsx(
+                    "Tree-label",
+                    classes,
+                )}
+            >
+                {children}
+            </StyledTreeNodeLabel>
         </StyledTreeNode>
     );
 };
@@ -96,9 +107,10 @@ const TreeNodes: React.FC<{
     openNodes: string[];
     selected: string | null;
     focused?: boolean;
-    handleClick: (node: TreeNode) => void;
+    onClick: (node: TreeNode) => void;
     renderNode?: (node: TreeNode) => React.ReactNode;
-}> = ({ nodes, level, openNodes, selected, focused, handleClick, renderNode }) => {
+    expandIcons?: [React.ReactNode, React.ReactNode];
+}> = ({ nodes, level, openNodes, selected, focused, onClick: onClick, renderNode, expandIcons }) => {
     return (
         nodes.map((node, index) => {
             const isOpen = openNodes.includes(node.key);
@@ -106,12 +118,13 @@ const TreeNodes: React.FC<{
                 <React.Fragment key={index}>
                     <TreeNode
                         level={level}
-                        onClick={() => handleClick(node)}
+                        onClick={() => onClick(node)}
                         selected={selected === node.key}
                         isOpen={isOpen}
                         toggle={node.children && node.children.length > 0}
                         focused={focused && selected === node.key}
                         data-node-key={node.key}
+                        expandIcons={expandIcons}
                     >
                         {renderNode ? renderNode(node) : <FormattedText text={node.title} />}
                     </TreeNode>
@@ -123,9 +136,10 @@ const TreeNodes: React.FC<{
                                 level={level + 1}
                                 openNodes={openNodes}
                                 selected={selected}
-                                handleClick={handleClick}
+                                onClick={onClick}
                                 renderNode={renderNode}
                                 focused={focused}
+                                expandIcons={expandIcons}
                             />
                         </Collapse>
                     )}
@@ -135,7 +149,7 @@ const TreeNodes: React.FC<{
     );
 };
 
-const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, renderNode }) => {
+const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, renderNode, expandIcons }) => {
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const [focused, setFocused] = React.useState<boolean>(false);
     const treeRef = React.useRef<HTMLDivElement>(null);
@@ -167,6 +181,10 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
     const [openNodes, setOpenNodes] = React.useState<string[]>(() => {
         return expandLevel(autoExpand);
     });
+
+    React.useEffect(() => {
+        setOpenNodes(expandLevel(autoExpand));
+    }, [autoExpand, data]);
 
     const flatOpenTree = React.useMemo(() => {
         const result: TreeNode[] = [];
@@ -292,10 +310,24 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
                 if (currentNode.children && currentNode.children.length > 0 && openNodes.includes(currentNode.key)) {
                     // Zwiń węzeł
                     toggleNode(currentNode.key);
-                } else if (currentNode.parent) {
-                    // Przenieś zaznaczenie do rodzica
-                    onSelect(currentNode.parent.key);
-                    setUncontrolledSelected(currentNode.parent.key);
+                } else {
+                    const findParentByKey = (nodes: TreeNode[], childKey: string): TreeNode | null => {
+                        for (const node of nodes) {
+                            if (node.children && node.children.length > 0) {
+                                if (node.children.some(c => c.key === childKey)) {
+                                    return node;
+                                }
+                                const found = findParentByKey(node.children, childKey);
+                                if (found) return found;
+                            }
+                        }
+                        return null;
+                    };
+                    const parent = findParentByKey(data, currentNode.key);
+                    if (parent) {
+                        onSelect(parent.key);
+                        setUncontrolledSelected(parent.key);
+                    }
                 }
             }
         }
@@ -310,6 +342,11 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
             )}
             role="tree"
             tabIndex={0}
+            onMouseDownCapture={() => {
+                if (document.activeElement !== treeRef.current) {
+                    treeRef.current?.focus();
+                }
+            }}
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
@@ -320,8 +357,9 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
                 openNodes={openNodes}
                 selected={uncontrolledSelected}
                 focused={focused}
-                handleClick={handleClick}
+                onClick={handleClick}
                 renderNode={renderNode}
+                expandIcons={expandIcons}
             />
         </StyledTree>
     );

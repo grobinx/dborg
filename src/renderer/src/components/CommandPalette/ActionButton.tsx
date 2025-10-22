@@ -8,7 +8,6 @@ import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
 import { Button } from "../buttons/Button";
 import { IconButton } from "../buttons/IconButton";
-import { get } from "http";
 
 type ButtonVariant = 'standard' | 'tool' | 'icon';
 
@@ -23,6 +22,7 @@ interface ActionButtonProps<T> extends ToolButtonOwnProps {
     showLabel?: boolean; // Czy pokazywać etykietę (domyślnie false)
     showShortcut?: boolean; // Czy pokazywać skrót klawiszowy w etykiecie (domyślnie true)
     showTooltip?: boolean; // Czy pokazywać podpowiedź (domyślnie true)
+    shortcutActive?: boolean; // Czy skrót klawiszowy jest aktywny (domyślnie true)
 }
 
 /**
@@ -40,6 +40,7 @@ const ActionButton = <T,>({
     showLabel = false,
     showShortcut = false,
     showTooltip = true,
+    shortcutActive = true,
     ...other
 }: ActionButtonProps<T>) => {
     const theme = useTheme();
@@ -93,7 +94,7 @@ const ActionButton = <T,>({
                 disabled={disabled}
                 selected={typeof resolvedAction.selected === "function" ? resolvedAction.selected(context) : resolvedAction.selected}
             >
-                {showShortcutFinal && resolvedAction.keybindings && <Shortcut keybindings={resolvedAction.keybindings} />}
+                {showShortcutFinal && resolvedAction.keybindings && <Shortcut keybindings={resolvedAction.keybindings} active={shortcutActive} />}
                 {resolveIcon(theme, resolvedAction.icon)}
                 {showLabelFinal && labelFinal}
             </VariantedButton>

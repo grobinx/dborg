@@ -30,6 +30,7 @@ import { ViewButtonLayout } from "./default/ViewButton";
 import { ShortcutLayout } from "./default/Shortcut";
 import { UnboundBadgeLayout } from "./default/UnboundBadge";
 import { ButtonGroupLayout } from "./default/ButtonGroup";
+import { TreeLayout } from "./default/Tree";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -333,6 +334,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             ToolButton: ToolButtonLayout(palette, root),
             Shortcut: ShortcutLayout(palette, root),
             ButtonGroup: ButtonGroupLayout(palette, root),
+            Tree: TreeLayout(palette, root),
         }
     }
 };

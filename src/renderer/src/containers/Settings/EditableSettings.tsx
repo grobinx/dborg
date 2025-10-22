@@ -1,7 +1,7 @@
 import { Box, Stack, StackProps, styled, Typography, useTheme } from "@mui/material";
 import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
 import React from "react";
-import Tree, { TreeNode } from './Tree'; // Importuj komponent Tree
+import Tree, { TreeNode } from '../../components/Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import { SettingsCollection, SettingsGroup, SettingTypeUnion } from "@renderer/components/settings/SettingsTypes";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
@@ -21,6 +21,10 @@ export interface EditableSettingsProps extends StackProps {
 type SettingWithIndex = SettingTypeUnion & {
     _group: SettingsGroup | SettingsCollection;
     _index: number;
+};
+
+type TreeNodeWithParent = TreeNode & {
+    parent?: TreeNodeWithParent | null;
 };
 
 const StyledEditableSettingsRoot = styled(Stack, {
@@ -60,10 +64,10 @@ const StyledEditableSettingsContent = styled(Stack, {
     display: 'flex',
 }));
 
-const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
-    const mapGroupsToTreeNodes = (groups: SettingsGroup[], parent?: TreeNode | null): TreeNode[] => {
+const buildTreeData = (collections: SettingsCollection[]): TreeNodeWithParent[] => {
+    const mapGroupsToTreeNodes = (groups: SettingsGroup[], parent?: TreeNodeWithParent | null): TreeNodeWithParent[] => {
         return groups.map(group => {
-            const node: TreeNode = {
+            const node: TreeNodeWithParent = {
                 key: group.key,
                 title: group.title,
                 parent
@@ -74,7 +78,7 @@ const buildTreeData = (collections: SettingsCollection[]): TreeNode[] => {
     };
 
     return collections.map(collection => {
-        const node: TreeNode = {
+        const node: TreeNodeWithParent = {
             key: collection.key,
             title: collection.title,
         };
@@ -187,7 +191,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [selected, setSelected, handleSearchKeyDown] = useKeyboardNavigation({
         items: flatSettings,
         getId: createKey,
-        onSelect: React.useCallback((item) => {
+        onSelect: React.useCallback((item: SettingTypeUnion) => {
             if (settingsContentRef.current) {
                 const element = settingsContentRef.current?.querySelector(`[data-setting-key="${createKey(item)}"] :first-child`);
                 if (element) {
@@ -212,8 +216,8 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     // Aktualizuj breadcrumb TYLKO na podstawie pinnedMap (nie selectedNode)
     React.useEffect(() => {
-        const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
-            const path: TreeNode[] = [];
+        const getPath = (node: TreeNodeWithParent | null | undefined): TreeNodeWithParent[] => {
+            const path: TreeNodeWithParent[] = [];
             while (node) {
                 path.unshift(node);
                 node = node.parent;
@@ -221,7 +225,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
             return path;
         };
 
-        const findNodeByKey = (nodes: TreeNode[], key: string): TreeNode | null => {
+        const findNodeByKey = (nodes: TreeNodeWithParent[], key: string): TreeNodeWithParent | null => {
             for (const node of nodes) {
                 if (node.key === key) return node;
                 if (node.children && node.children.length > 0) {
@@ -317,7 +321,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
         });
     }, []);
 
-    const renderNode = React.useCallback((node: TreeNode) => {
+    const renderNode = React.useCallback((node: TreeNodeWithParent) => {
         return <FormattedText
             text={node.title}
         // text={[[
