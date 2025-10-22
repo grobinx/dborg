@@ -181,6 +181,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [displaySettings, setDisplaySettings] = React.useState<SettingsCollection[]>(settingsCollections);
     const [flatSettings, setFlatSettings] = React.useState<SettingWithIndex[]>(() => flattenSettings(settingsCollections));
     const { t } = useTranslation();
+    const theme = useTheme();
     const [search, setSearch] = React.useState('');
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [selected, setSelected, handleSearchKeyDown] = useKeyboardNavigation({
@@ -198,9 +199,81 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const settingsContentRef = React.useRef<HTMLDivElement>(null);
     const [pinnedMap, setPinnedMap] = React.useState<string[]>([]);
     const [breadCrumb, setBreadcrumb] = React.useState<FormattedContentItem[]>([]);
-    const theme = useTheme();
     const [selectedNode, setSelectedNode] = React.useState<string | undefined>(undefined);
     const [manualSelectedNode, setManualSelectedNode] = React.useState<string | undefined>(undefined);
+
+    const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
+
+    const handleSelectNode = React.useCallback((key: string) => {
+        setSelectedNode(key);
+        setManualSelectedNode(key);
+        // NIE aktualizuj pinnedMap tutaj
+    }, []);
+
+    // Aktualizuj breadcrumb TYLKO na podstawie pinnedMap (nie selectedNode)
+    React.useEffect(() => {
+        const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
+            const path: TreeNode[] = [];
+            while (node) {
+                path.unshift(node);
+                node = node.parent;
+            }
+            return path;
+        };
+
+        const findNodeByKey = (nodes: TreeNode[], key: string): TreeNode | null => {
+            for (const node of nodes) {
+                if (node.key === key) return node;
+                if (node.children && node.children.length > 0) {
+                    const found = findNodeByKey(node.children, key);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        // Tylko pinnedMap wpływa na breadcrumb i selectedNode
+        if (pinnedMap.length === 0) {
+            setBreadcrumb([]);
+            // NIE ustawiaj selectedNode tutaj jeśli był manualny wybór
+            if (!manualSelectedNode) {
+                setSelectedNode(undefined);
+            }
+            return;
+        }
+
+        const pinnedSettings = pinnedMap.map(key => {
+            return flatSettings.find(item => createKey(item) === key);
+        });
+        const minIndexSetting = pinnedSettings.reduce<SettingWithIndex | null>((min, curr) => {
+            if (!curr) return min;
+            if (!min || curr._index < min._index) return curr;
+            return min;
+        }, null);
+
+        if (minIndexSetting) {
+            const groupNode = findNodeByKey(treeData, minIndexSetting._group.key);
+            const path = getPath(groupNode);
+            React.startTransition(() => {
+                setBreadcrumb(path.map(node => node.title));
+                // Aktualizuj selectedNode TYLKO jeśli nie było manualnego wyboru
+                if (!manualSelectedNode) {
+                    setSelectedNode(path[path.length - 1].key);
+                }
+            });
+        }
+    }, [pinnedMap, treeData, flatSettings, manualSelectedNode]);
+
+    React.useEffect(() => {
+        if (manualSelectedNode) {
+            const timeout = setTimeout(() => {
+                setManualSelectedNode(undefined);
+            }, 2000);
+
+            return () => clearTimeout(timeout);
+        }
+        return;
+    }, [manualSelectedNode]);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -225,13 +298,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
         };
     }, [searchDelay, search, settingsCollections]);
 
-    const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
-
-    const handleSelectNode = React.useCallback((key: string) => {
-        setSelectedNode(key);
-        setManualSelectedNode(key);
-    }, []);
-
     const handleSelectSetting = React.useCallback((key: string) => {
         setSelected(key);
     }, []);
@@ -250,58 +316,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
             }
         });
     }, []);
-
-    React.useEffect(() => {
-        const getPath = (node: TreeNode | null | undefined): TreeNode[] => {
-            const path: TreeNode[] = [];
-            while (node) {
-                path.unshift(node);
-                node = node.parent; // Przechodzimy do rodzica
-            }
-            return path;
-        };
-
-        const findNodeByKey = (nodes: TreeNode[], key: string): TreeNode | null => {
-            for (const node of nodes) {
-                if (node.key === key) return node;
-                if (node.children && node.children.length > 0) {
-                    const found = findNodeByKey(node.children, key);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
-
-        //const updateBreadcrumb = debounce(() => {
-            const pinnedSettings = pinnedMap.map(key => {
-                return flatSettings.find(item => createKey(item) === key);
-            });
-            const minIndexSetting = pinnedSettings.reduce<SettingWithIndex | null>((min, curr) => {
-                if (!curr) return min;
-                if (!min || curr._index < min._index) return curr;
-                return min;
-            }, null);
-
-            if (minIndexSetting) {
-                const groupNode = findNodeByKey(treeData, minIndexSetting._group.key);
-                const path = getPath(groupNode);
-                React.startTransition(() => {
-                    setBreadcrumb(path.map(node => node.title));
-                    setSelectedNode(path[path.length - 1].key);
-                });
-            }
-            else {
-                setBreadcrumb([]);
-                setSelectedNode(undefined);
-            }
-        //}, 100);
-
-        //updateBreadcrumb();
-
-        return () => {
-            //updateBreadcrumb.cancel();
-        };
-    }, [pinnedMap, treeData, flatSettings]);
 
     const renderNode = React.useCallback((node: TreeNode) => {
         return <FormattedText

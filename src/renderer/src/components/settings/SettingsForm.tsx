@@ -6,7 +6,7 @@ import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
 import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
-import { Box, Stack, styled, Typography } from "@mui/material";
+import { Box, Stack, styled, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
 
 const calculateWidth = (setting: SettingTypeUnion) => {
@@ -268,6 +268,8 @@ const SettingGroupForm: React.FC<{
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ group, selected, selectedGroup, onSelect, onPinned }) => {
+    const theme = useTheme();
+
     if (!group) {
         return null;
     }
@@ -277,7 +279,8 @@ const SettingGroupForm: React.FC<{
             <Box
                 data-setting-group-key={group.key}
                 sx={{
-                    backgroundColor: selectedGroup === group.key ? 'lightgray' : 'transparent',
+                    transition: "all 0.2s ease-in-out",
+                    backgroundColor: selectedGroup === group.key ? theme.palette.divider : undefined,
                     padding: 8,
                 }}
             >
@@ -336,6 +339,7 @@ export const SettingsCollectionForm: React.FC<{
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
 }> = ({ collection, selected, selectedGroup, onSelect, onPinned }) => {
+    const theme = useTheme();
 
     return (
         <Stack
@@ -344,7 +348,8 @@ export const SettingsCollectionForm: React.FC<{
             <Box
                 data-setting-group-key={collection.key}
                 sx={{
-                    backgroundColor: selectedGroup === collection.key ? 'lightgray' : 'transparent',
+                    transition: "all 0.2s ease-in-out",
+                    backgroundColor: selectedGroup === collection.key ? theme.palette.divider : undefined,
                     padding: 8,
                 }}
             >

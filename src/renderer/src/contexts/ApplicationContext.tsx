@@ -107,7 +107,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const { t } = useTranslation();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const { addToast } = useToast();
-    const [iAmDeveloper] = useSetting("app", "i_am_developer");
+    const [iAmDeveloper] = useSetting<boolean>("app", "i_am_developer");
     const { onEvent } = useSchema();
 
     const initialContainers = (): SpecificContainer[] => [
@@ -309,9 +309,20 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }, force ? 250 : 1000);
     };
 
+    const iAmDeveloperRef = React.useRef<boolean>(iAmDeveloper);
     useEffect(() => {
-        setContainers(initialContainers());
-        updateViewsForSession(null);
+        const containers = initialContainers();
+        setContainers(containers);
+        if (iAmDeveloperRef.current !== iAmDeveloper) {
+            iAmDeveloperRef.current = iAmDeveloper;
+            const settings = containers.find(v => v.type === "settings");
+            setContainers(containers);
+            setSelectedContainer(settings || null);
+            setSelectedView(settings?.views.find(v => v.id === "settings") || null);
+        }
+        else {
+            updateViewsForSession(null);
+        }
     }, [iAmDeveloper]);
 
     useEffect(() => {

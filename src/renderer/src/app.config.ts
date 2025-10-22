@@ -305,7 +305,7 @@ editableSettingsRegistry.register((context) => {
 
     context.registerCollection({
         key: 'developer',
-        title: t('developer-options', 'Developer Options'),
+        title: t('developer-options', "I'm a Developer!"),
         description: t('developer-options-description', 'Settings related to developer options.'),
         settings: [
             {

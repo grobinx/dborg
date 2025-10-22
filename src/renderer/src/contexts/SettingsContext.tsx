@@ -1,5 +1,4 @@
-import { AppSettings } from "@renderer/app.config";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { TSettings } from "src/api/settings";
 
 const settings: Record<string, TSettings> = {};
@@ -21,7 +20,7 @@ interface SettingsContextType {
     isLoading: boolean;
 }
 
-const subscribeChange = (group: string, key: string, callback: (value: any) => void): (() => void) => {
+function subscribeChange(group: string, key: string, callback: (value: any) => void): () => void {
     if (!subscribers[group]) {
         subscribers[group] = {};
     }
@@ -41,18 +40,18 @@ const subscribeChange = (group: string, key: string, callback: (value: any) => v
             delete subscribers[group];
         }
     };
-};
+}
 
-const notifyChange = (group: string, key: string, value: any) => {
+function notifyChange(group: string, key: string, value: any): void {
     const keySubscribers = subscribers[group]?.[key];
     if (keySubscribers) {
         setTimeout(() => {
             keySubscribers.forEach((callback) => callback(value));
         });
     }
-};
+}
 
-const storeGroups = (name: string, newSettings: TSettings) => {
+function storeGroups(name: string, newSettings: TSettings): void {
     const storeTimeout = getSetting("app", "settings.store_timeout");
 
     // Debouncing zapisu na dysku
@@ -68,9 +67,9 @@ const storeGroups = (name: string, newSettings: TSettings) => {
             console.error(`Nie udało się zapisać ustawień dla: ${name}`, error);
         }
     }, storeTimeout);
-};
+}
 
-export const setSetting = (group: string, key: string, value: any): void => {
+export function setSetting(group: string, key: string, value: any): void {
     if (settings[group][key] !== value) {
         settings[group][key] = value;
 
@@ -81,21 +80,21 @@ export const setSetting = (group: string, key: string, value: any): void => {
             ...settings[group],
         });
     }
-};
+}
 
-export const getSettingDefault = (group: string, key: string, defaultValue?: any): any => {
+export function getSettingDefault(group: string, key: string, defaultValue?: any): any {
     if (!defaultValue && settingsGroupDefaults[group] && key in settingsGroupDefaults[group]) {
         return settingsGroupDefaults[group][key];
     }
     return defaultValue;
-};
+}
 
-export const getSetting = (group: string, key: string, defaultValue?: any): any => {
+export function getSetting(group: string, key: string, defaultValue?: any): any {
     if (settings[group] && key in settings[group]) {
         return settings[group][key] ?? defaultValue ?? settingsGroupDefaults[group]?.[key];
     }
     return defaultValue ?? settingsGroupDefaults[group]?.[key];
-};
+}
 
 // Domyślna wartość kontekstu
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -107,11 +106,11 @@ export const SettingsContext = createContext<SettingsContextType | undefined>(un
  * @param defaultValue Default value for the setting.
  * @returns An array containing the setting value, a function to update it, and the default value.
  */
-export const useSetting = <T = string>(
+export function useSetting<T = string>(
     group: string,
     key: string,
     defaultValue?: T
-): [T, (value: T) => void, T] => {
+): [T, (value: T) => void, T] {
     const [value, setValue] = useState<any>(settings[group]?.[key] ?? defaultValue ?? settingsGroupDefaults[group]?.[key]);
 
     React.useEffect(() => {
@@ -129,7 +128,7 @@ export const useSetting = <T = string>(
     };
 
     return [value, setSettingValue, defaultValue ?? settingsGroupDefaults[group]?.[key]];
-};
+}
 
 // Provider kontekstu ustawień
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
