@@ -41,14 +41,16 @@ const AppWrapper: React.FC = () => {
                     key="door"
                     isOpen={initStep === 1 || initStep === 3}
                     //baseColor='#005500'
-                    onAnimationEnd={() => { 
+                    onAnimationEnd={() => {
                         if (initStep === 2) {
                             setInitStep(3);
                         }
                         else if (initStep === 3) {
-                            setInitStep(4);
+                            setTimeout(() => {
+                                setInitStep(4);
+                            }, 0);
                         }
-                     }}
+                    }}
                 />
             }
             {!settingsContext || settingsContext.isLoading || initStep <= 2 ? (
