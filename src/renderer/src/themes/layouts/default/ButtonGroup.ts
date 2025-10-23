@@ -16,13 +16,13 @@ export const ButtonGroupLayout = (_palette: Palette, _root: ThemeOptions): Butto
                     '& .ButtonGroup-button': {
                         marginLeft: 0, // Nakładanie borders dla seamless look
 
-                        '&:first-of-type': {
+                        '&:first-of-type:not(:only-of-type)': {
                             borderTopRightRadius: 0,
                             borderBottomRightRadius: 0,
                             marginLeft: 0,
                         },
 
-                        '&:last-of-type': {
+                        '&:last-of-type:not(:only-of-type)': {
                             borderTopLeftRadius: 0,
                             borderBottomLeftRadius: 0,
                         },
