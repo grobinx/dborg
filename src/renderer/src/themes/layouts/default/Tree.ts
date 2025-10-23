@@ -5,6 +5,19 @@ export const TreeLayout = (palette: Palette, _root: ThemeOptions): TreeComponent
     return {
         styleOverrides: {
             root: {
+                width: "100%",
+                height: "100%",
+                flexGrow: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+                display: 'flex',
+            },
+            inner: {
+                padding: 8, 
+                width: '100%', 
+                height: '100%',
+            },
+            tree: {
                 transition: "all 0.2s ease-in-out",
                 outline: 'none',
                 height: '100%',

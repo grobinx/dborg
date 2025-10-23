@@ -29,21 +29,17 @@ interface TreeProps {
     renderNode?: (node: TreeNode) => React.ReactNode;
     /** Custom expand icons for the node */
     expandIcons?: [React.ReactNode, React.ReactNode];
+    ref?: React.Ref<HTMLDivElement | null>;
+    treeRef?: React.Ref<HTMLDivElement | null>;
     [key: `data-${string}`]: any;
 }
 
-// Styled components
-const StyledTree = styled('div', { name: 'Tree', slot: 'root' })(({ }) => ({
-}));
-
-const StyledTreeNode = styled('div', { name: 'Tree', slot: 'node' })(({ }) => ({
-}));
-
-const StyledTreeNodeToggleIcon = styled('div', { name: 'Tree', slot: 'toggleIcon' })(({ }) => ({
-}));
-
-const StyledTreeNodeLabel = styled('div', { name: 'Tree', slot: 'label' })(({ }) => ({
-}));
+const StyledTree = styled('div', { name: 'Tree', slot: 'root', })(() => ({}));
+const StyledTreeInner = styled('div', { name: 'Tree', slot: 'inner', })(() => ({}));
+const StyledTreeTree = styled('div', { name: 'Tree', slot: 'tree' })(({ }) => ({}));
+const StyledTreeNode = styled('div', { name: 'Tree', slot: 'node' })(({ }) => ({}));
+const StyledTreeNodeToggleIcon = styled('div', { name: 'Tree', slot: 'toggleIcon' })(({ }) => ({}));
+const StyledTreeNodeLabel = styled('div', { name: 'Tree', slot: 'label' })(({ }) => ({}));
 
 const TreeNode: React.FC<React.PropsWithChildren<{
     className?: string;
@@ -149,10 +145,19 @@ const TreeNodes: React.FC<{
     );
 };
 
-const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, renderNode, expandIcons }) => {
+const Tree: React.FC<TreeProps> = ({
+    data,
+    onSelect,
+    selected,
+    autoExpand,
+    renderNode,
+    expandIcons,
+    ref,
+    treeRef: treeRefProp,
+}) => {
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const [focused, setFocused] = React.useState<boolean>(false);
-    const treeRef = React.useRef<HTMLDivElement>(null);
+    const treeRef = treeRefProp ?? React.useRef<HTMLDivElement>(null);
 
     const expandLevel = (level?: number | boolean) => {
         // Inicjalizuj openNodes na podstawie autoExpand
@@ -243,7 +248,7 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
     }, [onSelect, toggleNode]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
-        const node = treeRef.current?.querySelector('[data-node-key].selected');
+        const node = typeof treeRef === "object" ? treeRef.current?.querySelector('[data-node-key].selected') : null;
         if (!node) {
             return;
         }
@@ -335,32 +340,34 @@ const Tree: React.FC<TreeProps> = ({ data, onSelect, selected, autoExpand, rende
 
     return (
         <StyledTree
-            ref={treeRef}
-            className={clsx(
-                "Tree-root",
-                focused && 'focused'
-            )}
-            role="tree"
-            tabIndex={0}
-            onMouseDownCapture={() => {
-                if (document.activeElement !== treeRef.current) {
-                    treeRef.current?.focus();
-                }
-            }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
+            className="Tree-root"
+            ref={ref}
         >
-            <TreeNodes
-                nodes={data}
-                level={0}
-                openNodes={openNodes}
-                selected={uncontrolledSelected}
-                focused={focused}
-                onClick={handleClick}
-                renderNode={renderNode}
-                expandIcons={expandIcons}
-            />
+            <StyledTreeInner className="Tree-inner">
+                <StyledTreeTree
+                    ref={treeRef}
+                    className={clsx(
+                        "Tree-tree",
+                        focused && 'focused'
+                    )}
+                    role="tree"
+                    tabIndex={0}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                >
+                    <TreeNodes
+                        nodes={data}
+                        level={0}
+                        openNodes={openNodes}
+                        selected={uncontrolledSelected}
+                        focused={focused}
+                        onClick={handleClick}
+                        renderNode={renderNode}
+                        expandIcons={expandIcons}
+                    />
+                </StyledTreeTree>
+            </StyledTreeInner>
         </StyledTree>
     );
 };

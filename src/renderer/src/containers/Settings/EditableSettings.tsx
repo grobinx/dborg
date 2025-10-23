@@ -362,17 +362,13 @@ const EditableSettings = (props: EditableSettingsProps) => {
             </StyledEditableSettingsTitle>
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
-                    <StyledEditableSettingsContent>
-                        <Box sx={{ width: '100%', height: '100%', flexShrink: 0, padding: 8 }}>
-                            <Tree
-                                data={treeData}
-                                onSelect={handleSelectNode}
-                                selected={selectedNode}
-                                autoExpand={1}
-                                renderNode={renderNode}
-                            />
-                        </Box>
-                    </StyledEditableSettingsContent>
+                    <Tree
+                        data={treeData}
+                        onSelect={handleSelectNode}
+                        selected={selectedNode}
+                        autoExpand={1}
+                        renderNode={renderNode}
+                    />
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>
@@ -404,16 +400,14 @@ const EditableSettings = (props: EditableSettingsProps) => {
                                     ))}
                                 </Stack>
                             </Typography>
-                            <StyledEditableSettingsContent ref={settingsContentRef}>
-                                <SettingsForm
-                                    collections={displaySettings}
-                                    contentRef={settingsContentRef}
-                                    selected={selected ?? undefined}
-                                    onSelect={handleSelectSetting}
-                                    onPinned={handlePinned}
-                                    selectedGroup={manualSelectedNode}
-                                />
-                            </StyledEditableSettingsContent>
+                            <SettingsForm
+                                collections={displaySettings}
+                                ref={settingsContentRef}
+                                selected={selected ?? undefined}
+                                onSelect={handleSelectSetting}
+                                onPinned={handlePinned}
+                                selectedGroup={manualSelectedNode}
+                            />
                         </Stack>
                     )}
                 </SplitPanel>

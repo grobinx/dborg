@@ -5,7 +5,7 @@ export type TreeComponent = {
     styleOverrides?: ComponentsOverrides<Theme>['Tree'];
 };
 
-export type TreeComponentSlots = "root" | "node" | "toggleIcon" | "label";
+export type TreeComponentSlots = "root" | "inner" | "tree" | "node" | "toggleIcon" | "label";
 
 export type TreeComponentProps = Partial<React.ComponentProps<typeof Tree>>;
 
