@@ -18,52 +18,69 @@ import About from './About';
 import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 import { ConsoleProvider } from './contexts/ConsoleContext';
 import { SchemaProvider } from './contexts/SchemaContext';
+import RectangleDoor from './effects/RectangleDoor';
+import { init } from 'i18next';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
-    const [pause, setPause] = React.useState(true);
+    const [initStep, setInitStep] = React.useState(1);
 
     useEffect(() => {
         setTimeout(() => {
             // Ustawienie pauzy na false po załadowaniu ustawień
-            setPause(false);
-        }, 3500);
+            setInitStep(2);
+        }, 3000);
     }, [settingsContext?.isLoading]);
-
-    if (!settingsContext || settingsContext.isLoading || pause) {
-        return (
-            <ThemeWrapper>
-                <div style={{ height: '100vh', width: '100vw' }}>
-                    <About loading={true} />
-                </div>
-            </ThemeWrapper>
-        );
-    }
 
     console.count("AppWrapper Render");
 
     return (
-        <ToastProvider>
-            <ErrorBoundaryWrapper>
-                <GlobalErrorHandler />
-                <DatabaseProvider>
-                    <ThemeWrapper>
-                        <DialogsProvider>
-                            <ToastList />
-                            <SchemaProvider>
-                                <PluginManagerProvider>
-                                    <ApplicationProvider>
-                                        <QueryHistoryProvider>
-                                            <App />
-                                        </QueryHistoryProvider>
-                                    </ApplicationProvider>
-                                </PluginManagerProvider>
-                            </SchemaProvider>
-                        </DialogsProvider>
-                    </ThemeWrapper>
-                </DatabaseProvider>
-            </ErrorBoundaryWrapper>
-        </ToastProvider>
+        <div style={{ height: '100vh', width: '100vw' }}>
+            {initStep < 4 &&
+                <RectangleDoor
+                    key="door"
+                    isOpen={initStep === 1 || initStep === 3}
+                    //baseColor='#005500'
+                    onAnimationEnd={() => { 
+                        if (initStep === 2) {
+                            setInitStep(3);
+                        }
+                        else if (initStep === 3) {
+                            setInitStep(4);
+                        }
+                     }}
+                />
+            }
+            {!settingsContext || settingsContext.isLoading || initStep <= 2 ? (
+                <ThemeWrapper>
+                    <div style={{ height: '100vh', width: '100vw' }}>
+                        <About loading={true} />
+                    </div>
+                </ThemeWrapper>
+            ) : (
+                <ToastProvider>
+                    <ErrorBoundaryWrapper>
+                        <GlobalErrorHandler />
+                        <DatabaseProvider>
+                            <ThemeWrapper>
+                                <DialogsProvider>
+                                    <ToastList />
+                                    <SchemaProvider>
+                                        <PluginManagerProvider>
+                                            <ApplicationProvider>
+                                                <QueryHistoryProvider>
+                                                    <App />
+                                                </QueryHistoryProvider>
+                                            </ApplicationProvider>
+                                        </PluginManagerProvider>
+                                    </SchemaProvider>
+                                </DialogsProvider>
+                            </ThemeWrapper>
+                        </DatabaseProvider>
+                    </ErrorBoundaryWrapper>
+                </ToastProvider>
+            )}
+        </div>
     );
 };
 

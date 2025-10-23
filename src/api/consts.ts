@@ -12,7 +12,9 @@ export const version: Version = {
     }
 }
 
-export const dborgReleaseName: string = "Schrodinger's Sprout";
+// for next releases
+//export const dborgReleaseName: string = "Schrodinger's Sprout";
+export const dborgReleaseName: string = "Louver Gate";
 export const dborgDuration: string = "2024-2025";
 export const dborgDate: string = "2025-10-20 19:11:31";
 

@@ -8,6 +8,7 @@ import { MorphingSvgPaths } from './components/MorphingSvgs';
 import { TextDecorator } from './components/useful/TextDecorator';
 import clsx from './utils/clsx';
 import { generateWavePaths } from './utils/waveGenerator';
+import RectangleDoor from './effects/RectangleDoor';
 
 const ORBADA = 'ORBADA';
 const DATABASE_ORGANIZER = 'Database Organizer';
@@ -232,7 +233,6 @@ const About: React.FC<{
             overflow: 'hidden',
             background: '#181c24',
         }}>
-            {/* Animowane fale SVG na dole */}
             {/*
             <AnimatedWaves>
                 <LayeredWaves />
