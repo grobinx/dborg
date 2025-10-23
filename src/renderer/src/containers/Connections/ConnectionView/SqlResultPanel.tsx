@@ -79,7 +79,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [executing, setExecuting] = React.useState<boolean | null>(null);
     const executingRef = useRef<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
-    const { addToast } = useToast();
+    const addToast = useToast();
     const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
     const [queryDuration, setQueryDuration] = useState<number | null>(null);

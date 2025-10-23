@@ -88,7 +88,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const [saveing, setSaving] = React.useState(false);
     const [testing, setTesting] = React.useState(false);
     const { drivers } = useDatabase();
-    const { addToast } = useToast();
+    const addToast = useToast();
     const schemaRef = React.useRef<SchemaParametersRef>(null);
     const [search, setSearch] = React.useState('');
     const { queueMessage, subscribe, unsubscribe } = useMessages();

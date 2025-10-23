@@ -106,8 +106,8 @@ export const useToast = () => {
     if (!context) {
         throw new Error("useToast must be used within a ToastProvider");
     }
-    const { toasts, addToast } = context;
-    return { toasts, addToast };
+    const { addToast } = context;
+    return addToast;
 };
 
 export const useToastAdmin = () => {

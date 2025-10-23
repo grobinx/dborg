@@ -98,7 +98,7 @@ const SchemaContext = createContext<SchemaContextValue | undefined>(undefined);
 
 export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { drivers, connections } = useDatabase();
-    const { addToast } = useToast();
+    const addToast = useToast();
     const dialogs = useDialogs();
     const { t } = useTranslation();
     const { onEvent, emitEvent } = useListeners<SchemaEvent>();

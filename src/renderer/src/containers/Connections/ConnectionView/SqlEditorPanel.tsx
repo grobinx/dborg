@@ -48,7 +48,7 @@ interface SqlEditorContentProps {
 
 export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const { session, tabsItemID, itemID, editorContentManager } = props;
-    const { addToast } = useToast();
+    const addToast = useToast();
     const { t } = useTranslation();
     const firstLineRef = useRef<string>("");
     const contentLoadedRef = useRef(false);

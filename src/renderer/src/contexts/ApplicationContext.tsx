@@ -106,7 +106,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const theme = useTheme();
     const { t } = useTranslation();
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
-    const { addToast } = useToast();
+    const addToast = useToast();
     const [iAmDeveloper] = useSetting<boolean>("app", "i_am_developer");
     const { onEvent } = useSchema();
 

@@ -168,7 +168,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
     const [displayData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
-    const { addToast } = useToast();
+    const addToast = useToast();
     const { queueMessage } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
