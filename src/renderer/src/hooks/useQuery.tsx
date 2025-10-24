@@ -15,7 +15,7 @@ interface UseQueryResult<T> {
     data: T | null;
     status: QueryStatus;
     error: Error | null;
-    refetch: () => void; // Funkcja do ponownego załadowania danych
+    refetch: () => Promise<void>; // Funkcja do ponownego załadowania danych
 }
 
 export function useQuery<T>(
