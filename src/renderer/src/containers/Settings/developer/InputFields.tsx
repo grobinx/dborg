@@ -499,30 +499,33 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={arraySelectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="warning"
-                                    renderValue={(selected) => (<>
-                                        {selected.map((value) => (
-                                            <Chip
-                                                key={value}
-                                                style={{ gap: 4, fontSize: "inherit", height: "100%" }}
-                                                size="small"
-                                                onDelete={(e) => {
-                                                    e.stopPropagation();
-                                                    e.preventDefault();
-                                                    handleArraySelectChange(size, value);
-                                                }}
-                                                onClick={(e) => {
-                                                    console.log('Chip onClick called', e.target);
-                                                    e.stopPropagation();
-                                                }}
-                                                label={
-                                                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                        {value}
-                                                        <ColorBox color={value} />
-                                                    </span>
-                                                }
-                                            />
-                                        ))}
-                                    </>)} // Renderowanie wybranych wartości z kolorowymi boxami
+                                    height="auto"
+                                    renderValue={(selected) => (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                            {selected.map((value) => (
+                                                <Chip
+                                                    key={value}
+                                                    style={{ gap: 4, fontSize: "inherit", height: "100%" }}
+                                                    size="small"
+                                                    onDelete={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        handleArraySelectChange(size, value);
+                                                    }}
+                                                    onClick={(e) => {
+                                                        console.log('Chip onClick called', e.target);
+                                                        e.stopPropagation();
+                                                    }}
+                                                    label={
+                                                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                            {value}
+                                                            <ColorBox color={value} />
+                                                        </span>
+                                                    }
+                                                />
+                                            ))}
+                                        </div>
+                                    )} // Renderowanie wybranych wartości z kolorowymi boxami
                                 >
                                     <MenuItem value="red">Red<ColorBox color="red" /></MenuItem>
                                     <MenuItem value="green">Green<ColorBox color="green" /></MenuItem>

@@ -168,6 +168,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         disabled = false,
         required = false,
         width = "100%",
+        height,
         inputAdornments,
         adornments,
         placeholder,
@@ -307,7 +308,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
-            sx={{ width }}
+            style={{ width, height }}
         >
             <StyledBaseInputFieldMain
                 className={clsx(

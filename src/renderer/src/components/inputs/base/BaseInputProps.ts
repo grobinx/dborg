@@ -73,6 +73,13 @@ export interface BaseInputProps<T = any> {
      */
     width?: string | number;
     /**
+     * Wysokość elementu
+     * Może być podana jako liczba (w pikselach) lub jako string
+     * Przykłady: 40, '100%', '50px', 'auto'
+     * Jeśli nie zostanie podana, wysokość będzie ustawiona na automatyczną
+     */
+    height?: string | number;
+    /**
      * Nazwa koloru z palety MUI, np. 'primary', 'secondary', 'error', 'warning', 'info', 'success'
      * Kolor nie zostanie zmieniony ale ustawiona zostanie odpowiednia klasa CSS "color-..."
      * @default 'primary'
