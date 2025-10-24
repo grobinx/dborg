@@ -29,6 +29,8 @@ export function useKeyboardNavigation<T, V = string, A = any>({
     getContext,
 }: UseKeyboardNavigationProps<T, V, A>) {
     const [selectedId, setSelectedId] = React.useState<V | null>(null);
+    const itemsRef = React.useRef(items);
+    const lastSelectedIndexRef = React.useRef<number>(-1);
 
     const handleKeyDown = React.useCallback(
         (event: React.KeyboardEvent) => {
@@ -68,21 +70,39 @@ export function useKeyboardNavigation<T, V = string, A = any>({
         [items, selectedId, getId, onSelect, keyBindings]
     );
 
-    // Ustaw pierwszy element jako wybrany po zmianie listy
+    // Zapamiętaj ostatnio wybrany i istniejący indeks
     React.useEffect(() => {
-        if (items.length > 0 && selectedId === null) {
-            setSelectedId(getId(items[0]));
+        const selectedIndex = items.findIndex(item => getId(item) === selectedId);
+        if (selectedIndex !== -1) {
+            lastSelectedIndexRef.current = selectedIndex;
         }
-        else if (items.length > 0 && selectedId !== null) {
-            const exists = items.some(item => getId(item) === selectedId);
-            if (!exists) {
-                setSelectedId(getId(items[0]));
+    }, [selectedId, items]);
+
+    // Ustaw selectedId przy zmianie items
+    React.useEffect(() => {
+        if (itemsRef.current !== items) {
+            itemsRef.current = items;
+            if (items.length > 0) {
+                if (selectedId === null) {
+                    setSelectedId(getId(items[0]));
+                }
+                else if (items.find(item => getId(item) === selectedId) === undefined) {
+                    if (lastSelectedIndexRef.current >= 0 && lastSelectedIndexRef.current < items.length) {
+                        setSelectedId(getId(items[lastSelectedIndexRef.current]));
+                    }
+                    else if (lastSelectedIndexRef.current >= items.length && items.length > 0) {
+                        setSelectedId(getId(items[items.length - 1]));
+                    }
+                    else {
+                        setSelectedId(getId(items[0]));
+                    }
+                }
+            }
+            else if (items.length === 0) {
+                setSelectedId(null);
             }
         }
-        else {
-            setSelectedId(null);
-        }
-    }, [items, getId, selectedId]);
+    }, [items, selectedId]);
 
     return [
         selectedId,
