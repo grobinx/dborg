@@ -1,5 +1,5 @@
 import { Box, Stack, StackProps, styled, Typography, useTheme } from "@mui/material";
-import editableSettingsRegistry from "@renderer/components/settings/EditableSettingsRegistry";
+import editableSettingsRegistry from "@renderer/components/settings/SettingsRegistry";
 import React from "react";
 import Tree, { TreeNode } from '../../components/Tree'; // Importuj komponent Tree
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
@@ -13,9 +13,9 @@ import createKey from "@renderer/components/settings/createKey";
 import { FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { focusElement } from "@renderer/components/useful/FocusContainerHandler";
-import SettingsForm from "@renderer/components/settings/SettingsForm";
+import SettingsView from "@renderer/components/settings/SettingsForm";
 
-export interface EditableSettingsProps extends StackProps {
+export interface EditableSettingsProps {
 }
 
 type SettingWithIndex = SettingTypeUnion & {
@@ -50,18 +50,6 @@ const StyledEditableSettingsTitle = styled(Box, {
     borderBottom: `1px solid ${theme.palette.divider}`,
     alignItems: "center",
     gap: 8,
-}));
-
-const StyledEditableSettingsContent = styled(Stack, {
-    name: 'EditableSettings',
-    slot: 'content',
-})(() => ({
-    width: "100%",
-    height: "100%",
-    flexGrow: 1,
-    overflowY: "auto",
-    overflowX: "hidden",
-    display: 'flex',
 }));
 
 const buildTreeData = (collections: SettingsCollection[]): TreeNodeWithParent[] => {
@@ -180,7 +168,7 @@ const flattenSettings = (collections: SettingsCollection[]): SettingWithIndex[] 
 }
 
 const EditableSettings = (props: EditableSettingsProps) => {
-    const { ...other } = props;
+    const { ...rest } = props;
     const [settingsCollections] = React.useState(() => editableSettingsRegistry.executeRegistrations());
     const [displaySettings, setDisplaySettings] = React.useState<SettingsCollection[]>(settingsCollections);
     const [flatSettings, setFlatSettings] = React.useState<SettingWithIndex[]>(() => flattenSettings(settingsCollections));
@@ -260,7 +248,6 @@ const EditableSettings = (props: EditableSettingsProps) => {
             const path = getPath(groupNode);
             React.startTransition(() => {
                 setBreadcrumb(path.map(node => node.title));
-                // Aktualizuj selectedNode TYLKO jeśli nie było manualnego wyboru
                 if (!manualSelectedNode) {
                     setSelectedNode(path[path.length - 1].key);
                 }
@@ -338,11 +325,11 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
     return (
         <StyledEditableSettingsRoot
-            className="EditableSettings-root" {...other}
+            className="EditableSettings-root" {...rest}
         >
             <StyledEditableSettingsTitle>
                 <Typography variant="h4">
-                    Settings
+                    {t("settings", "Settings")}
                 </Typography>
                 <Stack flexGrow={1} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -356,6 +343,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
                             inputProps={{
                                 onKeyDown: handleSearchKeyDown
                             }}
+                            storeId="settings-search-field"
                         />
                     </InputDecorator>
                 </Box>
@@ -372,44 +360,35 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 </SplitPanel>
                 <Splitter />
                 <SplitPanel>
-                    {displaySettings.length === 0 ? (
-                        <StyledEditableSettingsContent>
-                            <Box sx={{ margin: "auto", opacity: 0.5, alignItems: "center" }}>
-                                {t("no-setting-results", "No settings found")}
-                            </Box>
-                        </StyledEditableSettingsContent>
-                    ) : (
-                        <Stack direction="column" sx={{ height: "100%" }}>
-                            <Typography variant="h6">
-                                <Stack
-                                    direction="row"
-                                    sx={{
-                                        padding: "0 8px",
-                                        width: "100%",
-                                        height: "48px",
-                                        borderBottom: `1px solid ${theme.palette.divider}`,
-                                        boxShadow: "0 4px 8px -4px rgba(0,0,0,0.12)",
-                                        gap: 4,
-                                        alignItems: "center",
-                                    }}
-                                    flexShrink={1}
-                                    divider={<span>/</span>}
-                                >
-                                    {breadCrumb.map((item, index) => (
-                                        <FormattedText key={index} text={item} />
-                                    ))}
-                                </Stack>
-                            </Typography>
-                            <SettingsForm
-                                collections={displaySettings}
-                                ref={settingsContentRef}
-                                selected={selected ?? undefined}
-                                onSelect={handleSelectSetting}
-                                onPinned={handlePinned}
-                                selectedGroup={manualSelectedNode}
-                            />
+                    <Stack direction="column" sx={{ height: "100%", width: "100%" }}>
+                        <Stack
+                            direction="row"
+                            sx={{
+                                ...theme.typography.h6,
+                                padding: "8px 8px",
+                                width: "100%",
+                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                boxShadow: "0 4px 8px -4px rgba(0,0,0,0.12)",
+                                gap: 4,
+                                alignItems: "center",
+                            }}
+                        >
+                            {breadCrumb.map((item, index) => (
+                                <React.Fragment key={index}>
+                                    {index > 0 && <span key={`sep-${index}`}>/</span>}
+                                    <FormattedText text={item} />
+                                </React.Fragment>
+                            ))}
                         </Stack>
-                    )}
+                        <SettingsView
+                            collections={displaySettings}
+                            ref={settingsContentRef}
+                            selected={selected ?? undefined}
+                            onSelect={handleSelectSetting}
+                            onPinned={handlePinned}
+                            selectedGroup={manualSelectedNode}
+                        />
+                    </Stack>
                 </SplitPanel>
             </SplitPanelGroup >
         </StyledEditableSettingsRoot >

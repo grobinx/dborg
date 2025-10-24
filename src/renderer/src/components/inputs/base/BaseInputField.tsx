@@ -266,14 +266,14 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         }
     }, [decorator, type, inputProps?.type]);
 
-    const handleFocus = React.useCallback(() => {
-        onFocus?.();
+    const handleFocus = React.useCallback((e: React.FocusEvent<HTMLElement>) => {
+        onFocus?.(e);
         setFocused(true);
         decorator?.setFocused(true);
     }, [onFocus, decorator]);
 
-    const handleBlur = React.useCallback(() => {
-        onBlur?.();
+    const handleBlur = React.useCallback((e: React.FocusEvent<HTMLElement>) => {
+        onBlur?.(e);
         setFocused(false);
         decorator?.setFocused(false);
     }, [onBlur, decorator]);
@@ -348,7 +348,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                         }}
                         onClick={(e: any) => {
                             inputProps?.onClick?.(e);
-                            onClick?.();
+                            onClick?.(e);
                         }}
                         tabIndex={disabled ? -1 : 0}
                         aria-disabled={disabled}

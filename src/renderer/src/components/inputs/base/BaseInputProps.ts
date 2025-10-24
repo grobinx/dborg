@@ -50,15 +50,15 @@ export interface BaseInputProps<T = any> {
     /**
      * Funkcja wywoływana po kliknięciu w dowolną część pola
      */
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     /**
      * Funkcja wywoływana po ustawieniu fokusu
      */
-    onFocus?: () => void;
+    onFocus?: (e: React.FocusEvent<HTMLElement>) => void;
     /**
      * Funkcja wywoływana po utracie fokusu
      */
-    onBlur?: () => void;
+    onBlur?: (e: React.FocusEvent<HTMLElement>) => void;
     /**
      * Funkcja walidująca wartość
      * @param value Wartość do sprawdzenia

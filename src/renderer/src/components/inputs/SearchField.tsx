@@ -5,13 +5,9 @@ import { FormattedContentItem } from '../useful/FormattedText';
 import { validateMaxLength, validateMinLength } from './base/useValidation';
 import { BaseInputField } from './base/BaseInputField';
 import { useTheme } from '@mui/material';
+import { TextField } from './TextField';
 
-interface SearchFieldProps extends BaseInputProps {
-    placeholder?: FormattedContentItem;
-    maxLength?: number;
-    minLength?: number;
-    adornments?: React.ReactNode;
-    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+interface SearchFieldProps extends React.ComponentProps<typeof TextField> {
     autoCollapse?: boolean;
 }
 
@@ -34,7 +30,7 @@ export const SearchField: React.FC<SearchFieldProps> = (props) => {
     }
 
     return (
-        <BaseInputField
+        <TextField
             value={value}
             inputProps={{
                 maxLength,
@@ -42,10 +38,6 @@ export const SearchField: React.FC<SearchFieldProps> = (props) => {
                 type: 'search',
                 ...inputProps,
             }}
-            validations={[
-                (value: any) => validateMinLength(value, minLength),
-                (value: any) => validateMaxLength(value, maxLength),
-            ]}
             {...other}
         />
     )

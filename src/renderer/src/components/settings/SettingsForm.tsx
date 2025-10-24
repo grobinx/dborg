@@ -6,13 +6,14 @@ import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
 import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
-import { alpha, Box, Stack, styled, Typography, useTheme } from "@mui/material";
+import { alpha, styled, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
 import clsx from "@renderer/utils/clsx";
+import { useTranslation } from "react-i18next";
 
-const StyledSettingsForm = styled(Stack, {
-    name: 'SettingsForm',
-    slot: 'form',
+const StyledSettingsView = styled('div', {
+    name: 'SettingsView',
+    slot: 'root',
 })(() => ({
     transition: "all 0.2s ease-in-out",
     width: "100%",
@@ -21,22 +22,24 @@ const StyledSettingsForm = styled(Stack, {
     overflowY: "auto",
     overflowX: "hidden",
     display: 'flex',
+    flexDirection: 'column',
 }));
 
-const StyledSettingsFormCollections = styled('div', {
-    name: 'SettingsForm',
-    slot: 'collections',
+const StyledSettingsViewContent = styled('div', {
+    name: 'SettingsView',
+    slot: 'content',
 })(() => ({
     transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
+    paddingTop: 8,
     paddingLeft: 8,
     paddingRight: 8,
     gap: 8,
 }));
 
-const StyledSettingsFormCollection = styled('div', {
-    name: 'SettingsForm',
+const StyledSettingsViewCollection = styled('div', {
+    name: 'SettingsView',
     slot: 'collection',
 })(() => ({
     transition: "all 0.2s ease-in-out",
@@ -45,8 +48,8 @@ const StyledSettingsFormCollection = styled('div', {
     gap: 4,
 }));
 
-const StyledSettingsFormList = styled('div', {
-    name: 'SettingsForm',
+const StyledSettingsViewList = styled('div', {
+    name: 'SettingsView',
     slot: 'list',
 })(() => ({
     transition: "all 0.2s ease-in-out",
@@ -55,8 +58,8 @@ const StyledSettingsFormList = styled('div', {
     gap: 4,
 }));
 
-const StyledSettingsFormGroup = styled('div', {
-    name: 'SettingsForm',
+const StyledSettingsViewGroup = styled('div', {
+    name: 'SettingsView',
     slot: 'group',
 })(() => ({
     transition: "all 0.2s ease-in-out",
@@ -65,9 +68,9 @@ const StyledSettingsFormGroup = styled('div', {
     gap: 4,
 }));
 
-const StyledSettingsGroupHeader = styled('div', {
-    name: 'SettingsForm',
-    slot: 'groupHeader',
+const StyledSettingsViewHeader = styled('div', {
+    name: 'SettingsView',
+    slot: 'header',
 })(({ theme }) => ({
     transition: "all 0.2s ease-in-out",
     display: "flex",
@@ -81,11 +84,21 @@ const StyledSettingsGroupHeader = styled('div', {
     },
 }));
 
-const StyledSettingsItem = styled('div', {
-    name: 'SettingsForm',
+const StyledSettingsViewItem = styled('div', {
+    name: 'SettingsView',
     slot: 'item',
 })(() => ({
     transition: "all 0.2s ease-in-out",
+}));
+
+const StyledSettingsViewEmpty = styled('div', {
+    name: 'SettingsView',
+    slot: 'empty',
+})(() => ({
+    margin: "auto",
+    opacity: 0.5,
+    alignItems: "center",
+    padding: 16,
 }));
 
 const calculateWidth = (setting: SettingTypeUnion) => {
@@ -270,7 +283,7 @@ const registry: Partial<Record<SettingType, React.FC<{
     boolean: ({ setting, selected, onSelect }) => <BooleanSetting setting={setting} selected={selected} onSelect={onSelect} />,
 };
 
-export const SettingFormItem: React.FC<{
+export const SettingsViewItem: React.FC<{
     setting: SettingTypeUnion,
     selected?: boolean,
     onSelect?: () => void,
@@ -296,7 +309,7 @@ export const SettingFormItem: React.FC<{
                 }
             }
         },
-            { threshold: [0.1], rootMargin: '0px 0px -20% 0px' }
+            { threshold: [0.1], rootMargin: '-5% 0px -20% 0px' }
         );
         itemObserver.observe(itemRef.current);
 
@@ -306,17 +319,17 @@ export const SettingFormItem: React.FC<{
     }, []);
 
     return (
-        <StyledSettingsItem
-            className="SettingsForm-item"
+        <StyledSettingsViewItem
+            className="SettingsView-item"
             ref={itemRef}
             data-setting-key={createKey(setting)}
         >
             <Renderer setting={setting} selected={selected} onSelect={onSelect} />
-        </StyledSettingsItem>
+        </StyledSettingsViewItem>
     );
 };
 
-export const SettingsFormList: React.FC<{
+export const SettingsViewList: React.FC<{
     settings: SettingTypeUnion[] | undefined,
     selected?: string,
     onSelect?: (key: string) => void,
@@ -327,9 +340,9 @@ export const SettingsFormList: React.FC<{
     }
 
     return (
-        <StyledSettingsFormList className={"SettingsForm-list"}>
+        <StyledSettingsViewList className={"SettingsView-list"}>
             {settings.map((setting) => (
-                <SettingFormItem
+                <SettingsViewItem
                     key={createKey(setting)}
                     setting={setting}
                     selected={createKey(setting) === selected}
@@ -337,11 +350,11 @@ export const SettingsFormList: React.FC<{
                     onPinned={onPinned}
                 />)
             )}
-        </StyledSettingsFormList>
+        </StyledSettingsViewList>
     );
 };
 
-const SettingFormGroup: React.FC<{
+const SettingsViewGroup: React.FC<{
     group: SettingsGroup;
     selected?: string;
     selectedGroup?: string;
@@ -355,10 +368,10 @@ const SettingFormGroup: React.FC<{
     }
 
     return (
-        <StyledSettingsFormGroup className={"SettingsForm-group"}>
-            <StyledSettingsGroupHeader
+        <StyledSettingsViewGroup className={"SettingsView-group"}>
+            <StyledSettingsViewHeader
                 className={clsx(
-                    "SettingsForm-groupHeader",
+                    "SettingsView-header",
                     selectedGroup === group.key && "selected",
                     'group'
                 )}
@@ -368,27 +381,27 @@ const SettingFormGroup: React.FC<{
                 {group.description && (
                     <Typography variant="description">{group.description}</Typography>
                 )}
-            </StyledSettingsGroupHeader>
+            </StyledSettingsViewHeader>
 
-            <SettingsFormList
+            <SettingsViewList
                 settings={group.settings}
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
 
-            <SettingsFormGroupList
+            <SettingsViewGroupList
                 groups={group.groups}
                 selected={selected}
                 selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
-        </StyledSettingsFormGroup>
+        </StyledSettingsViewGroup>
     )
 };
 
-const SettingsFormGroupList: React.FC<{
+const SettingsViewGroupList: React.FC<{
     groups?: SettingsGroup[];
     selected?: string;
     selectedGroup?: string;
@@ -400,7 +413,7 @@ const SettingsFormGroupList: React.FC<{
     }
     return (
         groups.map((grp, idx) => (
-            <SettingFormGroup
+            <SettingsViewGroup
                 key={`${grp.key}-group-${idx}`}
                 group={grp}
                 selected={selected}
@@ -412,7 +425,7 @@ const SettingsFormGroupList: React.FC<{
     );
 };
 
-export const SettingsFormCollection: React.FC<{
+const SettingsViewCollection: React.FC<{
     collection: SettingsCollection;
     selected?: string;
     selectedGroup?: string;
@@ -422,10 +435,10 @@ export const SettingsFormCollection: React.FC<{
     const theme = useTheme();
 
     return (
-        <StyledSettingsFormCollection className="SettingsForm-collection">
-            <StyledSettingsGroupHeader
+        <StyledSettingsViewCollection className="SettingsView-collection">
+            <StyledSettingsViewHeader
                 className={clsx(
-                    "SettingsForm-groupHeader",
+                    "SettingsView-header",
                     selectedGroup === collection.key && "selected",
                     'collection'
                 )}
@@ -435,27 +448,27 @@ export const SettingsFormCollection: React.FC<{
                 {collection?.description && (
                     <Typography variant="description">{collection.description}</Typography>
                 )}
-            </StyledSettingsGroupHeader>
+            </StyledSettingsViewHeader>
 
-            <SettingsFormList
+            <SettingsViewList
                 settings={collection.settings}
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
 
-            <SettingsFormGroupList
+            <SettingsViewGroupList
                 groups={collection.groups}
                 selected={selected}
                 selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
             />
-        </StyledSettingsFormCollection>
+        </StyledSettingsViewCollection>
     );
 };
 
-export interface SettingsFormProps {
+export interface SettingsViewProps {
     collections: SettingsCollection[];
     selected?: string;
     selectedGroup?: string;
@@ -465,7 +478,7 @@ export interface SettingsFormProps {
     className?: string;
 }
 
-const SettingsForm: React.FC<SettingsFormProps> = ({
+const SettingsView: React.FC<SettingsViewProps> = ({
     collections,
     selected,
     selectedGroup,
@@ -474,7 +487,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
     onPinned,
     className,
 }) => {
-    console.count("SettingsForm Render");
+    const { t } = useTranslation();
+    console.count("SettingsView Render");
 
     React.useEffect(() => {
         if (ref?.current && selected) {
@@ -495,18 +509,18 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
     }, [selectedGroup]);
 
     return (
-        <StyledSettingsForm
-            className="SettingsForm-root"
+        <StyledSettingsView
+            className={clsx("SettingsView-root", className)}
             ref={ref}
         >
-            <StyledSettingsFormCollections
-                className={clsx(
-                    "SettingsForm-collections",
-                    className
+            <StyledSettingsViewContent className="SettingsView-content">
+                {collections.length === 0 && (
+                    <StyledSettingsViewEmpty className="SettingsView-empty">
+                        {t("no-setting-results", "No settings found")}
+                    </StyledSettingsViewEmpty>
                 )}
-            >
                 {collections.map((collection) => (
-                    <SettingsFormCollection
+                    <SettingsViewCollection
                         key={collection.key}
                         collection={collection}
                         selected={selected}
@@ -515,9 +529,9 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
                         onPinned={onPinned}
                     />
                 ))}
-            </StyledSettingsFormCollections>
-        </StyledSettingsForm>
+            </StyledSettingsViewContent>
+        </StyledSettingsView>
     );
 };
 
-export default SettingsForm;
+export default SettingsView;

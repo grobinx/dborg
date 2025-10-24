@@ -8,7 +8,6 @@ import { MorphingSvgPaths } from './components/MorphingSvgs';
 import { TextDecorator } from './components/useful/TextDecorator';
 import clsx from './utils/clsx';
 import { generateWavePaths } from './utils/waveGenerator';
-import RectangleDoor from './effects/RectangleDoor';
 
 const ORBADA = 'ORBADA';
 const DATABASE_ORGANIZER = 'Database Organizer';
@@ -26,8 +25,8 @@ const StyledAppTitle = styled('div')({
     borderRadius: '8px',
     boxShadow: '0 0 0 3px rgba(50, 197, 62, 0.6)',
     zIndex: 2,
-    width: 750,
-    height: 120,
+    width: 600,
+    height: 100,
     position: 'relative',
     //border: '2px solid #fff',
     '&.char-animation-finished': {
@@ -109,6 +108,7 @@ const AnimatedReleaseName = styled('span')<{ delay: number }>(({ delay, theme })
 
 const StyledAppInfoContainer = styled('div')<{ delayShift: number }>(({ delayShift = 0 }) => ({
     marginBottom: '24px',
+    width: 600,
     textAlign: 'left',
     fontSize: '16px',
     color: '#fff',
@@ -244,7 +244,7 @@ const About: React.FC<{
                     charAnimationFinished && 'char-animation-finished'
                 )}
             >
-                <Typography variant="h4" height={50} marginBottom={10} fontSize="40px">
+                <Typography variant="h4" marginBottom={10} fontSize="32px">
                     <TextDecorator variant="NeonText">
                         {displayText}
                     </TextDecorator>
@@ -259,6 +259,7 @@ const About: React.FC<{
             {
                 <StyledAppInfoContainer delayShift={0} style={{
                     visibility: loading ? 'visible' : 'hidden',
+                    width: "auto",
                 }}>
                     <span style={{
                         fontSize: '20px',

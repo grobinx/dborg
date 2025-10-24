@@ -123,9 +123,9 @@ export function useSetting<T = string>(
         };
     }, [group, key]);
 
-    const setSettingValue = (newValue: T) => {
+    const setSettingValue = React.useCallback((newValue: T) => {
         setSetting(group, key, newValue);
-    };
+    }, [group, key]);
 
     return [value, setSettingValue, defaultValue ?? settingsGroupDefaults[group]?.[key]];
 }
