@@ -29,6 +29,7 @@ import { Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
+import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -505,6 +506,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         ];
     }, []);
 
+    useScrollIntoView({
+        containerId: "schema-list-content",
+        targetId: selectedItem,
+    })
+
     React.useEffect(() => {
         if (!selectedItem) return;
         const el = document.getElementById(selectedItem);
@@ -571,7 +577,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 className="SchemaList-content"
             >
                 {initialized &&
-                    <List {...slotProps?.list} onKeyDown={handleSearchKeyDown}>
+                    <List {...slotProps?.list} onKeyDown={handleSearchKeyDown} id="schema-list-content" dense>
                         {data !== null && displayData?.map((record) => {
                             const group = record.sch_group ?? t("ungrouped", "Ungrouped");
                             return (
@@ -599,7 +605,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                             </Typography>
                                         </ListSubheader>
                                     )}
-                                    <ListItem {...slotProps?.item} id={record.sch_id}>
+                                    <ListItem {...slotProps?.item} id={record.sch_id} disablePadding>
                                         <ListItemButton
                                             onClick={() => setSelectedItem(record.sch_id)}
                                             //onDoubleClick={() => handleConnect(record.sch_id)}

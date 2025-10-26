@@ -28,7 +28,35 @@ interface UseScrollIntoViewOptions {
      * @default true
      */
     onlyIfNotVisible?: boolean;
+    /**
+     * Opcjonalny selektor CSS elementu nagłówka sticky w kontenerze
+     * (np. '.header', '#header', 'header[sticky]')
+     */
+    stickyHeader?: string;
 }
+
+/**
+ * Zwraca aktualny offset (wysokość przykrycia) nagłówka sticky względem górnej krawędzi kontenera
+ */
+const getStickyOffset = (container: HTMLElement, selector?: string): number => {
+    if (!selector) return 0;
+    try {
+        const headerEl = container.querySelector<HTMLElement>(selector);
+        if (!headerEl) return 0;
+
+        const headerRect = headerEl.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Kompensujemy tylko gdy nagłówek faktycznie przykrywa górę widocznego obszaru kontenera
+        if (headerRect.top <= containerRect.top) {
+            return Math.max(0, Math.min(headerRect.bottom, containerRect.bottom) - containerRect.top);
+        }
+        return 0;
+    } catch (e) {
+        console.warn(`Invalid stickyHeader selector: ${selector}`, e);
+        return 0;
+    }
+};
 
 /**
  * Hook zapewniający, że element o podanym ID jest widoczny w kontenerze
@@ -40,6 +68,7 @@ export const useScrollIntoView = ({
     scrollOptions,
     delay = 0,
     onlyIfNotVisible = true,
+    stickyHeader,
 }: UseScrollIntoViewOptions) => {
     const options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest', ...scrollOptions };
     React.useEffect(() => {
@@ -55,6 +84,8 @@ export const useScrollIntoView = ({
                 return;
             }
 
+            const headerOffset = getStickyOffset(container, stickyHeader);
+
             // Znajdź element docelowy TYLKO w kontenerze
             const targetElement = container.querySelector<HTMLElement>(`#${CSS.escape(targetId)}`);
             
@@ -65,30 +96,49 @@ export const useScrollIntoView = ({
 
             // Sprawdź czy element jest widoczny (jeśli włączone)
             if (onlyIfNotVisible) {
-                const isVisible = isElementVisible(targetElement, container);
+                const isVisible = isElementVisible(targetElement, container, headerOffset);
                 if (isVisible) {
                     return;
                 }
             }
 
-            // Scrolluj do elementu
-            targetElement.scrollIntoView(options);
+            // Scrolluj do elementu z kompensacją sticky headera na osi Y
+            if (headerOffset > 0) {
+                const elementRect = targetElement.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+
+                const clampedTop = Math.max(0, Math.min(
+                    desiredTop,
+                    container.scrollHeight - container.clientHeight
+                ));
+
+                container.scrollTo({
+                    top: clampedTop,
+                    behavior: (options.behavior as ScrollBehavior) ?? 'auto',
+                });
+            } else {
+                targetElement.scrollIntoView(options);
+            }
         }, delay);
 
         return () => clearTimeout(timeoutId);
-    }, [targetId, containerId, containerRef, delay, onlyIfNotVisible, JSON.stringify(options)]);
+    }, [targetId, containerId, containerRef, delay, onlyIfNotVisible, stickyHeader, JSON.stringify(options)]);
 };
 
 /**
- * Sprawdza czy element jest widoczny w kontenerze
+ * Sprawdza czy element jest widoczny w kontenerze z uwzględnieniem sticky headera
  */
-const isElementVisible = (element: HTMLElement, container: HTMLElement): boolean => {
+const isElementVisible = (element: HTMLElement, container: HTMLElement, headerOffset = 0): boolean => {
     const elementRect = element.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
 
+    const visibleTop = containerRect.top + headerOffset;
+    const visibleBottom = containerRect.bottom;
+
     return (
-        elementRect.top >= containerRect.top &&
-        elementRect.bottom <= containerRect.bottom &&
+        elementRect.top >= visibleTop &&
+        elementRect.bottom <= visibleBottom &&
         elementRect.left >= containerRect.left &&
         elementRect.right <= containerRect.right
     );
@@ -102,6 +152,7 @@ export const useScrollIntoViewCallback = ({
     containerRef,
     scrollOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest' },
     onlyIfNotVisible = true,
+    stickyHeader,
 }: Omit<UseScrollIntoViewOptions, 'targetId' | 'delay'>) => {
     const scrollToElement = React.useCallback((targetId: string) => {
         const container = containerRef?.current || 
@@ -112,6 +163,8 @@ export const useScrollIntoViewCallback = ({
             return;
         }
 
+        const headerOffset = getStickyOffset(container, stickyHeader);
+
         // Znajdź element docelowy TYLKO w kontenerze
         const targetElement = container.querySelector<HTMLElement>(`#${CSS.escape(targetId)}`);
         
@@ -121,14 +174,30 @@ export const useScrollIntoViewCallback = ({
         }
 
         if (onlyIfNotVisible) {
-            const isVisible = isElementVisible(targetElement, container);
+            const isVisible = isElementVisible(targetElement, container, headerOffset);
             if (isVisible) {
                 return;
             }
         }
 
-        targetElement.scrollIntoView(scrollOptions);
-    }, [containerId, containerRef, scrollOptions, onlyIfNotVisible]);
+        if (headerOffset > 0) {
+            const elementRect = targetElement.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+
+            const clampedTop = Math.max(0, Math.min(
+                desiredTop,
+                container.scrollHeight - container.clientHeight
+            ));
+
+            container.scrollTo({
+                top: clampedTop,
+                behavior: (scrollOptions.behavior as ScrollBehavior) ?? 'auto',
+            });
+        } else {
+            targetElement.scrollIntoView(scrollOptions);
+        }
+    }, [containerId, containerRef, scrollOptions, onlyIfNotVisible, stickyHeader]);
 
     return scrollToElement;
 };
