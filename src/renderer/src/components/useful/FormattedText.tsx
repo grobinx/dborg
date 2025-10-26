@@ -85,7 +85,7 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ text, style, sx })
             <Stack
                 direction="column"
                 gap={1}
-                sx={{ whiteSpace: "pre-wrap", alignItems: "flex-start" }}
+                sx={{ whiteSpace: "pre-wrap", alignItems: "flex-start", alignSelf: "center" }}
                 width={"100%"}
             >
                 {text.map((item, index) => {

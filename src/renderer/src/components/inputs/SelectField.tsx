@@ -1,7 +1,6 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { Size } from '@renderer/types/sizes';
-import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
