@@ -3,6 +3,7 @@ import React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import clsx from '@renderer/utils/clsx';
 import Collapse from '@mui/material/Collapse';
+import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 
 /**
  * Tree node structure
@@ -17,10 +18,11 @@ export interface TreeNode {
 }
 
 interface TreeProps {
+    id?: string;
     /** Auto expand the tree to a specific level or true to expand all */
     autoExpand?: number | boolean;
     /** Data for the tree */
-    data: TreeNode[];
+    nodes: TreeNode[];
     /** Currently selected node key */
     selected?: string | null;
     /** Callback when a node is selected */
@@ -42,6 +44,7 @@ const StyledTreeNodeToggleIcon = styled('div', { name: 'Tree', slot: 'toggleIcon
 const StyledTreeNodeLabel = styled('div', { name: 'Tree', slot: 'label' })(({ }) => ({}));
 
 const TreeNode: React.FC<React.PropsWithChildren<{
+    id?: string;
     className?: string;
     level: number;
     selected?: boolean;
@@ -51,7 +54,7 @@ const TreeNode: React.FC<React.PropsWithChildren<{
     focused?: boolean;
     expandIcons?: [React.ReactNode, React.ReactNode];
     [key: string]: any;
-}>> = ({ className, level, onClick, selected, children, toggle, isOpen, focused, expandIcons, ...other }) => {
+}>> = ({ id, className, level, onClick, selected, children, toggle, isOpen, focused, expandIcons, ...other }) => {
     const theme = useTheme();
 
     const classes = clsx(
@@ -62,6 +65,7 @@ const TreeNode: React.FC<React.PropsWithChildren<{
 
     return (
         <StyledTreeNode
+            id={id}
             className={clsx(
                 "Tree-node",
                 className,
@@ -113,6 +117,7 @@ const TreeNodes: React.FC<{
             return (
                 <React.Fragment key={index}>
                     <TreeNode
+                        id={node.key}
                         level={level}
                         onClick={() => onClick(node)}
                         selected={selected === node.key}
@@ -146,7 +151,8 @@ const TreeNodes: React.FC<{
 };
 
 const Tree: React.FC<TreeProps> = ({
-    data,
+    id,
+    nodes,
     onSelect,
     selected,
     autoExpand,
@@ -157,12 +163,25 @@ const Tree: React.FC<TreeProps> = ({
 }) => {
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<string | null>(selected ?? null);
     const [focused, setFocused] = React.useState<boolean>(false);
-    const treeRef = treeRefProp ?? React.useRef<HTMLDivElement>(null);
+    const treeRef = React.useRef<HTMLDivElement>(null);
+
+    const parentMap = React.useMemo(() => {
+        const buildParentMap = (nodes: TreeNode[], parentKey: string | null = null, map: Record<string, string | null> = {}): Record<string, string | null> => {
+            nodes.forEach(node => {
+                map[node.key] = parentKey;
+                if (node.children) {
+                    buildParentMap(node.children, node.key, map);
+                }
+            });
+            return map;
+        };
+        return buildParentMap(nodes);
+    }, [nodes]);
 
     const expandLevel = (level?: number | boolean) => {
         // Inicjalizuj openNodes na podstawie autoExpand
         if (level === true) {
-            return data.map(node => node.key); // Rozwiń wszystkie węzły
+            return nodes.map(node => node.key); // Rozwiń wszystkie węzły
         } else if (typeof level === 'number') {
             const expandKeys: string[] = [];
             const expandLevel = level;
@@ -177,7 +196,7 @@ const Tree: React.FC<TreeProps> = ({
                 });
             };
 
-            expandNodes(data, 1);
+            expandNodes(nodes, 1);
             return expandKeys; // Rozwiń węzły do określonego poziomu
         }
         return []; // Domyślnie nie rozwijaj żadnych węzłów
@@ -189,7 +208,7 @@ const Tree: React.FC<TreeProps> = ({
 
     React.useEffect(() => {
         setOpenNodes(expandLevel(autoExpand));
-    }, [autoExpand, data]);
+    }, [autoExpand, nodes]);
 
     const flatOpenTree = React.useMemo(() => {
         const result: TreeNode[] = [];
@@ -201,37 +220,39 @@ const Tree: React.FC<TreeProps> = ({
                 }
             });
         };
-        traverse(data);
+        traverse(nodes);
         return result;
-    }, [data, openNodes]);
+    }, [nodes, openNodes]);
 
     React.useEffect(() => {
         if (selected !== undefined) {
             setUncontrolledSelected(selected ?? null);
             if (selected !== null) {
                 // Automatyczne rozwijanie węzłów nadrzędnych dla zaznaczonego węzła
-                const findAndExpandParents = (nodes: TreeNode[], key: string, parents: string[] = []): string[] | null => {
-                    for (const node of nodes) {
-                        if (node.key === key) {
-                            return parents;
+                const findAndExpandParents = (key: string): string[] => {
+                    const parents: string[] = [];
+                    let currentKey: string | null = key;
+
+                    while (currentKey) {
+                        const parentKey = parentMap[currentKey];
+                        if (parentKey) {
+                            parents.push(parentKey);
                         }
-                        if (node.children) {
-                            const result = findAndExpandParents(node.children, key, [...parents, node.key]);
-                            if (result) {
-                                return result;
-                            }
-                        }
+                        currentKey = parentKey;
                     }
-                    return null;
+
+                    return parents;
                 };
 
-                const parents = findAndExpandParents(data, selected);
+                const parents = findAndExpandParents(selected);
                 if (parents) {
                     setOpenNodes(prev => [...new Set([...prev, ...parents])]);
                 }
             }
         }
-    }, [selected, data]);
+    }, [selected, nodes]);
+
+    useScrollIntoView({ containerRef: treeRef, containerId: id, targetId: uncontrolledSelected ?? undefined });
 
     const toggleNode = React.useCallback((key: string) => {
         setOpenNodes(prev =>
@@ -248,11 +269,7 @@ const Tree: React.FC<TreeProps> = ({
     }, [onSelect, toggleNode]);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
-        const node = typeof treeRef === "object" ? treeRef.current?.querySelector('[data-node-key].selected') : null;
-        if (!node) {
-            return;
-        }
-        const key = node.getAttribute('data-node-key');
+        const key = uncontrolledSelected;
         if (!key) {
             return;
         }
@@ -316,22 +333,10 @@ const Tree: React.FC<TreeProps> = ({
                     // Zwiń węzeł
                     toggleNode(currentNode.key);
                 } else {
-                    const findParentByKey = (nodes: TreeNode[], childKey: string): TreeNode | null => {
-                        for (const node of nodes) {
-                            if (node.children && node.children.length > 0) {
-                                if (node.children.some(c => c.key === childKey)) {
-                                    return node;
-                                }
-                                const found = findParentByKey(node.children, childKey);
-                                if (found) return found;
-                            }
-                        }
-                        return null;
-                    };
-                    const parent = findParentByKey(data, currentNode.key);
-                    if (parent) {
-                        onSelect(parent.key);
-                        setUncontrolledSelected(parent.key);
+                    const parentKey = parentMap[currentNode.key] || null;
+                    if (parentKey) {
+                        onSelect(parentKey);
+                        setUncontrolledSelected(parentKey);
                     }
                 }
             }
@@ -340,12 +345,20 @@ const Tree: React.FC<TreeProps> = ({
 
     return (
         <StyledTree
+            id={id}
             className="Tree-root"
             ref={ref}
         >
             <StyledTreeInner className="Tree-inner">
                 <StyledTreeTree
-                    ref={treeRef}
+                    ref={(ref) => {
+                        treeRef.current = ref;
+                        if (typeof treeRefProp === 'function') {
+                            treeRefProp(ref);
+                        } else if (treeRefProp) {
+                            treeRefProp.current = ref;
+                        }
+                    }}
                     className={clsx(
                         "Tree-tree",
                         focused && 'focused'
@@ -357,7 +370,7 @@ const Tree: React.FC<TreeProps> = ({
                     onBlur={() => setFocused(false)}
                 >
                     <TreeNodes
-                        nodes={data}
+                        nodes={nodes}
                         level={0}
                         openNodes={openNodes}
                         selected={uncontrolledSelected}

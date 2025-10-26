@@ -10,6 +10,7 @@ import { alpha, styled, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
 import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
+import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 
 const StyledSettingsView = styled('div', {
     name: 'SettingsView',
@@ -320,9 +321,9 @@ export const SettingsViewItem: React.FC<{
 
     return (
         <StyledSettingsViewItem
+            id={createKey(setting)}
             className="SettingsView-item"
             ref={itemRef}
-            data-setting-key={createKey(setting)}
         >
             <Renderer setting={setting} selected={selected} onSelect={onSelect} />
         </StyledSettingsViewItem>
@@ -370,12 +371,12 @@ const SettingsViewGroup: React.FC<{
     return (
         <StyledSettingsViewGroup className={"SettingsView-group"}>
             <StyledSettingsViewHeader
+                id={group.key}
                 className={clsx(
                     "SettingsView-header",
                     selectedGroup === group.key && "selected",
                     'group'
                 )}
-                data-setting-group-key={group.key}
             >
                 <Typography variant="h6">{group.title}</Typography>
                 {group.description && (
@@ -437,12 +438,12 @@ const SettingsViewCollection: React.FC<{
     return (
         <StyledSettingsViewCollection className="SettingsView-collection">
             <StyledSettingsViewHeader
+                id={collection.key}
                 className={clsx(
                     "SettingsView-header",
                     selectedGroup === collection.key && "selected",
                     'collection'
                 )}
-                data-setting-group-key={collection.key}
             >
                 <Typography variant="h5">{collection.title}</Typography>
                 {collection?.description && (
@@ -490,23 +491,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     const { t } = useTranslation();
     console.count("SettingsView Render");
 
-    React.useEffect(() => {
-        if (ref?.current && selected) {
-            const selectedElement = ref.current.querySelector(`[data-setting-key="${selected}"]`);
-            if (selectedElement) {
-                selectedElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
-            }
-        }
-    }, [selected]);
-
-    React.useEffect(() => {
-        if (ref?.current && selectedGroup) {
-            const selectedElement = ref.current.querySelector(`[data-setting-group-key="${selectedGroup}"]`);
-            if (selectedElement) {
-                selectedElement.scrollIntoView({ behavior: 'auto', block: 'start' });
-            }
-        }
-    }, [selectedGroup]);
+    useScrollIntoView({ 
+        containerRef: ref, 
+        targetId: selectedGroup ?? selected, 
+        scrollOptions: { block: selectedGroup ? 'start' : 'nearest' } 
+    });
 
     return (
         <StyledSettingsView

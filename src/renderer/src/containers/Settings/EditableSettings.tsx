@@ -194,12 +194,11 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [selectedNode, setSelectedNode] = React.useState<string | undefined>(undefined);
     const [manualSelectedNode, setManualSelectedNode] = React.useState<string | undefined>(undefined);
 
-    const treeData = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
+    const treeNodes = React.useMemo(() => buildTreeData(displaySettings), [displaySettings]);
 
     const handleSelectNode = React.useCallback((key: string) => {
         setSelectedNode(key);
         setManualSelectedNode(key);
-        // NIE aktualizuj pinnedMap tutaj
     }, []);
 
     // Aktualizuj breadcrumb TYLKO na podstawie pinnedMap (nie selectedNode)
@@ -244,7 +243,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
         }, null);
 
         if (minIndexSetting) {
-            const groupNode = findNodeByKey(treeData, minIndexSetting._group.key);
+            const groupNode = findNodeByKey(treeNodes, minIndexSetting._group.key);
             const path = getPath(groupNode);
             React.startTransition(() => {
                 setBreadcrumb(path.map(node => node.title));
@@ -253,18 +252,11 @@ const EditableSettings = (props: EditableSettingsProps) => {
                 }
             });
         }
-    }, [pinnedMap, treeData, flatSettings, manualSelectedNode]);
+    }, [pinnedMap, treeNodes, flatSettings, manualSelectedNode]);
 
     React.useEffect(() => {
-        if (manualSelectedNode) {
-            const timeout = setTimeout(() => {
-                setManualSelectedNode(undefined);
-            }, 2000);
-
-            return () => clearTimeout(timeout);
-        }
-        return;
-    }, [manualSelectedNode]);
+        setManualSelectedNode(undefined);
+    }, [selected]);
 
     React.useEffect(() => {
         const debouncedSearch = debounce(() => {
@@ -351,7 +343,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
             <SplitPanelGroup direction="horizontal">
                 <SplitPanel defaultSize={20}>
                     <Tree
-                        data={treeData}
+                        nodes={treeNodes}
                         onSelect={handleSelectNode}
                         selected={selectedNode}
                         autoExpand={1}
