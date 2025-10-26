@@ -126,6 +126,18 @@ const StyledCompactViewport = styled('div', { name: 'CompactList', slot: 'viewpo
     willChange: 'transform',
 }));
 
+function getElementHeightPx(element: HTMLElement): number {
+    const computed = window.getComputedStyle(element);
+    const height = computed.height;
+    // height jest stringiem, np. "40px" lub "2.5rem"
+    if (height.endsWith('px')) {
+        return parseFloat(height);
+    }
+    // Jeśli nie px, ustaw tymczasowo wysokość na elemencie i pobierz offsetHeight
+    // (ale computed.height powinno już być w px dla większości przypadków)
+    return element.getBoundingClientRect().height;
+}
+
 export function CompactList<T = any>(props: CompactListProps<T>) {
     const {
         id,
@@ -154,18 +166,6 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
 
     const viewportRef = useRef<HTMLDivElement>(null);
     const [itemHeight, setItemHeight] = useState<number | null>(null);
-
-    function getElementHeightPx(element: HTMLElement): number {
-        const computed = window.getComputedStyle(element);
-        const height = computed.height;
-        // height jest stringiem, np. "40px" lub "2.5rem"
-        if (height.endsWith('px')) {
-            return parseFloat(height);
-        }
-        // Jeśli nie px, ustaw tymczasowo wysokość na elemencie i pobierz offsetHeight
-        // (ale computed.height powinno już być w px dla większości przypadków)
-        return element.getBoundingClientRect().height;
-    }
 
     // Po zamontowaniu pobierz wysokość pierwszego elementu
     useLayoutEffect(() => {
