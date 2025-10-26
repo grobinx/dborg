@@ -80,6 +80,7 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
         cursor: 'default',
     },
     outline: '1px solid transparent',
+    outlineOffset: -1,
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
             backgroundColor: alpha(theme.palette[color].main, 0.1),
@@ -98,7 +99,10 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
             },
 
             "&:hover:not(.header)": {
-                backgroundColor: alpha(theme.palette[color].main, 0.3),
+                backgroundColor: alpha(theme.palette[color].main, 0.2),
+                '&.selected': {
+                    backgroundColor: alpha(theme.palette[color].main, 0.6),
+                },
             },
         };
         return acc;
@@ -109,7 +113,7 @@ const StyledCompactListHeader = styled('div', { name: 'CompactList', slot: 'head
     flexDirection: 'row',
     fontWeight: 'bold',
 }));
-const StyledCompactListOption = styled('div', { name: 'CompactList', slot: 'option' })(({ }) => ({
+const StyledCompactListOption = styled('div', { name: 'CompactList', slot: 'option' })(({ theme }) => ({
     display: 'flex',
     flexDirection: 'row',
     flex: 1,
