@@ -191,6 +191,7 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
                 anchorEl={anchorEl}
                 open={openMenu}
                 onClose={handleMenuClose}
+                sx={{ maxHeight: 400 }}
             >
                 {(existingPatterns.length > 0) && [
                     <ListSubheader key="loaded-patterns-header">{t("stored-patterns", "Stored patterns")}</ListSubheader>,

@@ -98,6 +98,7 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
                 anchorEl={anchorEl}
                 open={openMenuGroups}
                 onClose={handleMenuClose}
+                sx={{ maxHeight: 400 }}
             >
                 {storedGroupList.length > 0 && ([
                     <ListSubheader key="stored-groups">{t("stored-schema-groups", "Stored schema groups")}</ListSubheader>,
