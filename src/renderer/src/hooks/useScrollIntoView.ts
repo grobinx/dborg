@@ -30,9 +30,14 @@ interface UseScrollIntoViewOptions {
     onlyIfNotVisible?: boolean;
     /**
      * Opcjonalny selektor CSS elementu nagłówka sticky w kontenerze
+     * Można podać nadrzędny element nagłówka, który ma ustawiony `position: sticky`
      * (np. '.header', '#header', 'header[sticky]')
      */
     stickyHeader?: string;
+    /**
+     * Dodatkowe zależności do efektu
+     */
+    dependencies?: any[];
 }
 
 /**
@@ -44,12 +49,32 @@ const getStickyOffset = (container: HTMLElement, selector?: string): number => {
         const headerEl = container.querySelector<HTMLElement>(selector);
         if (!headerEl) return 0;
 
-        const headerRect = headerEl.getBoundingClientRect();
+        // Sprawdź czy element lub którykolwiek z jego potomków ma position: sticky
+        let stickyElement: HTMLElement | null = null;
+        
+        // Najpierw sprawdź sam element
+        if (window.getComputedStyle(headerEl).position === 'sticky') {
+            stickyElement = headerEl;
+        } else {
+            // Znajdź pierwszy potomny element ze sticky
+            const allDescendants = headerEl.querySelectorAll('*');
+            for (const descendant of Array.from(allDescendants)) {
+                if (window.getComputedStyle(descendant).position === 'sticky') {
+                    stickyElement = descendant as HTMLElement;
+                    break;
+                }
+            }
+        }
+
+        // Jeśli nie znaleziono sticky elementu, zwróć 0
+        if (!stickyElement) return 0;
+
+        const stickyRect = stickyElement.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Kompensujemy tylko gdy nagłówek faktycznie przykrywa górę widocznego obszaru kontenera
-        if (headerRect.top <= containerRect.top) {
-            return Math.max(0, Math.min(headerRect.bottom, containerRect.bottom) - containerRect.top);
+        // Kompensujemy tylko gdy sticky element faktycznie przykrywa górę widocznego obszaru kontenera
+        if (stickyRect.top <= containerRect.top) {
+            return Math.max(0, Math.min(stickyRect.bottom, containerRect.bottom) - containerRect.top);
         }
         return 0;
     } catch (e) {
@@ -69,6 +94,7 @@ export const useScrollIntoView = ({
     delay = 0,
     onlyIfNotVisible = true,
     stickyHeader,
+    dependencies = [],
 }: UseScrollIntoViewOptions) => {
     const options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest', ...scrollOptions };
     React.useEffect(() => {
@@ -102,11 +128,27 @@ export const useScrollIntoView = ({
                 }
             }
 
-            // Scrolluj do elementu z kompensacją sticky headera na osi Y
-            if (headerOffset > 0) {
-                const elementRect = targetElement.getBoundingClientRect();
-                const containerRect = container.getBoundingClientRect();
-                const desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+            // Oblicz pozycje
+            const elementRect = targetElement.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const visibleTop = containerRect.top + headerOffset;
+            const visibleBottom = containerRect.bottom;
+
+            // Scrolluj do elementu z kompensacją sticky headera
+            if (headerOffset > 0 || elementRect.top < visibleTop || elementRect.bottom > visibleBottom) {
+                let desiredTop: number;
+
+                if (elementRect.top < visibleTop) {
+                    // Element jest powyżej widocznego obszaru - scrolluj do góry
+                    desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+                } else if (elementRect.bottom > visibleBottom) {
+                    // Element jest poniżej widocznego obszaru - scrolluj do dołu
+                    desiredTop = container.scrollTop + (elementRect.bottom - containerRect.bottom);
+                } else {
+                    // Element jest widoczny - użyj domyślnego scrollIntoView
+                    targetElement.scrollIntoView(options);
+                    return;
+                }
 
                 const clampedTop = Math.max(0, Math.min(
                     desiredTop,
@@ -123,11 +165,11 @@ export const useScrollIntoView = ({
         }, delay);
 
         return () => clearTimeout(timeoutId);
-    }, [targetId, containerId, containerRef, delay, onlyIfNotVisible, stickyHeader, JSON.stringify(options)]);
+    }, [targetId, containerId, containerRef, delay, onlyIfNotVisible, stickyHeader, JSON.stringify(options), ...dependencies]);
 };
 
 /**
- * Sprawdza czy element jest widoczny w kontenerze z uwzględnieniem sticky headera
+ * Sprawdza czy element jest CAŁKOWICIE widoczny w kontenerze
  */
 const isElementVisible = (element: HTMLElement, container: HTMLElement, headerOffset = 0): boolean => {
     const elementRect = element.getBoundingClientRect();
@@ -136,12 +178,13 @@ const isElementVisible = (element: HTMLElement, container: HTMLElement, headerOf
     const visibleTop = containerRect.top + headerOffset;
     const visibleBottom = containerRect.bottom;
 
-    return (
-        elementRect.top >= visibleTop &&
-        elementRect.bottom <= visibleBottom &&
-        elementRect.left >= containerRect.left &&
-        elementRect.right <= containerRect.right
-    );
+    // Element jest CAŁKOWICIE widoczny gdy:
+    // - jego góra jest poniżej górnej krawędzi widocznego obszaru
+    // - jego dół jest powyżej dolnej krawędzi widocznego obszaru
+    const isFullyVerticallyVisible = elementRect.top >= visibleTop && elementRect.bottom <= visibleBottom;
+    const isFullyHorizontallyVisible = elementRect.left >= containerRect.left && elementRect.right <= containerRect.right;
+
+    return isFullyVerticallyVisible && isFullyHorizontallyVisible;
 };
 
 /**
@@ -150,10 +193,12 @@ const isElementVisible = (element: HTMLElement, container: HTMLElement, headerOf
 export const useScrollIntoViewCallback = ({
     containerId,
     containerRef,
-    scrollOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest' },
+    scrollOptions,
     onlyIfNotVisible = true,
     stickyHeader,
+    dependencies = [],
 }: Omit<UseScrollIntoViewOptions, 'targetId' | 'delay'>) => {
+    const options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest', ...scrollOptions };
     const scrollToElement = React.useCallback((targetId: string) => {
         const container = containerRef?.current || 
             (containerId ? document.getElementById(containerId) : null);
@@ -192,12 +237,12 @@ export const useScrollIntoViewCallback = ({
 
             container.scrollTo({
                 top: clampedTop,
-                behavior: (scrollOptions.behavior as ScrollBehavior) ?? 'auto',
+                behavior: (options.behavior as ScrollBehavior) ?? 'auto',
             });
         } else {
-            targetElement.scrollIntoView(scrollOptions);
+            targetElement.scrollIntoView(options);
         }
-    }, [containerId, containerRef, scrollOptions, onlyIfNotVisible, stickyHeader]);
+    }, [containerId, containerRef, JSON.stringify(options), onlyIfNotVisible, stickyHeader, ...dependencies]);
 
     return scrollToElement;
 };
