@@ -349,7 +349,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
             }
             newSelected = arr;
         } else {
-            newSelected = currentSelected === option.value ? null : option.value;
+            newSelected = option.value;
         }
 
         if (selected === undefined) {

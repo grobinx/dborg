@@ -145,7 +145,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     const [hover, setHover] = React.useState(false);
     const [focusedSource, setFocusedSource] = React.useState<FocusSource>(null);
     const toggleValues = React.useMemo(() => normalizeToggle(toggle), [toggle]);
-    const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(defaultValue);
+    const [currentValue, setCurrentValue] = React.useState<string | null | undefined>(defaultValue ?? toggleValues[0] ?? null);
     const isInteractable = !disabled && !loading;
     const buttonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -285,7 +285,9 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
     }, [currentValue]);
 
     React.useEffect(() => {
-        setCurrentValue(value);
+        if (value !== undefined) {
+            setCurrentValue(value);
+        }
     }, [value]);
 
     React.useEffect(() => {
