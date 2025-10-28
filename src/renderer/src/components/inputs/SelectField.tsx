@@ -4,7 +4,7 @@ import { Size } from '@renderer/types/sizes';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
-import { rootSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
 
 export interface SelectOption<T = any> {
     label: FormattedContentItem;
@@ -29,7 +29,7 @@ const StyledMenuItem = styled(MenuItem, {
     shouldForwardProp: (prop) => prop !== 'componentSize',
 })<{ componentSize?: Size }>(
     ({ componentSize = 'medium' }) => {
-        const sizeProps = rootSizeProperties[componentSize];
+        const sizeProps = inputSizeProperties[componentSize];
         return {
             display: 'flex',
             alignItems: 'center',
@@ -222,7 +222,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     >
                                         {children ? React.Children.toArray(children).map(child => {
                                             if (React.isValidElement(child) && child.type === MenuItem && 'value' in (child.props as any)) {
-                                                const sizeProps = rootSizeProperties[size || 'medium'];
+                                                const sizeProps = inputSizeProperties[size || 'medium'];
                                                 return React.cloneElement(child, {
                                                     onClick: () => {
                                                         if (!Array.isArray(value)) {
@@ -276,11 +276,11 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     {optionDescription && (
                                         <Box
                                             sx={{
-                                                padding: rootSizeProperties[size || 'medium'].gap,
+                                                padding: inputSizeProperties[size || 'medium'].gap,
                                                 display: 'flex',
                                                 width: '100%',
                                                 order: popperBelow ? 2 : -2,
-                                                fontSize: rootSizeProperties[size || 'medium'].fontSize,
+                                                fontSize: inputSizeProperties[size || 'medium'].fontSize,
                                                 color: 'text.secondary',
                                             }}
                                         >

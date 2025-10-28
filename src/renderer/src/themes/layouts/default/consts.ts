@@ -7,10 +7,22 @@ export const paddingSmall = 2;
 export const paddingMedium = 4;
 export const paddingLarge = 6;
 
-export const rootSizeProperties: Record<Size, any> = {
+export const fontSizeProperties: Record<Size, CSSProperties> = {
+    small: {
+        fontSize: "0.8rem",
+    },
+    medium: {
+        fontSize: "1rem",
+    },
+    large: {
+        fontSize: "1.2rem",
+    },
+};
+
+export const buttonSizeProperties: Record<Size, any> = {
     small: {
         padding: `${paddingSmall}px ${paddingSmall * 1.5}px`,
-        fontSize: "0.8rem",
+        fontSize: fontSizeProperties.small.fontSize,
         height: "1.7rem",
         minHeight: "1.7rem",
         minWidth: "1.7rem",
@@ -24,7 +36,7 @@ export const rootSizeProperties: Record<Size, any> = {
     },
     medium: {
         padding: `${paddingMedium}px ${paddingMedium * 1.5}px`,
-        fontSize: "1rem",
+        fontSize: fontSizeProperties.medium.fontSize,
         height: "2.2rem",
         minHeight: "2.2rem",
         minWidth: "2.2rem",
@@ -38,7 +50,7 @@ export const rootSizeProperties: Record<Size, any> = {
     },
     large: {
         padding: `${paddingLarge}px ${paddingLarge * 1.5}px`,
-        fontSize: "1.2rem",
+        fontSize: fontSizeProperties.large.fontSize,
         height: "2.8rem",
         minHeight: "2.8rem",
         minWidth: "2.8rem",
@@ -51,3 +63,7 @@ export const rootSizeProperties: Record<Size, any> = {
         }
     },
 };
+
+export const inputSizeProperties: Record<Size, any> = buttonSizeProperties;
+
+export const listItemSizeProperties: Record<Size, any> = buttonSizeProperties;

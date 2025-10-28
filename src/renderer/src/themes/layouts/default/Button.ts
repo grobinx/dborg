@@ -1,5 +1,5 @@
 import { alpha, Palette, ThemeOptions } from "@mui/material";
-import { borderRadius, paddingLarge, paddingMedium, paddingSmall, rootSizeProperties } from "./consts";
+import { borderRadius, paddingLarge, paddingMedium, paddingSmall, buttonSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { ButtonComponent } from "@renderer/themes/theme.d/Button";
 
@@ -40,15 +40,15 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 },
 
                 "&.size-small": {
-                    ...rootSizeProperties.small
+                    ...buttonSizeProperties.small
                 },
 
                 "&.size-medium": {
-                    ...rootSizeProperties.medium
+                    ...buttonSizeProperties.medium
                 },
 
                 "&.size-large": {
-                    ...rootSizeProperties.large
+                    ...buttonSizeProperties.large
                 },
 
                 "&.focused": {

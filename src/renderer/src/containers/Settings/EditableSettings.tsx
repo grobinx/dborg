@@ -348,6 +348,9 @@ const EditableSettings = (props: EditableSettingsProps) => {
                         selected={selectedNode}
                         autoExpand={1}
                         renderNode={renderNode}
+                        color="default"
+                        size="default"
+                        dense
                     />
                 </SplitPanel>
                 <Splitter />

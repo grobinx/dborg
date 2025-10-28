@@ -1,5 +1,5 @@
 import { alpha, Palette, ThemeOptions } from "@mui/material";
-import { borderRadius, paddingLarge, paddingMedium, paddingSmall, rootSizeProperties } from "./consts";
+import { borderRadius, paddingLarge, paddingMedium, paddingSmall, inputSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
 
@@ -43,13 +43,13 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     //boxShadow: `inset 0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
                 },
                 '&.size-small': {
-                    ...rootSizeProperties.small,
+                    ...inputSizeProperties.small,
                 },
                 '&.size-medium': {
-                    ...rootSizeProperties.medium,
+                    ...inputSizeProperties.medium,
                 },
                 '&.size-large': {
-                    ...rootSizeProperties.large,
+                    ...inputSizeProperties.large,
                 },
                 '&.disabled': {
                     pointerEvents: 'none',

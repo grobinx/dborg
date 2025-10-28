@@ -178,7 +178,14 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
                 disabled: child.props.disabled || disabled,
                 value: exclusive ? (currentValue === child.props.toggle ? currentValue : null) : child.props.value,
                 onChange: (newValue: string | null) => {
-                    child.props.onChange?.(newValue !== child.props.toggle ? null : newValue);
+                    const toggle = child.props.toggle;
+                    let isActive = false;
+                    if (Array.isArray(toggle)) {
+                        isActive = toggle.includes(newValue);
+                    } else {
+                        isActive = newValue === toggle;
+                    }
+                    child.props.onChange?.(isActive ? newValue : null);
                     if (exclusive && newValue && newValue !== currentValue) {
                         handleExclusiveChange(newValue);
                     }

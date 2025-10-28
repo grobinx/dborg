@@ -2,7 +2,7 @@ import { Theme } from "@emotion/react";
 import { alpha, styled, SxProps } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
 import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
-import { borderRadius, rootSizeProperties } from "@renderer/themes/layouts/default/consts";
+import { listItemSizeProperties } from "@renderer/themes/layouts/default/consts";
 import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
@@ -57,7 +57,7 @@ interface CompactListProps<T = any> {
     className?: string;
     ref?: React.Ref<HTMLUListElement>;
     size?: Size;
-    color?: ThemeColor;
+    color?: ThemeColor | 'default';
     disabled?: boolean;
     noOptionsText?: FormattedContentItem;
     options: AnyOption<T>[];
@@ -85,9 +85,9 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
     transition: "all 0.2s ease-in-out",
     alignContent: 'center',
     alignItems: 'center',
-    "&.size-small": { ...rootSizeProperties.small, },
-    "&.size-medium": { ...rootSizeProperties.medium },
-    "&.size-large": { ...rootSizeProperties.large },
+    "&.size-small": { ...listItemSizeProperties.small, },
+    "&.size-medium": { ...listItemSizeProperties.medium },
+    "&.size-large": { ...listItemSizeProperties.large },
     '&.sticky': {
         position: 'sticky',
         top: 0,
@@ -99,7 +99,6 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
     outlineOffset: -1,
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
-            backgroundColor: alpha(theme.palette[color].main, 0.1),
             color: theme.palette.text.primary,
             '&.header': {
                 backgroundColor: theme.palette[color].main,
@@ -123,6 +122,20 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
         };
         return acc;
     }, {}),
+    '&.color-default': {
+        '&.header': {
+            backgroundColor: theme.palette.background.paper,
+        },
+        '&.selected': {
+            backgroundColor: theme.palette.action.selected,
+            '&:focused': {
+                outline: `1px solid ${theme.palette.action.focus}`,
+            },
+        },
+        '&:hover:not(.header)': {
+            backgroundColor: theme.palette.action.hover,
+        },
+    },
 }));
 const StyledCompactListHeader = styled('div', { name: 'CompactList', slot: 'header' })(() => ({
     display: 'flex',
@@ -148,28 +161,30 @@ const StyledCompactList = styled('ul', { name: 'CompactList', slot: 'root' })(()
 const StyledCompactViewport = styled('div', { name: 'CompactList', slot: 'viewport' })(() => ({
     willChange: 'transform',
 }));
-const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'container' })(() => ({
+const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'container' })(({ theme }) => ({
     display: 'flex',
     width: '100%',
     height: '100%',
     flexDirection: 'column',
     '&.sidebar': {
         flexDirection: 'row',
-    }
+    },
+    ...themeColors.reduce((acc, color) => {
+        acc[`&.color-${color}`] = {
+            backgroundColor: alpha(theme.palette[color].main, 0.1),
+        };
+        return acc;
+    }, {}),
+    '&.color-default': {
+        backgroundColor: "transparent",
+    },
 }));
 const StyledDescriptionArea = styled('div', { name: 'CompactList', slot: 'description' })(({ theme }) => ({
     display: 'flex',
     flex: '0 0 auto',
-    "&.size-small": { fontSize: rootSizeProperties.small.fontSize, padding: rootSizeProperties.small.padding },
-    "&.size-medium": { fontSize: rootSizeProperties.medium.fontSize, padding: rootSizeProperties.medium.padding },
-    "&.size-large": { fontSize: rootSizeProperties.large.fontSize, padding: rootSizeProperties.large.padding },
-    ...themeColors.reduce((acc, color) => {
-        acc[`&.color-${color}`] = {
-            backgroundColor: alpha(theme.palette[color].main, 0.1),
-            color: theme.palette.text.primary,
-        };
-        return acc;
-    }, {}),
+    "&.size-small": { fontSize: listItemSizeProperties.small.fontSize, padding: listItemSizeProperties.small.padding },
+    "&.size-medium": { fontSize: listItemSizeProperties.medium.fontSize, padding: listItemSizeProperties.medium.padding },
+    "&.size-large": { fontSize: listItemSizeProperties.large.fontSize, padding: listItemSizeProperties.large.padding },
     '&.footer': {
         borderTop: `1px solid ${theme.palette.divider}`,
     },
@@ -231,45 +246,59 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
 
     // After mount measure base item height (no inline description adjustments)
     useLayoutEffect(() => {
-        if (viewportRef.current) {
-            const firstOption = viewportRef.current.querySelector("li:not(.header)");
-            if (firstOption) {
-                const px = getElementHeightPx(firstOption as HTMLElement);
-                if (px > 0) {
-                    setItemHeight(px);
+        function measure() {
+            if (viewportRef.current) {
+                const firstOption = viewportRef.current.querySelector("li:not(.header)");
+                if (firstOption) {
+                    const px = getElementHeightPx(firstOption as HTMLElement);
+                    if (px > 0) {
+                        setItemHeight(px);
+                    }
                 }
             }
         }
+        measure();
     }, [lines, size, options, dense]);
 
-    // Pobierz maxHeight z propsów style lub sx, jeśli istnieje
-    const styleMaxHeight = style?.maxHeight;
-    const sxMaxHeight =
-        sx && typeof sx === 'object' && 'maxHeight' in sx
-            ? (sx as any).maxHeight
-            : undefined;
+    const [maxHeight, setMaxHeight] = useState<number | string | undefined>(undefined);
 
-    // Wyznacz końcowy maxHeight: najpierw style, potem sx, potem lines
-    const maxHeight =
-        styleMaxHeight !== undefined
-            ? styleMaxHeight
-            : sxMaxHeight !== undefined
-                ? sxMaxHeight
-                : lines && itemHeight
-                    ? lines * itemHeight
-                    : undefined;
+    React.useEffect(() => {
+        // Pobierz maxHeight z propsów style lub sx, jeśli istnieje
+        const styleMaxHeight = style?.maxHeight;
+        const sxMaxHeight =
+            sx && typeof sx === 'object' && 'maxHeight' in sx
+                ? (sx as any).maxHeight
+                : undefined;
 
-    let effectiveLines = lines;
-    if (
-        effectiveLines === undefined &&
-        maxHeight &&
-        itemHeight
-    ) {
-        let maxHeightPx = typeof maxHeight === "number"
-            ? maxHeight
-            : parseFloat(maxHeight);
-        effectiveLines = Math.max(1, Math.floor(maxHeightPx / itemHeight));
-    }
+        // Wyznacz końcowy maxHeight: najpierw style, potem sx, potem lines
+        const maxHeight =
+            styleMaxHeight !== undefined
+                ? styleMaxHeight
+                : sxMaxHeight !== undefined
+                    ? sxMaxHeight
+                    : lines && itemHeight
+                        ? lines * itemHeight
+                        : undefined;
+
+        setMaxHeight(maxHeight);
+    }, [style, sx, lines, itemHeight]);
+
+    const [effectiveLines, setEffectiveLines] = useState<number | undefined>(lines);
+
+    React.useEffect(() => {
+        let effectiveLines = lines;
+        if (
+            effectiveLines === undefined &&
+            maxHeight &&
+            itemHeight
+        ) {
+            let maxHeightPx = typeof maxHeight === "number"
+                ? maxHeight
+                : parseFloat(maxHeight);
+            effectiveLines = Math.max(1, Math.floor(maxHeightPx / itemHeight));
+        }
+        setEffectiveLines(effectiveLines);
+    }, [lines, maxHeight, itemHeight]);
 
     // Ustal źródło prawdy: kontrolowany czy niekontrolowany
     const currentSelected = selected !== undefined ? selected : uncontrolledSelected;
@@ -281,12 +310,6 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         return currentSelected === value;
     };
 
-    // Helper: currently hovered option (if any)
-    const hoveredOption: Option<T> | null =
-        hoveredIndex != null && isOption(options[hoveredIndex])
-            ? (options[hoveredIndex] as Option<T>)
-            : null;
-
     // Helper: selected option (only for single select)
     const selectedOption: Option<T> | null = React.useMemo(() => {
         if (multiple) return null;
@@ -295,12 +318,20 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         return found ?? null;
     }, [multiple, currentSelected, options]);
 
-    // Decide which option's description is shown globally (header/footer/sidebar)
-    const activeDescribedOption = hoveredOption?.description
-        ? hoveredOption
-        : selectedOption?.description
-            ? selectedOption
-            : null;
+    const [activeDescriptionOption, setActiveDescriptionOption] = useState<Option<T> | null>(null);
+
+    React.useEffect(() => {
+        const hoveredOption: Option<T> | null =
+            hoveredIndex != null && isOption(options[hoveredIndex])
+                ? (options[hoveredIndex] as Option<T>)
+                : null;
+        const activeDescribedOption = hoveredOption?.description
+            ? hoveredOption
+            : selectedOption?.description
+                ? selectedOption
+                : null;
+        setActiveDescriptionOption(activeDescribedOption);
+    }, [hoveredIndex, selectedOption]);
 
     // Obsługa kliknięcia na opcję
     const handleOptionClick = (option: Option<T>) => {
@@ -426,9 +457,6 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         }
     }
 
-    // Description container orientation
-    const isSidebar = effectiveDescription === 'sidebar';
-
     return (
         <StyledCompactContainer
             className={clsx(
@@ -437,9 +465,9 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                 classes
             )}
         >
-            {effectiveDescription === 'header' && activeDescribedOption?.description && (
+            {effectiveDescription === 'header' && activeDescriptionOption?.description && (
                 <StyledDescriptionArea className={clsx("CompactList-description", "header", classes)}>
-                    <FormattedText text={activeDescribedOption.description} />
+                    <FormattedText text={activeDescriptionOption.description} />
                 </StyledDescriptionArea>
             )}
 
@@ -482,7 +510,6 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                                 "header",
                                 classes,
                             )}
-                            style={{ minHeight: itemHeight ?? undefined }}
                         >
                             {renderItemHeader(stickyHeaderOption)}
                         </StyledCompactListItem>
@@ -506,7 +533,6 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                                 onClick={isHeader ? undefined : () => handleOptionClick(option as Option<T>)}
                                 onMouseEnter={isHeader ? undefined : () => setHoveredIndex(realIndex)}
                                 onMouseLeave={isHeader ? undefined : () => setHoveredIndex(prev => (prev === realIndex ? null : prev))}
-                                style={{ minHeight: itemHeight ?? undefined }}
                             >
                                 {isHeader ? renderItemHeader(option) : renderItemOption(option as Option<T>)}
                             </StyledCompactListItem>
@@ -518,18 +544,18 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                 </StyledCompactViewport>
             </StyledCompactList>
 
-            {effectiveDescription === 'footer' && activeDescribedOption?.description && (
+            {effectiveDescription === 'footer' && activeDescriptionOption?.description && (
                 <StyledDescriptionArea className={clsx("CompactList-description", "footer", classes)}>
-                    <FormattedText text={activeDescribedOption.description} />
+                    <FormattedText text={activeDescriptionOption.description} />
                 </StyledDescriptionArea>
             )}
 
-            {effectiveDescription === 'sidebar' && activeDescribedOption?.description && (
+            {effectiveDescription === 'sidebar' && activeDescriptionOption?.description && (
                 <StyledDescriptionArea
                     className={clsx("CompactList-description", "sidebar", classes)}
                     style={{ width: '35%', minWidth: 200, alignSelf: 'flex-start' }}
                 >
-                    <FormattedText text={activeDescribedOption.description} />
+                    <FormattedText text={activeDescriptionOption.description} />
                 </StyledDescriptionArea>
             )}
         </StyledCompactContainer>
