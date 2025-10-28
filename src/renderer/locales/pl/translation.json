@@ -47,7 +47,7 @@
 	"schema-properties-required": "Właściwości schematu są wymagane.",
 	"group-schema-list": "Grupuj listę schematów",
 	"group": "Grupa: {{group}}",
-	"schema-last-selected": "Ostatnio wybrany: {{lastSelected}}",
+	"schema-last-selected": "Wybrany: {{lastSelected}}",
 	"edit-schema": "Edytuj schemat",
 	"delete-schema": "Usuń schemat",
 	"ungrouped": "Niepogrupowane",

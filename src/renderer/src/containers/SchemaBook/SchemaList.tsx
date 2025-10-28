@@ -493,18 +493,15 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 </span>
             ),
             <span key="lastSelected" className="last-selected">
-                {t("schema-last-selected", "Last Selected: {{lastSelected}}", { lastSelected: lastSelectedText })}
+                {t("schema-last-selected", "Selected: {{lastSelected}}", { lastSelected: lastSelectedText })}
             </span>,
             record.sch_db_version && (
                 <span key="dbVersion" className="db-version">
                     {t("schema-db-version", "Version: {{version}}", { version: record.sch_db_version })}
                 </span>
             ),
-            <span key="order" className="order">
-                {t("schema-order", "Order: {{order}}", { order: record.sch_order })}
-            </span>
         ];
-    }, []);
+    }, [groupList]);
 
     useScrollIntoView({
         containerId: "schema-list-content",

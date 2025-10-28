@@ -47,7 +47,7 @@
 	"schema-properties-required": "Schema properties are required.",
 	"group-schema-list": "Group schema list",
 	"group": "Group: {{group}}",
-	"schema-last-selected": "Last Selected: {{lastSelected}}",
+	"schema-last-selected": "Selected: {{lastSelected}}",
 	"edit-schema": "Edit Schema",
 	"delete-schema": "Delete schema",
 	"ungrouped": "Ungrouped",

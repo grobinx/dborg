@@ -61,7 +61,7 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                 lines={6}
                                 dense={false}
                                 //sx={{ maxHeight: 300 }}
-                                description="tooltip"
+                                description="footer"
                             />
                         ), [size])}
                     </Stack>

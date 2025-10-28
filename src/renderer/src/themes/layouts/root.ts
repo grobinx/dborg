@@ -29,13 +29,13 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string)
                     },
                     '*::-webkit-scrollbar-track': {
                         background: 'rgba(0, 0, 0, 0.03)',
-                        borderRadius: '8px',
-                        margin: '1px',
+                        borderRadius: 0,
+                        margin: 0,
                         boxShadow: 'inset 0 0 6px rgba(0, 0, 0, 0.1)',
                     },
                     '*::-webkit-scrollbar-thumb': {
                         background: 'linear-gradient(135deg, rgba(100,100,100,0.5) 0%, rgba(80,80,80,0.6) 100%)',
-                        borderRadius: '8px',
+                        borderRadius: 0,
                         border: '3px solid transparent',
                         backgroundClip: 'padding-box',
                         //boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
