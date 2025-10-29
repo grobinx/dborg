@@ -21,6 +21,7 @@ const theme = createTheme({
                 selected: darken(colors.lime[900], 0.5),
             },
             tooltip: darken(colors.blueGrey[900], 0.2),
+            header: colors.blueGrey[900],
         },
         dataType: {
             boolean: colors.purple[200],

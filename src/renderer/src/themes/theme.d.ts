@@ -109,6 +109,7 @@ declare module "@mui/material/styles" {
             selected: string;
         };
         tooltip: string;
+        header: string;
     }
 
     interface Palette {

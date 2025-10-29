@@ -124,11 +124,11 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
     }, {}),
     '&.color-default': {
         '&.header': {
-            backgroundColor: theme.palette.background.paper,
+            backgroundColor: theme.palette.background.header,
         },
         '&.selected': {
             backgroundColor: theme.palette.action.selected,
-            '&:focused': {
+            '.focused &': {
                 outline: `1px solid ${theme.palette.action.focus}`,
             },
         },

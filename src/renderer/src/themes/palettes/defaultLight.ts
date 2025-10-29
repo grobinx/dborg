@@ -1,4 +1,4 @@
-import { alpha, lighten, createTheme } from "@mui/material/styles";
+import { alpha, lighten, createTheme, darken } from "@mui/material/styles";
 import { createPaletteColor } from "../../utils/colors";
 import { colors } from "@mui/material";
 import { light } from "@mui/material/styles/createPalette";
@@ -23,6 +23,7 @@ const theme = createTheme({
                 selected: colors.amber[100],
             },
             tooltip: colors.blueGrey[800],
+            header: colors.blueGrey[100],
         },
         dataType: {
             boolean: colors.purple[800],
