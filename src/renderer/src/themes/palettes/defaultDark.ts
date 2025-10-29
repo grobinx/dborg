@@ -40,7 +40,8 @@ const theme = createTheme({
             //icon: '#ffee58'
         },
         action: {
-            focus: alpha(colors.lightBlue[200], 0.25),
+            active: alpha(colors.lightBlue[200], 0.3),
+            focus: alpha(colors.lightBlue[200], 0.3),
             hover: alpha(colors.lightBlue[200], 0.1),
             selected: alpha(colors.lightBlue[200], 0.25),
             disabled: colors.grey[800],

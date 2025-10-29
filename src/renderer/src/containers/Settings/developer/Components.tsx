@@ -105,7 +105,7 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     }, []);
 
     const treeNodes = React.useMemo<TreeNode[]>(() => {
-        return generateRandomTree(100, { maxChildren: 10, maxDepth: 10 });
+        return generateRandomTree(1000, { maxChildren: 10, maxDepth: 10 });
     }, []);
 
     const [color, setColor] = React.useState<ThemeColor | 'default'>("main");
@@ -137,9 +137,9 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                                 options={options}
                                 headerSticky
                                 color={color}
-                                lines={6}
                                 dense={dense}
-                                //sx={{ maxHeight: 300 }}
+                                multiple={true}
+                                sx={{ maxHeight: 300 }}
                                 description="footer"
                             />
                         ), [size, color, dense])}

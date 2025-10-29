@@ -200,9 +200,9 @@ export const useScrollIntoViewCallback = ({
 }: Omit<UseScrollIntoViewOptions, 'targetId' | 'delay'>) => {
     const options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest', ...scrollOptions };
     const scrollToElement = React.useCallback((targetId: string) => {
-        const container = containerRef?.current || 
+        const container = containerRef?.current ||
             (containerId ? document.getElementById(containerId) : null);
-        
+
         if (!container) {
             console.warn(`Container not found: ${containerId}`);
             return;
@@ -212,12 +212,13 @@ export const useScrollIntoViewCallback = ({
 
         // Znajdź element docelowy TYLKO w kontenerze
         const targetElement = container.querySelector<HTMLElement>(`#${CSS.escape(targetId)}`);
-        
+
         if (!targetElement) {
             console.warn(`Target element not found in container: ${targetId}`);
             return;
         }
 
+        // Sprawdź czy element jest widoczny (jeśli włączone)
         if (onlyIfNotVisible) {
             const isVisible = isElementVisible(targetElement, container, headerOffset);
             if (isVisible) {
@@ -225,10 +226,27 @@ export const useScrollIntoViewCallback = ({
             }
         }
 
-        if (headerOffset > 0) {
-            const elementRect = targetElement.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            const desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+        // Oblicz pozycje
+        const elementRect = targetElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const visibleTop = containerRect.top + headerOffset;
+        const visibleBottom = containerRect.bottom;
+
+        // Scrolluj do elementu z kompensacją sticky headera
+        if (headerOffset > 0 || elementRect.top < visibleTop || elementRect.bottom > visibleBottom) {
+            let desiredTop: number;
+
+            if (elementRect.top < visibleTop) {
+                // Element jest powyżej widocznego obszaru - scrolluj do góry
+                desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+            } else if (elementRect.bottom > visibleBottom) {
+                // Element jest poniżej widocznego obszaru - scrolluj do dołu
+                desiredTop = container.scrollTop + (elementRect.bottom - containerRect.bottom);
+            } else {
+                // Element jest widoczny - użyj domyślnego scrollIntoView
+                targetElement.scrollIntoView(options);
+                return;
+            }
 
             const clampedTop = Math.max(0, Math.min(
                 desiredTop,

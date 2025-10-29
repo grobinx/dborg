@@ -2,11 +2,12 @@ import { Theme } from "@emotion/react";
 import { alpha, styled, SxProps } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
 import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
+import { useScrollIntoView, useScrollIntoViewCallback } from "@renderer/hooks/useScrollIntoView";
 import { listItemSizeProperties } from "@renderer/themes/layouts/default/consts";
 import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
-import React, { useRef, useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 
 interface BaseOption {
     label: FormattedContentItem;
@@ -107,9 +108,16 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
 
             '&.selected': {
                 backgroundColor: alpha(theme.palette[color].main, 0.4),
-                ".focused &": {
-                    outlineColor: theme.palette[color].main,
-                    //backgroundColor: alpha(palette[color].main, 0.5),
+            },
+
+            "&.focused": {
+                outlineColor: theme.palette[color].main,
+                '&.multiple': {
+                    outlineOffset: -2,
+                    outlineWidth: 2,
+                    '&:not(.selected)': {
+                        backgroundColor: alpha(theme.palette[color].main, 0.2),
+                    },
                 },
             },
 
@@ -128,8 +136,15 @@ const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' }
         },
         '&.selected': {
             backgroundColor: theme.palette.action.selected,
-            '.focused &': {
-                outline: `1px solid ${theme.palette.action.focus}`,
+        },
+        '&.focused': {
+            outlineColor: theme.palette.action.focus,
+            '&.multiple': {
+                outlineOffset: -2,
+                outlineWidth: 2,
+                '&:not(.selected)': {
+                    backgroundColor: theme.palette.action.hover,
+                },
             },
         },
         '&:hover:not(.header)': {
@@ -166,6 +181,7 @@ const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'conta
     width: '100%',
     height: '100%',
     flexDirection: 'column',
+    userSelect: 'none',
     '&.sidebar': {
         flexDirection: 'row',
     },
@@ -226,15 +242,19 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
 
     // Stan niekontrolowany
     const [uncontrolledSelected, setUncontrolledSelected] = React.useState<T | T[] | null>(multiple ? [] : null);
+    const [focusedItem, setFocusedItem] = React.useState<T | null>(null);
     const [focused, setFocused] = React.useState(false);
-    const [scrollTop, setScrollTop] = useState(0);
+    const scrollTopRef = useRef(0); // Zmiana ze stanu na ref
     const [effectiveDescription, setEffectiveDescription] = useState<DescriptionPosition>(description);
 
     const viewportRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLUListElement>(null);
     const [itemHeight, setItemHeight] = useState<number | null>(null);
 
     // New: track hovered item (real index in options)
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    React.useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
 
     React.useEffect(() => {
         if (!options.find(option => isOption(option) && option.description)) {
@@ -310,56 +330,86 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         return currentSelected === value;
     };
 
-    // Helper: selected option (only for single select)
-    const selectedOption: Option<T> | null = React.useMemo(() => {
-        if (multiple) return null;
-        if (currentSelected == null) return null;
-        const found = options.find(o => isOption(o) && (o as Option<T>).value === currentSelected) as Option<T> | undefined;
-        return found ?? null;
-    }, [multiple, currentSelected, options]);
+    const isFocusedItem = (value: any): boolean => {
+        return focused && focusedItem === value;
+    };
 
     const [activeDescriptionOption, setActiveDescriptionOption] = useState<Option<T> | null>(null);
 
     React.useEffect(() => {
-        const hoveredOption: Option<T> | null =
-            hoveredIndex != null && isOption(options[hoveredIndex])
-                ? (options[hoveredIndex] as Option<T>)
-                : null;
-        const activeDescribedOption = hoveredOption?.description
-            ? hoveredOption
-            : selectedOption?.description
-                ? selectedOption
-                : null;
-        setActiveDescriptionOption(activeDescribedOption);
-    }, [hoveredIndex, selectedOption]);
+        let option: Option<T> | null = null;
 
-    // Obsługa kliknięcia na opcję
-    const handleOptionClick = (option: Option<T>) => {
-        if (disabled) return;
-
-        let newSelected: T | T[] | null;
-
-        if (multiple) {
-            const arr = Array.isArray(currentSelected) ? [...currentSelected] : [];
-            const idx = arr.indexOf(option.value);
-            if (idx > -1) {
-                arr.splice(idx, 1);
-            } else {
-                arr.push(option.value);
-            }
-            newSelected = arr;
-        } else {
-            newSelected = option.value;
+        // 1. Hovered
+        if (hoveredIndex != null && isOption(options[hoveredIndex])) {
+            option = options[hoveredIndex] as Option<T>;
         }
 
+        // 2. Multiple: focusedItem z opisem
+        if (!option && multiple && focusedItem != null) {
+            option = options.find(o => isOption(o) && (o as Option<T>).value === focusedItem) as Option<T> | null;
+        }
+
+        // 3. Single select: selectedOption z opisem
+        if (!option && !multiple && !Array.isArray(currentSelected) && currentSelected) {
+            option = options.find(o => isOption(o) && (o as Option<T>).value === currentSelected) as Option<T> | null;
+        }
+
+        setActiveDescriptionOption(option ?? null);
+    }, [hoveredIndex, focusedItem, currentSelected, multiple, options]);
+
+    const toggleSelection = (value: T, ctrl: boolean, shift: boolean) => {
+        let newSelected: T | T[] | null;
+        if (multiple) {
+            const arr = Array.isArray(currentSelected) ? [...currentSelected] : [];
+            const idx = arr.indexOf(value);
+            if (shift && focusedItem != null) {
+                // Zaznacz zakres od focusedItem do klikniętego
+                const optionIndexes = options
+                    .map((opt, i) => isOption(opt) ? { value: opt.value, index: i } : null)
+                    .filter(Boolean) as { value: T, index: number }[];
+                const focusedIdx = optionIndexes.findIndex(o => o.value === focusedItem);
+                const clickedIdx = optionIndexes.findIndex(o => o.value === value);
+                if (focusedIdx !== -1 && clickedIdx !== -1) {
+                    const [start, end] = [focusedIdx, clickedIdx].sort((a, b) => a - b);
+                    const rangeValues = optionIndexes.slice(start, end + 1).map(o => o.value);
+                    // Dodaj do już wybranych (bez duplikatów)
+                    const merged = Array.from(new Set([...arr, ...rangeValues]));
+                    newSelected = merged;
+                } else {
+                    newSelected = arr;
+                }
+            }
+            else if (ctrl) {
+                // Toggle pojedynczego elementu
+                if (idx > -1) {
+                    arr.splice(idx, 1);
+                } else {
+                    arr.push(value);
+                }
+                newSelected = arr;
+            } else {
+                // Bez Ctrl/Cmd/Shift - wybierz tylko kliknięty element
+                newSelected = [value];
+            }
+        } else {
+            newSelected = value;
+        }
         if (selected === undefined) {
             setUncontrolledSelected(newSelected);
         }
+        updateFocusedItem(value);
         onSelect?.(newSelected);
+    }
+
+    // Obsługa kliknięcia na opcję
+    const handleOptionClick = (e: React.MouseEvent<HTMLElement>, option: Option<T>) => {
+        if (disabled) return;
+
+        toggleSelection(option.value, e.ctrlKey || e.metaKey, e.shiftKey);
     };
 
     const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-        setScrollTop(e.currentTarget.scrollTop);
+        scrollTopRef.current = e.currentTarget.scrollTop; // Użyj ref zamiast setState
     };
 
     const classes = clsx(
@@ -367,6 +417,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         size && `size-${size}`,
         color && `color-${color}`,
         dense && 'dense',
+        multiple && 'multiple',
     );
 
     const renderItemHeader = (option: HeaderOption) => {
@@ -433,7 +484,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
     const buffer = 10;
     const visibleCount = effectiveLines && itemHeight ? effectiveLines : 10;
     const totalCount = options.length;
-    const rawStartIndex = itemHeight ? Math.floor(scrollTop / itemHeight) : 0;
+    const rawStartIndex = itemHeight ? Math.floor(scrollTopRef.current / itemHeight) : 0; // Użyj ref
     const startIndex = Math.max(0, rawStartIndex - buffer);
     const endIndex = Math.min(totalCount, rawStartIndex + visibleCount + buffer);
 
@@ -457,6 +508,156 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         }
     }
 
+    const getFirstOptionIndex = () => options.findIndex(isOption);
+    const getLastOptionIndex = () => {
+        for (let i = options.length - 1; i >= 0; i--) {
+            if (isOption(options[i])) return i;
+        }
+        return -1;
+    };
+    const getNextOptionIndex = (current: number, dir: 1 | -1) => {
+        let idx = current + dir;
+        while (idx >= 0 && idx < options.length) {
+            if (isOption(options[idx])) return idx;
+            idx += dir;
+        }
+        return current;
+    };
+
+    const updateFocusedItem = (focusedItem: T | null) => {
+        setFocusedItem(focusedItem);
+        if (focusedItem == null || !listRef.current || !itemHeight) return;
+        
+        requestAnimationFrame(() => {
+            const targetIndex = options.findIndex(
+                opt => isOption(opt) && (opt as Option<T>).value === focusedItem
+            );
+            
+            if (targetIndex === -1 || !listRef.current) return;
+            
+            const container = listRef.current;
+            const targetScrollTop = targetIndex * itemHeight;
+            const currentScrollTop = container.scrollTop;
+            const viewportHeight = container.clientHeight;
+            
+            // Oblicz górną i dolną granicę widocznego obszaru
+            const visibleTop = currentScrollTop;
+            const visibleBottom = currentScrollTop + viewportHeight;
+            
+            // Oblicz pozycję elementu
+            const itemTop = targetScrollTop;
+            const itemBottom = targetScrollTop + itemHeight;
+            
+            // Uwzględnij sticky header jeśli istnieje
+            let stickyHeaderHeight = 0;
+            if (headerSticky) {
+                const stickyHeader = container.querySelector('.CompactList-item.sticky.header');
+                if (stickyHeader) {
+                    stickyHeaderHeight = getElementHeightPx(stickyHeader as HTMLElement);
+                }
+            }
+            
+            // Sprawdź czy element jest poza widocznym obszarem
+            const isAboveViewport = itemTop < (visibleTop + stickyHeaderHeight);
+            const isBelowViewport = itemBottom > visibleBottom;
+            
+            if (isAboveViewport) {
+                // Element powyżej widoku - przewiń tak by był na górze (pod sticky header)
+                container.scrollTop = itemTop - stickyHeaderHeight;
+            } else if (isBelowViewport) {
+                // Element poniżej widoku - przewiń tak by był na dole
+                container.scrollTop = itemBottom - viewportHeight;
+            }
+            // Jeśli element jest w widoku, nie rób nic
+        });
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
+        if (disabled) return;
+
+        let currentIdx = focusedItem != null
+            ? options.findIndex(opt => isOption(opt) && (opt as Option<T>).value === focusedItem)
+            : -1;
+
+        if (currentIdx === -1) {
+            currentIdx = getFirstOptionIndex();
+        }
+
+        let nextIdx = currentIdx;
+
+        if (e.key === "ArrowDown") {
+            nextIdx = getNextOptionIndex(currentIdx, 1);
+            const nextValue = isOption(options[nextIdx]) ? (options[nextIdx] as Option<T>).value : null;
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === "ArrowUp") {
+            nextIdx = getNextOptionIndex(currentIdx, -1);
+            const nextValue = isOption(options[nextIdx]) ? (options[nextIdx] as Option<T>).value : null;
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === "PageDown") {
+            let steps = visibleCount || 10;
+            let idx = currentIdx;
+            for (let i = 0; i < steps; i++) {
+                idx = getNextOptionIndex(idx, 1);
+            }
+            const nextValue = isOption(options[idx]) ? (options[idx] as Option<T>).value : null;
+            console.log('PageDown to idx', idx, 'value', nextValue);
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === "PageUp") {
+            let steps = visibleCount || 10;
+            let idx = currentIdx;
+            for (let i = 0; i < steps; i++) {
+                idx = getNextOptionIndex(idx, -1);
+            }
+            const nextValue = isOption(options[idx]) ? (options[idx] as Option<T>).value : null;
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === "Home") {
+            nextIdx = getFirstOptionIndex();
+            const nextValue = isOption(options[nextIdx]) ? (options[nextIdx] as Option<T>).value : null;
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === "End") {
+            nextIdx = getLastOptionIndex();
+            const nextValue = isOption(options[nextIdx]) ? (options[nextIdx] as Option<T>).value : null;
+            updateFocusedItem(nextValue);
+            if (!multiple && nextValue !== null) {
+                toggleSelection(nextValue, false, false);
+            }
+            e.preventDefault();
+        } else if (e.key === " " || e.key === "Enter") {
+            if (multiple && isOption(options[currentIdx])) {
+                toggleSelection(
+                    (options[currentIdx] as Option<T>).value,
+                    e.ctrlKey || e.metaKey || e.key === " ",
+                    e.shiftKey
+                );
+                if (e.key === " ") {
+                    nextIdx = getNextOptionIndex(currentIdx, 1);
+                    updateFocusedItem(isOption(options[nextIdx]) ? (options[nextIdx] as Option<T>).value : null);
+                }
+            }
+            e.preventDefault();
+        }
+    };
+
     return (
         <StyledCompactContainer
             className={clsx(
@@ -472,7 +673,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
             )}
 
             <StyledCompactList
-                ref={ref}
+                ref={listRef}
                 id={id}
                 className={clsx(
                     'CompactList-root',
@@ -483,11 +684,9 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                 tabIndex={disabled ? -1 : 0}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
+                onKeyDown={handleKeyDown}
                 sx={sx}
-                style={{
-                    ...style,
-                    ...(maxHeight ? { maxHeight } : {}),
-                }}
+                style={style}
                 onScroll={handleScroll}
             >
                 <StyledCompactViewport
@@ -497,12 +696,13 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                     ref={viewportRef}
                 >
                     {options.length === 0 && noOptionsText && (
-                        <StyledCompactListItem className={clsx("CompactList-item", classes)}>
+                        <StyledCompactListItem className={clsx("CompactList-item", classes)} tabIndex={-1}>
                             <FormattedText text={noOptionsText} />
                         </StyledCompactListItem>
                     )}
                     {stickyHeaderOption && (
                         <StyledCompactListItem
+                            id={`header-sticky`}
                             key={'sticky-header'}
                             className={clsx(
                                 "CompactList-item",
@@ -510,6 +710,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                                 "header",
                                 classes,
                             )}
+                            tabIndex={-1}
                         >
                             {renderItemHeader(stickyHeaderOption)}
                         </StyledCompactListItem>
@@ -522,17 +723,20 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                         const isHeader = isHeaderOption(option);
                         return (
                             <StyledCompactListItem
-                                key={realIndex}
+                                id={isHeader ? `header-${realIndex}` : CSS.escape(String((option as Option<T>).value))}
+                                key={index}
                                 className={clsx(
                                     "CompactList-item",
                                     isHeader && headerSticky && "sticky",
                                     isHeader && "header",
-                                    isHeader ? undefined : isSelected((option as Option<T>).value) ? "selected" : undefined,
+                                    !isHeader && isFocusedItem((option as Option<T>).value) && "focused",
+                                    !isHeader && isSelected((option as Option<T>).value) && "selected",
                                     classes,
                                 )}
-                                onClick={isHeader ? undefined : () => handleOptionClick(option as Option<T>)}
+                                onClick={isHeader ? undefined : (e) => handleOptionClick(e, option as Option<T>)}
                                 onMouseEnter={isHeader ? undefined : () => setHoveredIndex(realIndex)}
                                 onMouseLeave={isHeader ? undefined : () => setHoveredIndex(prev => (prev === realIndex ? null : prev))}
+                                tabIndex={-1}
                             >
                                 {isHeader ? renderItemHeader(option) : renderItemOption(option as Option<T>)}
                             </StyledCompactListItem>
