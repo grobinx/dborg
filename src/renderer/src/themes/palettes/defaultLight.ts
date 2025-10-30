@@ -42,9 +42,9 @@ const theme = createTheme({
             //icon: '#ffee58'
         },
         action: {
-            focus: alpha(colors.lightBlue[900], 0.2),
-            hover: alpha(colors.lightBlue[900], 0.1),
-            selected: alpha(colors.lightBlue[900], 0.2),
+            focus: alpha(colors.lightBlue[900], 0.1),
+            hover: alpha(colors.lightBlue[900], 0.05),
+            selected: alpha(colors.lightBlue[900], 0.1),
             disabled: colors.grey[300],
             disabledBackground: colors.grey[100],
             hoverOpacity: 0.2,

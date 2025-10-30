@@ -506,6 +506,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     useScrollIntoView({
         containerId: "schema-list-content",
         targetId: selectedItem,
+        stickyHeader: '[id^="group-"]',
     })
 
     React.useEffect(() => {
@@ -580,7 +581,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             return (
                                 <React.Fragment key={record.sch_id}>
                                     {(groupList && (displayData.findIndex(r => r.sch_group === record.sch_group) === displayData.indexOf(record))) && (
-                                        <ListSubheader {...slotProps?.subheader}>
+                                        <ListSubheader {...slotProps?.subheader} id={CSS.escape(`group-${group}`)}>
                                             <Typography variant="h6" style={{ width: "100%" }}>
                                                 {!sortList &&
                                                     <ButtonGroup className="drag" size="small" dense sx={{ marginRight: 8 }}>
