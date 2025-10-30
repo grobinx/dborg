@@ -1,10 +1,11 @@
-import { Box, Grid2 as Grid, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Stack, Typography, useTheme } from "@mui/material";
 import { Button } from "@renderer/components/buttons/Button";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { AnyOption, CompactList } from "@renderer/components/inputs/base/CompactList";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import Tree, { TreeNode } from "@renderer/components/Tree";
-import { FormattedContent, FormattedContentItem } from "@renderer/components/useful/FormattedText";
+import { FormattedContent } from "@renderer/components/useful/FormattedText";
+import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { ThemeIcons } from "@renderer/themes/icons";
 import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size, Sizes } from "@renderer/types/sizes";
@@ -70,6 +71,7 @@ function generateRandomTree(total: number, opts?: { maxChildren?: number; maxDep
 export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
     const icons = theme.icons as ThemeIcons; // Rzutowanie na ThemeIcons
+    const { schemas } = useSchema();
     const descriptions: FormattedContent[] = [
         "This is a description for Option 1.",
         "This is a description for Option 2, which is a bit longer than the first one.",
@@ -87,9 +89,10 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
         [["pl", "To jest rozwijalny opis dla Opcji 4.", "rozszerzalny"], ["en", "Here is the expandable description for Option 4, explaining its features and benefits.", "expandable"]],
         [["pl", "To jest rozwijalny opis dla Opcji 5.", "rozszerzalny"], ["en", "Finally, Option 5 comes with a concise expandable description to summarize its key points.", "expandable"]],
     ];
+    const extraLabels = ['new', 'default', 'important', 'warning'];
     const options = React.useMemo(() => {
         const arr: AnyOption[] = [];
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 200; i++) {
             if (i % 100 === 0) {
                 arr.push({
                     label: `Header ${i / 100 + 1}`,
@@ -97,7 +100,7 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
             }
             arr.push({
                 value: `option-${i + 1}`,
-                label: `Option ${i + 1}`,
+                label: Math.random() < 0.1 ? [[`Option ${i}`, <small>{extraLabels[Math.floor(Math.random() * extraLabels.length)]}</small>]] : `Option ${i + 1}`,
                 description: Math.random() < 0.8 ? descriptions[Math.floor(Math.random() * descriptions.length)] : undefined,
             });
         }
@@ -105,11 +108,18 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     }, []);
 
     const treeNodes = React.useMemo<TreeNode[]>(() => {
-        return generateRandomTree(1000, { maxChildren: 10, maxDepth: 10 });
+        return generateRandomTree(200, { maxChildren: 10, maxDepth: 10 });
     }, []);
 
     const [color, setColor] = React.useState<ThemeColor | 'default'>("main");
     const [dense, setDense] = React.useState<boolean>(false);
+    const [selectedOption, setSelectedOption] = React.useState<Record<Size | 'default', string | null>>({
+        small: null,
+        medium: null,
+        large: null,
+        default: null,
+    });
+    const [selectedSchema, setSelectedSchema] = React.useState<string | null>(schemas.length > 0 ? schemas[0].sch_id : null);
 
     return (
         <TabPanelContent {...props}
@@ -127,24 +137,61 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 <Button toggle="dense" onChange={(value) => setDense(!!value)}>Dense: {dense ? "true" : "false"}</Button>
             </ButtonGroup>
             <Stack key="compactList" direction="row" width="100%" gap={8}>
-                {Sizes.map((size) => (
+                {[...Sizes, 'default'].map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
                         CompactList, size: {size}
                         {React.useMemo(() => (
                             <CompactList
                                 key={size}
-                                size={size}
+                                size={size as Size | 'default'}
                                 options={options}
                                 headerSticky
                                 color={color}
                                 dense={dense}
-                                multiple={true}
                                 sx={{ maxHeight: 300 }}
-                                description="footer"
+                                description="tooltip"
+                                selected={[selectedOption[size]].filter(Boolean) as string[]}
+                                focused={selectedOption[size]}
+                                onItemClick={(value: string) => setSelectedOption(prev => ({ ...prev, [size]: value }))}
                             />
-                        ), [size, color, dense])}
+                        ), [size, color, dense, selectedOption[size]])}
                     </Stack>
                 ))}
+            </Stack>
+            <Stack key="compactList" direction="column" width="100%" gap={8}>
+                SchemaList
+                {React.useMemo(() => (
+                    <CompactList
+                        size={'default'}
+                        options={schemas.map(schema => ({
+                            value: schema.sch_id,
+                            label: schema.sch_name,
+                            schema
+                        }))}
+                        headerSticky
+                        color={color}
+                        dense={dense}
+                        sx={{ maxHeight: 300 }}
+                        description="tooltip"
+                        selected={[selectedSchema].filter(Boolean) as string[]}
+                        focused={selectedSchema}
+                        onItemClick={(value: string) => setSelectedSchema(value)}
+                        renderOption={(option, state: { selected, focused }) => {
+                            const schema = (option as any).schema;
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography variant="body2">{schema.sch_name}</Typography>
+                                    <div>
+                                        <Typography variant="caption" color="textSecondary">
+                                            Version: {schema.sch_db_version}
+                                            , Selected: {new Date(schema.sch_last_selected).toLocaleDateString()}
+                                        </Typography>
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    />
+                ), [color, dense, selectedSchema])}
             </Stack>
             <Stack key="tree" direction="row" width="100%" gap={8}>
                 {[...Sizes, 'default'].map((size) => (
