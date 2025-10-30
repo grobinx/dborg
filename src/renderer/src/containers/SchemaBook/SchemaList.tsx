@@ -269,7 +269,8 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             icon: "Disconnected",
             run: (context, schemaId) => {
                 context.disconnect(schemaId);
-            }
+            },
+            visible: (_context, _schemaId, connected) => (connected ?? 0) > 0,
         });
     }, []);
 
@@ -643,18 +644,16 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                                                 }}
                                             />
                                             <ButtonGroup className="actions">
-                                                {((record.connected ?? 0) > 0) && (
-                                                    <ActionButton
-                                                        key="disconnect"
-                                                        actionManager={actions.current}
-                                                        actionId={disconnectAllActionId}
-                                                        actionArgs={[record.sch_id, record.connected]}
-                                                        getContext={() => context}
-                                                        size="medium"
-                                                        color="info"
-                                                        loading={disconnecting.includes(record.sch_id)}
-                                                    />
-                                                )}
+                                                <ActionButton
+                                                    key="disconnect"
+                                                    actionManager={actions.current}
+                                                    actionId={disconnectAllActionId}
+                                                    actionArgs={[record.sch_id, record.connected]}
+                                                    getContext={() => context}
+                                                    size="medium"
+                                                    color="info"
+                                                    loading={disconnecting.includes(record.sch_id)}
+                                                />
                                                 <ActionButton
                                                     key="connect"
                                                     actionManager={actions.current}

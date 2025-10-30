@@ -31,7 +31,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                             '& .drag': {
                                 visibility: "hidden",
                             }
-                        }
+                        },
                     },
                 },
                 subheader: {

@@ -196,7 +196,7 @@ export interface ActionDescriptor<T> {
      * Czy akcja jest widoczna w interfejsie użytkownika.
      * Jeśli nie jest widoczna, nie będzie się pojawiać w palecie poleceń ani w menu kontekstowym. Również nie będzie można jej wywołać skrótem klawiszowym.
      */
-    visible?: boolean | ((context: T) => boolean);
+    visible?: boolean | ((context: T, ...args: any[]) => boolean);
 
     /**
      * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.

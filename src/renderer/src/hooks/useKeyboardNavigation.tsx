@@ -13,7 +13,7 @@ export interface KeyBindingHandler<T> {
 
 export interface UseKeyboardNavigationProps<T, V = string, A = any> {
     items: T[];
-    getId: (item: T) => V;
+    getId: (item: T) => V | null;
     onSelect?: (item: T) => void;
     keyBindings?: KeyBindingHandler<T>[];
     actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
@@ -37,18 +37,30 @@ export function useKeyboardNavigation<T, V = string, A = any>({
             if (!items || items.length === 0) return;
 
             const currentIndex = items.findIndex(item => getId(item) === selectedId);
-            let nextIndex = currentIndex;
 
             if (isKeybindingMatch("ArrowDown", event)) {
-                nextIndex = (currentIndex + 1) % items.length;
-                setSelectedId(getId(items[nextIndex]));
+                // Szukaj następnego elementu z nie-nullowym id
+                for (let i = 1; i <= items.length; i++) {
+                    const candidate = items[(currentIndex + i) % items.length];
+                    const candidateId = getId(candidate);
+                    if (candidateId !== null) {
+                        setSelectedId(candidateId);
+                        break;
+                    }
+                }
                 event.preventDefault();
-                return;
             } else if (isKeybindingMatch("ArrowUp", event)) {
-                nextIndex = (currentIndex - 1 + items.length) % items.length;
-                setSelectedId(getId(items[nextIndex]));
+                // Szukaj poprzedniego elementu z nie-nullowym id
+                for (let i = 1; i <= items.length; i++) {
+                    const idx = (currentIndex - i + items.length) % items.length;
+                    const candidate = items[idx];
+                    const candidateId = getId(candidate);
+                    if (candidateId !== null) {
+                        setSelectedId(candidateId);
+                        break;
+                    }
+                }
                 event.preventDefault();
-                return;
             } else if (onSelect && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
                 onSelect(items[currentIndex]);
                 event.preventDefault();

@@ -52,7 +52,7 @@ const ActionButton = <T,>({
 
     const context = getContext();
 
-    const visible = typeof resolvedAction.visible === 'function' ? resolvedAction.visible(context) : (resolvedAction.visible ?? true);
+    const visible = typeof resolvedAction.visible === 'function' ? resolvedAction.visible(context, ...(actionArgs || [])) : (resolvedAction.visible ?? true);
     if (!visible) {
         return null;
     }
