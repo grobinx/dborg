@@ -152,41 +152,55 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
     });
 }
 /**
- * Hook do sortowania tablic z wykorzystaniem indeksów
+ * Hook do sortowania tablic z wykorzystaniem indeksów.
+ * Jeśli przekazano jeden indeks (obiekt Index<T>), nie trzeba podawać indexName.
+ * Jeśli przekazano indeksy jako obiekt (Indexes<T>), należy podać indexName.
  * @param data 
- * @param indexes
- * @param indexName
+ * @param indexes - pojedynczy indeks lub obiekt indeksów
+ * @param indexName - nazwa indeksu (opcjonalnie, wymagane tylko dla wielu indeksów)
  * @returns [sorted] posortowana tablica lub null jeżeli brak danych lub indeksu
  */
-export const useSort = <T, I extends Indexes<T>>(
+export function useSort<T>(
     data: T[] | null,
-    indexes: I,
-    indexName: keyof I | null,
-): [T[] | null] => {
+    indexes: Index<T> | Indexes<T>,
+    indexName?: keyof Indexes<T> | null
+): T[] | null {
     const [sortedData, setSortedData] = React.useState<T[] | null>(null);
-    const [cache, setCache] = React.useState<Partial<Record<keyof I, T[] | null>>>({});
+    const [cache, setCache] = React.useState<Record<string, T[] | null>>({});
 
     React.useEffect(() => {
-        if (!indexes || !data || !indexName) {
+        if (!data || !indexes) {
             setSortedData(null);
             return;
         }
 
-        const index = indexes[indexName];
+        let index: Index<T> | undefined;
+        let cacheKey = "";
+
+        if (typeof indexes === "object" && "fields" in indexes) {
+            // Przekazano pojedynczy indeks
+            index = indexes as Index<T>;
+            cacheKey = "single";
+        } else if (typeof indexes === "object" && indexName) {
+            // Przekazano wiele indeksów
+            index = (indexes as Indexes<T>)[indexName];
+            cacheKey = String(indexName);
+        }
+
         if (!index) {
             setSortedData(null);
             return;
         }
 
-        if (index.cache && cache[indexName]) {
-            setSortedData(cache[indexName]);
+        if (index.cache && cache[cacheKey]) {
+            setSortedData(cache[cacheKey] ?? null);
             return;
         }
 
-        const sortedData = sortArray(data, index);
-        setSortedData(sortedData);
+        const sorted = sortArray(data, index);
+        setSortedData(sorted);
         if (index.cache) {
-            setCache((prev) => ({ ...prev, [indexName]: sortedData }));
+            setCache((prev) => ({ ...prev, [cacheKey]: sorted }));
         }
     }, [data, indexes, indexName]);
 
@@ -194,5 +208,5 @@ export const useSort = <T, I extends Indexes<T>>(
         setCache({});
     }, [data, indexes]);
 
-    return [sortedData];
+    return sortedData;
 }

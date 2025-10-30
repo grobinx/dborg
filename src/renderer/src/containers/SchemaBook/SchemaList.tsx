@@ -165,7 +165,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { initialized, schemas, getSchema, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection, deleteSchema, swapSchemasOrder } = useSchema();
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
-    const [sortedData] = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
+    const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
     const [displayData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
