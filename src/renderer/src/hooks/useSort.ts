@@ -74,7 +74,7 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
         }
     }
 
-    const getGroupedData = (field: string, data: T[]) => {
+    const getGroupedData = <K extends keyof T>(field: K, data: T[]) => {
         const grouped = data.reduce((acc, item) => {
             const key = String(item[field]);
             if (!acc[key]) {
@@ -116,7 +116,7 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
     const cachedGroupedData: Record<string, Record<string, { value: any, groupedData: T[] }>> = {};
     index.fields.forEach(field => {
         if (field.getGroupedValue) {
-            const groupedData = getGroupedData(field.name as string, data);
+            const groupedData = getGroupedData(field.name, data);
 
             const acc: Record<string, { value: any, groupedData: T[] }> = {};
             Object.keys(groupedData).forEach(key => {
