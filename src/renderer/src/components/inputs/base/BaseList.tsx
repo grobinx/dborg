@@ -10,10 +10,9 @@ import React, { useRef, useState } from "react";
 interface BaseListProps<T = any> extends React.AriaAttributes {
     ref?: React.Ref<HTMLUListElement>;
     items: T[];
-    selected: T[];
-    focused?: T | null;
 
-    isEqual: (a: T, b: T) => boolean;
+    isSelected?: (item: T) => boolean;
+    isFocused?: (item: T) => boolean;
 
     onItemClick?: (item: T, event: React.MouseEvent) => void;
     onItemDoubleClick?: (item: T, event: React.MouseEvent) => void;
@@ -40,6 +39,9 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
     dense?: boolean;
 
     renderItem: (item: T, state: { selected: boolean; focused: boolean }) => React.ReactNode;
+    renderEmpty?: () => React.ReactNode;
+    getItemClassName?: (item: T) => string | string[] | undefined;
+    getId?: (item: T) => string | undefined;
 
     componentName?: string;
     id?: string;
@@ -75,11 +77,14 @@ const createStyledBaseListItem = (componentName: string) => {
                 "&.focused": {
                     outlineColor: theme.palette[color].main,
                 },
-                "&:hover": {
+                "&:hover:not(.header)": {
                     backgroundColor: alpha(theme.palette[color].main, 0.1),
                     '&.selected': {
                         backgroundColor: alpha(theme.palette[color].main, 0.3),
                     },
+                },
+                "&.header": {
+                    backgroundColor: theme.palette[color].main,
                 },
             };
             return acc;
@@ -91,12 +96,22 @@ const createStyledBaseListItem = (componentName: string) => {
             '&.focused': {
                 outlineColor: theme.palette.action.focus,
             },
-            '&:hover': {
+            '&:hover:not(.header)': {
                 backgroundColor: theme.palette.action.hover,
                 '&.selected': {
                     backgroundColor: blendColors(theme.palette.action.selected, theme.palette.action.hover),
                 },
             },
+            "&.header": {
+                backgroundColor: theme.palette.background.paper,
+            },
+        },
+        '&.header': {
+            '.sticky &': {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+            }
         },
     }));
 };
@@ -130,13 +145,15 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         color = "main",
         disabled,
         items,
-        selected,
-        focused,
         dense,
 
-        isEqual,
+        isSelected,
+        isFocused,
 
         renderItem,
+        renderEmpty,
+        getItemClassName,
+        getId,
 
         onItemClick,
         onItemDoubleClick,
@@ -178,9 +195,6 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         className
     );
 
-    const isSelected = (item: T) => Array.isArray(selected) && selected.some(v => isEqual(v, item));
-    const isFocused = (item: T) => listFocused && focused != null && isEqual(focused, item);
-
     return (
         <StyledBaseList
             ref={listRef}
@@ -209,35 +223,39 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
             {...rest}
         >
             <StyledBaseViewport className={`${componentName}-viewport`}>
-                {items.map((item, index) => {
-                    const sel = isSelected(item);
-                    const foc = isFocused(item);
+                {items.length === 0 && renderEmpty ? renderEmpty() :
+                    items.map((item, index) => {
+                        const selected = isSelected?.(item);
+                        const focused = listFocused && isFocused?.(item);
 
-                    return (
-                        <StyledBaseListItem
-                            key={index}
-                            role="option"
-                            aria-selected={sel}
-                            className={clsx(
-                                `${componentName}-item`,
-                                sel && "selected",
-                                foc && "focused",
-                                classes
-                            )}
-                            onClick={(e) => !disabled && onItemClick?.(item, e)}
-                            onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
-                            onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
-                            onMouseEnter={onMouseEnter}
-                            onMouseLeave={onMouseLeave}
-                            onMouseMove={onMouseMove}
-                            onMouseDown={onMouseDown}
-                            onMouseUp={onMouseUp}
-                            tabIndex={-1}
-                        >
-                            {renderItem(item, { selected: sel, focused: foc })}
-                        </StyledBaseListItem>
-                    );
-                })}
+                        return (
+                            <StyledBaseListItem
+                                id={getId?.(item)}
+                                key={index}
+                                role="listitem"
+                                aria-selected={selected}
+                                className={clsx(
+                                    `${componentName}-item`,
+                                    selected && "selected",
+                                    focused && "focused",
+                                    getItemClassName?.(item),
+                                    classes
+                                )}
+                                onClick={(e) => !disabled && onItemClick?.(item, e)}
+                                onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
+                                onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
+                                onMouseEnter={(e) => !disabled && onMouseEnter?.(e)}
+                                onMouseLeave={(e) => !disabled && onMouseLeave?.(e)}
+                                onMouseMove={(e) => !disabled && onMouseMove?.(e)}
+                                onMouseDown={(e) => !disabled && onMouseDown?.(e)}
+                                onMouseUp={(e) => !disabled && onMouseUp?.(e)}
+                                tabIndex={-1}
+                            >
+                                {renderItem(item, { selected: selected ?? false, focused: focused ?? false })}
+                            </StyledBaseListItem>
+                        );
+                    })
+                }
             </StyledBaseViewport>
         </StyledBaseList>
     );

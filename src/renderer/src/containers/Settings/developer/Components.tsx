@@ -2,7 +2,7 @@ import { Stack, Typography, useTheme } from "@mui/material";
 import { Button } from "@renderer/components/buttons/Button";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
-import { AnyOption, CompactList } from "@renderer/components/inputs/base/CompactList";
+import { AnyOption, DescribedList } from "@renderer/components/inputs/DescribedList";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import Tree, { TreeNode } from "@renderer/components/Tree";
 import { FormattedContent } from "@renderer/components/useful/FormattedText";
@@ -93,10 +93,11 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const extraLabels = ['new', 'default', 'important', 'warning'];
     const options = React.useMemo(() => {
         const arr: AnyOption[] = [];
-        for (let i = 0; i < 200; i++) {
-            if (i % 100 === 0) {
+        let headerCounter = 1;
+        for (let i = 0; i < 100; i++) {
+            if (Math.random() < 0.1) {
                 arr.push({
-                    label: `Header ${i / 100 + 1}`,
+                    label: `Header ${headerCounter++}`,
                 });
             }
             arr.push({
@@ -137,20 +138,20 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 </Button>
                 <Button toggle="dense" onChange={(value) => setDense(!!value)}>Dense: {dense ? "true" : "false"}</Button>
             </ButtonGroup>
-            <Stack key="compactList" direction="row" width="100%" gap={8}>
+            <Stack key="describedList" direction="row" width="100%" gap={8}>
                 {[...Sizes, 'default'].map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        CompactList, size: {size}
+                        DescribedList, size: {size}
                         {React.useMemo(() => (
-                            <CompactList
+                            <DescribedList
                                 key={size}
                                 size={size as Size | 'default'}
                                 options={options}
                                 headerSticky
                                 color={color}
                                 dense={dense}
-                                sx={{ maxHeight: 300 }}
-                                description="tooltip"
+                                sx={{ maxHeight: 200 }}
+                                description="footer"
                                 selected={[selectedOption[size]].filter(Boolean) as string[]}
                                 focused={selectedOption[size]}
                                 onItemClick={(value: string) => setSelectedOption(prev => ({ ...prev, [size]: value }))}
@@ -164,14 +165,13 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                 {React.useMemo(() => (
                     <BaseList
                         componentName="TestSchemaList"
-                        isEqual={(a, b) => a.sch_id === b.sch_id}
                         size={'default'}
                         items={schemas}
                         color={color}
                         dense={dense}
                         sx={{ maxHeight: 300 }}
-                        selected={[selectedSchema].filter(Boolean) as SchemaRecord[]}
-                        focused={selectedSchema}
+                        isSelected={(item) => item.sch_id === selectedSchema?.sch_id}
+                        isFocused={(item) => item.sch_id === selectedSchema?.sch_id}
                         onItemClick={(value: SchemaRecord) => setSelectedSchema(value)}
                         renderItem={(schema) => {
                             return (

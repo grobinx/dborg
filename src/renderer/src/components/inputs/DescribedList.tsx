@@ -7,6 +7,7 @@ import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
 import React, { useRef, useState } from "react";
+import { BaseList } from "./base/BaseList";
 
 interface BaseOption {
     label: FormattedContentItem;
@@ -70,115 +71,33 @@ interface CompactListProps<T = any> {
     description?: DescriptionPosition;
     noOptionsText?: FormattedContentItem;
 
-    // Niestandardowa kontrola opisu (opcjonalne)
-    getDescribedOption?: (ctx: {
-        options: AnyOption<T>[];
-        hovered: T | null;
-        focused: T | null;
-        selected: T[];
-    }) => Option<T> | null;
-    renderDescription?: (option: Option<T>) => React.ReactNode;
     descriptionBehavior?: 'autoHide' | 'reserveSpace';
     descriptionSidebarWidth?: number | string;
 
-    // Render elementu
-    renderOption?: (option: Option<T>, state: {
-        selected: boolean;
-        focused: boolean;
-        hovered: boolean;
-    }) => React.ReactNode;
-    renderHeader?: (option: HeaderOption) => React.ReactNode;
-
-    // A11y + kontenery
-    'aria-label'?: string;
-    'aria-labelledby'?: string;
     id?: string;
     className?: string;
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
 }
 
-const StyledCompactListItem = styled('li', { name: 'CompactList', slot: 'item' })(({ theme }) => ({
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    transition: "all 0.2s ease-in-out",
-    alignContent: 'center',
-    alignItems: 'center',
-    "&.size-small": { ...listItemSizeProperties.small, },
-    "&.size-medium": { ...listItemSizeProperties.medium },
-    "&.size-large": { ...listItemSizeProperties.large },
-    '&.size-default': { padding: '2px 4px' },
-    '&.sticky': {
-        position: 'sticky',
-        top: 0,
-    },
-    '&.header': {
-        cursor: 'default',
-    },
-    outline: '1px solid transparent',
-    outlineOffset: -1,
-    ...themeColors.reduce((acc, color) => {
-        acc[`&.color-${color}`] = {
-            color: theme.palette.text.primary,
-            '&.header': {
-                backgroundColor: theme.palette[color].main,
-                color: theme.palette[color].contrastText,
-            },
-            '&.selected': {
-                backgroundColor: alpha(theme.palette[color].main, 0.4),
-            },
-            "&.focused": {
-                outlineColor: theme.palette[color].main,
-            },
-            "&:hover:not(.header)": {
-                backgroundColor: alpha(theme.palette[color].main, 0.2),
-                '&.selected': {
-                    backgroundColor: alpha(theme.palette[color].main, 0.6),
-                },
-            },
-        };
-        return acc;
-    }, {}),
-    '&.color-default': {
-        '&.header': {
-            backgroundColor: theme.palette.background.header,
-        },
-        '&.selected': {
-            backgroundColor: theme.palette.action.selected,
-        },
-        '&.focused': {
-            outlineColor: theme.palette.action.focus,
-        },
-        '&:hover:not(.header)': {
-            backgroundColor: theme.palette.action.hover,
-        },
-    },
-}));
 const StyledCompactListHeader = styled('div', { name: 'CompactList', slot: 'header' })(() => ({
     display: 'flex',
     flexDirection: 'row',
     fontWeight: 'bold',
+    '&.size-small': { padding: listItemSizeProperties.small.padding },
+    '&.size-medium': { padding: listItemSizeProperties.medium.padding },
+    '&.size-large': { padding: listItemSizeProperties.large.padding },
+    '&.size-default': { padding: '2px 4px' },
 }));
 const StyledCompactListOption = styled('div', { name: 'CompactList', slot: 'option' })(({ }) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     width: '100%',
-}));
-const StyledCompactList = styled('ul', { name: 'CompactList', slot: 'root' })(() => ({
-    outline: 'none',
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-    overflow: 'auto',
-    width: '100%',
-    height: '100%',
-    flex: 1,
-}));
-const StyledCompactViewport = styled('div', { name: 'CompactList', slot: 'viewport' })(() => ({
-    willChange: 'transform',
+    '&.size-small': { padding: listItemSizeProperties.small.padding },
+    '&.size-medium': { padding: listItemSizeProperties.medium.padding },
+    '&.size-large': { padding: listItemSizeProperties.large.padding },
+    '&.size-default': { padding: '2px 4px' },
 }));
 const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'container' })(({ theme }) => ({
     display: 'flex',
@@ -214,7 +133,7 @@ const StyledDescriptionArea = styled('div', { name: 'CompactList', slot: 'descri
     },
 }));
 
-export function CompactList<T = any>(props: CompactListProps<T>) {
+export function DescribedList<T = any>(props: CompactListProps<T>) {
     const {
         id,
         className,
@@ -230,13 +149,8 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         headerSticky = true,
         dense,
 
-        getDescribedOption,
-        renderDescription,
         descriptionBehavior = 'autoHide',
         descriptionSidebarWidth = '35%',
-
-        renderOption,
-        renderHeader,
 
         onItemClick,
         onItemDoubleClick,
@@ -246,15 +160,13 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         onFocus,
         onBlur,
 
-        sx,
-        style,
+        ...rest
     } = props;
 
     const listRef = useRef<HTMLUListElement>(null);
     React.useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
 
     const [hoveredValue, setHoveredValue] = useState<T | null>(null);
-    const [listFocused, setListFocused] = useState<boolean>(false);
 
     const classes = clsx(
         disabled && 'disabled',
@@ -288,28 +200,23 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
 
     const describedOption = effectiveDescription === 'tooltip' || effectiveDescription === 'none'
         ? null
-        : (getDescribedOption
-            ? getDescribedOption({ options, hovered: hoveredValue, focused: focusedItem ?? null, selected: selected ?? [] })
-            : defaultGetDescribedOption());
+        : defaultGetDescribedOption();
 
     const isSelected = (value: T) => Array.isArray(selected) && selected.some(v => Object.is(v, value));
-    const isFocused = (value: T) => listFocused && focusedItem != null && Object.is(focusedItem, value);
-    const isHovered = (value: T) => hoveredValue != null && Object.is(hoveredValue, value);
+    const isFocused = (value: T) => focusedItem != null && Object.is(focusedItem, value);
 
-    const renderItemHeader = (option: HeaderOption) => (
-        <StyledCompactListHeader className={clsx("CompactList-header", classes)}>
-            {renderHeader ? renderHeader(option) : <FormattedText text={option.label} />}
+    const renderHeader = (option: HeaderOption) => (
+        <StyledCompactListHeader
+            className={clsx(
+                "CompactList-header",
+                classes
+            )}>
+            <FormattedText text={option.label} />
         </StyledCompactListHeader>
     );
 
-    const renderItemOption = (option: Option<T>) => {
-        const sel = isSelected(option.value);
-        const foc = isFocused(option.value);
-        const hov = isHovered(option.value);
-
-        const content = renderOption
-            ? renderOption(option, { selected: sel, focused: foc, hovered: hov })
-            : <FormattedText text={option.label} />;
+    const renderOption = (option: Option<T>, { selected, focused }: { selected: boolean; focused: boolean }) => {
+        const content = <FormattedText text={option.label} />;
 
         const wrapped = (effectiveDescription === 'tooltip' && option.description)
             ? (
@@ -322,9 +229,16 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
         return (
             <StyledCompactListOption
                 id={CSS.escape(String(option.value))}
-                className={clsx("CompactList-option", classes, sel && "selected")}
-                aria-selected={sel}
+                className={clsx(
+                    "CompactList-option", 
+                    classes, 
+                    selected && "selected",
+                    focused && "focused",
+                )}
+                aria-selected={selected}
                 role="presentation"
+                onMouseEnter={() => !disabled && anyHasDescription && setHoveredValue(option.value)}
+                onMouseLeave={() => !disabled && anyHasDescription && setHoveredValue(prev => (Object.is(prev, option.value) ? null : prev))}
             >
                 {wrapped}
             </StyledCompactListOption>
@@ -338,90 +252,48 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
             {effectiveDescription === 'header' && describedOption?.description && (
                 <StyledDescriptionArea className={clsx("CompactList-description", "header", classes)}>
                     {describedOption?.description
-                        ? (renderDescription ? renderDescription(describedOption) : <FormattedText text={describedOption.description} />)
+                        ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
                 </StyledDescriptionArea>
             )}
 
-            <StyledCompactList
+            <BaseList<AnyOption<T>>
+                componentName="DescribedList"
+                className={clsx(
+                    headerSticky && "sticky",
+                )}
                 ref={listRef}
                 id={id}
-                role="listbox"
-                aria-multiselectable
-                className={clsx('CompactList-root', classes)}
-                tabIndex={disabled ? -1 : 0}
+                items={options}
+                size={size}
+                color={color}
+                disabled={disabled}
+                dense={dense}
+                isSelected={(item) => isOption(item) && isSelected(item.value)}
+                isFocused={(item) => isOption(item) && isFocused(item.value)}
+                onItemClick={(item, e) => isOption(item) && onItemClick?.(item.value, e)}
+                onItemDoubleClick={(item, e) => isOption(item) && onItemDoubleClick?.(item.value, e)}
+                onItemContextMenu={(item, e) => isOption(item) && onItemContextMenu?.(item.value, e)}
+                renderItem={(option, state) => {
+                    return isHeaderOption(option)
+                        ? renderHeader(option)
+                        : renderOption(option as Option<T>, state);
+                }}
+                getItemClassName={(item) => isHeaderOption(item) ? 'header' : 'option'}
+                getId={(item) => isOption(item) ? CSS.escape(item.value) : undefined}
+                renderEmpty={() => noOptionsText ? (
+                    <FormattedText text={noOptionsText} />
+                ) : null}
                 onKeyDown={onKeyDown}
-                onFocus={(e) => {
-                    onFocus?.(e);
-                    setListFocused(true);
-                }}
-                onBlur={(e) => {
-                    onBlur?.(e);
-                    setListFocused(false);
-                }}
-                sx={sx}
-                style={style}
-            >
-                <StyledCompactViewport className="CompactList-viewport">
-                    {options.length === 0 && noOptionsText && (
-                        <StyledCompactListItem className={clsx("CompactList-item", classes)} tabIndex={-1}>
-                            <FormattedText text={noOptionsText} />
-                        </StyledCompactListItem>
-                    )}
-
-                    {options.map((option, index) => {
-                        if (isHeaderOption(option)) {
-                            return (
-                                <StyledCompactListItem
-                                    id={`header-${index}`}
-                                    key={`h-${index}`}
-                                    className={clsx(
-                                        "CompactList-item",
-                                        "header",
-                                        headerSticky && "sticky",
-                                        classes
-                                    )}
-                                    tabIndex={-1}
-                                >
-                                    {renderItemHeader(option)}
-                                </StyledCompactListItem>
-                            );
-                        }
-
-                        const opt = option as Option<T>;
-                        const sel = isSelected(opt.value);
-                        const foc = isFocused(opt.value);
-
-                        return (
-                            <StyledCompactListItem
-                                id={CSS.escape(String(opt.value))}
-                                key={`o-${index}`}
-                                role="option"
-                                aria-selected={sel}
-                                className={clsx(
-                                    "CompactList-item",
-                                    sel && "selected",
-                                    foc && "focused",
-                                    classes
-                                )}
-                                onClick={(e) => !disabled && onItemClick?.(opt.value, e)}
-                                onDoubleClick={(e) => !disabled && onItemDoubleClick?.(opt.value, e)}
-                                onContextMenu={(e) => !disabled && onItemContextMenu?.(opt.value, e)}
-                                onMouseEnter={() => !disabled && anyHasDescription && setHoveredValue(opt.value)}
-                                onMouseLeave={() => !disabled && anyHasDescription && setHoveredValue(prev => (Object.is(prev, opt.value) ? null : prev))}
-                                tabIndex={-1}
-                            >
-                                {renderItemOption(opt)}
-                            </StyledCompactListItem>
-                        );
-                    })}
-                </StyledCompactViewport>
-            </StyledCompactList>
+                onFocus={onFocus}
+                onBlur={onBlur}
+                {...rest}
+            />
 
             {effectiveDescription === 'footer' && describedOption?.description && (
                 <StyledDescriptionArea className={clsx("CompactList-description", "footer", classes)}>
                     {describedOption?.description
-                        ? (renderDescription ? renderDescription(describedOption) : <FormattedText text={describedOption.description} />)
+                        ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
                 </StyledDescriptionArea>
             )}
@@ -432,7 +304,7 @@ export function CompactList<T = any>(props: CompactListProps<T>) {
                     style={{ width: descriptionSidebarWidth, minWidth: 200, alignSelf: 'flex-start' }}
                 >
                     {describedOption?.description
-                        ? (renderDescription ? renderDescription(describedOption) : <FormattedText text={describedOption.description} />)
+                        ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
                 </StyledDescriptionArea>
             )}
