@@ -32,7 +32,7 @@ export const groupArray = <T,>(data: T[], group: Group<T>): T[][] => {
         const groupKeys = group.fields.map(field => {
             const value = item[field.name];
             if (value === null || value === undefined || value === '') {
-                return value;
+                return value as any;
             }
             return (field.caseSensitive ?? true) ? String(value) : String(value).toLowerCase();
         });
@@ -47,53 +47,77 @@ export const groupArray = <T,>(data: T[], group: Group<T>): T[][] => {
     }
 
     return Array.from(groupsMap.values());
-}
+};
+
+// type guard do wykrywania pojedynczej definicji grupy
+const isSingleGroup = <T,>(g: Groups<T> | Group<T> | null | undefined): g is Group<T> => {
+    return !!g && typeof g === 'object' && Array.isArray((g as Group<T>).fields);
+};
 
 /**
  * Hook do grupowania danych
  * Zwracana jest tablica pogrupowanych elementów lub null jeśli brak grupowania
  * Funkcja zachowuje porządek elementów źródłowych w ramach grup
+ * - Przekaż Groups<T> i nazwę groupName, aby użyć wybranej grupy
+ * - Lub przekaż pojedynczy Group<T> bez podawania groupName
  * @param data tablica danych do pogrupowania
- * @param groups definicje grupowań
- * @param groupName nazwa grupowania zdefiniowanego w groups
+ * @param groups definicje grupowań (pojedyncza grupa lub słownik grup)
+ * @param groupName nazwa grupowania (wymagana tylko dla słownika Groups<T>)
  * @returns {T[][]} pogrupowana tablica lub null jeśli brak grupowania
  */
 export const useGroup = <T,>(
     data: T[] | null,
-    groups: Groups<T>,
-    groupName: string | null = null
-): [T[][] | null] => {
+    groups: Groups<T> | Group<T> | null,
+    groupName?: string | null
+): T[][] | null => {
     const [cache, setCache] = React.useState<Record<string, T[][]>>({});
     const [groupedData, setGroupedData] = React.useState<T[][] | null>(null);
 
     React.useEffect(() => {
-        if (!data || !groupName) {
+        if (!data || !groups) {
             setGroupedData(null);
             return;
         }
 
-        const group = groups[groupName];
-        if (!group || !data) {
+        let activeGroup: Group<T> | null = null;
+        let cacheKey = "__single__";
+
+        if (isSingleGroup<T>(groups)) {
+            // pojedyncza grupa – groupName nie jest wymagane
+            activeGroup = groups;
+            cacheKey = "__single__";
+        } else {
+            // wiele grup – potrzebna nazwa groupName
+            if (!groupName) {
+                setGroupedData(null);
+                return;
+            }
+            activeGroup = groups[groupName] ?? null;
+            cacheKey = groupName;
+        }
+
+        if (!activeGroup) {
             setGroupedData(null);
             return;
         }
 
-        if (group.cache && cache[groupName]) {
-            setGroupedData(cache[groupName]);
+        if (activeGroup.cache && cache[cacheKey]) {
+            setGroupedData(cache[cacheKey]);
             return;
         }
 
-        const grouped = groupArray(data, group);
+        const grouped = groupArray(data, activeGroup);
         setGroupedData(grouped);
-        if (group.cache) {
-            setCache((prev) => ({ ...prev, [groupName]: grouped }));
+
+        if (activeGroup.cache) {
+            setCache((prev) => ({ ...prev, [cacheKey]: grouped }));
         }
-    }, [data, groups, groupName]);
+    }, [data, groups, groupName, cache]);
 
     React.useEffect(() => {
         setCache({});
     }, [data, groups]);
 
-    return [groupedData];
-}
+    return groupedData;
+};
 

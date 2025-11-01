@@ -100,7 +100,9 @@ export const FormattedText = React.memo<FormattedTextProps>(({ text, style, sx }
                                 return <FormattedTextElement key={`text-${index}`} style={style} sx={sx}>{item}</FormattedTextElement>;
                             }
                             if (isValidElement(item)) {
-                                return React.cloneElement(item, { key: `element-${index}` });
+                                return item.key != null
+                                    ? item
+                                    : React.cloneElement(item, { key: `element-${index}` });
                             }
                             return item;
                         } else if (Array.isArray(item)) {
@@ -118,7 +120,9 @@ export const FormattedText = React.memo<FormattedTextProps>(({ text, style, sx }
                                             return <FormattedTextElement key={subIndex} style={style} sx={sx}>{subItem}</FormattedTextElement>;
                                         }
                                         if (isValidElement(subItem)) {
-                                            return React.cloneElement(subItem, { key: `element-${subIndex}` });
+                                            return subItem.key != null
+                                                ? subItem
+                                                : React.cloneElement(subItem, { key: `element-${subIndex}` });
                                         }
                                         return subItem;
                                     })}

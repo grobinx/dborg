@@ -1,6 +1,7 @@
 import { Stack, Typography, useTheme } from "@mui/material";
 import { Button } from "@renderer/components/buttons/Button";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
+import { BaseList } from "@renderer/components/inputs/base/BaseList";
 import { AnyOption, CompactList } from "@renderer/components/inputs/base/CompactList";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import Tree, { TreeNode } from "@renderer/components/Tree";
@@ -78,16 +79,16 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
         "Option 3 has its own unique description that provides more details about its purpose.",
         "Here is the description for Option 4, explaining its features and benefits.",
         "Finally, Option 5 comes with a concise description to summarize its key points.",
-        [["pl", "To jest opis dla Opcji 1."], ["en", "This is a description for Option 1."]],
-        [["pl", "To jest opis dla Opcji 2, który jest trochę dłuższy niż pierwszy."], ["en", "This is a description for Option 2, which is a bit longer than the first one."]],
+        [["pl", "To jest opis dla Opcji 1."], '-', ["en", "This is a description for Option 1."]],
+        [["pl", "To jest opis dla Opcji 2, który jest trochę dłuższy niż pierwszy."], '-', ["en", "This is a description for Option 2, which is a bit longer than the first one."]],
         [["pl", "Opcja 3 ma swój unikalny opis, który dostarcza więcej szczegółów na temat jej przeznaczenia."], ["en", "Option 3 has its own unique description that provides more details about its purpose."]],
-        [["pl", "Oto opis dla Opcji 4, wyjaśniający jej cechy i korzyści."], ["en", "Here is the description for Option 4, explaining its features and benefits."]],
+        [["pl", "Oto opis dla Opcji 4, wyjaśniający jej cechy i korzyści."], '-', ["en", "Here is the description for Option 4, explaining its features and benefits."]],
         [["pl", "Wreszcie, Opcja 5 ma zwięzły opis podsumowujący jej kluczowe punkty."], ["en", "Finally, Option 5 comes with a concise description to summarize its key points."]],
-        [["pl", "To jest rozwijalny opis dla Opcji 1.", "rozszerzalny"], ["en", "This is an expandable description for Option 1.", "expandable"]],
-        [["pl", "To jest rozwijalny opis dla Opcji 2.", "rozszerzalny"], ["en", "This is an expandable description for Option 2, which is a bit longer than the first one.", "expandable"]],
+        [["pl", "To jest rozwijalny opis dla Opcji 1.", "rozszerzalny"], '-', ["en", "This is an expandable description for Option 1.", "expandable"]],
+        [["pl", "To jest rozwijalny opis dla Opcji 2.", "rozszerzalny"], '-', ["en", "This is an expandable description for Option 2, which is a bit longer than the first one.", "expandable"]],
         [["pl", "To jest rozwijalny opis dla Opcji 3.", "rozszerzalny"], ["en", "Option 3 has its own unique expandable description that provides more details about its purpose.", "expandable"]],
-        [["pl", "To jest rozwijalny opis dla Opcji 4.", "rozszerzalny"], ["en", "Here is the expandable description for Option 4, explaining its features and benefits.", "expandable"]],
-        [["pl", "To jest rozwijalny opis dla Opcji 5.", "rozszerzalny"], ["en", "Finally, Option 5 comes with a concise expandable description to summarize its key points.", "expandable"]],
+        [["pl", "To jest rozwijalny opis dla Opcji 4.", "rozszerzalny"], '-', ["en", "Here is the expandable description for Option 4, explaining its features and benefits.", "expandable"]],
+        [["pl", "To jest rozwijalny opis dla Opcji 5.", "rozszerzalny"], '-', ["en", "Finally, Option 5 comes with a concise expandable description to summarize its key points.", "expandable"]],
     ];
     const extraLabels = ['new', 'default', 'important', 'warning'];
     const options = React.useMemo(() => {
@@ -119,7 +120,7 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
         large: null,
         default: null,
     });
-    const [selectedSchema, setSelectedSchema] = React.useState<string | null>(schemas.length > 0 ? schemas[0].sch_id : null);
+    const [selectedSchema, setSelectedSchema] = React.useState<SchemaRecord | null>(schemas.length > 0 ? schemas[0] : null);
 
     return (
         <TabPanelContent {...props}
@@ -158,33 +159,28 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                     </Stack>
                 ))}
             </Stack>
-            <Stack key="compactList" direction="column" width="100%" gap={8}>
+            <Stack key="schemaList" direction="column" width="100%" gap={8}>
                 SchemaList
                 {React.useMemo(() => (
-                    <CompactList
+                    <BaseList
+                        componentName="TestSchemaList"
+                        isEqual={(a, b) => a.sch_id === b.sch_id}
                         size={'default'}
-                        options={schemas.map(schema => ({
-                            value: schema.sch_id,
-                            label: schema.sch_name,
-                            schema
-                        }))}
-                        headerSticky
+                        items={schemas}
                         color={color}
                         dense={dense}
                         sx={{ maxHeight: 300 }}
-                        description="tooltip"
-                        selected={[selectedSchema].filter(Boolean) as string[]}
+                        selected={[selectedSchema].filter(Boolean) as SchemaRecord[]}
                         focused={selectedSchema}
-                        onItemClick={(value: string) => setSelectedSchema(value)}
-                        renderOption={(option, state: { selected, focused }) => {
-                            const schema = (option as any).schema;
+                        onItemClick={(value: SchemaRecord) => setSelectedSchema(value)}
+                        renderItem={(schema) => {
                             return (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                     <Typography variant="body2">{schema.sch_name}</Typography>
                                     <div>
                                         <Typography variant="caption" color="textSecondary">
                                             Version: {schema.sch_db_version}
-                                            , Selected: {new Date(schema.sch_last_selected).toLocaleDateString()}
+                                            , Selected: {new Date(schema.sch_last_selected!).toLocaleDateString()}
                                         </Typography>
                                     </div>
                                 </div>

@@ -151,6 +151,11 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
         return 0; // Równe
     });
 }
+
+const isSingleIndex = <T,>(i: Index<T> | Indexes<T> | null | undefined): i is Index<T> => {
+    return !!i && typeof i === 'object' && Array.isArray((i as Index<T>).fields);
+}
+
 /**
  * Hook do sortowania tablic z wykorzystaniem indeksów.
  * Jeśli przekazano jeden indeks (obiekt Index<T>), nie trzeba podawać indexName.
@@ -177,10 +182,10 @@ export function useSort<T>(
         let index: Index<T> | undefined;
         let cacheKey = "";
 
-        if (typeof indexes === "object" && "fields" in indexes) {
+        if (isSingleIndex<T>(indexes)) {
             // Przekazano pojedynczy indeks
-            index = indexes as Index<T>;
-            cacheKey = "single";
+            index = indexes;
+            cacheKey = "__single__";
         } else if (typeof indexes === "object" && indexName) {
             // Przekazano wiele indeksów
             index = (indexes as Indexes<T>)[indexName];

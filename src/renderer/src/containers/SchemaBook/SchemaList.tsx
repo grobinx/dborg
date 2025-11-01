@@ -166,7 +166,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
-    const [groupedData] = useGroup(sortedData, schemaGroups, 'groupName');
+    const groupedData = useGroup(sortedData, schemaGroups, 'groupName');
     const [displayData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const { drivers, connections } = useDatabase();
     const addToast = useToast();
