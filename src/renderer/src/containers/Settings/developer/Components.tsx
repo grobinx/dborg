@@ -72,7 +72,6 @@ function generateRandomTree(total: number, opts?: { maxChildren?: number; maxDep
 export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
     const icons = theme.icons as ThemeIcons; // Rzutowanie na ThemeIcons
-    const { schemas } = useSchema();
     const descriptions: FormattedContent[] = [
         "This is a description for Option 1.",
         "This is a description for Option 2, which is a bit longer than the first one.",
@@ -121,7 +120,6 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
         large: null,
         default: null,
     });
-    const [selectedSchema, setSelectedSchema] = React.useState<SchemaRecord | null>(schemas.length > 0 ? schemas[0] : null);
 
     return (
         <TabPanelContent {...props}
@@ -159,35 +157,6 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                         ), [size, color, dense, selectedOption[size]])}
                     </Stack>
                 ))}
-            </Stack>
-            <Stack key="schemaList" direction="column" width="100%" gap={8}>
-                SchemaList
-                {React.useMemo(() => (
-                    <BaseList
-                        componentName="TestSchemaList"
-                        size={'default'}
-                        items={schemas}
-                        color={color}
-                        dense={dense}
-                        sx={{ maxHeight: 300 }}
-                        isSelected={(item) => item.sch_id === selectedSchema?.sch_id}
-                        isFocused={(item) => item.sch_id === selectedSchema?.sch_id}
-                        onItemClick={(value: SchemaRecord) => setSelectedSchema(value)}
-                        renderItem={(schema) => {
-                            return (
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography variant="body2">{schema.sch_name}</Typography>
-                                    <div>
-                                        <Typography variant="caption" color="textSecondary">
-                                            Version: {schema.sch_db_version}
-                                            , Selected: {new Date(schema.sch_last_selected!).toLocaleDateString()}
-                                        </Typography>
-                                    </div>
-                                </div>
-                            );
-                        }}
-                    />
-                ), [color, dense, selectedSchema])}
             </Stack>
             <Stack key="tree" direction="row" width="100%" gap={8}>
                 {[...Sizes, 'default'].map((size) => (

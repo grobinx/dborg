@@ -1,15 +1,10 @@
 import {
     Typography, useThemeProps,
-    Box, styled, StackProps, Stack, useTheme, BoxProps,
-    ListItemButtonProps, ListItemIconProps, ListItemTextProps,
-    ListProps,
-    ListItemProps,
-    ListSubheaderProps,
+    Box, styled, StackProps, Stack, useTheme,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { IconWrapperOwnProps } from "@renderer/themes/icons";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { DateTime } from "luxon";
@@ -24,7 +19,7 @@ import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
-import { Group, Groups, useGroup } from "@renderer/hooks/useGroup";
+import { Group, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
@@ -233,7 +228,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         searchedData?.forEach((item) => {
             if ((item.sch_group ?? undefinedGroup) !== group) {
                 group = item.sch_group ?? undefinedGroup;
-                resultData.push({ title: group });
+                resultData.push({ title: group, first_sch_id: item.sch_id });
             }
             resultData.push(item);
         });
