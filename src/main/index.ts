@@ -42,7 +42,7 @@ function createWindow(): BrowserWindow {
     } else {
         mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
     }
-    
+
     // mainWindow.on('resize', debounce(() => {
     //     mainWindow.webContents.send('window-resized', mainWindow.getBounds());
     // }, 40));
@@ -69,23 +69,69 @@ app.whenReady().then(async () => {
     const mainWindow = createWindow()
 
     // Pobierz istniejące menu aplikacji
-    const menu = Menu.getApplicationMenu();
+    // const menu = Menu.getApplicationMenu();
 
-    if (menu) {
-        // Przejdź przez wszystkie elementy menu i znajdź pozycję z Ctrl+W
-        menu.items.forEach((menuItem) => {
-            if (menuItem.submenu) {
-                menuItem.submenu.items.forEach((submenuItem) => {
-                    if (submenuItem.accelerator === 'Ctrl+W' || submenuItem.accelerator === 'CommandOrControl+W') {
-                        submenuItem.accelerator = "Alt+F4"; // Zmień skrót na Alt+F4
-                    }
-                });
-            }
-        });
+    // if (menu) {
+    //     // Przejdź przez wszystkie elementy menu i znajdź pozycję z Ctrl+W
+    //     menu.items.forEach((menuItem) => {
+    //         if (menuItem.submenu) {
+    //             menuItem.submenu.items.forEach((submenuItem) => {
+    //                 if (submenuItem.accelerator === 'Ctrl+W' || submenuItem.accelerator === 'CommandOrControl+W') {
+    //                     submenuItem.accelerator = "Alt+F4"; // Zmień skrót na Alt+F4
+    //                 }
+    //             });
+    //         }
+    //     });
 
-        // Ustaw zmodyfikowane menu jako aktywne
-        Menu.setApplicationMenu(menu);
-    }
+    //     // Ustaw zmodyfikowane menu jako aktywne
+    //     Menu.setApplicationMenu(menu);
+    // }
+
+    const mainMenu: Electron.MenuItemConstructorOptions[] = [
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'Zamknij',
+                    accelerator: 'Alt+F4',
+                    click: () => {
+                        mainWindow.close();
+                     }
+                },
+                // inne pozycje...
+            ]
+        },
+        {
+            label: 'View',
+            submenu: [
+                {
+                    label: 'Reload',
+                    accelerator: 'CmdOrCtrl+R',
+                    role: 'reload'
+                },
+                {
+                    label: 'Force Reload',
+                    accelerator: 'Shift+CmdOrCtrl+R',
+                    role: 'forceReload'
+                },
+                {
+                    label: 'Toggle Developer Tools',
+                    accelerator: is.dev ? 'CmdOrCtrl+Shift+I' : '',
+                    role: 'toggleDevTools'
+                },
+                { type: 'separator' as const },
+                { label: 'Reset Zoom', role: 'resetZoom', accelerator: 'CmdOrCtrl+0' },
+                { label: 'Zoom In', role: 'zoomIn', accelerator: 'CmdOrCtrl+Plus' },
+                { label: 'Zoom Out', role: 'zoomOut', accelerator: 'CmdOrCtrl+-' },
+                { type: 'separator' as const },
+                { label: 'Toggle Fullscreen', role: 'togglefullscreen', accelerator: 'F11' }
+            ]
+        }
+        // inne menu...
+    ];
+
+    const menu = Menu.buildFromTemplate(mainMenu);
+    Menu.setApplicationMenu(menu);
 
     initSettings(ipcMain)
     initDborgPath(ipcMain)

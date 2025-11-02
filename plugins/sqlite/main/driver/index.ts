@@ -469,7 +469,7 @@ export class Driver extends driver.Driver {
     }
 
     getName(): string {
-        return "SQLite (3) driver";
+        return "SQLite (3)";
     }
 
     getDescription(): string | undefined {

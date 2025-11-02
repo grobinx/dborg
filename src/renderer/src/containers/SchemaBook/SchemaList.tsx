@@ -1,10 +1,9 @@
 import {
-    Typography, ListItem, ListItemButton, ListItemText, useThemeProps,
-    Box, List, styled, StackProps, Stack, useTheme, ListItemIcon, BoxProps,
+    Typography, useThemeProps,
+    Box, styled, StackProps, Stack, useTheme, BoxProps,
     ListItemButtonProps, ListItemIconProps, ListItemTextProps,
     ListProps,
     ListItemProps,
-    ListSubheader,
     ListSubheaderProps,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
@@ -25,11 +24,13 @@ import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
-import { Groups, useGroup } from "@renderer/hooks/useGroup";
+import { Group, Groups, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
+import clsx from "@renderer/utils/clsx";
+import { BaseList } from "@renderer/components/inputs/base/BaseList";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -40,18 +41,20 @@ interface Schema extends SchemaRecord {
     connected?: number;
 }
 
+interface GroupHeader {
+    title: string;
+    first_sch_id?: string;
+}
+
+const isGroupHeader = (item: Schema | GroupHeader): item is GroupHeader => {
+    return typeof item === "object" && "title" in item;
+};
+
+const isSchema = (item: Schema | GroupHeader): item is Schema => {
+    return typeof item === "object" && "sch_id" in item && "driverName" in item;
+};
+
 export interface SchemaListProps extends StackProps {
-    slotProps?: {
-        title?: BoxProps,
-        content?: BoxProps,
-        list?: ListProps,
-        item?: ListItemProps,
-        subheader?: ListSubheaderProps,
-        icon?: IconWrapperOwnProps,
-        itemButton?: ListItemButtonProps,
-        itemIcon?: ListItemIconProps,
-        itemText?: ListItemTextProps
-    }
 }
 
 interface SchemaListOwnProps extends SchemaListProps {
@@ -66,9 +69,9 @@ interface SchemaListContext {
     disconnect: (schemaId: string) => void;
 }
 
-const SchemaListRoot = styled(Stack, {
+const SchemaListContainer = styled(Stack, {
     name: 'SchemaList', // The component name
-    slot: 'root', // The slot name
+    slot: 'container', // The slot name
 })(() => ({
     display: 'flex',
     flexDirection: 'column',
@@ -81,7 +84,7 @@ const SchemaListContent = styled(Box, {
     name: 'SchemaList', // The component name
     slot: 'content', // The slot name
 })(() => ({
-    overflow: "auto",
+    overflow: "hidden",
     height: "100%",
     display: "block",
 }));
@@ -90,6 +93,60 @@ const SchemaListTitle = styled(Box, {
     name: 'SchemaList', // The component name
     slot: 'title', // The slot name
 })();
+
+const SchemaListDriverIcon = styled('div', {
+    name: 'SchemaList',
+    slot: 'driverIcon',
+})(() => ({
+}));
+
+const SchemaListStatusIcon = styled('div', {
+    name: 'SchemaList',
+    slot: 'statusIcon',
+})(() => ({
+}));
+
+const SchemaListActionButtons = styled('div', {
+    name: 'SchemaList',
+    slot: 'actionButtons',
+})(() => ({
+}));
+
+const SchemaListGroupHeader = styled('div', {
+    name: 'SchemaList',
+    slot: 'groupHeader',
+})(() => ({
+}));
+
+const SchemaListProfile = styled('div', {
+    name: 'SchemaList',
+    slot: 'profile',
+})(() => ({
+}));
+
+const SchemaListGroupName = styled('div', {
+    name: 'SchemaList',
+    slot: 'groupName',
+})(() => ({
+}));
+
+const SchemaListProfileName = styled('div', {
+    name: 'SchemaList',
+    slot: 'profileName',
+})(() => ({
+}));
+
+const SchemaListPrimaryText = styled('div', {
+    name: 'SchemaList',
+    slot: 'primaryText',
+})(() => ({
+}));
+
+const SchemaListSecondaryText = styled('div', {
+    name: 'SchemaList',
+    slot: 'secondaryText',
+})(() => ({
+}));
 
 const refreshActionId = "profile-list-refresh";
 const groupActionId = "profile-list-group";
@@ -143,13 +200,11 @@ const schemaIndexes: Indexes<Schema> = {
     },
 };
 
-const schemaGroups: Groups<Schema> = {
-    groupName: {
-        fields: [{
-            name: 'sch_group',
-        }],
-        cache: true,
-    }
+const schemaGroup: Group<Schema> = {
+    fields: [{
+        name: 'sch_group',
+    }],
+    cache: true,
 }
 
 const searchFields: (keyof Schema)[] = ['driverName', 'sch_group', 'sch_name'];
@@ -157,7 +212,7 @@ const searchFields: (keyof Schema)[] = ['driverName', 'sch_group', 'sch_name'];
 const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const { className, slotProps, ...other } = useThemeProps({ name: 'SchemaList', props });
+    const { className, ...other } = useThemeProps({ name: 'SchemaList', props });
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [groupList, setGroupList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<Boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
@@ -166,8 +221,24 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
-    const groupedData = useGroup(sortedData, schemaGroups, 'groupName');
-    const [displayData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
+    const [searchedData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
+    const groupedData = useGroup(searchedData, schemaGroup);
+    const displayData = React.useMemo(() => {
+        if (!groupList) {
+            return searchedData;
+        }
+        const resultData: (Schema | GroupHeader)[] = [];
+        let group: string | undefined = undefined;
+        const undefinedGroup = t("ungrouped", "Ungrouped");
+        searchedData?.forEach((item) => {
+            if ((item.sch_group ?? undefinedGroup) !== group) {
+                group = item.sch_group ?? undefinedGroup;
+                resultData.push({ title: group });
+            }
+            resultData.push(item);
+        });
+        return resultData;
+    }, [searchedData, groupList, t]);
     const { drivers, connections } = useDatabase();
     const addToast = useToast();
     const { queueMessage } = useMessages();
@@ -178,7 +249,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [testing, setTesting] = React.useState<string[]>([]);
     const actions = React.useRef<ActionManager<SchemaListContext>>(new ActionManager());
     const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation({
-        items: displayData ?? [],
+        items: searchedData ?? [],
         getId: (item) => item.sch_id,
         actionManager: actions.current,
         getContext: () => (context),
@@ -253,7 +324,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }, {
             id: cloneActionId,
             label: t("clone-profile", "Clone profile"),
-            keybindings: ["Ctrl+D"],
+            keybindings: ["Ctrl+Shift+C"],
             icon: "CloneConnectionSchema",
             run: (context, schemaId) => {
                 context.clone(schemaId);
@@ -265,7 +336,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     t("disconnect-multiple", "Disconnect all connections to database")
                     : t("disconnect", "Disconnect from database")
             },
-            keybindings: ["Ctrl+Shift+D"],
+            keybindings: ["Ctrl+D"],
             icon: "Disconnected",
             run: (context, schemaId) => {
                 context.disconnect(schemaId);
@@ -402,14 +473,14 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     };
 
     const moveDown = (schemaId: string) => {
-        if (!sortedData || sortedData.length === 0 || !schemaId) return;
+        if (!searchedData || searchedData.length === 0 || !schemaId) return;
 
-        const currentIndex = sortedData.findIndex((schema) => schema.sch_id === schemaId);
+        const currentIndex = searchedData.findIndex((schema) => schema.sch_id === schemaId);
         const nextIndex = currentIndex + 1;
 
-        if (nextIndex < sortedData.length) {
-            const nextSchema = sortedData[nextIndex];
-            if (groupList && (nextSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
+        if (nextIndex < searchedData.length) {
+            const nextSchema = searchedData[nextIndex];
+            if (groupList && (nextSchema.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
             swapSchemasOrder(schemaId, nextSchema.sch_id);
@@ -417,13 +488,13 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }
 
     const moveUp = (schemaId: string) => {
-        if (!sortedData || sortedData.length === 0 || !schemaId) return;
+        if (!searchedData || searchedData.length === 0 || !schemaId) return;
 
-        const currentIndex = sortedData.findIndex((schema) => schema.sch_id === schemaId);
+        const currentIndex = searchedData.findIndex((schema) => schema.sch_id === schemaId);
         const previousIndex = currentIndex - 1;
         if (previousIndex >= 0) {
-            const previousSchema = sortedData[previousIndex];
-            if (groupList && (previousSchema.sch_group ?? "ungrouped") !== (sortedData[currentIndex].sch_group ?? "ungrouped")) {
+            const previousSchema = searchedData[previousIndex];
+            if (groupList && (previousSchema.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
             swapSchemasOrder(schemaId, previousSchema.sch_id);
@@ -442,7 +513,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         }
     }
 
-    const moveDownGroup = (schemaId: string) => {
+    const moveGroupDown = (schemaId: string) => {
         if (!groupedData || groupedData.length === 0 || !schemaId) return;
 
         const currentIndex = groupedData.findIndex(group => group.some(schema => schema.sch_id === schemaId));
@@ -455,13 +526,15 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }
 
     const renderStatusIcon = (record: Schema) => {
+        let icon: React.ReactNode = null;
         if (connecting.includes(record.sch_id)) {
-            return <theme.icons.Loading {...slotProps?.icon} />;
-        }
-        if (record.connected ?? 0 > 0) {
-            return (
+            icon = <theme.icons.Loading />;
+        } else if (erroring.includes(record.sch_id)) {
+            icon = <theme.icons.Error />;
+        } else if (record.connected ?? 0 > 0) {
+            icon = (
                 <div style={{ position: "relative" }}>
-                    <theme.icons.Connected {...slotProps?.icon} />
+                    <theme.icons.Connected />
                     <UnboundBadge
                         content={(record.connected ?? 0) > 1 ? record.connected : 0}
                         sx={{
@@ -473,36 +546,225 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     />
                 </div>
             );
+        } else {
+            icon = <theme.icons.Disconnected />;
         }
-        if (erroring.includes(record.sch_id)) {
-            return <theme.icons.Error {...slotProps?.icon} />;
-        }
-        return <theme.icons.Disconnected {...slotProps?.icon} />;
+        return (
+            <SchemaListStatusIcon className="StatusIcon-statusIcon">
+                {icon}
+            </SchemaListStatusIcon>
+        );
     };
 
-    const renderSecondaryText = React.useCallback((record: Schema) => {
+    const renderDriverIcon = (record: Schema) => {
+        return (
+            <SchemaListDriverIcon className="DriverIcon-driverIcon">
+                <div className="icon">{record.driverIcon && <img src={record.driverIcon} />}</div>
+                <div className="name">{highlightText(record.driverName!)}</div>
+            </SchemaListDriverIcon>
+        );
+    };
+
+    const renderPrimaryText = (record: Schema) => {
+        return (
+            <SchemaListPrimaryText className="SchemaList-primaryText" style={{ color: record.sch_color }}>
+                {highlightText(record.sch_name!)}
+            </SchemaListPrimaryText>
+        );
+    };
+
+    const renderSecondaryText = (record: Schema) => {
         const neverText = t("never", "Never");
         const groupText = record.sch_group ?? t("ungrouped", "Ungrouped");
         const lastSelectedText = record.sch_last_selected
             ? DateTime.fromSQL(record.sch_last_selected ?? '')?.toRelative() ?? neverText
             : neverText;
 
-        return [
-            !groupList && (
-                <span key="group" className="group">
-                    {t("group", "Group: {{group}}", { group: groupText })}
+        return (
+            <SchemaListSecondaryText className="SchemaList-secondaryText">
+                {!groupList && (
+                    <span key="group" className="group">
+                        {t("group", "Group: {{group}}", { group: groupText })}
+                    </span>
+                )}
+                <span key="lastSelected" className="last-selected">
+                    {t("schema-last-selected", "Selected: {{lastSelected}}", { lastSelected: lastSelectedText })}
                 </span>
-            ),
-            <span key="lastSelected" className="last-selected">
-                {t("schema-last-selected", "Selected: {{lastSelected}}", { lastSelected: lastSelectedText })}
-            </span>,
-            record.sch_db_version && (
-                <span key="dbVersion" className="db-version">
-                    {t("schema-db-version", "Version: {{version}}", { version: record.sch_db_version })}
-                </span>
-            ),
-        ];
-    }, [groupList]);
+                {record.sch_db_version && (
+                    <span key="dbVersion" className="db-version">
+                        {t("schema-db-version", "Version: {{version}}", { version: record.sch_db_version })}
+                    </span>
+                )}
+            </SchemaListSecondaryText>
+        );
+    };
+
+    const renderProfileName = (record: Schema) => {
+        return (
+            <SchemaListProfileName className="SchemaList-profileName">
+                {renderPrimaryText(record)}
+                {renderSecondaryText(record)}
+            </SchemaListProfileName>
+        );
+    }
+
+    const renderHeaderSortButtons = (sch_id: string) => {
+        if (sortList) return null;
+        return (
+            <SchemaListActionButtons
+                className={clsx(
+                    "SchemaList-actionButtons",
+                    sch_id === selectedItem && "selected",
+                    "sort-buttons"
+                )}
+            >
+                <ButtonGroup size="small" dense>
+                    <ToolButton
+                        height={"2em"}
+                        onClick={(_e) => { moveGroupUp(sch_id); }}
+                    >
+                        <theme.icons.ExpandLess />
+                    </ToolButton>
+                    <ToolButton
+                        height={"2em"}
+                        onClick={(_e) => { moveGroupDown(sch_id); }}
+                    >
+                        <theme.icons.ExpandMore />
+                    </ToolButton>
+                </ButtonGroup>
+            </SchemaListActionButtons>
+        );
+    };
+
+    const renderSchemaSortButtons = (record: Schema) => {
+        if (sortList) return null;
+        return (
+            <SchemaListActionButtons
+                className={clsx(
+                    "SchemaList-actionButtons",
+                    record.sch_id === selectedItem && "selected",
+                    "sort-buttons"
+                )}
+            >
+                <ButtonGroup size="small" dense orientation="vertical">
+                    <ToolButton
+                        onClick={(_e) => { moveUp(record.sch_id); }}
+                    >
+                        <theme.icons.ExpandLess />
+                    </ToolButton>
+                    <ToolButton
+                        onClick={(_e) => { moveDown(record.sch_id); }}
+                    >
+                        <theme.icons.ExpandMore />
+                    </ToolButton>
+                </ButtonGroup>
+            </SchemaListActionButtons>
+        );
+    }
+
+    const renderHeader = (item: GroupHeader) => {
+        return (
+            <SchemaListGroupHeader
+                className="SchemaList-groupHeader"
+            >
+                {renderHeaderSortButtons(item.first_sch_id!)}
+                <SchemaListGroupName className="SchemaList-groupName">
+                    {highlightText(item.title)}
+                </SchemaListGroupName>
+            </SchemaListGroupHeader>
+        )
+    };
+
+    const renderProfile = (record: Schema) => {
+        return (
+            <SchemaListProfile
+                className={clsx(
+                    "SchemaList-profile",
+                    record.sch_id === selectedItem && "selected"
+                )}
+                onClick={() => setSelectedItem(record.sch_id)}
+            >
+                {renderSchemaSortButtons(record)}
+                {renderDriverIcon(record)}
+                {renderStatusIcon(record)}
+                {renderProfileName(record)}
+                {renderProfileActionButtons(record)}
+            </SchemaListProfile>
+        );
+    };
+
+    const renderProfileActionButtons = (record: Schema) => {
+        return (
+            <SchemaListActionButtons
+                className={clsx(
+                    "SchemaList-actionButtons",
+                    record.sch_id === selectedItem && "selected"
+                )}
+            >
+                <ButtonGroup>
+                    <ActionButton
+                        key="disconnect"
+                        actionManager={actions.current}
+                        actionId={disconnectAllActionId}
+                        actionArgs={[record.sch_id, record.connected]}
+                        getContext={() => context}
+                        size="medium"
+                        color="info"
+                        loading={disconnecting.includes(record.sch_id)}
+                    />
+                    <ActionButton
+                        key="connect"
+                        actionManager={actions.current}
+                        actionId={connectActionId}
+                        actionArgs={[record.sch_id]}
+                        getContext={() => context}
+                        size="medium"
+                        color="info"
+                        loading={connecting.includes(record.sch_id)}
+                    />
+                </ButtonGroup>
+                <ButtonGroup>
+                    <ActionButton
+                        actionManager={actions.current}
+                        actionId={testActionId}
+                        actionArgs={[record.sch_id]}
+                        getContext={() => context}
+                        size="medium"
+                        color="success"
+                        loading={testing.includes(record.sch_id)}
+                    />
+                    <ActionButton
+                        actionManager={actions.current}
+                        actionId={editActionId}
+                        actionArgs={[record.sch_id]}
+                        getContext={() => context}
+                        size="medium"
+                        color="primary"
+                    />
+                    <ActionButton
+                        actionManager={actions.current}
+                        actionId={cloneActionId}
+                        actionArgs={[record.sch_id]}
+                        getContext={() => context}
+                        size="medium"
+                        color="primary"
+                    />
+                </ButtonGroup>
+                <ButtonGroup>
+                    <ActionButton
+                        className="delete"
+                        actionManager={actions.current}
+                        actionId={deleteActionId}
+                        actionArgs={[record.sch_id]}
+                        getContext={() => context}
+                        size="medium"
+                        color="error"
+                        loading={deleting.includes(record.sch_id)}
+                    />
+                </ButtonGroup>
+            </SchemaListActionButtons>
+        );
+    };
 
     useScrollIntoView({
         containerId: "schema-list-content",
@@ -519,8 +781,8 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [selectedItem]);
 
     return (
-        <SchemaListRoot {...other} className={(className ?? '') + " SchemaList-root"}>
-            <SchemaListTitle {...slotProps?.title} className="SchemaList-title">
+        <SchemaListContainer {...other} className={clsx(className, "SchemaList-container")}>
+            <SchemaListTitle className="SchemaList-title">
                 <Typography variant="h4">{t_connectionSchema}</Typography>
                 <Stack flexGrow={1} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -572,148 +834,31 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 </Box>
             </SchemaListTitle>
             <SchemaListContent
-                {...slotProps?.content}
                 className="SchemaList-content"
             >
-                {initialized &&
-                    <List {...slotProps?.list} onKeyDown={handleSearchKeyDown} id="schema-list-content" dense>
-                        {data !== null && displayData?.map((record) => {
-                            const group = record.sch_group ?? t("ungrouped", "Ungrouped");
-                            return (
-                                <React.Fragment key={record.sch_id}>
-                                    {(groupList && (displayData.findIndex(r => r.sch_group === record.sch_group) === displayData.indexOf(record))) && (
-                                        <ListSubheader {...slotProps?.subheader} id={CSS.escape(`group-${group}`)}>
-                                            <Typography variant="h6" style={{ width: "100%" }}>
-                                                {!sortList &&
-                                                    <ButtonGroup className="drag" size="small" dense sx={{ marginRight: 8 }}>
-                                                        <ToolButton
-                                                            height={"2em"}
-                                                            onClick={(_e) => { moveGroupUp(record.sch_id); }}
-                                                        >
-                                                            <theme.icons.ExpandLess {...slotProps?.icon} />
-                                                        </ToolButton>
-                                                        <ToolButton
-                                                            height={"2em"}
-                                                            onClick={(_e) => { moveDownGroup(record.sch_id); }}
-                                                        >
-                                                            <theme.icons.ExpandMore {...slotProps?.icon} />
-                                                        </ToolButton>
-                                                    </ButtonGroup>
-                                                }
-                                                {highlightText(group)}
-                                            </Typography>
-                                        </ListSubheader>
-                                    )}
-                                    <ListItem {...slotProps?.item} id={record.sch_id} disablePadding>
-                                        <ListItemButton
-                                            onClick={() => setSelectedItem(record.sch_id)}
-                                            //onDoubleClick={() => handleConnect(record.sch_id)}
-                                            {...slotProps?.itemButton}
-                                            selected={record.sch_id === selectedItem}
-                                            disableRipple
-                                        >
-                                            {!sortList &&
-                                                <ButtonGroup className="drag" size="small" dense orientation="vertical">
-                                                    <ToolButton
-                                                        onClick={(_e) => { moveUp(record.sch_id); }}
-                                                    >
-                                                        <theme.icons.ExpandLess {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                    <ToolButton
-                                                        onClick={(_e) => { moveDown(record.sch_id); }}
-                                                    >
-                                                        <theme.icons.ExpandMore {...slotProps?.icon} />
-                                                    </ToolButton>
-                                                </ButtonGroup>
-                                            }
-                                            <ListItemIcon className="driver" {...slotProps?.itemIcon}>
-                                                {record.driverIcon && <img src={record.driverIcon} />}
-                                                <Typography variant="caption" className="name">{highlightText(record.driverName!)}</Typography>
-                                            </ListItemIcon>
-                                            <ListItemIcon className="status" {...slotProps?.itemIcon}>
-                                                {renderStatusIcon(record)}
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                {...slotProps?.itemText}
-                                                primary={<span style={{ color: record.sch_color }}>{highlightText(record.sch_name!)}</span>}
-                                                secondary={renderSecondaryText(record)}
-                                                slotProps={{
-                                                    primary: {
-                                                        variant: "h6",
-                                                    }
-                                                }}
-                                            />
-                                            <ButtonGroup className="actions">
-                                                <ActionButton
-                                                    key="disconnect"
-                                                    actionManager={actions.current}
-                                                    actionId={disconnectAllActionId}
-                                                    actionArgs={[record.sch_id, record.connected]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="info"
-                                                    loading={disconnecting.includes(record.sch_id)}
-                                                />
-                                                <ActionButton
-                                                    key="connect"
-                                                    actionManager={actions.current}
-                                                    actionId={connectActionId}
-                                                    actionArgs={[record.sch_id]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="info"
-                                                    loading={connecting.includes(record.sch_id)}
-                                                />
-                                            </ButtonGroup>
-                                            <ButtonGroup className="actions">
-                                                <ActionButton
-                                                    actionManager={actions.current}
-                                                    actionId={testActionId}
-                                                    actionArgs={[record.sch_id]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="success"
-                                                    loading={testing.includes(record.sch_id)}
-                                                />
-                                                <ActionButton
-                                                    actionManager={actions.current}
-                                                    actionId={editActionId}
-                                                    actionArgs={[record.sch_id]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="primary"
-                                                />
-                                                <ActionButton
-                                                    actionManager={actions.current}
-                                                    actionId={cloneActionId}
-                                                    actionArgs={[record.sch_id]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="primary"
-                                                />
-                                            </ButtonGroup>
-                                            <ButtonGroup className="actions">
-                                                <ActionButton
-                                                    className="delete"
-                                                    actionManager={actions.current}
-                                                    actionId={deleteActionId}
-                                                    actionArgs={[record.sch_id]}
-                                                    getContext={() => context}
-                                                    size="medium"
-                                                    color="error"
-                                                    loading={deleting.includes(record.sch_id)}
-                                                />
-                                            </ButtonGroup>
-                                        </ListItemButton>
-                                    </ListItem>
-                                </React.Fragment>
-                            );
-                        })}
-                    </List>
+                {initialized && displayData &&
+                    <BaseList
+                        componentName="SchemaList"
+                        id="schema-list-content"
+                        items={displayData}
+                        color="default"
+                        size="default"
+                        renderItem={item => {
+                            if (isGroupHeader(item)) {
+                                return renderHeader(item);
+                            }
+                            return renderProfile(item);
+                        }}
+                        isSelected={item => isSchema(item) && item.sch_id === selectedItem}
+                        isFocused={item => isSchema(item) && item.sch_id === selectedItem}
+                        getItemId={item => isSchema(item) ? item.sch_id : `group-${item.title}`}
+                        getItemClassName={item => isSchema(item) ? 'profile' : 'header'}
+                        onKeyDown={handleSearchKeyDown}
+                    />
                 }
                 {!initialized && <Typography>Loading data...</Typography>}
             </SchemaListContent>
-        </SchemaListRoot>
+        </SchemaListContainer>
     );
 };
 

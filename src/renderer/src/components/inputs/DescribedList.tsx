@@ -80,7 +80,7 @@ interface CompactListProps<T = any> {
     style?: React.CSSProperties;
 }
 
-const StyledCompactListHeader = styled('div', { name: 'CompactList', slot: 'header' })(() => ({
+const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({
     display: 'flex',
     flexDirection: 'row',
     fontWeight: 'bold',
@@ -89,7 +89,7 @@ const StyledCompactListHeader = styled('div', { name: 'CompactList', slot: 'head
     '&.size-large': { padding: listItemSizeProperties.large.padding },
     '&.size-default': { padding: '2px 4px' },
 }));
-const StyledCompactListOption = styled('div', { name: 'CompactList', slot: 'option' })(({ }) => ({
+const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
@@ -99,7 +99,7 @@ const StyledCompactListOption = styled('div', { name: 'CompactList', slot: 'opti
     '&.size-large': { padding: listItemSizeProperties.large.padding },
     '&.size-default': { padding: '2px 4px' },
 }));
-const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'container' })(({ theme }) => ({
+const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ theme }) => ({
     display: 'flex',
     width: '100%',
     height: '100%',
@@ -118,7 +118,7 @@ const StyledCompactContainer = styled('div', { name: 'CompactList', slot: 'conta
         backgroundColor: "transparent",
     },
 }));
-const StyledDescriptionArea = styled('div', { name: 'CompactList', slot: 'description' })(({ theme }) => ({
+const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ theme }) => ({
     display: 'flex',
     flex: '0 0 auto',
     "&.size-small": { fontSize: listItemSizeProperties.small.fontSize, padding: listItemSizeProperties.small.padding },
@@ -206,13 +206,13 @@ export function DescribedList<T = any>(props: CompactListProps<T>) {
     const isFocused = (value: T) => focusedItem != null && Object.is(focusedItem, value);
 
     const renderHeader = (option: HeaderOption) => (
-        <StyledCompactListHeader
+        <StyledDescribedListHeader
             className={clsx(
-                "CompactList-header",
+                "DescribedList-header",
                 classes
             )}>
             <FormattedText text={option.label} />
-        </StyledCompactListHeader>
+        </StyledDescribedListHeader>
     );
 
     const renderOption = (option: Option<T>, { selected, focused }: { selected: boolean; focused: boolean }) => {
@@ -227,7 +227,7 @@ export function DescribedList<T = any>(props: CompactListProps<T>) {
             : content;
 
         return (
-            <StyledCompactListOption
+            <StyledDescribedListOption
                 id={CSS.escape(String(option.value))}
                 className={clsx(
                     "CompactList-option", 
@@ -241,20 +241,20 @@ export function DescribedList<T = any>(props: CompactListProps<T>) {
                 onMouseLeave={() => !disabled && anyHasDescription && setHoveredValue(prev => (Object.is(prev, option.value) ? null : prev))}
             >
                 {wrapped}
-            </StyledCompactListOption>
+            </StyledDescribedListOption>
         );
     };
 
     return (
-        <StyledCompactContainer
+        <StyledDescribedListContainer
             className={clsx('CompactList-container', effectiveDescription === 'sidebar' && 'sidebar', classes)}
         >
             {effectiveDescription === 'header' && describedOption?.description && (
-                <StyledDescriptionArea className={clsx("CompactList-description", "header", classes)}>
+                <StyledDescribedListDescription className={clsx("CompactList-description", "header", classes)}>
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
-                </StyledDescriptionArea>
+                </StyledDescribedListDescription>
             )}
 
             <BaseList<AnyOption<T>>
@@ -277,10 +277,10 @@ export function DescribedList<T = any>(props: CompactListProps<T>) {
                 renderItem={(option, state) => {
                     return isHeaderOption(option)
                         ? renderHeader(option)
-                        : renderOption(option as Option<T>, state);
+                        : renderOption(option, state);
                 }}
                 getItemClassName={(item) => isHeaderOption(item) ? 'header' : 'option'}
-                getId={(item) => isOption(item) ? CSS.escape(item.value) : undefined}
+                getItemId={(item) => isOption(item) ? item.value : undefined}
                 renderEmpty={() => noOptionsText ? (
                     <FormattedText text={noOptionsText} />
                 ) : null}
@@ -291,23 +291,23 @@ export function DescribedList<T = any>(props: CompactListProps<T>) {
             />
 
             {effectiveDescription === 'footer' && describedOption?.description && (
-                <StyledDescriptionArea className={clsx("CompactList-description", "footer", classes)}>
+                <StyledDescribedListDescription className={clsx("CompactList-description", "footer", classes)}>
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
-                </StyledDescriptionArea>
+                </StyledDescribedListDescription>
             )}
 
             {effectiveDescription === 'sidebar' && describedOption?.description && (
-                <StyledDescriptionArea
+                <StyledDescribedListDescription
                     className={clsx("CompactList-description", "sidebar", classes)}
                     style={{ width: descriptionSidebarWidth, minWidth: 200, alignSelf: 'flex-start' }}
                 >
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
-                </StyledDescriptionArea>
+                </StyledDescribedListDescription>
             )}
-        </StyledCompactContainer>
+        </StyledDescribedListContainer>
     );
 }

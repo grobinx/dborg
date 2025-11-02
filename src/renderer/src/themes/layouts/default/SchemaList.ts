@@ -1,99 +1,16 @@
 import { Palette, ThemeOptions } from "@mui/material";
+import zIndex from "@mui/material/styles/zIndex";
 import { SchemaListComponent } from "@renderer/themes/theme.d/SchemaList";
 
 export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaListComponent => {
     return {
-        defaultProps: {
-            sx: {
-                fontSize: "1rem",
-            },
-            slotProps: {
-                list: {
-                    dense: true,
-                },
-                item: {
-                    sx: {
-                        paddingY: 2,
-                        '& .status': {
-                            marginRight: 12,
-                            fontSize: "1.2em",
-                            '& .MuiBadge-badge': {
-                                right: -5,
-                            }
-                        },
-                        '& .driver': {
-                            marginTop: 6,
-                        },
-                        '&:not(:hover) :not(.Mui-selected)': {
-                            '& .actions': {
-                                visibility: "hidden",
-                            },
-                            '& .drag': {
-                                visibility: "hidden",
-                            }
-                        },
-                    },
-                },
-                subheader: {
-                    sx: {
-                        '&:not(:hover) :not(.Mui-selected)': {
-                            '& .actions': {
-                                visibility: "hidden",
-                            },
-                            '& .drag': {
-                                visibility: "hidden",
-                            }
-                        }
-                    }
-                },
-                itemButton: {
-                    sx: {
-                        gap: 8,
-                        paddingY: 0,
-                        //transition: "background-color 0.3s ease",
-                    }
-                },
-                itemText: {
-                    sx: {
-                        '& .MuiListItemText-primary': {
-                            fontSize: "1em"
-                        },
-                        '& .MuiListItemText-secondary': {
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: 8,
-                            '& .db-version': {
-                                fontWeight: 600,
-                            }
-                        }
-                    }
-                },
-                itemIcon: {
-                    sx: {
-                        minWidth: 0,
-                        padding: 4,
-                        flexDirection: "column",
-                        alignItems: "center",
-                        '&.driver': {
-                            minWidth: 78,
-                            '& .name': {
-                                fontSize: "0.6rem",
-                            }
-                        },
-                        '& img': {
-                            width: 24,
-                            height: 24,
-                        },
-                    }
-                }
-            }
-        },
         styleOverrides: {
-            root: {
+            container: {
                 gap: 16,
                 padding: 16,
                 width: "90%",
-                margin: "auto"
+                margin: "auto",
+                fontSize: "1rem",
             },
             title: {
                 //justifyItems: "center",
@@ -109,6 +26,99 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
             },
             content: {
                 width: "90%",
+            },
+            root: {
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+            },
+            item: {
+                '&.profile': {
+                    padding: "4px 8px",
+                },
+                '&.header': {
+                    padding: "2px 8px",
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 100,
+                    backgroundColor: palette.background.paper,
+                }
+            },
+            driverIcon: {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '5rem',
+                '& .icon': {
+                    display: 'flex',
+                    '& img': {
+                        width: 32,
+                        height: 32,
+                    }
+                },
+                '& .name': {
+                    fontSize: '0.6rem',
+                }
+            },
+            statusIcon: {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '3rem',
+                fontSize: '1.4rem',
+            },
+            actionButtons: {
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 4,
+                visibility: "hidden",
+                '&.selected, .SchemaList-item:hover &': {
+                    '&:not(.sort-buttons)': {
+                        visibility: "visible",
+                    }
+                },
+                '.SchemaList-item:hover &': {
+                    '&.sort-buttons': {
+                        visibility: "visible",
+                    }
+                },
+            },
+            groupHeader: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexDirection: 'row',
+                cursor: 'default',
+            },
+            groupName: {
+                fontSize: "1.5rem",
+                fontWeight: 600,
+                lineHeight: 1.3,
+            },
+            profile: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+            },
+            profileName: {
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                gap: 2,
+            },
+            primaryText: {
+                fontSize: "1.2rem",
+                fontWeight: 600,
+            },
+            secondaryText: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                fontSize: "0.9rem",
+                fontWeight: 400,
+                gap: 8,
             }
         }
     }

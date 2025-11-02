@@ -194,7 +194,7 @@ export interface ActionDescriptor<T> {
 
     /**
      * Czy akcja jest widoczna w interfejsie użytkownika.
-     * Jeśli nie jest widoczna, nie będzie się pojawiać w palecie poleceń ani w menu kontekstowym. Również nie będzie można jej wywołać skrótem klawiszowym.
+     * Jeśli nie jest widoczna, nie będzie się pojawiać w palecie poleceń ani w menu kontekstowym. Będzie ją można wywołać za pomocą skrótów klawiszowych.
      */
     visible?: boolean | ((context: T, ...args: any[]) => boolean);
 
@@ -347,10 +347,10 @@ export class ActionManager<T> {
         );
 
         if (action) {
-            const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+            //const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
             const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
 
-            if (disabled || !visible || action.precondition && !action.precondition(context)) {
+            if (disabled || /*!visible || */action.precondition && !action.precondition(context)) {
                 this.resetSequence();
                 return true; // Sekwencja jest poprawna, ale akcja nie została wykonana
             }

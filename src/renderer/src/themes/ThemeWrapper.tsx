@@ -16,7 +16,12 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     const prefersDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
     const createThemes = React.useCallback(() => {
-        const root = rootLayout(fontSize, fontFamily, monospaceFontFamily);
+        const root = rootLayout(
+            fontSize, 
+            fontFamily, 
+            monospaceFontFamily, 
+            (uiTheme === "system" ? (prefersDarkMode ? "dark" : "light") : uiTheme) as "light" | "dark"
+        );
 
         const themeLight = createTheme(
             {

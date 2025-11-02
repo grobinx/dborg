@@ -658,7 +658,7 @@ export class Driver extends driver.Driver {
     }
 
     getName(): string {
-        return "PostgreSQL driver";
+        return "PostgreSQL";
     }
 
     getDescription(): string | undefined {
