@@ -138,6 +138,7 @@ export const useSearch = <T,>(
     const theme = useTheme();
     const [searchedData, setSearchedData] = React.useState<T[] | null>(data);
     const [searchedText, setSearchedText] = React.useState<string>(searchText ?? '');
+    const searchedTextRef = React.useRef<string>(searchedText);
     const [firstRun, setFirstRun] = React.useState<boolean>(true);
 
     React.useEffect(() => {
@@ -148,7 +149,8 @@ export const useSearch = <T,>(
             return;
         }
 
-        if (firstRun) {
+        // if first run or searchText didn't change during debounce, search immediately
+        if (firstRun || searchedTextRef.current === searchText) {
             setFirstRun(false);
             const results = searchArray(data, fields, searchText, options);
             setSearchedData(results);
@@ -164,6 +166,10 @@ export const useSearch = <T,>(
         debouncedSearch();
         return () => debouncedSearch.clear();
     }, [data, JSON.stringify(fields), searchText, options]);
+
+    React.useEffect(() => {
+        searchedTextRef.current = searchedText;
+    }, [searchedText]);
 
     const renderHighlightedText = React.useCallback((text: string | undefined | null): React.ReactNode => {
         return highlightText(
