@@ -10,7 +10,7 @@ export interface IndexField<T> {
     name: keyof T;
     /** Kierunek sortowania, domyślnie 'asc' */
     order?: SortOrder;
-    /** Czy wartości null powinny być traktowane jako największe (true) czy najmniejsze (false) */
+    /** Czy wartości null powinny być na końcu (true) czy na początku (false), domyślnie false */
     nullsLast?: boolean;
     /** Czy sortowanie powinno być rozróżniane wielkością liter (true) czy nie (false), domyślnie true */
     caseSensitive?: boolean;
@@ -87,10 +87,26 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
     }
 
     const compareValues = (aValue: any, bValue: any, field: IndexField<T>): number => {
+        const order = field.order === 'desc' ? -1 : 1;
+        const nullsLast = field.nullsLast ?? false;
+
         // Obsługa wartości null
         if (aValue === null && bValue === null) return 0;
-        if (aValue === null) return field.nullsLast ? 1 : -1;
-        if (bValue === null) return field.nullsLast ? -1 : 1;
+        
+        // Gdy tylko aValue jest null
+        if (aValue === null) {
+            // nullsLast = true: null ma być większe (na końcu), więc zwracamy 1
+            // nullsLast = false: null ma być mniejsze (na początku), więc zwracamy -1
+            // Potem mnożymy przez order, więc:
+            // ASC (order=1): nullsLast=true → 1*1=1 (null na końcu), nullsLast=false → -1*1=-1 (null na początku)
+            // DESC (order=-1): nullsLast=true → 1*-1=-1 (null na początku), nullsLast=false → -1*-1=1 (null na końcu)
+            return (nullsLast ? 1 : -1) * order;
+        }
+        
+        // Gdy tylko bValue jest null
+        if (bValue === null) {
+            return (nullsLast ? -1 : 1) * order;
+        }
 
         // Porównanie wartości w zależności od typu
         let comparison: number;
@@ -109,7 +125,6 @@ export const sortArray = <T,>(data: T[], index: Index<T>): T[] => {
 
         if (comparison === 0) return 0;
 
-        const order = field.order === 'desc' ? -1 : 1;
         return comparison * order;
     }
 
@@ -174,6 +189,7 @@ export function useSort<T>(
     const [cache, setCache] = React.useState<Record<string, T[] | null>>({});
 
     React.useEffect(() => {
+        console.debug("useSort: sorting data");
         if (!data || !indexes) {
             setSortedData(null);
             return;

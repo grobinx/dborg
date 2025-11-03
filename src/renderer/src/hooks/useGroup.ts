@@ -74,6 +74,7 @@ export const useGroup = <T,>(
     const [groupedData, setGroupedData] = React.useState<T[][] | null>(null);
 
     React.useEffect(() => {
+        console.debug("useGroup: grouping data");
         if (!data || !groups) {
             setGroupedData(null);
             return;

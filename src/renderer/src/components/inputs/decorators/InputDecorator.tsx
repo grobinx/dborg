@@ -371,7 +371,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         { bare: !indicator && !label && !restrictions && !description },
     );
 
-    const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
+    const changed = !disabled && JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefaultValue = JSON.stringify(value ?? defaultValue) === JSON.stringify(defaultValue);
 
     // Przygotuj adornments poza memo

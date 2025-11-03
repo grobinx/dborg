@@ -1,6 +1,6 @@
 import { Stack, styled, SxProps, Theme, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
-import React, { isValidElement, ReactNode, useMemo } from "react";
+import React from "react";
 import Code from "../Code";
 import ReactMarkdown from "react-markdown";
 
@@ -22,7 +22,7 @@ const StyledFormattedTextParagraph = styled('span', {
 }));
 
 export interface FormattedTextParagraphProps extends React.HTMLAttributes<HTMLSpanElement> {
-    children?: ReactNode;
+    children?: React.ReactNode;
 }
 
 const FormattedTextParagraph = React.memo<FormattedTextParagraphProps>((props) => {
@@ -45,7 +45,7 @@ interface FormattedTextElementProps extends React.ComponentProps<typeof ReactMar
 export const FormattedTextElement = React.memo<FormattedTextElementProps>((props) => {
     const theme = useTheme();
 
-    const components = useMemo(() => ({
+    const components = React.useMemo(() => ({
         p: (props) => <Typography fontSize="inherit" lineHeight="inherit" {...props} />,
         h1: (props) => <Typography variant="h1" {...props} />,
         h2: (props) => <Typography variant="h2" {...props} />,
@@ -78,10 +78,10 @@ export interface FormattedTextProps {
 export const FormattedText = React.memo<FormattedTextProps>(({ text, style, sx }) => {
     const theme = useTheme();
 
-    const content = useMemo(() => {
+    const content = React.useMemo(() => {
         if (typeof text === 'string') {
             return <FormattedTextElement style={style} sx={sx}>{text}</FormattedTextElement>;
-        } else if (isValidElement(text)) {
+        } else if (React.isValidElement(text)) {
             return text;
         } else if (Array.isArray(text)) {
             return (
@@ -99,7 +99,7 @@ export const FormattedText = React.memo<FormattedTextProps>(({ text, style, sx }
                                 }
                                 return <FormattedTextElement key={`text-${index}`} style={style} sx={sx}>{item}</FormattedTextElement>;
                             }
-                            if (isValidElement(item)) {
+                            if (React.isValidElement(item)) {
                                 return item.key != null
                                     ? item
                                     : React.cloneElement(item, { key: `element-${index}` });
@@ -119,7 +119,7 @@ export const FormattedText = React.memo<FormattedTextProps>(({ text, style, sx }
                                         if (typeof subItem === 'string') {
                                             return <FormattedTextElement key={subIndex} style={style} sx={sx}>{subItem}</FormattedTextElement>;
                                         }
-                                        if (isValidElement(subItem)) {
+                                        if (React.isValidElement(subItem)) {
                                             return subItem.key != null
                                                 ? subItem
                                                 : React.cloneElement(subItem, { key: `element-${subIndex}` });

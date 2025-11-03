@@ -448,7 +448,7 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
         `${setting.type}-setting`,
     );
 
-    const changed = JSON.stringify(previousValue) !== JSON.stringify(value);
+    const changed = !disabled && JSON.stringify(previousValue) !== JSON.stringify(value);
     const isDefaultValue = JSON.stringify(defaultValue) === JSON.stringify(value);
 
     const handleMouseEnter = React.useCallback(() => setHover(true), []);

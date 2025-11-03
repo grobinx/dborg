@@ -140,6 +140,7 @@ export const useSearch = <T,>(
     const [searchedText, setSearchedText] = React.useState<string>(searchText ?? '');
 
     React.useEffect(() => {
+        console.debug("useSearch: searching data");
         if (!data) {
             setSearchedData(null);
             setSearchedText('');

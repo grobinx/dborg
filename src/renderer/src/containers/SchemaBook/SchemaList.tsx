@@ -219,6 +219,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [searchedData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
     const groupedData = useGroup(searchedData, schemaGroup);
     const displayData = React.useMemo(() => {
+        console.debug("SchemaList: preparing display data");
         if (!groupList) {
             return searchedData;
         }
