@@ -1349,6 +1349,7 @@ export const DataGrid = <T extends object>({
                         const row = filteredDataState[absoluteRowIndex];
                         const isRowActive = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
+                        let columnLeft = columnsState.columnLeft(startColumn);
 
                         return (
                             <StyledRow
@@ -1419,7 +1420,7 @@ export const DataGrid = <T extends object>({
                                         styleDataType = "error";
                                     }
 
-                                    return (
+                                    const result = (
                                         <StyledCell
                                             key={localColIndex}
                                             data-r={absoluteRowIndex} // potrzebne do delegacji
@@ -1436,12 +1437,16 @@ export const DataGrid = <T extends object>({
                                             )}
                                             style={{
                                                 width: col.width || 150,
-                                                left: columnsState.columnLeft(absoluteColIndex),
+                                                left: columnLeft,
                                             }}
                                         >
                                             {formattedValue}
                                         </StyledCell>
                                     );
+
+                                    columnLeft += col.width || 150;
+
+                                    return result;
                                 })}
                             </StyledRow>
                         );

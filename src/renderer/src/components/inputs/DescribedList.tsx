@@ -84,9 +84,9 @@ const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: '
 }));
 const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({
 }));
-const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ theme }) => ({
+const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ }) => ({
 }));
-const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ theme }) => ({
+const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ }) => ({
 }));
 
 export function DescribedList<T = any>(props: DescribedListProps<T>) {
