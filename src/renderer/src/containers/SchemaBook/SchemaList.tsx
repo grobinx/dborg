@@ -20,7 +20,7 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
-import { useSearch } from "@renderer/hooks/useSearch";
+import { searchArray, useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
@@ -217,10 +217,9 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [data, setData] = React.useState<Schema[] | null>(null);
     const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [searchedData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
-    const groupedData = useGroup(searchedData, schemaGroup);
+    const groupedData = useGroup(sortedData, schemaGroup);
     const displayData = React.useMemo(() => {
-        console.debug("SchemaList: preparing display data");
-        if (!groupList) {
+        if (!groupList || !searchedData) {
             return searchedData;
         }
         const resultData: (Schema | GroupHeader)[] = [];
@@ -255,6 +254,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const searchRef = React.useRef<HTMLInputElement>(null);
 
     console.count("SchemaList render");
+    //console.log('initialized', initialized, 'schemas', schemas?.length, 'data', data?.length, 'sortedData', sortedData?.length, 'searchedData', searchedData?.length, 'displayData', displayData?.length);
 
     const t_connectionSchema = t("connection-profiles", "Connection profiles");
 
@@ -411,10 +411,13 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [sortList]);
 
     React.useEffect(() => {
+        if (!initialized) {
+            return;
+        }
         connectionStatus(schemas).then((data) => {
             setData(data);
         });
-    }, [schemas, sessions]);
+    }, [initialized, schemas, sessions]);
 
     const handleDelete = async (id: string) => {
         setDeleting((prev) => [...prev, id]);
@@ -848,6 +851,11 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                             }
                             return renderProfile(item);
                         }}
+                        renderEmpty={() => {
+                            return (
+                                <Typography>{t("no-profiles-found", "No profiles found.")}</Typography>
+                            )
+                        }}
                         isSelected={item => isSchema(item) && item.sch_id === selectedItem}
                         isFocused={item => isSchema(item) && item.sch_id === selectedItem}
                         getItemId={item => isSchema(item) ? item.sch_id : `group-${item.title}`}
@@ -855,7 +863,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         onKeyDown={handleSearchKeyDown}
                     />
                 }
-                {!initialized && <Typography>Loading data...</Typography>}
+                {(!initialized || !displayData) && <Typography>Loading data...</Typography>}
             </SchemaListContent>
         </SchemaListContainer>
     );

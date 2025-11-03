@@ -4,8 +4,6 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string, mode: "light" | "dark" = "light"): ThemeOptions => {
     const rootTheme = createTheme({ palette: { mode } });
 
-    console.log(mode);
-
     // Kolory dla light i dark
     const scrollbarColors =
         mode === "dark"

@@ -138,12 +138,21 @@ export const useSearch = <T,>(
     const theme = useTheme();
     const [searchedData, setSearchedData] = React.useState<T[] | null>(data);
     const [searchedText, setSearchedText] = React.useState<string>(searchText ?? '');
+    const [firstRun, setFirstRun] = React.useState<boolean>(true);
 
     React.useEffect(() => {
         console.debug("useSearch: searching data");
         if (!data) {
             setSearchedData(null);
             setSearchedText('');
+            return;
+        }
+
+        if (firstRun) {
+            setFirstRun(false);
+            const results = searchArray(data, fields, searchText, options);
+            setSearchedData(results);
+            setSearchedText(searchText ?? '');
             return;
         }
 
