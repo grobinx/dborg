@@ -55,81 +55,12 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
 
 // Fabryki styled komponentów zależne od componentName (na wzór BaseButton)
 const createStyledBaseListItem = (componentName: string) => {
-    return styled('li', { name: componentName, slot: 'item' })(({ theme }) => ({
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        transition: "all 0.2s ease-in-out",
-        alignContent: 'center',
-        alignItems: 'center',
-        "&.size-small": { ...listItemSizeProperties.small, padding: 0 },
-        "&.size-medium": { ...listItemSizeProperties.medium, padding: 0 },
-        "&.size-large": { ...listItemSizeProperties.large, padding: 0 },
-        '&.size-default': { padding: 0 },
-        outline: '1px solid transparent',
-        outlineOffset: -1,
-        ...themeColors.reduce((acc, color) => {
-            acc[`&.color-${color}`] = {
-                color: theme.palette.text.primary,
-                '&.selected': {
-                    backgroundColor: alpha(theme.palette[color].main, 0.2),
-                },
-                "&.focused": {
-                    outlineColor: theme.palette[color].main,
-                },
-                "&:hover:not(.header)": {
-                    backgroundColor: alpha(theme.palette[color].main, 0.1),
-                    '&.selected': {
-                        backgroundColor: alpha(theme.palette[color].main, 0.3),
-                    },
-                },
-                "&.header": {
-                    backgroundColor: theme.palette[color].main,
-                    color: theme.palette[color].contrastText,
-                },
-            };
-            return acc;
-        }, {} as Record<string, any>),
-        '&.color-default': {
-            '&.selected': {
-                backgroundColor: theme.palette.action.selected,
-            },
-            '&.focused': {
-                outlineColor: theme.palette.action.focus,
-            },
-            '&:hover:not(.header)': {
-                backgroundColor: theme.palette.action.hover,
-                '&.selected': {
-                    backgroundColor: blendColors(theme.palette.action.selected, theme.palette.action.hover),
-                },
-            },
-            "&.header": {
-                backgroundColor: theme.palette.background.header,
-                color: theme.palette.text.primary,
-            },
-        },
-        '&.header': {
-            cursor: 'default',
-            '.sticky &': {
-                position: 'sticky',
-                top: 0,
-                zIndex: 1,
-            }
-        },
+    return styled('li', { name: componentName, slot: 'item' })(({ }) => ({
     }));
 };
 
 const createStyledBaseList = (componentName: string) => {
-    return styled('ul', { name: componentName, slot: 'root' })(() => ({
-        outline: 'none',
-        listStyle: 'none',
-        margin: 0,
-        padding: 0,
-        overflow: 'auto',
-        width: '100%',
-        height: '100%',
-        flex: 1,
+    return styled('ul', { name: componentName, slot: 'root' })(({ }) => ({
     }));
 };
 

@@ -31,6 +31,7 @@ import { ShortcutLayout } from "./default/Shortcut";
 import { UnboundBadgeLayout } from "./default/UnboundBadge";
 import { ButtonGroupLayout } from "./default/ButtonGroup";
 import { TreeLayout } from "./default/Tree";
+import { DescribedListLayout } from "./default/DescribedList";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -335,6 +336,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             Shortcut: ShortcutLayout(palette, root),
             ButtonGroup: ButtonGroupLayout(palette, root),
             Tree: TreeLayout(palette, root),
+            DescribedList: DescribedListLayout(palette, root),
         }
     }
 };

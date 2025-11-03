@@ -1,6 +1,8 @@
-import { Palette, ThemeOptions } from "@mui/material";
+import { alpha, Palette, ThemeOptions } from "@mui/material";
 import zIndex from "@mui/material/styles/zIndex";
 import { SchemaListComponent } from "@renderer/themes/theme.d/SchemaList";
+import { themeColors } from "@renderer/types/colors";
+import { blendColors } from "@renderer/utils/colors";
 
 export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaListComponent => {
     return {
@@ -30,9 +32,26 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
             root: {
                 display: 'flex',
                 flexDirection: 'column',
+                outline: 'none',
+                listStyle: 'none',
+                margin: 0,
+                padding: 0,
+                overflow: 'auto',
+                width: '100%',
+                height: '100%',
+                flex: 1,
                 gap: 4,
             },
             item: {
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'row',
+                width: '100%',
+                transition: "all 0.2s ease-in-out",
+                alignContent: 'center',
+                alignItems: 'center',
+                outline: '1px solid transparent',
+                outlineOffset: -1,
                 '&.profile': {
                     padding: "4px 8px",
                 },
@@ -42,7 +61,43 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                     top: 0,
                     zIndex: 100,
                     backgroundColor: palette.background.paper,
-                }
+                    color: palette.text.secondary,
+                },
+                ...themeColors.reduce((acc, color) => {
+                    acc[`&.color-${color}`] = {
+                        color: palette.text.primary,
+                        '&.selected': {
+                            backgroundColor: alpha(palette[color].main, 0.2),
+                        },
+                        "&.focused": {
+                            outlineColor: palette[color].main,
+                        },
+                        "&:hover:not(.header)": {
+                            backgroundColor: alpha(palette[color].main, 0.1),
+                            '&.selected': {
+                                backgroundColor: blendColors(
+                                    alpha(palette[color].main, 0.2), 
+                                    alpha(palette[color].main, 0.1)
+                                )
+                            },
+                        },
+                    };
+                    return acc;
+                }, {} as Record<string, any>),
+                '&.color-default': {
+                    '&.selected': {
+                        backgroundColor: palette.action.selected,
+                    },
+                    '&.focused': {
+                        outlineColor: palette.action.focus,
+                    },
+                    '&:hover:not(.header)': {
+                        backgroundColor: palette.action.hover,
+                        '&.selected': {
+                            backgroundColor: blendColors(palette.action.selected, palette.action.hover),
+                        },
+                    },
+                },
             },
             driverIcon: {
                 display: 'flex',
@@ -119,6 +174,9 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 fontSize: "0.9rem",
                 fontWeight: 400,
                 gap: 8,
+                '& .last-selected, & .db-version, & .group-name': {
+                    color: palette.text.secondary,
+                }
             }
         }
     }

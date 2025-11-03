@@ -4,7 +4,6 @@ import MenuBar from "./MenuBar";
 import SideBar from "./SideBar";
 import StatusBar from "./StatusBar";
 import '@renderer/components/ToolPanels/QueryHistoryStatusButton';
-import { Size } from "electron";
 import { Placement } from './SideBar/ContainerButton';
 import { useSetting } from '@renderer/contexts/SettingsContext';
 import TabsPanel from '../components/TabsPanel/TabsPanel';

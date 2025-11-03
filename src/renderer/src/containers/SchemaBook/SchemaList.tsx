@@ -4,7 +4,7 @@ import {
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import React from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { DateTime } from "luxon";
@@ -411,13 +411,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [sortList]);
 
     React.useEffect(() => {
-        if (!initialized) {
-            return;
-        }
         connectionStatus(schemas).then((data) => {
             setData(data);
         });
-    }, [initialized, schemas, sessions]);
+    }, [schemas, sessions]);
 
     const handleDelete = async (id: string) => {
         setDeleting((prev) => [...prev, id]);
@@ -579,16 +576,22 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         return (
             <SchemaListSecondaryText className="SchemaList-secondaryText">
                 {!groupList && (
-                    <span key="group" className="group">
-                        {t("group", "Group: {{group}}", { group: groupText })}
+                    <span className="group-name">
+                        <Trans i18nKey="profile-group-name" values={{ group: groupText }}>
+                            Group: <strong>{groupText}</strong>
+                        </Trans>
                     </span>
                 )}
-                <span key="lastSelected" className="last-selected">
-                    {t("schema-last-selected", "Selected: {{lastSelected}}", { lastSelected: lastSelectedText })}
+                <span className="last-selected">
+                    <Trans i18nKey="profile-last-selected" values={{ lastSelected: lastSelectedText }}>
+                        Selected: <strong>{lastSelectedText}</strong>
+                    </Trans>
                 </span>
                 {record.sch_db_version && (
-                    <span key="dbVersion" className="db-version">
-                        {t("schema-db-version", "Version: {{version}}", { version: record.sch_db_version })}
+                    <span className="db-version">
+                        <Trans i18nKey="profile-db-version" values={{ version: record.sch_db_version }}>
+                            Version: <strong>{record.sch_db_version}</strong>
+                        </Trans>
                     </span>
                 )}
             </SchemaListSecondaryText>

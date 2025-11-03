@@ -42,7 +42,7 @@ function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
  */
 type DescriptionPosition = 'header' | 'footer' | 'sidebar' | 'tooltip' | 'none';
 
-interface CompactListProps<T = any> {
+interface DescribedListProps<T = any> {
     ref?: React.Ref<HTMLUListElement>;
 
     options: AnyOption<T>[];
@@ -81,59 +81,15 @@ interface CompactListProps<T = any> {
 }
 
 const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({
-    display: 'flex',
-    flexDirection: 'row',
-    fontWeight: 'bold',
-    '&.size-small': { padding: listItemSizeProperties.small.padding },
-    '&.size-medium': { padding: listItemSizeProperties.medium.padding },
-    '&.size-large': { padding: listItemSizeProperties.large.padding },
-    '&.size-default': { padding: '2px 4px' },
 }));
 const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    width: '100%',
-    '&.size-small': { padding: listItemSizeProperties.small.padding },
-    '&.size-medium': { padding: listItemSizeProperties.medium.padding },
-    '&.size-large': { padding: listItemSizeProperties.large.padding },
-    '&.size-default': { padding: '2px 4px' },
 }));
 const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ theme }) => ({
-    display: 'flex',
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    userSelect: 'none',
-    '&.sidebar': {
-        flexDirection: 'row',
-    },
-    ...themeColors.reduce((acc, color) => {
-        acc[`&.color-${color}`] = {
-            backgroundColor: alpha(theme.palette[color].main, 0.1),
-        };
-        return acc;
-    }, {}),
-    '&.color-default': {
-        backgroundColor: "transparent",
-    },
 }));
 const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ theme }) => ({
-    display: 'flex',
-    flex: '0 0 auto',
-    "&.size-small": { fontSize: listItemSizeProperties.small.fontSize, padding: listItemSizeProperties.small.padding },
-    "&.size-medium": { fontSize: listItemSizeProperties.medium.fontSize, padding: listItemSizeProperties.medium.padding },
-    "&.size-large": { fontSize: listItemSizeProperties.large.fontSize, padding: listItemSizeProperties.large.padding },
-    '&.size-default': { padding: '2px 4px' },
-    '&.footer': {
-        borderTop: `1px solid ${theme.palette.divider}`,
-    },
-    '&.header': {
-        borderBottom: `1px solid ${theme.palette.divider}`,
-    },
 }));
 
-export function DescribedList<T = any>(props: CompactListProps<T>) {
+export function DescribedList<T = any>(props: DescribedListProps<T>) {
     const {
         id,
         className,

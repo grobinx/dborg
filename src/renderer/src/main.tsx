@@ -19,7 +19,6 @@ import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 import { ConsoleProvider } from './contexts/ConsoleContext';
 import { SchemaProvider } from './contexts/SchemaContext';
 import RectangleDoor from './effects/RectangleDoor';
-import { init } from 'i18next';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -29,7 +28,7 @@ const AppWrapper: React.FC = () => {
         setTimeout(() => {
             // Ustawienie pauzy na false po załadowaniu ustawień
             setInitStep(2);
-        }, 3000);
+        }, 3200);
     }, [settingsContext?.isLoading]);
 
     console.count("AppWrapper Render");
@@ -43,7 +42,9 @@ const AppWrapper: React.FC = () => {
                     //baseColor='#005500'
                     onAnimationEnd={() => {
                         if (initStep === 2) {
-                            setInitStep(3);
+                            setTimeout(() => {
+                                setInitStep(3);
+                            }, 0);
                         }
                         else if (initStep === 3) {
                             setTimeout(() => {
