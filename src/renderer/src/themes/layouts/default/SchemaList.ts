@@ -50,7 +50,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 transition: "all 0.2s ease-in-out",
                 alignContent: 'center',
                 alignItems: 'center',
-                outline: '1px solid transparent',
+                outline: '2px solid transparent',
                 outlineOffset: -1,
                 '&.profile': {
                     padding: "4px 8px",
@@ -103,7 +103,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                width: '5rem',
+                width: '4.5rem',
                 '& .icon': {
                     display: 'flex',
                     '& img': {
@@ -119,7 +119,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                width: '3rem',
+                width: '4rem',
                 fontSize: '1.4rem',
             },
             actionButtons: {

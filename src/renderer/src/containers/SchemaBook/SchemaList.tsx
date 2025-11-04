@@ -411,13 +411,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     }, [sortList]);
 
     React.useEffect(() => {
-        if (!initialized) {
-            return;
-        }
         connectionStatus(schemas).then((data) => {
             setData(data);
         });
-    }, [initialized, schemas, sessions]);
+    }, [schemas, sessions]);
 
     const handleDelete = async (id: string) => {
         setDeleting((prev) => [...prev, id]);
