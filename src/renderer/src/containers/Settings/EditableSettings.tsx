@@ -179,7 +179,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
     const [selected, setSelected, handleSearchKeyDown] = useKeyboardNavigation({
         items: flatSettings,
         getId: createKey,
-        onSelect: React.useCallback((item: SettingTypeUnion) => {
+        onEnter: React.useCallback((item: SettingTypeUnion) => {
             if (settingsContentRef.current) {
                 const element = settingsContentRef.current?.querySelector(`[data-setting-key="${createKey(item)}"] :first-child`);
                 if (element) {

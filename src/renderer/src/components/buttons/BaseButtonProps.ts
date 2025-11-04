@@ -59,6 +59,12 @@ export interface BaseButtonProps {
     dense?: boolean;
 
     /**
+     * Czy przycisk jest płaski (bez tła)
+     * @default false
+     */
+    flat?: boolean;
+
+    /**
      * Kolor motywu
      * @default "primary"
      */

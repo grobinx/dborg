@@ -134,7 +134,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
         selected,
         size = 'medium',
         color = 'main',
-        value, toggle, defaultValue, showLoadingIndicator, dense,
+        value, toggle, defaultValue, showLoadingIndicator, dense, flat,
         onFocus, onBlur, onClick, onMouseDown, onMouseUp, onMouseEnter, onMouseLeave, onKeyDown, onKeyUp, onChange,
         width, height, style,
         ...otherProps
@@ -162,6 +162,7 @@ export const BaseButton: React.FC<BaseButtonOwnProps> = (props) => {
             `color-${color}`,
             `type-${type}`,
             dense && 'dense',
+            flat && 'flat',
             disabled && 'disabled',
             loading && 'loading',
             selected && 'selected',

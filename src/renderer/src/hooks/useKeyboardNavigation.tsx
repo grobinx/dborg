@@ -14,7 +14,7 @@ export interface KeyBindingHandler<T> {
 export interface UseKeyboardNavigationProps<T, V = string, A = any> {
     items: T[];
     getId: (item: T) => V | null;
-    onSelect?: (item: T) => void;
+    onEnter?: (item: T) => void;
     keyBindings?: KeyBindingHandler<T>[];
     actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
     getContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
@@ -23,7 +23,7 @@ export interface UseKeyboardNavigationProps<T, V = string, A = any> {
 export function useKeyboardNavigation<T, V = string, A = any>({
     items,
     getId,
-    onSelect,
+    onEnter,
     keyBindings = [],
     actionManager,
     getContext,
@@ -61,8 +61,8 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                     }
                 }
                 event.preventDefault();
-            } else if (onSelect && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
-                onSelect(items[currentIndex]);
+            } else if (onEnter && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
+                onEnter(items[currentIndex]);
                 event.preventDefault();
                 return;
             } else if (currentIndex >= 0) {
@@ -79,7 +79,7 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                 actionManager.executeActionByKeybinding(event, getContext());
             }
         },
-        [items, selectedId, getId, onSelect, keyBindings]
+        [items, selectedId, getId, onEnter, keyBindings]
     );
 
     // Zapamiętaj ostatnio wybrany i istniejący indeks

@@ -60,7 +60,9 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
 
                 ...themeColors.reduce((acc, color) => {
                     acc[`&.color-${color}`] = {
-                        backgroundColor: alpha(palette[color].main, 0.2),
+                        '&:not(.flat)': {
+                            backgroundColor: alpha(palette[color].main, 0.2),
+                        },
                         color: palette.text.primary,
                         //outline: `1px solid ${palette[color].main}`,
                         //outlineOffset: "-1px",
