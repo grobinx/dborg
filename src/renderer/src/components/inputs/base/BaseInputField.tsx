@@ -361,7 +361,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                                     'aria-disabled': disabled,
                                     disabled: disabled,
                                     onFocus: (e: React.FocusEvent<HTMLElement>) => {
-                                        console.log("FOCUS");
                                         handleFocus(e);
                                         (input as React.ReactElement<any>).props.onFocus?.(e);
                                     },
