@@ -137,7 +137,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
             input={(
                 <div
                     ref={inputRef}
-                    style={{ width: '100%', display: 'inherit', flexDirection: 'inherit', gap: 'inherit', outline: 'none' }}
+                    style={{ width: '100%', height: '100%', display: 'inherit', flexDirection: 'inherit', gap: 'inherit', outline: 'none' }}
                 >
                     <SelectValueRenderer />
                 </div>
