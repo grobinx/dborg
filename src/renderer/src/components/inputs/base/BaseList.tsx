@@ -49,6 +49,7 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
     className?: string;
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
+    tabIndex?: number;
 
     [key: `data-${string}`]: any;
 }
@@ -75,6 +76,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         disabled,
         items,
         dense,
+        tabIndex,
 
         isSelected,
         isFocused,
@@ -133,7 +135,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                 listFocused && 'focused',
                 classes
             )}
-            tabIndex={disabled ? -1 : 0}
+            tabIndex={disabled ? -1 : (tabIndex ?? 0)}
             onKeyDown={onKeyDown}
             onKeyUp={onKeyUp}
             onFocus={(e) => {

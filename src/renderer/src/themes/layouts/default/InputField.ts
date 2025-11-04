@@ -119,7 +119,7 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     gap: paddingLarge,
                 },
                 outline: "none",
-                '&.type-boolean': {
+                '& .type-boolean': {
                     alignItems: "flex-start",
                     padding: 2,
                     '.focused & .checkbox-icon': {

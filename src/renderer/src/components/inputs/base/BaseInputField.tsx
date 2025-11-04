@@ -302,7 +302,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             )}
             ref={ref}
             onMouseDown={() => {
-                if (!input && !disabled) { // ✅ Already handled
+                if (!input && !disabled) { 
                     textInputRef.current?.focus();
                 }
             }}
@@ -339,8 +339,6 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             "InputField-customInput",
                             classes,
                         )}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
                         onKeyDown={inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>}
                         onKeyUp={inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement>}
                         onMouseDown={inputProps?.onMouseDown as React.MouseEventHandler<HTMLDivElement>}
@@ -351,14 +349,27 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             inputProps?.onClick?.(e);
                             onClick?.(e);
                         }}
-                        tabIndex={disabled ? -1 : 0}
                         aria-disabled={disabled}
                         disabled={disabled}
                     >
                         {React.isValidElement(input)
                             ? React.cloneElement(
                                 input as React.ReactElement<any>,
-                                { className: clsx(classes, (input as React.ReactElement<any>).props.className) }
+                                {
+                                    className: clsx(classes, (input as React.ReactElement<any>).props.className),
+                                    tabIndex: disabled ? -1 : (input as React.ReactElement<any>).props.tabIndex ?? 0,
+                                    'aria-disabled': disabled,
+                                    disabled: disabled,
+                                    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+                                        console.log("FOCUS");
+                                        handleFocus(e);
+                                        (input as React.ReactElement<any>).props.onFocus?.(e);
+                                    },
+                                    onBlur: (e: React.FocusEvent<HTMLElement>) => {
+                                        handleBlur(e);
+                                        (input as React.ReactElement<any>).props.onBlur?.(e);
+                                    }
+                                }
                             )
                             : input}
                     </StyledBaseInputFieldCustomInput>

@@ -33,15 +33,15 @@ export interface HeaderOption extends LabeledOption {
 // Unia typów dla wszystkich możliwych opcji
 export type AnyOption<T = any> = Option<T> | HeaderOption | DividerOption;
 
-function isOption(option: AnyOption<any>): option is Option<any> {
+export function isOption(option: AnyOption<any>): option is Option<any> {
     return 'label' in option && 'value' in option;
 }
 
-function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
+export function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
     return 'label' in option && !('value' in option);
 }
 
-function isDividerOption(option: AnyOption<any>): option is DividerOption {
+export function isDividerOption(option: AnyOption<any>): option is DividerOption {
     return !('label' in option) && !('value' in option);
 }
 
@@ -91,6 +91,7 @@ interface DescribedListProps<T = any> {
     className?: string;
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
+    tabIndex?: number;
 }
 
 const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({}));

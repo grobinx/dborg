@@ -20,6 +20,7 @@ import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
 import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
+import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -446,6 +447,59 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="error"
+                                    options={[
+                                        {
+                                            value: "red",
+                                            label: [["Red", <ColorBox color="red" />]],
+                                            description: [
+                                                "The color of passion and energy.",
+                                                "* Symbolizes love and desire.",
+                                                "* Often associated with danger and warning.",
+                                                "* Used in branding to grab attention.",
+                                                "* Represents courage and strength.",
+                                                "* Can evoke strong emotions."
+                                            ]
+                                        },
+                                        {
+                                            value: "green",
+                                            label: [["Green", <ColorBox color="green" />]],
+                                            description: "The color of nature"
+                                        },
+                                        {
+                                            value: "blue",
+                                            label: [["Blue", <ColorBox color="blue" />]],
+                                        },
+                                        {
+                                            value: "yellow",
+                                            label: [["Yellow", <ColorBox color="yellow" />]],
+                                            description: "The color of sunshine"
+                                        },
+                                    ]}
+                                />
+                            </InputDecorator>
+                        ), [size, selectValues[size], selected])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="newSelectFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        NewSelectField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                selected={selected === size}
+                                onClick={() => setSelected(size)}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <NewSelectField
+                                    key={size}
+                                    placeholder={"Select " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                    size={size}
+                                    value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="info"
                                     options={[
                                         {
                                             value: "red",

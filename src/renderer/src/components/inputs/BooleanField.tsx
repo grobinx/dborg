@@ -58,18 +58,23 @@ export const BooleanField: React.FC<BooleanFieldProps> = (props) => {
             onConvertToInput={(value: boolean | undefined | null) => {
                 return value !== undefined && value !== null ? String(value) : '';
             }}
-            input={[
-                <span key="icon" className="checkbox-icon">
-                    {value === true ? (
-                        <theme.icons.CheckBoxChecked color={color} />
-                    ) : value === null ? (
-                        <theme.icons.CheckBoxIndeterminate color={color} />
-                    ) : (
-                        <theme.icons.CheckBoxBlank color={color} />
-                    )}
-                </span>,
-                <FormattedText key="label" text={label} />
-            ]}
+            input={
+                <div 
+                    style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', outline: 'none' }}
+                    className="type-boolean"
+                >
+                    <span key="icon" className="checkbox-icon">
+                        {value === true ? (
+                            <theme.icons.CheckBoxChecked color={color} />
+                        ) : value === null ? (
+                            <theme.icons.CheckBoxIndeterminate color={color} />
+                        ) : (
+                            <theme.icons.CheckBoxBlank color={color} />
+                        )}
+                    </span>
+                    <FormattedText key="label" text={label} />
+                </div>
+            }
             {...other}
         />
     )
