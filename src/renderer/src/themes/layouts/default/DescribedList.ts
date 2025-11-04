@@ -43,7 +43,10 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                         "&:hover:not(.header)": {
                             backgroundColor: alpha(palette[color].main, 0.1),
                             '&.selected': {
-                                backgroundColor: alpha(palette[color].main, 0.3),
+                                backgroundColor: blendColors(
+                                    alpha(palette[color].main, 0.3), 
+                                    alpha(palette[color].main, 0.2)
+                                ),
                             },
                         },
                         "&.header": {
@@ -78,6 +81,13 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                         top: 0,
                         zIndex: 1,
                     }
+                },
+                '&.divider, &.divider.dense': {
+                    padding: 0,
+                    borderTop: `1px solid ${palette.divider}`,
+                    margin: '2px 0',
+                    height: 'auto',
+                    minHeight: 0,
                 },
             },
             header: {

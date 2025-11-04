@@ -10,26 +10,39 @@ import React, { useRef, useState } from "react";
 import { BaseList } from "./base/BaseList";
 
 interface BaseOption {
+}
+
+/**
+ * Opcja dzielnika (separatora)
+ */
+export interface DividerOption extends BaseOption {
+}
+
+interface LabeledOption extends BaseOption {
     label: FormattedContentItem;
 }
 
-export interface Option<T = any> extends BaseOption {
+export interface Option<T = any> extends LabeledOption {
     value: T;
     description?: FormattedContent;
 }
 
-export interface HeaderOption extends BaseOption {
+export interface HeaderOption extends LabeledOption {
 }
 
 // Unia typów dla wszystkich możliwych opcji
-export type AnyOption<T = any> = Option<T> | HeaderOption;
+export type AnyOption<T = any> = Option<T> | HeaderOption | DividerOption;
 
 function isOption(option: AnyOption<any>): option is Option<any> {
-    return 'value' in option && option.value !== undefined;
+    return 'label' in option && 'value' in option;
 }
 
 function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
-    return !('value' in option) || option.value === undefined;
+    return 'label' in option && !('value' in option);
+}
+
+function isDividerOption(option: AnyOption<any>): option is DividerOption {
+    return !('label' in option) && !('value' in option);
 }
 
 /**
@@ -80,14 +93,10 @@ interface DescribedListProps<T = any> {
     style?: React.CSSProperties;
 }
 
-const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({
-}));
-const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({
-}));
-const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ }) => ({
-}));
-const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ }) => ({
-}));
+const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({}));
+const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({}));
+const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ }) => ({}));
+const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ }) => ({}));
 
 export function DescribedList<T = any>(props: DescribedListProps<T>) {
     const {
@@ -231,11 +240,15 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
                 onItemDoubleClick={(item, e) => isOption(item) && onItemDoubleClick?.(item.value, e)}
                 onItemContextMenu={(item, e) => isOption(item) && onItemContextMenu?.(item.value, e)}
                 renderItem={(option, state) => {
-                    return isHeaderOption(option)
-                        ? renderHeader(option)
-                        : renderOption(option, state);
+                    if (isOption(option)) {
+                        return renderOption(option, state);
+                    }
+                    if (isHeaderOption(option)) {
+                        return renderHeader(option);
+                    }
+                    return null;
                 }}
-                getItemClassName={(item) => isHeaderOption(item) ? 'header' : 'option'}
+                getItemClassName={(item) => isOption(item) ? 'option' : isHeaderOption(item) ? 'header' : 'divider'}
                 getItemId={(item) => isOption(item) ? item.value : undefined}
                 renderEmpty={() => noOptionsText ? (
                     <FormattedText text={noOptionsText} />

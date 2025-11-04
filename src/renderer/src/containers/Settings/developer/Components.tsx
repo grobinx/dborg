@@ -99,6 +99,9 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                     label: `Header ${headerCounter++}`,
                 });
             }
+            if (Math.random() < 0.05) {
+                arr.push({});
+            }
             arr.push({
                 value: `option-${i + 1}`,
                 label: Math.random() < 0.1 ? [[`Option ${i}`, <small>{extraLabels[Math.floor(Math.random() * extraLabels.length)]}</small>]] : `Option ${i + 1}`,
