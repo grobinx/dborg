@@ -116,7 +116,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
         dense,
 
         descriptionBehavior = 'autoHide',
-        descriptionSidebarWidth = '35%',
+        descriptionSidebarWidth = 'auto',
 
         onItemClick,
         onItemDoubleClick,

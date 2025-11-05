@@ -172,7 +172,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                         anchorEl={anchorRef.current}
                         style={{
                             zIndex: 1300,
-                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
+                            //width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
                         }}
                         modifiers={[placementModifier]}
                     >
@@ -197,6 +197,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                                         }}
                                         style={{
                                             maxHeight: listHeight,
+                                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto"
                                         }}
                                         description={placement === 'bottom' ? 'footer' : 'header'}
                                         tabIndex={-1}

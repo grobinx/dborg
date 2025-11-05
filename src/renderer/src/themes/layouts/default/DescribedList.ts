@@ -127,6 +127,9 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                 '&.color-default': {
                     backgroundColor: "transparent",
                 },
+                '&.sidebar ul': {
+                    borderRight: `1px solid ${palette.divider}`,
+                },
             },
             description: {
                 display: 'flex',
