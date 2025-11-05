@@ -18,6 +18,7 @@ export interface UseKeyboardNavigationProps<T, V = string, A = any> {
     keyBindings?: KeyBindingHandler<T>[];
     actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
     getContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
+    rollover?: boolean; // Czy nawigacja ma się zawijać (domyślnie false)
 }
 
 export function useKeyboardNavigation<T, V = string, A = any>({
@@ -27,6 +28,7 @@ export function useKeyboardNavigation<T, V = string, A = any>({
     keyBindings = [],
     actionManager,
     getContext,
+    rollover = false,
 }: UseKeyboardNavigationProps<T, V, A>) {
     const [selectedId, setSelectedId] = React.useState<V | null>(null);
     const itemsRef = React.useRef(items);
@@ -39,9 +41,12 @@ export function useKeyboardNavigation<T, V = string, A = any>({
             const currentIndex = items.findIndex(item => getId(item) === selectedId);
 
             if (isKeybindingMatch("ArrowDown", event)) {
-                // Szukaj następnego elementu z nie-nullowym id
                 for (let i = 1; i <= items.length; i++) {
-                    const candidate = items[(currentIndex + i) % items.length];
+                    const idx = rollover
+                        ? (currentIndex + i) % items.length
+                        : currentIndex + i;
+                    if (idx >= items.length) break;
+                    const candidate = items[idx];
                     const candidateId = getId(candidate);
                     if (candidateId !== null) {
                         setSelectedId(candidateId);
@@ -50,9 +55,11 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                 }
                 event.preventDefault();
             } else if (isKeybindingMatch("ArrowUp", event)) {
-                // Szukaj poprzedniego elementu z nie-nullowym id
                 for (let i = 1; i <= items.length; i++) {
-                    const idx = (currentIndex - i + items.length) % items.length;
+                    const idx = rollover
+                        ? (currentIndex - i + items.length) % items.length
+                        : currentIndex - i;
+                    if (idx < 0) break;
                     const candidate = items[idx];
                     const candidateId = getId(candidate);
                     if (candidateId !== null) {
