@@ -68,6 +68,26 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                     }
                 }
                 event.preventDefault();
+            } else if (isKeybindingMatch("Ctrl+Home", event)) {
+                for (let i = 0; i < items.length; i++) {
+                    const candidate = items[i];
+                    const candidateId = getId(candidate);
+                    if (candidateId !== null) {
+                        setSelectedId(candidateId);
+                        break;
+                    }
+                }
+                event.preventDefault();
+            } else if (isKeybindingMatch("Ctrl+End", event)) {
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const candidate = items[i];
+                    const candidateId = getId(candidate);
+                    if (candidateId !== null) {
+                        setSelectedId(candidateId);
+                        break;
+                    }
+                }
+                event.preventDefault();
             } else if (onEnter && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
                 onEnter(items[currentIndex]);
                 event.preventDefault();
@@ -78,6 +98,7 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                     const normalized = normalizeKeybinding(binding.key);
                     if (isKeybindingMatch(normalized, event)) {
                         binding.handler(items[currentIndex]);
+                        event.preventDefault();
                         return;
                     }
                 }

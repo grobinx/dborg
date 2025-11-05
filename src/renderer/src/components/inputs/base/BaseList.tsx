@@ -1,11 +1,8 @@
 import { Theme } from "@emotion/react";
-import { alpha, styled, SxProps } from "@mui/material";
-import { listItemSizeProperties } from "@renderer/themes/layouts/default/consts";
-import { ThemeColor, themeColors } from "@renderer/types/colors";
+import { styled, SxProps } from "@mui/material";
+import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
-import { blendColors } from "@renderer/utils/colors";
-import { current } from "immer";
 import React, { useRef, useState } from "react";
 
 interface BaseListProps<T = any> extends React.AriaAttributes {
@@ -155,7 +152,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
             {items.length === 0 && renderEmpty ? renderEmpty() :
                 items.map((item, index) => {
                     const selected = isSelected?.(item);
-                    const focused = listFocused && isFocused?.(item);
+                    const focused = isFocused?.(item);
                     const id = getItemId?.(item);
 
                     return (

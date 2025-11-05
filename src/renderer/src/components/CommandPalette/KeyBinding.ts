@@ -28,12 +28,10 @@ function sortModifiers(keys: string[]): string[] {
  * @returns [Ctrl+][Shift+][Alt+][Meta+]Key
  */
 export function normalizeKeybinding(keybinding: string): string {
-    // Rozdziel klawisze na części, usuwając spacje
     const parts = keybinding
-        .replace(/\s+/g, '')
-        .split('+');
+        .split('+')
+        .map(part => part.trim());
 
-    // Mapowanie nazw klawiszy na standardowe formy
     const keyMap: Record<string, string> = {
         control: 'Ctrl',
         ctrl: 'Ctrl',
@@ -48,16 +46,15 @@ export function normalizeKeybinding(keybinding: string): string {
         windows: 'Meta',
         os: 'Meta',
         '⌘': 'Meta',
+        space: ' ',
+        ' ': ' ',
     };
 
-    // Normalizuj każdą część
     const normalizedParts = parts.map((part) => keyMap[part.toLowerCase()] || part);
 
-    // Sortuj klawisze modyfikujące
     const modifiers = sortModifiers(normalizedParts.filter((key) => MODIFIERS_ORDER.includes(key)));
     const mainKey = normalizedParts.find((key) => !MODIFIERS_ORDER.includes(key));
 
-    // Połącz klawisze w standardowym formacie
     return [...modifiers, mainKey].filter(Boolean).join('+');
 }
 
@@ -83,14 +80,20 @@ export function splitKeybinding(keybinding: string): string[] {
  * @param event Obiekt zdarzenia klawiatury
  * @returns True, jeśli keybinding pasuje do zdarzenia
  */
+function keysEqual(a: string, b: string) {
+    return (
+        a.toLowerCase() === b.toLowerCase() ||
+        (a === ' ' && b.toLowerCase() === 'space') ||
+        (a.toLowerCase() === 'space' && b === ' ')
+    );
+}
+
 export function isKeybindingMatch(
     keybinding: string,
     event: KeyboardEvent
 ): boolean {
-    // Rozbij keybinding na części za pomocą splitKeybinding
     const parts = splitKeybinding(keybinding);
 
-    // Mapowanie klawiszy modyfikujących
     const modifiers = {
         Ctrl: event.ctrlKey,
         Shift: event.shiftKey,
@@ -98,29 +101,21 @@ export function isKeybindingMatch(
         Meta: event.metaKey,
     };
 
-    // Sprawdź klawisze modyfikujące
     for (const modifier of MODIFIERS_ORDER) {
         const hasModifier = parts.includes(modifier);
         if (hasModifier !== modifiers[modifier]) {
-            return false; // Klawisz modyfikujący nie pasuje
+            return false;
         }
     }
 
-    // Sprawdź główny klawisz
     const mainKey = parts.find((key) => !MODIFIERS_ORDER.includes(key));
     if (!mainKey) {
-        return false; // Brak głównego klawisza
+        return false;
     }
 
-    return mainKey.toLowerCase() === event.key.toLowerCase();
+    return keysEqual(mainKey, event.key);
 }
 
-/**
- * Konwertuje obiekt KeyboardEvent na keybinding w formacie string.
- * 
- * @param event Obiekt KeyboardEvent
- * @returns Keybinding w formacie [Ctrl+][Shift+][Alt+][Meta+]Key
- */
 export function keyboardEventToKeybinding(event: KeyboardEvent): string {
     const modifiers: string[] = [];
 
@@ -129,9 +124,8 @@ export function keyboardEventToKeybinding(event: KeyboardEvent): string {
     if (event.altKey) modifiers.push('Alt');
     if (event.metaKey) modifiers.push('Meta');
 
-    // Dodaj główny klawisz
-    const mainKey = event.key;
+    // Zamień spację na 'Space' dla czytelności
+    const mainKey = event.key === ' ' ? 'Space' : event.key;
 
-    // Połącz modyfikatory i główny klawisz w string
     return [...modifiers, mainKey].join('+');
 }

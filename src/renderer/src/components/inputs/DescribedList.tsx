@@ -8,6 +8,7 @@ import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
 import React, { useRef, useState } from "react";
 import { BaseList } from "./base/BaseList";
+import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 
 interface BaseOption {
 }
@@ -153,10 +154,10 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
 
     const defaultGetDescribedOption = (): Option<T> | null => {
         const hovered = valueToOption.get(hoveredValue);
-        if (hovered?.description) return hovered;
+        if (hoveredValue || hovered?.description) return hovered ?? null;
 
-        const foc = valueToOption.get(focusedItem ?? null);
-        if (foc?.description) return foc;
+        const foc = valueToOption.get(focusedItem);
+        if (foc?.description || foc) return foc ?? null;
 
         const firstSel = selected?.length ? valueToOption.get(selected[0] as T) : null;
         if (firstSel?.description) return firstSel;
@@ -171,7 +172,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
     const isSelected = (value: T) => Array.isArray(selected) && selected.some(v => Object.is(v, value));
     const isFocused = (value: T) => focusedItem != null && Object.is(focusedItem, value);
 
-    const renderHeader = (option: HeaderOption) => (
+    const renderHeader = React.useCallback((option: HeaderOption) => (
         <StyledDescribedListHeader
             className={clsx(
                 "DescribedList-header",
@@ -179,9 +180,9 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
             )}>
             <FormattedText text={option.label} />
         </StyledDescribedListHeader>
-    );
+    ), [classes]);
 
-    const renderOption = (option: Option<T>, { selected, focused }: { selected: boolean; focused: boolean }) => {
+    const renderOption = React.useCallback((option: Option<T>, { selected, focused }: { selected: boolean; focused: boolean }) => {
         const content = <FormattedText text={option.label} />;
 
         const wrapped = (effectiveDescription === 'tooltip' && option.description)
@@ -196,7 +197,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
             <StyledDescribedListOption
                 id={CSS.escape(String(option.value))}
                 className={clsx(
-                    "CompactList-option", 
+                    "DescribedList-option", 
                     classes, 
                     selected && "selected",
                     focused && "focused",
@@ -209,14 +210,22 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
                 {wrapped}
             </StyledDescribedListOption>
         );
-    };
+    }, [classes, effectiveDescription, anyHasDescription, disabled, classes]);
+
+    useScrollIntoView({ 
+        containerRef: listRef, 
+        targetId: focusedItem as string, 
+        stickyHeader: '.DescribedList-header',
+        scrollOptions: { behavior: 'auto' },
+        dependencies: [open] 
+    });
 
     return (
         <StyledDescribedListContainer
-            className={clsx('CompactList-container', effectiveDescription === 'sidebar' && 'sidebar', classes)}
+            className={clsx('DescribedList-container', effectiveDescription === 'sidebar' && 'sidebar', classes)}
         >
             {effectiveDescription === 'header' && describedOption?.description && (
-                <StyledDescribedListDescription className={clsx("CompactList-description", "header", classes)}>
+                <StyledDescribedListDescription className={clsx("DescribedList-description", "header", classes)}>
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
@@ -261,7 +270,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
             />
 
             {effectiveDescription === 'footer' && describedOption?.description && (
-                <StyledDescribedListDescription className={clsx("CompactList-description", "footer", classes)}>
+                <StyledDescribedListDescription className={clsx("DescribedList-description", "footer", classes)}>
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
@@ -270,7 +279,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
 
             {effectiveDescription === 'sidebar' && describedOption?.description && (
                 <StyledDescribedListDescription
-                    className={clsx("CompactList-description", "sidebar", classes)}
+                    className={clsx("DescribedList-description", "sidebar", classes)}
                     style={{ width: descriptionSidebarWidth, minWidth: 200, alignSelf: 'flex-start' }}
                 >
                     {describedOption?.description

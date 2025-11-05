@@ -6,6 +6,7 @@ import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { DescribedList, AnyOption, isOption } from './DescribedList';
+import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -13,30 +14,9 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     renderValue?: (selected: T) => React.ReactNode;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
-    options: AnyOption[];
+    options: AnyOption<T>[];
     listHeight?: number;
 }
-
-const StyledMenuItem = styled(MenuItem, {
-    name: "SelectField",
-    slot: "MenuItem",
-    shouldForwardProp: (prop) => prop !== 'componentSize',
-})<{ componentSize?: Size }>(
-    ({ componentSize = 'medium' }) => {
-        const sizeProps = inputSizeProperties[componentSize];
-        return {
-            display: 'flex',
-            alignItems: 'center',
-            gap: sizeProps.gap,
-            fontSize: sizeProps.fontSize,
-            padding: sizeProps.padding,
-            minHeight: sizeProps.height,
-            '&.Mui-dense': {
-                ...sizeProps['&.dense'],
-            }
-        };
-    }
-);
 
 /**
  * 
@@ -66,6 +46,9 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
     const inputRef = React.useRef<HTMLDivElement>(null);
     const theme = useTheme();
     const [placement, setPlacement] = React.useState<string | undefined>(undefined);
+    const multiple = Array.isArray(value);
+
+    const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
 
     const placementModifier = React.useMemo(() => ({
         name: "updatePlacementState",
@@ -87,10 +70,49 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
         setOpen(false);
     };
 
+    const handleItemClick = React.useCallback((val: AnyOption<T>) => {
+        onChange?.(val);
+        if (!multiple) {
+            setOpen(false);
+        }
+    }, [onChange]);
+
+    const [focusedItem, setFocusedItem, listKeyDownHandler] = useKeyboardNavigation({
+        items: options,
+        getId: (item) => isOption(item) ? item.value : null,
+        onEnter: (item) => isOption(item) && handleItemClick(item.value),
+        keyBindings: [
+            { key: 'Space', handler: (item) => isOption(item) && handleItemClick(item.value) }
+        ]
+    });
+
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLElement>) => {
+        if (!open) {
+            if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+                e.preventDefault();
+                handleToggle();
+            }
+        } else {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setOpen(false);
+            }
+            else {
+                listKeyDownHandler(e);
+            }
+        }
+        inputProps?.onKeyDown?.(e);
+    }, [inputProps, open, listKeyDownHandler]);
+
+    const wasOpen = React.useRef(false);
     React.useEffect(() => {
-        if (!open && inputRef.current) {
+        if (wasOpen.current && !open && inputRef.current) {
             inputRef.current?.focus();
         }
+        if (open) {
+            setFocusedItem(selectedValues[0] || null);
+        }
+        wasOpen.current = open;
     }, [open]);
 
     const SelectValueRenderer = () => {
@@ -121,10 +143,6 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
         );
     };
 
-    // Zamień MenuList na DescribedList
-    // Ustal wybrane wartości jako tablicę (DescribedList wymaga tablicy)
-    const selectedValues = Array.isArray(value) ? value : value !== undefined && value !== null ? [value] : [];
-
     return (
         <BaseInputField
             ref={anchorRef}
@@ -148,13 +166,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                     handleToggle();
                     inputProps?.onClick?.(e);
                 },
-                onKeyDown: (e) => {
-                    if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
-                        e.preventDefault();
-                        handleToggle();
-                    }
-                    inputProps?.onKeyDown?.(e);
-                },
+                onKeyDown: handleKeyDown,
             }}
             inputAdornments={
                 <Adornment position='input'>
@@ -172,7 +184,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                         anchorEl={anchorRef.current}
                         style={{
                             zIndex: 1300,
-                            //width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
+                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
                         }}
                         modifiers={[placementModifier]}
                     >
@@ -182,19 +194,14 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                                     display={"flex"}
                                     flexDirection={"column"}
                                 >
-                                    <DescribedList<T>
+                                    <DescribedList
                                         ref={menuListRef}
                                         options={options}
                                         selected={selectedValues}
+                                        focused={focusedItem}
                                         size={size}
                                         color={color}
-                                        onItemClick={(val) => {
-                                            onChange?.(val);
-                                            setOpen(false);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Escape') setOpen(false);
-                                        }}
+                                        onItemClick={handleItemClick}
                                         style={{
                                             maxHeight: listHeight,
                                             width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto"

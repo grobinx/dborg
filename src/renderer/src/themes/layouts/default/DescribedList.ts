@@ -37,14 +37,24 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                         '&.selected': {
                             backgroundColor: alpha(palette[color].main, 0.2),
                         },
+                        '.focused &': {
+                            "&.focused": {
+                                outlineColor: palette[color].main,
+                            },
+                        },
                         "&.focused": {
-                            outlineColor: palette[color].main,
+                            '&:not(.selected)': {
+                                backgroundColor: alpha(palette[color].main, 0.1),
+                            },
+                            '&.selected': {
+                                backgroundColor: alpha(palette[color].main, 0.3),
+                            },
                         },
                         "&:hover:not(.header)": {
                             backgroundColor: alpha(palette[color].main, 0.1),
                             '&.selected': {
                                 backgroundColor: blendColors(
-                                    alpha(palette[color].main, 0.3), 
+                                    alpha(palette[color].main, 0.3),
                                     alpha(palette[color].main, 0.2)
                                 ),
                             },
@@ -60,8 +70,18 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                     '&.selected': {
                         backgroundColor: palette.action.selected,
                     },
-                    '&.focused': {
-                        outlineColor: palette.action.focus,
+                    '.focused &': {
+                        "&.focused": {
+                            outlineColor: palette.action.focus,
+                        },
+                    },
+                    "&.focused": {
+                        '&:not(.selected)': {
+                            backgroundColor: palette.action.focus,
+                        },
+                        '&.selected': {
+                            backgroundColor: blendColors(palette.action.selected, palette.action.selected),
+                        },
                     },
                     '&:hover:not(.header)': {
                         backgroundColor: palette.action.hover,

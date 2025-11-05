@@ -21,6 +21,7 @@ import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
 import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
+import { htmlColors } from "@renderer/types/colors";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -499,35 +500,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                    color="info"
-                                    options={[
-                                        {
-                                            value: "red",
-                                            label: [["Red", <ColorBox color="red" />]],
-                                            description: [
-                                                "The color of passion and energy.",
-                                                "* Symbolizes love and desire.",
-                                                "* Often associated with danger and warning.",
-                                                "* Used in branding to grab attention.",
-                                                "* Represents courage and strength.",
-                                                "* Can evoke strong emotions."
-                                            ]
-                                        },
-                                        {
-                                            value: "green",
-                                            label: [["Green", <ColorBox color="green" />]],
-                                            description: "The color of nature"
-                                        },
-                                        {
-                                            value: "blue",
-                                            label: [["Blue", <ColorBox color="blue" />]],
-                                        },
-                                        {
-                                            value: "yellow",
-                                            label: [["Yellow", <ColorBox color="yellow" />]],
-                                            description: "The color of sunshine"
-                                        },
-                                    ]}
+                                    color="success"
+                                    options={htmlColors.map((color) => ({
+                                        value: color,
+                                        label: [[color.charAt(0).toUpperCase() + color.slice(1), <ColorBox color={color} />]],
+                                        description: `This is the color ${color}.`
+                                    }))}
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size], selected])}

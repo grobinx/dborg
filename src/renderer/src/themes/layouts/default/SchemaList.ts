@@ -69,14 +69,16 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                         '&.selected': {
                             backgroundColor: alpha(palette[color].main, 0.2),
                         },
-                        "&.focused": {
-                            outlineColor: palette[color].main,
+                        '.focused &': {
+                            "&.focused": {
+                                outlineColor: palette[color].main,
+                            },
                         },
                         "&:hover:not(.header)": {
                             backgroundColor: alpha(palette[color].main, 0.1),
                             '&.selected': {
                                 backgroundColor: blendColors(
-                                    alpha(palette[color].main, 0.2), 
+                                    alpha(palette[color].main, 0.2),
                                     alpha(palette[color].main, 0.1)
                                 )
                             },
@@ -89,7 +91,9 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                         backgroundColor: palette.action.selected,
                     },
                     '&.focused': {
-                        outlineColor: palette.action.focus,
+                        '.focused &': {
+                            outlineColor: palette.action.focus,
+                        },
                     },
                     '&:hover:not(.header)': {
                         backgroundColor: palette.action.hover,
