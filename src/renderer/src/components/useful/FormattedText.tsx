@@ -46,7 +46,7 @@ export const FormattedTextElement = React.memo<FormattedTextElementProps>((props
     const theme = useTheme();
 
     const components = React.useMemo(() => ({
-        p: (props) => <Typography fontSize="inherit" lineHeight="inherit" {...props} />,
+        p: (props) => <Typography {...props} fontSize="inherit" fontWeight="inherit" lineHeight="inherit" />,
         h1: (props) => <Typography variant="h1" {...props} />,
         h2: (props) => <Typography variant="h2" {...props} />,
         h3: (props) => <Typography variant="h3" {...props} />,
