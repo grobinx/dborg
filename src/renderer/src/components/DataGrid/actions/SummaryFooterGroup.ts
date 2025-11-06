@@ -1,9 +1,9 @@
-import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext, SummaryOperation, typeToOperationMap } from "../DataGridTypes";
 import { toBaseType } from "../../../../../../src/api/db";
 
-export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
+export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.groups.summaryFooterGroup";
 
@@ -12,7 +12,7 @@ export const SummaryFooterGroup = (): ActionGroupDescriptor<DataGridActionContex
         prefix: "&",
         label: t(id, "& Summary footer"),
         actions: (context: DataGridActionContext<any>) => {
-            let actions: (ActionDescriptor<any> & { operation: SummaryOperation })[] = [];
+            let actions: (Action<any> & { operation: SummaryOperation })[] = [];
             const summaryFooterOperation = context.getSummaryOperation();
             const column = context.getColumn();
             const baseType = toBaseType(column?.dataType ?? "string");

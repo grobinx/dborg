@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionDescriptor, ActionGroupDescriptor, ActionManager } from "../CommandPalette/ActionManager";
+import { Action, ActionGroup, ActionManager } from "../CommandPalette/ActionManager";
 import { ColumnBaseType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "../../../../../src/api/db";
 import { ColumnFilter, ColumnsFilterOperator } from "./useColumnsFilterState";
 
@@ -246,8 +246,8 @@ export interface DataGridActionContext<T extends object> {
 
 export interface DataGridContext<T extends object> {
     addCommand: (keybinding: string, execute: (context: DataGridActionContext<T>) => void) => void
-    addAction: (...action: ActionDescriptor<DataGridActionContext<T>>[]) => void
-    addActionGroup(...group: ActionGroupDescriptor<DataGridActionContext<T>>[]): void
+    addAction: (...action: Action<DataGridActionContext<T>>[]) => void
+    addActionGroup(...group: ActionGroup<DataGridActionContext<T>>[]): void
 }
 
 export interface DataGridStatus {

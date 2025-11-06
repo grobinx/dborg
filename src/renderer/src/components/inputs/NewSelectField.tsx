@@ -81,8 +81,8 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
         items: options,
         getId: (item) => isOption(item) ? item.value : null,
         onEnter: (item) => isOption(item) && handleItemClick(item.value),
-        keyBindings: [
-            { key: 'Space', handler: (item) => isOption(item) && handleItemClick(item.value) }
+        actions: [
+            { shortcut: 'Space', handler: (item) => isOption(item) && handleItemClick(item.value) }
         ]
     });
 

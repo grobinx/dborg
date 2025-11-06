@@ -1,4 +1,4 @@
-import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import i18next from "i18next";
 import { ColumnDefinition, DataGridActionContext } from "../DataGridTypes";
 import { valueToString } from "../../../../../../src/api/db";
@@ -6,7 +6,7 @@ import { displayMaxLengh } from "../DataGridUtils";
 
 export const AdjustWidthToData_ID = "dataGrid.actions.adjustWidthToData";
 
-export const AdjustWidthToData = (): ActionDescriptor<DataGridActionContext<any>> => {
+export const AdjustWidthToData = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
         id: AdjustWidthToData_ID,

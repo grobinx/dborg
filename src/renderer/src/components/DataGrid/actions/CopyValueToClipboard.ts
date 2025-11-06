@@ -1,9 +1,9 @@
-import { ActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import i18next from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 import { valueToString } from "../../../../../../src/api/db";
 
-export const CopyValueToClipboard = (): ActionDescriptor<DataGridActionContext<any>> => {
+export const CopyValueToClipboard = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.actions.copyValueToClipboard";
 

@@ -247,8 +247,8 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         items: searchedData ?? [],
         getId: (item) => item.sch_id,
         actionManager: actions.current,
-        getContext: () => (context),
-        keyBindings: [{ key: "F1", handler: () => setOpenCommandPalette(true) }],
+        actionContext: () => (context),
+        actions: [{ shortcut: "F1", handler: () => setOpenCommandPalette(true) }],
     });
     const [openCommandPalette, setOpenCommandPalette] = React.useState(false);
     const searchRef = React.useRef<HTMLInputElement>(null);

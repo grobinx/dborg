@@ -4,7 +4,7 @@ export type ActionGroupMode =
     'actions' |
     'filter';
 
-export interface ActionGroupOptionDescription<T> {
+export interface ActionGroupOption<T> {
     /**
      * Unikalny identyfikator akcji.
      */
@@ -44,7 +44,7 @@ export interface ActionGroupOptionDescription<T> {
     disabled?: (context: T) => boolean;
 }
 
-export interface ActionGroupDescriptor<T = any> {
+export interface ActionGroup<T = any> {
     /**
      * Unikalny identyfikator grupy akcji.
      */
@@ -76,7 +76,7 @@ export interface ActionGroupDescriptor<T = any> {
      * @param searchText Opcjonalny parametr zapytania, który może być użyty do filtrowania akcji.
      * @returns Tablica akcji, które są częścią tej grupy.
      */
-    actions: (context: T, searchText?: string) => ActionDescriptor<T>[] | Promise<ActionDescriptor<T>[]>;
+    actions: (context: T, searchText?: string) => Action<T>[] | Promise<Action<T>[]>;
 
     /**
      * Funkcja, która zostanie wywołana, gdy użytkownik anuluje grupę akcji.
@@ -101,7 +101,7 @@ export interface ActionGroupDescriptor<T = any> {
      * Dodatkowe przyciski widoczne w polu poleceń.
      * Używane do dodawania dodatkowych akcji związanych z tą grupą akcji.
      */
-    options?: ActionGroupOptionDescription<T>[];
+    options?: ActionGroupOption<T>[];
 
     /**
      * Pozycja okna poleceń względem rodzica (np. na dole można umieścić gdy grupa służy do wyszukiwania)
@@ -110,7 +110,7 @@ export interface ActionGroupDescriptor<T = any> {
     position?: 'top' | 'bottom';
 }
 
-export interface ActionDescriptor<T> {
+export interface Action<T> {
     /**
      * Unikalny identyfikator akcji.
      */
@@ -148,7 +148,7 @@ export interface ActionDescriptor<T> {
      * Ikona akcji, która będzie prezentowana użytkownikowi.
      * Może być to komponent React lub inny element reprezentujący ikonę.
      */
-    icon?: React.ReactNode;
+    icon?: React.ReactNode | ((context: T, ...args: any[]) => React.ReactNode);
 
     /**
      * Warunek wstępny (precondition), który musi być spełniony, aby akcja mogła zostać wykonana.
@@ -199,13 +199,28 @@ export interface ActionDescriptor<T> {
     visible?: boolean | ((context: T, ...args: any[]) => boolean);
 
     /**
+     * Czy akcja jest aktywna (dostępna do użycia z poziomu skrótów klawiszowych).
+     * Wtedy w UI będzie widoczna, ale nie będzie można jej wywołać skrótem klawiszowym. Skrót będzie niewidoczny lub przyciemniony.
+     */
+    active?: boolean | ((context: T, ...args: any[]) => boolean);
+
+    /**
+     * Czy akcja jest oznaczona jako ładowanie czegoś.
+     */
+    loading?: boolean | ((context: T, ...args: any[]) => boolean);
+
+    /**
      * Wewnętrzna wartość do przechowywania czasu ostatniego wybrania akcji.
      * Używane do zarządzania porządkiem listy akcji.
      */
     _LastSelected?: number;
 }
 
-export function isActionDescriptor(obj: any): obj is ActionDescriptor<any> {
+export interface Actions<T,> {
+    [id: string]: Action<T>;
+}
+
+export function isAction(obj: any): obj is Action<any> {
     return (
         typeof obj === "object" &&
         obj !== null &&
@@ -215,9 +230,16 @@ export function isActionDescriptor(obj: any): obj is ActionDescriptor<any> {
     );
 }
 
+export function isActions(obj: any): obj is Actions<any> {
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+    return Object.values(obj).every(isAction);
+}
+
 export class ActionManager<T> {
-    private actions: Map<string, ActionDescriptor<T>> = new Map();
-    private actionGroups: Map<string, ActionGroupDescriptor<T>> = new Map();
+    private actions: Map<string, Action<T>> = new Map();
+    private actionGroups: Map<string, ActionGroup<T>> = new Map();
     private currentSequence: string[] = [];
     private sequenceTimeout: NodeJS.Timeout | null = null;
     private sequenceResetTime = 2000;
@@ -235,7 +257,7 @@ export class ActionManager<T> {
      * Rejestruje nową grupę akcji.
      * @param group Opis grupy akcji.
      */
-    registerActionGroup(...groups: ActionGroupDescriptor<T>[]): void {
+    registerActionGroup(...groups: ActionGroup<T>[]): void {
         for (const group of groups) {
             if (this.actionGroups.has(group.id)) {
                 continue;
@@ -249,7 +271,7 @@ export class ActionManager<T> {
      * @param groupId Identyfikator grupy akcji.
      * @returns Zarejestrowana grupa akcji lub undefined, jeśli nie istnieje.
      */
-    getActionGroup(groupId: string): ActionGroupDescriptor<T> | undefined {
+    getActionGroup(groupId: string): ActionGroup<T> | undefined {
         return this.actionGroups.get(groupId);
     }
 
@@ -257,7 +279,7 @@ export class ActionManager<T> {
      * Pobiera wszystkie zarejestrowane grupy akcji.
      * @returns Tablica zarejestrowanych grup akcji.
      */
-    getRegisteredActionGroups(): ActionGroupDescriptor<T>[] {
+    getRegisteredActionGroups(): ActionGroup<T>[] {
         return Array.from(this.actionGroups.values());
     }
 
@@ -265,7 +287,7 @@ export class ActionManager<T> {
      * Rejestruje nową akcję.
      * @param action Opis akcji
      */
-    registerAction(...actions: ActionDescriptor<T>[]): void {
+    registerAction(...actions: Action<T>[]): void {
         for (const action of actions) {
             const normalizedKeybindings = action.keybindings?.map(normalizeKeybinding); // Normalizacja keybindings
             const normalizedAction = { ...action, keybindings: normalizedKeybindings };
@@ -291,10 +313,10 @@ export class ActionManager<T> {
      * @param context Obiekt, na którym akcja ma być wykonana.
      * @param args Dodatkowe argumenty przekazywane do funkcji.
      */
-    executeAction(action: ActionDescriptor<T>, context: T, ...args: any[]): void | Promise<void>;
+    executeAction(action: Action<T>, context: T, ...args: any[]): void | Promise<void>;
 
-    executeAction(actionOrId: string | ActionDescriptor<T>, context: T, ...args: any[]): void | Promise<void> {
-        let action: ActionDescriptor<T> | undefined;
+    executeAction(actionOrId: string | Action<T>, context: T, ...args: any[]): void | Promise<void> {
+        let action: Action<T> | undefined;
 
         // Jeśli przekazano identyfikator, znajdź akcję w zarejestrowanych akcjach
         if (typeof actionOrId === 'string') {
@@ -410,7 +432,7 @@ export class ActionManager<T> {
      * @param actionId Identyfikator akcji do pobrania.
      * @returns 
      */
-    getAction(actionId: string): ActionDescriptor<T> | undefined {
+    getAction(actionId: string): Action<T> | undefined {
         return this.actions.get(actionId);
     }
 
@@ -422,7 +444,7 @@ export class ActionManager<T> {
      * @param context Obiekt, na którym akcje mają być wykonane (wymagany dla dynamicznych akcji).
      * @returns Tablica akcji.
      */
-    async getRegisteredActions(prefix: string | null = '>', context?: T, query?: string): Promise<ActionDescriptor<T>[]> {
+    async getRegisteredActions(prefix: string | null = '>', context?: T, query?: string): Promise<Action<T>[]> {
         if (prefix === null) {
             return [];
         }
@@ -434,7 +456,7 @@ export class ActionManager<T> {
             return [];
         }
 
-        let actions: ActionDescriptor<T>[] = await actionGroup.actions(context!, query);
+        let actions: Action<T>[] = await actionGroup.actions(context!, query);
 
         if ((actionGroup.mode ?? 'actions') === 'actions' && actionGroup.id === 'default') {
             actions = actions.sort((a, b) => {

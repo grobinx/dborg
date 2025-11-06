@@ -1,4 +1,4 @@
-import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
@@ -16,7 +16,7 @@ export const SelectSchemaGroup = (
     session: IDatabaseSession,
     selectedSchemaName: string | null,
     onSelectSchema: (schemaName: string) => void
-): ActionGroupDescriptor<DataGridActionContext<any>> => {
+): ActionGroup<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.pg.groups.selectSchema";
 
@@ -26,7 +26,7 @@ export const SelectSchemaGroup = (
         label: t(id, "# Select schema"),
         mode: "actions",
         actions: async () => {
-            const actions: ActionDescriptor<any>[] = [];
+            const actions: Action<any>[] = [];
             let schemas: string[] = [];
 
             console.debug('Fetching schemas...', session.schema.sch_name);

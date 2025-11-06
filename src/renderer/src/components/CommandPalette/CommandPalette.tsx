@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material'; // Import komponentu Button
 import { styled } from '@mui/system';
-import { ActionDescriptor, ActionGroupDescriptor, ActionGroupOptionDescription, ActionManager } from './ActionManager';
+import { Action, ActionGroup, ActionGroupOption, ActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
 import { resolveIcon } from '@renderer/themes/icons';
@@ -15,7 +15,7 @@ import { Adornment } from '../inputs/base/BaseInputField';
 interface CommandPaletteProps {
     manager: ActionManager<any>;
     open: boolean;
-    onAction?: (action: ActionDescriptor<any>) => void;
+    onAction?: (action: Action<any>) => void;
     getContext?: () => any;
     onClose: () => void;
     parentRef?: React.RefObject<HTMLElement | null>;
@@ -86,7 +86,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const { t } = useTranslation();
     const [searchText, setSearchText] = useState(initSearchText ?? '');
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const [selectedGroup, setSelectedGroup] = useState<ActionGroupDescriptor | null>(null); // Zmieniono na przechowywanie całej grupy
+    const [selectedGroup, setSelectedGroup] = useState<ActionGroup | null>(null); // Zmieniono na przechowywanie całej grupy
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const listItemRef = useRef<HTMLLIElement>(null); // Referencja do elementu listy
@@ -103,7 +103,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         parentRef?.current?.focus();
     };
 
-    const handleOptionClick = (option: ActionGroupOptionDescription<any>) => {
+    const handleOptionClick = (option: ActionGroupOption<any>) => {
         if (getContext) {
             option.run(getContext());
             Promise.resolve().then(() => {
@@ -177,8 +177,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [open, searchText, manager]);
 
     // Always calculate filteredCommands, even if the component is not open
-    const [filteredCommands, setFilteredCommands] = useState<ActionDescriptor<any>[]>([]);
-    const cachedActions = useRef<Record<string, ActionDescriptor<any>[]>>({});
+    const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
+    const cachedActions = useRef<Record<string, Action<any>[]>>({});
 
     useEffect(() => {
         if (!open) {
@@ -359,7 +359,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         };
     }, [open, handleClose]);
 
-    const handleCommandClick = (action: ActionDescriptor<any>) => {
+    const handleCommandClick = (action: Action<any>) => {
         Promise.resolve().then(() => {
             if (getContext) {
                 manager.executeAction(action, getContext());
@@ -372,7 +372,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
 
     // Helper function to group and sort context menu actions
-    const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: ActionDescriptor<any>[]; }[]>([]);
+    const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: Action<any>[]; }[]>([]);
 
     useEffect(() => {
         let isMounted = true;
@@ -397,7 +397,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 }
                 acc[groupId].push(action);
                 return acc;
-            }, {} as Record<string, ActionDescriptor<any>[]>);
+            }, {} as Record<string, Action<any>[]>);
 
             const sortedGroups = Object.entries(grouped)
                 .sort(([groupA], [groupB]) => {
@@ -537,7 +537,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     }
                                                     disabled={disabled}
                                                 >
-                                                    <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
+                                                    <ListItemIcon>{resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}</ListItemIcon>
                                                     <ListItemText
                                                         primary={highlightText(
                                                             typeof action.label === "function" ? action.label(context) : action.label,
@@ -614,7 +614,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         dense
                                         disabled={disabled}
                                     >
-                                        <ListItemIcon>{resolveIcon(theme, action.icon)}</ListItemIcon>
+                                        <ListItemIcon>{resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}</ListItemIcon>
                                         <ListItemText>
                                             {label}
                                         </ListItemText>

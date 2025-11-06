@@ -3,7 +3,7 @@ import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
 import { SxProps } from "@mui/material";
 import { Theme } from "@mui/system";
-import { ActionDescriptor } from "../CommandPalette/ActionManager";
+import { Action } from "../CommandPalette/ActionManager";
 
 export interface BaseButtonProps {
     /**

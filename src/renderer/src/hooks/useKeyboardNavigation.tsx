@@ -1,23 +1,33 @@
-import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, Actions, isActions } from "@renderer/components/CommandPalette/ActionManager";
 import { isKeybindingMatch, normalizeKeybinding } from "@renderer/components/CommandPalette/KeyBinding";
 import React from "react";
 
-export interface KeyBindingHandler<T> {
+export interface KeyBinding<T> {
     /**
      * Klawisz lub kombinacja klawiszy do obsługi
      * @example "Ctrl+Enter", "Shift+A", "Escape"
      */
-    key: string;
+    shortcut: string;
     handler: (item: T) => void;
+}
+
+export type KeyBindings<T> = KeyBinding<T>[];
+
+export function isKeyBinding(obj: any): obj is KeyBinding<any> {
+    return obj && typeof obj === "object" && typeof obj.shortcut === "string" && typeof obj.handler === "function";
+}
+
+export function isKeyBindings(obj: any): obj is KeyBindings<any> {
+    return Array.isArray(obj) && obj.every(isKeyBinding);
 }
 
 export interface UseKeyboardNavigationProps<T, V = string, A = any> {
     items: T[];
     getId: (item: T) => V | null;
     onEnter?: (item: T) => void;
-    keyBindings?: KeyBindingHandler<T>[];
+    actions?: KeyBindings<T> | Actions<A>;
     actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
-    getContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
+    actionContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
     rollover?: boolean; // Czy nawigacja ma się zawijać (domyślnie false)
 }
 
@@ -25,9 +35,9 @@ export function useKeyboardNavigation<T, V = string, A = any>({
     items,
     getId,
     onEnter,
-    keyBindings = [],
+    actions = [],
     actionManager,
-    getContext,
+    actionContext: actionContext,
     rollover = false,
 }: UseKeyboardNavigationProps<T, V, A>) {
     const [selectedId, setSelectedId] = React.useState<V | null>(null);
@@ -93,21 +103,33 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                 event.preventDefault();
                 return;
             } else if (currentIndex >= 0) {
-                // Obsługa custom keybindings
-                for (const binding of keyBindings) {
-                    const normalized = normalizeKeybinding(binding.key);
-                    if (isKeybindingMatch(normalized, event)) {
-                        binding.handler(items[currentIndex]);
-                        event.preventDefault();
-                        return;
+                if (isKeyBindings(actions)) {
+                    for (const binding of actions) {
+                        const normalized = normalizeKeybinding(binding.shortcut);
+                        if (isKeybindingMatch(normalized, event)) {
+                            binding.handler(items[currentIndex]);
+                            event.preventDefault();
+                            return;
+                        }
+                    }
+                }
+                else if (isActions(actions)) {
+                    for (const action of Object.values(actions)) {
+                        if (action.keybindings) {
+                            const normalized = normalizeKeybinding(action.keybindings[0]);
+                            if (isKeybindingMatch(normalized, event)) {
+                                action.run(actionContext?.(), items[currentIndex]);
+                                return;
+                            }
+                        }
                     }
                 }
             }
-            if (actionManager && getContext) {
-                actionManager.executeActionByKeybinding(event, getContext());
+            if (actionManager && actionContext) {
+                actionManager.executeActionByKeybinding(event, actionContext());
             }
         },
-        [items, selectedId, getId, onEnter, keyBindings]
+        [items, selectedId, getId, onEnter, actions]
     );
 
     // Zapamiętaj ostatnio wybrany i istniejący indeks

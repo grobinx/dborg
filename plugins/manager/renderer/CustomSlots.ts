@@ -1,4 +1,4 @@
-import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
@@ -31,8 +31,8 @@ export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunct
 export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
 export type RecordsAsyncFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
-export type ActionDescriptorsFactory<T = any> = ActionDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionDescriptor<T>[]);
-export type ActionGroupDescriptorsFactory<T = any> = ActionGroupDescriptor<T>[] | ((refresh: RefreshSlotFunction) => ActionGroupDescriptor<T>[]);
+export type ActionDescriptorsFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
+export type ActionGroupDescriptorsFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
@@ -44,7 +44,7 @@ export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunctio
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 
-export type ActionKind<T = any> = string | ActionDescriptor<T> | CommandDescriptor<T> | ITextField;
+export type ActionKind<T = any> = string | Action<T> | CommandDescriptor<T> | ITextField;
 
 export interface ISelectOption {
     value: string,
@@ -386,10 +386,10 @@ export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, 
 export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionDescriptorsFactory<T = any>(factory: ActionDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionDescriptor<T>[] | undefined {
+export function resolveActionDescriptorsFactory<T = any>(factory: ActionDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroupDescriptor<T>[] | undefined {
+export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveEditorActionDescriptorsFactory(factory: EditorActionDescriptorsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {

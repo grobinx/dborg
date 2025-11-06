@@ -32,7 +32,7 @@ import TabContentSlot from "./TabContentSlot";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import SplitSlot from "./SplitSlot";
-import { ActionManager, isActionDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, isAction } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
 import ActionButton from "@renderer/components/CommandPalette/ActionButton";
@@ -169,7 +169,7 @@ export function createActionComponents(
 
         actionComponents = resolvedActions.map((action, index) => {
             if (typeof action === "object") {
-                if (isActionDescriptor(action)) {
+                if (isAction(action)) {
                     if (!actionManager) {
                         actionManager = new ActionManager<typeof context>();
                     }

@@ -1,8 +1,8 @@
-import { ActionDescriptor, ActionGroupDescriptor } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
-export const SearchDataGroup = (): ActionGroupDescriptor<DataGridActionContext<any>> => {
+export const SearchDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.groups.searchData";
     const leaveResultId = "dataGrid.group.searchData.actions.leaveResult";
@@ -33,7 +33,7 @@ export const SearchDataGroup = (): ActionGroupDescriptor<DataGridActionContext<a
                 }, 300);
             }
 
-            const actions: ActionDescriptor<any>[] = [
+            const actions: Action<any>[] = [
                 {
                     id: leaveResultId,
                     label: t(leaveResultId, "Leave a result"),
