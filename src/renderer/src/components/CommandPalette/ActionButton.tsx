@@ -25,13 +25,13 @@ export interface ActionProps<T> {
      * Identyfikator akcji lub opis akcji do powiązania z przyciskiem.
      * Jeśli podano menedżer akcji, można użyć identyfikatora akcji
      */
-    action?: string | Action<T>; 
+    action?: string | Action<T>;
     actionContext?: () => T; // Funkcja zwracająca kontekst
     actionArgs?: any[]; // Argumenty do przekazania do akcji przy wywołaniu
     actionShows?: ActionShows; // Co pokazywać z akcji
 }
 
-export function prepareAction<T,>(context: T | undefined, action: Action<T> | undefined, shows: ActionShows, args: any[] = []) {
+export function prepareAction<T,>(context: T, action: Action<T> | undefined, shows: ActionShows, args: any[] = []) {
     if (!action) {
         return null;
     }
@@ -54,18 +54,23 @@ export function prepareAction<T,>(context: T | undefined, action: Action<T> | un
     };
 }
 
-interface NewActionButtonProps<T> extends ToolButtonOwnProps, ActionProps<T> {}
+interface NewActionButtonProps<T> extends ToolButtonOwnProps, ActionProps<T> { }
 
 const NewActionButton = <T,>(props: NewActionButtonProps<T>) => {
     const { componentName, action, actionManager, actionContext, children, disabled, loading, selected, actionShows, actionArgs, onClick, ...other } = props;
 
-    const resolvedAction = typeof action === "string" && actionManager ? actionManager.getAction(action) : action;
+    const resolvedAction =
+        typeof action === "string" ?
+            actionManager ?
+                actionManager.getAction(action)
+                : undefined
+            : action;
 
     if (!resolvedAction) {
         return null;
     }
 
-    const context = actionContext?.();
+    const context = actionContext?.() ?? {} as T;
 
     const pa = prepareAction(context, resolvedAction, { label: true, icon: true, shortcut: true, tooltip: true, ...actionShows }, actionArgs);
 
@@ -78,8 +83,8 @@ const NewActionButton = <T,>(props: NewActionButtonProps<T>) => {
         if (typeof onClick === "function") {
             onClick(e);
         }
-        else if (typeof pa?.handler === "function") {
-            pa.handler(e);
+        else if (typeof pa?.run === "function") {
+            pa.run(context, actionArgs);
         }
     };
 
@@ -109,7 +114,7 @@ const NewActionButton = <T,>(props: NewActionButtonProps<T>) => {
     return pa?.tooltip ? (
         <Tooltip title={
             pa?.tooltipShortcut ?
-                <>{pa.tooltip || pa?.label}<br /><Shortcut keybindings={[pa?.tooltipShortcut]} /></>
+                <>{pa.tooltip || pa?.label}<br /><Shortcut keybindings={pa?.tooltipShortcut} /></>
                 : (pa.tooltip || pa?.label)}>
             <span>{button}</span>
         </Tooltip>
