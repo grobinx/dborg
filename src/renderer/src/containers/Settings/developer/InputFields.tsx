@@ -21,7 +21,7 @@ import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
 import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
-import { htmlColors, nameColor } from "@renderer/types/colors";
+import { htmlColors, labelColor } from "@renderer/types/colors";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -177,6 +177,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     const ColorBox = ({ color }: { color: string }) => (
         <span
             style={{
+                display: "inline-block",
                 width: 16,
                 height: 16,
                 backgroundColor: color,
@@ -186,6 +187,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             }}
         />
     );
+
+    const colorOptions = React.useMemo(() => htmlColors.map((color) => ({
+        value: color,
+        label: <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={color} /> {labelColor(color)}</span>,
+        description: `This is the color ${color}.`
+    })), []);
 
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
@@ -448,11 +455,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="success"
-                                    options={htmlColors.map((color) => ({
-                                        value: color,
-                                        label: [[nameColor(color), <ColorBox color={color} />]],
-                                        description: `This is the color ${color}.`
-                                    }))}
+                                    options={colorOptions}
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size], selected])}

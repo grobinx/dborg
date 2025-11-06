@@ -192,7 +192,7 @@ export const htmlColorWords: string[] = [
     "wheat", "white", "smoke", "yellow", "medium", "midnight", "lime"
 ].sort((a, b) => b.length - a.length);
 
-export function nameColor(color: string): string {
+export function labelColor(color: string): string {
     let rest = color.toLowerCase();
     const found: string[] = [];
 

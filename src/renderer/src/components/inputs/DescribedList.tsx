@@ -188,7 +188,7 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
         const wrapped = (effectiveDescription === 'tooltip' && option.description)
             ? (
                 <Tooltip title={option.description} placement="right">
-                    <span>{React.isValidElement(content) ? content : <span>{content}</span>}</span>
+                    {React.isValidElement(content) ? content : <span>{content}</span>}
                 </Tooltip>
             )
             : content;

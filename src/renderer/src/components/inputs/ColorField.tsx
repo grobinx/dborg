@@ -8,7 +8,7 @@ import ColorPicker, { ColorPickerType } from '../useful/ColorPicker';
 import { styled, useTheme, Menu, MenuItem } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import clsx from '@renderer/utils/clsx';
-import { htmlColors } from '@renderer/types/colors';
+import { htmlColors, labelColor } from '@renderer/types/colors';
 import ButtonGroup from '../buttons/ButtonGroup';
 
 interface ColorFieldProps extends BaseInputProps {
@@ -180,16 +180,16 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
                             },
                         }}
                     >
-                        {htmlColors.map((name) => (
+                        {htmlColors.map((color) => (
                             <StyledColorMenuItem
-                                key={name}
-                                onClick={() => handleColorSelect(name)}
-                                selected={value === name}
+                                key={color}
+                                onClick={() => handleColorSelect(color)}
+                                selected={value === color}
                             >
                                 <StyledColorSwatch
-                                    style={{ backgroundColor: name }}
+                                    style={{ backgroundColor: color }}
                                 />
-                                {name}
+                                {labelColor(color)}
                             </StyledColorMenuItem>
                         ))}
                     </Menu>
