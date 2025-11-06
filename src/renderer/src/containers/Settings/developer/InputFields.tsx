@@ -21,7 +21,7 @@ import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
 import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
-import { htmlColors } from "@renderer/types/colors";
+import { htmlColors, nameColor } from "@renderer/types/colors";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -450,7 +450,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="success"
                                     options={htmlColors.map((color) => ({
                                         value: color,
-                                        label: [[color.charAt(0).toUpperCase() + color.slice(1), <ColorBox color={color} />]],
+                                        label: [[nameColor(color), <ColorBox color={color} />]],
                                         description: `This is the color ${color}.`
                                     }))}
                                 />

@@ -177,3 +177,40 @@ export const htmlColors: DataType.NamedColor[] = [
     "yellow",
     "yellowgreen"
 ];
+
+export const htmlColorWords: string[] = [
+    "alice", "blue", "antique", "white", "aqua", "marine", "azure", "beige", "bisque", "black",
+    "blanched", "almond", "violet", "brown", "burly", "wood", "cadet", "chartreuse", "chocolate",
+    "coral", "corn", "flower", "silk", "crimson", "cyan", "dark", "golden", "rod", "gray", "green",
+    "grey", "khaki", "magenta", "olive", "orange", "orchid", "red", "salmon", "sea", "slate",
+    "turquoise", "pink", "deep", "sky", "dim", "dodger", "fire", "brick", "floral", "forest",
+    "fuchsia", "gainsboro", "ghost", "gold", "honey", "dew", "hot", "indian", "indigo",
+    "ivory", "lavender", "blush", "lawn", "lemon", "chiffon", "light", "steel", "mint", "cream",
+    "misty", "rose", "moccasin", "navajo", "navy", "old", "lace", "drab", "pale", "papaya", "whip",
+    "peach", "puff", "peru", "plum", "powder", "purple", "rebecca", "rosy", "royal", "saddle",
+    "sand", "shell", "sienna", "silver", "snow", "spring", "tan", "teal", "thistle", "tomato",
+    "wheat", "white", "smoke", "yellow", "medium", "midnight", "lime"
+].sort((a, b) => b.length - a.length);
+
+export function nameColor(color: string): string {
+    let rest = color.toLowerCase();
+    const found: string[] = [];
+
+    while (rest.length > 0) {
+        let matched = false;
+        for (const word of htmlColorWords) {
+            if (rest.startsWith(word)) {
+                found.push(word.charAt(0).toUpperCase() + word.slice(1));
+                rest = rest.slice(word.length);
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            found.push(rest.charAt(0).toUpperCase() + rest.slice(1));
+            break;
+        }
+    }
+    return found.join(' ');
+}
+
