@@ -5,13 +5,13 @@ import { FormattedContent, FormattedContentItem, FormattedText } from '../useful
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
-import { DescribedList, AnyOption, isOption } from './DescribedList';
+import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
-    value?: T;
-    renderValue?: (selected: T) => React.ReactNode;
+    value?: T | T[];
+    renderValue?: (selected: T | T[]) => React.ReactNode;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
     options: AnyOption<T>[];
@@ -70,7 +70,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
         setOpen(false);
     };
 
-    const handleItemClick = React.useCallback((val: AnyOption<T>) => {
+    const handleItemClick = React.useCallback((val: T) => {
         onChange?.(val);
         if (!multiple) {
             setOpen(false);
