@@ -28,6 +28,10 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 MozAppearance: "none",
                 whiteSpace: "nowrap",
                 border: `1px solid ${palette.divider}`,
+                outlineColor: 'transparent',
+                outlineWidth: 0,
+                outlineStyle: 'solid',
+                outlineOffset: -2,
 
                 "&.disabled": {
                     opacity: 0.6,
@@ -53,9 +57,6 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
 
                 "&.focused": {
                     borderColor: 'transparent',
-                    outlineWidth: 2,
-                    outlineStyle: 'solid',
-                    outlineOffset: -2,
                 },
 
                 ...themeColors.reduce((acc, color) => {
@@ -64,10 +65,9 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                             backgroundColor: alpha(palette[color].main, 0.2),
                         },
                         color: palette.text.primary,
-                        //outline: `1px solid ${palette[color].main}`,
-                        //outlineOffset: "-1px",
 
                         "&.hover:not(.disabled):not(.loading)": {
+                            boxShadow: `0 2px 8px 0 ${alpha(palette[color].main, 0.18)}`,
                             backgroundColor: alpha(palette[color].main, 0.3),
                             '&.focused': {
                                 //backgroundColor: alpha(palette[color].main, 0.4),
@@ -81,23 +81,18 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                         },
 
                         "&.active:not(.disabled):not(.loading)": {
-                            position: "relative",
-                            //transform: "scale(0.98)",
-                            overflow: "hidden",
                             backgroundColor: alpha(palette[color].dark, 0.4),
                         },
 
                         "&.focused": {
-                            transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outlineWidth: 2,
                             outlineColor: palette[color].main,
-                            //backgroundColor: alpha(palette[color].main, 0.5),
                         },
 
                         '&.selected': {
                             backgroundColor: alpha(palette[color].main, 0.5),
                         },
 
-                        // Style dla różnych pressed states
                         "&.has-value": {
                             backgroundColor: alpha(palette[color].main, 0.6),
                         },
@@ -117,7 +112,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "all 0.1s ease-in-out",
+                transition: "all 0.2s ease-in-out",
                 padding: "0 0.5rem",
                 '&.loading': {
                     opacity: 0,
