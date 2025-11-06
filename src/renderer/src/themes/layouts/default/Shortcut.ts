@@ -26,7 +26,7 @@ export const ShortcutLayout = (_palette: Palette, _root: ThemeOptions): Shortcut
                 },
                 '&.size-large': {
                     fontSize: '0.9em',
-                }
+                },
             },
             chord: {
                 transition: "all 0.2s ease-in-out",

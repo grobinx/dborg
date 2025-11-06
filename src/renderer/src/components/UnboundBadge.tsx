@@ -28,7 +28,7 @@ const UnboundBadge: React.FC<UnboundBadgeProps> = (props) => {
         size = "medium",
         color = "primary",
         unmountOnHide = false,
-        ...other 
+        ...other
     } = useThemeProps({ name: "UnboundBadge", props: props, });
     const [isVisible, setIsVisible] = React.useState(content); // Controls rendering
     const [isAnimating, setIsAnimating] = React.useState(content); // Controls animation
@@ -43,22 +43,23 @@ const UnboundBadge: React.FC<UnboundBadgeProps> = (props) => {
         }
     }, [content]);
 
-    return (
-        <>
-            {(isVisible || !unmountOnHide) && (
-                <StyledUnboundBadgeRoot
-                    className={clsx(
-                        "UnboundBadge-root",
-                        isAnimating && "visible",
-                        `size-${size}`,
-                        `color-${color}`
-                    )}
-                    {...other}
-                >
-                    {content}
-                </StyledUnboundBadgeRoot>
+    const isContentVisible =
+        typeof content === "number"
+            ? content > 0
+            : content !== null && content !== undefined && !(typeof content === "string" && content === "");
+
+    return (isContentVisible || !unmountOnHide) && (
+        <StyledUnboundBadgeRoot
+            className={clsx(
+                "UnboundBadge-root",
+                isAnimating && "visible",
+                `size-${size}`,
+                `color-${color}`
             )}
-        </>
+            {...other}
+        >
+            {content}
+        </StyledUnboundBadgeRoot>
     );
 };
 

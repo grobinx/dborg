@@ -280,43 +280,85 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             handleClose();
         }
 
+        const ignoreAction = (index: number) => {
+            const action = filteredCommands[index];
+            const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+            const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+            return visible && !disabled;
+        };
+
         const items = selectedGroup
             ? filteredCommands
             : manager.getRegisteredActionGroups();
 
+        // Pomocnicza funkcja do znalezienia następnego indeksu spełniającego ignoreAction
+        const findNextIndex = (start: number, step: number) => {
+            let idx = start;
+            const len = items.length;
+            for (let i = 0; i < len; i++) {
+                idx = (idx + step + len) % len;
+                if (ignoreAction(idx)) return idx;
+            }
+            return null;
+        };
+
         if (event.key === 'ArrowDown') {
             event.preventDefault();
-            setSelectedIndex((prev) => {
-                const nextIndex = prev === null || prev === items.length - 1 ? 0 : prev + 1;
-                scrollToItem(nextIndex);
-                return nextIndex;
+            setSelectedIndex(prev => {
+                const current = prev === null ? -1 : prev;
+                const nextIndex = findNextIndex(current, 1);
+                if (nextIndex !== null) {
+                    scrollToItem(nextIndex);
+                    return nextIndex;
+                }
+                return prev;
             });
         }
 
         if (event.key === 'ArrowUp') {
             event.preventDefault();
-            setSelectedIndex((prev) => {
-                const nextIndex = prev === null || prev === 0 ? items.length - 1 : prev - 1;
-                scrollToItem(nextIndex);
-                return nextIndex;
+            setSelectedIndex(prev => {
+                const current = prev === null ? items.length : prev;
+                const nextIndex = findNextIndex(current, -1);
+                if (nextIndex !== null) {
+                    scrollToItem(nextIndex);
+                    return nextIndex;
+                }
+                return prev;
             });
         }
 
         if (event.key === 'PageDown') {
             event.preventDefault();
-            setSelectedIndex((prev) => {
-                const nextIndex = Math.min((prev ?? 0) + 5, items.length - 1);
-                scrollToItem(nextIndex);
-                return nextIndex;
+            setSelectedIndex(prev => {
+                let current = prev === null ? -1 : prev;
+                let nextIndex = current;
+                for (let i = 0; i < 5; i++) {
+                    const candidate = findNextIndex(nextIndex, 1);
+                    if (candidate !== null) nextIndex = candidate;
+                }
+                if (nextIndex !== current) {
+                    scrollToItem(nextIndex);
+                    return nextIndex;
+                }
+                return prev;
             });
         }
 
         if (event.key === 'PageUp') {
             event.preventDefault();
-            setSelectedIndex((prev) => {
-                const nextIndex = Math.max((prev ?? items.length - 1) - 5, 0);
-                scrollToItem(nextIndex);
-                return nextIndex;
+            setSelectedIndex(prev => {
+                let current = prev === null ? items.length : prev;
+                let nextIndex = current;
+                for (let i = 0; i < 5; i++) {
+                    const candidate = findNextIndex(nextIndex, -1);
+                    if (candidate !== null) nextIndex = candidate;
+                }
+                if (nextIndex !== current) {
+                    scrollToItem(nextIndex);
+                    return nextIndex;
+                }
+                return prev;
             });
         }
 
@@ -511,13 +553,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     >
                         {selectedGroup
                             ? filteredCommands
-                                .filter(action => {
-                                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
-                                    return visible;
-                                })
                                 .map((action, index) => {
                                     const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
                                     const tooltip = typeof action.tooltip === "function" ? action.tooltip(context) : action.tooltip;
+                                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
                                     return (
                                         <ListItem
                                             key={action.id}
@@ -525,6 +564,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                             dense
                                             ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
                                             className="command-list-item"
+                                            sx={{ opacity: disabled ? 0.5 : 1, display: visible ? 'block' : 'none' }}
                                         >
                                             <Tooltip title={tooltip}>
                                                 <ListItemButton

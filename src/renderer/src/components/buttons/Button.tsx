@@ -1,16 +1,17 @@
-import React from "react";
-import { BaseButtonProps } from "./BaseButtonProps";
-import { BaseButton } from "./BaseButton";
+import ActionButton, { ActionButtonProps } from "./ActionButton";
 
-export interface ButtonOwnProps extends BaseButtonProps {
+export interface ButtonOwnProps<T = any> extends ActionButtonProps<T> {
 }
 
-export const Button: React.FC<ButtonOwnProps> = (props) => {
-    const { ...other } = props;
+export const Button = <T,>(props: ButtonOwnProps<T>) => {
+    const { actionShows, ...other } = props;
+
+    const shows = { label: true, icon: true, shortcut: true, tooltip: false, ...actionShows }; 
 
     return (
-        <BaseButton
+        <ActionButton<T>
             componentName="Button"
+            actionShows={shows}
             {...other}
         />
     );

@@ -6,7 +6,6 @@ import {
     resolveActionsFactory,
     resolveBooleanFactory,
     resolveContentSlotKindFactory,
-    resolveReactNodeFactory,
     resolveSelectOptionsFactory,
     resolveSplitSlotPartKindFactory,
     resolveTabContentSlotKindFactory,
@@ -23,9 +22,7 @@ import React from "react";
 import GridSlot from "./GridSlot";
 import ContentSlot from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
-import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
-import { MenuItem, Theme } from "@mui/material";
-import { resolveIcon } from "@renderer/themes/icons";
+import { MenuItem } from "@mui/material";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
 import TabContentSlot from "./TabContentSlot";
@@ -35,8 +32,8 @@ import SplitSlot from "./SplitSlot";
 import { ActionManager, isAction } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
-import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import ToolTextField from "@renderer/components/ToolTextField";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -174,10 +171,10 @@ export function createActionComponents(
                         actionManager = new ActionManager<typeof context>();
                     }
                     actionManager.registerAction(action);
-                    return <ActionButton
+                    return <ToolButton
                         key={action.id}
-                        actionId={action.id}
-                        getContext={() => context}
+                        action={action.id}
+                        actionContext={() => context}
                         actionManager={actionManager}
                     />;
                 }
@@ -208,10 +205,10 @@ export function createActionComponents(
                 }
             }
             if (typeof action === "string" && dataGridRef?.current) {
-                return <ActionButton
+                return <ToolButton
                     key={action}
-                    actionId={action}
-                    getContext={() => dataGridRef?.current}
+                    action={action}
+                    actionContext={() => dataGridRef?.current}
                     actionManager={dataGridRef.current.actionManager() ?? undefined}
                 />;
             }

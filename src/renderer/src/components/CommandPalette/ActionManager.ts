@@ -220,7 +220,7 @@ export interface Actions<T,> {
     [id: string]: Action<T>;
 }
 
-export function isAction(obj: any): obj is Action<any> {
+export function isAction<A>(obj: any): obj is Action<A> {
     return (
         typeof obj === "object" &&
         obj !== null &&
@@ -230,11 +230,11 @@ export function isAction(obj: any): obj is Action<any> {
     );
 }
 
-export function isActions(obj: any): obj is Actions<any> {
+export function isActions<A>(obj: any): obj is Actions<A> {
     if (typeof obj !== "object" || obj === null) {
         return false;
     }
-    return Object.values(obj).every(isAction);
+    return Object.values(obj).every(isAction<A>);
 }
 
 export class ActionManager<T> {

@@ -21,24 +21,61 @@ export function isKeyBindings(obj: any): obj is KeyBindings<any> {
     return Array.isArray(obj) && obj.every(isKeyBinding);
 }
 
-export interface UseKeyboardNavigationProps<T, V = string, A = any> {
+export interface UseKeyboardNavigationActionsProps<T, A> {
+    actions: KeyBindings<T> | Actions<A>;
+    actionManager?: ActionManager<A>;
+    actionContext?: never;
+}
+
+// Wariant 2: akcje przez manager i context
+export interface UseKeyboardNavigationManagerProps<T, A> {
+    actions?: KeyBindings<T> | Actions<A>;
+    actionManager: ActionManager<A>;
+    actionContext: () => A;
+}
+
+export interface UseKeyboardNavigationActionsNoneProps<T, A> {
+    actions?: KeyBindings<T> | Actions<A>;
+    actionManager?: ActionManager<A>;
+    actionContext?: never;
+}
+
+
+/**
+ * Hook do nawigacji klawiaturowej wśród listy elementów.
+ * Umożliwia poruszanie się za pomocą strzałek, Home, End oraz definiowanie własnych skrótów klawiszowych.
+ * 
+ * W tym hooku nie działają sekwencje skrótów klawiszowych jeśli przekazano akcje wprost.
+ * Zawsze jest brany pierwszy skrót z keybindings.
+ * 
+ * @param items Lista elementów do nawigacji.
+ * @param getId Funkcja zwracająca unikalny identyfikator elementu.
+ * @param onEnter Funkcja wywoływana po naciśnięciu Enter na zaznaczonym elemencie.
+ * @param actions Dodatkowe skróty klawiszowe i ich obsługa. 
+ *      Jeśli podano wprost akcje, manager i kontekst nie jest potrzebny.
+ *      Jeśli nie podano, należy podać actionManager i actionContext.
+ * @param actionManager Opcjonalny menedżer akcji z zarejestrowanymi skrótami klawiszowymi.
+ * @param actionContext Funkcja zwracająca kontekst dla menedżera akcji.
+ */
+export type UseKeyboardNavigationProps<T, V = string, A = any> = {
     items: T[];
     getId: (item: T) => V | null;
     onEnter?: (item: T) => void;
-    actions?: KeyBindings<T> | Actions<A>;
-    actionManager?: ActionManager<A>; // Opcjonalny menedżer akcji do rejestrowania skrótów klawiszowych
-    actionContext?: () => A; // Funkcja zwracająca kontekst dla menedżera akcji
     rollover?: boolean; // Czy nawigacja ma się zawijać (domyślnie false)
-}
+} & (
+        UseKeyboardNavigationActionsProps<T, A>
+        | UseKeyboardNavigationManagerProps<T, A>
+        | UseKeyboardNavigationActionsNoneProps<T, A>
+    );
 
 export function useKeyboardNavigation<T, V = string, A = any>({
     items,
     getId,
     onEnter,
-    actions = [],
-    actionManager,
-    actionContext: actionContext,
     rollover = false,
+    actions,
+    actionManager,
+    actionContext,
 }: UseKeyboardNavigationProps<T, V, A>) {
     const [selectedId, setSelectedId] = React.useState<V | null>(null);
     const itemsRef = React.useRef(items);
@@ -113,16 +150,19 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                         }
                     }
                 }
-                else if (isActions(actions)) {
+                else if (isActions<A>(actions)) {
                     for (const action of Object.values(actions)) {
                         if (action.keybindings) {
                             const normalized = normalizeKeybinding(action.keybindings[0]);
                             if (isKeybindingMatch(normalized, event)) {
-                                action.run(actionContext?.(), items[currentIndex]);
+                                action.run(actionContext?.() ?? {} as A, items[currentIndex]);
                                 return;
                             }
                         }
                     }
+                }
+                else if (actionManager && actionContext) {
+                    actionManager.executeActionByKeybinding(event, actionContext());
                 }
             }
             if (actionManager && actionContext) {

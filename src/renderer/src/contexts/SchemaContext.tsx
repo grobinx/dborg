@@ -1,22 +1,16 @@
 import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
-import { useMessages, Messages } from "@renderer/contexts/MessageContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { uuidv7 } from "uuidv7";
 import { DBORG_DATA_PATH_NAME } from "../../../api/dborg-path";
-import { sortArray } from "@renderer/hooks/useSort";
-import { groupArray } from "@renderer/hooks/useGroup";
 import * as api from "../../../api/db";
 import { useTranslation } from "react-i18next";
 import PasswordDialog from "@renderer/dialogs/PasswordDialog";
 import { SchemaUsePasswordType } from "@renderer/containers/SchemaAssistant/SchemaParameters/DriverPropertyPassword";
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
-import { emit } from "process";
-import { Add } from "@mui/icons-material";
-import sleep from "@renderer/utils/sleep";
 
 // Define the schema structure
 export interface SchemaRecord {

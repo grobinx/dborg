@@ -17,15 +17,15 @@ import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
-import ActionButton from "@renderer/components/CommandPalette/ActionButton";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
-import { searchArray, useSearch } from "@renderer/hooks/useSearch";
+import { useSearch } from "@renderer/hooks/useSearch";
 import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import clsx from "@renderer/utils/clsx";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
+import { keyboardState } from "@renderer/utils/keyboardState";
 
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
@@ -432,6 +432,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await testConnection(schema.sch_drv_unique_id, schema.sch_use_password, schema.sch_properties, schema.sch_name);
         } catch (error) {
+            addToast("error",
+                t("schema-connection-test-error", "Connection test failed!"),
+                { source: schema.sch_name, reason: error }
+            );
             setErroring((prev) => [...prev, schema.sch_id]);
         } finally {
             setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
@@ -444,6 +448,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await connectToDatabase(schemaId);
         } catch (error) {
+            addToast("error",
+                t("schema-connection-test-error", "Connection failed!"),
+                { reason: error }
+            );
             setErroring((prev) => [...prev, schemaId]);
         } finally {
             setConnecting((prev) => prev.filter((id) => id !== schemaId));
@@ -455,6 +463,10 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await disconnectFromAllDatabases(schemaId);
         } catch (error) {
+            addToast("error",
+                t("schema-disconnect-error", "Failed to disconnect from database!"),
+                { reason: error }
+            );
             setErroring((prev) => [...prev, schemaId]);
         } finally {
             setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
@@ -520,12 +532,12 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             icon = <theme.icons.Loading />;
         } else if (erroring.includes(record.sch_id)) {
             icon = <theme.icons.Error />;
-        } else if (record.connected ?? 0 > 0) {
+        } else if ((record?.connected ?? 0) > 0) {
             icon = (
                 <div style={{ position: "relative" }}>
                     <theme.icons.Connected />
                     <UnboundBadge
-                        content={(record.connected ?? 0) > 1 ? record.connected : 0}
+                        content={(record?.connected ?? 0) > 1 ? (record?.connected ?? 0) : 0}
                         sx={{
                             position: "absolute",
                             top: '-1em',
@@ -539,7 +551,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             icon = <theme.icons.Disconnected />;
         }
         return (
-            <SchemaListStatusIcon className="StatusIcon-statusIcon">
+            <SchemaListStatusIcon className="StatusIcon-statusIcon" key="status-icon">
                 {icon}
             </SchemaListStatusIcon>
         );
@@ -678,61 +690,61 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                 )}
             >
                 <ButtonGroup>
-                    <ActionButton
+                    <ToolButton
                         key="disconnect"
                         actionManager={actions.current}
-                        actionId={disconnectAllActionId}
+                        action={disconnectAllActionId}
                         actionArgs={[record.sch_id, record.connected]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="info"
                         loading={disconnecting.includes(record.sch_id)}
                     />
-                    <ActionButton
+                    <ToolButton
                         key="connect"
                         actionManager={actions.current}
-                        actionId={connectActionId}
+                        action={connectActionId}
                         actionArgs={[record.sch_id]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="info"
                         loading={connecting.includes(record.sch_id)}
                     />
                 </ButtonGroup>
                 <ButtonGroup>
-                    <ActionButton
+                    <ToolButton
                         actionManager={actions.current}
-                        actionId={testActionId}
+                        action={testActionId}
                         actionArgs={[record.sch_id]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="success"
                         loading={testing.includes(record.sch_id)}
                     />
-                    <ActionButton
+                    <ToolButton
                         actionManager={actions.current}
-                        actionId={editActionId}
+                        action={editActionId}
                         actionArgs={[record.sch_id]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="primary"
                     />
-                    <ActionButton
+                    <ToolButton
                         actionManager={actions.current}
-                        actionId={cloneActionId}
+                        action={cloneActionId}
                         actionArgs={[record.sch_id]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="primary"
                     />
                 </ButtonGroup>
                 <ButtonGroup>
-                    <ActionButton
+                    <ToolButton
                         className="delete"
                         actionManager={actions.current}
-                        actionId={deleteActionId}
+                        action={deleteActionId}
                         actionArgs={[record.sch_id]}
-                        getContext={() => context}
+                        actionContext={() => context}
                         size="medium"
                         color="error"
                         loading={deleting.includes(record.sch_id)}
@@ -794,27 +806,27 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                         />
                     </InputDecorator>
                     <ButtonGroup>
-                        <ActionButton
+                        <ToolButton
                             actionManager={actions.current}
-                            actionId={groupActionId}
-                            getContext={() => context}
+                            action={groupActionId}
+                            actionContext={() => context}
                             size="large"
                             toggle={"true"}
                             value={groupList ? "true" : null}
                         />
-                        <ActionButton
+                        <ToolButton
                             actionManager={actions.current}
-                            actionId={sortActionId}
-                            getContext={() => context}
+                            action={sortActionId}
+                            actionContext={() => context}
                             size="large"
                             toggle={"true"}
                             value={sortList ? "true" : null}
                         />
                     </ButtonGroup>
-                    <ActionButton
+                    <ToolButton
                         actionManager={actions.current}
-                        actionId={refreshActionId}
-                        getContext={() => context}
+                        action={refreshActionId}
+                        actionContext={() => context}
                         size="large"
                     />
                 </Box>
