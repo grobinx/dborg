@@ -2,6 +2,7 @@ import { FormattedContent } from "@renderer/components/useful/FormattedText";
 import React from "react";
 import { ThemeColor } from "../../../types/colors";
 import { Size } from "../../../types/sizes";
+import { SxProps } from "@mui/material";
 
 export interface BaseInputProps<T = any> {
     id?: string;
@@ -84,13 +85,13 @@ export interface BaseInputProps<T = any> {
      * Kolor nie zostanie zmieniony ale ustawiona zostanie odpowiednia klasa CSS "color-..."
      * @default 'primary'
      */
-    color?: ThemeColor;
+    color?: ThemeColor | 'default';
     /**
      * Rozmiar elementu, np. 'small', 'medium', 'large'
      * Rozmiar nie zostanie zmieniony ale ustawiona zostanie odpowiednia klasa CSS "size-..."
      * @default 'medium'
      */
-    size?: Size;
+    size?: Size | 'default';
     /**
      * Referencja do elementu kontenera
      */
@@ -105,4 +106,7 @@ export interface BaseInputProps<T = any> {
      * Ustaw autofocus na elemencie wejściowym
      */
     autoFocus?: boolean;
+
+    sx?: SxProps;
+    style?: React.CSSProperties;
 }

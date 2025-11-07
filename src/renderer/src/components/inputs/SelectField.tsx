@@ -247,7 +247,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                                 <StyledMenuItem
                                                     key={option.value}
                                                     value={option.value}
-                                                    componentSize={size}
+                                                    componentSize={size === "default" ? 'medium' : size}
                                                     onClick={() => {
                                                         if (!Array.isArray(value)) {
                                                             setOpen(false);

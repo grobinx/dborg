@@ -22,6 +22,8 @@ import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
 import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
 import { htmlColors, labelColor } from "@renderer/types/colors";
+import { isOption, Option } from "@renderer/components/inputs/DescribedList";
+import { Options } from "electron";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -188,9 +190,9 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         />
     );
 
-    const colorOptions = React.useMemo(() => htmlColors.map((color) => ({
+    const colorOptions = React.useMemo<Option<string>[]>(() => htmlColors.map((color) => ({
         value: color,
-        label: <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={color} /> {labelColor(color)}</span>,
+        label: color,
         description: `This is the color ${color}.`
     })), []);
 
@@ -454,8 +456,13 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                    color="success"
+                                    //color="success"
                                     options={colorOptions}
+                                    renderItem={item => {
+                                        return isOption(item) ? (
+                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {labelColor(item.value)}</span>
+                                        ) : null;
+                                    }}
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size], selected])}
@@ -474,7 +481,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <SelectField
+                                <NewSelectField
                                     key={size}
                                     placeholder={"Select colors"}
                                     size={size}
@@ -482,17 +489,29 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     onChange={(value) => handleArraySelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="warning"
                                     height="auto"
+                                    options={[
+                                        { value: "red", label: "Red" },
+                                        { value: "green", label: "Green" },
+                                        { value: "blue", label: "Blue" },
+                                        { value: "yellow", label: "Yellow" },
+                                        { value: "purple", label: "Purple" },
+                                        { value: "orange", label: "Orange" },
+                                        { value: "pink", label: "Pink" },
+                                        { value: "brown", label: "Brown" },
+                                        { value: "black", label: "Black" },
+                                        { value: "white", label: "White" },
+                                    ] as Option<string>[]}
                                     renderValue={(selected) => (
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                            {selected.map((value) => (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, height: "100%" }}>
+                                            {(selected as Option<string>[]).map((option) => (
                                                 <Chip
-                                                    key={value}
-                                                    style={{ gap: 4, fontSize: "inherit", height: "100%" }}
+                                                    key={option.value}
+                                                    style={{ gap: 4, fontSize: "inherit", height: "auto" }}
                                                     size="small"
                                                     onDelete={(e) => {
                                                         e.stopPropagation();
                                                         e.preventDefault();
-                                                        handleArraySelectChange(size, value);
+                                                        handleArraySelectChange(size, option.value);
                                                     }}
                                                     onClick={(e) => {
                                                         console.log('Chip onClick called', e.target);
@@ -500,22 +519,20 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                                     }}
                                                     label={
                                                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                            {value}
-                                                            <ColorBox color={value} />
+                                                            {option.label}
+                                                            <ColorBox color={option.value} />
                                                         </span>
                                                     }
                                                 />
                                             ))}
                                         </div>
-                                    )} // Renderowanie wybranych wartości z kolorowymi boxami
-                                >
-                                    <MenuItem value="red">Red<ColorBox color="red" /></MenuItem>
-                                    <MenuItem value="green">Green<ColorBox color="green" /></MenuItem>
-                                    <MenuItem value="blue">Blue<ColorBox color="blue" /></MenuItem>
-                                    <MenuItem value="yellow">Yellow<ColorBox color="yellow" /></MenuItem>
-                                    <MenuItem value="purple">Purple<ColorBox color="purple" /></MenuItem>
-                                    <MenuItem value="orange">Orange<ColorBox color="orange" /></MenuItem>
-                                </SelectField>
+                                    )}
+                                    renderItem={item => {
+                                        return isOption(item) ? (
+                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {labelColor(item.value)}</span>
+                                        ) : null;
+                                    }}
+                                />
                             </InputDecorator>
                         ), [size, arraySelectValues[size], selected])}
                     </Stack>

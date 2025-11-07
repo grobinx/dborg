@@ -15,6 +15,11 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
     onItemClick?: (item: T, event: React.MouseEvent) => void;
     onItemDoubleClick?: (item: T, event: React.MouseEvent) => void;
     onItemContextMenu?: (item: T, event: React.MouseEvent) => void;
+    onItemMouseEnter?: (item: T, event: React.MouseEvent) => void;
+    onItemMouseLeave?: (item: T, event: React.MouseEvent) => void;
+    onItemMouseMove?: (item: T, event: React.MouseEvent<HTMLElement>) => void;
+    onItemMouseDown?: (item: T, event: React.MouseEvent<HTMLElement>) => void;
+    onItemMouseUp?: (item: T, event: React.MouseEvent<HTMLElement>) => void;
 
     // event handlers for the list
     onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
@@ -86,6 +91,11 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         onItemClick,
         onItemDoubleClick,
         onItemContextMenu,
+        onItemMouseEnter,
+        onItemMouseLeave,
+        onItemMouseMove,
+        onItemMouseDown,
+        onItemMouseUp,
 
         onKeyDown,
         onFocus,
@@ -145,6 +155,11 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
             }}
             onWheel={onWheel}
             onScroll={onScroll}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            onMouseMove={onMouseMove}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
             sx={sx}
             style={style}
             {...rest}
@@ -171,11 +186,11 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                             onClick={(e) => !disabled && onItemClick?.(item, e)}
                             onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
                             onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
-                            onMouseEnter={(e) => !disabled && onMouseEnter?.(e)}
-                            onMouseLeave={(e) => !disabled && onMouseLeave?.(e)}
-                            onMouseMove={(e) => !disabled && onMouseMove?.(e)}
-                            onMouseDown={(e) => !disabled && onMouseDown?.(e)}
-                            onMouseUp={(e) => !disabled && onMouseUp?.(e)}
+                            onMouseEnter={(e) => !disabled && onItemMouseEnter?.(item, e)}
+                            onMouseLeave={(e) => !disabled && onItemMouseLeave?.(item, e)}
+                            onMouseMove={(e) => !disabled && onItemMouseMove?.(item, e)}
+                            onMouseDown={(e) => !disabled && onItemMouseDown?.(item, e)}
+                            onMouseUp={(e) => !disabled && onItemMouseUp?.(item, e)}
                             tabIndex={-1}
                         >
                             {renderItem(item, { selected: selected ?? false, focused: focused ?? false })}

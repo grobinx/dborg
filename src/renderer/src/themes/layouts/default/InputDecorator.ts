@@ -41,6 +41,10 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                     },
                     gap: paddingLarge,
                 },
+                '&.size-default': {
+                    padding: 4,
+                    gap: 4,
+                },
                 '&.selected': {
                     backgroundColor: palette.action.selected,
                 },
@@ -72,6 +76,9 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                     marginBottom: paddingLarge / 2,
                     fontSize: "1.05rem",
                 },
+                '&.size-default': {
+                    marginBottom: 2,
+                },
             },
             labelText: {
                 '&.required::after': {
@@ -92,6 +99,9 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                     marginTop: paddingLarge / 2,
                     fontSize: "0.95rem",
                 },
+                '&.size-default': {
+                    marginTop: 2,
+                },
                 color: palette.text.secondary,
             },
             indicator: {
@@ -110,6 +120,9 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 },
                 '&.size-large': {
                     width: 5,
+                },
+                '&.size-default': {
+                    width: 4,
                 },
             },
             restrictions: {

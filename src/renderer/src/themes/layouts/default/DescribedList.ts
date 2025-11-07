@@ -28,7 +28,7 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                 "&.size-small": { ...listItemSizeProperties.small, padding: 0 },
                 "&.size-medium": { ...listItemSizeProperties.medium, padding: 0 },
                 "&.size-large": { ...listItemSizeProperties.large, padding: 0 },
-                '&.size-default': { padding: 0 },
+                '&.size-default': { fontSize: "1rem", padding: 0 },
                 outline: '1px solid transparent',
                 outlineOffset: -1,
                 ...themeColors.reduce((acc, color) => {
@@ -121,9 +121,10 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
             },
             option: {
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
                 flex: 1,
                 width: '100%',
+                alignItems: 'center',
                 '&.size-small': { padding: listItemSizeProperties.small.padding },
                 '&.size-medium': { padding: listItemSizeProperties.medium.padding },
                 '&.size-large': { padding: listItemSizeProperties.large.padding },

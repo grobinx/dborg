@@ -173,7 +173,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         adornments,
         placeholder,
         autoCollapse,
-        color = "main",
+        color = "default",
         onValidate,
         onFocus,
         onBlur,
@@ -185,6 +185,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         inputRef,
         children,
         autoFocus,
+        sx, style,
     } = props;
 
     const [uncontrolledValue, setUncontrolledValue] = React.useState<T | undefined>(defaultValue);
@@ -308,7 +309,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
-            style={{ width, height }}
+            style={{ width, height, ...style }}
+            sx={sx}
         >
             <StyledBaseInputFieldMain
                 className={clsx(

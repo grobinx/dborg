@@ -7,11 +7,13 @@ import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, sty
 import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
+import { Popover } from '../Popover';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
     value?: T | T[];
-    renderValue?: (selected: T | T[]) => React.ReactNode;
+    renderValue?: (option: Option<T> | Option<T>[]) => React.ReactNode;
+    renderItem?: (option: AnyOption<T>, state: { selected: boolean; focused: boolean }) => React.ReactNode;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
     options: AnyOption<T>[];
@@ -30,6 +32,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
     const {
         value,
         renderValue,
+        renderItem,
         onChange,
         size,
         color,
@@ -42,7 +45,7 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
 
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef<HTMLDivElement>(null);
-    const menuListRef = React.useRef<HTMLUListElement>(null);
+    const listRef = React.useRef<HTMLUListElement>(null);
     const inputRef = React.useRef<HTMLDivElement>(null);
     const theme = useTheme();
     const [placement, setPlacement] = React.useState<string | undefined>(undefined);
@@ -50,23 +53,12 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
 
     const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
 
-    const placementModifier = React.useMemo(() => ({
-        name: "updatePlacementState",
-        enabled: true,
-        phase: 'afterWrite' as const,
-        fn({ state }: any) {
-            setPlacement(state.placement);
-        },
-    }), []);
-
     const handleToggle = () => {
         setOpen((prevOpen) => !prevOpen);
     };
 
     const handleClose = (event: Event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
-            return;
-        }
+        console.log('closing popover');
         setOpen(false);
     };
 
@@ -116,7 +108,25 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
     }, [open]);
 
     const SelectValueRenderer = () => {
-        if (renderValue && value !== undefined) return renderValue(value);
+        if (renderValue && value !== undefined) {
+            if (Array.isArray(value)) {
+                const items = options.filter(option => isOption(option) && value?.includes(option.value));
+                return renderValue(items as Option<T>[]);
+            }
+            const option = options.find(option => isOption(option) && option.value === value);
+            return option ? renderValue(option as Option<T>) : null;
+        }
+        if (renderItem && value !== undefined) {
+            if (Array.isArray(value)) {
+                return options
+                    .filter(option => isOption(option) && value?.includes(option.value))
+                    .map(option => renderItem(option as Option<T>, { selected: false, focused: false }))
+            }
+            else {
+                const item = options.find(option => isOption(option) && option.value === value);
+                return item ? renderItem(item as Option<T>, { selected: false, focused: false }) : null;
+            }
+        }
 
         if (!Array.isArray(value)) {
             const option = options.find(option => isOption(option) && option.value === value);
@@ -179,41 +189,29 @@ export const NewSelectField = <T,>(props: SelectFieldProps<T>) => {
                     >
                         {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                     </span>
-                    <Popper
+                    <Popover
                         open={open}
                         anchorEl={anchorRef.current}
-                        style={{
-                            zIndex: 1300,
-                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
-                        }}
-                        modifiers={[placementModifier]}
+                        onClose={handleClose}
+                        onChangePlacement={setPlacement}
                     >
-                        <Paper sx={{ margin: 1 }}>
-                            <ClickAwayListener onClickAway={handleClose} mouseEvent="onMouseDown">
-                                <Box
-                                    display={"flex"}
-                                    flexDirection={"column"}
-                                >
-                                    <DescribedList
-                                        ref={menuListRef}
-                                        options={options}
-                                        selected={selectedValues}
-                                        focused={focusedItem}
-                                        size={size}
-                                        color={color}
-                                        onItemClick={handleItemClick}
-                                        style={{
-                                            maxHeight: listHeight,
-                                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto"
-                                        }}
-                                        description={placement === 'bottom' ? 'footer' : 'header'}
-                                        tabIndex={-1}
-                                    />
-                                    {/* Opis opcji jest już obsługiwany przez DescribedList */}
-                                </Box>
-                            </ClickAwayListener>
-                        </Paper>
-                    </Popper>
+                        <DescribedList
+                            ref={listRef}
+                            options={options}
+                            selected={selectedValues}
+                            focused={focusedItem}
+                            size={size}
+                            color={color}
+                            onItemClick={handleItemClick}
+                            style={{
+                                maxHeight: listHeight,
+                                width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto"
+                            }}
+                            description={placement === 'top' ? 'header' : 'footer'}
+                            tabIndex={-1}
+                            renderItem={renderItem}
+                        />
+                    </Popover>
                 </Adornment>
             }
             {...other}

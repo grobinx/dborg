@@ -35,7 +35,7 @@ export interface HeaderOption extends LabeledOption {
 export type AnyOption<T = any> = Option<T> | HeaderOption | DividerOption;
 
 export function isOption(option: AnyOption<any>): option is Option<any> {
-    return 'label' in option && 'value' in option;
+    return typeof option === 'object' && 'label' in option && 'value' in option;
 }
 
 export function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
@@ -73,6 +73,8 @@ interface DescribedListProps<T = any> {
     onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
     onFocus?: (event: React.FocusEvent<HTMLElement>) => void;
     onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
+
+    renderItem?: (option: AnyOption<T>, state: { selected: boolean; focused: boolean }) => React.ReactNode;
 
     // Wygląd
     size?: Size | 'default';
@@ -127,6 +129,8 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
         onFocus,
         onBlur,
 
+        renderItem,
+
         ...rest
     } = props;
 
@@ -178,12 +182,12 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
                 "DescribedList-header",
                 classes
             )}>
-            <FormattedText text={option.label} />
+            {renderItem ? renderItem(option, { selected: false, focused: false }) : <FormattedText text={option.label} />}
         </StyledDescribedListHeader>
     ), [classes]);
 
     const renderOption = React.useCallback((option: Option<T>, { selected, focused }: { selected: boolean; focused: boolean }) => {
-        const content = <FormattedText text={option.label} />;
+        const content = renderItem ? renderItem(option, { selected, focused }) : <FormattedText text={option.label} />;
 
         const wrapped = (effectiveDescription === 'tooltip' && option.description)
             ? (
@@ -204,8 +208,6 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
                 )}
                 aria-selected={selected}
                 role="presentation"
-                onMouseEnter={() => !disabled && anyHasDescription && setHoveredValue(option.value)}
-                onMouseLeave={() => !disabled && anyHasDescription && setHoveredValue(prev => (Object.is(prev, option.value) ? null : prev))}
             >
                 {wrapped}
             </StyledDescribedListOption>
@@ -249,6 +251,8 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
                 onItemClick={(item, e) => isOption(item) && onItemClick?.(item.value, e)}
                 onItemDoubleClick={(item, e) => isOption(item) && onItemDoubleClick?.(item.value, e)}
                 onItemContextMenu={(item, e) => isOption(item) && onItemContextMenu?.(item.value, e)}
+                onItemMouseEnter={(item, _e) => !disabled && anyHasDescription && isOption(item) && setHoveredValue(item.value)}
+                onItemMouseLeave={(item, _e) => !disabled && anyHasDescription && isOption(item) && setHoveredValue(prev => (Object.is(prev, item.value) ? null : prev))}
                 renderItem={(option, state) => {
                     if (isOption(option)) {
                         return renderOption(option, state);

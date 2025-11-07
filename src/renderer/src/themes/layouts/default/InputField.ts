@@ -28,6 +28,9 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                         };
                         return acc;
                     }, {}),
+                    '&.color-default': {
+                        backgroundColor: alpha(palette.background.paper, 0.1),
+                    },
                 },
                 '&.focused:not(.type-boolean)': {
                     outlineWidth: 2,
@@ -40,6 +43,9 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                         };
                         return acc;
                     }, {}),
+                    '&.color-default': {
+                        outlineColor: palette.action.focus,
+                    },
                     //boxShadow: `inset 0 0 7px 0px ${alpha(palette.text.primary, 0.5)}`,
                 },
                 '&.size-small': {
@@ -50,6 +56,10 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
                 '&.size-large': {
                     ...inputSizeProperties.large,
+                },
+                '&.size-default': {
+                    padding: 4,
+                    fontSize: "1rem",
                 },
                 '&.disabled': {
                     pointerEvents: 'none',
@@ -131,6 +141,9 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                             };
                             return acc;
                         }, {}),
+                        '.color-default &': {
+                            outlineColor: palette.action.focus,
+                        },
                     }
                 },
             },

@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { styled, useTheme, useThemeProps } from "@mui/material/styles";
+import { useTheme, useThemeProps } from "@mui/material/styles";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
-import { ListItem, ListItemText, ListItemIcon, MenuItem, Divider, Typography } from "@mui/material";
+import { ListItem, ListItemText, ListItemIcon, Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { List, RowComponentProps, useListRef } from "react-window";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
@@ -21,9 +21,10 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
 import { IconButton } from "../buttons/IconButton";
-import { SelectField } from "../inputs/SelectField";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 import debounce from "@renderer/utils/debounce";
+import { AnyOption, isOption, Option } from "../inputs/DescribedList";
+import { NewSelectField } from "../inputs/NewSelectField";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -266,6 +267,19 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
         }
     };
 
+    const options = React.useMemo(() => {
+        const result: AnyOption<LogLevel>[] = [
+            { value: 'default', label: t("default-log-levels", "Default Log Levels") },
+            { value: 'all', label: t("all-log-levels", "All Log Levels") },
+        ];
+        result.push({});
+        result.push(...logLevels.map(level => ({
+            value: level.level,
+            label: level.level,
+        })));
+        return result;
+    }, [logLevels, loggedLevels]);
+
     return (
         <TabPanelButtons>
             <InputDecorator indicator={false} width={200}>
@@ -290,41 +304,60 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                 </IconButton>
             </Tooltip>
             <InputDecorator indicator={false} width={200}>
-                <SelectField
+                <NewSelectField
                     size="small"
+                    color="main"
+                    options={options}
                     value={loggedLevels ?? []}
                     onChange={handleLogLevelChange}
-                    renderValue={(values) => {
+                    renderItem={(option, { selected }) => {
+                        if (isOption(option)) {
+                            if (option.value === "default") {
+                                return t("default-log-levels", "Default Log Levels");
+                            }
+                            if (option.value === "all") {
+                                return t("all-log-levels", "All Log Levels");
+                            }
+                            return (<>
+                                <span style={{ width: 24 }}>{selected && <theme.icons.Check />}</span>
+                                <span style={{ color: getLogLevelColor(option.value as LogLevel, theme.palette) }}>{option.label}</span>
+                            </>);
+                        }
+                        return null;
+                    }}
+                    renderValue={(option: Option<LogLevel> | Option<LogLevel>[]) => {
+                        const values = Array.isArray(option) ? option : [option];
                         const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
-                        const selectedLogLevels = values.length && values.every(lvl => defaultLogLevels.includes(lvl));
+                        const selectedLogLevels = 
+                            values.length === defaultLogLevels.length &&
+                            values.every(lvl => defaultLogLevels.includes(lvl.value));
+                        let label: React.ReactNode;
                         if (selectedLogLevels) {
-                            return t("default-log-levels", "Default log levels");
+                            label = t("default-log-levels", "Default log levels");
                         }
                         else if (values.length === DefaultLogLevels.length) {
-                            return t("all-log-levels", "All log levels");
+                            label = t("all-log-levels", "All log levels");
                         }
-                        else if (values.length === 0) {
-                            return t("select-log-levels", "Select log levels");
+                        else if (values.length === 0 || (values.length === 1 && !values[0])) {
+                            label = t("select-log-levels", "Select log levels");
                         }
-                        return values.join(", ");
+                        else {
+                            label = values.map((v, i) =>
+                                <span key={v.value}>
+                                    {i > 0 && ', '}
+                                    <span style={{ color: getLogLevelColor(v.value as LogLevel, theme.palette) }}>
+                                        {v.label}
+                                    </span>
+                                </span>
+                            );
+                        }
+                        return (
+                            <div style={{ height: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {label}
+                            </div>
+                        );
                     }}
-                >
-                    <MenuItem key="default" value="default">
-                        {t("default-log-levels", "Default log levels")}
-                    </MenuItem>
-                    <MenuItem key="all" value="all">
-                        {t("all-log-levels", "All log levels")}
-                    </MenuItem>
-                    <Divider />
-                    {logLevels.map((level) => (
-                        <MenuItem key={level.level} value={level.level}>
-                            <ListItemIcon>
-                                {level.logged ? <theme.icons.Check /> : null}
-                            </ListItemIcon>
-                            {level.level}
-                        </MenuItem>
-                    ))}
-                </SelectField>
+                />
             </InputDecorator>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <IconButton
