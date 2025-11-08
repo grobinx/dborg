@@ -25,7 +25,10 @@ export function Popover({
     onChangePlacement,
     modifiers,
     children,
+    slotProps,
 }: PopoverProps) {
+    const { popper, paper, awayListener } = slotProps || {};
+    
     const placementModifier = React.useMemo(() => ({
         name: "updatePlacementState",
         enabled: true,
@@ -44,13 +47,15 @@ export function Popover({
             style={{
                 zIndex: 1300,
             }}
+            {...popper}
         >
-            <Paper sx={{ margin: 1 }}>
+            <Paper sx={{ margin: 1 }} {...paper}>
                 <ClickAwayListener
                     onClickAway={(event) => {
                         event.stopPropagation();
                         onClose?.(event);
                     }}
+                    {...awayListener}
                 >
                     <Box>
                         {children}
