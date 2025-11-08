@@ -41,9 +41,9 @@ const theme = createTheme({
         },
         action: {
             active: alpha(colors.lightBlue[200], 0.3),
-            focus: alpha(colors.lightBlue[200], 0.3),
+            focus: alpha(colors.lightBlue[200], 0.2),
             hover: alpha(colors.lightBlue[200], 0.1),
-            selected: alpha(colors.lightBlue[200], 0.25),
+            selected: alpha(colors.lightBlue[200], 0.15),
             disabled: colors.grey[800],
             disabledBackground: colors.grey[900],
             hoverOpacity: 0.1,

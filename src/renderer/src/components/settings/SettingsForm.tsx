@@ -4,13 +4,13 @@ import { getSetting, useSetting } from "@renderer/contexts/SettingsContext";
 import { SettingDecorator } from "./SettingDecorator";
 import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
-import { SelectField } from "../inputs/SelectField";
 import { BooleanField } from "../inputs/BooleanField";
 import { alpha, styled, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
 import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
+import { SelectField } from "../inputs/SelectField";
 
 const StyledSettingsView = styled('div', {
     name: 'SettingsView',

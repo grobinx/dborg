@@ -12,17 +12,17 @@ export const ToolButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonC
         ...button,
         styleOverrides: {
             ...button.styleOverrides,
-            root: {
-                ...(button.styleOverrides?.root as any),
-                borderColor: 'transparent',
-                borderWidth: 0,
-                "&.focused": {
-                    outline: "none",
-                    '&.focused-keyboard': {
-                        ...(button.styleOverrides?.root as any)["&.focused"],
-                    }
-                },
-            },
+            // root: {
+            //     ...(button.styleOverrides?.root as any),
+            //     borderColor: 'transparent',
+            //     borderWidth: 0,
+            //     "&.focused": {
+            //         outline: "none",
+            //         '&.focused-keyboard': {
+            //             ...(button.styleOverrides?.root as any)["&.focused"],
+            //         }
+            //     },
+            // },
             content: {
                 ...(button.styleOverrides?.content as any),
                 padding: "0",

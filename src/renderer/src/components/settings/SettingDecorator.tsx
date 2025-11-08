@@ -65,30 +65,30 @@ export interface SettingDecoratorProps {
 const StyledSettingDecorator = styled('div', {
     name: "SettingDecorator",
     slot: "root",
-})<{}>((props) => ({
+})(({ theme }) => ({
     transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "row",
     width: "100%",
-    margin: props.theme.spacing(1),
+    margin: theme.spacing(1),
     gap: 8,
     padding: 8,
     outline: "1px solid transparent",
     outlineOffset: -1,
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
-            backgroundColor: alpha(props.theme.palette[color].main, 0.03),
+            backgroundColor: alpha(theme.palette[color].main, 0.03),
         };
         return acc;
     }, {}),
     '&.hover': {
-        backgroundColor: props.theme.palette.action.hover,
+        backgroundColor: theme.palette.action.hover,
     },
     '&.focused': {
-        outlineColor: props.theme.palette.action.focus,
+        outlineColor: theme.palette.action.focus,
     },
     '&.selected': {
-        backgroundColor: props.theme.palette.action.selected,
+        backgroundColor: theme.palette.action.selected,
     },
     '&.disabled': {
         opacity: 0.5,

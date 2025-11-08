@@ -2,16 +2,9 @@ import { Stack, useTheme } from "@mui/material";
 import { Action, ActionManager } from "../CommandPalette/ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
 import Tooltip from "../Tooltip";
-import { ToolButton, ToolButtonOwnProps } from "./ToolButton";
 import { Shortcut } from "../Shortcut";
-import { Size } from "@renderer/types/sizes";
-import clsx from "@renderer/utils/clsx";
-import { Button } from "./Button";
-import { IconButton } from "./IconButton";
 import { BaseButton } from "./BaseButton";
 import { BaseButtonProps } from "./BaseButtonProps";
-
-type ButtonVariant = 'standard' | 'tool' | 'icon';
 
 export interface ActionShows {
     icon?: boolean;

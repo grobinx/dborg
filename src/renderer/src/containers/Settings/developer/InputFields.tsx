@@ -12,7 +12,6 @@ import React from "react";
 import { Adornment } from "@renderer/components/inputs/base/BaseInputField";
 import { PasswordField } from "@renderer/components/inputs/PasswordField";
 import { ColorField } from "@renderer/components/inputs/ColorField";
-import { SelectField } from "@renderer/components/inputs/SelectField";
 import { BooleanField } from "@renderer/components/inputs/BooleanField";
 import { DateField } from "@renderer/components/inputs/DateField";
 import { TimeField } from "@renderer/components/inputs/TimeField";
@@ -20,7 +19,7 @@ import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
 import { FileField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
-import { NewSelectField } from "@renderer/components/inputs/NewSelectField";
+import { SelectField } from "@renderer/components/inputs/SelectField";
 import { htmlColors, labelColor } from "@renderer/types/colors";
 import { isOption, Option } from "@renderer/components/inputs/DescribedList";
 import { Options } from "electron";
@@ -450,7 +449,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <NewSelectField
+                                <SelectField
                                     key={size}
                                     placeholder={"Select " + size.charAt(0).toUpperCase() + size.slice(1)}
                                     size={size}
@@ -481,7 +480,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <NewSelectField
+                                <SelectField
                                     key={size}
                                     placeholder={"Select colors"}
                                     size={size}

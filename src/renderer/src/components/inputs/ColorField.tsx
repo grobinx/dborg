@@ -175,7 +175,6 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
                             paper: {
                                 style: {
                                     maxHeight: 300,
-                                    width: 200,
                                 },
                             },
                         }}

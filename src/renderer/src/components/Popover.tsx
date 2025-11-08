@@ -1,13 +1,13 @@
 import React from 'react';
-import { Paper, Box, ClickAwayListener, Popper } from '@mui/material';
+import { Paper, Box, ClickAwayListener, Popper, PopperPlacementType } from '@mui/material';
 import { Options } from '@popperjs/core';
 
 interface PopoverProps {
     open: boolean;
     anchorEl: HTMLElement | null;
-    placement?: 'bottom' | 'top' | 'right' | 'left';
+    placement?: PopperPlacementType;
     onClose?: (event: Event) => void;
-    onChangePlacement?: (placement: string) => void;
+    onChangePlacement?: (placement: PopperPlacementType) => void;
     modifiers?: Options['modifiers']; // Popper.js modifiers
     children: React.ReactNode;
     slotProps?: {

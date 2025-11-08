@@ -24,7 +24,8 @@ import { IconButton } from "../buttons/IconButton";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 import debounce from "@renderer/utils/debounce";
 import { AnyOption, isOption, Option } from "../inputs/DescribedList";
-import { NewSelectField } from "../inputs/NewSelectField";
+import { SelectField } from "../inputs/SelectField";
+import { ToolButton } from "../buttons/ToolButton";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -292,7 +293,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                 />
             </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>
-                <IconButton
+                <ToolButton
                     toggle={[null, 'on']}
                     onChange={(value) => {
                         setShowTime(value === 'on');
@@ -301,10 +302,10 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     color="main"
                 >
                     <theme.icons.Clock />
-                </IconButton>
+                </ToolButton>
             </Tooltip>
             <InputDecorator indicator={false} width={200}>
-                <NewSelectField
+                <SelectField
                     size="small"
                     color="main"
                     options={options}
@@ -360,14 +361,14 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                 />
             </InputDecorator>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
-                <IconButton
+                <ToolButton
                     size="small"
                     disabled={logs.length === 0}
                     onClick={() => console.clear()}
                     color="main"
                 >
                     <theme.icons.Delete />
-                </IconButton>
+                </ToolButton>
             </Tooltip>
         </TabPanelButtons>
     );

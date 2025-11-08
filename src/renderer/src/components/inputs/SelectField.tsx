@@ -5,44 +5,21 @@ import { FormattedContent, FormattedContentItem, FormattedText } from '../useful
 import { Adornment, BaseInputField } from './base/BaseInputField';
 import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
-
-export interface SelectOption<T = any> {
-    label: FormattedContentItem;
-    value: T;
-    description?: FormattedContent;
-}
+import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
+import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
+import { Popover } from '../Popover';
+import { useVisibleState } from '@renderer/hooks/useVisibleState';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
-    value?: T;
-    renderValue?: (selected: T) => React.ReactNode;
+    value?: T | T[];
+    renderValue?: (option: Option<T> | Option<T>[]) => React.ReactNode;
+    renderItem?: (option: AnyOption<T>, state: { selected: boolean; focused: boolean }) => React.ReactNode;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
-    options?: SelectOption[];
-    children?: React.ReactNode;
+    options: AnyOption<T>[];
     listHeight?: number;
 }
-
-const StyledMenuItem = styled(MenuItem, {
-    name: "SelectField",
-    slot: "MenuItem",
-    shouldForwardProp: (prop) => prop !== 'componentSize',
-})<{ componentSize?: Size }>(
-    ({ componentSize = 'medium' }) => {
-        const sizeProps = inputSizeProperties[componentSize];
-        return {
-            display: 'flex',
-            alignItems: 'center',
-            gap: sizeProps.gap,
-            fontSize: sizeProps.fontSize,
-            padding: sizeProps.padding,
-            minHeight: sizeProps.height,
-            '&.Mui-dense': {
-                ...sizeProps['&.dense'],
-            }
-        };
-    }
-);
 
 /**
  * 
@@ -56,129 +33,154 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const {
         value,
         renderValue,
+        renderItem,
         onChange,
         size,
         color,
         options,
         disabled,
-        children,
         listHeight = 250,
         inputProps,
         ...other
     } = props;
 
     const [open, setOpen] = React.useState(false);
-    const [optionDescription, setOptionDescription] = React.useState<FormattedContent>(options?.find(option => option.value === value)?.description || null);
-    const anchorRef = React.useRef<HTMLDivElement>(null);
-    const menuListRef = React.useRef<HTMLUListElement>(null);
-    const [popperBelow, setPopperBelow] = React.useState(false);
-    const [optionsHasDescription, setOptionsHasDescription] = React.useState(false);
+    const [rootRef, visibleRoot] = useVisibleState<HTMLDivElement>();
+    const listRef = React.useRef<HTMLUListElement>(null);
+    const inputRef = React.useRef<HTMLDivElement>(null);
     const theme = useTheme();
+    const [placement, setPlacement] = React.useState<string | undefined>(undefined);
+    const multiple = Array.isArray(value);
+
+    const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
 
     const handleToggle = () => {
         setOpen((prevOpen) => !prevOpen);
     };
 
     const handleClose = (event: Event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
-            return;
-        }
+        console.log('closing popover');
         setOpen(false);
     };
 
-    const isPopperBelow = () => {
-        if (!anchorRef.current) return false;
+    const handleItemClick = React.useCallback((val: T) => {
+        onChange?.(val);
+        if (!multiple) {
+            if (inputRef.current) {
+                inputRef.current?.focus();
+            }
+            setOpen(false);
+        }
+    }, [onChange]);
 
-        const anchorRect = anchorRef.current.getBoundingClientRect();
-        return anchorRect.top <= window.innerHeight - anchorRect.bottom;
-    };
+    const [focusedItem, setFocusedItem, listKeyDownHandler] = useKeyboardNavigation({
+        items: options,
+        getId: (item) => isOption(item) ? item.value : null,
+        onEnter: (item) => isOption(item) && handleItemClick(item.value),
+        actions: [
+            { shortcut: 'Space', handler: (item) => isOption(item) && handleItemClick(item.value) }
+        ]
+    });
+
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLElement>) => {
+        if (!open) {
+            if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+                e.preventDefault();
+                handleToggle();
+            }
+        } else {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setOpen(false);
+            }
+            else {
+                listKeyDownHandler(e);
+            }
+        }
+        inputProps?.onKeyDown?.(e);
+    }, [inputProps, open, listKeyDownHandler]);
+
+    const wasOpen = React.useRef(false);
+    React.useEffect(() => {
+        if (wasOpen.current && !open && inputRef.current) {
+            //inputRef.current?.focus();
+        }
+        if (open) {
+            setFocusedItem(selectedValues[0] || null);
+        }
+        wasOpen.current = open;
+    }, [open]);
 
     const SelectValueRenderer = () => {
-        if (renderValue && value !== undefined) return renderValue(value);
+        if (renderValue && value !== undefined) {
+            if (Array.isArray(value)) {
+                const items = options.filter(option => isOption(option) && value?.includes(option.value));
+                return renderValue(items as Option<T>[]);
+            }
+            const option = options.find(option => isOption(option) && option.value === value);
+            return option ? renderValue(option as Option<T>) : null;
+        }
+        if (renderItem && value !== undefined) {
+            if (Array.isArray(value)) {
+                return options
+                    .filter(option => isOption(option) && value?.includes(option.value))
+                    .map(option => renderItem(option as Option<T>, { selected: false, focused: false }))
+            }
+            else {
+                const item = options.find(option => isOption(option) && option.value === value);
+                return item ? renderItem(item as Option<T>, { selected: false, focused: false }) : null;
+            }
+        }
 
-        if (options) {
-            if (!Array.isArray(value)) {
+        if (!Array.isArray(value)) {
+            const option = options.find(option => isOption(option) && option.value === value);
+            if (option && isOption(option)) {
                 return (
                     <FormattedText
-                        text={options?.find(option => option.value === value)?.label}
+                        text={option.label}
                     />
                 );
             }
-            return (
-                options
-                    .filter(option => value?.includes(option.value))
-                    .map(option => (
+            return null;
+        }
+        return (
+            options
+                .filter(option => isOption(option) && value?.includes(option.value))
+                .map(option => (
+                    isOption(option) && (
                         <FormattedText
                             key={option.value}
                             text={option.label}
                         />
-                    ))
-            );
-        }
-
-        if (children) {
-            return (
-                React.Children.toArray(children)
-                    .filter(child => {
-                        if (React.isValidElement(child) && child.type === MenuItem) {
-                            const childValue = (child.props as any).value;
-                            return Array.isArray(value)
-                                ? value.includes(childValue)
-                                : value === childValue;
-                        }
-                        return false;
-                    })
-                    .map(child => {
-                        if (React.isValidElement(child) && child.props && 'children' in (child as any).props) {
-                            return (child.props as any).children;
-                        }
-                        return null;
-                    })
-            );
-        }
-
-        return <></>;
+                    )
+                ))
+        );
     };
-
-    React.useEffect(() => {
-        if (open) {
-            const hasDescription = options?.some(option => option.description);
-            setOptionsHasDescription(!!hasDescription);
-            const isBelow = isPopperBelow();
-            setPopperBelow(isBelow);
-            setOptionDescription(options?.find(option => option.value === value)?.description || null);
-            setTimeout(() => {
-                menuListRef.current?.focus();
-            }, 0);
-        }
-    }, [value, open]);
 
     return (
         <BaseInputField
-            ref={anchorRef}
+            ref={rootRef}
             value={value}
             type='select'
             size={size}
             color={color}
             onChange={onChange}
             disabled={disabled}
-            input={<SelectValueRenderer />}
+            input={(
+                <div
+                    ref={inputRef}
+                    style={{ width: '100%', height: '100%', display: 'inherit', flexDirection: 'inherit', gap: 'inherit', outline: 'none' }}
+                >
+                    <SelectValueRenderer />
+                </div>
+            )}
             inputProps={{
                 ...inputProps,
                 onClick: (e) => {
-                    if ((e.target as HTMLElement).closest('[data-ignore-toggle]')) {
-                        return;
-                    }
                     handleToggle();
                     inputProps?.onClick?.(e);
                 },
-                onKeyDown: (e) => {
-                    if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
-                        e.preventDefault();
-                        handleToggle();
-                    }
-                    inputProps?.onKeyDown?.(e);
-                },
+                onKeyDown: handleKeyDown,
             }}
             inputAdornments={
                 <Adornment position='input'>
@@ -191,106 +193,29 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     >
                         {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                     </span>
-                    <Popper
-                        open={open}
-                        anchorEl={anchorRef.current}
-                        placement={optionsHasDescription ? (popperBelow ? "bottom-start" : "top-start") : undefined}
-                        style={{
-                            zIndex: 1300,
-                            width: anchorRef.current ? `${anchorRef.current.offsetWidth}px` : "auto",
-                        }}
+                    <Popover
+                        open={open && visibleRoot}
+                        anchorEl={rootRef.current}
+                        onClose={handleClose}
+                        onChangePlacement={setPlacement}
                     >
-                        <Paper sx={{ margin: 1 }}>
-                            <ClickAwayListener onClickAway={handleClose} mouseEvent="onMouseDown">
-                                <Box
-                                    display={"flex"}
-                                    flexDirection={"column"}
-                                >
-                                    <MenuList
-                                        ref={menuListRef}
-                                        sx={{
-                                            maxHeight: listHeight,
-                                            overflow: "auto",
-                                            outline: "none",
-                                        }}
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Escape') {
-                                                setOpen(false);
-                                            }
-                                        }}
-                                    >
-                                        {children ? React.Children.toArray(children).map(child => {
-                                            if (React.isValidElement(child) && child.type === MenuItem && 'value' in (child.props as any)) {
-                                                const sizeProps = inputSizeProperties[size || 'medium'];
-                                                return React.cloneElement(child, {
-                                                    onClick: () => {
-                                                        if (!Array.isArray(value)) {
-                                                            setOpen(false);
-                                                        }
-                                                        onChange?.((child.props as any).value);
-                                                        //anchorRef.current?.focus();
-                                                    },
-                                                    selected: Array.isArray(value) ? value.includes((child.props as any).value) : value === (child.props as any).value,
-                                                    sx: {
-                                                        fontSize: sizeProps.fontSize,
-                                                        padding: sizeProps.padding,
-                                                        minHeight: sizeProps.height,
-                                                        gap: sizeProps.gap,
-                                                        ...((child.props as any).sx || {})
-                                                    }
-                                                } as React.ComponentProps<typeof MenuItem>);
-                                            }
-                                            return child;
-                                        }) :
-                                            options?.map((option) => (
-                                                <StyledMenuItem
-                                                    key={option.value}
-                                                    value={option.value}
-                                                    componentSize={size === "default" ? 'medium' : size}
-                                                    onClick={() => {
-                                                        if (!Array.isArray(value)) {
-                                                            setOpen(false);
-                                                        }
-                                                        onChange?.(option.value);
-                                                        //anchorRef.current?.focus();
-                                                    }}
-                                                    selected={Array.isArray(value) ? value.includes(option.value) : value === option.value}
-                                                    onMouseEnter={() => {
-                                                        setOptionDescription(option.description || null);
-                                                    }}
-                                                    onMouseLeave={() => {
-                                                        setOptionDescription(option.description || null);
-                                                    }}
-                                                    onFocusVisible={() => {
-                                                        setOptionDescription(option.description || null);
-                                                    }}
-                                                >
-                                                    <FormattedText text={option.label} />
-                                                </StyledMenuItem>
-                                            ))}
-                                    </MenuList>
-                                    {optionDescription && (
-                                        <Divider sx={{ order: popperBelow ? 1 : -1 }} />
-                                    )}
-                                    {optionDescription && (
-                                        <Box
-                                            sx={{
-                                                padding: inputSizeProperties[size || 'medium'].gap,
-                                                display: 'flex',
-                                                width: '100%',
-                                                order: popperBelow ? 2 : -2,
-                                                fontSize: inputSizeProperties[size || 'medium'].fontSize,
-                                                color: 'text.secondary',
-                                            }}
-                                        >
-                                            <FormattedText text={optionDescription} />
-                                        </Box>
-                                    )}
-                                </Box>
-                            </ClickAwayListener>
-                        </Paper>
-                    </Popper>
+                        <DescribedList
+                            ref={listRef}
+                            options={options}
+                            selected={selectedValues}
+                            focused={focusedItem}
+                            size={size}
+                            color={color}
+                            onItemClick={handleItemClick}
+                            style={{
+                                maxHeight: listHeight,
+                                width: (rootRef.current && (placement === 'bottom' || placement === 'top')) ? `${rootRef.current.offsetWidth}px` : "auto"
+                            }}
+                            description={placement === 'top' ? 'header' : 'footer'}
+                            tabIndex={-1}
+                            renderItem={renderItem}
+                        />
+                    </Popover>
                 </Adornment>
             }
             {...other}

@@ -50,7 +50,7 @@ export interface BaseButtonProps {
      * Rozmiar przycisku
      * @default "medium"
      */
-    size?: Size;
+    size?: Size | "default";
 
     /**
      * Czy przycisk jest w gęstym układzie
@@ -68,7 +68,7 @@ export interface BaseButtonProps {
      * Kolor motywu
      * @default "primary"
      */
-    color?: ThemeColor;
+    color?: ThemeColor | "default";
     
     /**
      * Typ przycisku HTML

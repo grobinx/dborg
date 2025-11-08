@@ -1,12 +1,9 @@
-import { Box, InputLabel, MenuItem, Stack, Typography } from '@mui/material';
+import { Box, InputLabel, Stack, Typography } from '@mui/material';
 import React from 'react';
 import { PropertyInfo } from '../../../../../api/db';
 import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
-import Tooltip from '@renderer/components/Tooltip';
-import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import { PasswordField } from '@renderer/components/inputs/PasswordField';
-import { Adornment } from '@renderer/components/inputs/base/BaseInputField';
 import { SelectField } from '@renderer/components/inputs/SelectField';
 
 export type SchemaUsePasswordType = "ask" | "save" | "empty" | undefined;
@@ -51,11 +48,13 @@ const DriverPropertyPassword: React.FC<DriverPropertyFileProps> = (props) => {
                         value={usePassword ?? "ask"}
                         onChange={value => onChangeUsePassword(value as SchemaUsePasswordType)}
                         width={textFieldWidth("string", i18n_SchemaUsePassword)}
-                    >
-                        <MenuItem key="ask" value="ask">{i18n_AskPasswordOnConnect}</MenuItem>
-                        <MenuItem key="save" value="save">{i18n_SavePassword}</MenuItem>
-                        <MenuItem key="empty" value="empty">{i18n_UseEmptyPassword}</MenuItem>
-                    </SelectField>
+                        options={[
+                            { value: "ask", label: i18n_AskPasswordOnConnect },
+                            { value: "save", label: i18n_SavePassword },
+                            { value: "empty", label: i18n_UseEmptyPassword },
+                        ]}
+                        color="default"
+                    />
                 </Box>
             </Stack>
         </Stack>

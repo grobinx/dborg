@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from 'react';
+import React, { InputHTMLAttributes, useImperativeHandle } from 'react';
 import { styled } from '@mui/material';
 import { BaseInputProps } from './BaseInputProps';
 import { FormattedContentItem, FormattedText } from '../../useful/FormattedText';
@@ -197,6 +197,9 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const decorator = useInputDecorator();
     const [focused, setFocused] = React.useState<boolean | undefined>(undefined);
     const [hover, setHover] = React.useState<boolean>(false);
+    const rootRef = React.useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => rootRef.current as HTMLDivElement);
 
     const [invalid] = useValidation(
         currentValue,
@@ -276,8 +279,12 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
 
     const handleBlur = React.useCallback((e: React.FocusEvent<HTMLElement>) => {
         onBlur?.(e);
-        setFocused(false);
-        decorator?.setFocused(false);
+        setTimeout(() => {
+            if (!rootRef.current?.contains(document.activeElement)) {
+                setFocused(false);
+                decorator?.setFocused(false);
+            }
+        }, 0);
     }, [onBlur, decorator]);
 
     const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -301,12 +308,14 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                 classes,
                 className,
             )}
-            ref={ref}
+            ref={rootRef}
             onMouseDown={() => {
-                if (!input && !disabled) { 
+                if (!input && !disabled) {
                     textInputRef.current?.focus();
                 }
             }}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
             style={{ width, height, ...style }}
