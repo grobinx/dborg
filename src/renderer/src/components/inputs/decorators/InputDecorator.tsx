@@ -292,7 +292,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                 size: children.props.size ?? "medium",
                 defaultValue: children.props.defaultValue,
                 value: children.props.value,
-                color: children.props.color ?? "primary",
+                color: children.props.color ?? "main",
             };
         }
         return {
@@ -301,7 +301,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
             size: "medium",
             defaultValue: undefined,
             value: undefined,
-            color: "primary",
+            color: "main",
         };
     }, [children]);
 

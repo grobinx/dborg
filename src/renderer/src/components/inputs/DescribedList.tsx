@@ -39,11 +39,11 @@ export function isOption(option: AnyOption<any>): option is Option<any> {
 }
 
 export function isHeaderOption(option: AnyOption<any>): option is HeaderOption {
-    return 'label' in option && !('value' in option);
+    return typeof option === 'object' && 'label' in option && !('value' in option);
 }
 
 export function isDividerOption(option: AnyOption<any>): option is DividerOption {
-    return !('label' in option) && !('value' in option);
+    return typeof option === 'object' && !('label' in option) && !('value' in option);
 }
 
 /**
