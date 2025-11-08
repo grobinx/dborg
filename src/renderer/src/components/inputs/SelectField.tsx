@@ -58,8 +58,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         setOpen((prevOpen) => !prevOpen);
     };
 
-    const handleClose = (event: Event) => {
-        console.log('closing popover');
+    const handleClose = (_event: Event) => {
         setOpen(false);
     };
 
