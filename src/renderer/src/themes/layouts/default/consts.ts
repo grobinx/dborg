@@ -57,9 +57,9 @@ export const buttonSizeProperties: Record<Size, any> = {
         gap: paddingLarge,
         '&.dense': {
             padding: paddingLarge / 2,
-            height: "1.9rem",
-            minHeight: "1.9rem",
-            minWidth: "1.9rem",
+            height: "2rem",
+            minHeight: "2rem",
+            minWidth: "2rem",
         }
     },
 };

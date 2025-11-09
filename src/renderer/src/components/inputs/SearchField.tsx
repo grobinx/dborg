@@ -23,11 +23,13 @@ export const SearchField: React.FC<SearchFieldProps> = (props) => {
     const theme = useTheme();
     const decorator = useInputDecorator();
 
-    if (decorator && maxLength) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxLength) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
+            });
+        }
+    }, [(value ?? "").length, decorator, maxLength]);
 
     return (
         <TextField

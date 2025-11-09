@@ -185,6 +185,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         inputRef,
         children,
         autoFocus,
+        dense,
         sx, style,
     } = props;
 
@@ -225,6 +226,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         `type-${type ?? inputProps?.type ?? 'text'}`,
         hover && "hover",
         autoCollapse && "auto-collapse",
+        dense && "dense",
     );
 
     const allAdornments = React.Children.toArray(adornments);

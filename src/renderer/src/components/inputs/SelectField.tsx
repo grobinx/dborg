@@ -3,12 +3,13 @@ import { BaseInputProps } from './base/BaseInputProps';
 import { Size } from '@renderer/types/sizes';
 import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Box, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
+import { Box, Chip, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
 import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { Popover } from '../Popover';
 import { useVisibleState } from '@renderer/hooks/useVisibleState';
+import { useInputDecorator } from './decorators/InputDecoratorContext';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -21,6 +22,7 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     listHeight?: number;
     // NOWE:
     multiValueDisplay?: "wrap" | "column" | "ellipsis";
+    maxItems?: number;
 }
 
 /**
@@ -45,6 +47,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         inputProps,
         // NOWE:
         multiValueDisplay = 'wrap',
+        maxItems,
         ...other
     } = props;
 
@@ -55,6 +58,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const theme = useTheme();
     const [placement, setPlacement] = React.useState<string | undefined>(undefined);
     const multiple = Array.isArray(value);
+    const decorator = useInputDecorator();
 
     const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
 
@@ -67,14 +71,27 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     };
 
     const handleItemClick = React.useCallback((val: T) => {
-        onChange?.(val);
         if (!multiple) {
+            onChange?.(val);
             if (inputRef.current) {
                 inputRef.current?.focus();
             }
             setOpen(false);
         }
+        else {
+            if (value.length < (maxItems ?? Infinity) || value.includes(val)) {
+                onChange?.(val);
+            }
+        }
     }, [onChange]);
+
+    React.useEffect(() => {
+        if (decorator && maxItems && multiple) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? []).length}/${maxItems}`]);
+            });
+        }
+    }, [multiple && value.length, decorator, maxItems]);
 
     const [focusedItem, setFocusedItem, listKeyDownHandler] = useKeyboardNavigation({
         items: options,
@@ -103,16 +120,31 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         inputProps?.onKeyDown?.(e);
     }, [inputProps, open, listKeyDownHandler]);
 
-    const wasOpen = React.useRef(false);
     React.useEffect(() => {
-        if (wasOpen.current && !open && inputRef.current) {
-            //inputRef.current?.focus();
-        }
         if (open) {
             setFocusedItem(selectedValues[0] || null);
         }
-        wasOpen.current = open;
     }, [open]);
+
+    const RenderSelectedOption = ({ option }: { option: Option<T> }) => {
+        return (
+            <Chip
+                style={{ fontSize: "inherit", height: "auto" }}
+                size="small"
+                onDelete={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleItemClick(option.value);
+                }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                }}
+                label={
+                    renderItem ? renderItem(option as AnyOption<T>, { selected: false, focused: false }) : <FormattedText text={option.label} />
+                }
+            />
+        );
+    };
 
     const SelectValueRenderer = () => {
         if (renderValue && value !== undefined) {
@@ -140,33 +172,26 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             return (
                 <div style={{ overflow: "hidden" }}>
                     {selectedOptions.map((opt, idx) => (
-                        renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
+                        <RenderSelectedOption key={idx} option={opt} />
                     ))}
                 </div>
             );
         }
 
         if (multiValueDisplay === "ellipsis") {
-            // Jeden wiersz z przecinkami i ucinaniem na końcu
+            // Jeden wiersz
             return (
                 selectedOptions.map((opt, idx) => (
-                    renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
+                    <RenderSelectedOption key={idx} option={opt} />
                 ))
             );
         }
 
-        // Domyślnie: wrap z przecinkami
+        // Wrap
         return (
-            <span
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 4,
-                    minWidth: 0,
-                }}
-            >
+            <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, minWidth: 0, }}>
                 {selectedOptions.map((opt, idx) => (
-                    renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
+                    <RenderSelectedOption key={idx} option={opt} />
                 ))}
             </span>
         );

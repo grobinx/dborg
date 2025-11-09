@@ -12,3 +12,9 @@ export const Sizes: Size[] = [
     'medium',
     'large',
 ];
+
+export const denseSizes: Record<Size, Size | "default"> = {
+    small: 'default',
+    medium: 'small',
+    large: 'medium',
+};

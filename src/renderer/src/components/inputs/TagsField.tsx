@@ -7,6 +7,7 @@ import { IconButton } from "../buttons/IconButton";
 import clsx from "@renderer/utils/clsx";
 import { useInputDecorator } from "./decorators/InputDecoratorContext";
 import { Popover } from "../Popover";
+import { denseSizes, Size } from "@renderer/types/sizes";
 
 export interface TagsFieldProps extends Omit<BaseInputProps<string>, "onChange" | "value" | "defaultValue"> {
     value?: string[];
@@ -34,6 +35,7 @@ export const TagsField: React.FC<TagsFieldProps> = ({
     color = "main",
     showTags = true,
     maxTags,
+    dense,
     ...other
 }) => {
     const theme = useTheme();
@@ -57,11 +59,13 @@ export const TagsField: React.FC<TagsFieldProps> = ({
         setListOpen(false);
     };
 
-    if (decorator && maxTags) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(tags ?? []).length}/${maxTags}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxTags) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(tags ?? []).length}/${maxTags}`]);
+            });
+        }
+    }, [(tags ?? []).length, decorator, maxTags]);
 
     const handleAddTag = React.useCallback((tag?: string) => {
         const newTag = (tag ?? inputValue).trim();
@@ -168,7 +172,7 @@ export const TagsField: React.FC<TagsFieldProps> = ({
                 ),
                 <Adornment position="end" key="add">
                     <IconButton
-                        size={size}
+                        size={dense && size !== "default" ? denseSizes[size as Size] : size}
                         color="main"
                         dense
                         onClick={() => handleAddTag()}
@@ -191,6 +195,7 @@ export const TagsField: React.FC<TagsFieldProps> = ({
                 disabled,
             }}
             disabled={disabled}
+            dense={dense}
             {...other}
         >
             {filteredSuggestions.length > 0 && inputRef.current && (

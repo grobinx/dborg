@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from '@renderer/utils/clsx';
 import { htmlColors, labelColor } from '@renderer/types/colors';
 import ButtonGroup from '../buttons/ButtonGroup';
+import { denseSizes, Size } from '@renderer/types/sizes';
 
 interface ColorFieldProps extends BaseInputProps {
     adornments?: React.ReactNode;
@@ -47,6 +48,7 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
         size = 'medium',
         color = 'main',
         defaultValue,
+        dense,
         ...other
     } = props;
 
@@ -131,7 +133,7 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
                         <Tooltip title={t("pick-a-color", "Pick a color")}>
                             <ToolButton
                                 onClick={handleColorPickerOpen}
-                                size={size}
+                                size={dense && size !== "default" ? denseSizes[size as Size] : size}
                                 color={color}
                                 dense
                             >
@@ -150,7 +152,7 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
                         <Tooltip title={t("select-color", "Select color")}>
                             <ToolButton
                                 onClick={handleColorMenuOpen}
-                                size={size}
+                                size={dense && size !== "default" ? denseSizes[size as Size] : size}
                                 color={color}
                                 dense
                             >
@@ -202,6 +204,7 @@ export const ColorField: React.FC<ColorFieldProps> = (props) => {
                     />
                 </Adornment>,
             ]}
+            dense={dense}
             {...other}
         />
     );

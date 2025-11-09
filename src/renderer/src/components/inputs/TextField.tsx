@@ -45,11 +45,13 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
         }
     });
 
-    if (decorator && maxLength) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxLength) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
+            });
+        }
+    }, [(value ?? "").length, decorator, maxLength]);
 
     // Filtrowanie storedList wg wpisywanego tekstu
     const filteredSuggestions = React.useMemo(() => {

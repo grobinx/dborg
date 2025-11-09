@@ -37,11 +37,13 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
     const [uncontrolledValue, setUncontrolledValue] = React.useState<string | undefined>(defaultValue);
     const value = controlledValue !== undefined ? controlledValue : uncontrolledValue;
 
-    if (decorator && maxLength) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxLength) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
+            });
+        }
+    }, [(value ?? "").length, decorator, maxLength]);
 
     const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
         if (onChange) {

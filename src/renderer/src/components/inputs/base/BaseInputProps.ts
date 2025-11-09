@@ -106,6 +106,10 @@ export interface BaseInputProps<T = any> {
      * Ustaw autofocus na elemencie wejściowym
      */
     autoFocus?: boolean;
+    /**
+     * Czy używać gęstego odstępu wewnętrznego (padding)
+     */
+    dense?: boolean;
 
     sx?: SxProps;
     style?: React.CSSProperties;

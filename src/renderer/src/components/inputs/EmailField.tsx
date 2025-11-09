@@ -26,11 +26,13 @@ export const EmailField: React.FC<EmailFieldProps> = (props) => {
 
     const decorator = useInputDecorator();
 
-    if (decorator && maxLength) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxLength) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
+            });
+        }
+    }, [(value ?? "").length, decorator, maxLength]);
 
     return (
         <BaseInputField

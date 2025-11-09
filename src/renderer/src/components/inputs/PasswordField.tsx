@@ -8,6 +8,7 @@ import { IconButton } from '../buttons/IconButton';
 import { useTheme } from '@mui/material';
 import Tooltip from '../Tooltip';
 import { useTranslation } from 'react-i18next';
+import { denseSizes, Size } from '@renderer/types/sizes';
 
 interface StringFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -25,6 +26,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
         inputProps,
         size,
         inputRef,
+        dense,
         ...other
     } = props;
 
@@ -34,11 +36,13 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
     const inputPasswordRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
     const { t } = useTranslation();
 
-    if (decorator && maxLength) {
-        Promise.resolve().then(() => {
-            decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
-        });
-    }
+    React.useEffect(() => {
+        if (decorator && maxLength) {
+            Promise.resolve().then(() => {
+                decorator.setRestrictions([`${(value ?? "").length}/${maxLength}`]);
+            });
+        }
+    }, [(value ?? "").length, decorator, maxLength]);
 
     return (
         <BaseInputField
@@ -71,7 +75,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
                                 setShowPassword(!showPassword);
                                 inputPasswordRef.current?.focus();
                             }}
-                            size={size}
+                            size={dense && size !== "default" ? denseSizes[size as Size] : size}
                             dense
                         >
                             {showPassword ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
@@ -80,6 +84,7 @@ export const PasswordField: React.FC<StringFieldProps> = (props) => {
                 </Adornment>
             }
             size={size}
+            dense={dense}
             {...other}
         />
     )

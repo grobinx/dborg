@@ -43,7 +43,6 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 gap: 4,
             },
             item: {
-                cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'row',
                 width: '100%',
@@ -53,6 +52,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 outline: '2px solid transparent',
                 outlineOffset: -1,
                 '&.profile': {
+                    cursor: 'pointer',
                     padding: "4px 8px",
                 },
                 '&.header': {
@@ -60,7 +60,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                     position: 'sticky',
                     top: 0,
                     zIndex: 100,
-                    backgroundColor: palette.background.paper,
+                    backgroundColor: palette.background.sideBar,
                     color: palette.text.secondary,
                 },
                 ...themeColors.reduce((acc, color) => {

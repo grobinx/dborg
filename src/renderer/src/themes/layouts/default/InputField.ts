@@ -2,6 +2,7 @@ import { alpha, Palette, ThemeOptions } from "@mui/material";
 import { borderRadius, paddingLarge, paddingMedium, paddingSmall, inputSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
+import { LineWeight } from "@mui/icons-material";
 
 
 export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFieldComponent => {
@@ -78,76 +79,127 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 },
                 '&.type-tags': {
                     height: "auto",
+                },
+                '&.type-tags.dense': {
+                    height: "auto",
+                    '& .MuiChip-root': {
+                        height: 'auto',
+                        lineHeight: 1.2,
+                    }
+            }
+        },
+        input: {
+            fontFamily: "inherit",
+            fontSize: "inherit",
+            lineHeight: 1.5,
+            '&.dense': {
+                lineHeight: 1.2,
+            },
+            padding: 0,
+            backgroundColor: 'transparent',
+            color: palette.text.primary,
+            border: "none",
+            boxShadow: "none",
+            outline: "none",
+            '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button': {
+                WebkitAppearance: "none",
+                margin: 0,
+            },
+            '&[type="number"]': {
+                MozAppearance: "textfield",
+            },
+            '&.type-tags': {
+                minWidth: "5rem",
+                width: "auto",
+            },
+        },
+        customInput: {
+            lineHeight: 1.5,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "center",
+            alignItems: "center",
+            height: "100%",
+            minWidth: 0,
+            maxWidth: "100%",
+            overflowX: "auto",
+            overflowY: "hidden",
+            '&::-webkit-scrollbar': {
+                display: 'none', // Chrome/Safari/Edge
+            },
+            padding: 0,
+            whiteSpace: "nowrap",
+            '&.size-small': {
+                gap: paddingSmall,
+            },
+            '&.size-medium': {
+                gap: paddingMedium,
+            },
+            '&.size-large': {
+                gap: paddingLarge,
+            },
+            outline: "none",
+            '& .type-boolean': {
+                alignItems: "flex-start",
+                padding: 2,
+                '.focused & .checkbox-icon': {
+                    outline: "2px solid",
+                    borderRadius: borderRadius,
+                    ...themeColors.reduce((acc, color) => {
+                        acc[`.color-${color} &`] = {
+                            outlineColor: palette[color].main,
+                        };
+                        return acc;
+                    }, {}),
+                    '.color-default &': {
+                        outlineColor: palette.action.focus,
+                    },
                 }
             },
-            input: {
-                fontFamily: "inherit",
-                fontSize: "inherit",
-                lineHeight: 1.5,
-                padding: 0,
-                backgroundColor: 'transparent',
-                color: palette.text.primary,
-                border: "none",
-                boxShadow: "none",
-                outline: "none",
-                '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button': {
-                    WebkitAppearance: "none",
-                    margin: 0,
-                },
-                '&[type="number"]': {
-                    MozAppearance: "textfield",
-                },
-                '&.type-tags': {
-                    minWidth: "5rem",
-                    width: "auto",
-                },
+        },
+        main: {
+            '&.size-small': {
+                gap: paddingSmall,
             },
-            customInput: {
-                lineHeight: 1.5,
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "row",
-                alignSelf: "center",
+            '&.size-medium': {
+                gap: paddingMedium,
+            },
+            '&.size-large': {
+                gap: paddingLarge,
+            },
+        },
+        placeholder: {
+            color: palette.text.disabled,
+            position: "absolute",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minWidth: 0,
+        },
+        adornment: {
+            alignItems: 'center',
+            '&.type-number.position-input': {
+                flexDirection: 'column',
+                justifyContent: "center",
                 alignItems: "center",
-                height: "100%",
-                minWidth: 0,
-                maxWidth: "100%",
-                overflowX: "auto",
-                overflowY: "hidden",
+                width: '2rem',
+            },
+            '&.tags-container': {
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                overflowX: 'auto',
+                overflowY: 'hidden',
                 '&::-webkit-scrollbar': {
                     display: 'none', // Chrome/Safari/Edge
                 },
-                padding: 0,
-                whiteSpace: "nowrap",
-                '&.size-small': {
-                    gap: paddingSmall,
+                gap: paddingMedium,
+                '& .MuiChip-root': {
+                    fontSize: "inherit",
+                    maxWidth: "10rem",
                 },
-                '&.size-medium': {
-                    gap: paddingMedium,
-                },
-                '&.size-large': {
-                    gap: paddingLarge,
-                },
-                outline: "none",
-                '& .type-boolean': {
-                    alignItems: "flex-start",
-                    padding: 2,
-                    '.focused & .checkbox-icon': {
-                        outline: "2px solid",
-                        borderRadius: borderRadius,
-                        ...themeColors.reduce((acc, color) => {
-                            acc[`.color-${color} &`] = {
-                                outlineColor: palette[color].main,
-                            };
-                            return acc;
-                        }, {}),
-                        '.color-default &': {
-                            outlineColor: palette.action.focus,
-                        },
-                    }
-                },
-            },
-            main: {
                 '&.size-small': {
                     gap: paddingSmall,
                 },
@@ -158,85 +210,44 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     gap: paddingLarge,
                 },
             },
-            placeholder: {
-                color: palette.text.disabled,
-                position: "absolute",
-                pointerEvents: "none",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                minWidth: 0,
+        },
+        numberStepper: {
+            display: 'flex',
+            flexGrow: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: 'transparent',
+            border: 'none',
+            outline: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            color: palette.text.primary,
+            width: '90%',
+            height: 0,
+            '& span': {
+                fontSize: '0.8rem',
+                transform: 'scaleY(0.5)',
             },
-            adornment: {
-                alignItems: 'center',
-                '&.type-number.position-input': {
-                    flexDirection: 'column',
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: '2rem',
-                },
-                '&.tags-container': {
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    overflowX: 'auto',
-                    overflowY: 'hidden',
-                    '&::-webkit-scrollbar': {
-                        display: 'none', // Chrome/Safari/Edge
-                    },
-                    gap: paddingMedium,
-                    '& .MuiChip-root': {
-                        fontSize: "inherit",
-                        maxWidth: "10rem",
-                    },
-                    '&.size-small': {
-                        gap: paddingSmall,
-                    },
-                    '&.size-medium': {
-                        gap: paddingMedium,
-                    },
-                    '&.size-large': {
-                        gap: paddingLarge,
-                    },
-                },
+            '&:hover': {
+                backgroundColor: palette.action.hover,
             },
-            numberStepper: {
-                display: 'flex',
-                flexGrow: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                color: palette.text.primary,
-                width: '90%',
-                height: 0,
-                '& span': {
-                    fontSize: '0.8rem',
-                    transform: 'scaleY(0.5)',
-                },
-                '&:hover': {
-                    backgroundColor: palette.action.hover,
-                },
+        },
+        colorIndicator: {
+            border: `1px solid ${palette.primary.main}`,
+            borderRadius: borderRadius,
+            '&.size-small': {
+                width: '14px',
+                height: '14px',
             },
-            colorIndicator: {
-                border: `1px solid ${palette.primary.main}`,
-                borderRadius: borderRadius,
-                '&.size-small': {
-                    width: '14px',
-                    height: '14px',
-                },
-                '&.size-medium': {
-                    width: '18px',
-                    height: '18px',
-                },
-                '&.size-large': {
-                    width: '22px',
-                    height: '22px',
-                },
-            }
+            '&.size-medium': {
+                width: '18px',
+                height: '18px',
+            },
+            '&.size-large': {
+                width: '22px',
+                height: '22px',
+            },
         }
-    };
+    }
+};
 };
