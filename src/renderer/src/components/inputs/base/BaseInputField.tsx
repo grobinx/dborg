@@ -178,6 +178,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         onFocus,
         onBlur,
         onClick,
+        onKeyDown,
+        onKeyUp,
         validations,
         inputProps,
         input,
@@ -352,8 +354,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                             "InputField-customInput",
                             classes,
                         )}
-                        onKeyDown={inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>}
-                        onKeyUp={inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement>}
+                        onKeyDown={onKeyDown ?? inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLDivElement>}
+                        onKeyUp={onKeyUp ?? inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLDivElement>}
                         onMouseDown={inputProps?.onMouseDown as React.MouseEventHandler<HTMLDivElement>}
                         onMouseUp={(e: any) => {
                             inputProps?.onMouseUp?.(e);
@@ -410,6 +412,8 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     onClick={onClick}
+                    onKeyDown={onKeyDown ?? inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLElement>}
+                    onKeyUp={onKeyUp ?? inputProps?.onKeyUp as React.KeyboardEventHandler<HTMLElement>}
                     width={width}
                     hidden={!!input}
                 />

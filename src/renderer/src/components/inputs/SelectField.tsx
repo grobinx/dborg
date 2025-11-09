@@ -1,10 +1,8 @@
 import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
-import { Size } from '@renderer/types/sizes';
-import { FormattedContent, FormattedContentItem, FormattedText } from '../useful/FormattedText';
+import { FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Box, Chip, ClickAwayListener, Divider, MenuItem, MenuList, Paper, Popper, styled, useTheme } from '@mui/material';
-import { inputSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { Chip, useTheme } from '@mui/material';
 import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { Popover } from '../Popover';

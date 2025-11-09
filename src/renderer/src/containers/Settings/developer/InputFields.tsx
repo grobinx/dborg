@@ -23,11 +23,11 @@ import { SelectField } from "@renderer/components/inputs/SelectField";
 import { htmlColors, labelColor } from "@renderer/types/colors";
 import { isOption, Option } from "@renderer/components/inputs/DescribedList";
 import { Options } from "electron";
+import { ListField } from "@renderer/components/inputs/ListField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
 
-    const [selected, setSelected] = React.useState<string | undefined>(undefined);
     const [textValues, setTextValues] = React.useState<Record<string, any>>({
         small: "a",
         medium: "b",
@@ -72,6 +72,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         small: "#ff0000",
         medium: "#00ff00",
         large: "#0000ff",
+    });
+    const [listValues, setListValues] = React.useState<Record<string, string[] | undefined>>({
+        small: ["red"],
+        medium: ["green", "blue"],
+        large: ["blue"],
     });
     const [selectValues, setSelectValues] = React.useState<Record<string, string | undefined>>({
         small: "red",
@@ -174,6 +179,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
             };
         });
     };
+    const handleValueListChange = (size: string, value: string[] | undefined) => {
+        setListValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
 
     const ColorBox = ({ color }: { color: string }) => (
         <span
@@ -204,8 +215,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -220,7 +229,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     defaultValue={1}
                                 />
                             </InputDecorator>
-                        ), [size, textValues[size], selected])}
+                        ), [size, textValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -231,8 +240,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -248,7 +255,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     defaultValue={1}
                                 />
                             </InputDecorator>
-                        ), [size, numberValues[size], selected])}
+                        ), [size, numberValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -259,8 +266,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -276,7 +281,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     legend={["safe", "low", "medium", "high", "critical"]}
                                 />
                             </InputDecorator>
-                        ), [size, sliderValues[size], selected])}
+                        ), [size, sliderValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -287,8 +292,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -305,7 +308,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     legend={["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth"]}
                                 />
                             </InputDecorator>
-                        ), [size, rangeValues[size], selected])}
+                        ), [size, rangeValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -316,8 +319,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -330,7 +331,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={true}
                                 />
                             </InputDecorator>
-                        ), [size, emailValues[size], selected])}
+                        ), [size, emailValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -341,8 +342,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -356,7 +355,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={false}
                                 />
                             </InputDecorator>
-                        ), [size, searchValues[size], selected])}
+                        ), [size, searchValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -367,8 +366,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -383,7 +380,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={true}
                                 />
                             </InputDecorator>
-                        ), [size, patternValues[size], selected])}
+                        ), [size, patternValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -394,8 +391,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -408,7 +403,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={true}
                                 />
                             </InputDecorator>
-                        ), [size, passwordValues[size], selected])}
+                        ), [size, passwordValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -419,8 +414,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -433,19 +426,17 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     required={true}
                                 />
                             </InputDecorator>
-                        ), [size, colorValues[size], selected])}
+                        ), [size, colorValues[size]])}
                     </Stack>
                 ))}
             </Stack>
-            <Stack key="newSelectFields" direction="row" width="100%" gap={8}>
+            <Stack key="selectFields" direction="row" width="100%" gap={8}>
                 {Sizes.map((size) => (
                     <Stack key={size} direction={"column"} width="100%">
-                        NewSelectField, size: {size}
+                        SelectField, size: {size}
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -464,7 +455,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     }}
                                 />
                             </InputDecorator>
-                        ), [size, selectValues[size], selected])}
+                        ), [size, selectValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -475,8 +466,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -508,7 +497,31 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     maxItems={3}
                                 />
                             </InputDecorator>
-                        ), [size, arraySelectValues[size], selected])}
+                        ), [size, arraySelectValues[size]])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="listFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        ListField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <ListField
+                                    key={size}
+                                    placeholder={"Add to list..."}
+                                    size={size}
+                                    value={listValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueListChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="secondary"
+                                    sx={{ maxHeught: 200, }}
+                                />
+                            </InputDecorator>
+                        ), [size, listValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -519,8 +532,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
                                 <BooleanField
@@ -533,7 +544,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     indeterminate={true}
                                 />
                             </InputDecorator>
-                        ), [size, booleanValues[size], selected])}
+                        ), [size, booleanValues[size]])}
                     </Stack>
                 ))}
             </Stack>
@@ -544,8 +555,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -555,7 +564,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="secondary"
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>
@@ -566,8 +575,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -577,7 +584,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="warning"
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>
@@ -588,8 +595,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -599,7 +604,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="success"
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>
@@ -610,8 +615,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -621,7 +624,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     color="main"
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>
@@ -632,8 +635,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -652,7 +653,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     }
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>
@@ -663,8 +664,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                         {React.useMemo(() => (
                             <InputDecorator
                                 key={size}
-                                selected={selected === size}
-                                onClick={() => setSelected(size)}
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
@@ -677,7 +676,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     storeId="settings-dev-tags"
                                 />
                             </InputDecorator>
-                        ), [size, selected])}
+                        ), [size])}
                     </Stack>
                 ))}
             </Stack>

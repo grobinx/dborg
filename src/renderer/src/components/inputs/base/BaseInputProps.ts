@@ -111,6 +111,9 @@ export interface BaseInputProps<T = any> {
      */
     dense?: boolean;
 
+    onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
+    onKeyUp?: (event: React.KeyboardEvent<HTMLElement>) => void;
+
     sx?: SxProps;
     style?: React.CSSProperties;
 }
