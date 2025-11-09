@@ -5,6 +5,7 @@ import { BaseInputField } from './base/BaseInputField';
 import { BaseList } from './base/BaseList';
 import { TextField } from './TextField';
 import { IconButton } from '../buttons/IconButton';
+import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 
 interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: string[];
@@ -14,6 +15,8 @@ interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     listHeight?: number;
     maxItems?: number;
     allowDuplicates?: boolean;
+    allowDelete?: boolean;
+    allowAdd?: boolean;
 }
 
 export const ListField: React.FC<ListFieldProps> = ({
@@ -27,6 +30,8 @@ export const ListField: React.FC<ListFieldProps> = ({
     listHeight = 260,
     maxItems,
     allowDuplicates = false,
+    allowDelete = true,
+    allowAdd = true,
     ...other
 }) => {
     const theme = useTheme();
@@ -34,6 +39,23 @@ export const ListField: React.FC<ListFieldProps> = ({
     const [editIndex, setEditIndex] = React.useState<number | null>(null);
     const [editValue, setEditValue] = React.useState('');
     const [newValue, setNewValue] = React.useState('');
+    const listRef = React.useRef<HTMLDivElement>(null);
+    const inputAddRef = React.useRef<HTMLInputElement>(null);
+    const [selected, setSelected, handleListKeyDown] = useKeyboardNavigation({
+        getId: (item: number) => item,
+        items: React.useMemo(() => value.map((_, index) => index), [value]),
+        onEnter: (item) => {
+            if (editIndex !== null) return;
+            startEdit(item);
+        },
+        actions: [
+            {
+                shortcut: 'Delete', handler: (item) => {
+                    if (item !== -1) removeItem(item);
+                }
+            }
+        ]
+    });
 
     const items = value ?? [];
 
@@ -72,9 +94,11 @@ export const ListField: React.FC<ListFieldProps> = ({
     const cancelEdit = () => {
         setEditIndex(null);
         setEditValue('');
+        inputAddRef.current?.focus();
     };
 
     const removeItem = (idx: number) => {
+        if (allowDelete === false) return;
         const next = items.filter((_, i) => i !== idx);
         commit(next);
         if (editIndex === idx) cancelEdit();
@@ -93,14 +117,19 @@ export const ListField: React.FC<ListFieldProps> = ({
         if (!canAdd(t)) return;
         commit([...(items ?? []), t]);
         setNewValue('');
+        setSelected(items.length);
     };
 
     const handleNewKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addItem();
-        } else if (e.key === 'Escape') {
-            setNewValue('');
+        if (newValue.trim() !== '') {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addItem();
+            } else if (e.key === 'Escape') {
+                setNewValue('');
+            }
+        } else {
+            handleListKeyDown(e);
         }
     };
 
@@ -116,27 +145,29 @@ export const ListField: React.FC<ListFieldProps> = ({
 
     return (
         <BaseInputField
+            ref={listRef}
             type="list"
             size={size}
             color={color}
             disabled={disabled}
             value={items}
+            onKeyDown={!allowAdd ? handleListKeyDown : undefined}
             input={
-                <div style={{ width: '100%', cursor: 'default' }}>
-                    <BaseList<string>
-                        componentName="DescribedList"
+                <div style={{ width: '100%', cursor: 'default' }} tabIndex={-1}>
+                    <BaseList
                         items={items}
                         size={size}
                         color={color}
                         disabled={disabled}
+                        isSelected={(_, index) => newValue.trim() === '' && index === selected}
+                        //isFocused={item => newValue.trim() === '' && item === selected}
                         style={{
                             maxHeight: listHeight,
-                            overflow: 'auto',
                         }}
                         renderEmpty={() => (
                             emptyholder ?? 'Empty list'
                         )}
-                        renderItem={(item, { focused }) => {
+                        renderItem={(item) => {
                             const idx = items.indexOf(item);
                             const isEditing = editIndex === idx;
                             return (
@@ -145,9 +176,9 @@ export const ListField: React.FC<ListFieldProps> = ({
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 4,
-                                        padding: '2px 6px',
                                         width: '100%',
                                     }}
+                                    onClick={() => setSelected(idx)}
                                     onDoubleClick={() => startEdit(idx)}
                                 >
                                     {isEditing ? (
@@ -193,14 +224,13 @@ export const ListField: React.FC<ListFieldProps> = ({
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
-                                                    fontWeight: focused ? 600 : 400,
                                                 }}
                                             >
                                                 {item}
                                             </span>
                                             <IconButton
                                                 size={size}
-                                                color="success"
+                                                color="primary"
                                                 onClick={() => startEdit(idx)}
                                                 disabled={disabled}
                                                 data-ignore-toggle
@@ -209,17 +239,19 @@ export const ListField: React.FC<ListFieldProps> = ({
                                             >
                                                 <theme.icons.EditableEditor />
                                             </IconButton>
-                                            <IconButton
-                                                size={size}
-                                                color="error"
-                                                onClick={() => removeItem(idx)}
-                                                disabled={disabled}
-                                                data-ignore-toggle
-                                                aria-label="remove"
-                                                dense
-                                            >
-                                                <theme.icons.Delete />
-                                            </IconButton>
+                                            {allowDelete && ( // Conditionally render the delete button
+                                                <IconButton
+                                                    size={size}
+                                                    color="error"
+                                                    onClick={() => removeItem(idx)}
+                                                    disabled={disabled}
+                                                    data-ignore-toggle
+                                                    aria-label="remove"
+                                                    dense
+                                                >
+                                                    <theme.icons.Delete />
+                                                </IconButton>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -228,39 +260,42 @@ export const ListField: React.FC<ListFieldProps> = ({
                     />
 
                     {/* Footer: dodawanie nowego elementu */}
-                    <Box
-                        sx={{
-                            mt: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                        }}
-                    >
-                        <TextField
-                            size={size}
-                            placeholder={placeholder}
-                            value={newValue}
-                            onChange={setNewValue}
-                            onKeyDown={handleNewKeyDown}
-                            disabled={
-                                disabled ||
-                                (maxItems !== undefined && items.length >= maxItems)
-                            }
-                        />
-                        <IconButton
-                            size={size}
-                            color="success"
-                            onClick={addItem}
-                            disabled={
-                                disabled ||
-                                !canAdd(newValue) ||
-                                (maxItems !== undefined && items.length >= maxItems)
-                            }
-                            aria-label="add"
+                    {allowAdd && (
+                        <Box
+                            sx={{
+                                mt: 4,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                            }}
                         >
-                            <theme.icons.Add />
-                        </IconButton>
-                    </Box>
+                            <TextField
+                                size={size}
+                                placeholder={placeholder}
+                                value={newValue}
+                                onChange={setNewValue}
+                                onKeyDown={handleNewKeyDown}
+                                disabled={
+                                    disabled ||
+                                    (maxItems !== undefined && items.length >= maxItems)
+                                }
+                                inputRef={inputAddRef}
+                            />
+                            <IconButton
+                                size={size}
+                                color="success"
+                                onClick={addItem}
+                                disabled={
+                                    disabled ||
+                                    !canAdd(newValue) ||
+                                    (maxItems !== undefined && items.length >= maxItems)
+                                }
+                                aria-label="add"
+                            >
+                                <theme.icons.Add />
+                            </IconButton>
+                        </Box>
+                    )}
                 </div>
             }
             height={"auto"}

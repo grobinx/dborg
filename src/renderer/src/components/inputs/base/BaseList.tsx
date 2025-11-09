@@ -9,8 +9,8 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
     ref?: React.Ref<HTMLUListElement>;
     items: T[];
 
-    isSelected?: (item: T) => boolean;
-    isFocused?: (item: T) => boolean;
+    isSelected?: (item: T, index: number) => boolean;
+    isFocused?: (item: T, index: number) => boolean;
 
     onItemClick?: (item: T, event: React.MouseEvent) => void;
     onItemDoubleClick?: (item: T, event: React.MouseEvent) => void;
@@ -166,8 +166,8 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         >
             {items.length === 0 && renderEmpty ? renderEmpty() :
                 items.map((item, index) => {
-                    const selected = isSelected?.(item);
-                    const focused = isFocused?.(item);
+                    const selected = isSelected?.(item, index);
+                    const focused = isFocused?.(item, index);
                     const id = getItemId?.(item);
 
                     return (

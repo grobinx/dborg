@@ -59,6 +59,7 @@ import { UnboundBadgeComponent, UnboundBadgeComponentProps, UnboundBadgeComponen
 import { ButtonGroupComponent, ButtonGroupComponentProps, ButtonGroupComponentSlots } from "./theme.d/ButtonGroup";
 import { TreeComponent, TreeComponentProps, TreeComponentSlots } from "./theme.d/Tree";
 import { DescribedListComponent, DescribedListComponentProps, DescribedListComponentSlots } from "./theme.d/DescribedList";
+import { BaseListComponent, BaseListComponentProps, BaseListComponentSlots } from "./theme.d/BaseList";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -167,6 +168,7 @@ declare module "@mui/material/styles" {
         ButtonGroup: ButtonGroupComponentSlots;
         Tree: TreeComponentSlots;
         DescribedList: DescribedListComponentSlots;
+        BaseList: BaseListComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -204,7 +206,8 @@ declare module "@mui/material/styles" {
         Shortcut: ShortcutComponentProps;
         ButtonGroup: ButtonGroupComponentProps;
         Tree: TreeComponentProps;
-        DescribedList: DescribedListComponentProps
+        DescribedList: DescribedListComponentProps;
+        BaseList: BaseListComponentProps;
     }
     interface Components {
         MenuBar?: MenuBarComponent;
@@ -254,6 +257,7 @@ declare module "@mui/material/styles" {
         ButtonGroup?: ButtonGroupComponent;
         Tree?: TreeComponent;
         DescribedList?: DescribedListComponent;
+        BaseList?: BaseListComponent;
     }
 
 }

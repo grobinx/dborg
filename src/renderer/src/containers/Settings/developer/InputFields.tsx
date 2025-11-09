@@ -518,7 +518,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={listValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueListChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="secondary"
-                                    sx={{ maxHeught: 200, }}
+                                    sx={{ maxHeight: 200, }}
                                 />
                             </InputDecorator>
                         ), [size, listValues[size]])}

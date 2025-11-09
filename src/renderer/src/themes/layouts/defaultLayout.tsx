@@ -32,6 +32,7 @@ import { UnboundBadgeLayout } from "./default/UnboundBadge";
 import { ButtonGroupLayout } from "./default/ButtonGroup";
 import { TreeLayout } from "./default/Tree";
 import { DescribedListLayout } from "./default/DescribedList";
+import { BaseListLayout } from "./default/BaseList";
 
 const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
 
@@ -337,6 +338,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             ButtonGroup: ButtonGroupLayout(palette, root),
             Tree: TreeLayout(palette, root),
             DescribedList: DescribedListLayout(palette, root),
+            BaseList: BaseListLayout(palette, root),
         }
     }
 };
