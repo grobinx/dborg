@@ -513,7 +513,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                                         handleArraySelectChange(size, option.value);
                                                     }}
                                                     onClick={(e) => {
-                                                        console.log('Chip onClick called', e.target);
                                                         e.stopPropagation();
                                                     }}
                                                     label={
@@ -528,7 +527,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     )}
                                     renderItem={item => {
                                         return isOption(item) ? (
-                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {labelColor(item.value)}</span>
+                                            <span key={item.value} style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {labelColor(item.value)}</span>
                                         ) : null;
                                     }}
                                 />

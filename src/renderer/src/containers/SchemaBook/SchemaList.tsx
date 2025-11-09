@@ -402,7 +402,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             if (!cancelled) setData(updated);
         })();
         return () => { cancelled = true; };
-    }, [schemas, sessions, drivers, connections]);
+    }, [groupList, sortList, schemas, sessions, drivers, connections]);
 
     React.useEffect(() => {
         window.localStorage.setItem(Store_SchemaList_groupList, JSON.stringify(groupList));

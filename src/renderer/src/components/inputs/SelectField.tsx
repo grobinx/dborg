@@ -19,6 +19,8 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
     options: AnyOption<T>[];
     listHeight?: number;
+    // NOWE:
+    multiValueDisplay?: "wrap" | "column" | "ellipsis";
 }
 
 /**
@@ -41,6 +43,8 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         disabled,
         listHeight = 250,
         inputProps,
+        // NOWE:
+        multiValueDisplay = 'wrap',
         ...other
     } = props;
 
@@ -119,17 +123,6 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             const option = options.find(option => isOption(option) && option.value === value);
             return option ? renderValue(option as Option<T>) : null;
         }
-        if (renderItem && value !== undefined) {
-            if (Array.isArray(value)) {
-                return options
-                    .filter(option => isOption(option) && value?.includes(option.value))
-                    .map(option => renderItem(option as Option<T>, { selected: false, focused: false }))
-            }
-            else {
-                const item = options.find(option => isOption(option) && option.value === value);
-                return item ? renderItem(item as Option<T>, { selected: false, focused: false }) : null;
-            }
-        }
 
         if (!Array.isArray(value)) {
             const option = options.find(option => isOption(option) && option.value === value);
@@ -142,17 +135,44 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             }
             return null;
         }
-        return (
-            options
-                .filter(option => isOption(option) && value?.includes(option.value))
-                .map(option => (
-                    isOption(option) && (
-                        <FormattedText
-                            key={option.value}
-                            text={option.label}
-                        />
-                    )
+
+        // WIELE WARTOŚCI BEZ renderValue:
+        const selectedOptions = options.filter(option => isOption(option) && value?.includes(option.value)) as Option<T>[];
+
+        if (multiValueDisplay === "column") {
+            // Jeden wiersz z przecinkami i ucinaniem na końcu
+            return (
+                <div style={{ overflow: "hidden" }}>
+                    {selectedOptions.map((opt, idx) => (
+                        renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
+                    ))}
+                </div>
+            );
+        }
+
+        if (multiValueDisplay === "ellipsis") {
+            // Jeden wiersz z przecinkami i ucinaniem na końcu
+            return (
+                selectedOptions.map((opt, idx) => (
+                    renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
                 ))
+            );
+        }
+
+        // Domyślnie: wrap z przecinkami
+        return (
+            <span
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 4,
+                    minWidth: 0,
+                }}
+            >
+                {selectedOptions.map((opt, idx) => (
+                    renderItem ? renderItem(opt as AnyOption<T>, { selected: false, focused: false }) : <FormattedText key={idx} text={opt.label} />
+                ))}
+            </span>
         );
     };
 
@@ -168,7 +188,20 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             input={(
                 <div
                     ref={inputRef}
-                    style={{ width: '100%', height: '100%', display: 'inherit', flexDirection: 'inherit', gap: 'inherit', outline: 'none' }}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'inherit',
+                        flexDirection: 'inherit',
+                        gap: 'inherit',
+                        outline: 'none',
+                        // kontrola zawijania/ucinania na kontenerze
+                        whiteSpace: multiValueDisplay === 'ellipsis' ? 'nowrap' : 'normal',
+                        overflow: multiValueDisplay === 'ellipsis' ? 'hidden' : undefined,
+                        textOverflow: multiValueDisplay === 'ellipsis' ? 'ellipsis' : undefined,
+                        flexWrap: multiValueDisplay === 'wrap' ? 'wrap' : 'nowrap',
+                        minWidth: 0,
+                    }}
                 >
                     <SelectValueRenderer />
                 </div>

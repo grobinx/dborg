@@ -6,6 +6,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { IconButton } from "../buttons/IconButton";
 import clsx from "@renderer/utils/clsx";
 import { useInputDecorator } from "./decorators/InputDecoratorContext";
+import { Popover } from "../Popover";
 
 export interface TagsFieldProps extends Omit<BaseInputProps<string>, "onChange" | "value" | "defaultValue"> {
     value?: string[];
@@ -193,33 +194,26 @@ export const TagsField: React.FC<TagsFieldProps> = ({
             {...other}
         >
             {filteredSuggestions.length > 0 && inputRef.current && (
-                <ClickAwayListener onClickAway={handleClose}>
-                    <Popper
-                        open={listOpen}
-                        anchorEl={inputRef.current}
-                        style={{
-                            zIndex: 1300,
-                            width: inputRef.current ? `${inputRef.current.offsetWidth}px` : "auto",
-                        }}
-                    >
-                        <Paper sx={{ margin: 1 }}>
-                            <List dense disablePadding>
-                                {filteredSuggestions.map((suggestion, index) => (
-                                    <ListItemButton
-                                        key={suggestion}
-                                        onClick={e => {
-                                            e.preventDefault();
-                                            handleAddTag(suggestion);
-                                        }}
-                                        selected={listSelectedIndex === index}
-                                    >
-                                        <ListItemText primary={suggestion} />
-                                    </ListItemButton>
-                                ))}
-                            </List>
-                        </Paper>
-                    </Popper>
-                </ClickAwayListener>
+                <Popover
+                    open={listOpen}
+                    anchorEl={inputRef.current}
+                    onClose={handleClose}
+                >
+                    <List dense disablePadding style={{ width: inputRef.current ? `${inputRef.current.offsetWidth}px` : "auto", }}>
+                        {filteredSuggestions.map((suggestion, index) => (
+                            <ListItemButton
+                                key={suggestion}
+                                onClick={e => {
+                                    e.preventDefault();
+                                    handleAddTag(suggestion);
+                                }}
+                                selected={listSelectedIndex === index}
+                            >
+                                <ListItemText primary={suggestion} />
+                            </ListItemButton>
+                        ))}
+                    </List>
+                </Popover>
             )}
         </BaseInputField>
     );

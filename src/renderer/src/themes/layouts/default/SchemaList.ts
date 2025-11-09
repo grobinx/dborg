@@ -107,7 +107,7 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                width: '4.5rem',
+                width: '4rem',
                 '& .icon': {
                     display: 'flex',
                     '& img': {

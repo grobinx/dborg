@@ -1,4 +1,5 @@
 import { DataType } from "csstype";
+import { t } from "i18next";
 
 export type ThemeColor =
     /** Kolor główny, neutralny */
@@ -200,7 +201,8 @@ export function labelColor(color: string): string {
         let matched = false;
         for (const word of htmlColorWords) {
             if (rest.startsWith(word)) {
-                found.push(word.charAt(0).toUpperCase() + word.slice(1));
+                const transition = t(`colors.${word}`, word);
+                found.push(transition.charAt(0).toUpperCase() + transition.slice(1));
                 rest = rest.slice(word.length);
                 matched = true;
                 break;
