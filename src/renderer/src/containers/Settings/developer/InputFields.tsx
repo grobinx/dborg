@@ -505,7 +505,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                             {(selected as Option<string>[]).map((option) => (
                                                 <Chip
                                                     key={option.value}
-                                                    style={{ gap: 4, fontSize: "inherit", height: "auto" }}
+                                                    style={{ fontSize: "inherit", height: "auto" }}
                                                     size="small"
                                                     onDelete={(e) => {
                                                         e.stopPropagation();

@@ -127,11 +127,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         if (!Array.isArray(value)) {
             const option = options.find(option => isOption(option) && option.value === value);
             if (option && isOption(option)) {
-                return (
-                    <FormattedText
-                        text={option.label}
-                    />
-                );
+                return renderItem ? renderItem(option as AnyOption<T>, { selected: false, focused: false }) : <FormattedText text={option.label} />;
             }
             return null;
         }
@@ -140,7 +136,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         const selectedOptions = options.filter(option => isOption(option) && value?.includes(option.value)) as Option<T>[];
 
         if (multiValueDisplay === "column") {
-            // Jeden wiersz z przecinkami i ucinaniem na końcu
+            // Jedna kolumna
             return (
                 <div style={{ overflow: "hidden" }}>
                     {selectedOptions.map((opt, idx) => (
