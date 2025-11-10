@@ -1,4 +1,4 @@
-import { Box, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Messages, useMessages } from './MessageContext';
@@ -20,7 +20,7 @@ import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 import { useSetting } from './SettingsContext';
 import { useProfiles } from './ProfilesContext';
 
-type SidebarSection = "first" | "last"; // Define the sections for the container buttons
+type SidebarSection = "first" | "last";
 export type ContainerType =
     "new-profile"
     | "connections"
@@ -30,56 +30,37 @@ export type ContainerType =
     | "custom";
 
 export interface IContainer {
-    id: string; // Unique identifier for the container
-    type: ContainerType; // Type of container
-    icon: React.ReactNode; // Icon for the button, can be a string or a React node
-    label: string; // Title of the button
-    tooltip?: string; // Optional tooltip for the button
+    id: string;
+    type: ContainerType;
+    icon: React.ReactNode;
+    label: string;
+    tooltip?: string;
     section: SidebarSection;
-    container?: ({ children }: { children?: React.ReactNode }) => React.ReactNode; // Optional container component to be rendered
-    disabled?: () => boolean; // Optional function to determine if the container is disabled
+    container?: ({ children }: { children?: React.ReactNode }) => React.ReactNode;
+    disabled?: () => boolean;
 }
 
-export type ViewType = "rendered" | "connection" | "custom"; // Define the types of views
+export type ViewType = "rendered" | "connection" | "custom";
 
 export interface IView {
-    type: ViewType; // Type of the view
-    id: string; // Unique identifier for the view
-    icon: React.ReactNode; // Icon for the button, can be a string (theme.icon) or a React node
-    label: string; // Title of the button
-    tooltip?: string; // Optional tooltip for the button
+    type: ViewType;
+    id: string;
+    icon: React.ReactNode;
+    label: string;
+    tooltip?: string;
 }
 
-// Union type for all view types
 export type View =
     RenderedView
     | ConnectionView
     | CustomView;
 
-// Define specific container structures for each ContainerType
-interface NewProfileContainer extends IContainer {
-    type: "new-profile";
-}
+interface NewProfileContainer extends IContainer { type: "new-profile"; }
+interface ConnectionsContainer extends IContainer { type: "connections"; }
+interface ProfileListContainer extends IContainer { type: "profile-list"; }
+interface SettingsContainer extends IContainer { type: "settings"; views: View[]; }
+interface PluginsContainer extends IContainer { type: "plugins"; views: View[]; }
 
-interface ConnectionsContainer extends IContainer {
-    type: "connections";
-}
-
-interface ProfileListContainer extends IContainer {
-    type: "profile-list";
-}
-
-interface SettingsContainer extends IContainer {
-    type: "settings";
-    views: View[]; // Add views property to match usage
-}
-
-interface PluginsContainer extends IContainer {
-    type: "plugins";
-    views: View[]; // List of views associated with the plugins container
-}
-
-// Union type for all container structures
 type SpecificContainer =
     | NewProfileContainer
     | ConnectionsContainer
@@ -88,20 +69,17 @@ type SpecificContainer =
     | PluginsContainer
     | CustomContainer;
 
-// Define the structure of the application state
 interface ApplicationState {
-    containers: SpecificContainer[] | null; // List of all available containers
-    selectedContainer: SpecificContainer | null; // Currently selected container
-    views: View[] | null; // List of views within the selected container
-    selectedView: View | null; // Currently selected view within the selected container
-    sessions: IDatabaseSession[] | null; // List of database connections
-    selectedSession: IDatabaseSession | null; // Currently selected database connection
+    containers: SpecificContainer[] | null;
+    selectedContainer: SpecificContainer | null;
+    views: View[] | null;
+    selectedView: View | null;
+    sessions: IDatabaseSession[] | null;
+    selectedSession: IDatabaseSession | null;
 }
 
-// Create the context
 const ApplicationContext = createContext<ApplicationState | undefined>(undefined);
 
-// Create a provider component
 export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -109,13 +87,26 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const addToast = useToast();
     const [iAmDeveloper] = useSetting<boolean>("app", "i_am_developer");
     const { onEvent } = useProfiles();
+    const plugins = usePluginManager();
+
+    const [containers, setContainers] = useState<SpecificContainer[] | null>(null);
+    const [selectedContainer, setSelectedContainer] = useState<SpecificContainer | null>(null);
+    const [views, setViews] = useState<View[] | null>(null);
+    const [selectedView, setSelectedView] = useState<View | null>(null);
+
+    const { initialized: contextInitialized, connections: databaseConnections } = useDatabase();
+
+    const [sessions, setSessions] = useState<IDatabaseSession[] | null>(null);
+    const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
+    const [selectedSession, setSelectedSession] = useState<IDatabaseSession | null>(null);
+    const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
 
     const initialContainers = (): SpecificContainer[] => [
         {
             id: uuidv7(),
             type: "new-profile",
             icon: <theme.icons.NewConnection />,
-            label: t("new", "New"), // było: "Nowe połączenie"
+            label: t("new", "New"),
             tooltip: t("create-new-connection-profile", "Create new connection profile"),
             section: "first",
             container: () => <SchemaAssistant />,
@@ -124,7 +115,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             id: uuidv7(),
             type: "profile-list",
             icon: <theme.icons.ConnectionList />,
-            label: t("profiles", "Profiles"), // było: "Lista połączeń"
+            label: t("profiles", "Profiles"),
             tooltip: t("manage-connection-profiles", "Manage connection profiles"),
             section: "first",
             container: () => <ProfileBook />,
@@ -133,11 +124,11 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             id: uuidv7(),
             type: "connections",
             icon: <theme.icons.Connections />,
-            label: t("sessions", "Sessions"), // było: "Connections"
+            label: t("sessions", "Sessions"),
             tooltip: t("active-database-sessions", "Active database sessions"),
             section: "first",
             container: ({ children }) => <Connections>{children}</Connections>,
-            disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0)
+            disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0),
         },
         {
             id: uuidv7(),
@@ -197,90 +188,68 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         },
     ];
 
-    const [containers, setContainers] = React.useState<SpecificContainer[] | null>(null);
-    const [selectedContainer, setSelectedContainer] = useState<SpecificContainer | null>(null);
-    const [views, setViews] = useState<View[] | null>(null);
-    const [selectedView, setSelectedView] = useState<View | null>(null);
-    const { initialized: contextInitialized, connections: databaseConnections } = useDatabase();
-    const [sessions, setSessions] = React.useState<IDatabaseSession[] | null>(null);
-    const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
-    const [selectedSession, setSelectedSession] = React.useState<IDatabaseSession | null>(null);
-    const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
-    const plugins = usePluginManager();
+    const chooseContainer = (list: IDatabaseSession[] | null) => {
+        if (!containers) return null;
+        if (list && list.length) return containers.find(c => c.type === "connections") || containers[0];
+        return containers.find(c => c.type === "profile-list") || containers[0];
+    };
 
-    const chooseContainer = React.useCallback((list: IDatabaseSession[] | null) => {
-        if (containers) {
-            if (list && list.length) {
-                return containers.find(c => c.type === "connections") || containers[0];
-            }
-            return containers.find(c => c.type === "profile-list") || containers[0];
-        }
-        return null;
-    }, [containers]);
-
-    // Initialize the containers and set the default selected container
-    // this call is after application init or reset webcontent, so we restore connections from main process
-    React.useEffect(() => {
-        if (!contextInitialized) {
+    const updateSessionViews = (session: IDatabaseSession | null) => {
+        if (!session) {
+            setViews(null);
+            setSelectedView(null);
             return;
         }
+        const sid = session.info.uniqueId;
+        const cached = sessionViewState[sid];
+        if (cached) {
+            setViews(cached.views);
+            setSelectedView(cached.views.find(v => v.id === cached.selectedViewId) || null);
+            return;
+        }
+        const newViews = plugins.getConnectionViews(session);
+        if (newViews && newViews.length) {
+            setSessionViewState(prev => ({ ...prev, [sid]: { views: newViews, selectedViewId: null } }));
+            setViews(newViews);
+            setSelectedView(null);
+        } else {
+            setViews(null);
+            setSelectedView(null);
+        }
+    };
 
-        databaseConnections.list().then(async (list) => {
-            const connectionsList = await Promise.all(list.map(async (conn) => {
-                const newSession = new DatabaseSession(conn);
-                await newSession.closeCursors();
-                initMetadata(newSession);
-                return newSession;
-            }));
-            setSessions(connectionsList);
-            setSelectedSession(connectionsList[connectionsList.length - 1] || null);
-
-            setSelectedContainer(prev => {
-                if (prev) return prev;
-                return chooseContainer(connectionsList);
-            });
-        });
-    }, [contextInitialized, databaseConnections, chooseContainer]);
-
-    const updateViewsForSession = React.useCallback((session: IDatabaseSession | null) => {
-        if (session) {
-            const sessionId = session.info.uniqueId;
-            const sessionState = sessionViewState[sessionId];
-
-            if (sessionState) {
-                setViews(sessionState.views);
-                setSelectedView(
-                    sessionState.views.find(v => v.id === sessionState.selectedViewId) || null
-                );
+    const updateViewsForContainer = (container: SpecificContainer | null, session: IDatabaseSession | null) => {
+        if (!container) {
+            setViews(null);
+            setSelectedView(null);
+            return;
+        }
+        if (container.type === "connections") {
+            updateSessionViews(session);
+            return;
+        }
+        if ('views' in container) {
+            const list = container.views;
+            setViews(list);
+            if (container.type === "settings") {
+                setSelectedView(list.find(v => v.id === "settings") || list[0] || null);
             } else {
-                const views = plugins.getConnectionViews(session);
-                if (views) {
-                    setSessionViewState(prev => ({
-                        ...prev,
-                        [sessionId]: { views, selectedViewId: null },
-                    }));
-                    setViews(views);
-                    setSelectedView(null);
-                } else {
-                    setViews(null);
-                    setSelectedView(null);
-                }
+                setSelectedView(list[0] || null);
             }
         } else {
             setViews(null);
             setSelectedView(null);
         }
-    }, [sessionViewState, plugins]);
+    };
 
     const initMetadata = (session: IDatabaseSession, force?: boolean) => {
-        if (!session.info.driver.implements.includes("metadata")) {
-            return;
-        }
+        if (!session.info.driver.implements.includes("metadata")) return;
         setTimeout(() => {
             queueMessage(Messages.SESSION_GET_METADATA_START, {
                 connectionId: session.info.uniqueId,
                 schema: session.schema,
             } as Messages.SessionGetMetadataStart);
+
             session.getMetadata((current) => {
                 queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
                     connectionId: session.info.uniqueId,
@@ -290,7 +259,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 session.metadata = metadata;
                 queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
                     connectionId: session.info.uniqueId,
-                    metadata: metadata,
+                    metadata,
                 } as Messages.SessionGetMetadataSuccess);
             }).catch((error) => {
                 queueMessage(Messages.SESSION_GET_METADATA_ERROR, {
@@ -309,165 +278,147 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }, force ? 250 : 1000);
     };
 
-    const iAmDeveloperRef = React.useRef<boolean>(iAmDeveloper);
+    // Reakcja na toggle deweloperski: przebudowa listy kontenerów
+    const iAmDeveloperRef = React.useRef(iAmDeveloper);
     useEffect(() => {
-        const containers = initialContainers();
-        setContainers(containers);
+        const next = initialContainers();
+        setContainers(next);
         if (iAmDeveloperRef.current !== iAmDeveloper) {
             iAmDeveloperRef.current = iAmDeveloper;
-            const settings = containers.find(v => v.type === "settings");
-            setContainers(containers);
-            setSelectedContainer(settings || null);
-            setSelectedView(settings?.views.find(v => v.id === "settings") || null);
+            const settings = next.find(c => c.type === "settings") || null;
+            setSelectedContainer(settings);
+            updateViewsForContainer(settings, selectedSession);
+        } else {
+            updateViewsForContainer(selectedContainer, selectedSession);
         }
-        else {
-            updateViewsForSession(null);
-        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [iAmDeveloper]);
 
+    // Inicjalizacja sesji po starcie kontekstu
     useEffect(() => {
-        if (selectedContainer?.type === "connections") {
-            updateViewsForSession(selectedSession);
-        } else if (selectedContainer && "views" in selectedContainer) {
-            if (views != selectedContainer.views) {
-                setViews(selectedContainer.views);
-                setSelectedView(
-                    selectedContainer?.type === "settings" ?
-                        selectedContainer.views.find(v => v.id === "settings") || selectedContainer.views[0]
-                        : selectedContainer.views[0] || null);
-            }
-        } else {
-            setViews(null);
-            setSelectedView(null);
-        }
-    }, [selectedContainer, selectedSession, updateViewsForSession]);
+        if (!contextInitialized) return;
+        databaseConnections.list().then(async list => {
+            const restored = await Promise.all(list.map(async conn => {
+                const s = new DatabaseSession(conn);
+                await s.closeCursors();
+                initMetadata(s);
+                return s;
+            }));
+            setSessions(restored);
+            sessionsRef.current = restored;
+            const last = restored[restored.length - 1] || null;
+            setSelectedSession(last);
+            const autoContainer = chooseContainer(restored);
+            setSelectedContainer(prev => prev || autoContainer);
+        });
+    }, [contextInitialized, databaseConnections]);
 
+    // Aktualizacja widoków przy zmianie kontenera lub sesji
     useEffect(() => {
-        sessionsRef.current = sessions;
-    }, [sessions]);
+        updateViewsForContainer(selectedContainer, selectedSession);
+    }, [selectedContainer, selectedSession, sessionViewState]);
 
-    const handleSwitchContainer = React.useCallback((containerType: ContainerType) => {
-        const targetContainer = containers?.find(c => c.type === containerType);
-        if (targetContainer && targetContainer !== selectedContainer) {
-            setSelectedContainer(targetContainer);
-        }
+    // Handlery
+    const handleSwitchContainer = React.useCallback((type: ContainerType) => {
+        if (!containers) return;
+        const target = containers.find(c => c.type === type) || null;
+        if (target && target !== selectedContainer) setSelectedContainer(target);
     }, [containers, selectedContainer]);
 
     const handleSwitchView = React.useCallback((viewId: string) => {
-        if (views) {
-            // Sprawdź, czy kliknięto na już wybrany widok
-            if (selectedView?.id === viewId) {
-                setSelectedView(prev => selectedContainer?.type === "connections" ? null : prev);
-                if (selectedSession) {
-                    setSessionViewState(prev => ({
-                        ...prev,
-                        [selectedSession.info.uniqueId]: {
-                            views: prev[selectedSession.info.uniqueId]?.views || views,
-                            selectedViewId: null, // Odznacz widok
-                        },
-                    }));
-                }
-                return;
-            }
-
-            // Ustaw nowy widok
-            setSelectedView(views.find(v => v.id === viewId) || null);
-            if (selectedSession) {
+        if (!views) return;
+        if (selectedView?.id === viewId) {
+            const isConn = selectedContainer?.type === "connections";
+            setSelectedView(isConn ? null : selectedView);
+            if (isConn && selectedSession) {
                 setSessionViewState(prev => ({
                     ...prev,
                     [selectedSession.info.uniqueId]: {
                         views: prev[selectedSession.info.uniqueId]?.views || views,
-                        selectedViewId: viewId,
+                        selectedViewId: null,
                     },
                 }));
             }
-        }
-    }, [views, selectedContainer, selectedSession, selectedView]);
-
-    const handleEditSchema = React.useCallback((schemaId: string) => {
-        sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
-            queueMessage(Messages.SET_SCHEMA_ID, schemaId);
-        });
-    }, []);
-
-    const handleCloneEditSchema = React.useCallback((schemaId: string) => {
-        sendMessage(Messages.SWITCH_CONTAINER, "new-connection").then(() => {
-            queueMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
-        });
-    }, []);
-
-    const handleTabConnectionsChanged = React.useCallback((message: TabPanelChangedMessage) => {
-        if (message.tabsItemID !== "connections-tabs-panel") {
             return;
         }
-        if (selectedContainer?.type === "connections") {
-            const session = sessions?.find(c => c.info.uniqueId === message.itemID);
-            setSelectedSession(session ?? null);
-            updateViewsForSession(session ?? null);
+        const next = views.find(v => v.id === viewId) || null;
+        setSelectedView(next);
+        if (selectedContainer?.type === "connections" && selectedSession) {
+            setSessionViewState(prev => ({
+                ...prev,
+                [selectedSession.info.uniqueId]: {
+                    views: prev[selectedSession.info.uniqueId]?.views || views,
+                    selectedViewId: viewId,
+                },
+            }));
         }
-    }, [sessions, selectedContainer, updateViewsForSession]);
+    }, [views, selectedView, selectedContainer, selectedSession]);
+
+    const handleEditSchema = React.useCallback((schemaId: string) => {
+        sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
+            queueMessage(Messages.SET_SCHEMA_ID, schemaId);
+        });
+    }, [sendMessage, queueMessage]);
+
+    const handleCloneEditSchema = React.useCallback((schemaId: string) => {
+        sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
+            queueMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
+        });
+    }, [sendMessage, queueMessage]);
+
+    const handleTabConnectionsChanged = React.useCallback((msg: TabPanelChangedMessage) => {
+        if (msg.tabsItemID !== "connections-tabs-panel") return;
+        if (selectedContainer?.type !== "connections") return;
+        const session = sessions?.find(s => s.info.uniqueId === msg.itemID) || null;
+        setSelectedSession(session);
+    }, [sessions, selectedContainer]);
 
     const handleSchemaConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
-        setSessions((prev) => {
+        setSessions(prev => {
             const newSession = new DatabaseSession(connection);
             initMetadata(newSession);
-            const updatedSessions = [...(prev || []), newSession];
-
-            // Ustaw nowo dodaną sesję jako wybraną
+            const updated = [...(prev || []), newSession];
             setSelectedSession(newSession);
-
-            // Zaktualizuj widoki dla nowo wybranej sesji
-            updateViewsForSession(newSession);
-
-            return updatedSessions;
+            sessionsRef.current = updated;
+            return updated;
         });
-    }, [updateViewsForSession]);
+    }, []);
 
     const handleSchemaDisconnectSuccess = React.useCallback((connectionId: string) => {
-        setSessions((prev) => {
-            const updatedSessions = prev?.filter(session => session.info.uniqueId !== connectionId) || null;
-
-            // Jeśli usunięta sesja była wybraną sesją, ustaw nową wybraną sesję
+        setSessions(prev => {
+            const filtered = prev?.filter(s => s.info.uniqueId !== connectionId) || null;
             if (selectedSession?.info.uniqueId === connectionId) {
-                const newSelectedSession = updatedSessions?.[0] || null;
-                setSelectedSession(newSelectedSession);
-
-                // Zaktualizuj widoki dla nowo wybranej sesji
-                updateViewsForSession(newSelectedSession);
+                const nextSel = filtered?.[0] || null;
+                setSelectedSession(nextSel);
             }
-
-            if (updatedSessions === null || updatedSessions.length === 0) {
-                setSelectedContainer(chooseContainer(updatedSessions));
+            if (!filtered || filtered.length === 0) {
+                setSelectedContainer(chooseContainer(filtered));
             }
-
-            return updatedSessions;
+            sessionsRef.current = filtered;
+            return filtered;
         });
-
-        // Usuń widoki usuniętej sesji z sessionViewState
-        setSessionViewState((prev) => {
-            const newState = { ...prev };
-            delete newState[connectionId];
-            return newState;
+        setSessionViewState(prev => {
+            const next = { ...prev };
+            delete next[connectionId];
+            return next;
         });
-    }, [selectedSession, updateViewsForSession, chooseContainer]);
+    }, [selectedSession, containers]);
 
-    const handleRefreshMetadata = React.useCallback((message: RefreshMetadata) => {
-        if (selectedSession && selectedSession.info.uniqueId === message.connectionId) {
+    const handleRefreshMetadata = React.useCallback((msg: RefreshMetadata) => {
+        if (selectedSession && selectedSession.info.uniqueId === msg.connectionId) {
             initMetadata(selectedSession, true);
         }
     }, [selectedSession]);
 
-    React.useEffect(() => {
-        const disconnecting = onEvent("disconnecting", (event) => {
-            if (event.status === "success") {
-                handleSchemaDisconnectSuccess(event.connectionUniqueId);
-            }
+    // Subskrypcje
+    useEffect(() => {
+        const offDisconnecting = onEvent("disconnecting", e => {
+            if (e.status === "success") handleSchemaDisconnectSuccess(e.connectionUniqueId);
         });
-        const connecting = onEvent("connecting", (event) => {
-            if (event.status === "success") {
-                handleSchemaConnectSuccess(event.connection!);
-            }
+        const offConnecting = onEvent("connecting", e => {
+            if (e.status === "success") handleSchemaConnectSuccess(e.connection!);
         });
+
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
         subscribe(Messages.EDIT_SCHEMA, handleEditSchema);
@@ -482,20 +433,22 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
             unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
-            disconnecting();
-            connecting();
+            offDisconnecting();
+            offConnecting();
         };
     }, [
         handleSwitchContainer,
         handleSwitchView,
         handleEditSchema,
+        handleCloneEditSchema,
         handleTabConnectionsChanged,
         handleSchemaConnectSuccess,
         handleSchemaDisconnectSuccess,
         handleRefreshMetadata,
+        onEvent,
+        subscribe,
+        unsubscribe,
     ]);
-
-    console.count("ApplicationContext Render");
 
     return (
         <ApplicationContext.Provider
@@ -504,8 +457,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 selectedContainer,
                 views,
                 selectedView,
-                sessions: sessions,
-                selectedSession: selectedSession,
+                sessions,
+                selectedSession,
             }}
         >
             {children}
@@ -513,7 +466,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     );
 };
 
-// Custom hook to use the ApplicationContext
 export const useApplicationContext = (): ApplicationState => {
     const context = useContext(ApplicationContext);
     if (!context) {
@@ -522,7 +474,6 @@ export const useApplicationContext = (): ApplicationState => {
     return context;
 };
 
-// Custom hook to use containers
 export const useContainers = () => {
     const { containers, selectedContainer, views, selectedView } = useApplicationContext();
     return { containers, selectedContainer, views, selectedView };
