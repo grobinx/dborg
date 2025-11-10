@@ -147,6 +147,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         setNewKey('');
         setNewValue('');
         setSelected(keys.length);
+        inputAddKeyRef.current?.focus();
     };
 
     const handleNewKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
