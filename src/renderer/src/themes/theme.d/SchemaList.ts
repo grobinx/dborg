@@ -1,7 +1,7 @@
 import { ComponentsOverrides, ComponentsPropsList, Theme } from "@mui/material";
-import { SchemaList } from "@renderer/containers/SchemaBook";
+import { ProfileList } from "@renderer/containers/SchemaBook";
 
-export type SchemaListComponentProps = Partial<React.ComponentProps<typeof SchemaList>>;
+export type SchemaListComponentProps = Partial<React.ComponentProps<typeof ProfileList>>;
 
 export type SchemaListComponent = {
     styleOverrides?: ComponentsOverrides<Theme>['SchemaList'];

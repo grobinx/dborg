@@ -204,7 +204,7 @@ const schemaGroup: Group<Schema> = {
 
 const searchFields: (keyof Schema)[] = ['driverName', 'sch_group', 'sch_name'];
 
-const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
+const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { className, ...other } = useThemeProps({ name: 'SchemaList', props });
@@ -858,4 +858,4 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     );
 };
 
-export default SchemaList;
+export default ProfileList;

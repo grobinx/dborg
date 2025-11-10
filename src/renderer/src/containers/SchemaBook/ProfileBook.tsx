@@ -1,14 +1,14 @@
 import { Box, BoxProps, styled, useThemeProps } from "@mui/material";
 import React from "react";
-import SchemaList from "./SchemaList";
+import ProfileList from "./ProfileList";
 
-export interface SchemaBookProps extends BoxProps {
+export interface ProfileBookProps extends BoxProps {
 }
 
-interface SchemaBookOwnProps extends SchemaBookProps {
+interface ProfileBookOwnProps extends ProfileBookProps {
 }
 
-const SchemaBookRoot = styled(Box, {
+const ProfileBookRoot = styled(Box, {
     name: 'SchemaBook', // The component name
     slot: 'root', // The slot name
 })(() => ({
@@ -16,17 +16,17 @@ const SchemaBookRoot = styled(Box, {
     width: "100%",
 }));
 
-const SchemaBook: React.FC<SchemaBookOwnProps> = (props) => {
+const ProfileBook: React.FC<ProfileBookOwnProps> = (props) => {
     const { hidden, className, children, ...other } = useThemeProps({ name: 'SchemaBook', props });
     return (
-        <SchemaBookRoot
+        <ProfileBookRoot
             {...other}
             className={(className ?? "") + " SchemaBook-root"}
             style={{ display: hidden ? "none" : "flex" }}
         >
-            <SchemaList />
-        </SchemaBookRoot>
+            <ProfileList />
+        </ProfileBookRoot>
     );
 }
 
-export default SchemaBook;
+export default ProfileBook;

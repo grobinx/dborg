@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Messages, useMessages } from './MessageContext';
 import SchemaAssistant from '@renderer/containers/SchemaAssistant';
-import SchemaBook from '@renderer/containers/SchemaBook';
+import ProfileBook from '@renderer/containers/SchemaBook';
 import Connections from '@renderer/containers/Connections/Connections';
 import { useDatabase } from './DatabaseContext';
 import * as api from "../../../api/db";
@@ -127,7 +127,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             label: t("profiles", "Profiles"), // było: "Lista połączeń"
             tooltip: t("manage-connection-profiles", "Manage connection profiles"),
             section: "first",
-            container: () => <SchemaBook />,
+            container: () => <ProfileBook />,
         },
         {
             id: uuidv7(),

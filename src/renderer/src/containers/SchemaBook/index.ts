@@ -1,5 +1,5 @@
-export * from './SchemaBook';
-export { default } from './SchemaBook';
+export * from './ProfileBook';
+export { default } from './ProfileBook';
 
-export * from './SchemaList';
-export { default as SchemaList } from './SchemaList';
+export * from './ProfileList';
+export { default as ProfileList } from './ProfileList';
