@@ -24,6 +24,7 @@ import { htmlColors, labelColor } from "@renderer/types/colors";
 import { isOption, Option } from "@renderer/components/inputs/DescribedList";
 import { Options } from "electron";
 import { ListField } from "@renderer/components/inputs/ListField";
+import { PropertyField } from "@renderer/components/inputs/PropertyField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -75,8 +76,13 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     });
     const [listValues, setListValues] = React.useState<Record<string, string[] | undefined>>({
         small: ["red"],
-        medium: ["green", "blue"],
+        medium: ["kaktus", "pulpet", "banan"],
         large: ["blue"],
+    });
+    const [objectValues, setObjectValues] = React.useState<Record<string, Record<string, any> | undefined>>({
+        small: { color: "red" },
+        medium: { fruit: "kaktus", vegetable: "pulpet", dessert: "banan" },
+        large: { color: "blue" },
     });
     const [selectValues, setSelectValues] = React.useState<Record<string, string | undefined>>({
         small: "red",
@@ -181,6 +187,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueListChange = (size: string, value: string[] | undefined) => {
         setListValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueObjectChange = (size: string, value: Record<string, any> | undefined) => {
+        setObjectValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -518,10 +530,36 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     value={listValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueListChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
                                     color="secondary"
-                                    sx={{ maxHeight: 200, }}
+                                    sx={{ maxHeight: 200 }}
+                                    maxItems={6}
                                 />
                             </InputDecorator>
                         ), [size, listValues[size]])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="propertyFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        PropertyField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <PropertyField
+                                    key={size}
+                                    keyPlaceholder={"Add property..."}
+                                    size={size}
+                                    value={objectValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueObjectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="secondary"
+                                    sx={{ maxHeight: 200 }}
+                                    maxItems={6}
+                                />
+                            </InputDecorator>
+                        ), [size, objectValues[size]])}
                     </Stack>
                 ))}
             </Stack>

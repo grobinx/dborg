@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme, Box } from '@mui/material';
+import { useTheme } from '@mui/material';
 import { BaseInputProps } from './base/BaseInputProps';
 import { BaseInputField } from './base/BaseInputField';
 import { BaseList } from './base/BaseList';
@@ -9,132 +9,153 @@ import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 
-interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
-    value?: string[];
-    onChange?: (next: string[]) => void;
-    placeholder?: string;
+interface PropertyFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
+    value?: Record<string, any>;
+    onChange?: (next: Record<string, any>) => void;
+    keyPlaceholder?: string;
+    valuePlaceholder?: string;
     emptyholder?: string;
     maxItems?: number;
-    allowDuplicates?: boolean;
     allowDelete?: boolean;
     allowAdd?: boolean;
+    allowEditPropertyName?: boolean;
 }
 
-export const ListField: React.FC<ListFieldProps> = ({
-    value = [],
+export const PropertyField: React.FC<PropertyFieldProps> = ({
+    value = {},
     onChange,
     size,
     color,
     disabled,
-    placeholder,
+    keyPlaceholder = 'Property',
+    valuePlaceholder = 'Value',
     emptyholder,
     maxItems,
-    allowDuplicates = false,
     allowDelete = true,
     allowAdd = true,
+    allowEditPropertyName = true,
     ...other
 }) => {
     const theme = useTheme();
 
-    const [editIndex, setEditIndex] = React.useState<number | null>(null);
+    const [editKey, setEditKey] = React.useState<string | null>(null);
+    const [editNewKey, setEditNewKey] = React.useState('');
     const [editValue, setEditValue] = React.useState('');
+    const [newKey, setNewKey] = React.useState('');
     const [newValue, setNewValue] = React.useState('');
     const listRef = React.useRef<HTMLUListElement>(null);
-    const inputAddRef = React.useRef<HTMLInputElement>(null);
+    const inputAddKeyRef = React.useRef<HTMLInputElement>(null);
+    const inputRef = React.useRef<HTMLDivElement>(null);
+    
+    const keys = React.useMemo(() => Object.keys(value ?? {}), [value]);
+    
     const [selected, setSelected, handleListKeyDown] = useKeyboardNavigation({
         getId: (item: number) => item,
-        items: React.useMemo(() => value.map((_, index) => index), [value]),
+        items: React.useMemo(() => keys.map((_, index) => index), [keys]),
         onEnter: (item) => {
-            if (editIndex !== null) return;
-            startEdit(item);
+            if (editKey !== null) return;
+            startEdit(keys[item]);
         },
         actions: [
             {
-                shortcut: 'Delete', handler: (item) => {
-                    if (item !== -1) removeItem(item);
+                shortcut: 'Delete',
+                handler: (item) => {
+                    if (item !== -1) removeItem(keys[item]);
                 }
             }
         ]
     });
     const decorator = useInputDecorator();
 
-    const items = value ?? [];
-
     React.useEffect(() => {
         if (decorator && maxItems) {
             Promise.resolve().then(() => {
-                decorator.setRestrictions([`${(value ?? []).length}/${maxItems}`]);
+                decorator.setRestrictions([`${keys.length}/${maxItems}`]);
             });
         }
-    }, [items.length, decorator, maxItems]);
+    }, [keys.length, decorator, maxItems]);
 
-    const commit = (next: string[]) => {
+    const commit = (next: Record<string, any>) => {
         onChange?.(next);
     };
 
-    const startEdit = (idx: number) => {
+    const startEdit = (key: string) => {
         if (disabled) return;
-        setEditIndex(idx);
-        setEditValue(items[idx] ?? '');
+        setEditKey(key);
+        setEditNewKey(key);
+        setEditValue(String(value[key] ?? ''));
     };
 
     const saveEdit = () => {
-        if (editIndex === null) return;
+        if (editKey === null) return;
+        const k = allowEditPropertyName ? editNewKey.trim() : editKey;
         const v = editValue.trim();
-        if (!v) {
-            // empty -> remove
-            removeItem(editIndex);
+        
+        if (!k) {
+            // empty key -> remove
+            removeItem(editKey);
             cancelEdit();
             return;
         }
-        if (!allowDuplicates) {
-            const dup = items.findIndex((x, i) => x === v && i !== editIndex);
-            if (dup !== -1) {
-                cancelEdit();
-                return;
-            }
+
+        // Check if key changed and new key already exists
+        if (allowEditPropertyName && editKey !== k && value.hasOwnProperty(k)) {
+            cancelEdit();
+            return;
         }
-        const next = [...items];
-        next[editIndex] = v;
+
+        const next = { ...value };
+        
+        // If key changed and editing is allowed, remove old key
+        if (allowEditPropertyName && editKey !== k) {
+            delete next[editKey];
+        }
+        
+        next[k] = v;
         commit(next);
         cancelEdit();
     };
 
     const cancelEdit = () => {
-        setEditIndex(null);
+        setEditKey(null);
+        setEditNewKey('');
         setEditValue('');
-        inputAddRef.current?.focus();
+        inputAddKeyRef.current?.focus();
     };
 
-    const removeItem = (idx: number) => {
+    const removeItem = (key: string) => {
         if (allowDelete === false) return;
-        const next = items.filter((_, i) => i !== idx);
+        const next = { ...value };
+        delete next[key];
         commit(next);
-        if (editIndex === idx) cancelEdit();
+        if (editKey === key) cancelEdit();
     };
 
-    const canAdd = (v: string) => {
-        const t = v.trim();
-        if (!t) return false;
-        if (maxItems !== undefined && items.length >= maxItems) return false;
-        if (!allowDuplicates && items.includes(t)) return false;
+    const canAdd = () => {
+        const k = newKey.trim();
+        if (!k) return false;
+        if (maxItems !== undefined && keys.length >= maxItems) return false;
+        if (value.hasOwnProperty(k)) return false;
         return true;
     };
 
     const addItem = () => {
-        const t = newValue.trim();
-        if (!canAdd(t)) return;
-        commit([...(items ?? []), t]);
+        if (!canAdd()) return;
+        const k = newKey.trim();
+        const v = newValue.trim();
+        commit({ ...value, [k]: v });
+        setNewKey('');
         setNewValue('');
-        setSelected(items.length);
+        setSelected(keys.length);
     };
 
     const handleNewKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-        if (newValue.trim() !== '') {
-            if (e.key === 'Enter' && canAdd(newValue)) {
+        if (newKey.trim() !== '' || newValue.trim() !== '') {
+            if (e.key === 'Enter' && canAdd()) {
                 e.preventDefault();
                 addItem();
             } else if (e.key === 'Escape') {
+                setNewKey('');
                 setNewValue('');
             }
         } else {
@@ -156,14 +177,15 @@ export const ListField: React.FC<ListFieldProps> = ({
 
     return (
         <BaseInputField
-            type="list"
+            type="property"
             size={size}
             color={color}
             disabled={disabled}
-            value={items}
+            value={value}
             onKeyDown={!allowAdd ? handleListKeyDown : undefined}
             input={
                 <div
+                    ref={inputRef}
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -177,19 +199,16 @@ export const ListField: React.FC<ListFieldProps> = ({
                 >
                     <BaseList
                         ref={listRef}
-                        items={items}
+                        items={keys}
                         size={size}
                         color={color}
                         disabled={disabled}
-                        isSelected={(_, index) => newValue.trim() === '' && index === selected}
+                        isSelected={(_, index) => newKey.trim() === '' && newValue.trim() === '' && index === selected}
                         getItemId={(_, index) => `item-${index}`}
-                        //isFocused={item => newValue.trim() === '' && item === selected}
-                        renderEmpty={() => (
-                            emptyholder ?? 'Empty list'
-                        )}
-                        renderItem={(item) => {
-                            const idx = items.indexOf(item);
-                            const isEditing = editIndex === idx;
+                        renderEmpty={() => emptyholder ?? 'Empty properties'}
+                        renderItem={(key) => {
+                            const idx = keys.indexOf(key);
+                            const isEditing = editKey === key;
                             return (
                                 <div
                                     style={{
@@ -200,19 +219,46 @@ export const ListField: React.FC<ListFieldProps> = ({
                                         minHeight: 0,
                                     }}
                                     onClick={() => setSelected(idx)}
-                                    onDoubleClick={() => startEdit(idx)}
+                                    onDoubleClick={() => startEdit(key)}
                                 >
                                     {isEditing ? (
                                         <>
+                                            {allowEditPropertyName ? (
+                                                <TextField
+                                                    autoFocus
+                                                    size={size}
+                                                    placeholder={keyPlaceholder}
+                                                    value={editNewKey}
+                                                    disabled={disabled}
+                                                    onChange={setEditNewKey}
+                                                    onKeyDown={handleEditKeyDown}
+                                                    dense
+                                                    style={{ flex: 1 }}
+                                                />
+                                            ) : (
+                                                <span
+                                                    style={{
+                                                        flex: 1,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    {key}
+                                                </span>
+                                            )}
                                             <TextField
-                                                autoFocus
+                                                autoFocus={!allowEditPropertyName}
                                                 size={size}
+                                                placeholder={valuePlaceholder}
                                                 value={editValue}
                                                 disabled={disabled}
                                                 onChange={setEditValue}
                                                 onBlur={saveEdit}
                                                 onKeyDown={handleEditKeyDown}
                                                 dense
+                                                style={{ flex: 1 }}
                                             />
                                             <IconButton
                                                 size={size}
@@ -245,14 +291,25 @@ export const ListField: React.FC<ListFieldProps> = ({
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
+                                                    fontWeight: 500,
                                                 }}
                                             >
-                                                {item}
+                                                {key}
+                                            </span>
+                                            <span
+                                                style={{
+                                                    flex: 1,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                {String(value[key])}
                                             </span>
                                             <IconButton
                                                 size={size}
                                                 color="primary"
-                                                onClick={() => startEdit(idx)}
+                                                onClick={() => startEdit(key)}
                                                 disabled={disabled}
                                                 data-ignore-toggle
                                                 aria-label="edit"
@@ -260,11 +317,11 @@ export const ListField: React.FC<ListFieldProps> = ({
                                             >
                                                 <theme.icons.EditableEditor />
                                             </IconButton>
-                                            {allowDelete && ( // Conditionally render the delete button
+                                            {allowDelete && (
                                                 <IconButton
                                                     size={size}
                                                     color="error"
-                                                    onClick={() => removeItem(idx)}
+                                                    onClick={() => removeItem(key)}
                                                     disabled={disabled}
                                                     data-ignore-toggle
                                                     aria-label="remove"
@@ -280,7 +337,6 @@ export const ListField: React.FC<ListFieldProps> = ({
                         }}
                     />
 
-                    {/* Footer: dodawanie nowego elementu */}
                     {allowAdd && (
                         <div
                             style={{
@@ -292,25 +348,28 @@ export const ListField: React.FC<ListFieldProps> = ({
                         >
                             <TextField
                                 size={size}
-                                placeholder={placeholder}
+                                placeholder={keyPlaceholder}
+                                value={newKey}
+                                onChange={setNewKey}
+                                onKeyDown={handleNewKeyDown}
+                                disabled={disabled}
+                                inputRef={inputAddKeyRef}
+                                style={{ flex: 1 }}
+                            />
+                            <TextField
+                                size={size}
+                                placeholder={valuePlaceholder}
                                 value={newValue}
                                 onChange={setNewValue}
                                 onKeyDown={handleNewKeyDown}
-                                disabled={
-                                    disabled
-                                    //|| (maxItems !== undefined && items.length >= maxItems)
-                                }
-                                inputRef={inputAddRef}
+                                disabled={disabled}
+                                style={{ flex: 1 }}
                             />
                             <IconButton
                                 size={size}
                                 color="success"
                                 onClick={addItem}
-                                disabled={
-                                    disabled ||
-                                    !canAdd(newValue)
-                                    //|| (maxItems !== undefined && items.length >= maxItems)
-                                }
+                                disabled={disabled || !canAdd()}
                                 aria-label="add"
                             >
                                 <theme.icons.Add />
@@ -325,4 +384,4 @@ export const ListField: React.FC<ListFieldProps> = ({
     );
 };
 
-ListField.displayName = 'ListField';
+PropertyField.displayName = 'PropertyField';

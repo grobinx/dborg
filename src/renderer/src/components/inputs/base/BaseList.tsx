@@ -43,8 +43,8 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
 
     renderItem: (item: T, state: { selected: boolean; focused: boolean }) => React.ReactNode;
     renderEmpty?: () => React.ReactNode;
-    getItemClassName?: (item: T) => string | string[] | undefined;
-    getItemId?: (item: T) => string | undefined;
+    getItemClassName?: (item: T, index: number) => string | string[] | undefined;
+    getItemId?: (item: T, index: number) => string | undefined;
 
     componentName?: string;
     id?: string;
@@ -168,7 +168,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                 items.map((item, index) => {
                     const selected = isSelected?.(item, index);
                     const focused = isFocused?.(item, index);
-                    const id = getItemId?.(item);
+                    const id = getItemId?.(item, index);
 
                     return (
                         <StyledBaseListItem
@@ -180,7 +180,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                                 `${componentName}-item`,
                                 selected && "selected",
                                 focused && "focused",
-                                getItemClassName?.(item),
+                                getItemClassName?.(item, index),
                                 classes
                             )}
                             onClick={(e) => !disabled && onItemClick?.(item, e)}
