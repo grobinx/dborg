@@ -18,7 +18,7 @@ import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 import { useSetting } from './SettingsContext';
-import { useSchema } from './SchemaContext';
+import { useProfiles } from './ProfilesContext';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
@@ -108,7 +108,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const { sendMessage, queueMessage, subscribe, unsubscribe } = useMessages();
     const addToast = useToast();
     const [iAmDeveloper] = useSetting<boolean>("app", "i_am_developer");
-    const { onEvent } = useSchema();
+    const { onEvent } = useProfiles();
 
     const initialContainers = (): SpecificContainer[] => [
         {

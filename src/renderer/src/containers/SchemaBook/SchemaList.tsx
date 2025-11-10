@@ -20,7 +20,7 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
-import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import clsx from "@renderer/utils/clsx";
@@ -30,7 +30,7 @@ import { keyboardState } from "@renderer/utils/keyboardState";
 const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
 const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
 
-interface Schema extends SchemaRecord {
+interface Schema extends ProfileRecord {
     driverName?: string;
     driverIcon?: string;
     connected?: number;
@@ -212,7 +212,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     const [groupList, setGroupList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
     const [sortList, setSortList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { initialized, schemas, getSchema, disconnectFromAllDatabases, reloadSchemas, connectToDatabase, testConnection, deleteSchema, swapSchemasOrder } = useSchema();
+    const { initialized, profiles, getProfile: getSchema, disconnectProfile: disconnectFromAllDatabases, reloadProfiles: reloadSchemas, connectToDatabase, testConnection, deleteProfile: deleteSchema, swapProfilesOrder: swapSchemasOrder } = useProfiles();
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Schema[] | null>(null);
     const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
@@ -380,17 +380,17 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
     React.useEffect(() => {
         let cancelled = false;
         (async () => {
-            if (!schemas) {
+            if (!profiles) {
                 setData(null);
                 return;
             }
             const connectionList = await connections.list();
             const counts: Record<string, number> = {};
             (connectionList ?? []).forEach(conn => {
-                const id = String((conn.userData?.schema as SchemaRecord)?.sch_id ?? "");
+                const id = String((conn.userData?.schema as ProfileRecord)?.sch_id ?? "");
                 if (id) counts[id] = (counts[id] ?? 0) + 1;
             });
-            const updated: Schema[] = schemas.map(record => {
+            const updated: Schema[] = profiles.map(record => {
                 const driver = drivers.find(record.sch_drv_unique_id as string);
                 return {
                     ...record,
@@ -402,7 +402,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
             if (!cancelled) setData(updated);
         })();
         return () => { cancelled = true; };
-    }, [groupList, sortList, schemas, sessions, drivers, connections]);
+    }, [groupList, sortList, profiles, sessions, drivers, connections]);
 
     React.useEffect(() => {
         window.localStorage.setItem(Store_SchemaList_groupList, JSON.stringify(groupList));

@@ -17,7 +17,7 @@ import { GlobalErrorHandler } from './contexts/GlobalErrorHandler';
 import About from './About';
 import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 import { ConsoleProvider } from './contexts/ConsoleContext';
-import { SchemaProvider } from './contexts/SchemaContext';
+import { ProfilesProvider } from './contexts/ProfilesContext';
 import RectangleDoor from './effects/RectangleDoor';
 
 const AppWrapper: React.FC = () => {
@@ -68,7 +68,7 @@ const AppWrapper: React.FC = () => {
                             <ThemeWrapper>
                                 <DialogsProvider>
                                     <ToastList />
-                                    <SchemaProvider>
+                                    <ProfilesProvider>
                                         <PluginManagerProvider>
                                             <ApplicationProvider>
                                                 <QueryHistoryProvider>
@@ -76,7 +76,7 @@ const AppWrapper: React.FC = () => {
                                                 </QueryHistoryProvider>
                                             </ApplicationProvider>
                                         </PluginManagerProvider>
-                                    </SchemaProvider>
+                                    </ProfilesProvider>
                                 </DialogsProvider>
                             </ThemeWrapper>
                         </DatabaseProvider>

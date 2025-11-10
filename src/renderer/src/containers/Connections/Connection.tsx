@@ -22,7 +22,7 @@ import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
 import ActionsBar from "../ViewSlots/ActionsBar";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { useSchema } from "@renderer/contexts/SchemaContext";
+import { useProfiles } from "@renderer/contexts/ProfilesContext";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -167,7 +167,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
     const theme = useTheme();
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
-    const { disconnectFromDatabase } = useSchema();
+    const { disconnectSession: disconnectFromDatabase } = useProfiles();
 
     React.useEffect(() => {
         const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {

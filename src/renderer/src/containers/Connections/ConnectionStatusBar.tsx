@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import * as api from "../../../../api/db";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
-import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
 
 interface ConnectionStatus {
     status: "connecting" | "connected" | "error";
@@ -16,10 +16,10 @@ const ConnectionStatusBar: React.FC = () => {
     const theme = useTheme();
     const [connectionStatuses, setConnectionStatuses] = React.useState<Record<string, ConnectionStatus>>({});
     const [iconStates, setIconStates] = React.useState<Record<string, boolean>>({}); // Przechowuje stan ikon (true = Connected, false = Disconnected)
-    const { onEvent } = useSchema();
+    const { onEvent } = useProfiles();
 
     React.useEffect(() => {
-        const connectionInfoHandle = (schema: SchemaRecord) => {
+        const connectionInfoHandle = (schema: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
                 [schema.sch_id]: {
@@ -35,7 +35,7 @@ const ConnectionStatusBar: React.FC = () => {
             }));
         };
 
-        const connectionSuccessHandle = (schema: SchemaRecord) => {
+        const connectionSuccessHandle = (schema: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
                 [schema.sch_id]: {
@@ -60,7 +60,7 @@ const ConnectionStatusBar: React.FC = () => {
             }, 5000);
         };
 
-        const connectionErrorHandle = (_error: any, schema: SchemaRecord) => {
+        const connectionErrorHandle = (_error: any, schema: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
                 [schema.sch_id]: {
@@ -84,7 +84,7 @@ const ConnectionStatusBar: React.FC = () => {
             }, 5000);
         };
 
-        const connectionCancelHandle = (schema: SchemaRecord) => {
+        const connectionCancelHandle = (schema: ProfileRecord) => {
             setConnectionStatuses((prev) => {
                 const updated = { ...prev };
                 delete updated[schema.sch_id]; // Usuń status dla danego schematu

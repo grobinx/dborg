@@ -9,9 +9,9 @@ import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import { TextField } from '@renderer/components/inputs/TextField';
 import { Adornment } from '@renderer/components/inputs/base/BaseInputField';
 import ButtonGroup from '@renderer/components/buttons/ButtonGroup';
-import { useSchema } from '@renderer/contexts/SchemaContext';
+import { useProfiles } from '@renderer/contexts/ProfilesContext';
 
-interface SchemaPatternFieldProps {
+interface ProfilePatternFieldProps {
     properties: PropertiesInfo,
     schemaPattern: string,
     schemaName: string,
@@ -21,14 +21,14 @@ interface SchemaPatternFieldProps {
     onChangeColor: (value?: string) => void,
 }
 
-const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
+const ProfilePatternField: React.FC<ProfilePatternFieldProps> = (props) => {
     const { properties, schemaPattern, schemaName, schemaColor, schemaDriverId, onChangePattern, onChangeColor } = props;
     const theme = useTheme();
     const { t } = useTranslation();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
-    const { schemas } = useSchema();
+    const { profiles } = useProfiles();
     const [colorPickerAnchoreEl, setColorPickerAnchoreEl] = React.useState<null | HTMLElement>(null);
 
     const i18n_SchemaName = t("schema-name", "Schema name");
@@ -74,11 +74,11 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
         if (!schemaDriverId) return [];
 
         return [...new Set(
-            schemas
+            profiles
                 .filter(sch => sch.sch_drv_unique_id === schemaDriverId && sch.sch_pattern)
                 .map(sch => sch.sch_pattern as string)
         )].sort((a, b) => a.localeCompare(b));
-    }, [schemas, schemaDriverId]);
+    }, [profiles, schemaDriverId]);
 
     const patterns = React.useMemo<string[]>(() => {
         const patterns: string[] = [];
@@ -247,4 +247,4 @@ const SchemaPatternField: React.FC<SchemaPatternFieldProps> = (props) => {
     );
 };
 
-export default SchemaPatternField;
+export default ProfilePatternField;

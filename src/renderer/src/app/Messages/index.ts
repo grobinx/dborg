@@ -1,5 +1,5 @@
 import { DatabasesMetadata } from "src/api/db";
-import { SchemaRecord } from "../../contexts/SchemaContext";
+import { ProfileRecord } from "../../contexts/ProfilesContext";
 
 /**
  * Toggle the visibility of the tools panel.
@@ -111,7 +111,7 @@ export const CHANGE_SIDE_BAR_PLACEMENT = "change-side-bar-placement";
 export const SESSION_GET_METADATA_START = "session:get-metadata:start";
 export type SessionGetMetadataStart = {
     connectionId: string; // Unique identifier for the connection
-    schema: SchemaRecord; // Name of the schema to get metadata for
+    schema: ProfileRecord; // Name of the schema to get metadata for
 }
 export const SESSION_GET_METADATA_PROGRESS = "session:get-metadata";
 export type SessionGetMetadataProgress = {

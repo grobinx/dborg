@@ -6,9 +6,9 @@ import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
 import { TextField } from '@renderer/components/inputs/TextField';
 import { Adornment } from '@renderer/components/inputs/base/BaseInputField';
-import { useSchema } from '@renderer/contexts/SchemaContext';
+import { useProfiles } from '@renderer/contexts/ProfilesContext';
 
-interface SchemaGroupFieldProps {
+interface ProfileGroupFieldProps {
     schemaGroup: string | undefined,
     onChange: (value: string) => void,
 }
@@ -18,14 +18,14 @@ type GrupNameType = {
     description?: string,
 }
 
-const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
+const ProfileGroupField: React.FC<ProfileGroupFieldProps> = (props) => {
     const { schemaGroup, onChange } = props;
     const theme = useTheme();
     const { t } = useTranslation();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const openMenuGroups = Boolean(anchorEl);
-    const { schemas } = useSchema();
+    const { profiles } = useProfiles();
 
     const i18n_schemaGroup = t("schema-group", "Schema group");
 
@@ -40,12 +40,12 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
     const storedGroupList = React.useMemo(() => {
         return [
             ...new Set(
-                schemas
+                profiles
                     .filter(schema => (schema.sch_group ?? "").trim().length > 0)
                     .map(schema => schema.sch_group as string)
             )]
             .sort((a, b) => a.localeCompare(b));
-    }, [schemas]);
+    }, [profiles]);
 
     const predefinedGroupList = React.useMemo<GrupNameType[]>(() => [
         { value: t("Development", "Development"), description: t("Development-description", "Development environments") },
@@ -128,4 +128,4 @@ const SchemaGroupField: React.FC<SchemaGroupFieldProps> = (props) => {
     );
 };
 
-export default SchemaGroupField;
+export default ProfileGroupField;

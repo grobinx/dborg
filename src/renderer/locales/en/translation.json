@@ -9,7 +9,7 @@
 	"new-connection": "New connection",
 	"connections": "Connections",
 	"settings": "Settings",
-	"schema-assistant": "Connection schema creation assistant",
+	"schema-assistant": "Connection profile creation assistant",
 	"select-db-driver": "Select driver",
 	"schema-properties": "Connection properties",
 	"summary": "Summary",

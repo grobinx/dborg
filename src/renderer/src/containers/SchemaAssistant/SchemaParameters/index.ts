@@ -1,2 +1,2 @@
-export * from './SchemaParameters';
-export { default } from './SchemaParameters';
+export * from './ProfileParameters';
+export { default } from './ProfileParameters';

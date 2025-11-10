@@ -6,14 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { PasswordField } from '@renderer/components/inputs/PasswordField';
 import { SelectField } from '@renderer/components/inputs/SelectField';
 
-export type SchemaUsePasswordType = "ask" | "save" | "empty" | undefined;
+export type ProfileUsePasswordType = "ask" | "save" | "empty" | undefined;
 
 interface DriverPropertyFileProps {
     property: PropertyInfo,
     value: any,
-    usePassword: SchemaUsePasswordType,
+    usePassword: ProfileUsePasswordType,
     onChange: (field: PropertyInfo, value: string) => void,
-    onChangeUsePassword: (value: SchemaUsePasswordType) => void,
+    onChangeUsePassword: (value: ProfileUsePasswordType) => void,
     passwordRef?: React.RefObject<HTMLInputElement | null>,
 }
 
@@ -46,7 +46,7 @@ const DriverPropertyPassword: React.FC<DriverPropertyFileProps> = (props) => {
                     <InputLabel>{i18n_SchemaUsePassword}</InputLabel>
                     <SelectField
                         value={usePassword ?? "ask"}
-                        onChange={value => onChangeUsePassword(value as SchemaUsePasswordType)}
+                        onChange={value => onChangeUsePassword(value as ProfileUsePasswordType)}
                         width={textFieldWidth("string", i18n_SchemaUsePassword)}
                         options={[
                             { value: "ask", label: i18n_AskPasswordOnConnect },

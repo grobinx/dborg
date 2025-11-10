@@ -6,7 +6,7 @@ import { AnyOption, DescribedList } from "@renderer/components/inputs/DescribedL
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import Tree, { TreeNode } from "@renderer/components/Tree";
 import { FormattedContent } from "@renderer/components/useful/FormattedText";
-import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
 import { ThemeIcons } from "@renderer/themes/icons";
 import { ThemeColor, themeColors } from "@renderer/types/colors";
 import { Size, Sizes } from "@renderer/types/sizes";

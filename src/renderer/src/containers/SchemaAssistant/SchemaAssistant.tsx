@@ -5,8 +5,8 @@ import {
 import * as React from 'react';
 import { useTranslation } from "react-i18next";
 import DriverSelect from "./DriverSelect";
-import SchemaParameters, { SchemaParametersRef } from "./SchemaParameters";
-import { SchemaParametersType } from "./SchemaParameters/SchemaTypes";
+import SchemaParameters, { ProfileParametersRef } from "./SchemaParameters";
+import { ProfileParametersType } from "./SchemaParameters/ProfileTypes";
 import SchemaSummary from "./SchemaSummary/SchemaSummar";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -15,7 +15,7 @@ import { ContainerType, useContainers } from "@renderer/contexts/ApplicationCont
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
-import { SchemaRecord, useSchema } from "@renderer/contexts/SchemaContext";
+import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
 import { Properties } from "src/api/db";
 
 export interface SchemaAssistantProps extends BoxProps {
@@ -84,17 +84,17 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { hidden, className, slotProps, ...other } = useThemeProps({ name: 'SchemaAssistant', props });
     const { t } = useTranslation();
     const [activeStep, setActiveStep] = React.useState(0);
-    const [schemaParams, setSchemaParams] = React.useState<SchemaParametersType>({ uniqueId: undefined });
+    const [schemaParams, setSchemaParams] = React.useState<ProfileParametersType>({ uniqueId: undefined });
     const [saveing, setSaving] = React.useState(false);
     const [testing, setTesting] = React.useState(false);
     const { drivers } = useDatabase();
     const addToast = useToast();
-    const schemaRef = React.useRef<SchemaParametersRef>(null);
+    const schemaRef = React.useRef<ProfileParametersRef>(null);
     const [search, setSearch] = React.useState('');
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
-    const { testConnection, connectToDatabase, getSchema, createSchema, updateSchema } = useSchema();
+    const { testConnection, connectToDatabase, getProfile: getSchema, createProfile: createSchema, updateProfile: updateSchema } = useProfiles();
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -186,7 +186,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         handleEndEditSchemaMessage,
     ]);
 
-    const saveSchema = (schema: SchemaParametersType) => {
+    const saveSchema = (schema: ProfileParametersType) => {
         const save = async () => {
             if (!schema.schemaName) {
                 addToast("warning", t("schema-name-required", "Schema name is required."), { source: t("schema-assistant", "Schema assistant") });
@@ -238,7 +238,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         })
     };
 
-    const handleTestConnection = async (schema: SchemaParametersType) => {
+    const handleTestConnection = async (schema: ProfileParametersType) => {
         setTesting(true);
         try {
             if (!schema.driverUniqueId) {
@@ -272,9 +272,9 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         >
             <SchemaAssistantTitle className="SchemaAssistant-title" {...slotProps?.assistantTitle}>
                 <Typography variant="h4" {...slotProps?.title}>
-                    {(assistantMode === "new") && t("schema-assistant", "Schema assistant")}
-                    {(assistantMode === "edit") && t("schema-assistant-edit", "Schema edit assistant")}
-                    {(assistantMode === "clone") && t("schema-assistant-clone", "Schema clone assistant")}
+                    {(assistantMode === "new") && t("schema-assistant", "Profile assistant")}
+                    {(assistantMode === "edit") && t("schema-assistant-edit", "Profile edit assistant")}
+                    {(assistantMode === "clone") && t("schema-assistant-clone", "Profile clone assistant")}
                 </Typography>
                 <Stack flexGrow={1} />
                 {activeStep === 1 &&

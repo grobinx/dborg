@@ -1,6 +1,6 @@
 import { Grid2 as Grid, List, ListItem, ListItemText, ListProps, Stack, StackProps, styled, Typography, useThemeProps } from '@mui/material';
 import React from 'react';
-import { SchemaParametersType } from '../SchemaParameters/SchemaTypes';
+import { ProfileParametersType } from '../SchemaParameters/ProfileTypes';
 import { useDatabase } from '@renderer/contexts/DatabaseContext';
 import DriverSummary from '../DriverSelect/DriverSummary';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,7 @@ export interface SchemaSummaryProps extends StackProps {
 
 interface SchemaSummaryOwnProps extends SchemaSummaryProps {
     ref?: React.RefObject<HTMLInputElement>,
-    schema: SchemaParametersType
+    schema: ProfileParametersType
 }
 
 export interface SchemaSummaryRef extends HTMLDivElement {

@@ -1,14 +1,14 @@
 import { DriverInfo, Properties } from "src/api/db";
-import { SchemaUsePasswordType } from "./DriverPropertyPassword";
+import { ProfileUsePasswordType } from "./DriverPropertyPassword";
 
-export type SchemaParametersType = {
+export type ProfileParametersType = {
     uniqueId?: string,
     driverUniqueId?: string,
     schemaPattern?: string,
     schemaName?: string,
     schemaColor?: string,
     schemaGroup?: string,
-    usePassword?: SchemaUsePasswordType,
+    usePassword?: ProfileUsePasswordType,
     properties?: Properties,
     driver?: DriverInfo,
 }

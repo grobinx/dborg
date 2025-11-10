@@ -7,23 +7,23 @@ import DriverPropertyFile from "./DriverPropertyFile";
 import DriverPropertyString from "./DriverPropertyString";
 import { schemaPatternToName, setPropertyValue } from "./Utils";
 import DriverPropertyNumber from "./DriverPropertyNumber";
-import DriverPropertyPassword, { SchemaUsePasswordType } from "./DriverPropertyPassword";
+import DriverPropertyPassword, { ProfileUsePasswordType } from "./DriverPropertyPassword";
 import DriverPropertyBoolean from "./DriverPropertyBoolean";
 import { useTranslation } from "react-i18next";
-import SchemaPatternField from "./SchemaPatternField";
-import SchemaGroupField from "./SchemaGroupField";
-import { SchemaParametersType } from "./SchemaTypes";
+import ProfilePatternField from "./ProfilePatternField";
+import ProfileGroupField from "./ProfileGroupField";
+import { ProfileParametersType } from "./ProfileTypes";
 import DriverSummary from "../DriverSelect/DriverSummary";
 import debounce from '@renderer/utils/debounce';
 import { useSetting } from "@renderer/contexts/SettingsContext";
 
-export interface SchemaParametersRef {
-    getSchema: () => SchemaParametersType;
+export interface ProfileParametersRef {
+    getSchema: () => ProfileParametersType;
 }
 
-export interface SchemaParametersProps extends StackProps {
-    schemaRef?: React.RefObject<SchemaParametersRef | null>,
-    schema: SchemaParametersType,
+export interface ProfileParametersProps extends StackProps {
+    schemaRef?: React.RefObject<ProfileParametersRef | null>,
+    schema: ProfileParametersType,
     slotProps?: {
         driverIcon?: IconWrapperProps,
         driverName?: TypographyProps,
@@ -39,10 +39,10 @@ export interface SchemaParametersProps extends StackProps {
     search?: string,
 }
 
-interface SchemaParametersOwnProps extends SchemaParametersProps {
+interface ProfileParametersOwnProps extends ProfileParametersProps {
 }
 
-const SchemaParametersRoot = styled(Stack, {
+const ProfileParametersRoot = styled(Stack, {
     name: 'SchemaParameters', // The component name
     slot: 'root', // The slot name
 })(() => ({
@@ -69,7 +69,7 @@ const SchemaParametersProperties = styled(Stack, {
 })(() => ({
 }));
 
-const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
+const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
     //const theme = useTheme();
     const { schemaRef, schema, slotProps, search, ...other } = useThemeProps({ name: 'SchemaParameters', props });
     const { drivers } = useDatabase();
@@ -80,7 +80,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
     const [schemaName, setSchemaName] = React.useState(schema.schemaName ?? '');
     const [schemaColor, setSchemaColor] = React.useState<string | undefined>(schema.schemaColor);
     const [schemaGroup, setSchemaGroup] = React.useState(schema.schemaGroup);
-    const [schemaUsePassword, setSchemaUsePassword] = React.useState<SchemaUsePasswordType>(schema.usePassword);
+    const [schemaUsePassword, setSchemaUsePassword] = React.useState<ProfileUsePasswordType>(schema.usePassword);
     const [searchProperties, setSearchProperties] = React.useState<string[]>([]);
     const passwordRef = React.useRef<HTMLInputElement | null>(null);
     const [searchDelay] = useSetting<number>("app", "search.delay");
@@ -177,7 +177,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                         {t("schema-fields", "Schema properties")}
                     </Typography>
                     <SchemaParametersProperties {...slotProps?.groupProperties}>
-                        <SchemaPatternField
+                        <ProfilePatternField
                             properties={driver?.properties ?? []}
                             schemaName={schemaName}
                             schemaPattern={schemaPattern}
@@ -186,7 +186,7 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
                             onChangePattern={value => setSchemaPattern(value)}
                             onChangeColor={value => setSchemaColor(value)}
                         />
-                        <SchemaGroupField
+                        <ProfileGroupField
                             schemaGroup={schemaGroup}
                             onChange={value => setSchemaGroup(value === '' ? undefined : value)}
                         />
@@ -285,13 +285,13 @@ const SchemaParameters: React.FC<SchemaParametersOwnProps> = (props) => {
         </>
 
     return (
-        <SchemaParametersRoot
+        <ProfileParametersRoot
             {...other}
             className={" SchemaParameters-root"}
             {...slotProps?.schemaParameters}
         >
             {propertyInputs}
-        </SchemaParametersRoot>
+        </ProfileParametersRoot>
     )
 }
 
