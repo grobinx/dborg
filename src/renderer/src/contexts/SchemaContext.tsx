@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
+import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateTime } from "luxon";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -99,82 +99,130 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { onEvent, emitEvent } = useListeners<SchemaEvent>();
     const [schemas, setSchemas] = useState<SchemaRecord[]>([]);
     const [schemaInitialized, setSchemaInitialized] = useState<boolean>(false);
-    const schemasRef = React.useRef<SchemaRecord[]>(schemas);
-    const [justFetched, setJustFetched] = useState<boolean>(false);
+
+    // Refs
+    const schemasRef = useRef<SchemaRecord[]>([]);
+    const saveTimerRef = useRef<number | null>(null);
+    const unmountedRef = useRef(false);
+    const justFetchedRef = useRef<boolean>(false);
+
+    // Utils
+    const nowSql = () => DateTime.now().toSQL();
+    const parseJsonSafe = <T,>(json: string): T | null => {
+        try { return JSON.parse(json) as T; } catch { return null; }
+    };
+
+    // Keep ref in sync
+    useEffect(() => { schemasRef.current = schemas; }, [schemas]);
+    useEffect(() => {
+        return () => {
+            unmountedRef.current = true;
+            if (saveTimerRef.current) {
+                window.clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = null;
+            }
+        };
+    }, []);
+
+    // Fast lookups
+    const schemaMap = useMemo(() => {
+        const map = new Map<string, SchemaRecord>();
+        for (const s of schemas) map.set(s.sch_id, s);
+        return map;
+    }, [schemas]);
+
+    const scheduleSave = useCallback((payload: SchemaRecord[]) => {
+        if (!schemaInitialized || justFetchedRef.current) {
+            // Skip saving right after fetch
+            justFetchedRef.current = false;
+            return;
+        }
+        if (saveTimerRef.current) {
+            window.clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+        }
+        saveTimerRef.current = window.setTimeout(async () => {
+            try {
+                await storeSchemas(payload);
+            } finally {
+                saveTimerRef.current && window.clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = null;
+            }
+        }, 300);
+    }, [schemaInitialized]); // storeSchemas is declared below but stable via useCallback
 
     const getSchema = useCallback((schemaId: string, throwError: boolean = true) => {
-        if (schemasRef.current) {
-            const schema = schemasRef.current.find((s) => s.sch_id === schemaId);
-            if (schema) {
-                return JSON.parse(JSON.stringify(schema)) as SchemaRecord;
-            }
-        }
-        if (throwError) {
+        const schema = schemaMap.get(schemaId) || null;
+        if (!schema && throwError) {
             throw new Error(t("profile-id-not-found", "Profile not found!"));
         }
-        return null;
-    }, []);
+        return schema ? { ...schema } : null;
+    }, [schemaMap, t]);
 
     const loadSchemas = useCallback(async () => {
         emitEvent('fetching', { status: 'started' });
-        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
-        const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
-        if (data) {
-            try {
-                const loadedSchemas = JSON.parse(data);
+        try {
+            const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+            const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
+            if (data) {
+                const loadedSchemas = parseJsonSafe<SchemaRecord[]>(data) ?? [];
                 setSchemas(loadedSchemas);
-                setJustFetched(true);
-                setSchemaInitialized(true);
-            } catch (error) {
-                addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
-                emitEvent('fetching', { status: 'error', error });
-                throw error;
+                justFetchedRef.current = true;
+            } else {
+                setSchemas([]);
             }
+            setSchemaInitialized(true);
+            emitEvent('fetching', { status: 'success' });
+        } catch (error) {
+            addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
+            setSchemas([]);
+            setSchemaInitialized(true);
+            emitEvent('fetching', { status: 'error', error });
         }
-        emitEvent('fetching', { status: 'success' });
-    }, []);
+    }, [addToast, emitEvent, t]);
 
-    const storeSchemas = useCallback(async (schemas: SchemaRecord[]) => {
+    const storeSchemas = useCallback(async (schemasToStore: SchemaRecord[]) => {
         emitEvent('storing', { status: 'started' });
-        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
-        await window.dborg.path.ensureDir(dataPath);
-        const backupData = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
-        if (backupData) {
-            await window.dborg.path.ensureDir(`${dataPath}/backup`);
-            const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
-            await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, backupData);
-            const backupFiles =
-                (await window.dborg.path.list(`${dataPath}/backup`, "schemas.json.*"))
-                    .sort((a, b) => b.localeCompare(a));
-            if (backupFiles.length > 10) {
-                for (let i = 10; i < backupFiles.length; i++) {
-                    await window.dborg.file.deleteFile(`${dataPath}/backup/${backupFiles[i]}`);
+        try {
+            const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+            await window.dborg.path.ensureDir(dataPath);
+            const backupData = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
+
+            if (backupData) {
+                await window.dborg.path.ensureDir(`${dataPath}/backup`);
+                const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
+                await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, backupData);
+                const backupFiles =
+                    (await window.dborg.path.list(`${dataPath}/backup`, "schemas.json.*"))
+                        .sort((a, b) => b.localeCompare(a));
+                if (backupFiles.length > 10) {
+                    for (let i = 10; i < backupFiles.length; i++) {
+                        await window.dborg.file.deleteFile(`${dataPath}/backup/${backupFiles[i]}`);
+                    }
                 }
             }
+
+            await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemasToStore, null, 2));
+            emitEvent('storing', { status: 'success' });
+        } catch (error) {
+            emitEvent('storing', { status: 'error', error });
+            throw error;
         }
-        await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
-        emitEvent('storing', { status: 'success' });
-    }, []);
+    }, [emitEvent]);
+
+    // Persist with debounce
+    useEffect(() => {
+        if (!schemaInitialized) return;
+        scheduleSave(schemas);
+    }, [schemas, schemaInitialized, scheduleSave]);
 
     useEffect(() => {
-        schemasRef.current = schemas;
-        if (!schemaInitialized) {
-            return;
-        }
-        if (justFetched) {
-            setJustFetched(false);
-            return;
-        }
-        storeSchemas(schemas);
-    }, [schemas]);
-
-    React.useEffect(() => {
         loadSchemas();
-    }, []);
+    }, [loadSchemas]);
 
     const reloadSchemas = useCallback(async () => {
         await loadSchemas();
-    }, []);
+    }, [loadSchemas]);
 
     const passwordPrompt = useCallback(async (
         usePassword: SchemaUsePasswordType,
@@ -187,10 +235,11 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             properties[passwordProperty] = password;
         }
         return true;
-    }, []);
+    }, [dialogs]);
 
     const checkExistingConnection = useCallback(async (schemaId: string): Promise<boolean> => {
-        const existingConnection = (await connections.list()).find(
+        const list = await connections.list();
+        const existingConnection = list.find(
             (conn) => (conn.userData?.schema as SchemaRecord)?.sch_id === schemaId
         );
 
@@ -208,15 +257,13 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     okText: t("yes", "Yes"),
                 }
             );
-            return confirm; // Zwraca true, jeśli użytkownik potwierdził, false w przeciwnym razie
+            return confirm;
         }
-
-        return true; // Brak istniejącego połączenia, można kontynuować
-    }, [connections]);
+        return true;
+    }, [connections, dialogs, t]);
 
     const connectToDatabase = useCallback(async (schemaId: string) => {
         const schema = getSchema(schemaId)!;
-
         emitEvent("connecting", { schema, status: "started" });
 
         const confirm = await checkExistingConnection(schemaId);
@@ -226,7 +273,7 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         const driverId = schema.sch_drv_unique_id as string;
-        const properties = schema.sch_properties;
+        const properties = { ...schema.sch_properties };
         const usePassword = schema.sch_use_password as SchemaUsePasswordType;
         const passwordProperty = drivers.find(driverId)?.passwordProperty;
 
@@ -248,18 +295,22 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent("connecting", { schema, status: "error", error });
             throw error;
         }
-        schema.sch_last_selected = DateTime.now().toSQL();
-        schema.sch_db_version = connection.version;
-        schema.sch_updated = DateTime.now().toSQL();
-        connections.userData.set(connection.uniqueId, "schema", schema);
-        connection.userData.schema = schema;
-        setSchemas((prev) => {
-            const otherSchemas = prev.filter((s) => s.sch_id !== schemaId);
-            return [...otherSchemas, schema];
-        });
-        emitEvent("connecting", { schema, status: "success", connection });
+
+        const updated: SchemaRecord = {
+            ...schema,
+            sch_last_selected: nowSql(),
+            sch_db_version: connection.version,
+            sch_updated: nowSql(),
+            sch_properties: properties,
+        };
+
+        connections.userData.set(connection.uniqueId, "schema", updated);
+        connection.userData.schema = updated;
+
+        setSchemas((prev) => prev.map(s => s.sch_id === schemaId ? updated : s));
+        emitEvent("connecting", { schema: updated, status: "success", connection });
         return connection;
-    }, [drivers, connections]);
+    }, [addToast, checkExistingConnection, drivers, passwordPrompt, t, connections, getSchema]);
 
     const disconnectFromDatabase = useCallback(async (uniqueId: string) => {
         const schema = (await connections.userData.get(uniqueId, "schema")) as SchemaRecord;
@@ -272,19 +323,19 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent("disconnecting", { schema, status: "error", connectionUniqueId: uniqueId, error });
             throw error;
         }
-    }, [connections]);
+    }, [connections, emitEvent]);
 
     const disconnectFromAllDatabases = useCallback(async (schemaId: string) => {
         const allConnections = (await connections.list()).filter(
             (conn) => (conn.userData?.schema as SchemaRecord)?.sch_id === schemaId
         );
         for (const conn of allConnections) {
-            disconnectFromDatabase(conn.uniqueId);
+            await disconnectFromDatabase(conn.uniqueId);
         }
-    }, [connections]);
+    }, [connections, disconnectFromDatabase]);
 
     const testConnection = useCallback(async (driverUniqueId: string, usePassword: SchemaUsePasswordType, properties: Properties, schemaName: string) => {
-        const schema = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties };
+        const schema = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties } as SchemaRecord;
         try {
             emitEvent("testing", { schema, status: "started" });
             const passwordProperty = drivers.find(driverUniqueId)?.passwordProperty;
@@ -313,15 +364,16 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent("testing", { schema, status: "error", error });
             throw error;
         }
-    }, [drivers, connections]);
+    }, [drivers, connections, addToast, passwordPrompt, t, emitEvent]);
 
-    const updateOrder = useCallback((schemas: SchemaRecord[]) => {
-        return schemas.slice()
+    const normalizeOrder = useCallback((list: SchemaRecord[]): SchemaRecord[] => {
+        return list
+            .slice()
             .sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0))
             .map((schema, index) => ({
                 ...schema,
                 sch_order: index + 1,
-                sch_updated: DateTime.now().toSQL(),
+                sch_updated: nowSql(),
             }));
     }, []);
 
@@ -331,51 +383,40 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: schema.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
-            setSchemas(prev => updateOrder(prev.filter(s => s.sch_id !== schemaId)));
+            setSchemas(prev => normalizeOrder(prev.filter(s => s.sch_id !== schemaId)));
             return true;
         }
         return false;
-    }, []);
+    }, [dialogs, getSchema, normalizeOrder, t]);
 
     /**
      * Check if a schema with the same name already exists.
-     * @param schemaName The name of the schema to check.
-     * @param schemaId The ID of the schema to exclude from the check.
-     * @returns True if the schema does not exist or the user confirms to continue.
      */
     const checkSchemaExists = useCallback(async (schemaName: string, schemaId?: string): Promise<boolean> => {
-        const schema = schemasRef.current.find(s => s.sch_name === schemaName && s.sch_id !== schemaId);
-
-        if (schema) {
+        const duplicate = schemasRef.current.find(s => s.sch_name === schemaName && s.sch_id !== schemaId);
+        if (duplicate) {
             const confirm = await dialogs.confirm(
                 t("schema-exists-q", 'Schema "{{name}}" already exists. Do you want to continue?', { name: schemaName }),
                 { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
             );
             return confirm;
         }
-
         return true;
-    }, []);
+    }, [dialogs, t]);
 
     /**
      * Remove the password property from the schema if the password is not saved.
-     * @param schema The schema to check.
-     * @param schema.sch_use_password The password usage type.
-     * @param schema.sch_properties The schema properties.
-     * @param schema.sch_drv_unique_id The driver unique ID.
-     * @returns The schema without the password property if the password is not saved.
      */
     const passwordRetention = useCallback((schema: Pick<SchemaRecord, "sch_use_password" | "sch_properties" | "sch_drv_unique_id">) => {
         const passwordProperty = drivers.find(schema.sch_drv_unique_id)?.passwordProperty;
         if (schema.sch_use_password !== "save" && passwordProperty) {
+            // Mutate local draft object only; caller should pass copies if needed
             delete schema.sch_properties?.[passwordProperty];
         }
     }, [drivers]);
 
     /**
      * Create a new schema.
-     * @param schema The schema to create.
-     * @returns The ID of the created schema.
      */
     const createSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
         emitEvent('creating', { schema: schema as SchemaRecord, status: 'started' });
@@ -383,25 +424,26 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent('creating', { schema: schema as SchemaRecord, status: 'cancel' });
             return;
         }
-        passwordRetention(schema);
+
+        const draft: typeof schema = { ...schema, sch_properties: { ...schema.sch_properties } };
+        passwordRetention(draft);
 
         const uniqueId = uuidv7();
         const newSchema: SchemaRecord = {
-            ...schema,
+            ...draft,
             sch_id: uniqueId,
-            sch_created: DateTime.now().toSQL(),
-            sch_updated: DateTime.now().toSQL(),
-            sch_order: Infinity,
+            sch_created: nowSql(),
+            sch_updated: nowSql(),
+            sch_order: (schemasRef.current.length ? Math.max(...schemasRef.current.map(s => s.sch_order ?? 0)) + 1 : 1),
         };
-        setSchemas((prev) => updateOrder([...prev, newSchema]));
+
+        setSchemas((prev) => [...prev, newSchema]);
         emitEvent('creating', { schema: newSchema, status: 'success' });
         return uniqueId;
-    }, [passwordRetention]);
+    }, [checkSchemaExists, passwordRetention, emitEvent]);
 
     /**
      * Update an existing schema.
-     * @param schema The schema to update.
-     * @returns True if the update was successful, false otherwise.
      */
     const updateSchema = useCallback(async (schema: Omit<SchemaRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
         const existsSchema = getSchema(schema.sch_id)!;
@@ -411,87 +453,107 @@ export const SchemaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             emitEvent('updating', { schema: existsSchema as SchemaRecord, status: 'cancel' });
             return false;
         }
-        passwordRetention(schema);
+
+        const draft: typeof schema = { ...schema, sch_properties: { ...schema.sch_properties } };
+        passwordRetention(draft);
 
         const updatedSchema: SchemaRecord = {
             ...existsSchema,
-            ...schema,
-            sch_updated: DateTime.now().toSQL(),
+            ...draft,
+            sch_updated: nowSql(),
         };
-        setSchemas((prev) =>
-            prev.map((schema) => (schema.sch_id === updatedSchema.sch_id ? updatedSchema : schema)) // Zaktualizuj schemat w liście
-        );
+
+        setSchemas((prev) => prev.map((s) => (s.sch_id === updatedSchema.sch_id ? updatedSchema : s)));
         emitEvent('updating', { schema: updatedSchema, status: 'success' });
         return true;
-    }, [passwordRetention]);
+    }, [checkSchemaExists, getSchema, passwordRetention, emitEvent]);
 
     const swapSchemasOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
-        if (!schemasRef.current) {
-            return;
-        }
+        const list = schemasRef.current;
+        if (!list?.length) return;
 
-        const sourceIndex = schemasRef.current.findIndex(s => s.sch_id === sourceSchemaId);
-        const targetIndex = schemasRef.current.findIndex(s => s.sch_id === targetSchemaId);
-        if (sourceIndex === -1 || targetIndex === -1) {
+        const byId = (id: string) => list.findIndex(s => s.sch_id === id);
+        const srcIdx = byId(sourceSchemaId);
+        const tgtIdx = byId(targetSchemaId);
+        if (srcIdx === -1 || tgtIdx === -1) {
             throw new Error(t("profile-not-found", "Profile not found!"));
         }
 
-        const nextOrder = Math.max(...schemasRef.current.map(s => s.sch_order ?? 0)) + 1;
-
-        let sourceOrder = schemasRef.current[sourceIndex].sch_order ?? (nextOrder);
-        let targetOrder = schemasRef.current[targetIndex].sch_order ?? (nextOrder + 1);
+        const sorted = list.slice().sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0));
 
         if (group) {
-            setSchemas(prev => {
-                const newSchemas = prev.slice().sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0));
-                const sourceGroup = newSchemas[sourceIndex].sch_group;
-                const targetGroup = newSchemas[targetIndex].sch_group;
-                for (let i = 0; i < newSchemas.length; i++) {
-                    if (newSchemas[i].sch_group === sourceGroup) {
-                        newSchemas[i].sch_order = targetOrder;
-                        newSchemas[i].sch_updated = DateTime.now().toSQL();
-                        targetOrder += 0.001;
-                    } else if (newSchemas[i].sch_group === targetGroup) {
-                        newSchemas[i].sch_order = sourceOrder;
-                        newSchemas[i].sch_updated = DateTime.now().toSQL();
-                        sourceOrder += 0.001;
-                    }
-                }
-                return updateOrder(newSchemas);
-            });
+            const srcGroup = sorted[srcIdx].sch_group;
+            const tgtGroup = sorted[tgtIdx].sch_group;
+
+            const srcBlock = sorted.filter(s => s.sch_group === srcGroup);
+            const tgtBlock = sorted.filter(s => s.sch_group === tgtGroup);
+            const rest = sorted.filter(s => s.sch_group !== srcGroup && s.sch_group !== tgtGroup);
+
+            // Find insertion points based on original positions
+            const firstSrcPos = Math.min(...sorted.map((s, i) => s.sch_group === srcGroup ? i : Number.MAX_SAFE_INTEGER));
+            const firstTgtPos = Math.min(...sorted.map((s, i) => s.sch_group === tgtGroup ? i : Number.MAX_SAFE_INTEGER));
+
+            let newOrder: SchemaRecord[];
+            if (firstSrcPos < firstTgtPos) {
+                // src before tgt -> place tgt where src was, then src where tgt was
+                const beforeSrc = rest.slice(0, firstSrcPos);
+                const between = rest.slice(firstSrcPos, firstTgtPos - srcBlock.length);
+                const afterTgt = rest.slice(firstTgtPos - srcBlock.length);
+                newOrder = [...beforeSrc, ...tgtBlock, ...between, ...srcBlock, ...afterTgt];
+            } else {
+                // tgt before src
+                const beforeTgt = rest.slice(0, firstTgtPos);
+                const between = rest.slice(firstTgtPos, firstSrcPos - tgtBlock.length);
+                const afterSrc = rest.slice(firstSrcPos - tgtBlock.length);
+                newOrder = [...beforeTgt, ...srcBlock, ...between, ...tgtBlock, ...afterSrc];
+            }
+
+            setSchemas(normalizeOrder(newOrder));
+        } else {
+            // Swap single items by position
+            const newList = sorted.slice();
+            const [a, b] = [newList[srcIdx], newList[tgtIdx]];
+            newList[srcIdx] = { ...b, sch_updated: nowSql() };
+            newList[tgtIdx] = { ...a, sch_updated: nowSql() };
+            setSchemas(normalizeOrder(newList));
         }
-        else {
-            setSchemas(prev => {
-                const newSchemas = prev.slice();
-                newSchemas[sourceIndex].sch_order = targetOrder;
-                newSchemas[sourceIndex].sch_updated = DateTime.now().toSQL();
-                newSchemas[targetIndex].sch_order = sourceOrder;
-                newSchemas[targetIndex].sch_updated = DateTime.now().toSQL();
-                return newSchemas;
-            });
-        }
-    }, []);
+    }, [normalizeOrder, t]);
+
+    // Provide memoized context value to avoid re-renders
+    const ctxValue = useMemo<SchemaContextValue>(() => ({
+        initialized: schemaInitialized,
+        schemas,
+        getSchema,
+        reloadSchemas,
+        createSchema,
+        updateSchema,
+        deleteSchema,
+        swapSchemasOrder,
+        connectToDatabase,
+        disconnectFromDatabase,
+        disconnectFromAllDatabases,
+        testConnection,
+        onEvent: onEvent as SchemaEventMethod,
+    }), [
+        schemaInitialized,
+        schemas,
+        getSchema,
+        reloadSchemas,
+        createSchema,
+        updateSchema,
+        deleteSchema,
+        swapSchemasOrder,
+        connectToDatabase,
+        disconnectFromDatabase,
+        disconnectFromAllDatabases,
+        testConnection,
+        onEvent,
+    ]);
 
     console.count("SchemaProvider render");
 
     return (
-        <SchemaContext.Provider
-            value={{
-                initialized: schemaInitialized,
-                schemas,
-                getSchema,
-                reloadSchemas,
-                createSchema,
-                updateSchema,
-                deleteSchema,
-                swapSchemasOrder,
-                connectToDatabase,
-                disconnectFromDatabase,
-                disconnectFromAllDatabases,
-                testConnection,
-                onEvent: onEvent as SchemaEventMethod,
-            }}
-        >
+        <SchemaContext.Provider value={ctxValue}>
             {children}
         </SchemaContext.Provider>
     );
