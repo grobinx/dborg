@@ -121,30 +121,44 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
         loadDriverList();
     }, []);
 
-    const value = {
-        initialized: initialized,
-        drivers: {
-            list: driverList,
-            find: driverFind,
-            loadList: loadDriverList,
-            connect: driverConnect,
+    const driversCtx = React.useMemo(() => ({
+        list: driverList,
+        find: driverFind,
+        loadList: loadDriverList,
+        connect: driverConnect,
+    }), [driverList, driverFind, loadDriverList, driverConnect]);
+
+    const connectionsCtx = React.useMemo(() => ({
+        list: connectionList,
+        close: connectionClose,
+        userData: {
+            get: connectionGetUserData,
+            set: connectionSetUserData,
         },
-        connections: {
-            list: connectionList,
-            close: connectionClose,
-            userData: {
-                get: connectionGetUserData,
-                set: connectionSetUserData,
-            },
-            query: connectionQuery,
-            store: connectionStore,
-            execute: connectionExecute,
-        },
-        internal: {
-            query: internalQuery,
-            execute: internalExecute,
-        }
-    } as DatabaseContextType;
+        query: connectionQuery,
+        store: connectionStore,
+        execute: connectionExecute,
+    }), [
+        connectionList,
+        connectionClose,
+        connectionGetUserData,
+        connectionSetUserData,
+        connectionQuery,
+        connectionStore,
+        connectionExecute,
+    ]);
+
+    const internalCtx = React.useMemo(() => ({
+        query: internalQuery,
+        execute: internalExecute,
+    }), [internalQuery, internalExecute]);
+
+    const value = React.useMemo(() => ({
+        initialized,
+        drivers: driversCtx,
+        connections: connectionsCtx,
+        internal: internalCtx,
+    }) as DatabaseContextType, [initialized, driversCtx, connectionsCtx, internalCtx]);
 
     return (
         <DatabaseContext.Provider value={value}>
