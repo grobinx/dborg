@@ -432,10 +432,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await testConnection(schema.sch_drv_unique_id, schema.sch_use_password, schema.sch_properties, schema.sch_name);
         } catch (error) {
-            addToast("error",
-                t("schema-connection-test-error", "Connection test failed!"),
-                { source: schema.sch_name, reason: error }
-            );
             setErroring((prev) => [...prev, schema.sch_id]);
         } finally {
             setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
@@ -448,10 +444,6 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
         try {
             await connectToDatabase(schemaId);
         } catch (error) {
-            addToast("error",
-                t("schema-connection-test-error", "Connection failed!"),
-                { reason: error }
-            );
             setErroring((prev) => [...prev, schemaId]);
         } finally {
             setConnecting((prev) => prev.filter((id) => id !== schemaId));
@@ -762,6 +754,7 @@ const SchemaList: React.FC<SchemaListOwnProps> = (props) => {
                     record.sch_id === selectedItem && "selected"
                 )}
                 onClick={() => setSelectedItem(record.sch_id)}
+                onDoubleClick={() => actions.current.executeAction(connectActionId, context, record.sch_id)}
             >
                 {renderSchemaSortButtons(record)}
                 {renderDriverIcon(record)}
