@@ -6,7 +6,7 @@ const AppContainers: React.FC = () => {
 
     return (
         containers?.map((container) => {
-            if (["new-connection", "connection-list", "connections"].includes(container.type)) {
+            if (["new-profile", "profile-list", "connections"].includes(container.type)) {
                 return (
                     <Container key={container.type} hidden={container !== selectedContainer}>
                         {container.container !== undefined && <container.container key={container.id} />}

@@ -550,7 +550,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             >
                                 <PropertyField
                                     key={size}
-                                    keyPlaceholder={"Add property..."}
                                     size={size}
                                     value={objectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueObjectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru

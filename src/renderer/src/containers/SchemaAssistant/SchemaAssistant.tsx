@@ -108,7 +108,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     };
 
     const handleSwitchContainerMessage = React.useCallback((container: ContainerType) => {
-        if (container === selectedContainer?.type && container === "new-connection") {
+        if (container === selectedContainer?.type && container === "new-profile") {
             queueMessage(Messages.SET_SCHEMA_ID, undefined);
         }
     }, [selectedContainer]);
@@ -164,7 +164,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     }, []);
 
     const handleEndEditSchemaMessage = React.useCallback(() => {
-        queueMessage(Messages.SWITCH_CONTAINER, "connection-list");
+        queueMessage(Messages.SWITCH_CONTAINER, "profile-list");
     }, []);
 
     // Register and unregister message handlers

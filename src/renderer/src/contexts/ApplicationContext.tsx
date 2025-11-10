@@ -22,9 +22,9 @@ import { useProfiles } from './ProfilesContext';
 
 type SidebarSection = "first" | "last"; // Define the sections for the container buttons
 export type ContainerType =
-    "new-connection"
+    "new-profile"
     | "connections"
-    | "connection-list"
+    | "profile-list"
     | "settings"
     | "plugins"
     | "custom";
@@ -57,16 +57,16 @@ export type View =
     | CustomView;
 
 // Define specific container structures for each ContainerType
-interface NewConnectionContainer extends IContainer {
-    type: "new-connection";
+interface NewProfileContainer extends IContainer {
+    type: "new-profile";
 }
 
 interface ConnectionsContainer extends IContainer {
     type: "connections";
 }
 
-interface ConnectionListContainer extends IContainer {
-    type: "connection-list";
+interface ProfileListContainer extends IContainer {
+    type: "profile-list";
 }
 
 interface SettingsContainer extends IContainer {
@@ -81,9 +81,9 @@ interface PluginsContainer extends IContainer {
 
 // Union type for all container structures
 type SpecificContainer =
-    | NewConnectionContainer
+    | NewProfileContainer
     | ConnectionsContainer
-    | ConnectionListContainer
+    | ProfileListContainer
     | SettingsContainer
     | PluginsContainer
     | CustomContainer;
@@ -113,7 +113,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const initialContainers = (): SpecificContainer[] => [
         {
             id: uuidv7(),
-            type: "new-connection",
+            type: "new-profile",
             icon: <theme.icons.NewConnection />,
             label: t("new", "New"), // było: "Nowe połączenie"
             tooltip: t("create-new-connection-profile", "Create new connection profile"),
@@ -122,7 +122,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         },
         {
             id: uuidv7(),
-            type: "connection-list",
+            type: "profile-list",
             icon: <theme.icons.ConnectionList />,
             label: t("profiles", "Profiles"), // było: "Lista połączeń"
             tooltip: t("manage-connection-profiles", "Manage connection profiles"),
@@ -213,7 +213,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             if (list && list.length) {
                 return containers.find(c => c.type === "connections") || containers[0];
             }
-            return containers.find(c => c.type === "connection-list") || containers[0];
+            return containers.find(c => c.type === "profile-list") || containers[0];
         }
         return null;
     }, [containers]);
