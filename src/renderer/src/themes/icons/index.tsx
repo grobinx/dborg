@@ -10,16 +10,16 @@ export interface IconWrapperProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export interface IconWrapperOwnProps extends IconWrapperProps {
-    color?: ThemeColor;
+    color?: ThemeColor | "default";
 }
 
 const StyledIconWrapper = styled('span', {
     name: 'IconWrapper',
     slot: 'root',
     shouldForwardProp: (prop) => prop !== 'color',
-})<{ color?: ThemeColor }>(({ theme, color }) => ({
+})<{ color?: ThemeColor | "default" }>(({ theme, color }) => ({
     display: 'flex',
-    color: color ? theme.palette[color].main : 'inherit',
+    color: (color && color !== "default") ? theme.palette[color].main : 'inherit',
     position: 'relative',
     width: "1em", // Ustawienie szerokości
     height: "1em", // Ustawienie wysokości
