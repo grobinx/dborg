@@ -256,7 +256,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                                 value={editValue}
                                                 disabled={disabled}
                                                 onChange={setEditValue}
-                                                onBlur={saveEdit}
+                                                //onBlur={cancelEdit}
                                                 onKeyDown={handleEditKeyDown}
                                                 dense
                                                 style={{ flex: 1 }}

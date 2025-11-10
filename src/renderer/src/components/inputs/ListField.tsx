@@ -210,7 +210,7 @@ export const ListField: React.FC<ListFieldProps> = ({
                                                 value={editValue}
                                                 disabled={disabled}
                                                 onChange={setEditValue}
-                                                onBlur={saveEdit}
+                                                //onBlur={cancelEdit}
                                                 onKeyDown={handleEditKeyDown}
                                                 dense
                                             />

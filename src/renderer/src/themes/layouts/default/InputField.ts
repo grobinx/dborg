@@ -178,6 +178,10 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 minWidth: 0,
+                lineHeight: 1.6,
+                '&.dense': {
+                    lineHeight: 1.2,
+                },
             },
             adornment: {
                 alignItems: 'center',
