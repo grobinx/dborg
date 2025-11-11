@@ -525,7 +525,6 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                             >
                                 <ListField
                                     key={size}
-                                    placeholder={"Add to list..."}
                                     size={size}
                                     value={listValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueListChange(size, value)} // Aktualizuj wartość dla danego rozmiaru

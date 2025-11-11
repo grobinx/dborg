@@ -10,6 +10,7 @@ import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { Actions } from '../CommandPalette/ActionManager';
+import { useTranslation } from 'react-i18next';
 
 interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: string[];
@@ -37,11 +38,12 @@ export const ListField: React.FC<ListFieldProps> = ({
     ...other
 }) => {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const actions: Actions<{}> = {
         cmAdd: {
             id: 'cmAdd',
-            label: 'Add Item',
+            label: t('add-item', 'Add Item'),
             icon: theme.icons.Add,
             keybindings: ['Enter'],
             run: () => {
@@ -53,7 +55,7 @@ export const ListField: React.FC<ListFieldProps> = ({
         },
         cmEdit: {
             id: 'cmEdit',
-            label: 'Edit Item',
+            label: t('edit-item', 'Edit Item'),
             icon: theme.icons.EditableEditor,
             keybindings: ['Enter'],
             run: (_, index) => {
@@ -65,7 +67,7 @@ export const ListField: React.FC<ListFieldProps> = ({
         },
         cmRemove: {
             id: 'cmRemove',
-            label: 'Remove Item',
+            label: t('remove-item', 'Remove Item'),
             icon: theme.icons.Delete,
             keybindings: ['Delete'],
             run: (_, index) => {
@@ -77,7 +79,7 @@ export const ListField: React.FC<ListFieldProps> = ({
         },
         cmSave: {
             id: 'cmSave',
-            label: 'Save Edit',
+            label: t('save-edit', 'Save Edit'),
             icon: theme.icons.Check,
             keybindings: ['Enter'],
             run: () => {
@@ -87,7 +89,7 @@ export const ListField: React.FC<ListFieldProps> = ({
         },
         cmCancel: {
             id: 'cmCancel',
-            label: 'Cancel Edit',
+            label: t('cancel-edit', 'Cancel Edit'),
             icon: theme.icons.Close,
             keybindings: ['Escape'],
             run: () => {
@@ -248,7 +250,7 @@ export const ListField: React.FC<ListFieldProps> = ({
                         getItemId={(_, index) => `item-${index}`}
                         //isFocused={item => newValue.trim() === '' && item === selected}
                         renderEmpty={() => (
-                            emptyholder ?? 'Empty list'
+                            emptyholder ?? t('empty-list', 'Empty list')
                         )}
                         renderItem={(item) => {
                             const idx = items.indexOf(item);
@@ -350,7 +352,7 @@ export const ListField: React.FC<ListFieldProps> = ({
                         >
                             <TextField
                                 size={size}
-                                placeholder={placeholder}
+                                placeholder={placeholder ?? t('add-new-item', 'Add new item...')}
                                 value={newValue}
                                 onChange={setNewValue}
                                 onKeyDown={handleNewKeyDown}
