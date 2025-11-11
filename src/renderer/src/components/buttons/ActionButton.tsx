@@ -102,6 +102,7 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
             loading={pa?.loading || loading}
             selected={pa?.selected || selected}
             onClick={handleClick}
+            //aria-label={pa?.label}
             {...other}
         >
             {content}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { BaseInputProps } from './base/BaseInputProps';
 import { BaseInputField } from './base/BaseInputField';
 import { BaseList } from './base/BaseList';
@@ -8,6 +8,7 @@ import { IconButton } from '../buttons/IconButton';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
+import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 
 interface PropertyFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: Record<string, any>;
@@ -174,7 +175,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         }
     };
 
-    useScrollIntoView({ containerRef: listRef, targetId: `item-${selected}` });
+    useScrollIntoView({ containerRef: listRef, targetId: selected ? `item-${selected}` : undefined });
 
     return (
         <BaseInputField
@@ -185,9 +186,9 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             value={value}
             onKeyDown={!allowAdd ? handleListKeyDown : undefined}
             input={
-                <div
+                <Box
                     ref={inputRef}
-                    style={{
+                    sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         width: '100%',
@@ -211,13 +212,26 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                             const idx = keys.indexOf(key);
                             const isEditing = editKey === key;
                             return (
-                                <div
-                                    style={{
+                                <Box
+                                    sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 4,
                                         width: '100%',
+                                        height: '100%',
+                                        padding: listItemSizeProperties[size || 'medium'].padding,
                                         minHeight: 0,
+                                        '& .IconButton-root': {
+                                            visibility: 'hidden',
+                                            '.selected &': {
+                                                visibility: 'visible',
+                                            }
+                                        },
+                                        '&:hover': {
+                                            '& .IconButton-root': {
+                                                visibility: 'visible',
+                                            }
+                                        }
                                     }}
                                     onClick={() => setSelected(idx)}
                                     onDoubleClick={() => startEdit(key)}
@@ -333,14 +347,14 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                             )}
                                         </>
                                     )}
-                                </div>
+                                </Box>
                             );
                         }}
                     />
 
                     {allowAdd && (
-                        <div
-                            style={{
+                        <Box
+                            sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 4,
@@ -375,9 +389,9 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                             >
                                 <theme.icons.Add />
                             </IconButton>
-                        </div>
+                        </Box>
                     )}
-                </div>
+                </Box>
             }
             height={"auto"}
             {...other}

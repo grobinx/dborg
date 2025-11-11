@@ -8,6 +8,8 @@ import { IconButton } from '../buttons/IconButton';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
+import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { Actions } from '../CommandPalette/ActionManager';
 
 interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: string[];
@@ -35,6 +37,65 @@ export const ListField: React.FC<ListFieldProps> = ({
     ...other
 }) => {
     const theme = useTheme();
+
+    const actions: Actions<{}> = {
+        cmAdd: {
+            id: 'cmAdd',
+            label: 'Add Item',
+            icon: theme.icons.Add,
+            keybindings: ['Enter'],
+            run: () => {
+                if (canAdd(newValue)) {
+                    addItem();
+                }
+            },
+            disabled: () => disabled || !canAdd(newValue),
+        },
+        cmEdit: {
+            id: 'cmEdit',
+            label: 'Edit Item',
+            icon: theme.icons.EditableEditor,
+            keybindings: ['Enter'],
+            run: (_, index) => {
+                if ((selected !== null || index !== undefined) && editIndex === null) {
+                    startEdit(index ?? selected);
+                }
+            },
+            disabled: () => disabled || selected === null || editIndex !== null,
+        },
+        cmRemove: {
+            id: 'cmRemove',
+            label: 'Remove Item',
+            icon: theme.icons.Delete,
+            keybindings: ['Delete'],
+            run: (_, index) => {
+                if (selected !== null || index !== undefined) {
+                    removeItem(index ?? selected);
+                }
+            },
+            disabled: () => disabled || selected === null,
+        },
+        cmSave: {
+            id: 'cmSave',
+            label: 'Save Edit',
+            icon: theme.icons.Check,
+            keybindings: ['Enter'],
+            run: () => {
+                saveEdit();
+            },
+            disabled: () => disabled || editIndex === null,
+        },
+        cmCancel: {
+            id: 'cmCancel',
+            label: 'Cancel Edit',
+            icon: theme.icons.Close,
+            keybindings: ['Escape'],
+            run: () => {
+                cancelEdit();
+            },
+            disabled: () => disabled || editIndex === null,
+        },
+    }
 
     const [editIndex, setEditIndex] = React.useState<number | null>(null);
     const [editValue, setEditValue] = React.useState('');
@@ -152,7 +213,7 @@ export const ListField: React.FC<ListFieldProps> = ({
         }
     };
 
-    useScrollIntoView({ containerRef: listRef, targetId: `item-${selected}` });
+    useScrollIntoView({ containerRef: listRef, targetId: selected !== null ? `item-${selected}` : undefined });
 
     return (
         <BaseInputField
@@ -162,9 +223,11 @@ export const ListField: React.FC<ListFieldProps> = ({
             disabled={disabled}
             value={items}
             onKeyDown={!allowAdd ? handleListKeyDown : undefined}
+            onConvertToInput={value => JSON.stringify(value)}
+            onConvertToValue={value => JSON.parse(value)}
             input={
-                <div
-                    style={{
+                <Box
+                    sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         width: '100%',
@@ -191,13 +254,26 @@ export const ListField: React.FC<ListFieldProps> = ({
                             const idx = items.indexOf(item);
                             const isEditing = editIndex === idx;
                             return (
-                                <div
-                                    style={{
+                                <Box
+                                    sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 4,
                                         width: '100%',
+                                        height: '100%',
+                                        padding: listItemSizeProperties[size || 'medium'].padding,
                                         minHeight: 0,
+                                        '& .IconButton-root': {
+                                            visibility: 'hidden',
+                                            '.selected &': {
+                                                visibility: 'visible',
+                                            }
+                                        },
+                                        '&:hover': {
+                                            '& .IconButton-root': {
+                                                visibility: 'visible',
+                                            }
+                                        }
                                     }}
                                     onClick={() => setSelected(idx)}
                                     onDoubleClick={() => startEdit(idx)}
@@ -217,25 +293,15 @@ export const ListField: React.FC<ListFieldProps> = ({
                                             <IconButton
                                                 size={size}
                                                 color="success"
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={saveEdit}
-                                                data-ignore-toggle
-                                                aria-label="save"
+                                                action={actions.cmSave}
                                                 dense
-                                            >
-                                                <theme.icons.Check />
-                                            </IconButton>
+                                            />
                                             <IconButton
                                                 size={size}
                                                 color="warning"
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={cancelEdit}
-                                                data-ignore-toggle
-                                                aria-label="cancel"
+                                                action={actions.cmCancel}
                                                 dense
-                                            >
-                                                <theme.icons.Close />
-                                            </IconButton>
+                                            />
                                         </>
                                     ) : (
                                         <>
@@ -252,38 +318,30 @@ export const ListField: React.FC<ListFieldProps> = ({
                                             <IconButton
                                                 size={size}
                                                 color="primary"
-                                                onClick={() => startEdit(idx)}
-                                                disabled={disabled}
-                                                data-ignore-toggle
-                                                aria-label="edit"
+                                                action={actions.cmEdit}
+                                                actionArgs={[idx]}
                                                 dense
-                                            >
-                                                <theme.icons.EditableEditor />
-                                            </IconButton>
+                                            />
                                             {allowDelete && ( // Conditionally render the delete button
                                                 <IconButton
                                                     size={size}
                                                     color="error"
-                                                    onClick={() => removeItem(idx)}
-                                                    disabled={disabled}
-                                                    data-ignore-toggle
-                                                    aria-label="remove"
+                                                    action={actions.cmRemove}
+                                                    actionArgs={[idx]}
                                                     dense
-                                                >
-                                                    <theme.icons.Delete />
-                                                </IconButton>
+                                                />
                                             )}
                                         </>
                                     )}
-                                </div>
+                                </Box>
                             );
                         }}
                     />
 
                     {/* Footer: dodawanie nowego elementu */}
                     {allowAdd && (
-                        <div
-                            style={{
+                        <Box
+                            sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 4,
@@ -305,19 +363,11 @@ export const ListField: React.FC<ListFieldProps> = ({
                             <IconButton
                                 size={size}
                                 color="success"
-                                onClick={addItem}
-                                disabled={
-                                    disabled ||
-                                    !canAdd(newValue)
-                                    //|| (maxItems !== undefined && items.length >= maxItems)
-                                }
-                                aria-label="add"
-                            >
-                                <theme.icons.Add />
-                            </IconButton>
-                        </div>
+                                action={actions.cmAdd}
+                            />
+                        </Box>
                     )}
-                </div>
+                </Box>
             }
             height={"auto"}
             {...other}
