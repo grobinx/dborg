@@ -142,7 +142,6 @@ export const useSearch = <T,>(
     const [firstRun, setFirstRun] = React.useState<boolean>(true);
 
     React.useEffect(() => {
-        console.debug("useSearch: searching data");
         if (!data) {
             setSearchedData(null);
             setSearchedText('');

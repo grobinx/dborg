@@ -2,12 +2,15 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Chip, useTheme } from '@mui/material';
+import { Box, Chip, useTheme } from '@mui/material';
 import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { Popover } from '../Popover';
 import { useVisibleState } from '@renderer/hooks/useVisibleState';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
+import { useSearch } from '@renderer/hooks/useSearch';
+import { TextField } from './TextField';
+import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -18,9 +21,10 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     inputProps?: React.InputHTMLAttributes<HTMLElement>;
     options: AnyOption<T>[];
     listHeight?: number;
-    // NOWE:
     multiValueDisplay?: "wrap" | "column" | "ellipsis";
     maxItems?: number;
+    searchable?: boolean;
+    searchPlaceholder?: string;
 }
 
 /**
@@ -43,9 +47,10 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         disabled,
         listHeight = 250,
         inputProps,
-        // NOWE:
         multiValueDisplay = 'wrap',
         maxItems,
+        searchable = false,
+        searchPlaceholder = 'Search...',
         ...other
     } = props;
 
@@ -53,12 +58,30 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     const [rootRef, visibleRoot] = useVisibleState<HTMLDivElement>();
     const listRef = React.useRef<HTMLUListElement>(null);
     const inputRef = React.useRef<HTMLDivElement>(null);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
     const theme = useTheme();
     const [placement, setPlacement] = React.useState<string | undefined>(undefined);
     const multiple = Array.isArray(value);
     const decorator = useInputDecorator();
+    const [searchText, setSearchText] = React.useState('');
 
     const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
+
+    const [filteredOptions, highlightText] = useSearch(
+        React.useMemo(() => options.filter(isOption), [options]),
+        ['label', 'value', 'description'],
+        searchText,
+    );
+
+    const displayOptions = React.useMemo(() => {
+        if (!searchable || !searchText.trim()) {
+            return options;
+        }
+
+        // Odtwórz strukturę z separatorami
+        const filtered = new Set(filteredOptions?.map(f => f.value));
+        return options.filter(opt => !isOption(opt) || filtered.has(opt.value));
+    }, [searchable, searchText, options, filteredOptions]);
 
     const handleToggle = () => {
         setOpen((prevOpen) => !prevOpen);
@@ -66,6 +89,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
 
     const handleClose = (_event: Event) => {
         setOpen(false);
+        setSearchText('');
     };
 
     const handleItemClick = React.useCallback((val: T) => {
@@ -75,13 +99,14 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                 inputRef.current?.focus();
             }
             setOpen(false);
+            setSearchText('');
         }
         else {
             if (value.length < (maxItems ?? Infinity) || value.includes(val)) {
                 onChange?.(val);
             }
         }
-    }, [onChange]);
+    }, [onChange, multiple, value, maxItems]);
 
     React.useEffect(() => {
         if (decorator && maxItems && multiple) {
@@ -92,7 +117,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     }, [multiple && value.length, decorator, maxItems]);
 
     const [focusedItem, setFocusedItem, listKeyDownHandler] = useKeyboardNavigation({
-        items: options,
+        items: displayOptions,
         getId: (item) => isOption(item) ? item.value : null,
         onEnter: (item) => isOption(item) && handleItemClick(item.value),
         actions: [
@@ -109,20 +134,43 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         } else {
             if (e.key === 'Escape') {
                 e.preventDefault();
-                setOpen(false);
+                if (searchable && searchText) {
+                    setSearchText('');
+                } else {
+                    setOpen(false);
+                }
             }
             else {
                 listKeyDownHandler(e);
             }
         }
         inputProps?.onKeyDown?.(e);
-    }, [inputProps, open, listKeyDownHandler]);
+    }, [inputProps, open, listKeyDownHandler, searchable, searchText]);
+
+    const handleSearchKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLElement>) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            if (searchText) {
+                setSearchText('');
+            } else {
+                setOpen(false);
+            }
+        } else if (['ArrowDown', 'ArrowUp', 'Enter', 'Space'].includes(e.key)) {
+            listKeyDownHandler(e);
+        }
+    }, [searchText, listKeyDownHandler]);
 
     React.useEffect(() => {
         if (open) {
             setFocusedItem(selectedValues[0] || null);
+            if (searchable) {
+                // Focus search input when opening
+                setTimeout(() => {
+                    searchInputRef.current?.focus();
+                }, 0);
+            }
         }
-    }, [open]);
+    }, [open, searchable]);
 
     const RenderSelectedOption = ({ option }: { option: Option<T> }) => {
         return (
@@ -162,22 +210,19 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             return null;
         }
 
-        // WIELE WARTOŚCI BEZ renderValue:
         const selectedOptions = options.filter(option => isOption(option) && value?.includes(option.value)) as Option<T>[];
 
         if (multiValueDisplay === "column") {
-            // Jedna kolumna
             return (
-                <div style={{ overflow: "hidden" }}>
+                <Box sx={{ overflow: "hidden" }}>
                     {selectedOptions.map((opt, idx) => (
                         <RenderSelectedOption key={idx} option={opt} />
                     ))}
-                </div>
+                </Box>
             );
         }
 
         if (multiValueDisplay === "ellipsis") {
-            // Jeden wiersz
             return (
                 selectedOptions.map((opt, idx) => (
                     <RenderSelectedOption key={idx} option={opt} />
@@ -185,7 +230,6 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             );
         }
 
-        // Wrap
         return (
             <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, minWidth: 0, }}>
                 {selectedOptions.map((opt, idx) => (
@@ -205,16 +249,15 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
             onChange={onChange}
             disabled={disabled}
             input={(
-                <div
+                <Box
                     ref={inputRef}
-                    style={{
+                    sx={{
                         width: '100%',
                         height: '100%',
                         display: 'inherit',
                         flexDirection: 'inherit',
                         gap: 'inherit',
                         outline: 'none',
-                        // kontrola zawijania/ucinania na kontenerze
                         whiteSpace: multiValueDisplay === 'ellipsis' ? 'nowrap' : 'normal',
                         overflow: multiValueDisplay === 'ellipsis' ? 'hidden' : undefined,
                         textOverflow: multiValueDisplay === 'ellipsis' ? 'ellipsis' : undefined,
@@ -223,7 +266,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                     }}
                 >
                     <SelectValueRenderer />
-                </div>
+                </Box>
             )}
             inputProps={{
                 ...inputProps,
@@ -250,22 +293,52 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                         onClose={handleClose}
                         onChangePlacement={setPlacement}
                     >
-                        <DescribedList
-                            ref={listRef}
-                            options={options}
-                            selected={selectedValues}
-                            focused={focusedItem}
-                            size={size}
-                            color={color}
-                            onItemClick={handleItemClick}
-                            style={{
-                                maxHeight: listHeight,
-                                width: (rootRef.current && (placement === 'bottom' || placement === 'top')) ? `${rootRef.current.offsetWidth}px` : "auto"
-                            }}
-                            description={placement === 'top' ? 'header' : 'footer'}
-                            tabIndex={-1}
-                            renderItem={renderItem}
-                        />
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}>
+                            {searchable && (
+                                <Box
+                                    sx={{
+                                        padding: listItemSizeProperties[size || 'medium'].padding
+                                    }}
+                                >
+                                    <TextField
+                                        inputRef={searchInputRef}
+                                        size={size}
+                                        placeholder={searchPlaceholder}
+                                        value={searchText}
+                                        onChange={setSearchText}
+                                        onKeyDown={handleSearchKeyDown}
+                                        autoFocus
+                                    />
+                                </Box>
+                            )}
+                            <DescribedList
+                                ref={listRef}
+                                options={displayOptions}
+                                selected={selectedValues}
+                                focused={focusedItem}
+                                size={size}
+                                color={color}
+                                onItemClick={handleItemClick}
+                                style={{
+                                    maxHeight: listHeight,
+                                    width: (rootRef.current && (placement === 'bottom' || placement === 'top')) ? `${rootRef.current.offsetWidth}px` : "auto"
+                                }}
+                                description={placement === 'top' ? 'header' : 'footer'}
+                                tabIndex={-1}
+                                renderItem={searchable && searchText ?
+                                    (option, state) => {
+                                        if (!isOption(option)) return renderItem?.(option, state);
+                                        const highlighted = highlightText(typeof option.label === 'string' ? option.label : '');
+                                        return renderItem ? renderItem(option, state) : highlighted;
+                                    } :
+                                    renderItem
+                                }
+                            />
+                        </Box>
                     </Popover>
                 </Adornment>
             }

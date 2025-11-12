@@ -214,7 +214,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
 
     const colorOptions = React.useMemo<Option<string>[]>(() => htmlColors.map((color) => ({
         value: color,
-        label: color,
+        label: labelColor(color),
         description: `This is the color ${color}.`
     })), []);
 
@@ -462,9 +462,10 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     options={colorOptions}
                                     renderItem={item => {
                                         return isOption(item) ? (
-                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {labelColor(item.value)}</span>
+                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {item.label}</span>
                                         ) : null;
                                     }}
+                                    searchable
                                 />
                             </InputDecorator>
                         ), [size, selectValues[size]])}
