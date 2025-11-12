@@ -88,7 +88,7 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
     if (!content) {
         content = (
             <>
-                {pa?.shortcut && <Shortcut keybindings={pa?.shortcut} />}
+                {pa?.shortcut && <Shortcut active={pa?.active} keybindings={pa?.shortcut} />}
                 {resolveIcon(theme, pa?.icon)}
                 {pa?.label}
             </>

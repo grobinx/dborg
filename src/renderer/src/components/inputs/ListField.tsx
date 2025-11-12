@@ -63,7 +63,7 @@ export const ListField: React.FC<ListFieldProps> = ({
                     startEdit(index ?? selected);
                 }
             },
-            disabled: () => disabled || selected === null || editIndex !== null,
+            disabled: () => disabled || editIndex !== null,
         },
         cmRemove: {
             id: 'cmRemove',
@@ -75,7 +75,7 @@ export const ListField: React.FC<ListFieldProps> = ({
                     removeItem(index ?? selected);
                 }
             },
-            disabled: () => disabled || selected === null,
+            disabled: () => disabled ?? false,
         },
         cmSave: {
             id: 'cmSave',
