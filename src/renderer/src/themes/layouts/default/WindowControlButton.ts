@@ -6,7 +6,6 @@ export const WindowControlButtonLayout = (palette: Palette, _root: ThemeOptions)
         styleOverrides: {
             root: {
                 outline: "none",
-                transition: "all 0.2s ease-in-out",
                 display: "flex",
                 color: palette.mode === "dark" ? lighten(palette.menuBar.main, 0.6) : darken(palette.menuBar.main, 0.6),
                 backgroundColor: palette.background.menuBar,

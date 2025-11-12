@@ -8,7 +8,6 @@ export const ButtonGroupLayout = (_palette: Palette, _root: ThemeOptions): Butto
             root: {
                 display: 'inline-flex',
                 gap: 0,
-                transition: "all 0.2s ease-in-out",
 
                 // Pozycjonowanie przycisków - usuń border radius z środkowych
                 '&.orientation-horizontal': {

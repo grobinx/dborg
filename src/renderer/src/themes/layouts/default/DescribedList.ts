@@ -22,7 +22,6 @@ export const DescribedListLayout = (palette: Palette, _root: ThemeOptions): Desc
                 display: 'flex',
                 flexDirection: 'row',
                 width: '100%',
-                transition: "all 0.2s ease-in-out",
                 alignContent: 'center',
                 alignItems: 'center',
                 "&.size-small": { ...listItemSizeProperties.small, padding: 0 },

@@ -46,7 +46,6 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 display: 'flex',
                 flexDirection: 'row',
                 width: '100%',
-                transition: "all 0.2s ease-in-out",
                 alignContent: 'center',
                 alignItems: 'center',
                 outline: '2px solid transparent',

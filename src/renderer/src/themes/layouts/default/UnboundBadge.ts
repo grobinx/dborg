@@ -9,7 +9,6 @@ export const UnboundBadgeLayout = (palette: Palette, _root: ThemeOptions): Unbou
         },
         styleOverrides: {
             root: {
-                transition: "all 0.2s ease-in-out",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

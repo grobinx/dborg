@@ -16,7 +16,6 @@ const StyledSettingsView = styled('div', {
     name: 'SettingsView',
     slot: 'root',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
     width: "100%",
     height: "100%",
     flexGrow: 1,
@@ -30,7 +29,6 @@ const StyledSettingsViewContent = styled('div', {
     name: 'SettingsView',
     slot: 'content',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
     paddingTop: 8,
@@ -43,7 +41,6 @@ const StyledSettingsViewCollection = styled('div', {
     name: 'SettingsView',
     slot: 'collection',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
     gap: 4,
@@ -53,7 +50,6 @@ const StyledSettingsViewList = styled('div', {
     name: 'SettingsView',
     slot: 'list',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
     gap: 4,
@@ -63,7 +59,6 @@ const StyledSettingsViewGroup = styled('div', {
     name: 'SettingsView',
     slot: 'group',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
     gap: 4,
@@ -73,7 +68,6 @@ const StyledSettingsViewHeader = styled('div', {
     name: 'SettingsView',
     slot: 'header',
 })(({ theme }) => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "column",
     padding: 8,
@@ -89,7 +83,6 @@ const StyledSettingsViewItem = styled('div', {
     name: 'SettingsView',
     slot: 'item',
 })(() => ({
-    transition: "all 0.2s ease-in-out",
 }));
 
 const StyledSettingsViewEmpty = styled('div', {

@@ -20,7 +20,6 @@ export const TreeLayout = (palette: Palette, _root: ThemeOptions): TreeComponent
                 height: '100%',
             },
             tree: {
-                transition: "all 0.2s ease-in-out",
                 outline: 'none',
                 height: '100%',
                 width: '100%',
@@ -36,7 +35,6 @@ export const TreeLayout = (palette: Palette, _root: ThemeOptions): TreeComponent
                 },
             },
             node: {
-                transition: "all 0.2s ease-in-out",
                 display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',

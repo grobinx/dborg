@@ -220,13 +220,6 @@ const StyledRow = styled("div", {
     width: "100%",
     backgroundColor: theme.palette.background.table.container,
     willChange: "transform", // było: "transform, top"
-    //transition: "background-color 0.2s ease", // Płynna zmiana koloru tła
-    //backgroundColor: theme.palette.background.table.container,
-    // "&.odd": {
-    //     backgroundColor: theme.palette.mode === "dark" ?
-    //         darken(theme.palette.background.table.container, 0.05) :
-    //         lighten(theme.palette.background.table.container, 0.05),
-    // },
     "&.even": {
         backgroundColor: theme.palette.mode === "dark" ?
             lighten(theme.palette.background.table.container, 0.05) :

@@ -20,7 +20,6 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
                 fontSize: '0.875em',
                 fontWeight: 600,
                 lineHeight: 1,
-                transition: "all 0.2s ease-in-out",
                 backgroundColor: "transparent",
                 appearance: "none",
                 WebkitAppearance: "none",
@@ -42,7 +41,6 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
                         },
 
                         "&.focused-keyboard": {
-                            transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                             outlineColor: palette[color].main,
                         },
 
@@ -54,7 +52,6 @@ export const StatusBarButtonLayout = (palette: Palette, _root: ThemeOptions): St
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "opacity 0.2s ease-in-out",
                 padding: "0",
                 gap: 4,
                 '&.loading': {

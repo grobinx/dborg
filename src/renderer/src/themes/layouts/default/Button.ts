@@ -20,7 +20,6 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 fontSize: "inherit",
                 fontWeight: 600,
                 lineHeight: 1,
-                transition: "all 0.2s ease-in-out",
                 borderRadius: borderRadius,
                 backgroundColor: "transparent",
                 appearance: "none",
@@ -112,7 +111,6 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "all 0.2s ease-in-out",
                 padding: "0 0.5rem",
                 '&.loading': {
                     opacity: 0,

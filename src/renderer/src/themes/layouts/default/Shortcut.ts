@@ -5,7 +5,6 @@ export const ShortcutLayout = (_palette: Palette, _root: ThemeOptions): Shortcut
     return {
         styleOverrides: {
             root: {
-                transition: "all 0.2s ease-in-out",
                 display: 'flex',
                 alignItems: 'center',
                 fontFamily: "monospace",
@@ -29,13 +28,11 @@ export const ShortcutLayout = (_palette: Palette, _root: ThemeOptions): Shortcut
                 },
             },
             chord: {
-                transition: "all 0.2s ease-in-out",
                 display: "flex",
                 gap: 2,
                 alignItems: "center",
             },
             key: {
-                transition: "all 0.2s ease-in-out",
                 display: "inline-block",
                 padding: "2px 4px",
                 background: "#e5e5e5",

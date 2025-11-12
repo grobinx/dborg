@@ -15,7 +15,6 @@ const ANIMATION_SPEED = 1;
 const totalDelay = (ORBADA.length + 2) * ANIMATION_SPEED * 0.15 + ANIMATION_SPEED * 0.8;
 
 const StyledAppTitle = styled('div')({
-    transition: "all 0.2s ease-in-out",
     marginBottom: '24px',
     textAlign: 'center',
     alignContent: 'center',

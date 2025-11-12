@@ -66,7 +66,6 @@ const StyledSettingDecorator = styled('div', {
     name: "SettingDecorator",
     slot: "root",
 })(({ theme }) => ({
-    transition: "all 0.2s ease-in-out",
     display: "flex",
     flexDirection: "row",
     width: "100%",

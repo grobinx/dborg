@@ -72,6 +72,27 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string,
                             : "rgba(120,120,120,0.4) rgba(0,0,0,0.03)",
                         scrollbarWidth: 'thin',
                     },
+                    ':root': {
+                        // opcjonalnie wspólna zmienna
+                        '--app-transition': 
+                            'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', box-shadow 200ms ease-out' + 
+                            ', fill 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', stroke 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', opacity 150ms ease-in' + 
+                            ', outline 100ms ease' +
+                            ', outline-color 100ms ease' +
+                            ', outline-offset 100ms ease' +
+                            ', border-radius 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
+                            ', backdrop-filter 250ms ease-out' +
+                            ', filter 200ms ease-out' +
+                            ', visibility 0ms step-start 10ms',
+                    },
+                    '*, *::before, *::after': {
+                        transition: 'var(--app-transition)', // albo wpisz stałą zamiast zmiennej
+                    },
                 }
             }
         }

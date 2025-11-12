@@ -9,7 +9,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
     return {
         styleOverrides: {
             root: {
-                transition: "all 0.2s ease-in-out",
                 outline: "2px solid transparent",
                 outlineOffset: -2,
                 lineHeight: 1.5,
@@ -18,7 +17,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     borderRadius: borderRadius,
                     '&.hover': {
                         borderColor: palette.mode === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
-                        transition: "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     },
                     '&.hover:not(.focused)': {
                         //boxShadow: `inset 0 0 3px 0px ${alpha(palette.text.primary, 0.5)}`,
@@ -37,7 +35,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                     outlineWidth: 2,
                     outlineStyle: 'solid',
                     borderColor: 'transparent',
-                    transition: "outline-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     ...themeColors.reduce((acc, color) => {
                         acc[`&.color-${color}`] = {
                             outlineColor: palette[color].main,
