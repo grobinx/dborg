@@ -46,6 +46,15 @@ export function isDividerOption(option: AnyOption<any>): option is DividerOption
     return typeof option === 'object' && !('label' in option) && !('value' in option);
 }
 
+export function stringsToOptions(strings: string[], indexed: false): Option<string>[];
+export function stringsToOptions(strings: string[], indexed: true): Option<number>[];
+export function stringsToOptions(strings: string[], indexed: boolean): Option<any>[] {
+    return strings.map((s, index) => ({
+        value: indexed ? index : s,
+        label: s
+    }));
+}
+
 /**
  * Pozycja opisu
  * - 'header' - opis powyżej listy
