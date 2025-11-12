@@ -39,7 +39,7 @@ const App: React.FC = () => {
         return storedValue !== null ? JSON.parse(storedValue) : false;
     });
     const [stackDirection, setStackDirection] = React.useState<'row' | 'row-reverse' | 'column' | 'column-reverse'>("column");
-    const { emit, subscribe, unsubscribe } = useMessages();
+    const { queueMessage, subscribe, unsubscribe } = useMessages();
     const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
 
     console.count("App Render");
@@ -64,13 +64,13 @@ const App: React.FC = () => {
                         return false;
                     } else {
                         // Jeśli przełączamy się na inną zakładkę, przełącz na wybraną
-                        emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
+                        queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
                         lastToolItemRef.current = { tabsItemID, itemID };
                         return true;
                     }
                 } else {
                     // Zakładki są ukryte, pokaż zakładki i przełącz na wybraną
-                    emit(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
+                    queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, itemID);
                     lastToolItemRef.current = { tabsItemID, itemID };
                     return true;
                 }
