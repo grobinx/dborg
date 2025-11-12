@@ -25,6 +25,7 @@ import { isOption, Option } from "@renderer/components/inputs/DescribedList";
 import { Options } from "electron";
 import { ListField } from "@renderer/components/inputs/ListField";
 import { PropertyField } from "@renderer/components/inputs/PropertyField";
+import { Ellipsis } from "@renderer/components/useful/Elipsis";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -462,7 +463,10 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     options={colorOptions}
                                     renderItem={item => {
                                         return isOption(item) ? (
-                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}><ColorBox color={item.value} /> {item.label}</span>
+                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}>
+                                                <ColorBox color={item.value} />
+                                                <Ellipsis flex>{item.label}</Ellipsis>
+                                            </span>
                                         ) : null;
                                     }}
                                     searchable
