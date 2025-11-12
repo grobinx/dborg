@@ -48,20 +48,20 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
     const inputAddKeyRef = React.useRef<HTMLInputElement>(null);
     const inputRef = React.useRef<HTMLDivElement>(null);
     
-    const keys = React.useMemo(() => Object.keys(value ?? {}), [value]);
+    const keys = React.useMemo(() => Object.keys(value ?? {}), [value]).sort();
     
     const [selected, setSelected, handleListKeyDown] = useKeyboardNavigation({
-        getId: (item: number) => item,
-        items: React.useMemo(() => keys.map((_, index) => index), [keys]),
-        onEnter: (item) => {
+        getId: (key: string) => key,
+        items: keys,
+        onEnter: (key) => {
             if (editKey !== null) return;
-            startEdit(keys[item]);
+            startEdit(key);
         },
         actions: [
             {
                 shortcut: 'Delete',
-                handler: (item) => {
-                    if (item !== -1) removeItem(keys[item]);
+                handler: (key) => {
+                    if (key) removeItem(key);
                 }
             }
         ]
@@ -115,6 +115,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         next[k] = v;
         commit(next);
         cancelEdit();
+        setSelected(k);
     };
 
     const cancelEdit = () => {
@@ -147,7 +148,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         commit({ ...value, [k]: v });
         setNewKey('');
         setNewValue('');
-        setSelected(keys.length);
+        setSelected(k);
         inputAddKeyRef.current?.focus();
     };
 
@@ -205,11 +206,10 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                         size={size}
                         color={color}
                         disabled={disabled}
-                        isSelected={(_, index) => newKey.trim() === '' && newValue.trim() === '' && index === selected}
-                        getItemId={(_, index) => `item-${index}`}
+                        isSelected={(key) => newKey.trim() === '' && newValue.trim() === '' && key === selected}
+                        getItemId={(key) => `item-${key}`}
                         renderEmpty={() => emptyholder ?? 'Empty properties'}
                         renderItem={(key) => {
-                            const idx = keys.indexOf(key);
                             const isEditing = editKey === key;
                             return (
                                 <Box
@@ -233,7 +233,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                             }
                                         }
                                     }}
-                                    onClick={() => setSelected(idx)}
+                                    onClick={() => setSelected(key)}
                                     onDoubleClick={() => startEdit(key)}
                                 >
                                     {isEditing ? (
