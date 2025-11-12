@@ -3,6 +3,7 @@ import { Button } from "@renderer/components/buttons/Button";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
 import { AnyOption, DescribedList } from "@renderer/components/inputs/DescribedList";
+import LineClampDemo from "@renderer/playground/LineClampDemo";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
 import Tree, { TreeNode } from "@renderer/components/Tree";
 import { FormattedContent } from "@renderer/components/useful/FormattedText";
@@ -178,6 +179,9 @@ export const ComponentsContent: React.FC<TabPanelContentOwnProps> = (props) => {
                         ), [size, color, dense])}
                     </Stack>
                 ))}
+            </Stack>
+            <Stack key="lineClamp" direction="row" width="100%" gap={8}>
+                <LineClampDemo />
             </Stack>
         </TabPanelContent >
     );

@@ -9,6 +9,7 @@ import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { Ellipsis } from '../useful/Elipsis';
 
 interface PropertyFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: Record<string, any>;
@@ -47,9 +48,9 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
     const listRef = React.useRef<HTMLUListElement>(null);
     const inputAddKeyRef = React.useRef<HTMLInputElement>(null);
     const inputRef = React.useRef<HTMLDivElement>(null);
-    
+
     const keys = React.useMemo(() => Object.keys(value ?? {}), [value]).sort();
-    
+
     const [selected, setSelected, handleListKeyDown] = useKeyboardNavigation({
         getId: (key: string) => key,
         items: keys,
@@ -91,7 +92,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         if (editKey === null) return;
         const k = allowEditPropertyName ? editNewKey.trim() : editKey;
         const v = editValue.trim();
-        
+
         if (!k) {
             // empty key -> remove
             removeItem(editKey);
@@ -106,12 +107,12 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         }
 
         const next = { ...value };
-        
+
         // If key changed and editing is allowed, remove old key
         if (allowEditPropertyName && editKey !== k) {
             delete next[editKey];
         }
-        
+
         next[k] = v;
         commit(next);
         cancelEdit();
@@ -251,17 +252,9 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                                     style={{ flex: 1 }}
                                                 />
                                             ) : (
-                                                <span
-                                                    style={{
-                                                        flex: 1,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap',
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
+                                                <Ellipsis flex style={{ fontWeight: 500 }}>
                                                     {key}
-                                                </span>
+                                                </Ellipsis>
                                             )}
                                             <TextField
                                                 autoFocus={!allowEditPropertyName}
@@ -300,27 +293,12 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                         </>
                                     ) : (
                                         <>
-                                            <span
-                                                style={{
-                                                    flex: 1,
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    fontWeight: 500,
-                                                }}
-                                            >
+                                            <Ellipsis flex style={{ fontWeight: 500 }}>
                                                 {key}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    flex: 1,
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
+                                            </Ellipsis>
+                                            <Ellipsis flex>
                                                 {String(value[key])}
-                                            </span>
+                                            </Ellipsis>
                                             <IconButton
                                                 size={size}
                                                 color="primary"

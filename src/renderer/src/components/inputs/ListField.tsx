@@ -11,6 +11,7 @@ import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { Actions } from '../CommandPalette/ActionManager';
 import { useTranslation } from 'react-i18next';
+import { Ellipsis } from '../useful/Elipsis';
 
 interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: string[];
@@ -307,16 +308,9 @@ export const ListField: React.FC<ListFieldProps> = ({
                                         </>
                                     ) : (
                                         <>
-                                            <span
-                                                style={{
-                                                    flex: 1,
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
+                                            <Ellipsis flex>
                                                 {item}
-                                            </span>
+                                            </Ellipsis>
                                             <IconButton
                                                 size={size}
                                                 color="primary"
