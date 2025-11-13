@@ -22,7 +22,6 @@ import { TagsField } from "@renderer/components/inputs/TagsField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { htmlColors, labelColor } from "@renderer/types/colors";
 import { isOption, Option } from "@renderer/components/inputs/DescribedList";
-import { Options } from "electron";
 import { ListField } from "@renderer/components/inputs/ListField";
 import { PropertyField } from "@renderer/components/inputs/PropertyField";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
@@ -459,7 +458,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     size={size}
                                     value={selectValues[size]} // Pobierz wartość dla danego rozmiaru
                                     onChange={(value) => handleValueSelectChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
-                                    //color="success"
+                                    color="success"
                                     options={colorOptions}
                                     renderItem={item => {
                                         return isOption(item) ? (

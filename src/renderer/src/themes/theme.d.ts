@@ -20,7 +20,6 @@ import { TabPanelProps } from "@renderer/components/TabsPanel/TabPanel";
 import { TabPanelLabelProps } from "@renderer/components/TabsPanel/TabPanelLabel";
 import { TabPanelButtonsProps } from "@renderer/components/TabsPanel/TabPanelButtons";
 import { UnboundBadgeProps } from "@renderer/components/UnboundBadge";
-import { ToolTextFieldProps } from "@renderer/components/ToolTextField";
 import { ColumnBaseType } from "src/api/db";
 import { ToolSelectProps } from "@renderer/components/useful/ToolSelect";
 import { ConsoleLogPanelProps } from "@renderer/components/ToolPanels/ConsoleLogsPanel";
@@ -154,7 +153,6 @@ declare module "@mui/material/styles" {
         TabPanel: TabPanelComponentSlots;
         UnboundBadge: UnboundBadgeComponentSlots;
         SplitPanel: SplitPanelComponentSlots;
-        ToolTextField: "root";
         ToolSelect: "root";
         ConsoleLogPanel: ConsoleLogPanelComponentSlots;
         Code: CodeComponentSlots;
@@ -191,7 +189,6 @@ declare module "@mui/material/styles" {
         ToastList: ToastListComponentProps;
         TabsPanel: TabsPanelComponentProps;
         TabPanel: TabPanelComponent;
-        ToolTextField: Partial<ToolTextFieldProps>;
         ToolSelect: Partial<ToolSelectProps>;
         UnboundBadge: Partial<UnboundBadgeComponentProps>;
         SplitPanel: SplitPanelComponentProps;
@@ -233,11 +230,6 @@ declare module "@mui/material/styles" {
         ToastList?: ToastListComponent;
         TabsPanel?: TabsPanelComponent;
         TabPanel?: TabPanelComponent;
-        ToolTextField?: {
-            defaultProps?: ComponentsPropsList['ToolTextField'];
-            styleOverrides?: ComponentsOverrides<Theme>['ToolTextField'];
-            //variants?: ComponentsVariants['ToolTextField'];
-        };
         ToolSelect?: {
             defaultProps?: ComponentsPropsList['ToolSelect'];
             styleOverrides?: ComponentsOverrides<Theme>['ToolSelect'];

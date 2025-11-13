@@ -1,6 +1,7 @@
 import { darken, lighten, PaletteColor, Theme } from "@mui/material";
 
-export const resolveColor = (colorName: string, theme: Theme) => {
+export const resolveColor = (colorName: string | undefined, theme: Theme) => {
+    if (!colorName) return undefined;
     // Obsługa dynamicznych kolorów
     const colorParts = colorName.split(".");
     let color: any = theme.palette;

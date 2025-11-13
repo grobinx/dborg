@@ -11,6 +11,7 @@ import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useSearch } from '@renderer/hooks/useSearch';
 import { TextField } from './TextField';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
+import { resolveColor } from '@renderer/utils/colors';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -239,6 +240,28 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         );
     };
 
+    let searchableField: React.ReactNode = null;
+    if (searchable) {
+        searchableField = (
+            <Box
+                sx={{
+                    padding: listItemSizeProperties[size || 'medium'].padding
+                }}
+            >
+                <TextField
+                    inputRef={searchInputRef}
+                    size={size}
+                    placeholder={searchPlaceholder}
+                    value={searchText}
+                    onChange={setSearchText}
+                    onKeyDown={handleSearchKeyDown}
+                    autoFocus
+                />
+            </Box>
+        );
+    }
+
+
     return (
         <BaseInputField
             ref={rootRef}
@@ -280,12 +303,12 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                 <Adornment position='input'>
                     <span
                         onClick={handleToggle}
-                        color={color}
+                        color={resolveColor(color, theme)}
                         style={{
                             cursor: 'pointer',
                         }}
                     >
-                        {open ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
+                        {open ? <theme.icons.ExpandLess color={color} /> : <theme.icons.ExpandMore color={color} />}
                     </span>
                     <Popover
                         open={open && visibleRoot}
@@ -298,23 +321,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                 display: 'flex',
                                 flexDirection: 'column',
                             }}>
-                            {searchable && (
-                                <Box
-                                    sx={{
-                                        padding: listItemSizeProperties[size || 'medium'].padding
-                                    }}
-                                >
-                                    <TextField
-                                        inputRef={searchInputRef}
-                                        size={size}
-                                        placeholder={searchPlaceholder}
-                                        value={searchText}
-                                        onChange={setSearchText}
-                                        onKeyDown={handleSearchKeyDown}
-                                        autoFocus
-                                    />
-                                </Box>
-                            )}
+                            {placement !== 'top' && searchableField}
                             <DescribedList
                                 ref={listRef}
                                 options={displayOptions}
@@ -338,6 +345,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                     renderItem
                                 }
                             />
+                            {placement === 'top' && searchableField}
                         </Box>
                     </Popover>
                 </Adornment>

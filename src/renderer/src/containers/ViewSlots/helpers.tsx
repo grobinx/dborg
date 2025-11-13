@@ -18,7 +18,7 @@ import {
     TextSlotKindFactory,
     TitleSlotKindFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
-import React from "react";
+import React, { HTMLInputTypeAttribute } from "react";
 import GridSlot from "./GridSlot";
 import ContentSlot from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
@@ -32,8 +32,8 @@ import SplitSlot from "./SplitSlot";
 import { ActionManager, isAction } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
-import ToolTextField from "@renderer/components/ToolTextField";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { TextField } from "@renderer/components/inputs/TextField";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -173,28 +173,28 @@ export function createActionComponents(
                     actionManager.registerAction(action);
                     return <ToolButton
                         key={action.id}
-                        action={action.id}
+                        action={action}
                         actionContext={() => context}
                         actionManager={actionManager}
+                        size="small"
                     />;
                 }
                 if (isITextField(action)) {
-                    const options = resolveSelectOptionsFactory(action.options, refreshSlot);
-                    return <ToolTextField
+                    if (action.type !== 'select') {
+                        const options = resolveSelectOptionsFactory(action.options, refreshSlot);
+                        return;
+                    }
+                    return <TextField
                         key={index}
-                        type={action.type !== 'select' ? action.type : undefined}
-                        select={action.type === 'select' ? true : undefined}
+                        //@todo: type={action.type}
                         placeholder={action.placeholder}
                         defaultValue={action.defaultValue ?? ""}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                            action.onChange(event.target.value);
+                        onChange={value => {
+                            action.onChange(value);
                         }}
                         disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                    >
-                        {options?.map((option, optionIndex) => (
-                            <MenuItem key={optionIndex} value={option.value}>{option.label}</MenuItem>
-                        ))}
-                    </ToolTextField>;
+                        size="small"
+                    />
                 }
                 if (isCommandDescriptor(action)) {
                     if (!commandManager) {
@@ -210,6 +210,7 @@ export function createActionComponents(
                     action={action}
                     actionContext={() => dataGridRef?.current}
                     actionManager={dataGridRef.current.actionManager() ?? undefined}
+                    size="small"
                 />;
             }
             return null

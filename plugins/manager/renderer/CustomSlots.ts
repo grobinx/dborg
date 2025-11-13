@@ -31,8 +31,8 @@ export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunct
 export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
 export type RecordsAsyncFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
-export type ActionDescriptorsFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
-export type ActionGroupDescriptorsFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
+export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
+export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
@@ -49,6 +49,7 @@ export type ActionKind<T = any> = string | Action<T> | CommandDescriptor<T> | IT
 export interface ISelectOption {
     value: string,
     label: string,
+    description?: string,
 }
 
 export interface ITextField {
@@ -155,7 +156,7 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Akcje dostępne dla listy zakładek (opcjonalnie).
      */
-    actions?: ActionDescriptorsFactory;
+    actions?: ActionFactory;
     /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
@@ -314,11 +315,11 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
-    actions?: ActionDescriptorsFactory;
+    actions?: ActionFactory;
     /**
      * Grupy akcji dostępne w gridzie (opcjonalnie).
      */
-    actionGroups?: ActionGroupDescriptorsFactory;
+    actionGroups?: ActionGroupFactory;
     /**
      * Callback po kliknięciu w wiersz (opcjonalnie).
      */
@@ -386,10 +387,10 @@ export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, 
 export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionDescriptorsFactory<T = any>(factory: ActionDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
+export function resolveActionDescriptorsFactory<T = any>(factory: ActionFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupDescriptorsFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
+export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveEditorActionDescriptorsFactory(factory: EditorActionDescriptorsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {

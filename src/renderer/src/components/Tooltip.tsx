@@ -7,10 +7,12 @@ export interface TooltipProps extends Omit<MuiTooltipProps, "title"> {
 }
 
 const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
+    if (!title) {
+        return children;
+    }
     return (
         <MuiTooltip
-            title={title && <FormattedText text={title} />}
-            disableInteractive
+            title={<FormattedText text={title} />}
             {...props}
         >
             {children}

@@ -291,25 +291,6 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             SchemaList: SchemaListLayout(palette, root),
             TabsPanel: TabsPanelLayout(palette, root),
             TabPanel: TabPanelLayout(palette, root),
-            ToolTextField: {
-                defaultProps: {
-                    sx: {
-                        '& input': {
-                            fontSize: "0.8rem",
-                            paddingX: 4,
-                            paddingY: 0,
-                        },
-                        '& .MuiSelect-select': {
-                            fontSize: "0.8rem",
-                            paddingX: 4,
-                            paddingY: 0,
-                        },
-                        '& .MuiInputBase-root': {
-                            padding: 2,
-                        },
-                    }
-                }
-            },
             ToolSelect: {
                 defaultProps: {
                     variant: "outlined",
