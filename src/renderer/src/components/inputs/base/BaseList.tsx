@@ -194,10 +194,11 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
             onMouseUp={onMouseUp}
             style={{
                 ...style,
-                position: virtual ? 'relative' : undefined,
-                overflowY: virtual ? 'auto' : undefined,
-                height: virtual ? '100%' : undefined,
+                position: virtual ? 'relative' : style?.position,
+                overflowY: virtual ? 'auto' : style?.overflowY,
+                height: virtual ? '100%' : style?.height,
             }}
+            sx={sx}
             {...rest}
         >
             {items.length === 0 && renderEmpty ? renderEmpty() :
