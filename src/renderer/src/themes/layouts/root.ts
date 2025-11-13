@@ -74,14 +74,14 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string,
                     },
                     ':root': {
                         // opcjonalnie wspólna zmienna
-                        '--app-transition': 
+                        '--app-transition':
                             'background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
                             ', color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
                             ', border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
-                            ', box-shadow 200ms ease-out' + 
+                            ', box-shadow 200ms ease-out' +
                             ', fill 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
                             ', stroke 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
-                            ', opacity 150ms ease-in' + 
+                            ', opacity 150ms ease-in' +
                             ', outline 100ms ease' +
                             ', outline-color 100ms ease' +
                             ', outline-offset 100ms ease' +
@@ -90,8 +90,11 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string,
                             ', filter 200ms ease-out' +
                             ', visibility 0ms step-start 10ms',
                     },
-                    '*, *::before, *::after': {
-                        transition: 'var(--app-transition)', // albo wpisz stałą zamiast zmiennej
+                    // '*, *::before, *::after': {
+                    //     transition: 'var(--app-transition)',
+                    // },
+                    ':not([class*="DataGrid-"]), :not([class*="DataGrid-"])::before, :not([class*="DataGrid-"])::after': {
+                        transition: 'var(--app-transition)',
                     },
                 }
             }
