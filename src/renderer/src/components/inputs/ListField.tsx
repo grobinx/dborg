@@ -11,6 +11,8 @@ import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { Actions } from '../CommandPalette/ActionManager';
 import { useTranslation } from 'react-i18next';
+import { Ellipsis } from '../useful/Elipsis';
+import { InputDecorator } from './decorators/InputDecorator';
 
 interface ListFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: string[];
@@ -85,7 +87,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             run: () => {
                 saveEdit();
             },
-            disabled: () => disabled || editIndex === null,
+            disabled: () => disabled || editIndex === null || !canSaveEdit(editValue),
         },
         cmCancel: {
             id: 'cmCancel',
@@ -181,6 +183,16 @@ export const ListField: React.FC<ListFieldProps> = ({
         if (!t) return false;
         if (maxItems !== undefined && items.length >= maxItems) return false;
         if (!allowDuplicates && items.includes(t)) return false;
+        return true;
+    };
+
+    const canSaveEdit = (v: string) => {
+        const t = v.trim();
+        if (!t) return false;
+        if (!allowDuplicates) {
+            const dup = items.findIndex((x, i) => x === t && i !== editIndex);
+            if (dup !== -1) return false;
+        }
         return true;
     };
 
@@ -282,16 +294,18 @@ export const ListField: React.FC<ListFieldProps> = ({
                                 >
                                     {isEditing ? (
                                         <>
-                                            <TextField
-                                                autoFocus
-                                                size={size}
-                                                value={editValue}
-                                                disabled={disabled}
-                                                onChange={setEditValue}
-                                                //onBlur={cancelEdit}
-                                                onKeyDown={handleEditKeyDown}
-                                                dense
-                                            />
+                                            <InputDecorator indicator={false} disableBlink>
+                                                <TextField
+                                                    autoFocus
+                                                    size={size}
+                                                    value={editValue}
+                                                    disabled={disabled}
+                                                    onChange={setEditValue}
+                                                    //onBlur={cancelEdit}
+                                                    onKeyDown={handleEditKeyDown}
+                                                    dense
+                                                />
+                                            </InputDecorator>
                                             <IconButton
                                                 size={size}
                                                 color="success"
@@ -307,16 +321,9 @@ export const ListField: React.FC<ListFieldProps> = ({
                                         </>
                                     ) : (
                                         <>
-                                            <span
-                                                style={{
-                                                    flex: 1,
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
+                                            <Ellipsis flex>
                                                 {item}
-                                            </span>
+                                            </Ellipsis>
                                             <IconButton
                                                 size={size}
                                                 color="primary"
@@ -350,18 +357,20 @@ export const ListField: React.FC<ListFieldProps> = ({
                                 flexShrink: 0,
                             }}
                         >
-                            <TextField
-                                size={size}
-                                placeholder={placeholder ?? t('add-new-item', 'Add new item...')}
-                                value={newValue}
-                                onChange={setNewValue}
-                                onKeyDown={handleNewKeyDown}
-                                disabled={
-                                    disabled
-                                    //|| (maxItems !== undefined && items.length >= maxItems)
-                                }
-                                inputRef={inputAddRef}
-                            />
+                            <InputDecorator indicator={false} disableBlink>
+                                <TextField
+                                    size={size}
+                                    placeholder={placeholder ?? t('add-new-item', 'Add new item...')}
+                                    value={newValue}
+                                    onChange={setNewValue}
+                                    onKeyDown={handleNewKeyDown}
+                                    disabled={
+                                        disabled
+                                        //|| (maxItems !== undefined && items.length >= maxItems)
+                                    }
+                                    inputRef={inputAddRef}
+                                />
+                            </InputDecorator>
                             <IconButton
                                 size={size}
                                 color="success"

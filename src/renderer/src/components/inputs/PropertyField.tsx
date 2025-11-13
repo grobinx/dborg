@@ -10,6 +10,9 @@ import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { Ellipsis } from '../useful/Elipsis';
+import { Actions } from '../CommandPalette/ActionManager';
+import { useTranslation } from 'react-i18next';
+import { InputDecorator } from './decorators/InputDecorator';
 
 interface PropertyFieldProps extends Omit<BaseInputProps, 'value' | 'onChange'> {
     value?: Record<string, any>;
@@ -39,6 +42,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
     ...other
 }) => {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const [editKey, setEditKey] = React.useState<string | null>(null);
     const [editNewKey, setEditNewKey] = React.useState('');
@@ -142,6 +146,15 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
         return true;
     };
 
+    const canSaveEdit = () => {
+        if (editKey === null) return false;
+        const k = allowEditPropertyName ? editNewKey.trim() : editKey;
+        if (!k) return true;
+        if (maxItems !== undefined && keys.length >= maxItems) return false;
+        if (value.hasOwnProperty(k) && editKey !== k) return false;
+        return true;
+    };
+
     const addItem = () => {
         if (!canAdd()) return;
         const k = newKey.trim();
@@ -175,6 +188,66 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             e.preventDefault();
             cancelEdit();
         }
+    };
+
+    // AKCJE jak w ListField
+    const actions: Actions<{}> = {
+        cmAdd: {
+            id: 'cmAdd',
+            label: t('add-item', 'Add Item'),
+            icon: theme.icons.Add,
+            keybindings: ['Enter'],
+            run: () => {
+                if (canAdd()) {
+                    addItem();
+                }
+            },
+            disabled: () => disabled || !canAdd(),
+        },
+        cmEdit: {
+            id: 'cmEdit',
+            label: t('edit-item', 'Edit Item'),
+            icon: theme.icons.EditableEditor,
+            keybindings: ['Enter'],
+            run: (_, key) => {
+                if ((selected !== null || key !== undefined) && editKey === null) {
+                    startEdit(key ?? selected);
+                }
+            },
+            disabled: () => disabled || editKey !== null,
+        },
+        cmRemove: {
+            id: 'cmRemove',
+            label: t('remove-item', 'Remove Item'),
+            icon: theme.icons.Delete,
+            keybindings: ['Delete'],
+            run: (_, key) => {
+                if (selected !== null || key !== undefined) {
+                    removeItem(key ?? selected);
+                }
+            },
+            disabled: () => disabled ?? false,
+        },
+        cmSave: {
+            id: 'cmSave',
+            label: t('save-edit', 'Save Edit'),
+            icon: theme.icons.Check,
+            keybindings: ['Enter'],
+            run: () => {
+                saveEdit();
+            },
+            disabled: () => disabled || editKey === null || !canSaveEdit(),
+        },
+        cmCancel: {
+            id: 'cmCancel',
+            label: t('cancel-edit', 'Cancel Edit'),
+            icon: theme.icons.Close,
+            keybindings: ['Escape'],
+            run: () => {
+                cancelEdit();
+            },
+            disabled: () => disabled || editKey === null,
+        },
     };
 
     useScrollIntoView({ containerRef: listRef, targetId: selected ? `item-${selected}` : undefined });
@@ -240,56 +313,49 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                     {isEditing ? (
                                         <>
                                             {allowEditPropertyName ? (
-                                                <TextField
-                                                    autoFocus
-                                                    size={size}
-                                                    placeholder={keyPlaceholder}
-                                                    value={editNewKey}
-                                                    disabled={disabled}
-                                                    onChange={setEditNewKey}
-                                                    onKeyDown={handleEditKeyDown}
-                                                    dense
-                                                    style={{ flex: 1 }}
-                                                />
+                                                <InputDecorator indicator={false} disableBlink>
+                                                    <TextField
+                                                        autoFocus
+                                                        size={size}
+                                                        placeholder={keyPlaceholder}
+                                                        value={editNewKey}
+                                                        disabled={disabled}
+                                                        onChange={setEditNewKey}
+                                                        onKeyDown={handleEditKeyDown}
+                                                        dense
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                </InputDecorator>
                                             ) : (
                                                 <Ellipsis flex style={{ fontWeight: 500 }}>
                                                     {key}
                                                 </Ellipsis>
                                             )}
-                                            <TextField
-                                                autoFocus={!allowEditPropertyName}
-                                                size={size}
-                                                placeholder={valuePlaceholder}
-                                                value={editValue}
-                                                disabled={disabled}
-                                                onChange={setEditValue}
-                                                //onBlur={cancelEdit}
-                                                onKeyDown={handleEditKeyDown}
-                                                dense
-                                                style={{ flex: 1 }}
-                                            />
+                                            <InputDecorator indicator={false} disableBlink>
+                                                <TextField
+                                                    autoFocus={!allowEditPropertyName}
+                                                    size={size}
+                                                    placeholder={valuePlaceholder}
+                                                    value={editValue}
+                                                    disabled={disabled}
+                                                    onChange={setEditValue}
+                                                    onKeyDown={handleEditKeyDown}
+                                                    dense
+                                                    style={{ flex: 1 }}
+                                                />
+                                            </InputDecorator>
                                             <IconButton
                                                 size={size}
                                                 color="success"
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={saveEdit}
-                                                data-ignore-toggle
-                                                aria-label="save"
+                                                action={actions.cmSave}
                                                 dense
-                                            >
-                                                <theme.icons.Check />
-                                            </IconButton>
+                                            />
                                             <IconButton
                                                 size={size}
                                                 color="warning"
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={cancelEdit}
-                                                data-ignore-toggle
-                                                aria-label="cancel"
+                                                action={actions.cmCancel}
                                                 dense
-                                            >
-                                                <theme.icons.Close />
-                                            </IconButton>
+                                            />
                                         </>
                                     ) : (
                                         <>
@@ -302,26 +368,18 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                             <IconButton
                                                 size={size}
                                                 color="primary"
-                                                onClick={() => startEdit(key)}
-                                                disabled={disabled}
-                                                data-ignore-toggle
-                                                aria-label="edit"
+                                                action={actions.cmEdit}
+                                                actionArgs={[key]}
                                                 dense
-                                            >
-                                                <theme.icons.EditableEditor />
-                                            </IconButton>
+                                            />
                                             {allowDelete && (
                                                 <IconButton
                                                     size={size}
                                                     color="error"
-                                                    onClick={() => removeItem(key)}
-                                                    disabled={disabled}
-                                                    data-ignore-toggle
-                                                    aria-label="remove"
+                                                    action={actions.cmRemove}
+                                                    actionArgs={[key]}
                                                     dense
-                                                >
-                                                    <theme.icons.Delete />
-                                                </IconButton>
+                                                />
                                             )}
                                         </>
                                     )}
@@ -339,31 +397,33 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
                                 flexShrink: 0,
                             }}
                         >
-                            <TextField
-                                size={size}
-                                placeholder={keyPlaceholder}
-                                value={newKey}
-                                onChange={setNewKey}
-                                onKeyDown={handleNewKeyDown}
-                                disabled={disabled}
-                                inputRef={inputAddKeyRef}
-                                style={{ flex: 1 }}
-                            />
-                            <TextField
-                                size={size}
-                                placeholder={valuePlaceholder}
-                                value={newValue}
-                                onChange={setNewValue}
-                                onKeyDown={handleNewKeyDown}
-                                disabled={disabled}
-                                style={{ flex: 1 }}
-                            />
+                            <InputDecorator indicator={false} disableBlink>
+                                <TextField
+                                    size={size}
+                                    placeholder={keyPlaceholder}
+                                    value={newKey}
+                                    onChange={setNewKey}
+                                    onKeyDown={handleNewKeyDown}
+                                    disabled={disabled}
+                                    inputRef={inputAddKeyRef}
+                                    style={{ flex: 1 }}
+                                />
+                            </InputDecorator>
+                            <InputDecorator indicator={false} disableBlink>
+                                <TextField
+                                    size={size}
+                                    placeholder={valuePlaceholder}
+                                    value={newValue}
+                                    onChange={setNewValue}
+                                    onKeyDown={handleNewKeyDown}
+                                    disabled={disabled}
+                                    style={{ flex: 1 }}
+                                />
+                            </InputDecorator>
                             <IconButton
                                 size={size}
                                 color="success"
-                                onClick={addItem}
-                                disabled={disabled || !canAdd()}
-                                aria-label="add"
+                                action={actions.cmAdd}
                             >
                                 <theme.icons.Add />
                             </IconButton>

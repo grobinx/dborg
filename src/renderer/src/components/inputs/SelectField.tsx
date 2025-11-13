@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseInputProps } from './base/BaseInputProps';
 import { FormattedContentItem, FormattedText } from '../useful/FormattedText';
 import { Adornment, BaseInputField } from './base/BaseInputField';
-import { Box, Chip, useTheme } from '@mui/material';
+import { alpha, Box, Chip, styled, useTheme } from '@mui/material';
 import { DescribedList, AnyOption, isOption, Option } from './DescribedList';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { Popover } from '../Popover';
@@ -12,6 +12,9 @@ import { useSearch } from '@renderer/hooks/useSearch';
 import { TextField } from './TextField';
 import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { resolveColor } from '@renderer/utils/colors';
+import { themeColors } from '@renderer/types/colors';
+import clsx from '@renderer/utils/clsx';
+import { InputDecorator } from './decorators/InputDecorator';
 
 interface SelectFieldProps<T = any> extends BaseInputProps {
     placeholder?: FormattedContentItem;
@@ -27,6 +30,18 @@ interface SelectFieldProps<T = any> extends BaseInputProps {
     searchable?: boolean;
     searchPlaceholder?: string;
 }
+
+const StyledSelectFieldListBox = styled('div', {
+    name: "SelectField",
+    slot: "listBox",
+})(({ }) => ({
+}));
+
+const StyledSelectFieldSearch = styled('div', {
+    name: "SelectField",
+    slot: "search",
+})(({ }) => ({
+}));
 
 /**
  * 
@@ -243,21 +258,25 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     let searchableField: React.ReactNode = null;
     if (searchable) {
         searchableField = (
-            <Box
-                sx={{
-                    padding: listItemSizeProperties[size || 'medium'].padding
-                }}
+            <StyledSelectFieldSearch
+                className={clsx(
+                    'SelectField-search',
+                    `color-${color}`,
+                    `size-${size || 'medium'}`,
+                )}
             >
-                <TextField
-                    inputRef={searchInputRef}
-                    size={size}
-                    placeholder={searchPlaceholder}
-                    value={searchText}
-                    onChange={setSearchText}
-                    onKeyDown={handleSearchKeyDown}
-                    autoFocus
-                />
-            </Box>
+                <InputDecorator indicator={false} disableBlink>
+                    <TextField
+                        inputRef={searchInputRef}
+                        size={size}
+                        placeholder={searchPlaceholder}
+                        value={searchText}
+                        onChange={setSearchText}
+                        onKeyDown={handleSearchKeyDown}
+                        autoFocus
+                    />
+                </InputDecorator>
+            </StyledSelectFieldSearch>
         );
     }
 
@@ -316,11 +335,13 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                         onClose={handleClose}
                         onChangePlacement={setPlacement}
                     >
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                            }}>
+                        <StyledSelectFieldListBox
+                            className={clsx(
+                                'SelectField-listBox',
+                                `color-${color}`,
+                                `size-${size || 'medium'}`,
+                            )}
+                        >
                             {placement !== 'top' && searchableField}
                             <DescribedList
                                 ref={listRef}
@@ -346,7 +367,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
                                 }
                             />
                             {placement === 'top' && searchableField}
-                        </Box>
+                        </StyledSelectFieldListBox>
                     </Popover>
                 </Adornment>
             }

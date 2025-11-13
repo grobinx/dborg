@@ -62,6 +62,11 @@ export interface InputDecoratorProps {
      * @default true
      */
     showValidity?: boolean;
+    /**
+     * Czy wyłączyć miganie wskaźnika braku aktywności
+     * @default false
+     */
+    disableBlink?: boolean;
 
     sx?: SxProps;
 }
@@ -244,6 +249,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         selected = false,
         sx,
         showValidity = true,
+        disableBlink = false,
     } = props;
 
     const theme = useTheme();
@@ -313,7 +319,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     const scheduleIdleOff = React.useCallback(() => {
         const ATTENTION_MS = 2000;
         offTimerRef.current = setTimeout(() => {
-            if (!focused || type === "search") return;
+            if (!focused || type === "search" || disableBlink) return;
             setIdleAttention(false);
             // restart cycle “from the beginning”
             lastActivityRef.current = Date.now();
@@ -327,7 +333,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         const elapsed = Date.now() - lastActivityRef.current;
         const delay = Math.max(0, IDLE_MS - elapsed);
         onTimerRef.current = setTimeout(() => {
-            if (!focused || type === "search") return;
+            if (!focused || type === "search" || disableBlink) return;
             // ensure no activity happened in the meantime
             if (Date.now() - lastActivityRef.current < IDLE_MS) return;
             setIdleAttention(true);
@@ -339,7 +345,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     React.useEffect(() => {
         clearIdleTimers();
         setIdleAttention(false);
-        if (focused && type !== "search") {
+        if (focused && type !== "search" && !disableBlink) {
             lastActivityRef.current = Date.now();
             scheduleIdleOn();
         }
@@ -349,7 +355,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     // restart cycle on value change (activity)
     React.useEffect(() => {
         lastActivityRef.current = Date.now();
-        if (!focused || type === "search") return;
+        if (!focused || type === "search" || disableBlink) return;
         clearIdleTimers();
         setIdleAttention(false);
         scheduleIdleOn();

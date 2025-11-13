@@ -5,6 +5,9 @@ interface LineClampProps {
     lines?: number;
 }
 
+/**
+ * A component that clamps text to a specified number of lines, adding an ellipsis if the text overflows.
+ */
 export const LineClamp: React.FC<LineClampProps & React.HTMLAttributes<HTMLDivElement>> =
     styled('div')<LineClampProps>(({ lines = 2 }) =>
     ({

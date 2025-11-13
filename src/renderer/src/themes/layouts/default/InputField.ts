@@ -2,8 +2,6 @@ import { alpha, Palette, ThemeOptions } from "@mui/material";
 import { borderRadius, paddingLarge, paddingMedium, paddingSmall, inputSizeProperties } from "./consts";
 import { themeColors } from "@renderer/types/colors";
 import { InputFieldComponent } from "@renderer/themes/theme.d/InputField";
-import { LineWeight } from "@mui/icons-material";
-
 
 export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFieldComponent => {
     return {

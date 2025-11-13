@@ -229,6 +229,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         hover && "hover",
         autoCollapse && "auto-collapse",
         dense && "dense",
+        !decorator && 'no-decorator',
     );
 
     const allAdornments = React.Children.toArray(adornments);

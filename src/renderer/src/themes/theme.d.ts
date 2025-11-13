@@ -59,6 +59,7 @@ import { ButtonGroupComponent, ButtonGroupComponentProps, ButtonGroupComponentSl
 import { TreeComponent, TreeComponentProps, TreeComponentSlots } from "./theme.d/Tree";
 import { DescribedListComponent, DescribedListComponentProps, DescribedListComponentSlots } from "./theme.d/DescribedList";
 import { BaseListComponent, BaseListComponentProps, BaseListComponentSlots } from "./theme.d/BaseList";
+import { SelectFieldComponent, SelectFieldComponentProps, SelectFieldComponentSlots } from "./theme.d/SelectField";
 
 type Theme = Omit<MuiTheme, 'components'>;
 
@@ -167,6 +168,7 @@ declare module "@mui/material/styles" {
         Tree: TreeComponentSlots;
         DescribedList: DescribedListComponentSlots;
         BaseList: BaseListComponentSlots;
+        SelectField: SelectFieldComponentSlots;
     }
 
     interface ComponentsPropsList {
@@ -205,6 +207,7 @@ declare module "@mui/material/styles" {
         Tree: TreeComponentProps;
         DescribedList: DescribedListComponentProps;
         BaseList: BaseListComponentProps;
+        SelectField: SelectFieldComponentProps;
     }
     interface Components {
         MenuBar?: MenuBarComponent;
@@ -250,6 +253,7 @@ declare module "@mui/material/styles" {
         Tree?: TreeComponent;
         DescribedList?: DescribedListComponent;
         BaseList?: BaseListComponent;
+        SelectField?: SelectFieldComponent;
     }
 
 }
