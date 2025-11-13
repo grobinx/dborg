@@ -41,6 +41,16 @@ interface BaseListProps<T = any> extends React.AriaAttributes {
     disabled?: boolean;
     dense?: boolean;
 
+    /** Whether the list should use virtual scrolling */
+    virtual?: boolean;
+    /** 
+     * Height of each item in pixels, required for virtual scrolling.
+     * If virtual not enabled, it will be used to set minHeight and maxHeight of items, items outside visible area won't be rendered by renderItem
+     */
+    itemHeight?: number; // px
+    /** Number of extra items to render above and below the visible area for smoother scrolling */
+    overscan?: number;   // ile dodatkowych elementów renderować nad/pod widokiem
+
     renderItem: (item: T, state: { selected: boolean; focused: boolean }) => React.ReactNode;
     renderEmpty?: () => React.ReactNode;
     getItemClassName?: (item: T, index: number) => string | string[] | undefined;
@@ -79,6 +89,9 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         items,
         dense,
         tabIndex,
+        virtual = false,
+        itemHeight,
+        overscan = 4,
 
         isSelected,
         isFocused,
@@ -123,6 +136,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
     React.useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
 
     const [listFocused, setListFocused] = useState<boolean>(false);
+    const [scrollTop, setScrollTop] = useState(0);
 
     const classes = clsx(
         disabled && 'disabled',
@@ -131,6 +145,24 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         dense && 'dense',
         className
     );
+
+    const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
+        setScrollTop(e.currentTarget.scrollTop);
+        onScroll?.(e);
+    };
+
+    let visibleItems = items;
+    let start = 0, end = items.length;
+
+    if (itemHeight && items.length > 0 && listRef.current) {
+        const containerHeight = listRef.current.offsetHeight || 300;
+        const total = items.length;
+        start = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+        end = Math.min(total, Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan);
+        if (virtual) {
+            visibleItems = items.slice(start, end);
+        }
+    }
 
     return (
         <StyledBaseList
@@ -154,49 +186,99 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                 setListFocused(false);
             }}
             onWheel={onWheel}
-            onScroll={onScroll}
+            onScroll={(virtual || itemHeight) ? handleScroll : onScroll}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             onMouseMove={onMouseMove}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
-            sx={sx}
-            style={style}
+            style={{
+                ...style,
+                position: virtual ? 'relative' : undefined,
+                overflowY: virtual ? 'auto' : undefined,
+                height: virtual ? '100%' : undefined,
+            }}
             {...rest}
         >
             {items.length === 0 && renderEmpty ? renderEmpty() :
-                items.map((item, index) => {
-                    const selected = isSelected?.(item, index);
-                    const focused = isFocused?.(item, index);
-                    const id = getItemId?.(item, index);
+                (virtual && itemHeight) ? (
+                    <div style={{ height: items.length * itemHeight, position: 'relative' }}>
+                        {visibleItems.map((item, index) => {
+                            const realIndex = start + index;
+                            const selected = isSelected?.(item, realIndex);
+                            const focused = isFocused?.(item, realIndex);
+                            const id = getItemId?.(item, realIndex);
 
-                    return (
-                        <StyledBaseListItem
-                            id={id ? id : undefined}
-                            key={index}
-                            role="listitem"
-                            aria-selected={selected}
-                            className={clsx(
-                                `${componentName}-item`,
-                                selected && "selected",
-                                focused && "focused",
-                                getItemClassName?.(item, index),
-                                classes
-                            )}
-                            onClick={(e) => !disabled && onItemClick?.(item, e)}
-                            onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
-                            onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
-                            onMouseEnter={(e) => !disabled && onItemMouseEnter?.(item, e)}
-                            onMouseLeave={(e) => !disabled && onItemMouseLeave?.(item, e)}
-                            onMouseMove={(e) => !disabled && onItemMouseMove?.(item, e)}
-                            onMouseDown={(e) => !disabled && onItemMouseDown?.(item, e)}
-                            onMouseUp={(e) => !disabled && onItemMouseUp?.(item, e)}
-                            tabIndex={-1}
-                        >
-                            {renderItem(item, { selected: selected ?? false, focused: focused ?? false })}
-                        </StyledBaseListItem>
-                    );
-                })
+                            return (
+                                <StyledBaseListItem
+                                    id={id ? id : undefined}
+                                    key={realIndex}
+                                    role="listitem"
+                                    aria-selected={selected}
+                                    className={clsx(
+                                        `${componentName}-item`,
+                                        selected && "selected",
+                                        focused && "focused",
+                                        getItemClassName?.(item, realIndex),
+                                        classes
+                                    )}
+                                    style={{
+                                        position: 'absolute',
+                                        top: (realIndex * itemHeight),
+                                        left: 0,
+                                        right: 0,
+                                        height: itemHeight,
+                                    }}
+                                    onClick={(e) => !disabled && onItemClick?.(item, e)}
+                                    onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
+                                    onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
+                                    onMouseEnter={(e) => !disabled && onItemMouseEnter?.(item, e)}
+                                    onMouseLeave={(e) => !disabled && onItemMouseLeave?.(item, e)}
+                                    onMouseMove={(e) => !disabled && onItemMouseMove?.(item, e)}
+                                    onMouseDown={(e) => !disabled && onItemMouseDown?.(item, e)}
+                                    onMouseUp={(e) => !disabled && onItemMouseUp?.(item, e)}
+                                    tabIndex={-1}
+                                >
+                                    {renderItem(item, { selected: selected ?? false, focused: focused ?? false })}
+                                </StyledBaseListItem>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    items.map((item, index) => {
+                        const selected = isSelected?.(item, index);
+                        const focused = isFocused?.(item, index);
+                        const id = getItemId?.(item, index);
+
+                        return (
+                            <StyledBaseListItem
+                                id={id ? id : undefined}
+                                key={index}
+                                role="listitem"
+                                aria-selected={selected}
+                                className={clsx(
+                                    `${componentName}-item`,
+                                    selected && "selected",
+                                    focused && "focused",
+                                    getItemClassName?.(item, index),
+                                    classes
+                                )}
+                                style={itemHeight ? { minHeight: itemHeight, maxHeight: itemHeight } : undefined}
+                                onClick={(e) => !disabled && onItemClick?.(item, e)}
+                                onDoubleClick={(e) => !disabled && onItemDoubleClick?.(item, e)}
+                                onContextMenu={(e) => !disabled && onItemContextMenu?.(item, e)}
+                                onMouseEnter={(e) => !disabled && onItemMouseEnter?.(item, e)}
+                                onMouseLeave={(e) => !disabled && onItemMouseLeave?.(item, e)}
+                                onMouseMove={(e) => !disabled && onItemMouseMove?.(item, e)}
+                                onMouseDown={(e) => !disabled && onItemMouseDown?.(item, e)}
+                                onMouseUp={(e) => !disabled && onItemMouseUp?.(item, e)}
+                                tabIndex={-1}
+                            >
+                                {(index >= start && index <= end) && renderItem(item, { selected: selected ?? false, focused: focused ?? false })}
+                            </StyledBaseListItem>
+                        );
+                    })
+                )
             }
         </StyledBaseList>
     );
