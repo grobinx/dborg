@@ -140,7 +140,7 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
 
     const classes = clsx(
         disabled && 'disabled',
-        size && `size-${size}`,
+        size && `size-${itemHeight ? 'default' : size}`,
         color && `color-${color}`,
         dense && 'dense',
         className

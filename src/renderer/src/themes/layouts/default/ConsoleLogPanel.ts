@@ -5,17 +5,6 @@ export const ConsoleLogPanelLayout = (palette: Palette, _root: ThemeOptions): Co
     return {
         defaultProps: {
             slotProps: {
-                item: {
-                    sx: {
-                        cursor: "pointer",
-                        '&.Mui-selected': {
-                            backgroundColor: palette.action.selected
-                        },
-                        "&:hover": {
-                            backgroundColor: palette.action.hover,
-                        },
-                    }
-                },
                 details: {
                     sx: {
                         "&.no-selection": {

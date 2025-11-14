@@ -5,9 +5,8 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } from "@renderer/contexts/ConsoleContext";
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
-import { ListItem, ListItemText, ListItemIcon, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { List, RowComponentProps, useListRef } from "react-window";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
 import * as Messages from '../../app/Messages';
@@ -20,12 +19,14 @@ import Tooltip from "../Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { SearchField } from "../inputs/SearchField";
 import { InputDecorator } from "../inputs/decorators/InputDecorator";
-import { IconButton } from "../buttons/IconButton";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 import debounce from "@renderer/utils/debounce";
 import { AnyOption, isOption, Option } from "../inputs/DescribedList";
 import { SelectField } from "../inputs/SelectField";
 import { ToolButton } from "../buttons/ToolButton";
+import { BaseList } from "../inputs/base/BaseList";
+import { FormattedText } from "../useful/FormattedText";
+import { useSearch } from "@renderer/hooks/useSearch";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -45,10 +46,7 @@ export const useConsoleLogState = create<ConsoleLogState>((set) => ({
 
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
     slotProps?: {
-        list?: React.ComponentProps<typeof List>;
-        item?: React.ComponentProps<typeof ListItem>;
-        itemIcon?: React.ComponentProps<typeof ListItemIcon>;
-        itemText?: React.ComponentProps<typeof ListItemText>;
+        list?: React.ComponentProps<typeof BaseList>;
         details?: React.ComponentProps<typeof StyledConsoleLogDetailsPanel>;
     };
     itemSize?: number; // Wysokość pojedynczego elementu listy
@@ -62,7 +60,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const theme = useTheme();
     const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
-    const listRef = useListRef(null);
+    const listRef = React.useRef<HTMLUListElement>(null);
     const showTime = useConsoleLogState(state => state.showTime);
     const search = useConsoleLogState(state => state.search);
     const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
@@ -101,79 +99,40 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
         return;
     }, [logs, search, searchDelay]);
 
-    // Przewijanie do ostatniego elementu po zmianie logów
-    useEffect(() => {
-        if (displayLogs.length > 0) {
-            setTimeout(() => {
-                if (listRef.current && panelVisible) {
-                    listRef.current.scrollToRow({
-                        index: displayLogs.length - 1,
-                        align: "end"
-                    });
-                }
-            }, 100);
-        }
-    }, [displayLogs, panelVisible]);
-
-    // Render pojedynczego elementu listy - używając react-window 2.x API
-    const renderRow = ({ index, style, displayLogs, selectedItem, handleSelectItem, theme, showTime, getLogLevelColor, formatTime }: RowComponentProps<{
-        displayLogs: LogEntry[],
-        selectedItem: string | null,
-        handleSelectItem: (id: string) => void,
-        theme: any,
-        showTime: boolean,
-        getLogLevelColor: (level: LogLevel, palette: any) => string,
-        formatTime: (time: number) => string
-    }>) => {
-        const log = displayLogs[index];
-        if (!log) return <div style={style}>No log</div>;
-
+    const renderRow = (item: LogEntry) => {
         return (
-            <div
-                key={log.id}
-                style={{
-                    ...style,
-                    display: "flex",
-                    alignItems: "flex-start",
-                    padding: 0,
-                    cursor: "pointer",
-                    backgroundColor: selectedItem === log.id ? theme.palette.action.selected : "transparent"
+            <Typography
+                variant="monospace"
+                sx={{
+                    padding: "2px 4px",
+                    display: "block", // zamiast flex
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    width: "100%",
+                    minWidth: 0,
+                    color: getLogLevelColor(item.level, theme.palette),
                 }}
-                onClick={() => handleSelectItem(log.id)}
-                className={`ConsoleLogPanel-item${selectedItem === log.id ? " Mui-selected" : ""}`}
             >
-                <Typography
-                    variant="monospace"
-                    sx={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        color: getLogLevelColor(log.level, theme.palette),
-                        m: 0,
-                        px: 1,
-                        width: "100%"
-                    }}
-                >
-                    {showTime && log.time && (
-                        <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
-                            {formatTime(log.time)}
-                        </span>
-                    )}
-                    {Array.isArray(log.message) ? log.message.map(value => {
-                        if (typeof value === "object") {
-                            if (value !== null && "name" in value && "message" in value) {
-                                return `${value.name}: ${value.message}`;
-                            }
-                            else {
-                                return JSON.stringify(value);
-                            }
+                {showTime && item.time && (
+                    <span style={{ color: theme.palette.primary.main, marginRight: 8 }}>
+                        {formatTime(item.time)}
+                    </span>
+                )}
+                {Array.isArray(item.message) ? item.message.map(value => {
+                    if (typeof value === "object") {
+                        if (value !== null && "name" in value && "message" in value) {
+                            return `${value.name}: ${value.message}`;
                         }
                         else {
-                            return value;
+                            return JSON.stringify(value);
                         }
-                    }).join(" ") : String(log.message)}
-                </Typography>
-            </div>
+                    }
+                    else {
+                        return value;
+                    }
+                }).join(" ") : String(item.message)}
+            </Typography>
         );
     };
 
@@ -182,26 +141,23 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
             {panelVisible && (
                 <SplitPanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
                     <SplitPanel>
-                        <div style={{ height: '100%', width: '100%' }}>
-                            <List
-                                listRef={listRef}
-                                className="ConsoleLogPanel-root"
-                                rowComponent={renderRow}
-                                rowCount={displayLogs.length}
-                                rowHeight={listItemSize}
-                                style={{ height: '100%', width: '100%' }}
-                                rowProps={{
-                                    displayLogs,
-                                    selectedItem,
-                                    handleSelectItem,
-                                    theme,
-                                    showTime,
-                                    getLogLevelColor,
-                                    formatTime
-                                } as any}
-                                {...slotProps?.list}
-                            />
-                        </div>
+                        <BaseList
+                            ref={listRef}
+                            items={displayLogs}
+                            virtual
+                            itemHeight={listItemSize}
+                            isSelected={(item) => item.id === selectedItem}
+                            isFocused={(item) => item.id === selectedItem}
+                            onItemClick={(item) => handleSelectItem(item.id)}
+                            getItemId={(item) => item.id}
+                            renderEmpty={() => (
+                                <div style={{ padding: 16, textAlign: "center", color: theme.palette.text.disabled }}>
+                                    <FormattedText text={t("no-logs", "No logs available")} />
+                                </div>
+                            )}
+                            renderItem={renderRow}
+                            color="default"
+                        />
                     </SplitPanel>
                     <Splitter />
                     <SplitPanel defaultSize={25} >
@@ -329,7 +285,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     renderValue={(option: Option<LogLevel> | Option<LogLevel>[]) => {
                         const values = Array.isArray(option) ? option : [option];
                         const defaultLogLevels = DefaultLogLevels.filter(entry => entry.logged).map(entry => entry.level) as LogLevel[];
-                        const selectedLogLevels = 
+                        const selectedLogLevels =
                             values.length === defaultLogLevels.length &&
                             values.every(lvl => defaultLogLevels.includes(lvl.value));
                         let label: React.ReactNode;
