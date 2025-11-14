@@ -665,7 +665,7 @@ export const DataGrid = <T extends object>({
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
-                    ? filteredDataState[selectedCell.row][columnsState.current[selectedCell.column].key]
+                    ? filteredDataState[selectedCell.row][columnsState.current[selectedCell.column]?.key]
                     : null;
 
                 const newStatus: DataGridStatus = {
