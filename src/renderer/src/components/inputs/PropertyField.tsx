@@ -260,6 +260,8 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             disabled={disabled}
             value={value}
             onKeyDown={!allowAdd ? handleListKeyDown : undefined}
+            onConvertToInput={value => JSON.stringify(value)}
+            onConvertToValue={value => JSON.parse(value)}
             input={
                 <Box
                     ref={inputRef}
