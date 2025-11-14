@@ -139,7 +139,7 @@ const tableColumnsTab = (
                         dataType: "string",
                     },
                 ] as ColumnDefinition[],
-                autoSaveId: "table-columns-grid-" + session.schema.sch_id,
+                autoSaveId: "table-columns-grid-" + session.profile.sch_id,
             } as IGridSlot),
         }
     };

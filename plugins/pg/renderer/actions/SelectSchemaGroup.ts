@@ -29,7 +29,7 @@ export const SelectSchemaGroup = (
             const actions: Action<any>[] = [];
             let schemas: string[] = [];
 
-            console.debug('Fetching schemas...', session.schema.sch_name);
+            console.debug('Fetching schemas...', session.profile.sch_name);
             if (session.metadata) {
                 const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
 

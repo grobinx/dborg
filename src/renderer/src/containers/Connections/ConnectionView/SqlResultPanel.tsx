@@ -170,19 +170,19 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setRows(rows);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.schema.sch_name,
+                    schema: session.profile.sch_name,
                     executionTime: info.duration,
                     fetchTime: fetchTime,
                     rows: rows.length,
                     startTime: startTime,
                 });
             } catch (error) {
-                addToast("error", "Error executing query", { reason: error, source: session.schema.sch_name });
+                addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
                 setColumns([]);
                 setRows([]);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.schema.sch_name,
+                    schema: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
                         : String(error),
@@ -195,7 +195,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     try {
                         await cursor.close();
                     } catch (error) {
-                        addToast("error", "Error executing query", { reason: error, source: session.schema.sch_name });
+                        addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
                     }
                 }
             }
@@ -222,16 +222,16 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setUpdatedCount(result.updateCount ?? null);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.schema.sch_name,
+                    schema: session.profile.sch_name,
                     executionTime: result.duration,
                     rows: result.updateCount ?? undefined,
                     startTime: Date.now(),
                 });
             } catch (error) {
-                addToast("error", "Error executing command", { reason: error, source: session.schema.sch_name });
+                addToast("error", "Error executing command", { reason: error, source: session.profile.sch_name });
                 addQueryToHistory({
                     query: query!,
-                    schema: session.schema.sch_name,
+                    schema: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
                         : String(error),
@@ -351,7 +351,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     onChange={(status) => setDataGridStatus(status)}
                     onMount={onMountHandle}
                     ref={dataGridRef}
-                    autoSaveId={session.schema.sch_id}
+                    autoSaveId={session.profile.sch_id}
                 />
             </Box>
             <DataGridStatusBar

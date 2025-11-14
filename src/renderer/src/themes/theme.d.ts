@@ -48,7 +48,7 @@ import { StatusBarButtonComponent, StatusBarButtonComponentProps, StatusBarButto
 import { DriverSummaryComponent, DriverSummaryComponentProps, DriverSummaryComponentSlots } from "./theme.d/DriverSummary";
 import { SchemaParametersComponent, SchemaParametersComponentProps, SchemaParametersComponentSlots } from "./theme.d/SchemaParameters";
 import { SchemaSummaryComponent, SchemaSummaryComponentProps, SchemaSummaryComponentSlots } from "./theme.d/SchemaSummary";
-import { SchemaListComponent, SchemaListComponentProps, SchemaListComponentSlots } from "./theme.d/SchemaList";
+import { ProfileListComponent, ProfileListComponentProps, ProfileListComponentSlots } from "./theme.d/ProfileList";
 import { TabsPanelComponent, TabsPanelComponentProps, TabsPanelComponentSlots } from "./theme.d/TabsPanel";
 import { TabPanelComponent, TabPanelComponentSlots } from "./theme.d/TabPanel";
 import { ContainerButtonComponent, ContainerButtonComponentProps, ContainerButtonComponentSlots } from "./theme.d/ContainerButton";
@@ -148,7 +148,7 @@ declare module "@mui/material/styles" {
         SchemaParameters: SchemaParametersComponentSlots;
         SchemaSummary: SchemaSummaryComponentSlots;
         SchemaBook: "root";
-        SchemaList: SchemaListComponentSlots;
+        ProfileList: ProfileListComponentSlots;
         ToastList: ToastListComponentSlots;
         TabsPanel: TabsPanelComponentSlots;
         TabPanel: TabPanelComponentSlots;
@@ -187,7 +187,7 @@ declare module "@mui/material/styles" {
         DriverSummary: DriverSummaryComponentProps;
         SchemaSummary: SchemaSummaryComponentProps;
         SchemaBook: Partial<SchemaBookProps>;
-        SchemaList: SchemaListComponentProps;
+        ProfileList: ProfileListComponentProps;
         ToastList: ToastListComponentProps;
         TabsPanel: TabsPanelComponentProps;
         TabPanel: TabPanelComponent;
@@ -229,7 +229,7 @@ declare module "@mui/material/styles" {
             styleOverrides?: ComponentsOverrides<Theme>['SchemaBook'];
             //variants?: ComponentsVariants['DriverSummary'];
         };
-        SchemaList?: SchemaListComponent;
+        ProfileList?: ProfileListComponent;
         ToastList?: ToastListComponent;
         TabsPanel?: TabsPanelComponent;
         TabPanel?: TabPanelComponent;

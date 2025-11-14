@@ -158,7 +158,7 @@ const PostgresPlugin: Plugin = {
                                         refresh("tables-title-" + session.info.uniqueId);
                                     }),
                                 ],
-                                autoSaveId: "tables-grid-" + session.schema.sch_id,
+                                autoSaveId: "tables-grid-" + session.profile.sch_id,
                                 status: ["data-rows"]
                             } as IGridSlot,
                             text: {
@@ -240,7 +240,7 @@ const PostgresPlugin: Plugin = {
                                         <div>
                                             <h1>Views</h1>
                                             <p>This is a PostgreSQL plugin for ORBADA.</p>
-                                            <p>{session.schema.sch_name}</p>
+                                            <p>{session.profile.sch_name}</p>
                                         </div>
                                     );
                                 },

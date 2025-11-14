@@ -109,7 +109,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
 
     const handleSwitchContainerMessage = React.useCallback((container: ContainerType) => {
         if (container === selectedContainer?.type && container === "new-profile") {
-            queueMessage(Messages.SET_SCHEMA_ID, undefined);
+            queueMessage(Messages.SET_PROFILE_ID, undefined);
         }
     }, [selectedContainer]);
 
@@ -170,15 +170,15 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     // Register and unregister message handlers
     React.useEffect(() => {
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
-        subscribe(Messages.SET_SCHEMA_ID, handleSetSchemaIdMessage);
-        subscribe(Messages.STE_CLONE_SCHEMA_ID, handleSetCloneSchemaIdMessage);
-        subscribe(Messages.END_EDIT_SCHEMA, handleEndEditSchemaMessage);
+        subscribe(Messages.SET_PROFILE_ID, handleSetSchemaIdMessage);
+        subscribe(Messages.STE_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
+        subscribe(Messages.END_EDIT_PROFILE, handleEndEditSchemaMessage);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
-            unsubscribe(Messages.SET_SCHEMA_ID, handleSetSchemaIdMessage);
-            unsubscribe(Messages.STE_CLONE_SCHEMA_ID, handleSetCloneSchemaIdMessage);
-            unsubscribe(Messages.END_EDIT_SCHEMA, handleEndEditSchemaMessage);
+            unsubscribe(Messages.SET_PROFILE_ID, handleSetSchemaIdMessage);
+            unsubscribe(Messages.STE_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
+            unsubscribe(Messages.END_EDIT_PROFILE, handleEndEditSchemaMessage);
         };
     }, [
         handleSwitchContainerMessage,
@@ -350,7 +350,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                     </Button>,
                     < Button
                         {...slotProps?.button}
-                        onClick={() => schemaParams.uniqueId && queueMessage(Messages.END_EDIT_SCHEMA)}
+                        onClick={() => schemaParams.uniqueId && queueMessage(Messages.END_EDIT_PROFILE)}
                         key="finish"
                     >
                         {t("finish", "Finish")}

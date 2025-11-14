@@ -5,7 +5,7 @@ import { ProfileRecord } from "./ProfilesContext";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
-    schema: ProfileRecord; // Schema information
+    profile: ProfileRecord; // Profile information
     metadata?: api.DatabasesMetadata | undefined; // Metadata of the database
 
     getVersion(): string | undefined; // Get the version of the database
@@ -57,13 +57,13 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
 
 class DatabaseSession implements IDatabaseSession {
     info: api.ConnectionInfo; // Connection information
-    schema: ProfileRecord; // Schema information
+    profile: ProfileRecord; // Profile information
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
 
     constructor(info: api.ConnectionInfo) {
         this.info = info;
-        this.schema = info.userData.schema as ProfileRecord;
+        this.profile = info.userData.profile as ProfileRecord;
         this.metadata = undefined;
         this.metadataInitialized = false;
     }

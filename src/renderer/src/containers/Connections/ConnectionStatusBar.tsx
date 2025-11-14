@@ -19,34 +19,34 @@ const ConnectionStatusBar: React.FC = () => {
     const { onEvent } = useProfiles();
 
     React.useEffect(() => {
-        const connectionInfoHandle = (schema: ProfileRecord) => {
+        const connectionInfoHandle = (profile: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
-                [schema.sch_id]: {
+                [profile.sch_id]: {
                     status: "connecting",
-                    name: schema.sch_name,
+                    name: profile.sch_name,
                 },
             }));
 
             // Ustaw przełączanie ikon dla statusu "connecting"
             setIconStates((prev) => ({
                 ...prev,
-                [schema.sch_id]: true, // Domyślnie zaczynamy od ikony "Connected"
+                [profile.sch_id]: true, // Domyślnie zaczynamy od ikony "Connected"
             }));
         };
 
-        const connectionSuccessHandle = (schema: ProfileRecord) => {
+        const connectionSuccessHandle = (profile: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
-                [schema.sch_id]: {
+                [profile.sch_id]: {
                     status: "connected",
-                    name: schema.sch_name,
+                    name: profile.sch_name,
                 },
             }));
 
             setIconStates((prev) => {
                 const updated = { ...prev };
-                delete updated[schema.sch_id];
+                delete updated[profile.sch_id];
                 return updated;
             });
 
@@ -54,63 +54,63 @@ const ConnectionStatusBar: React.FC = () => {
             setTimeout(() => {
                 setConnectionStatuses((prev) => {
                     const updated = { ...prev };
-                    delete updated[schema.sch_id];
+                    delete updated[profile.sch_id];
                     return updated;
                 });
             }, 5000);
         };
 
-        const connectionErrorHandle = (_error: any, schema: ProfileRecord) => {
+        const connectionErrorHandle = (_error: any, profile: ProfileRecord) => {
             setConnectionStatuses((prev) => ({
                 ...prev,
-                [schema.sch_id]: {
+                [profile.sch_id]: {
                     status: "error",
-                    name: schema.sch_name,
+                    name: profile.sch_name,
                 },
             }));
 
             setIconStates((prev) => {
                 const updated = { ...prev };
-                delete updated[schema.sch_id];
+                delete updated[profile.sch_id];
                 return updated;
             });
             // Usuń status po 5 sekundach
             setTimeout(() => {
                 setConnectionStatuses((prev) => {
                     const updated = { ...prev };
-                    delete updated[schema.sch_id];
+                    delete updated[profile.sch_id];
                     return updated;
                 });
             }, 5000);
         };
 
-        const connectionCancelHandle = (schema: ProfileRecord) => {
+        const connectionCancelHandle = (profile: ProfileRecord) => {
             setConnectionStatuses((prev) => {
                 const updated = { ...prev };
-                delete updated[schema.sch_id]; // Usuń status dla danego schematu
+                delete updated[profile.sch_id]; // Usuń status dla danego profilu
                 return updated;
             });
             setIconStates((prev) => {
                 const updated = { ...prev };
-                delete updated[schema.sch_id];
+                delete updated[profile.sch_id];
                 return updated;
             });
         };
 
         const offEvent = onEvent("connecting", (event) => {
-            const schema = event.schema;
+            const profile = event.profile;
             switch (event.status) {
                 case "started":
-                    connectionInfoHandle(schema);
+                    connectionInfoHandle(profile);
                     break;
                 case "success":
-                    connectionSuccessHandle(schema);
+                    connectionSuccessHandle(profile);
                     break;
                 case "error":
-                    connectionErrorHandle(event.error, schema);
+                    connectionErrorHandle(event.error, profile);
                     break;
                 case "cancel":
-                    connectionCancelHandle(schema);
+                    connectionCancelHandle(profile);
                     break;
             }
         });

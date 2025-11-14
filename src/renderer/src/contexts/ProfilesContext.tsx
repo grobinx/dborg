@@ -12,7 +12,7 @@ import { ProfileUsePasswordType } from "@renderer/containers/SchemaAssistant/Sch
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
 
-// Define the schema structure
+// Define the profile structure
 export interface ProfileRecord {
     sch_id: string;
     sch_created?: string;
@@ -30,7 +30,7 @@ export interface ProfileRecord {
     sch_order?: number;
 }
 
-export type SchemaEventType =
+export type ProfileEventType =
     | 'creating'
     | 'updating'
     | 'deleting'
@@ -41,14 +41,14 @@ export type SchemaEventType =
     | 'storing'
     ;
 
-type ProfileEventConnecting = { schema: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; connection?: api.ConnectionInfo; error?: any };
-type ProfileEventDisconnecting = { schema: ProfileRecord; connectionUniqueId: string; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
-type ProfileEventTesting = { schema: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type ProfileEventConnecting = { profile: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; connection?: api.ConnectionInfo; error?: any };
+type ProfileEventDisconnecting = { profile: ProfileRecord; connectionUniqueId: string; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type ProfileEventTesting = { profile: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
 type ProfileEventFetching = { status: 'started' | 'success' | 'error'; error?: any };
 type ProfileEventStoring = { status: 'started' | 'success' | 'error'; error?: any };
-type ProfileEventCreating = { schema: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
-type ProfileEventUpdating = { schema: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
-type ProfileEventDeleting = { schema: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type ProfileEventCreating = { profile: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type ProfileEventUpdating = { profile: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
+type ProfileEventDeleting = { profile: ProfileRecord; status: 'started' | 'cancel' | 'success' | 'error'; error?: any };
 
 type ProfileEvent =
     | ProfileEventConnecting
@@ -75,16 +75,16 @@ type ProfileEventMethod = {
 interface ProfilesContextValue {
     initialized: boolean;
     profiles: ProfileRecord[];
-    getProfile: (schemaId: string, throwError?: boolean) => ProfileRecord | null;
+    getProfile: (profileId: string, throwError?: boolean) => ProfileRecord | null;
     reloadProfiles: () => Promise<void>;
-    createProfile: (schema: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<string | undefined>;
-    updateProfile: (schema: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<boolean | undefined>;
-    deleteProfile: (schemaId: string) => Promise<boolean>;
-    swapProfilesOrder: (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => Promise<void>;
-    connectToDatabase: (schemaId: string) => Promise<api.ConnectionInfo | undefined>;
+    createProfile: (profile: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<string | undefined>;
+    updateProfile: (profile: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<boolean | undefined>;
+    deleteProfile: (profileId: string) => Promise<boolean>;
+    swapProfilesOrder: (sourceProfileId: string, targetProfileId: string, group?: boolean) => Promise<void>;
+    connectToDatabase: (profileId: string) => Promise<api.ConnectionInfo | undefined>;
     disconnectSession: (uniqueId: string) => Promise<void>;
-    disconnectProfile: (schemaId: string) => Promise<void>;
-    testConnection: (driverUniqueId: string, usePassword: ProfileUsePasswordType, properties: Properties, schemaName: string) => Promise<boolean | undefined>;
+    disconnectProfile: (profileId: string) => Promise<void>;
+    testConnection: (driverUniqueId: string, usePassword: ProfileUsePasswordType, properties: Properties, profileName: string) => Promise<boolean | undefined>;
 
     onEvent: ProfileEventMethod;
 }
@@ -98,15 +98,15 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const { t } = useTranslation();
     const { onEvent, emitEvent } = useListeners<ProfileEvent>();
     const [profiles, setProfiles] = useState<ProfileRecord[]>([]);
-    const [profilesInitialized, setSchemaInitialized] = useState<boolean>(false);
+    const [profilesInitialized, setProfilesInitialized] = useState<boolean>(false);
     const profilesRef = React.useRef<ProfileRecord[]>(profiles);
     const [justFetched, setJustFetched] = useState<boolean>(false);
 
-    const getProfile = useCallback((schemaId: string, throwError: boolean = true) => {
+    const getProfile = useCallback((profileId: string, throwError: boolean = true) => {
         if (profilesRef.current) {
-            const schema = profilesRef.current.find((s) => s.sch_id === schemaId);
-            if (schema) {
-                return JSON.parse(JSON.stringify(schema)) as ProfileRecord;
+            const profile = profilesRef.current.find((s) => s.sch_id === profileId);
+            if (profile) {
+                return JSON.parse(JSON.stringify(profile)) as ProfileRecord;
             }
         }
         if (throwError) {
@@ -121,10 +121,10 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
         if (data) {
             try {
-                const loadedSchemas = JSON.parse(data);
-                setProfiles(loadedSchemas);
+                const loadedProfiles = JSON.parse(data);
+                setProfiles(loadedProfiles);
                 setJustFetched(true);
-                setSchemaInitialized(true);
+                setProfilesInitialized(true);
             } catch (error) {
                 addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
                 emitEvent('fetching', { status: 'error', error });
@@ -134,7 +134,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         emitEvent('fetching', { status: 'success' });
     }, []);
 
-    const storeProfiles = useCallback(async (schemas: ProfileRecord[]) => {
+    const storeProfiles = useCallback(async (profiles: ProfileRecord[]) => {
         emitEvent('storing', { status: 'started' });
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
         await window.dborg.path.ensureDir(dataPath);
@@ -152,7 +152,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 }
             }
         }
-        await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(schemas, null, 2));
+        await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(profiles, null, 2));
         emitEvent('storing', { status: 'success' });
     }, []);
 
@@ -189,9 +189,9 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return true;
     }, []);
 
-    const checkExistingConnection = useCallback(async (schemaId: string): Promise<boolean> => {
+    const checkExistingConnection = useCallback(async (profileId: string): Promise<boolean> => {
         const existingConnection = (await connections.list()).find(
-            (conn) => (conn.userData?.schema as ProfileRecord)?.sch_id === schemaId
+            (conn) => (conn.userData?.profile as ProfileRecord)?.sch_id === profileId
         );
 
         if (existingConnection) {
@@ -199,7 +199,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 t(
                     "connection-already-established",
                     'A connection to "{{name}}" is already established. Do you want to continue?',
-                    { name: (existingConnection.userData.schema as ProfileRecord).sch_name }
+                    { name: (existingConnection.userData.profile as ProfileRecord).sch_name }
                 ),
                 {
                     severity: "warning",
@@ -214,25 +214,25 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return true; // Brak istniejącego połączenia, można kontynuować
     }, [connections]);
 
-    const connectToDatabase = useCallback(async (schemaId: string) => {
-        const schema = getProfile(schemaId)!;
+    const connectToDatabase = useCallback(async (profileId: string) => {
+        const profile = getProfile(profileId)!;
 
-        emitEvent("connecting", { schema, status: "started" });
+        emitEvent("connecting", { profile, status: "started" });
 
-        const confirm = await checkExistingConnection(schemaId);
+        const confirm = await checkExistingConnection(profileId);
         if (!confirm) {
-            emitEvent("connecting", { schema, status: "cancel" });
+            emitEvent("connecting", { profile, status: "cancel" });
             return;
         }
 
-        const driverId = schema.sch_drv_unique_id as string;
-        const properties = schema.sch_properties;
-        const usePassword = schema.sch_use_password as ProfileUsePasswordType;
+        const driverId = profile.sch_drv_unique_id as string;
+        const properties = profile.sch_properties;
+        const usePassword = profile.sch_use_password as ProfileUsePasswordType;
         const passwordProperty = drivers.find(driverId)?.passwordProperty;
 
         const passwordHandled = await passwordPrompt(usePassword, passwordProperty, properties);
         if (!passwordHandled) {
-            emitEvent("connecting", { schema, status: "cancel" });
+            emitEvent("connecting", { profile, status: "cancel" });
             return;
         }
 
@@ -242,55 +242,55 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         catch (error) {
             addToast("error",
-                t("profile-connection-error", "Failed to connect to {{name}}!", { name: schema.sch_name }),
+                t("profile-connection-error", "Failed to connect to {{name}}!", { name: profile.sch_name }),
                 { source: t("profile-context", "Profile context"), reason: error }
             );
-            emitEvent("connecting", { schema, status: "error", error });
+            emitEvent("connecting", { profile, status: "error", error });
             throw error;
         }
-        schema.sch_last_selected = DateTime.now().toSQL();
-        schema.sch_db_version = connection.version;
-        schema.sch_updated = DateTime.now().toSQL();
-        connections.userData.set(connection.uniqueId, "schema", schema);
-        connection.userData.schema = schema;
+        profile.sch_last_selected = DateTime.now().toSQL();
+        profile.sch_db_version = connection.version;
+        profile.sch_updated = DateTime.now().toSQL();
+        connections.userData.set(connection.uniqueId, "profile", profile);
+        connection.userData.profile = profile;
         setProfiles((prev) => {
-            const otherSchemas = prev.filter((s) => s.sch_id !== schemaId);
-            return [...otherSchemas, schema];
+            const otherProfiles = prev.filter((s) => s.sch_id !== profileId);
+            return [...otherProfiles, profile];
         });
-        emitEvent("connecting", { schema, status: "success", connection });
+        emitEvent("connecting", { profile, status: "success", connection });
         return connection;
     }, [drivers, connections]);
 
     const disconnectSession = useCallback(async (uniqueId: string) => {
-        const schema = (await connections.userData.get(uniqueId, "schema")) as ProfileRecord;
-        emitEvent("disconnecting", { schema, status: "started", connectionUniqueId: uniqueId });
+        const profile = (await connections.userData.get(uniqueId, "profile")) as ProfileRecord;
+        emitEvent("disconnecting", { profile: profile, status: "started", connectionUniqueId: uniqueId });
         try {
             await connections.close(uniqueId);
-            emitEvent("disconnecting", { schema, status: "success", connectionUniqueId: uniqueId });
+            emitEvent("disconnecting", { profile: profile, status: "success", connectionUniqueId: uniqueId });
         }
         catch (error) {
-            emitEvent("disconnecting", { schema, status: "error", connectionUniqueId: uniqueId, error });
+            emitEvent("disconnecting", { profile: profile, status: "error", connectionUniqueId: uniqueId, error });
             throw error;
         }
     }, [connections]);
 
-    const disconnectProfile = useCallback(async (schemaId: string) => {
+    const disconnectProfile = useCallback(async (profileId: string) => {
         const allConnections = (await connections.list()).filter(
-            (conn) => (conn.userData?.schema as ProfileRecord)?.sch_id === schemaId
+            (conn) => (conn.userData?.profile as ProfileRecord)?.sch_id === profileId
         );
         for (const conn of allConnections) {
             disconnectSession(conn.uniqueId);
         }
     }, [connections]);
 
-    const testConnection = useCallback(async (driverUniqueId: string, usePassword: ProfileUsePasswordType, properties: Properties, schemaName: string) => {
-        const schema = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: schemaName, sch_properties: properties };
+    const testConnection = useCallback(async (driverUniqueId: string, usePassword: ProfileUsePasswordType, properties: Properties, profileName: string) => {
+        const profile = { sch_id: "", sch_drv_unique_id: driverUniqueId, sch_name: profileName, sch_properties: properties };
         try {
-            emitEvent("testing", { schema, status: "started" });
+            emitEvent("testing", { profile: profile, status: "started" });
             const passwordProperty = drivers.find(driverUniqueId)?.passwordProperty;
             const passwordHandled = await passwordPrompt(usePassword, passwordProperty, properties);
             if (!passwordHandled) {
-                emitEvent("testing", { schema, status: "cancel" });
+                emitEvent("testing", { profile: profile, status: "cancel" });
                 return;
             }
 
@@ -298,58 +298,58 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             await connections.close(connection.uniqueId);
 
             addToast("success",
-                t("profile-test-success", "Connection \"{{name}}\" is valid.", { name: schemaName }),
+                t("profile-test-success", "Connection \"{{name}}\" is valid.", { name: profileName }),
                 { source: t("profile-context", "Profile context") }
             );
-            emitEvent("testing", { schema, status: "success" });
+            emitEvent("testing", { profile: profile, status: "success" });
 
             return true;
         }
         catch (error) {
             addToast("error",
-                t("profile-test-error", "An error occurred while testing the profile connection \"{{name}}\".", { name: schemaName }),
+                t("profile-test-error", "An error occurred while testing the profile connection \"{{name}}\".", { name: profileName }),
                 { source: t("profile-context", "Profile context"), reason: error }
             );
-            emitEvent("testing", { schema, status: "error", error });
+            emitEvent("testing", { profile: profile, status: "error", error });
             throw error;
         }
     }, [drivers, connections]);
 
-    const normalizeOrder = useCallback((schemas: ProfileRecord[]) => {
-        return schemas
+    const normalizeOrder = useCallback((profiles: ProfileRecord[]) => {
+        return profiles
             .slice()
             .sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0))
-            .map((schema, index) => ({
-                ...schema,
+            .map((profile, index) => ({
+                ...profile,
                 sch_order: index + 1,
                 sch_updated: DateTime.now().toSQL(),
             }));
     }, []);
 
-    const deleteProfile = useCallback(async (schemaId: string) => {
-        const schema = getProfile(schemaId)!;
+    const deleteProfile = useCallback(async (profileId: string) => {
+        const profile = getProfile(profileId)!;
         if (await dialogs.confirm(
-            t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: schema.sch_name }),
+            t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: profile.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
-            setProfiles(prev => normalizeOrder(prev.filter(s => s.sch_id !== schemaId)));
+            setProfiles(prev => normalizeOrder(prev.filter(s => s.sch_id !== profileId)));
             return true;
         }
         return false;
     }, []);
 
     /**
-     * Check if a schema with the same name already exists.
-     * @param schemaName The name of the schema to check.
-     * @param schemaId The ID of the schema to exclude from the check.
-     * @returns True if the schema does not exist or the user confirms to continue.
+     * Check if a profile with the same name already exists.
+     * @param profileName The name of the profile to check.
+     * @param profileId The ID of the profile to exclude from the check.
+     * @returns True if the profile does not exist or the user confirms to continue.
      */
-    const checkSchemaExists = useCallback(async (schemaName: string, schemaId?: string): Promise<boolean> => {
-        const schema = profilesRef.current.find(s => s.sch_name === schemaName && s.sch_id !== schemaId);
+    const checkProfileExists = useCallback(async (profileName: string, profileId?: string): Promise<boolean> => {
+        const profile = profilesRef.current.find(s => s.sch_name === profileName && s.sch_id !== profileId);
 
-        if (schema) {
+        if (profile) {
             const confirm = await dialogs.confirm(
-                t("schema-exists-q", 'Schema "{{name}}" already exists. Do you want to continue?', { name: schemaName }),
+                t("profile-exists-q", 'Profile "{{name}}" already exists. Do you want to continue?', { name: profileName }),
                 { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
             );
             return confirm;
@@ -359,80 +359,80 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     /**
-     * Remove the password property from the schema if the password is not saved.
-     * @param schema The schema to check.
-     * @param schema.sch_use_password The password usage type.
-     * @param schema.sch_properties The schema properties.
-     * @param schema.sch_drv_unique_id The driver unique ID.
-     * @returns The schema without the password property if the password is not saved.
+     * Remove the password property from the profile if the password is not saved.
+     * @param profile The profile to check.
+     * @param profile.sch_use_password The password usage type.
+     * @param profile.sch_properties The profile properties.
+     * @param profile.sch_drv_unique_id The driver unique ID.
+     * @returns The profile without the password property if the password is not saved.
      */
-    const passwordRetention = useCallback((schema: Pick<ProfileRecord, "sch_use_password" | "sch_properties" | "sch_drv_unique_id">) => {
-        const passwordProperty = drivers.find(schema.sch_drv_unique_id)?.passwordProperty;
-        if (schema.sch_use_password !== "save" && passwordProperty) {
-            delete schema.sch_properties?.[passwordProperty];
+    const passwordRetention = useCallback((profile: Pick<ProfileRecord, "sch_use_password" | "sch_properties" | "sch_drv_unique_id">) => {
+        const passwordProperty = drivers.find(profile.sch_drv_unique_id)?.passwordProperty;
+        if (profile.sch_use_password !== "save" && passwordProperty) {
+            delete profile.sch_properties?.[passwordProperty];
         }
     }, [drivers]);
 
     /**
-     * Create a new schema.
-     * @param schema The schema to create.
-     * @returns The ID of the created schema.
+     * Create a new profile.
+     * @param profile The profile to create.
+     * @returns The ID of the created profile.
      */
-    const createProfile = useCallback(async (schema: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
-        emitEvent('creating', { schema: schema as ProfileRecord, status: 'started' });
-        if (!(await checkSchemaExists(schema.sch_name))) {
-            emitEvent('creating', { schema: schema as ProfileRecord, status: 'cancel' });
+    const createProfile = useCallback(async (profile: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+        emitEvent('creating', { profile: profile as ProfileRecord, status: 'started' });
+        if (!(await checkProfileExists(profile.sch_name))) {
+            emitEvent('creating', { profile: profile as ProfileRecord, status: 'cancel' });
             return;
         }
-        passwordRetention(schema);
+        passwordRetention(profile);
 
         const uniqueId = uuidv7();
-        const newSchema: ProfileRecord = {
-            ...schema,
+        const newProfile: ProfileRecord = {
+            ...profile,
             sch_id: uniqueId,
             sch_created: DateTime.now().toSQL(),
             sch_updated: DateTime.now().toSQL(),
             sch_order: Infinity,
         };
-        setProfiles((prev) => normalizeOrder([...prev, newSchema]));
-        emitEvent('creating', { schema: newSchema, status: 'success' });
+        setProfiles((prev) => normalizeOrder([...prev, newProfile]));
+        emitEvent('creating', { profile: newProfile, status: 'success' });
         return uniqueId;
     }, [passwordRetention]);
 
     /**
-     * Update an existing schema.
-     * @param schema The schema to update.
+     * Update an existing profile.
+     * @param profile The profile to update.
      * @returns True if the update was successful, false otherwise.
      */
-    const updateProfile = useCallback(async (schema: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
-        const existsSchema = getProfile(schema.sch_id)!;
+    const updateProfile = useCallback(async (profile: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+        const existsProfile = getProfile(profile.sch_id)!;
 
-        emitEvent('updating', { schema: existsSchema as ProfileRecord, status: 'started' });
-        if (!(await checkSchemaExists(schema.sch_name, schema.sch_id))) {
-            emitEvent('updating', { schema: existsSchema as ProfileRecord, status: 'cancel' });
+        emitEvent('updating', { profile: existsProfile as ProfileRecord, status: 'started' });
+        if (!(await checkProfileExists(profile.sch_name, profile.sch_id))) {
+            emitEvent('updating', { profile: existsProfile as ProfileRecord, status: 'cancel' });
             return false;
         }
-        passwordRetention(schema);
+        passwordRetention(profile);
 
-        const updatedSchema: ProfileRecord = {
-            ...existsSchema,
-            ...schema,
+        const updatedProfile: ProfileRecord = {
+            ...existsProfile,
+            ...profile,
             sch_updated: DateTime.now().toSQL(),
         };
         setProfiles((prev) =>
-            prev.map((schema) => (schema.sch_id === updatedSchema.sch_id ? updatedSchema : schema)) // Zaktualizuj schemat w liście
+            prev.map((profile) => (profile.sch_id === updatedProfile.sch_id ? updatedProfile : profile)) // Zaktualizuj profil w liście
         );
-        emitEvent('updating', { schema: updatedSchema, status: 'success' });
+        emitEvent('updating', { profile: updatedProfile, status: 'success' });
         return true;
     }, [passwordRetention]);
 
-    const swapProfilesOrder = useCallback(async (sourceSchemaId: string, targetSchemaId: string, group?: boolean) => {
+    const swapProfilesOrder = useCallback(async (sourceProfileId: string, targetProfileId: string, group?: boolean) => {
         if (!profilesRef.current) {
             return;
         }
 
-        const sourceIndex = profilesRef.current.findIndex(s => s.sch_id === sourceSchemaId);
-        const targetIndex = profilesRef.current.findIndex(s => s.sch_id === targetSchemaId);
+        const sourceIndex = profilesRef.current.findIndex(s => s.sch_id === sourceProfileId);
+        const targetIndex = profilesRef.current.findIndex(s => s.sch_id === targetProfileId);
         if (sourceIndex === -1 || targetIndex === -1) {
             throw new Error(t("profile-not-found", "Profile not found!"));
         }
@@ -444,36 +444,36 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (group) {
             setProfiles(prev => {
-                const newSchemas = prev.slice().sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0));
-                const sourceGroup = newSchemas[sourceIndex].sch_group;
-                const targetGroup = newSchemas[targetIndex].sch_group;
-                for (let i = 0; i < newSchemas.length; i++) {
-                    if (newSchemas[i].sch_group === sourceGroup) {
-                        newSchemas[i].sch_order = targetOrder;
-                        newSchemas[i].sch_updated = DateTime.now().toSQL();
+                const newProfiles = prev.slice().sort((a, b) => (a.sch_order ?? 0) - (b.sch_order ?? 0));
+                const sourceGroup = newProfiles[sourceIndex].sch_group;
+                const targetGroup = newProfiles[targetIndex].sch_group;
+                for (let i = 0; i < newProfiles.length; i++) {
+                    if (newProfiles[i].sch_group === sourceGroup) {
+                        newProfiles[i].sch_order = targetOrder;
+                        newProfiles[i].sch_updated = DateTime.now().toSQL();
                         targetOrder += 0.001;
-                    } else if (newSchemas[i].sch_group === targetGroup) {
-                        newSchemas[i].sch_order = sourceOrder;
-                        newSchemas[i].sch_updated = DateTime.now().toSQL();
+                    } else if (newProfiles[i].sch_group === targetGroup) {
+                        newProfiles[i].sch_order = sourceOrder;
+                        newProfiles[i].sch_updated = DateTime.now().toSQL();
                         sourceOrder += 0.001;
                     }
                 }
-                return normalizeOrder(newSchemas);
+                return normalizeOrder(newProfiles);
             });
         }
         else {
             setProfiles(prev => {
-                const newSchemas = prev.slice();
-                newSchemas[sourceIndex].sch_order = targetOrder;
-                newSchemas[sourceIndex].sch_updated = DateTime.now().toSQL();
-                newSchemas[targetIndex].sch_order = sourceOrder;
-                newSchemas[targetIndex].sch_updated = DateTime.now().toSQL();
-                return newSchemas;
+                const newProfiles = prev.slice();
+                newProfiles[sourceIndex].sch_order = targetOrder;
+                newProfiles[sourceIndex].sch_updated = DateTime.now().toSQL();
+                newProfiles[targetIndex].sch_order = sourceOrder;
+                newProfiles[targetIndex].sch_updated = DateTime.now().toSQL();
+                return newProfiles;
             });
         }
     }, []);
 
-    console.count("SchemaProvider render");
+    console.count("ProfilesProvider render");
 
     return (
         <ProfilesContext.Provider

@@ -113,7 +113,7 @@ const tableIndexesTab = (
                         width: 350,
                     },
                 ] as ColumnDefinition[],
-                autoSaveId: "table-indexes-grid-" + session.schema.sch_id,
+                autoSaveId: "table-indexes-grid-" + session.profile.sch_id,
             } as IGridSlot),
         }
     };

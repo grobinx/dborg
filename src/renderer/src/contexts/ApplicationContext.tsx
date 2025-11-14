@@ -249,7 +249,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setTimeout(() => {
             queueMessage(Messages.SESSION_GET_METADATA_START, {
                 connectionId: session.info.uniqueId,
-                schema: session.schema,
+                profile: session.profile,
             } as Messages.SessionGetMetadataStart);
 
             session.getMetadata((current) => {
@@ -270,7 +270,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 } as Messages.SessionGetMetadataError);
                 addToast("error", "Error loading metadata", {
                     reason: error,
-                    source: session.schema.sch_name,
+                    source: session.profile.sch_name,
                 });
             }).finally(() => {
                 queueMessage(Messages.SESSION_GET_METADATA_END, {
@@ -361,13 +361,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const handleEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
-            queueMessage(Messages.SET_SCHEMA_ID, schemaId);
+            queueMessage(Messages.SET_PROFILE_ID, schemaId);
         });
     }, [sendMessage, queueMessage]);
 
     const handleCloneEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
-            queueMessage(Messages.STE_CLONE_SCHEMA_ID, schemaId);
+            queueMessage(Messages.STE_CLONE_PROFILE_ID, schemaId);
         });
     }, [sendMessage, queueMessage]);
 
@@ -428,16 +428,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
         subscribe(Messages.SWITCH_VIEW, handleSwitchView);
-        subscribe(Messages.EDIT_SCHEMA, handleEditSchema);
-        subscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
+        subscribe(Messages.EDIT_PROFILE, handleEditSchema);
+        subscribe(Messages.CLONE_EDIT_PROFILE, handleCloneEditSchema);
         subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
         subscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
             unsubscribe(Messages.SWITCH_VIEW, handleSwitchView);
-            unsubscribe(Messages.EDIT_SCHEMA, handleEditSchema);
-            unsubscribe(Messages.CLONE_EDIT_SCHEMA, handleCloneEditSchema);
+            unsubscribe(Messages.EDIT_PROFILE, handleEditSchema);
+            unsubscribe(Messages.CLONE_EDIT_PROFILE, handleCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
             unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
             offDisconnecting();

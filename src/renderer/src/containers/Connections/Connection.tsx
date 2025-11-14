@@ -50,7 +50,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { queueMessage } = useMessages();
 
     // Utwórz instancję EditorContentManager
-    const editorContentManager = React.useMemo(() => new EditorContentManager(session.schema.sch_id), [session.schema.sch_id]);
+    const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
 
     // Przechowuj utworzone widoki w stanie
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
@@ -112,7 +112,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
         <StyledConnection className="Connection-root" {...other}>
             <SplitPanelGroup
                 direction="horizontal"
-                autoSaveId={`connection-panel-left-${session.schema.sch_id}`}
+                autoSaveId={`connection-panel-left-${session.profile.sch_id}`}
             >
                 <SplitPanel defaultSize={20} hidden={!selectedThis}>
                     {Object.entries(sideViewsMap).map(([id, node]) => (
@@ -130,7 +130,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 </SplitPanel>
                 <Splitter hidden={!selectedThis} />
                 <SplitPanel>
-                    <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.schema.sch_id}`}>
+                    <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.profile.sch_id}`}>
                         <SplitPanel>
                             <EditorsTabs
                                 session={session}
@@ -261,7 +261,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
             ) : (
                 <theme.icons.Disconnected /> // Wyświetl ikonę Disconnected, gdy połączenie jest nieaktywne
             )}
-            <span style={{ color: session.schema.sch_color }}>{session.schema.sch_name}</span>
+            <span style={{ color: session.profile.sch_color }}>{session.profile.sch_name}</span>
         </TabPanelLabel>
     );
 };

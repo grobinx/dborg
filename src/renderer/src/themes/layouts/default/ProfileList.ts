@@ -1,10 +1,9 @@
 import { alpha, Palette, ThemeOptions } from "@mui/material";
-import zIndex from "@mui/material/styles/zIndex";
-import { SchemaListComponent } from "@renderer/themes/theme.d/SchemaList";
+import { ProfileListComponent } from "@renderer/themes/theme.d/ProfileList";
 import { themeColors } from "@renderer/types/colors";
 import { blendColors } from "@renderer/utils/colors";
 
-export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaListComponent => {
+export const ProfileListLayout = (palette: Palette, _root: ThemeOptions): ProfileListComponent => {
     return {
         styleOverrides: {
             container: {
@@ -124,18 +123,21 @@ export const SchemaListLayout = (palette: Palette, _root: ThemeOptions): SchemaL
                 alignItems: 'center',
                 width: '4rem',
                 fontSize: '1.4rem',
+                '& .connected': {
+                    filter: 'drop-shadow(0 0 4px ' + palette.success.main + ') drop-shadow(0 0 8px ' + palette.success.light + ')',
+                }
             },
             actionButtons: {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: 4,
                 visibility: "hidden",
-                '&.selected, .SchemaList-item:hover &': {
+                '&.selected, .ProfileList-item:hover &': {
                     '&:not(.sort-buttons)': {
                         visibility: "visible",
                     }
                 },
-                '.SchemaList-item:hover &': {
+                '.ProfileList-item:hover &': {
                     '&.sort-buttons': {
                         visibility: "visible",
                     }

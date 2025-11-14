@@ -27,10 +27,10 @@ import clsx from "@renderer/utils/clsx";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
 import { keyboardState } from "@renderer/utils/keyboardState";
 
-const Store_SchemaList_groupList = "schemaListGroupList"; // Define the key for session storage
-const Store_SchemaList_sortList = "schemaListSortList"; // Define the key for session storage
+const Store_ProfileList_groupList = "profileListGroupList"; // Define the key for session storage
+const Store_ProfileList_sortList = "profileListSortList"; // Define the key for session storage
 
-interface Schema extends ProfileRecord {
+interface Profile extends ProfileRecord {
     driverName?: string;
     driverIcon?: string;
     connected?: number;
@@ -41,31 +41,31 @@ interface GroupHeader {
     first_sch_id?: string;
 }
 
-const isGroupHeader = (item: Schema | GroupHeader): item is GroupHeader => {
+const isGroupHeader = (item: Profile | GroupHeader): item is GroupHeader => {
     return typeof item === "object" && "title" in item;
 };
 
-const isSchema = (item: Schema | GroupHeader): item is Schema => {
+const isProfile = (item: Profile | GroupHeader): item is Profile => {
     return typeof item === "object" && "sch_id" in item && "driverName" in item;
 };
 
-export interface SchemaListProps extends StackProps {
+export interface ProfileListProps extends StackProps {
 }
 
-interface SchemaListOwnProps extends SchemaListProps {
+interface ProfileListOwnProps extends ProfileListProps {
 }
 
-interface SchemaListContext {
-    connect: (schemaId: string) => void;
-    delete: (schemaId: string) => void;
-    test: (schemaId: string) => void;
-    edit: (schemaId: string) => void;
-    clone: (schemaId: string) => void;
-    disconnect: (schemaId: string) => void;
+interface ProfileListContext {
+    connect: (profileId: string) => void;
+    delete: (profileId: string) => void;
+    test: (profileId: string) => void;
+    edit: (sprofileId: string) => void;
+    clone: (profileId: string) => void;
+    disconnect: (profileId: string) => void;
 }
 
-const SchemaListContainer = styled(Stack, {
-    name: 'SchemaList', // The component name
+const ProfileListContainer = styled(Stack, {
+    name: 'ProfileList', // The component name
     slot: 'container', // The slot name
 })(() => ({
     display: 'flex',
@@ -75,8 +75,8 @@ const SchemaListContainer = styled(Stack, {
     height: "100%",
 }));
 
-const SchemaListContent = styled(Box, {
-    name: 'SchemaList', // The component name
+const ProfileListContent = styled(Box, {
+    name: 'ProfileList', // The component name
     slot: 'content', // The slot name
 })(() => ({
     overflow: "hidden",
@@ -84,61 +84,61 @@ const SchemaListContent = styled(Box, {
     display: "block",
 }));
 
-const SchemaListTitle = styled(Box, {
-    name: 'SchemaList', // The component name
+const ProfileListTitle = styled(Box, {
+    name: 'ProfileList', // The component name
     slot: 'title', // The slot name
 })();
 
-const SchemaListDriverIcon = styled('div', {
-    name: 'SchemaList',
+const ProfileListDriverIcon = styled('div', {
+    name: 'ProfileList',
     slot: 'driverIcon',
 })(() => ({
 }));
 
-const SchemaListStatusIcon = styled('div', {
-    name: 'SchemaList',
+const ProfileListStatusIcon = styled('div', {
+    name: 'ProfileList',
     slot: 'statusIcon',
 })(() => ({
 }));
 
-const SchemaListActionButtons = styled('div', {
-    name: 'SchemaList',
+const ProfileListActionButtons = styled('div', {
+    name: 'ProfileList',
     slot: 'actionButtons',
 })(() => ({
 }));
 
-const SchemaListGroupHeader = styled('div', {
-    name: 'SchemaList',
+const ProfileListGroupHeader = styled('div', {
+    name: 'ProfileList',
     slot: 'groupHeader',
 })(() => ({
 }));
 
-const SchemaListProfile = styled('div', {
-    name: 'SchemaList',
+const ProfileListProfile = styled('div', {
+    name: 'ProfileList',
     slot: 'profile',
 })(() => ({
 }));
 
-const SchemaListGroupName = styled('div', {
-    name: 'SchemaList',
+const ProfileListGroupName = styled('div', {
+    name: 'ProfileList',
     slot: 'groupName',
 })(() => ({
 }));
 
-const SchemaListProfileName = styled('div', {
-    name: 'SchemaList',
+const ProfileListProfileName = styled('div', {
+    name: 'ProfileList',
     slot: 'profileName',
 })(() => ({
 }));
 
-const SchemaListPrimaryText = styled('div', {
-    name: 'SchemaList',
+const ProfileListPrimaryText = styled('div', {
+    name: 'ProfileList',
     slot: 'primaryText',
 })(() => ({
 }));
 
-const SchemaListSecondaryText = styled('div', {
-    name: 'SchemaList',
+const ProfileListSecondaryText = styled('div', {
+    name: 'ProfileList',
     slot: 'secondaryText',
 })(() => ({
 }));
@@ -153,7 +153,7 @@ const editActionId = "profile-list-edit";
 const cloneActionId = "profile-list-clone";
 const disconnectAllActionId = "profile-list-disconnect-all";
 
-const schemaIndexes: Indexes<Schema> = {
+const profileIndexes: Indexes<Profile> = {
     lastUsed: {
         fields: [
             { name: 'sch_last_selected', nullsLast: false, order: 'desc' },
@@ -195,34 +195,34 @@ const schemaIndexes: Indexes<Schema> = {
     },
 };
 
-const schemaGroup: Group<Schema> = {
+const profileGroup: Group<Profile> = {
     fields: [{
         name: 'sch_group',
     }],
     cache: true,
 }
 
-const searchFields: (keyof Schema)[] = ['driverName', 'sch_group', 'sch_name'];
+const searchFields: (keyof Profile)[] = ['driverName', 'sch_group', 'sch_name'];
 
-const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
+const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const { className, ...other } = useThemeProps({ name: 'SchemaList', props });
+    const { className, ...other } = props;
     const [searchDelay] = useSetting<number>("app", "search.delay");
-    const [groupList, setGroupList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_groupList) ?? "false"));
-    const [sortList, setSortList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_SchemaList_sortList) ?? "false"));
+    const [groupList, setGroupList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_ProfileList_groupList) ?? "false"));
+    const [sortList, setSortList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_ProfileList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
-    const { initialized, profiles, getProfile: getSchema, disconnectProfile: disconnectFromAllDatabases, reloadProfiles: reloadSchemas, connectToDatabase, testConnection, deleteProfile: deleteSchema, swapProfilesOrder: swapSchemasOrder } = useProfiles();
+    const { initialized, profiles, getProfile, disconnectProfile, reloadProfiles, connectToDatabase, testConnection, deleteProfile, swapProfilesOrder } = useProfiles();
     const { sessions } = useApplicationContext();
-    const [data, setData] = React.useState<Schema[] | null>(null);
-    const sortedData = useSort(data, schemaIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
+    const [data, setData] = React.useState<Profile[] | null>(null);
+    const sortedData = useSort(data, profileIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [searchedData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
-    const groupedData = useGroup(sortedData, schemaGroup);
+    const groupedData = useGroup(sortedData, profileGroup);
     const displayData = React.useMemo(() => {
         if (!groupList || !searchedData) {
             return searchedData;
         }
-        const resultData: (Schema | GroupHeader)[] = [];
+        const resultData: (Profile | GroupHeader)[] = [];
         let group: string | undefined = undefined;
         const undefinedGroup = t("ungrouped", "Ungrouped");
         searchedData?.forEach((item) => {
@@ -242,7 +242,7 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
     const [erroring, setErroring] = React.useState<string[]>([]);
     const [deleting, setDeleting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
-    const actions = React.useRef<ActionManager<SchemaListContext>>(new ActionManager());
+    const actions = React.useRef<ActionManager<ProfileListContext>>(new ActionManager());
     const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation({
         items: searchedData ?? [],
         getId: (item) => item.sch_id,
@@ -253,10 +253,9 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
     const [openCommandPalette, setOpenCommandPalette] = React.useState(false);
     const searchRef = React.useRef<HTMLInputElement>(null);
 
-    console.count("SchemaList render");
-    //console.log('initialized', initialized, 'schemas', schemas?.length, 'data', data?.length, 'sortedData', sortedData?.length, 'searchedData', searchedData?.length, 'displayData', displayData?.length);
+    console.count("ProfileList render");
 
-    const t_connectionSchema = t("connection-profiles", "Connection profiles");
+    const t_connectionProfile = t("connection-profiles", "Connection profiles");
 
     React.useEffect(() => {
         actions.current.registerAction({
@@ -265,7 +264,7 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
             keybindings: ["F5"],
             icon: "Refresh",
             run: () => {
-                reloadSchemas();
+                reloadProfiles();
             }
         }, {
             id: groupActionId,
@@ -290,89 +289,89 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
             label: t("connect-to-database", "Connect to database"),
             keybindings: ["Enter"],
             icon: "Connected",
-            run: (context, schemaId) => {
-                context.connect(schemaId);
+            run: (context, profileId) => {
+                context.connect(profileId);
             }
         }, {
             id: deleteActionId,
             label: t("delete-profile", "Delete profile"),
             keybindings: ["F8"],
             icon: "Delete",
-            run: (context, schemaId) => {
-                context.delete(schemaId);
+            run: (context, profileId) => {
+                context.delete(profileId);
             },
         }, {
             id: testActionId,
             label: t("test-connection", "Test connection"),
             keybindings: ["Ctrl+T"],
             icon: "ConnectionTest",
-            run: (context, schemaId) => {
-                context.test(schemaId);
+            run: (context, profileId) => {
+                context.test(profileId);
             }
         }, {
             id: editActionId,
             label: t("edit-profile", "Edit profile"),
             keybindings: ["Ctrl+E"],
             icon: "EditConnectionSchema",
-            run: (context, schemaId) => {
-                context.edit(schemaId);
+            run: (context, profileId) => {
+                context.edit(profileId);
             }
         }, {
             id: cloneActionId,
             label: t("clone-profile", "Clone profile"),
             keybindings: ["Ctrl+Shift+C"],
             icon: "CloneConnectionSchema",
-            run: (context, schemaId) => {
-                context.clone(schemaId);
+            run: (context, profileId) => {
+                context.clone(profileId);
             }
         }, {
             id: disconnectAllActionId,
-            label: (_context, _schemaId, connected) => {
+            label: (_context, _profileId, connected) => {
                 return (connected ?? 0) > 1 ?
                     t("disconnect-multiple", "Disconnect all connections to database")
                     : t("disconnect", "Disconnect from database")
             },
             keybindings: ["Ctrl+D"],
             icon: "Disconnected",
-            run: (context, schemaId) => {
-                context.disconnect(schemaId);
+            run: (context, profileId) => {
+                context.disconnect(profileId);
             },
-            visible: (_context, _schemaId, connected) => (connected ?? 0) > 0,
+            visible: (_context, _profileId, connected) => (connected ?? 0) > 0,
         });
     }, []);
 
-    const context: SchemaListContext = {
-        connect: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                handleConnect((schemaId ?? selectedItem) as string);
+    const context: ProfileListContext = {
+        connect: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                handleConnect((profileId ?? selectedItem) as string);
             }
         },
-        delete: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                handleDelete((schemaId ?? selectedItem) as string);
+        delete: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                handleDelete((profileId ?? selectedItem) as string);
             }
         },
-        test: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                const record = getSchema((schemaId ?? selectedItem) as string);
+        test: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                const record = getProfile((profileId ?? selectedItem) as string);
                 if (record) {
                     handleTestConnection(record);
                 }
             }
         },
-        edit: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                queueMessage(Messages.EDIT_SCHEMA, (schemaId ?? selectedItem) as string);
+        edit: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                queueMessage(Messages.EDIT_PROFILE, (profileId ?? selectedItem) as string);
             }
         },
-        clone: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                queueMessage(Messages.CLONE_EDIT_SCHEMA, (schemaId ?? selectedItem) as string);
+        clone: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                queueMessage(Messages.CLONE_EDIT_PROFILE, (profileId ?? selectedItem) as string);
             }
         },
-        disconnect: (schemaId?: string) => {
-            if ((schemaId ?? selectedItem) != null) {
-                handleDisconnectAll((schemaId ?? selectedItem) as string);
+        disconnect: (profileId?: string) => {
+            if ((profileId ?? selectedItem) != null) {
+                handleDisconnectAll((profileId ?? selectedItem) as string);
             }
         }
     };
@@ -387,10 +386,10 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
             const connectionList = await connections.list();
             const counts: Record<string, number> = {};
             (connectionList ?? []).forEach(conn => {
-                const id = String((conn.userData?.schema as ProfileRecord)?.sch_id ?? "");
+                const id = String((conn.userData?.profile as ProfileRecord)?.sch_id ?? "");
                 if (id) counts[id] = (counts[id] ?? 0) + 1;
             });
-            const updated: Schema[] = profiles.map(record => {
+            const updated: Profile[] = profiles.map(record => {
                 const driver = drivers.find(record.sch_drv_unique_id as string);
                 return {
                     ...record,
@@ -405,120 +404,120 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
     }, [groupList, sortList, profiles, sessions, drivers, connections]);
 
     React.useEffect(() => {
-        window.localStorage.setItem(Store_SchemaList_groupList, JSON.stringify(groupList));
+        window.localStorage.setItem(Store_ProfileList_groupList, JSON.stringify(groupList));
     }, [groupList]);
 
     React.useEffect(() => {
-        window.localStorage.setItem(Store_SchemaList_sortList, JSON.stringify(sortList));
+        window.localStorage.setItem(Store_ProfileList_sortList, JSON.stringify(sortList));
     }, [sortList]);
 
     const handleDelete = async (id: string) => {
         setDeleting((prev) => [...prev, id]);
         try {
-            await deleteSchema(id);
+            await deleteProfile(id);
         } catch (error) {
             addToast("error",
-                t("schema-delete-error", "Failed to delete the connection schema!"),
-                { source: t_connectionSchema, reason: error }
+                t("profile-delete-error", "Failed to delete the connection profile!"),
+                { source: t_connectionProfile, reason: error }
             );
         } finally {
-            setDeleting((prev) => prev.filter((schemaId) => schemaId !== id));
+            setDeleting((prev) => prev.filter((profileId) => profileId !== id));
         }
     };
 
-    // Function to handle testing the schema connection
-    const handleTestConnection = async (schema: Schema) => {
-        setTesting((prev) => [...prev, schema.sch_id]);
+    // Function to handle testing the profile connection
+    const handleTestConnection = async (profile: Profile) => {
+        setTesting((prev) => [...prev, profile.sch_id]);
         try {
-            await testConnection(schema.sch_drv_unique_id, schema.sch_use_password, schema.sch_properties, schema.sch_name);
+            await testConnection(profile.sch_drv_unique_id, profile.sch_use_password, profile.sch_properties, profile.sch_name);
         } catch (error) {
-            setErroring((prev) => [...prev, schema.sch_id]);
+            setErroring((prev) => [...prev, profile.sch_id]);
         } finally {
-            setTesting((prev) => prev.filter((id) => id !== schema.sch_id));
+            setTesting((prev) => prev.filter((id) => id !== profile.sch_id));
         }
     };
 
-    const handleConnect = async (schemaId: string) => {
-        setConnecting((prev) => [...prev, schemaId]);
-        setErroring((prev) => prev.filter((id) => id !== schemaId));
+    const handleConnect = async (profileId: string) => {
+        setConnecting((prev) => [...prev, profileId]);
+        setErroring((prev) => prev.filter((id) => id !== profileId));
         try {
-            await connectToDatabase(schemaId);
+            await connectToDatabase(profileId);
         } catch (error) {
-            setErroring((prev) => [...prev, schemaId]);
+            setErroring((prev) => [...prev, profileId]);
         } finally {
-            setConnecting((prev) => prev.filter((id) => id !== schemaId));
+            setConnecting((prev) => prev.filter((id) => id !== profileId));
         }
     };
 
-    const handleDisconnectAll = async (schemaId: string) => {
-        setDisconnecting((prev) => [...prev, schemaId]);
+    const handleDisconnectAll = async (profileId: string) => {
+        setDisconnecting((prev) => [...prev, profileId]);
         try {
-            await disconnectFromAllDatabases(schemaId);
+            await disconnectProfile(profileId);
         } catch (error) {
             addToast("error",
-                t("schema-disconnect-error", "Failed to disconnect from database!"),
+                t("profile-disconnect-error", "Failed to disconnect from database!"),
                 { reason: error }
             );
-            setErroring((prev) => [...prev, schemaId]);
+            setErroring((prev) => [...prev, profileId]);
         } finally {
-            setDisconnecting((prev) => prev.filter((id) => id !== schemaId));
+            setDisconnecting((prev) => prev.filter((id) => id !== profileId));
         }
     };
 
-    const moveDown = React.useCallback((schemaId: string) => {
-        if (!searchedData || searchedData.length === 0 || !schemaId) return;
+    const moveDown = React.useCallback((profileId: string) => {
+        if (!searchedData || searchedData.length === 0 || !profileId) return;
 
-        const currentIndex = searchedData.findIndex((schema) => schema.sch_id === schemaId);
+        const currentIndex = searchedData.findIndex((profile) => profile.sch_id === profileId);
         const nextIndex = currentIndex + 1;
 
         if (nextIndex < searchedData.length) {
-            const nextSchema = searchedData[nextIndex];
-            if (groupList && (nextSchema.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
+            const nextProfile = searchedData[nextIndex];
+            if (groupList && (nextProfile.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
-            swapSchemasOrder(schemaId, nextSchema.sch_id);
+            swapProfilesOrder(profileId, nextProfile.sch_id);
         }
-    }, [searchedData, groupList, swapSchemasOrder]);
+    }, [searchedData, groupList, swapProfilesOrder]);
 
-    const moveUp = React.useCallback((schemaId: string) => {
-        if (!searchedData || searchedData.length === 0 || !schemaId) return;
+    const moveUp = React.useCallback((profileId: string) => {
+        if (!searchedData || searchedData.length === 0 || !profileId) return;
 
-        const currentIndex = searchedData.findIndex((schema) => schema.sch_id === schemaId);
+        const currentIndex = searchedData.findIndex((profile) => profile.sch_id === profileId);
         const previousIndex = currentIndex - 1;
         if (previousIndex >= 0) {
-            const previousSchema = searchedData[previousIndex];
-            if (groupList && (previousSchema.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
+            const previousProfile = searchedData[previousIndex];
+            if (groupList && (previousProfile.sch_group ?? "ungrouped") !== (searchedData[currentIndex].sch_group ?? "ungrouped")) {
                 return; // Prevent moving to a different group
             }
-            swapSchemasOrder(schemaId, previousSchema.sch_id);
+            swapProfilesOrder(profileId, previousProfile.sch_id);
         }
-    }, [searchedData, groupList, swapSchemasOrder]);
+    }, [searchedData, groupList, swapProfilesOrder]);
 
-    const moveGroupUp = React.useCallback((schemaId: string) => {
-        if (!groupedData || groupedData.length === 0 || !schemaId) return;
+    const moveGroupUp = React.useCallback((profileId: string) => {
+        if (!groupedData || groupedData.length === 0 || !profileId) return;
 
-        const currentIndex = groupedData.findIndex(group => group.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.some(profile => profile.sch_id === profileId));
         const previousIndex = currentIndex - 1;
         if (previousIndex >= 0) {
             const currentGroup = groupedData[currentIndex];
             const previousGroup = groupedData[previousIndex];
-            swapSchemasOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
+            swapProfilesOrder(currentGroup[0].sch_id, previousGroup[0].sch_id, true);
         }
-    }, [groupedData, swapSchemasOrder]);
+    }, [groupedData, swapProfilesOrder]);
 
-    const moveGroupDown = React.useCallback((schemaId: string) => {
-        if (!groupedData || groupedData.length === 0 || !schemaId) return;
+    const moveGroupDown = React.useCallback((profileId: string) => {
+        if (!groupedData || groupedData.length === 0 || !profileId) return;
 
-        const currentIndex = groupedData.findIndex(group => group.some(schema => schema.sch_id === schemaId));
+        const currentIndex = groupedData.findIndex(group => group.some(profile => profile.sch_id === profileId));
         const nextIndex = currentIndex + 1;
         if (nextIndex < groupedData.length) {
             const currentGroup = groupedData[currentIndex];
             const nextGroup = groupedData[nextIndex];
-            swapSchemasOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
+            swapProfilesOrder(currentGroup[0].sch_id, nextGroup[0].sch_id, true);
         }
-    }, [groupedData, swapSchemasOrder]);
+    }, [groupedData, swapProfilesOrder]);
 
-    const renderStatusIcon = React.useCallback((record: Schema, connecting: string[], erroring: string[]) => {
+    const renderStatusIcon = React.useCallback((record: Profile, connecting: string[], erroring: string[]) => {
         let icon: React.ReactNode = null;
         if (connecting.includes(record.sch_id)) {
             icon = <theme.icons.Loading />;
@@ -543,30 +542,30 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
             icon = <theme.icons.Disconnected />;
         }
         return (
-            <SchemaListStatusIcon className="StatusIcon-statusIcon" key="status-icon">
+            <ProfileListStatusIcon className="StatusIcon-statusIcon" key="status-icon">
                 {icon}
-            </SchemaListStatusIcon>
+            </ProfileListStatusIcon>
         );
     }, [theme]);
 
-    const renderDriverIcon = React.useCallback((record: Schema) => {
+    const renderDriverIcon = React.useCallback((record: Profile) => {
         return (
-            <SchemaListDriverIcon className="DriverIcon-driverIcon">
+            <ProfileListDriverIcon className="DriverIcon-driverIcon">
                 <div className="icon">{record.driverIcon && <img src={record.driverIcon} />}</div>
                 <div className="name">{highlightText(record.driverName!)}</div>
-            </SchemaListDriverIcon>
+            </ProfileListDriverIcon>
         );
     }, [highlightText]);
 
-    const renderPrimaryText = React.useCallback((record: Schema) => {
+    const renderPrimaryText = React.useCallback((record: Profile) => {
         return (
-            <SchemaListPrimaryText className="SchemaList-primaryText" style={{ color: record.sch_color }}>
+            <ProfileListPrimaryText className="ProfileList-primaryText" style={{ color: record.sch_color }}>
                 {highlightText(record.sch_name!)}
-            </SchemaListPrimaryText>
+            </ProfileListPrimaryText>
         );
     }, [highlightText]);
 
-    const renderSecondaryText = React.useCallback((record: Schema) => {
+    const renderSecondaryText = React.useCallback((record: Profile) => {
         const neverText = t("never", "Never");
         const groupText = record.sch_group ?? t("ungrouped", "Ungrouped");
         const lastSelectedText = record.sch_last_selected
@@ -574,7 +573,7 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
             : neverText;
 
         return (
-            <SchemaListSecondaryText className="SchemaList-secondaryText">
+            <ProfileListSecondaryText className="ProfileList-secondaryText">
                 {!groupList && (
                     <span className="group-name">
                         <Trans i18nKey="profile-group-name" values={{ group: groupText }}>
@@ -594,25 +593,25 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                         </Trans>
                     </span>
                 )}
-            </SchemaListSecondaryText>
+            </ProfileListSecondaryText>
         );
     }, [t]);
 
-    const renderProfileName = React.useCallback((record: Schema) => {
+    const renderProfileName = React.useCallback((record: Profile) => {
         return (
-            <SchemaListProfileName className="SchemaList-profileName">
+            <ProfileListProfileName className="ProfileList-profileName">
                 {renderPrimaryText(record)}
                 {renderSecondaryText(record)}
-            </SchemaListProfileName>
+            </ProfileListProfileName>
         );
     }, [renderPrimaryText, renderSecondaryText]);
 
     const renderHeaderSortButtons = React.useCallback((sch_id: string) => {
         if (sortList) return null;
         return (
-            <SchemaListActionButtons
+            <ProfileListActionButtons
                 className={clsx(
-                    "SchemaList-actionButtons",
+                    "ProfileList-actionButtons",
                     sch_id === selectedItem && "selected",
                     "sort-buttons"
                 )}
@@ -631,16 +630,16 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                         <theme.icons.ExpandMore />
                     </ToolButton>
                 </ButtonGroup>
-            </SchemaListActionButtons>
+            </ProfileListActionButtons>
         );
     }, [selectedItem, sortList, moveGroupUp, moveGroupDown]);
 
-    const renderSchemaSortButtons = React.useCallback((record: Schema) => {
+    const renderProfileSortButtons = React.useCallback((record: Profile) => {
         if (sortList) return null;
         return (
-            <SchemaListActionButtons
+            <ProfileListActionButtons
                 className={clsx(
-                    "SchemaList-actionButtons",
+                    "ProfileList-actionButtons",
                     record.sch_id === selectedItem && "selected",
                     "sort-buttons"
                 )}
@@ -657,27 +656,27 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                         <theme.icons.ExpandMore />
                     </ToolButton>
                 </ButtonGroup>
-            </SchemaListActionButtons>
+            </ProfileListActionButtons>
         );
     }, [selectedItem, sortList, moveUp, moveDown]);
 
     const renderHeader = React.useCallback((item: GroupHeader) => {
         return (
-            <SchemaListGroupHeader className="SchemaList-groupHeader">
+            <ProfileListGroupHeader className="ProfileList-groupHeader">
                 {renderHeaderSortButtons(item.first_sch_id!)}
-                <SchemaListGroupName className="SchemaList-groupName">
+                <ProfileListGroupName className="ProfileList-groupName">
                     {highlightText(item.title)}
-                </SchemaListGroupName>
-            </SchemaListGroupHeader>
+                </ProfileListGroupName>
+            </ProfileListGroupHeader>
         );
     }, [renderHeaderSortButtons, highlightText]);
 
 
-    const renderProfileActionButtons = React.useCallback((record: Schema) => {
+    const renderProfileActionButtons = React.useCallback((record: Profile) => {
         return (
-            <SchemaListActionButtons
+            <ProfileListActionButtons
                 className={clsx(
-                    "SchemaList-actionButtons",
+                    "ProfileList-actionButtons",
                     record.sch_id === selectedItem && "selected"
                 )}
             >
@@ -742,39 +741,39 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                         loading={deleting.includes(record.sch_id)}
                     />
                 </ButtonGroup>
-            </SchemaListActionButtons>
+            </ProfileListActionButtons>
         );
     }, [selectedItem, context, disconnecting, connecting, testing, deleting]);
 
-    const renderProfile = React.useCallback((record: Schema) => {
+    const renderProfile = React.useCallback((record: Profile) => {
         return (
-            <SchemaListProfile
+            <ProfileListProfile
                 className={clsx(
-                    "SchemaList-profile",
+                    "ProfileList-profile",
                     record.sch_id === selectedItem && "selected"
                 )}
                 onClick={() => setSelectedItem(record.sch_id)}
                 onDoubleClick={() => actions.current.executeAction(connectActionId, context, record.sch_id)}
             >
-                {renderSchemaSortButtons(record)}
+                {renderProfileSortButtons(record)}
                 {renderDriverIcon(record)}
                 {renderStatusIcon(record, connecting, erroring)}
                 {renderProfileName(record)}
                 {renderProfileActionButtons(record)}
-            </SchemaListProfile>
+            </ProfileListProfile>
         );
-    }, [selectedItem, connecting, erroring, renderSchemaSortButtons, renderDriverIcon, renderStatusIcon, renderProfileName, renderProfileActionButtons]);
+    }, [selectedItem, connecting, erroring, renderProfileSortButtons, renderDriverIcon, renderStatusIcon, renderProfileName, renderProfileActionButtons]);
 
     useScrollIntoView({
-        containerId: "schema-list-content",
+        containerId: "profile-list-content",
         targetId: selectedItem,
         stickyHeader: '[id^="group-"]',
     })
 
     return (
-        <SchemaListContainer {...other} className={clsx(className, "SchemaList-container")}>
-            <SchemaListTitle className="SchemaList-title">
-                <Typography variant="h4">{t_connectionSchema}</Typography>
+        <ProfileListContainer {...other} className={clsx(className, "ProfileList-container")}>
+            <ProfileListTitle className="ProfileList-title">
+                <Typography variant="h4">{t_connectionProfile}</Typography>
                 <Stack flexGrow={1} />
                 <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <CommandPalette
@@ -823,14 +822,14 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                         size="large"
                     />
                 </Box>
-            </SchemaListTitle>
-            <SchemaListContent
-                className="SchemaList-content"
+            </ProfileListTitle>
+            <ProfileListContent
+                className="ProfileList-content"
             >
                 {initialized && displayData &&
                     <BaseList
-                        componentName="SchemaList"
-                        id="schema-list-content"
+                        componentName="ProfileList"
+                        id="profile-list-content"
                         items={displayData}
                         color="default"
                         size="default"
@@ -845,16 +844,16 @@ const ProfileList: React.FC<SchemaListOwnProps> = (props) => {
                                 <Typography>{t("no-profiles-found", "No profiles found.")}</Typography>
                             )
                         }}
-                        isSelected={item => isSchema(item) && item.sch_id === selectedItem}
-                        isFocused={item => isSchema(item) && item.sch_id === selectedItem}
-                        getItemId={item => isSchema(item) ? item.sch_id : `group-${item.title}`}
-                        getItemClassName={item => isSchema(item) ? 'profile' : 'header'}
+                        isSelected={item => isProfile(item) && item.sch_id === selectedItem}
+                        isFocused={item => isProfile(item) && item.sch_id === selectedItem}
+                        getItemId={item => isProfile(item) ? item.sch_id : `group-${item.title}`}
+                        getItemClassName={item => isProfile(item) ? 'profile' : 'header'}
                         onKeyDown={handleSearchKeyDown}
                     />
                 }
                 {(!initialized || !displayData) && <Typography>Loading data...</Typography>}
-            </SchemaListContent>
-        </SchemaListContainer>
+            </ProfileListContent>
+        </ProfileListContainer>
     );
 };
 

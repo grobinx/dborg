@@ -88,7 +88,8 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string,
                             ', border-radius 200ms cubic-bezier(0.4, 0, 0.2, 1)' +
                             ', backdrop-filter 250ms ease-out' +
                             ', filter 200ms ease-out' +
-                            ', visibility 0ms step-start 10ms',
+                            ', visibility 0ms step-start 10ms' +
+                            ', filter 200ms ease-out',
                     },
                     // '*, *::before, *::after': {
                     //     transition: 'var(--app-transition)',

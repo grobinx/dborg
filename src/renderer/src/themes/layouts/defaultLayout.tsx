@@ -22,7 +22,7 @@ import { StatusBarButtonLayout } from "./default/StatusBarButton";
 import { DriverSummaryLayout } from "./default/DriverSummary";
 import { SchemaParametersLayout } from "./default/SchemaParameters";
 import { SchemaSummaryLayout } from "./default/SchemaSummary";
-import { SchemaListLayout } from "./default/SchemaList";
+import { ProfileListLayout } from "./default/ProfileList";
 import { TabsPanelLayout } from "./default/TabsPanel";
 import { TabPanelLayout } from "./default/TabPanel";
 import { ContainerButtonLayout } from "./default/ContainerButton";
@@ -289,7 +289,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             DriverSummary: DriverSummaryLayout(palette, root),
             SchemaParameters: SchemaParametersLayout(palette, root),
             SchemaSummary: SchemaSummaryLayout(palette, root),
-            SchemaList: SchemaListLayout(palette, root),
+            ProfileList: ProfileListLayout(palette, root),
             TabsPanel: TabsPanelLayout(palette, root),
             TabPanel: TabPanelLayout(palette, root),
             ToolSelect: {

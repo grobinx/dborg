@@ -40,7 +40,7 @@ interface EditorsTabsOwnProps extends EditorsTabsProps {
 }
 
 export function editorsTabsId(session: IDatabaseSession): string {
-    return session.schema.sch_id + ":" + session.info.uniqueId + "sql-editors";
+    return session.profile.sch_id + ":" + session.info.uniqueId + "sql-editors";
 }
 
 export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {

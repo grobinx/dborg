@@ -40,7 +40,7 @@ const MetadataCollctorStatusBar: React.FC = () => {
                 ...prev,
                 [message.connectionId]: {
                     status: "start",
-                    name: message.schema.sch_name,
+                    name: message.profile.sch_name,
                     progress: t("started", "Started"),
                 },
             }));

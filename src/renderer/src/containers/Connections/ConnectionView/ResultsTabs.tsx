@@ -18,7 +18,7 @@ interface ResultsTabsProps {
 }
 
 export function resultsTabsId(session: IDatabaseSession): string {
-    return session.schema.sch_id + ":" + session.info.uniqueId + ":results-tabs";
+    return session.profile.sch_id + ":" + session.info.uniqueId + ":results-tabs";
 }
 
 const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {

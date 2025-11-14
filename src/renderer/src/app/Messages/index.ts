@@ -69,33 +69,33 @@ export const SWITCH_CONTAINER = "switch-container";
 export const SWITCH_VIEW = "switch-view";
 
 /**
- * Edit the db schema
- * @param schemaId The db schema.
+ * Edit the db profile.
+ * @param profileId The db profile.
  */
-export const EDIT_SCHEMA = "edit-schema";
+export const EDIT_PROFILE = "edit-profile";
 
 /**
- * Clone the db schema and edit as new one.
- * @param schemaId The db schema to clone.
+ * Clone the db profile and edit as new one.
+ * @param profileId The db profile to clone.
  */
-export const CLONE_EDIT_SCHEMA = "clone-edit-schema";
+export const CLONE_EDIT_PROFILE = "clone-edit-profile";
 
 /**
- * Set the schema ID for the current operation.
- * @param schemaId The ID of the schema to set.
+ * Set the profile ID for the current operation.
+ * @param profileId The ID of the profile to set.
  */
-export const SET_SCHEMA_ID = "set-schema-id";
+export const SET_PROFILE_ID = "set-profile-id";
 
 /**
- * Set the schema ID for clone schema to edit as new one.
- * @param schemaId The ID of the schema to set.
+ * Set the profile ID for clone profile to edit as new one.
+ * @param profileId The ID of the profile to set.
  */
-export const STE_CLONE_SCHEMA_ID = "set-clone-schema-id";
+export const SET_CLONE_PROFILE_ID = "set-clone-profile-id";
 
 /**
- * End the edit of the db schema
+ * End the edit of the db profile
  */
-export const END_EDIT_SCHEMA = "end-edit-schema";
+export const END_EDIT_PROFILE = "end-edit-profile";
 
 /**
  * Logo click event.
@@ -111,7 +111,7 @@ export const CHANGE_SIDE_BAR_PLACEMENT = "change-side-bar-placement";
 export const SESSION_GET_METADATA_START = "session:get-metadata:start";
 export type SessionGetMetadataStart = {
     connectionId: string; // Unique identifier for the connection
-    schema: ProfileRecord; // Name of the schema to get metadata for
+    profile: ProfileRecord; // Name of the profile to get metadata for
 }
 export const SESSION_GET_METADATA_PROGRESS = "session:get-metadata";
 export type SessionGetMetadataProgress = {
