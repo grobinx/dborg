@@ -101,100 +101,102 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [selectedSession, setSelectedSession] = useState<IDatabaseSession | null>(null);
     const [sessionViewState, setSessionViewState] = useState<Record<string, { views: View[]; selectedViewId: string | null }>>({});
 
-    const initialContainers = (): SpecificContainer[] => [
-        {
-            id: uuidv7(),
-            type: "new-profile",
-            icon: <theme.icons.NewConnection />,
-            label: t("new", "New"),
-            tooltip: t("create-new-connection-profile", "Create new connection profile"),
-            section: "first",
-            container: () => <SchemaAssistant />,
-        },
-        {
-            id: uuidv7(),
-            type: "profile-list",
-            icon: <theme.icons.ConnectionList />,
-            label: t("profiles", "Profiles"),
-            tooltip: t("manage-connection-profiles", "Manage connection profiles"),
-            section: "first",
-            container: () => <ProfileBook />,
-        },
-        {
-            id: uuidv7(),
-            type: "connections",
-            icon: <theme.icons.Connections />,
-            label: t("sessions", "Sessions"),
-            tooltip: t("active-database-sessions", "Active database sessions"),
-            section: "first",
-            container: ({ children }) => <Connections>{children}</Connections>,
-            disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0),
-        },
-        {
-            id: uuidv7(),
-            type: "plugins",
-            icon: <theme.icons.Plugins />,
-            label: t("plugins", "Plugins"),
-            section: "last",
-            container: ({ children }) => children,
-            views: [
-                {
-                    type: "rendered",
-                    id: "bake-cupcake",
-                    icon: <theme.icons.Cupcake />,
-                    label: t("bake-cupcake", "Bake a cupcake"),
-                    render: () => <div>Bake a cupcake</div>,
-                },
-                {
-                    type: "rendered",
-                    id: "make-drink",
-                    icon: <theme.icons.Drink />,
-                    label: t("make-drink", "Make a drink"),
-                    render: () => <div>Make a drink</div>,
-                },
-            ],
-        },
-        {
-            id: uuidv7(),
-            type: "settings",
-            icon: <theme.icons.Settings />,
-            label: t("manage", "Manage"),
-            section: "last",
-            container: ({ children }) => children,
-            views: [
-                {
-                    type: "rendered",
-                    id: "about",
-                    icon: <theme.icons.Info />,
-                    label: t("about", "About"),
-                    render: () => <About />,
-                },
-                {
-                    type: "rendered",
-                    id: "settings",
-                    icon: <theme.icons.Settings />,
-                    label: t("settings", "Settings"),
-                    render: () => <EditableSettings />,
-                },
-                iAmDeveloper && {
-                    type: "rendered",
-                    id: "developer-view",
-                    icon: <theme.icons.Developer />,
-                    label: t("developer-view", "Developer"),
-                    tooltip: t("manage-developer-options", "Manage developer options"),
-                    render: () => <DeveloperOptions />,
-                },
-            ].filter(Boolean) as View[],
-        },
-    ];
+    const initialContainers = React.useCallback((): SpecificContainer[] => {
+        return [
+            {
+                id: uuidv7(),
+                type: "new-profile",
+                icon: <theme.icons.NewConnection />,
+                label: t("new", "New"),
+                tooltip: t("create-new-connection-profile", "Create new connection profile"),
+                section: "first",
+                container: () => <SchemaAssistant />,
+            },
+            {
+                id: uuidv7(),
+                type: "profile-list",
+                icon: <theme.icons.ConnectionList />,
+                label: t("profiles", "Profiles"),
+                tooltip: t("manage-connection-profiles", "Manage connection profiles"),
+                section: "first",
+                container: () => <ProfileBook />,
+            },
+            {
+                id: uuidv7(),
+                type: "connections",
+                icon: <theme.icons.Connections />,
+                label: t("sessions", "Sessions"),
+                tooltip: t("active-database-sessions", "Active database sessions"),
+                section: "first",
+                container: ({ children }) => <Connections>{children}</Connections>,
+                disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0),
+            },
+            {
+                id: uuidv7(),
+                type: "plugins",
+                icon: <theme.icons.Plugins />,
+                label: t("plugins", "Plugins"),
+                section: "last",
+                container: ({ children }) => children,
+                views: [
+                    {
+                        type: "rendered",
+                        id: "bake-cupcake",
+                        icon: <theme.icons.Cupcake />,
+                        label: t("bake-cupcake", "Bake a cupcake"),
+                        render: () => <div>Bake a cupcake</div>,
+                    },
+                    {
+                        type: "rendered",
+                        id: "make-drink",
+                        icon: <theme.icons.Drink />,
+                        label: t("make-drink", "Make a drink"),
+                        render: () => <div>Make a drink</div>,
+                    },
+                ],
+            },
+            {
+                id: uuidv7(),
+                type: "settings",
+                icon: <theme.icons.Settings />,
+                label: t("manage", "Manage"),
+                section: "last",
+                container: ({ children }) => children,
+                views: [
+                    {
+                        type: "rendered",
+                        id: "about",
+                        icon: <theme.icons.Info />,
+                        label: t("about", "About"),
+                        render: () => <About />,
+                    },
+                    {
+                        type: "rendered",
+                        id: "settings",
+                        icon: <theme.icons.Settings />,
+                        label: t("settings", "Settings"),
+                        render: () => <EditableSettings />,
+                    },
+                    iAmDeveloper && {
+                        type: "rendered",
+                        id: "developer-view",
+                        icon: <theme.icons.Developer />,
+                        label: t("developer-view", "Developer"),
+                        tooltip: t("manage-developer-options", "Manage developer options"),
+                        render: () => <DeveloperOptions />,
+                    },
+                ].filter(Boolean) as View[],
+            },
+        ];
+    }, [theme.icons, t, iAmDeveloper]);
 
-    const chooseContainer = (list: IDatabaseSession[] | null) => {
+    const chooseContainer = React.useCallback((list: IDatabaseSession[] | null) => {
         if (!containers) return null;
         if (list && list.length) return containers.find(c => c.type === "connections") || containers[0];
         return containers.find(c => c.type === "profile-list") || containers[0];
-    };
+    }, [containers]);
 
-    const updateSessionViews = (session: IDatabaseSession | null) => {
+    const updateSessionViews = React.useCallback((session: IDatabaseSession | null) => {
         if (!session) {
             setViews(null);
             setSelectedView(null);
@@ -216,9 +218,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setViews(null);
             setSelectedView(null);
         }
-    };
+    }, [plugins, sessionViewState]);
 
-    const updateViewsForContainer = (container: SpecificContainer | null, session: IDatabaseSession | null) => {
+    const updateViewsForContainer = React.useCallback((container: SpecificContainer | null, session: IDatabaseSession | null) => {
         if (!container) {
             setViews(null);
             setSelectedView(null);
@@ -240,9 +242,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setViews(null);
             setSelectedView(null);
         }
-    };
+    }, [updateSessionViews]);
 
-    const initMetadata = (session: IDatabaseSession, force?: boolean) => {
+    const initMetadata = React.useCallback((session: IDatabaseSession, force?: boolean) => {
         if (!session.info.driver.implements.includes("metadata")) return;
         setTimeout(() => {
             queueMessage(Messages.SESSION_GET_METADATA_START, {
@@ -276,7 +278,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 } as Messages.SessionGetMetadataEnd);
             });
         }, force ? 250 : 1000);
-    };
+    }, []);
 
     // Reakcja na toggle deweloperski: przebudowa listy kontenerów
     const iAmDeveloperRef = React.useRef(iAmDeveloper);
@@ -322,8 +324,11 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handleSwitchContainer = React.useCallback((type: ContainerType) => {
         if (!containers) return;
         const target = containers.find(c => c.type === type) || null;
-        if (target && target !== selectedContainer) setSelectedContainer(target);
-    }, [containers, selectedContainer]);
+        if (target && target !== selectedContainer) {
+            setSelectedContainer(target);
+            updateViewsForContainer(target, selectedSession);
+        }
+    }, [containers, selectedContainer, selectedSession]);
 
     const handleSwitchView = React.useCallback((viewId: string) => {
         if (!views) return;
@@ -371,7 +376,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (selectedContainer?.type !== "connections") return;
         const session = sessions?.find(s => s.info.uniqueId === msg.itemID) || null;
         setSelectedSession(session);
-    }, [sessions, selectedContainer]);
+        updateViewsForContainer(selectedContainer, session);
+    }, [sessions, selectedContainer, updateViewsForContainer]);
 
     const handleSchemaConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
         setSessions(prev => {
@@ -379,10 +385,11 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             initMetadata(newSession);
             const updated = [...(prev || []), newSession];
             setSelectedSession(newSession);
+            updateViewsForContainer(selectedContainer, newSession);
             sessionsRef.current = updated;
             return updated;
         });
-    }, []);
+    }, [selectedContainer, updateViewsForContainer, initMetadata]);
 
     const handleSchemaDisconnectSuccess = React.useCallback((connectionId: string) => {
         setSessions(prev => {
@@ -402,13 +409,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             delete next[connectionId];
             return next;
         });
-    }, [selectedSession, containers]);
+    }, [selectedSession, containers, chooseContainer]);
 
     const handleRefreshMetadata = React.useCallback((msg: RefreshMetadata) => {
         if (selectedSession && selectedSession.info.uniqueId === msg.connectionId) {
             initMetadata(selectedSession, true);
         }
-    }, [selectedSession]);
+    }, [selectedSession, initMetadata]);
 
     // Subskrypcje
     useEffect(() => {
