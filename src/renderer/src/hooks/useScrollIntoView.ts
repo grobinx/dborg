@@ -115,7 +115,6 @@ export const useScrollIntoView = ({
                 (containerId ? document.getElementById(containerId) : null);
 
             if (!container) {
-                console.warn(`Container not found: ${containerId}`);
                 return;
             }
 

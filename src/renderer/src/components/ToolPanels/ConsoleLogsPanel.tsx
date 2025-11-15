@@ -112,6 +112,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
         targetIndex: displayLogs.findIndex(log => log.id === selectedLogId),
         itemSize: listItemSize,
         scrollOptions: { behavior: 'instant', block: 'nearest' },
+        dependencies: [selectedLogId],
     });
 
     const renderRow = (item: LogEntry) => {
@@ -272,6 +273,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     placeholder={t("search---", "Search...")}
                     size="small"
                     color="main"
+                    autoFocus
                     onKeyDown={(e) => handleListNavigation(
                         e,
                         displayLogs,

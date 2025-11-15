@@ -102,39 +102,41 @@ const App: React.FC = () => {
                     </SplitPanel>
                     <Splitter key="splitter" hidden={!toolsTabsPanelVisible} />
                     <SplitPanel key="split-tools-panel" defaultSize={20} hidden={!toolsTabsPanelVisible}>
-                        <TabsPanel
-                            className="ToolsPanel"
-                            itemID="tools-tabs-panel"
-                            buttons={
-                                <TabPanelButtons>
-                                    <Tooltip title={t("hide-tools-panel", "Hide Tools Panel")}>
-                                        <ToolButton
-                                            onClick={() => {
-                                                setToolsTabsPanelVisible(!toolsTabsPanelVisible);
-                                                lastToolItemRef.current = null;
-                                            }}
-                                            size="small"
-                                            color="main"
-                                        >
-                                            <theme.icons.ExpandMore />
-                                        </ToolButton>
-                                    </Tooltip>
-                                </TabPanelButtons>
-                            }
-                        >
-                            <TabPanel
-                                itemID="logs"
-                                label={<ConsoleLogsPanelLabel />}
-                                buttons={<ConsoleLogsPanelButtons />}
-                                content={<ConsoleLogPanel />}
-                            />
-                            <TabPanel
-                                itemID="query-history"
-                                label={<QueryHistoryPanelLabel />}
-                                buttons={<QueryHistoryPanelButtons />}
-                                content={<QueryHistoryPanel />}
-                            />
-                        </TabsPanel>
+                        {toolsTabsPanelVisible && (
+                            <TabsPanel
+                                className="ToolsPanel"
+                                itemID="tools-tabs-panel"
+                                buttons={
+                                    <TabPanelButtons>
+                                        <Tooltip title={t("hide-tools-panel", "Hide Tools Panel")}>
+                                            <ToolButton
+                                                onClick={() => {
+                                                    setToolsTabsPanelVisible(!toolsTabsPanelVisible);
+                                                    lastToolItemRef.current = null;
+                                                }}
+                                                size="small"
+                                                color="main"
+                                            >
+                                                <theme.icons.ExpandMore />
+                                            </ToolButton>
+                                        </Tooltip>
+                                    </TabPanelButtons>
+                                }
+                            >
+                                <TabPanel
+                                    itemID="logs"
+                                    label={<ConsoleLogsPanelLabel />}
+                                    buttons={<ConsoleLogsPanelButtons />}
+                                    content={<ConsoleLogPanel />}
+                                />
+                                <TabPanel
+                                    itemID="query-history"
+                                    label={<QueryHistoryPanelLabel />}
+                                    buttons={<QueryHistoryPanelButtons />}
+                                    content={<QueryHistoryPanel />}
+                                />
+                            </TabsPanel>
+                        )}
                     </SplitPanel>
                 </SplitPanelGroup>
             </Stack>
