@@ -68,6 +68,72 @@ export type UseKeyboardNavigationProps<T, V = string, A = any> = {
         | UseKeyboardNavigationActionsNoneProps<T, A>
     );
 
+export function handleListNavigation<T, V>(
+    event: React.KeyboardEvent,
+    items: T[],
+    getId: (item: T) => V | null,
+    selectedId: V | null,
+    setSelectedId: (id: V | null) => void,
+    rollover: boolean = false
+) {
+    const currentIndex = items.findIndex(item => getId(item) === selectedId);
+
+    if (isKeybindingMatch("ArrowDown", event)) {
+        for (let i = 1; i <= items.length; i++) {
+            const idx = rollover
+                ? (currentIndex + i) % items.length
+                : currentIndex + i;
+            if (idx >= items.length) break;
+            const candidate = items[idx];
+            const candidateId = getId(candidate);
+            if (candidateId !== null) {
+                setSelectedId(candidateId);
+                break;
+            }
+        }
+        event.preventDefault();
+        return true;
+    } else if (isKeybindingMatch("ArrowUp", event)) {
+        for (let i = 1; i <= items.length; i++) {
+            const idx = rollover
+                ? (currentIndex - i + items.length) % items.length
+                : currentIndex - i;
+            if (idx < 0) break;
+            const candidate = items[idx];
+            const candidateId = getId(candidate);
+            if (candidateId !== null) {
+                setSelectedId(candidateId);
+                break;
+            }
+        }
+        event.preventDefault();
+        return true;
+    } else if (isKeybindingMatch("Ctrl+Home", event)) {
+        for (let i = 0; i < items.length; i++) {
+            const candidate = items[i];
+            const candidateId = getId(candidate);
+            if (candidateId !== null) {
+                setSelectedId(candidateId);
+                break;
+            }
+        }
+        event.preventDefault();
+        return true;
+    } else if (isKeybindingMatch("Ctrl+End", event)) {
+        for (let i = items.length - 1; i >= 0; i--) {
+            const candidate = items[i];
+            const candidateId = getId(candidate);
+            if (candidateId !== null) {
+                setSelectedId(candidateId);
+                break;
+            }
+        }
+        event.preventDefault();
+        return true;
+    }
+    return false;
+}
+
 export function useKeyboardNavigation<T, V = string, A = any>({
     items,
     getId,
@@ -85,57 +151,14 @@ export function useKeyboardNavigation<T, V = string, A = any>({
         (event: React.KeyboardEvent) => {
             if (!items || items.length === 0) return;
 
+            // Użycie wyodrębnionej funkcji
+            if (handleListNavigation(event, items, getId, selectedId, setSelectedId, rollover)) {
+                return;
+            }
+
             const currentIndex = items.findIndex(item => getId(item) === selectedId);
 
-            if (isKeybindingMatch("ArrowDown", event)) {
-                for (let i = 1; i <= items.length; i++) {
-                    const idx = rollover
-                        ? (currentIndex + i) % items.length
-                        : currentIndex + i;
-                    if (idx >= items.length) break;
-                    const candidate = items[idx];
-                    const candidateId = getId(candidate);
-                    if (candidateId !== null) {
-                        setSelectedId(candidateId);
-                        break;
-                    }
-                }
-                event.preventDefault();
-            } else if (isKeybindingMatch("ArrowUp", event)) {
-                for (let i = 1; i <= items.length; i++) {
-                    const idx = rollover
-                        ? (currentIndex - i + items.length) % items.length
-                        : currentIndex - i;
-                    if (idx < 0) break;
-                    const candidate = items[idx];
-                    const candidateId = getId(candidate);
-                    if (candidateId !== null) {
-                        setSelectedId(candidateId);
-                        break;
-                    }
-                }
-                event.preventDefault();
-            } else if (isKeybindingMatch("Ctrl+Home", event)) {
-                for (let i = 0; i < items.length; i++) {
-                    const candidate = items[i];
-                    const candidateId = getId(candidate);
-                    if (candidateId !== null) {
-                        setSelectedId(candidateId);
-                        break;
-                    }
-                }
-                event.preventDefault();
-            } else if (isKeybindingMatch("Ctrl+End", event)) {
-                for (let i = items.length - 1; i >= 0; i--) {
-                    const candidate = items[i];
-                    const candidateId = getId(candidate);
-                    if (candidateId !== null) {
-                        setSelectedId(candidateId);
-                        break;
-                    }
-                }
-                event.preventDefault();
-            } else if (onEnter && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
+            if (onEnter && isKeybindingMatch("Enter", event) && currentIndex >= 0) {
                 onEnter(items[currentIndex]);
                 event.preventDefault();
                 return;
@@ -169,7 +192,7 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                 actionManager.executeActionByKeybinding(event, actionContext());
             }
         },
-        [items, selectedId, getId, onEnter, actions]
+        [items, selectedId, getId, onEnter, actions, actionManager, actionContext, rollover]
     );
 
     // Zapamiętaj ostatnio wybrany i istniejący indeks

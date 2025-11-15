@@ -26,22 +26,31 @@ import { SelectField } from "../inputs/SelectField";
 import { ToolButton } from "../buttons/ToolButton";
 import { BaseList } from "../inputs/base/BaseList";
 import { FormattedText } from "../useful/FormattedText";
-import { useSearch } from "@renderer/hooks/useSearch";
+import { handleListNavigation } from "@renderer/hooks/useKeyboardNavigation";
+import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 
 interface ConsoleLogState {
     showTime: boolean;
     search: string;
+    displayLogs: LogEntry[];
+    selectedLogId: string | null;
     toggleShowTime: () => void;
     setShowTime: (show: boolean) => void;
     setSearch: (search: string) => void;
+    setDisplayLogs: (logs: LogEntry[]) => void;
+    setSelectedLogId: (id: string | null) => void;
 }
 
-export const useConsoleLogState = create<ConsoleLogState>((set) => ({
+export const useConsoleLogState = create<ConsoleLogState>((set, get) => ({
     showTime: false,
     search: "",
-    toggleShowTime: () => set((state) => ({ showTime: !state.showTime })),
-    setShowTime: (show: boolean) => set(() => ({ showTime: show })),
-    setSearch: (search: string) => set(() => ({ search: search })),
+    displayLogs: [],
+    selectedLogId: null,
+    toggleShowTime: () => set({ showTime: !get().showTime }),
+    setShowTime: (show: boolean) => set({ showTime: show }),
+    setSearch: (search: string) => set({ search: search }),
+    setDisplayLogs: (logs: LogEntry[]) => set({ displayLogs: logs }),
+    setSelectedLogId: (id: string | null) => set({ selectedLogId: id }),
 }));
 
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
@@ -59,19 +68,17 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
-    const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
     const listRef = React.useRef<HTMLUListElement>(null);
     const showTime = useConsoleLogState(state => state.showTime);
     const search = useConsoleLogState(state => state.search);
-    const [displayLogs, setDisplayLogs] = React.useState<LogEntry[]>(logs);
+    const displayLogs = useConsoleLogState(state => state.displayLogs);
+    const setDisplayLogs = useConsoleLogState(state => state.setDisplayLogs);
+    const selectedLogId = useConsoleLogState(state => state.selectedLogId);
+    const setSelectedLogId = useConsoleLogState(state => state.setSelectedLogId);
     const [fontSize] = useSetting<number>("ui", "fontSize", 20);
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5));
     const [searchDelay] = useSetting<number>("app", "search.delay");
-
-    const handleSelectItem = (id: string) => {
-        setSelectedItem((prev) => (prev === id ? null : id)); // Toggle selection
-    };
 
     useEffect(() => {
         const newHeight = itemSize ?? fontSize * 1.5;
@@ -81,23 +88,31 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     useEffect(() => {
         if ((search ?? "").trim() === "") {
             setDisplayLogs(logs);
+            setSelectedLogId(logs.length > 0 ? logs[logs.length - 1].id : null);
         } else {
             const debounced = debounce(() => {
                 const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
-                setDisplayLogs(
-                    logs.filter(entry => {
-                        const logDetails = formatLogDetails(entry)?.toLowerCase();
-                        return parts.every(value =>
-                            logDetails?.includes(value)
-                        )
-                    })
-                );
+                const searchedLogs = logs.filter(entry => {
+                    const logDetails = formatLogDetails(entry)?.toLowerCase();
+                    return parts.every(value =>
+                        logDetails?.includes(value)
+                    )
+                });
+                setDisplayLogs(searchedLogs);
+                setSelectedLogId(searchedLogs.length > 0 ? searchedLogs[searchedLogs.length - 1].id : null);
             }, searchDelay);
             debounced();
             return () => debounced.cancel();
         }
         return;
     }, [logs, search, searchDelay]);
+
+    useScrollIntoView({
+        containerRef: listRef,
+        targetIndex: displayLogs.findIndex(log => log.id === selectedLogId),
+        itemSize: listItemSize,
+        scrollOptions: { behavior: 'instant', block: 'nearest' },
+    });
 
     const renderRow = (item: LogEntry) => {
         return (
@@ -146,9 +161,9 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                             items={displayLogs}
                             virtual
                             itemHeight={listItemSize}
-                            isSelected={(item) => item.id === selectedItem}
-                            isFocused={(item) => item.id === selectedItem}
-                            onItemClick={(item) => handleSelectItem(item.id)}
+                            isSelected={(item) => item.id === selectedLogId}
+                            isFocused={(item) => item.id === selectedLogId}
+                            onItemClick={(item) => setSelectedLogId(item.id)}
                             getItemId={(item) => item.id}
                             renderEmpty={() => (
                                 <div style={{ padding: 16, textAlign: "center", color: theme.palette.text.disabled }}>
@@ -157,6 +172,13 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                             )}
                             renderItem={renderRow}
                             color="default"
+                            onKeyDown={(e) => handleListNavigation(
+                                e,
+                                displayLogs,
+                                (item) => item.id,
+                                selectedLogId,
+                                setSelectedLogId
+                            )}
                         />
                     </SplitPanel>
                     <Splitter />
@@ -166,7 +188,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                                 itemID='log-details'
                                 label={<ConsoleLogDetailsLabel />}
                                 content={<ConsoleLogDetailsContent
-                                    item={displayLogs.find(l => l.id === selectedItem)}
+                                    item={displayLogs.find(l => l.id === selectedLogId)}
                                     {...slotProps?.details}
                                 />}
                                 buttons={<ConsoleLogDetailsButtons />}
@@ -175,7 +197,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
                                 itemID='log-stacktrace'
                                 label={<ConsoleLogStackTraceLabel />}
                                 content={<ConsoleLogStackTraceContent
-                                    stack={displayLogs.find(l => l.id === selectedItem)?.stack}
+                                    stack={displayLogs.find(l => l.id === selectedLogId)?.stack}
                                     {...slotProps?.details}
                                 />}
                                 buttons={<ConsoleLogStackTraceButtons />}
@@ -202,8 +224,12 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const { logs, logLevels, loggedLevels, setLogLevels } = useConsole();
     const theme = useTheme();
     const { t } = useTranslation();
-    const { setShowTime } = useConsoleLogState();
-    const { search, setSearch } = useConsoleLogState();
+    const setShowTime = useConsoleLogState(state => state.setShowTime);
+    const search = useConsoleLogState(state => state.search);
+    const setSearch = useConsoleLogState(state => state.setSearch);
+    const displayLogs = useConsoleLogState(state => state.displayLogs);
+    const selectedLogId = useConsoleLogState(state => state.selectedLogId);
+    const setSelectedLogId = useConsoleLogState(state => state.setSelectedLogId);
 
     // Obsługa zmiany zaznaczenia
     const handleLogLevelChange = (value: LogLevel) => {
@@ -246,6 +272,13 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                     placeholder={t("search---", "Search...")}
                     size="small"
                     color="main"
+                    onKeyDown={(e) => handleListNavigation(
+                        e,
+                        displayLogs,
+                        (item) => item.id,
+                        selectedLogId,
+                        setSelectedLogId
+                    )}
                 />
             </InputDecorator>
             <Tooltip title={t("show-item-time", "Show item time")}>

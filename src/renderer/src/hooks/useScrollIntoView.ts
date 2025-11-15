@@ -14,6 +14,14 @@ interface UseScrollIntoViewOptions {
      */
     targetId?: string | null;
     /**
+     * Indeks elementu, który ma być widoczny (alternatywa dla targetId) (jeśli lista jest wirtualna)
+     */
+    targetIndex?: number | null;
+    /**
+     * Rozmiar pojedynczego elementu w kontenerze (jeśli lista jest wirtualna)
+     */
+    itemSize?: number;
+    /**
      * Opcje dla scrollIntoView
      * @default { behavior: 'smooth', block: 'nearest', inline: 'nearest' }
      */
@@ -51,7 +59,7 @@ const getStickyOffset = (container: HTMLElement, selector?: string): number => {
 
         // Sprawdź czy element lub którykolwiek z jego potomków ma position: sticky
         let stickyElement: HTMLElement | null = null;
-        
+
         // Najpierw sprawdź sam element
         if (window.getComputedStyle(headerEl).position === 'sticky') {
             stickyElement = headerEl;
@@ -90,6 +98,8 @@ export const useScrollIntoView = ({
     containerId,
     containerRef,
     targetId,
+    targetIndex,
+    itemSize,
     scrollOptions,
     delay = 0,
     onlyIfNotVisible = true,
@@ -98,13 +108,12 @@ export const useScrollIntoView = ({
 }: UseScrollIntoViewOptions) => {
     const options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest', inline: 'nearest', ...scrollOptions };
     React.useEffect(() => {
-        if (!targetId) return;
+        if (targetId == null && (targetIndex == null || itemSize == null)) return;
 
         const timeoutId = setTimeout(() => {
-            // Znajdź kontener
-            const container = containerRef?.current || 
+            const container = containerRef?.current ||
                 (containerId ? document.getElementById(containerId) : null);
-            
+
             if (!container) {
                 console.warn(`Container not found: ${containerId}`);
                 return;
@@ -112,60 +121,108 @@ export const useScrollIntoView = ({
 
             const headerOffset = getStickyOffset(container, stickyHeader);
 
-            // Znajdź element docelowy TYLKO w kontenerze
-            const targetElement = container.querySelector<HTMLElement>(`#${CSS.escape(targetId)}`);
-            
-            if (!targetElement) {
-                console.warn(`Target element not found in container: ${targetId}`);
-                return;
-            }
+            // Scrollowanie do elementu DOM po id
+            if (targetId != null) {
+                const targetElement = container.querySelector<HTMLElement>(`#${CSS.escape(targetId)}`);
+                if (!targetElement) {
+                    // Jeśli nie znaleziono elementu, spróbuj scrollować po indeksie jeśli podano
+                    if (targetIndex != null && itemSize != null) {
+                        const itemTop = targetIndex * itemSize;
+                        const itemBottom = itemTop + itemSize;
+                        const visibleTop = container.scrollTop;
+                        const visibleBottom = visibleTop + container.clientHeight;
 
-            // Sprawdź czy element jest widoczny (jeśli włączone)
-            if (onlyIfNotVisible) {
-                const isVisible = isElementVisible(targetElement, container, headerOffset);
-                if (isVisible) {
+                        // Jeśli element jest już widoczny, nie scrolluj
+                        if (onlyIfNotVisible && itemTop >= visibleTop && itemBottom <= visibleBottom) return;
+
+                        // Scrolluj tak, by element był w pełni widoczny
+                        let scrollTo = visibleTop;
+                        if (itemTop < visibleTop) {
+                            scrollTo = itemTop;
+                        } else if (itemBottom > visibleBottom) {
+                            scrollTo = itemBottom - container.clientHeight;
+                        }
+                        container.scrollTo({
+                            top: Math.max(0, Math.min(scrollTo, container.scrollHeight - container.clientHeight)),
+                            behavior: (options.behavior as ScrollBehavior) ?? 'auto',
+                        });
+                    } else {
+                        console.warn(`Target element not found in container: ${targetId}`);
+                    }
                     return;
                 }
-            }
 
-            // Oblicz pozycje
-            const elementRect = targetElement.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            const visibleTop = containerRect.top + headerOffset;
-            const visibleBottom = containerRect.bottom;
+                // Sprawdź czy element jest widoczny (jeśli włączone)
+                if (onlyIfNotVisible) {
+                    const isVisible = isElementVisible(targetElement, container, headerOffset);
+                    if (isVisible) return;
+                }
 
-            // Scrolluj do elementu z kompensacją sticky headera
-            if (headerOffset > 0 || elementRect.top < visibleTop || elementRect.bottom > visibleBottom) {
+                // Scrolluj do elementu z kompensacją sticky headera
+                const elementRect = targetElement.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const visibleTop = containerRect.top + headerOffset;
+                const visibleBottom = containerRect.bottom;
+
                 let desiredTop: number;
-
-                if (elementRect.top < visibleTop) {
-                    // Element jest powyżej widocznego obszaru - scrolluj do góry
-                    desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
-                } else if (elementRect.bottom > visibleBottom) {
-                    // Element jest poniżej widocznego obszaru - scrolluj do dołu
-                    desiredTop = container.scrollTop + (elementRect.bottom - containerRect.bottom);
+                if (headerOffset > 0 || elementRect.top < visibleTop || elementRect.bottom > visibleBottom) {
+                    if (elementRect.top < visibleTop) {
+                        desiredTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset;
+                    } else if (elementRect.bottom > visibleBottom) {
+                        desiredTop = container.scrollTop + (elementRect.bottom - containerRect.bottom);
+                    } else {
+                        targetElement.scrollIntoView(options);
+                        return;
+                    }
+                    const clampedTop = Math.max(0, Math.min(
+                        desiredTop,
+                        container.scrollHeight - container.clientHeight
+                    ));
+                    container.scrollTo({
+                        top: clampedTop,
+                        behavior: (options.behavior as ScrollBehavior) ?? 'auto',
+                    });
                 } else {
-                    // Element jest widoczny - użyj domyślnego scrollIntoView
                     targetElement.scrollIntoView(options);
-                    return;
                 }
+            }
+            // Scrollowanie po indeksie (wirtualna lista)
+            else if (targetIndex != null && itemSize != null) {
+                const itemTop = targetIndex * itemSize;
+                const itemBottom = itemTop + itemSize;
+                const visibleTop = container.scrollTop;
+                const visibleBottom = visibleTop + container.clientHeight;
 
-                const clampedTop = Math.max(0, Math.min(
-                    desiredTop,
-                    container.scrollHeight - container.clientHeight
-                ));
+                // Jeśli element jest już widoczny, nie scrolluj
+                if (onlyIfNotVisible && itemTop >= visibleTop && itemBottom <= visibleBottom) return;
 
+                // Scrolluj tak, by element był w pełni widoczny
+                let scrollTo = visibleTop;
+                if (itemTop < visibleTop) {
+                    scrollTo = itemTop;
+                } else if (itemBottom > visibleBottom) {
+                    scrollTo = itemBottom - container.clientHeight;
+                }
                 container.scrollTo({
-                    top: clampedTop,
+                    top: Math.max(0, Math.min(scrollTo, container.scrollHeight - container.clientHeight)),
                     behavior: (options.behavior as ScrollBehavior) ?? 'auto',
                 });
-            } else {
-                targetElement.scrollIntoView(options);
             }
         }, delay);
 
         return () => clearTimeout(timeoutId);
-    }, [targetId, containerId, containerRef, delay, onlyIfNotVisible, stickyHeader, JSON.stringify(options), ...dependencies]);
+    }, [
+        targetId,
+        targetIndex,
+        itemSize,
+        containerId,
+        containerRef,
+        delay,
+        onlyIfNotVisible,
+        stickyHeader,
+        JSON.stringify(options),
+        ...dependencies
+    ]);
 };
 
 /**
