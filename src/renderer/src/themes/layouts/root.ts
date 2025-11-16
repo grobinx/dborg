@@ -97,6 +97,9 @@ const root = (fontSize: number, fontFamily: string, monospaceFontFamily: string,
                     ':not([class*="DataGrid-"]), :not([class*="DataGrid-"])::before, :not([class*="DataGrid-"])::after': {
                         transition: 'var(--app-transition)',
                     },
+                    '*': {
+                        outline: 'none',
+                    }
                 }
             }
         }

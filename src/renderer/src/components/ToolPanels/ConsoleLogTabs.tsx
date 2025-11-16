@@ -57,7 +57,7 @@ export function formatTime(time: number): string {
     return new Date(time).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 });
 }
 
-export const StyledConsoleLogDetailsPanel = styled('div', {
+export const StyledConsoleLogDetailsPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = styled('div', {
     name: "ConsoleLogPanel",
     slot: "details",
 })(({ theme }) => ({
