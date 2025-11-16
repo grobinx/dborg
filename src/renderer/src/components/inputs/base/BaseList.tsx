@@ -151,7 +151,6 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         onScroll?.(e);
     };
 
-    let visibleItems = items;
     let start = 0, end = items.length;
 
     if (itemHeight && items.length > 0 && listRef.current) {
@@ -159,9 +158,6 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
         const total = items.length;
         start = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
         end = Math.min(total, Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan);
-        if (virtual) {
-            visibleItems = items.slice(start, end);
-        }
     }
 
     return (
@@ -175,23 +171,27 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
                 classes
             )}
             tabIndex={disabled ? -1 : (tabIndex ?? 0)}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
+            onKeyDown={(e) => !disabled && onKeyDown?.(e)}
+            onKeyUp={(e) => !disabled && onKeyUp?.(e)}
             onFocus={(e) => {
-                onFocus?.(e);
-                setListFocused(true);
+                if (!disabled) {
+                    onFocus?.(e);
+                    setListFocused(true);
+                }
             }}
             onBlur={(e) => {
-                onBlur?.(e);
-                setListFocused(false);
+                if (!disabled) {
+                    onBlur?.(e);
+                    setListFocused(false);
+                }
             }}
-            onWheel={onWheel}
-            onScroll={(virtual || itemHeight) ? handleScroll : onScroll}
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
-            onMouseMove={onMouseMove}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
+            onWheel={(e) => !disabled && onWheel?.(e)}
+            onScroll={(virtual || itemHeight) && !disabled ? handleScroll : onScroll}
+            onMouseEnter={(e) => !disabled && onMouseEnter?.(e)}
+            onMouseLeave={(e) => !disabled && onMouseLeave?.(e)}
+            onMouseMove={(e) => !disabled && onMouseMove?.(e)}
+            onMouseDown={(e) => !disabled && onMouseDown?.(e)}
+            onMouseUp={(e) => !disabled && onMouseUp?.(e)}
             style={{
                 ...style,
                 position: virtual ? 'relative' : style?.position,
@@ -204,8 +204,9 @@ export function BaseList<T = any>(props: BaseListProps<T>) {
             {items.length === 0 && renderEmpty ? renderEmpty() :
                 (virtual && itemHeight) ? (
                     <div style={{ height: items.length * itemHeight, position: 'relative' }}>
-                        {visibleItems.map((item, index) => {
+                        {Array.from({ length: end - start }, (_, index) => {
                             const realIndex = start + index;
+                            const item = items[realIndex];
                             const selected = isSelected?.(item, realIndex);
                             const focused = isFocused?.(item, realIndex);
                             const id = getItemId?.(item, realIndex);
