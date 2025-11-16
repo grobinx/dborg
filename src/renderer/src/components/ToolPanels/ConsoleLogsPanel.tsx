@@ -67,7 +67,6 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const { logs } = useConsole();
     const { t } = useTranslation();
     const theme = useTheme();
-    const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
     const listRef = React.useRef<HTMLUListElement>(null);
     const showTime = useConsoleLogState(state => state.showTime);
     const search = useConsoleLogState(state => state.search);
@@ -79,6 +78,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5));
     const [searchDelay] = useSetting<number>("app", "search.delay");
+    const [detailLogId, setDetailLogId] = React.useState<string | null>(null);
 
     useEffect(() => {
         const newHeight = itemSize ?? fontSize * 1.5;
@@ -106,6 +106,16 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
         }
         return;
     }, [logs, search, searchDelay]);
+
+    React.useEffect(() => {
+        const debounced = debounce(() => {
+            if (selectedLogId) {
+                setDetailLogId(selectedLogId);
+            }
+        }, 250);
+        debounced();
+        return () => debounced.cancel();
+    }, [selectedLogId]);
 
     useScrollIntoView({
         containerRef: listRef,
@@ -153,60 +163,58 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     };
 
     return (
-        <TabPanelContent ref={panelRef} style={{ alignItems: "flex-start" }} {...other}>
-            {panelVisible && (
-                <SplitPanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
-                    <SplitPanel>
-                        <BaseList
-                            ref={listRef}
-                            items={displayLogs}
-                            virtual
-                            itemHeight={listItemSize}
-                            isSelected={(item) => item.id === selectedLogId}
-                            isFocused={(item) => item.id === selectedLogId}
-                            onItemClick={(item) => setSelectedLogId(item.id)}
-                            getItemId={(item) => item.id}
-                            renderEmpty={() => (
-                                <div style={{ padding: 16, textAlign: "center", color: theme.palette.text.disabled }}>
-                                    <FormattedText text={t("no-logs", "No logs available")} />
-                                </div>
-                            )}
-                            renderItem={renderRow}
-                            color="default"
-                            onKeyDown={(e) => handleListNavigation(
-                                e,
-                                displayLogs,
-                                (item) => item.id,
-                                selectedLogId,
-                                setSelectedLogId
-                            )}
+        <TabPanelContent style={{ alignItems: "flex-start" }} {...other}>
+            <SplitPanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
+                <SplitPanel>
+                    <BaseList
+                        ref={listRef}
+                        items={displayLogs}
+                        virtual
+                        itemHeight={listItemSize}
+                        isSelected={(item) => item.id === selectedLogId}
+                        isFocused={(item) => item.id === selectedLogId}
+                        onItemClick={(item) => setSelectedLogId(item.id)}
+                        getItemId={(item) => item.id}
+                        renderEmpty={() => (
+                            <div style={{ padding: 16, textAlign: "center", color: theme.palette.text.disabled }}>
+                                <FormattedText text={t("no-logs", "No logs available")} />
+                            </div>
+                        )}
+                        renderItem={renderRow}
+                        color="default"
+                        onKeyDown={(e) => handleListNavigation(
+                            e,
+                            displayLogs,
+                            (item) => item.id,
+                            selectedLogId,
+                            setSelectedLogId
+                        )}
+                    />
+                </SplitPanel>
+                <Splitter />
+                <SplitPanel defaultSize={25} >
+                    <TabsPanel itemID='log-item-details-tabs'>
+                        <TabPanel
+                            itemID='log-details'
+                            label={<ConsoleLogDetailsLabel />}
+                            content={<ConsoleLogDetailsContent
+                                item={displayLogs.find(l => l.id === detailLogId)}
+                                {...slotProps?.details}
+                            />}
+                            buttons={<ConsoleLogDetailsButtons />}
                         />
-                    </SplitPanel>
-                    <Splitter />
-                    <SplitPanel defaultSize={25} >
-                        <TabsPanel itemID='log-item-details-tabs'>
-                            <TabPanel
-                                itemID='log-details'
-                                label={<ConsoleLogDetailsLabel />}
-                                content={<ConsoleLogDetailsContent
-                                    item={displayLogs.find(l => l.id === selectedLogId)}
-                                    {...slotProps?.details}
-                                />}
-                                buttons={<ConsoleLogDetailsButtons />}
-                            />
-                            <TabPanel
-                                itemID='log-stacktrace'
-                                label={<ConsoleLogStackTraceLabel />}
-                                content={<ConsoleLogStackTraceContent
-                                    stack={displayLogs.find(l => l.id === selectedLogId)?.stack}
-                                    {...slotProps?.details}
-                                />}
-                                buttons={<ConsoleLogStackTraceButtons />}
-                            />
-                        </TabsPanel>
-                    </SplitPanel>
-                </SplitPanelGroup>
-            )}
+                        <TabPanel
+                            itemID='log-stacktrace'
+                            label={<ConsoleLogStackTraceLabel />}
+                            content={<ConsoleLogStackTraceContent
+                                stack={displayLogs.find(l => l.id === detailLogId)?.stack}
+                                {...slotProps?.details}
+                            />}
+                            buttons={<ConsoleLogStackTraceButtons />}
+                        />
+                    </TabsPanel>
+                </SplitPanel>
+            </SplitPanelGroup>
         </TabPanelContent>
     );
 };

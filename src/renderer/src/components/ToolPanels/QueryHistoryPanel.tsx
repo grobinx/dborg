@@ -14,7 +14,6 @@ import { ToolButton } from "../buttons/ToolButton";
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
     const { t } = useTranslation();
-    const [panelRef, panelVisible] = useVisibleState<HTMLDivElement>();
 
     // Kolumny dla DataGrid
     const columns: ColumnDefinition[] = [
@@ -32,14 +31,12 @@ export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     ];
 
     return (
-        <TabPanelContent className="QueryHistoryPanel-root" ref={panelRef}>
-            {panelVisible && (
-                <DataGrid
-                    data={queryHistory.map((entry, index) => ({ id: index, ...entry }))}
-                    columns={columns}
-                    autoSaveId="query-history-grid"
-                />
-            )}
+        <TabPanelContent className="QueryHistoryPanel-root">
+            <DataGrid
+                data={queryHistory.map((entry, index) => ({ id: index, ...entry }))}
+                columns={columns}
+                autoSaveId="query-history-grid"
+            />
         </TabPanelContent>
     );
 };
