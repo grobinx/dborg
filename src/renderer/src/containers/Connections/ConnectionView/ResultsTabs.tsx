@@ -6,7 +6,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { uuidv7 } from "uuidv7";
-import { useMessages } from "@renderer/contexts/MessageContext";
+import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
@@ -24,7 +24,7 @@ export function resultsTabsId(session: IDatabaseSession): string {
 const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {
     const theme = useTheme();
     const [resultsTabs, setResultsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
-    const { subscribe, unsubscribe } = useMessages();
+    const { subscribe, unsubscribe, queueMessage } = useMessages();
 
     const tabsItemID = resultsTabsId(session);
 
@@ -40,6 +40,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
             />
         );
         setResultsTabs((prevTabs) => [...prevTabs, newResultTab]);
+        queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, newResultId);
     };
 
     useEffect(() => {
