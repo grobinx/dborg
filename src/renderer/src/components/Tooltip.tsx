@@ -13,6 +13,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
     return (
         <MuiTooltip
             title={<FormattedText text={title} />}
+            disableInteractive
             {...props}
         >
             {children}

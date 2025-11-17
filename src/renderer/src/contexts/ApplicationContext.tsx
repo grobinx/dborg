@@ -367,7 +367,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const handleCloneEditSchema = React.useCallback((schemaId: string) => {
         sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
-            queueMessage(Messages.STE_CLONE_PROFILE_ID, schemaId);
+            queueMessage(Messages.SET_CLONE_PROFILE_ID, schemaId);
         });
     }, [sendMessage, queueMessage]);
 
