@@ -1,21 +1,28 @@
+import React from "react";
 
-export function Rotating(props: { speed?: number, children: React.ReactNode }) {
-    const { speed = 1.2, children } = props;
+export function Rotating(props: { speed?: number, children: React.ReactNode, angle?: number }) {
+    const { speed = 1.2, children, angle } = props;
+    const animated = angle === undefined;
+
     return (
         <span
             style={{
                 display: "flex",
-                animation: `cg-rotate ${speed}s linear infinite`,
+                transform: angle !== undefined ? `rotate(${angle}deg)` : undefined,
+                animation: animated ? `cg-rotate ${speed}s linear infinite` : undefined,
+                transition: angle !== undefined ? `transform ${speed}s cubic-bezier(0.4,0,0.2,1)` : undefined,
             }}
         >
             {children}
-            <style>
-                {`
-                @keyframes cg-rotate {
-                    100% { transform: rotate(360deg); }
-                }
-                `}
-            </style>
+            {animated && (
+                <style>
+                    {`
+                    @keyframes cg-rotate {
+                        100% { transform: rotate(360deg); }
+                    }
+                    `}
+                </style>
+            )}
         </span>
     );
 }
