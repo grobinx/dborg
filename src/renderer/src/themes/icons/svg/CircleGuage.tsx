@@ -23,25 +23,3 @@ export function CircleGauge(props: SVGProps<SVGSVGElement>) {
         </svg>
     );
 }
-
-export function CircleGaugeRotating(props: SVGProps<SVGSVGElement> & { speed?: number }) {
-    const speed = props.speed ?? 1.2; // sekundy na obrót
-    return (
-        <span
-            style={{
-                display: "flex",
-                animation: `cg-rotate ${speed}s linear infinite`,
-            }}
-        >
-            <CircleGauge {...props} />
-            <style>
-                {`
-                @keyframes cg-rotate {
-                    100% { transform: rotate(360deg); }
-                }
-                `}
-            </style>
-        </span>
-    );
-}
-
