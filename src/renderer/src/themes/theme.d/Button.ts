@@ -12,6 +12,5 @@ export type ButtonComponentSlots =
     "root"
     | "content"
     | "loading"
-    | "loadingIndicator"
     | "loadingContent"
     ;

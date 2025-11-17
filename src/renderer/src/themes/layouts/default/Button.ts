@@ -141,19 +141,6 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 justifyContent: "center",
                 gap: "8px",
             },
-            loadingIndicator: {
-                width: "1em",
-                height: "1em",
-                border: "2px solid transparent",
-                borderTop: "2px solid currentColor",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-
-                "@keyframes spin": {
-                    "0%": { transform: "rotate(0deg)" },
-                    "100%": { transform: "rotate(360deg)" },
-                },
-            },
             loadingContent: {
                 fontSize: "0.875em",
                 opacity: 0.8,

@@ -27,14 +27,6 @@ const createStyledBaseButtonLoading = (componentName: string) => {
     }));
 };
 
-const createStyledBaseButtonLoadingIndicator = (componentName: string) => {
-    return styled('div', {
-        name: componentName,
-        slot: "loadingIndicator",
-    })(() => ({
-    }));
-};
-
 const createStyledBaseButtonLoadingContent = (componentName: string) => {
     return styled('span', {
         name: componentName,
@@ -89,7 +81,6 @@ export const BaseButtonLoading: React.FC<BaseButtonLoadingProps> = (props) => {
     }, [loading, showLoadingIndicator]);
 
     const StyledBaseButtonLoading = React.useMemo(() => createStyledBaseButtonLoading(componentName), [componentName]);
-    const StyledBaseButtonLoadingIndicator = React.useMemo(() => createStyledBaseButtonLoadingIndicator(componentName), [componentName]);
     const StyledBaseButtonLoadingContent = React.useMemo(() => createStyledBaseButtonLoadingContent(componentName), [componentName]);
 
     return (
