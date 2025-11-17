@@ -139,7 +139,9 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
         await window.dborg.path.ensureDir(dataPath);
         const backupData = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
-        if (backupData) {
+
+        // Backup tylko jeśli profiles się zmieniły
+        if (backupData && JSON.stringify(JSON.parse(backupData)) !== JSON.stringify(profiles)) {
             await window.dborg.path.ensureDir(`${dataPath}/backup`);
             const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
             await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, backupData);

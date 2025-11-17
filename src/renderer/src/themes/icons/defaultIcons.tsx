@@ -36,7 +36,7 @@ import { SpaceOff } from "./svg/SpaceOff";
 import { UpperLetter } from "./svg/UpperLetter";
 import { LowerLetter } from "./svg/LowerLetter";
 import { CircleGauge } from "./svg/CircleGuage";
-import { Rotating } from "@renderer/components/useful/Rotate";
+import { Rotating } from "@renderer/components/useful/Rotating";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {

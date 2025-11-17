@@ -4,16 +4,26 @@ import { FormattedText, FormattedContent } from "./useful/FormattedText";
 
 export interface TooltipProps extends Omit<MuiTooltipProps, "title"> {
     title: FormattedContent;
+    interactive?: boolean;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ children, title, ...props }) => {
-    if (!title) {
+const getChildDisabled = (child: React.ReactNode) => {
+    if (React.isValidElement(child) && "disabled" in (child.props as any)) {
+        return !!(child.props as any).disabled;
+    }
+    return false;
+};
+
+const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false, ...props }) => {
+    const childIsDisabled = getChildDisabled(children);
+
+    if (!title || childIsDisabled) {
         return children;
     }
     return (
         <MuiTooltip
             title={<FormattedText text={title} />}
-            disableInteractive
+            disableInteractive={!interactive}
             {...props}
         >
             {children}
