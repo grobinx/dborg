@@ -19,6 +19,7 @@ import { QueryHistoryProvider } from './contexts/QueryHistoryContext';
 import { ConsoleProvider } from './contexts/ConsoleContext';
 import { ProfilesProvider } from './contexts/ProfilesContext';
 import RectangleDoor from './effects/RectangleDoor';
+import { GlobalValueProvider } from './contexts/GlobalValueContext';
 
 const AppWrapper: React.FC = () => {
     const settingsContext = React.useContext(SettingsContext);
@@ -89,12 +90,14 @@ const AppWrapper: React.FC = () => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
-        <ConsoleProvider>
-            <MessageProvider>
-                <SettingsProvider>
-                    <AppWrapper />
-                </SettingsProvider>
-            </MessageProvider>
-        </ConsoleProvider>
+        <GlobalValueProvider>
+            <ConsoleProvider>
+                <MessageProvider>
+                    <SettingsProvider>
+                        <AppWrapper />
+                    </SettingsProvider>
+                </MessageProvider>
+            </ConsoleProvider>
+        </GlobalValueProvider>
     </React.StrictMode>
 );

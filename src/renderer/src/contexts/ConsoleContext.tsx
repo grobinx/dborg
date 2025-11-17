@@ -254,14 +254,14 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, []);
 
     // Funkcja do ustawiania poziomów logowania
-    const setLogLevelsHandle = (levels: LogLevel[]) => {
+    const setLogLevelsHandle = React.useCallback((levels: LogLevel[]) => {
         setLogLevels(prev => {
             return prev.map(entry => ({
                 ...entry,
                 logged: levels.includes(entry.level),
             }));
         });
-    };
+    }, []);
 
     return (
         <ConsoleContext.Provider value={{ logs, logLevels, setLogLevels: setLogLevelsHandle, loggedLevels }}>
