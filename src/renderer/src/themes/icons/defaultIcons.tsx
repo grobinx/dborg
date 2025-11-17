@@ -36,7 +36,7 @@ import { SpaceOff } from "./svg/SpaceOff";
 import { UpperLetter } from "./svg/UpperLetter";
 import { LowerLetter } from "./svg/LowerLetter";
 import { CircleGauge } from "./svg/CircleGuage";
-import { Rotating } from "@renderer/components/useful/Rotating";
+import { Rotate } from "@renderer/components/useful/Rotate";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -75,7 +75,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             ExpandLess: (props) => <IconWrapper {...props} className="expand-less"><MuiIcons.ExpandLess fontSize="inherit" /></IconWrapper>,
             ExpandMore: (props) => <IconWrapper {...props} className="expand-more"><MuiIcons.ExpandMore fontSize="inherit" /></IconWrapper>,
             ConnectionTest: (props) => <IconWrapper {...props} className="connection-test"><Testcafe fontSize="inherit" /></IconWrapper>,
-            Loading: (props) => <IconWrapper {...props} className="loading"><Rotating><CircleGauge /></Rotating></IconWrapper>,
+            Loading: (props) => <IconWrapper {...props} className="loading"><Rotate><CircleGauge /></Rotate></IconWrapper>,
             Refresh: (props) => <IconWrapper {...props} className="refresh"><MuiIcons.Refresh fontSize="inherit" /></IconWrapper>,
             SqlEditor: (props) => <IconWrapper {...props} className="sql-editor"><Sql fontSize="inherit" /></IconWrapper>,
             DatabaseTables: (props) => <IconWrapper {...props} className="database-tables"><BsIcons.Table fontSize="inherit" /></IconWrapper>,

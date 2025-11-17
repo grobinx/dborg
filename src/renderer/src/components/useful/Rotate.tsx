@@ -1,6 +1,6 @@
 import React from "react";
 
-export function Rotating(props: { speed?: number, children: React.ReactNode, angle?: number }) {
+export function Rotate(props: { speed?: number, children: React.ReactNode, angle?: number }) {
     const { speed = 1.2, children, angle } = props;
     const animated = angle === undefined;
 
