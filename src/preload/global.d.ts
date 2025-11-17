@@ -44,6 +44,7 @@ declare global {
                 readFile: (path: string, charCode?: BufferEncoding) => Promise<string>,
                 writeFile: (path: string, content: string, charCode?: BufferEncoding) => Promise<void>,
                 deleteFile: (path: string) => Promise<void>,
+                renameFile: (oldPath: string, newPath: string) => Promise<void>,
                 exists: (path: string) => Promise<boolean>,
                 /**
                  * Watch file or directory for changes, when directory is watched all subdirectorys are watched too

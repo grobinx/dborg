@@ -10,6 +10,7 @@ const EVENT_FILE_EXISTS = "dborg:file:exists";
 const EVENT_FILE_WATCH_START = "dborg:file:watch:start";
 const EVENT_FILE_WATCH_STOP = "dborg:file:watch:stop";
 const EVENT_FILE_CHANGED = "dborg:file:changed";
+const EVENT_FILE_RENAME = "dborg:file:rename";
 
 const watchers = new Map<string, FSWatcher>();
 
@@ -106,6 +107,18 @@ export function init(ipc: typeof ipcMain, window: Electron.BrowserWindow) : void
             });
         }
     );
+
+    ipc.handle(EVENT_FILE_RENAME, (_ : IpcMainInvokeEvent, oldPath: string, newPath: string) : Promise<InvokeResult> => {
+        return handleResult(new Promise((resolve, reject) => {
+            fs.rename(oldPath, newPath, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(undefined);
+                }
+            });
+        }));
+    });
 }
 
 export const preload = {
@@ -126,6 +139,9 @@ export const preload = {
     },
     unwatchFile: async (filePath: string): Promise<void> => {
         return ipcRenderer.invoke(EVENT_FILE_WATCH_STOP, filePath);
+    },
+    renameFile: async (oldPath: string, newPath: string): Promise<void> => {
+        return invokeResult(ipcRenderer.invoke(EVENT_FILE_RENAME, oldPath, newPath));
     },
     onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, options?: { events?: FileChangeEvent[], filePath?: string }): (() => void) => {
         const subscription = (_event: any, filePath: string, eventType?: FileChangeEvent) => {
