@@ -101,6 +101,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [profilesInitialized, setProfilesInitialized] = useState<boolean>(false);
     const profilesRef = React.useRef<ProfileRecord[]>(profiles);
     const [justFetched, setJustFetched] = useState<boolean>(false);
+    const [oryginalSchema, setOryginalSchema] = useState<string | null>(null);
 
     const getProfile = useCallback((profileId: string, throwError: boolean = true) => {
         if (profilesRef.current) {
@@ -125,6 +126,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 setProfiles(loadedProfiles);
                 setJustFetched(true);
                 setProfilesInitialized(true);
+                setOryginalSchema(data);
             } catch (error) {
                 addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
                 emitEvent('fetching', { status: 'error', error });
@@ -137,14 +139,12 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const storeProfiles = useCallback(async (profiles: ProfileRecord[]) => {
         emitEvent('storing', { status: 'started' });
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
-        await window.dborg.path.ensureDir(dataPath);
-        const backupData = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
 
         // Backup tylko jeśli profiles się zmieniły
-        if (backupData && JSON.stringify(JSON.parse(backupData)) !== JSON.stringify(profiles)) {
+        if (oryginalSchema && JSON.stringify(JSON.parse(oryginalSchema)) !== JSON.stringify(profiles)) {
             await window.dborg.path.ensureDir(`${dataPath}/backup`);
             const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
-            await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, backupData);
+            await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, oryginalSchema);
             const backupFiles =
                 (await window.dborg.path.list(`${dataPath}/backup`, "schemas.json.*"))
                     .sort((a, b) => b.localeCompare(a));
