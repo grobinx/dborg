@@ -1,5 +1,5 @@
 import React from 'react';
-import { styled } from '@mui/material';
+import { styled, useTheme } from '@mui/material';
 import { BaseButtonContentProps, BaseButtonLoadingProps, BaseButtonProps } from './BaseButtonProps';
 import clsx from '../../utils/clsx';
 import { FormattedText } from '../useful/FormattedText';
@@ -73,6 +73,7 @@ const normalizeToggle = (toggle: string | (string | null)[] | undefined): (strin
 
 export const BaseButtonLoading: React.FC<BaseButtonLoadingProps> = (props) => {
     const { componentName, className, loading, showLoadingIndicator } = props;
+    const theme = useTheme();
 
     const shouldShowIndicator = React.useMemo(() => {
         if (typeof showLoadingIndicator === 'boolean') {
@@ -96,9 +97,7 @@ export const BaseButtonLoading: React.FC<BaseButtonLoadingProps> = (props) => {
             className={`${componentName}-loading ${className}`}
         >
             {shouldShowIndicator &&
-                <StyledBaseButtonLoadingIndicator
-                    className={`${componentName}-loadingIndicator`}
-                />
+                <theme.icons.Loading />
             }
 
             {(loading && typeof loading !== 'boolean') && (
