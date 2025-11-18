@@ -16,5 +16,6 @@ export const MoveColumnToEnd = (): Action<DataGridActionContext<any>> => {
                 context.moveColumn(position.column, context.getColumnCount() - 1);
             }
         },
+        disabled: (context) => context.getPosition() === null,
     };
 }

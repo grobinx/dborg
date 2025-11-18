@@ -26,5 +26,6 @@ export const CopyValueToClipboard = (): Action<DataGridActionContext<any>> => {
                 }
             }
         },
+        disabled: (context) => context.getPosition() === null,
     };
 };

@@ -17,5 +17,6 @@ export const DecreaseColumnWidth = (): Action<DataGridActionContext<any>> => {
                 context.setColumnWidth(Math.max(width - 10, 20));
             }
         },
+        disabled: (context) => context.getPosition() === null,
     };
 }

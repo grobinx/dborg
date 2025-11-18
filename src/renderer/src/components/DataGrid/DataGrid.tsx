@@ -1072,8 +1072,6 @@ export const DataGrid = <T extends object>({
 
         if (document.activeElement !== containerRef.current) return;
 
-        if (!selectedCell) return;
-
         const context: DataGridActionContext<T> = dataGridActionContext;
         if (commandManager.current?.executeCommand(event, context)) {
             event.preventDefault();
@@ -1160,7 +1158,7 @@ export const DataGrid = <T extends object>({
 
     return (
         <StyledTable
-            className={clsx("DataGrid-table", classes)}
+            className={clsx("DataGrid-table", classes, isFocused && 'focused')}
             style={{
                 ['--dg-cell-px' as any]: `${cellPaddingX}px`,
                 ['--dg-cell-py' as any]: `${cellPaddingY}px`,
@@ -1178,10 +1176,10 @@ export const DataGrid = <T extends object>({
 
             <StyledTableContainer
                 ref={containerRef}
-                className={clsx("DataGrid-tableContainer", classes)}
+                className={clsx("DataGrid-tableContainer", classes, isFocused && 'focused')}
                 tabIndex={0}
-                onKeyDown={handleKeyDown}
-                onScroll={onScroll}
+                onKeyDown={!loading ? handleKeyDown : undefined}
+                onScroll={!loading ? onScroll : undefined}
                 onFocus={focusHandler}
                 style={{
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne

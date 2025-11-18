@@ -39,6 +39,7 @@ const CommandList = styled(List, {
         maxHeight: maxHeight ? `${maxHeight}px` : "300px",
         overflowY: 'auto',
         marginTop: theme.spacing(1),
+        color: theme.palette.text.primary,
     }
 });
 
@@ -577,7 +578,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     }
                                                     disabled={disabled}
                                                 >
-                                                    <ListItemIcon>{resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}</ListItemIcon>
+                                                    <ListItemIcon sx={{ color: 'inherit' }}>                                                    
+                                                        {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
+                                                    </ListItemIcon>
                                                     <ListItemText
                                                         primary={highlightText(
                                                             typeof action.label === "function" ? action.label(context) : action.label,
@@ -654,7 +657,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         dense
                                         disabled={disabled}
                                     >
-                                        <ListItemIcon>{resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}</ListItemIcon>
+                                        <ListItemIcon sx={{ color: 'inherit' }}>
+                                            {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
+                                        </ListItemIcon>
                                         <ListItemText>
                                             {label}
                                         </ListItemText>

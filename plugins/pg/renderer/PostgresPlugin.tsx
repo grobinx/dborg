@@ -177,7 +177,7 @@ const PostgresPlugin: Plugin = {
                                 label: {
                                     id: "table-tab-label-" + session.info.uniqueId,
                                     type: "tablabel",
-                                    label: () => rowTableName ? `${rowSchemaName}.${rowTableName}` : "No selected",
+                                    label: () => rowTableName ? `${rowSchemaName}.${rowTableName}` : t("not-selected", "Not selected"),
                                     icon: "DatabaseTables",
                                 },
                                 content: {
