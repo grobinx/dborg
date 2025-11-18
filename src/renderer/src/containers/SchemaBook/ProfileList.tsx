@@ -1,5 +1,5 @@
 import {
-    Typography, useThemeProps,
+    Typography,
     Box, styled, StackProps, Stack, useTheme,
 } from "@mui/material";
 import { useDatabase } from "@renderer/contexts/DatabaseContext";
@@ -20,12 +20,12 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
-import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
+import { useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import clsx from "@renderer/utils/clsx";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
-import { keyboardState } from "@renderer/utils/keyboardState";
+import { ProfileRecord } from "src/api/entities";
 
 const Store_ProfileList_groupList = "profileListGroupList"; // Define the key for session storage
 const Store_ProfileList_sortList = "profileListSortList"; // Define the key for session storage

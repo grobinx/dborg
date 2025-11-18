@@ -8,27 +8,9 @@ import { DBORG_DATA_PATH_NAME } from "../../../api/dborg-path";
 import * as api from "../../../api/db";
 import { useTranslation } from "react-i18next";
 import PasswordDialog from "@renderer/dialogs/PasswordDialog";
-import { ProfileUsePasswordType } from "@renderer/containers/SchemaAssistant/SchemaParameters/DriverPropertyPassword";
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
-
-// Define the profile structure
-export interface ProfileRecord {
-    sch_id: string;
-    sch_created?: string;
-    sch_updated?: string;
-    sch_drv_unique_id: string;
-    sch_group?: string;
-    sch_pattern?: string;
-    sch_name: string;
-    sch_color?: string;
-    sch_use_password?: ProfileUsePasswordType;
-    sch_properties: Properties;
-    sch_last_selected?: string;
-    sch_db_version?: string;
-    sch_script?: string;
-    sch_order?: number;
-}
+import { ProfileRecord, ProfileUsePasswordType } from "src/api/entities";
 
 export type ProfileEventType =
     | 'creating'
@@ -119,7 +101,12 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const loadProfiles = useCallback(async () => {
         emitEvent('fetching', { status: 'started' });
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
-        const data = await window.dborg.file.readFile(`${dataPath}/schemas.json`).catch(() => null);
+
+        if (await window.dborg.file.exists(`${dataPath}/schemas.json`)) {
+            await window.dborg.file.renameFile(`${dataPath}/schemas.json`, `${dataPath}/profiles.json`);
+        }
+
+        const data = await window.dborg.file.readFile(`${dataPath}/profiles.json`).catch(() => null);
         if (data) {
             try {
                 const loadedProfiles = JSON.parse(data);
@@ -128,7 +115,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 setProfilesInitialized(true);
                 setOryginalProfilesData(data);
             } catch (error) {
-                addToast("error", t("error-parsing-schemas-json", "Error parsing schemas.json file."), { reason: error });
+                addToast("error", t("error-parsing-profiles-json", "Error parsing profiles.json file."), { reason: error });
                 emitEvent('fetching', { status: 'error', error });
                 throw error;
             }
@@ -144,9 +131,9 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (oryginalProfilesData && JSON.stringify(JSON.parse(oryginalProfilesData)) !== JSON.stringify(profiles)) {
             await window.dborg.path.ensureDir(`${dataPath}/backup`);
             const timestamp = DateTime.now().toFormat("yyyyLLdd_HHmmss");
-            await window.dborg.file.writeFile(`${dataPath}/backup/schemas.json.${timestamp}`, oryginalProfilesData);
+            await window.dborg.file.writeFile(`${dataPath}/backup/profiles.json.${timestamp}`, oryginalProfilesData);
             const backupFiles =
-                (await window.dborg.path.list(`${dataPath}/backup`, "schemas.json.*"))
+                (await window.dborg.path.list(`${dataPath}/backup`, "profiles.json.*"))
                     .sort((a, b) => b.localeCompare(a));
             if (backupFiles.length > 10) {
                 for (let i = 10; i < backupFiles.length; i++) {
@@ -154,9 +141,9 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 }
             }
         }
-        await window.dborg.file.writeFile(`${dataPath}/schemas.json`, JSON.stringify(profiles, null, 2));
+        await window.dborg.file.writeFile(`${dataPath}/profiles.json`, JSON.stringify(profiles, null, 2));
         emitEvent('storing', { status: 'success' });
-    }, []);
+    }, [oryginalProfilesData]);
 
     useEffect(() => {
         profilesRef.current = profiles;

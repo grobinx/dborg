@@ -1,11 +1,14 @@
 import path from "node:path";
 import * as consts from "../../../api/consts";
 import { Connection, Driver } from "../../api/db";
-import { dataPath as dborgPath } from '../../api/dborg-path'
+import { DBORG_DATA_PATH, dataPath as dborgPath } from '../../api/dborg-path'
 import Version from "../../../api/version";
 import { uuidv7 } from "uuidv7";
 import { CommandResult, QueryResult } from "../../../api/db";
 import { DateTime } from "luxon";
+import fs from "node:fs/promises";
+import { DborgRecord, DriverRecord } from "src/api/entities";
+import dborgPackage from '../../../../package.json';
 
 export interface InternalConnection {
     setConnection(connection: Connection): void;
@@ -83,86 +86,83 @@ export async function init(): Promise<void> {
         throw Error("Can't connect to DBorga internal database!");
     }
 
-    await internal.execute("create table if not exists dborg (id varchar primary key, name varchar unique, value varchar)");
-    const { rows } = await internal.query("select value from dborg where name = 'version'");
-    if (rows.length) {
-        lastVersion.parse(rows[0].value as string);
-        const sql = "update dborg set value = ? where name = ?";
-        await internal.execute(sql, [lastVersion.toString(), "last-version"]);
-        await internal.execute(sql, [consts.version.toString(), "version"]);
-        await internal.execute("update dborg set value = ? where name = ?", [DateTime.now().toSQL(), "last-start"]);
-    }
-    else {
-        const sql = "insert into dborg values (?, ?, ?)";
-        await internal.execute(sql, [uuidv7(), "version", consts.version.toString()]);
-        await internal.execute(sql, [uuidv7(), "last-version", null]);
-        await internal.execute(sql, [uuidv7(), "first-start", DateTime.now().toSQL()]);
-        await internal.execute(sql, [uuidv7(), "last-start", null]);
+    try {
+        await updateDborg();
+    } catch (e) {
+        console.error("Storing dborg info failed:", e);
     }
 
-    if (Number(lastVersion.release ?? 0) <= 0) {
-        await internal.execute(
-            "create table schemas (\n" +
-            "  sch_id varchar primary key, \n" +
-            "  sch_created varchar, \n" +
-            "  sch_updated varchar, \n" +
-            "  sch_drv_unique_id varchar, \n" +
-            "  sch_group varchar, \n" +
-            "  sch_pattern varchar, \n" +
-            "  sch_name varchar, \n" +
-            "  sch_color varchar, \n" +
-            "  sch_use_password varchar, \n" +
-            "  sch_properties varchar, \n" +
-            "  sch_last_selected varchar\n" +
-            ")");
-        await internal.execute(
-            "create table drivers (\n" +
-            "  drv_id varchar primary key, \n" +
-            "  drv_unique_id varchar unique, \n" +
-            "  drv_name varchar, \n" +
-            "  drv_description varchar, \n" +
-            "  drv_icon varchar, \n" +
-            "  drv_version varchar\n" +
-            ")"
-        );
-        await internal.execute("alter table schemas add column sch_db_version varchar");
-        await internal.execute("alter table schemas add column sch_script varchar");
+    try {
+        await updateDrivers();
+    } catch (e) {
+        console.error("Storing drivers failed:", e);
+    }
+}
+
+async function updateDrivers() {
+    const filePath = path.join(dborgPath(DBORG_DATA_PATH), "drivers.json");
+    let drivers: DriverRecord[] | undefined = undefined;
+
+    try {
+        const driversData = await fs.readFile(filePath, { encoding: "utf-8" });
+        if (driversData) {
+            drivers = JSON.parse(driversData) as DriverRecord[];
+        }
+    } catch (e) {
+        // ignore
+    }
+    drivers = Driver.getDrivers().map(driver => {
+        const existing = drivers?.find(d => d.drv_unique_id === driver.getUniqueId());
+        return {
+            drv_id: existing?.drv_id ?? uuidv7(),
+            drv_unique_id: driver.getUniqueId(),
+            drv_name: driver.getName(),
+            drv_description: driver.getDescription(),
+            drv_icon: driver.getIcon(),
+            drv_version: driver.getVersion().toString()
+        } as DriverRecord;
+    });
+    await fs.writeFile(filePath, JSON.stringify(drivers, null, 2), { encoding: "utf-8" });
+}
+
+async function updateDborg() {
+    const filePath = path.join(dborgPath(DBORG_DATA_PATH), "dborg.json");
+    let dborg: DborgRecord | undefined = undefined;
+
+    try {
+        const dborgData = await fs.readFile(filePath, { encoding: "utf-8" });
+        if (dborgData) {
+            dborg = JSON.parse(dborgData) as DborgRecord;
+        }
+    } catch (e) {
+        // ignore
     }
     
-    if (Number(lastVersion.release ?? 0) < 3) {
-        await internal.execute("alter table schemas add column sch_order varchar");
-    }
-    
-    if (Number(lastVersion.release ?? 0) < 5) {
-        await internal.execute(
-            "WITH ordered AS (\n" +
-            "    SELECT sch_id, ROW_NUMBER() OVER (ORDER BY sch_order) AS new_order\n" +
-            "    FROM schemas\n" +
-            ")\n" +
-            "UPDATE schemas\n" +
-            "SET sch_order = (\n" +
-            "    SELECT new_order FROM ordered WHERE ordered.sch_id = schemas.sch_id\n" +
-            ")"
-        );
-    }
-    
-    const exclude: string[] = [];
-    for (const driver of Driver.getDrivers()) {
-        await internal.execute(
-            "insert into drivers (drv_id, drv_unique_id, drv_name, drv_description, drv_icon, drv_version)\n" +
-            "values (?, ?, ?, ?, ?, ?)\n" +
-            "on conflict (drv_unique_id) do\n" +
-            "update set\n" +
-            "  drv_name = ?2,\n" +
-            "  drv_description = ?3,\n" +
-            "  drv_icon = ?4,\n" +
-            "  drv_version = ?5\n" +
-            "where drv_unique_id = ?6",
-            [uuidv7(), driver.getUniqueId(), driver.getName(), driver.getDescription(), driver.getIcon() ?? null, driver.getVersion().toString()]
-        );
-        exclude.push(driver.getUniqueId());
-    }
-    await internal.execute(`delete from drivers where drv_unique_id not in (${exclude.map(value => `'${value}'`).join(", ")})`);
+    dborg = {
+        id: dborg?.id ?? uuidv7(),
+        version: consts.version.toString(),
+        lastVersion: dborg?.version ?? null,
+        firstStart: dborg?.firstStart ?? DateTime.now().toSQL(),
+        lastStart: DateTime.now().toSQL(),
+        release: consts.dborgReleaseName,
+        author: dborgPackage.author,
+        homepage: dborgPackage.homepage,
+        license: dborgPackage.license,
+        date: consts.dborgDate,
+        duration: consts.dborgDuration,
+        platform: process.platform,
+        arch: process.arch,
+        environment: {
+            node: process.versions.node,
+            v8: process.versions.v8,
+            uv: process.versions.uv,
+            zlib: process.versions.zlib,
+            openssl: process.versions.openssl,
+            electron: process.versions.electron
+        }
+    } as DborgRecord;
+
+    await fs.writeFile(filePath, JSON.stringify(dborg, null, 2), { encoding: "utf-8" });
 }
 
 export default internal;

@@ -1,0 +1,55 @@
+import { Properties } from "src/api/db";
+
+export type ProfileUsePasswordType = "ask" | "save" | "empty" | undefined;
+
+// Define the profile structure
+export interface ProfileRecord {
+    sch_id: string;
+    sch_created?: string;
+    sch_updated?: string;
+    sch_drv_unique_id: string;
+    sch_group?: string;
+    sch_pattern?: string;
+    sch_name: string;
+    sch_color?: string;
+    sch_use_password?: ProfileUsePasswordType;
+    sch_properties: Properties;
+    sch_last_selected?: string;
+    sch_db_version?: string;
+    sch_script?: string;
+    sch_order?: number;
+}
+
+// Define the driver structure
+export interface DriverRecord {
+    drv_id: string;
+    drv_unique_id: string;
+    drv_name: string;
+    drv_description: string;
+    drv_icon: string;
+    drv_version: string;
+}
+
+export interface DborgRecord {
+    id: string;
+    version : string;
+    lastVersion : string | null;
+    firstStart : string;
+    lastStart : string;
+    release : string;
+    author : string;
+    homepage : string;
+    license : string;
+    date : string;
+    duration : string;
+    platform: string;
+    arch: string;
+    environment: {
+        node: string;
+        v8: string;
+        uv: string;
+        zlib: string;
+        openssl: string;
+        electron: string;
+    };
+}

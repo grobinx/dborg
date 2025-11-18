@@ -5,8 +5,7 @@ import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import { PasswordField } from '@renderer/components/inputs/PasswordField';
 import { SelectField } from '@renderer/components/inputs/SelectField';
-
-export type ProfileUsePasswordType = "ask" | "save" | "empty" | undefined;
+import { ProfileUsePasswordType } from 'src/api/entities';
 
 interface DriverPropertyFileProps {
     property: PropertyInfo,
