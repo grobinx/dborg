@@ -1,4 +1,4 @@
-import { Box, InputLabel, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, Stack, useTheme } from '@mui/material';
+import { Box, InputLabel, ListItem, ListItemButton, ListItemText, ListSubheader, Menu, Stack, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PropertiesInfo } from 'src/api/db';
@@ -174,17 +174,13 @@ const ProfilePatternField: React.FC<ProfilePatternFieldProps> = (props) => {
                     />
                 </Box>
                 <Box>
-                    <InputLabel>{i18n_VisibleName + " (r/o)"}</InputLabel>
-                    <TextField
-                        key={"name"}
-                        value={schemaName}
-                        width={textFieldWidth("string", i18n_VisibleName)}
-                        inputProps={{
-                            style: {
-                                color: schemaColor
-                            }
-                        }}
-                    />
+                    <InputLabel>{i18n_VisibleName}</InputLabel>
+                    <Typography
+                        variant="h6"
+                        color={schemaColor}
+                    >
+                        {schemaName}
+                    </Typography>
                 </Box>
             </Stack>
             <Menu
