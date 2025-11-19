@@ -20,7 +20,7 @@ function createKeyBuilder(keys: string[]) {
         for (let k = 0; k < keys.length; k++) {
             const col = keys[k];
             const dict = dicts[k];
-            const v = row[col];
+            const v = String(row[col]);
             let id = dict.get(v);
             if (id === undefined) {
                 id = nextIds[k]++;
