@@ -326,7 +326,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
             // schedule next idle on
             scheduleIdleOn();
         }, ATTENTION_MS);
-    }, [focused, type]);
+    }, [focused, type, disableBlink]);
 
     const scheduleIdleOn = React.useCallback(() => {
         const IDLE_MS = 30000;
@@ -339,7 +339,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
             setIdleAttention(true);
             scheduleIdleOff();
         }, delay);
-    }, [focused, type, scheduleIdleOff]);
+    }, [focused, type, scheduleIdleOff, disableBlink]);
 
     // restart cycle on focus change
     React.useEffect(() => {
@@ -350,7 +350,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
             scheduleIdleOn();
         }
         return () => clearIdleTimers();
-    }, [focused, type, clearIdleTimers, scheduleIdleOn]);
+    }, [focused, type, clearIdleTimers, scheduleIdleOn, disableBlink]);
 
     // restart cycle on value change (activity)
     React.useEffect(() => {
@@ -359,7 +359,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         clearIdleTimers();
         setIdleAttention(false);
         scheduleIdleOn();
-    }, [type, value, focused, clearIdleTimers, scheduleIdleOn]);
+    }, [type, value, focused, clearIdleTimers, scheduleIdleOn, disableBlink]);
 
     const [previousValue] = React.useState(value);
 
