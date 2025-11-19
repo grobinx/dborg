@@ -462,7 +462,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     options={colorOptions}
                                     renderItem={item => {
                                         return isOption(item) ? (
-                                            <span style={{ alignItems: "center", display: "flex", gap: 8 }}>
+                                            <span style={{ alignItems: "center", display: "flex", gap: 8, width: "100%" }}>
                                                 <ColorBox color={item.value} />
                                                 <Ellipsis flex>{item.label}</Ellipsis>
                                             </span>
