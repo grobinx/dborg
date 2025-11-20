@@ -1,7 +1,6 @@
+import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
-import { View } from "./ApplicationContext";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { ProfileRecord } from "./ProfilesContext";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information

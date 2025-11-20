@@ -150,6 +150,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     }
                 }
                 const fetchedRows = await cursor.fetch();
+
                 let fetchTime = Date.now();
                 cancelExecution.current = null;
                 const info = await cursor.getCursorInfo();
@@ -438,7 +439,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
                 disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
                 dense
             >
-                <theme.icons.Close color={!tabIsActive ? undefined : "error" } />
+                <theme.icons.Close color={!tabIsActive ? undefined : "error"} />
             </ToolButton>
         </TabPanelLabel>
     );

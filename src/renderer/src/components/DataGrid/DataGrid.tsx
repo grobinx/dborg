@@ -452,7 +452,6 @@ export const DataGrid = <T extends object>({
     const [null_value] = useSetting("dborg", "data_grid.null_value");
     const [colors_enabled] = useSetting<boolean>("dborg", `data_grid.${mode}.colors_enabled`);
     const [active_highlight] = useSetting<boolean>("dborg", "data_grid.active_highlight");
-    const [dataState, setDataState] = useState<T[] | null>(null);
     const searchState = useSearchState();
     const { scrollTop, scrollLeft } = useScrollSync(containerRef, !!loading);
     const [containerHeight, setContainerHeight] = useState(0);
@@ -534,9 +533,7 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         console.debug("DataGrid mounted");
-        setDataState(data);
         setSelectedRows([]);
-        //setSelectedCell(null);
     }, [data]);
 
     useEffect(() => {
@@ -555,9 +552,9 @@ export const DataGrid = <T extends object>({
         }
     }, [columns]);
 
-    const filteredDataState = React.useMemo<T[]>(() => {
+    const filteredData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
-        let resultSet: T[] = [...(dataState || [])];
+        let resultSet: T[] = [...(data || [])];
 
         // Filtry kolumn
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
@@ -625,7 +622,7 @@ export const DataGrid = <T extends object>({
 
         return resultSet;
     }, [
-        dataState,
+        data,
         searchState.current,
         columnsState.stateChanged,
         groupingColumns.columns,
@@ -636,20 +633,20 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         console.debug("DataGrid row correction");
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
-        if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= filteredDataState.length) {
-            updateSelectedCell(filteredDataState.length > 0 ? { row: filteredDataState.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
+        if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= filteredData.length) {
+            updateSelectedCell(filteredData.length > 0 ? { row: filteredData.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
         }
-    }, [filteredDataState.length]);
+    }, [filteredData.length]);
 
     const summaryRow = React.useMemo<Record<string, any>>(() => {
         if (!columnsState.anySummarized) return {};
         console.debug("DataGrid derive summaryRow (memo)");
         const dataForSummary = selectedRows.length > 0
-            ? selectedRows.map(i => filteredDataState[i]).filter(Boolean)
-            : filteredDataState;
+            ? selectedRows.map(i => filteredData[i]).filter(Boolean)
+            : filteredData;
         return calculateSummary(dataForSummary, columnsState.current);
     }, [
-        filteredDataState,
+        filteredData,
         selectedRows,
         columnsState.stateChanged,
         columnsState.anySummarized
@@ -665,7 +662,7 @@ export const DataGrid = <T extends object>({
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
-                    ? filteredDataState[selectedCell.row]?.[columnsState.current[selectedCell.column]?.key]
+                    ? filteredData[selectedCell.row]?.[columnsState.current[selectedCell.column]?.key]
                     : null;
 
                 const newStatus: DataGridStatus = {
@@ -674,9 +671,9 @@ export const DataGrid = <T extends object>({
                     isSummaryVisible: columnsState.anySummarized,
                     isRowNumberVisible: showRowNumberColumn,
                     columnCount: columnsState.current.length,
-                    rowCount: filteredDataState.length,
+                    rowCount: filteredData.length,
                     position: selectedCell,
-                    dataRowCount: dataState?.length || 0,
+                    dataRowCount: data?.length || 0,
                     selectedRowCount: selectedRows.length,
                     column: selectedCell?.column !== undefined ? columnsState.current[selectedCell.column] || null : null,
                     valueType: resolvePrimitiveType(value),
@@ -700,7 +697,7 @@ export const DataGrid = <T extends object>({
         }
         return;
     }, [
-        filteredDataState,
+        filteredData,
         selectedCell?.row,
         selectedCell?.column,
         loading,
@@ -711,7 +708,7 @@ export const DataGrid = <T extends object>({
         openCommandPalette,
         onChange,
         active,
-        dataState,
+        data,
         columnsState.anySummarized
     ]);
 
@@ -724,7 +721,7 @@ export const DataGrid = <T extends object>({
             }
             return;
         }
-        const maxRow = filteredDataState.length - 1;
+        const maxRow = filteredData.length - 1;
         const maxCol = columnsState.current.length - 1;
         if (maxRow < 0 || maxCol < 0) {
             if (selectedCellRef.current !== null) {
@@ -749,7 +746,7 @@ export const DataGrid = <T extends object>({
                 }
             });
         });
-    }, [filteredDataState.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
+    }, [filteredData.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
     // useEffect(() => {
@@ -763,29 +760,29 @@ export const DataGrid = <T extends object>({
     //     }
     // }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
 
-    const totalHeight = filteredDataState.length * rowHeight;
-    const { startRow, endRow } = calculateVisibleRows(filteredDataState.length, rowHeight, containerHeight, scrollTop, containerRef);
+    const totalHeight = filteredData.length * rowHeight;
+    const { startRow, endRow } = calculateVisibleRows(filteredData.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
     const overscanFrom = Math.max(startRow - overscanRowCount, 0);
-    const overscanTo = Math.min(endRow + overscanRowCount, filteredDataState.length);
+    const overscanTo = Math.min(endRow + overscanRowCount, filteredData.length);
 
     useEffect(() => {
         console.debug("DataGrid row click");
         if (onRowClick) {
             if (selectedCell?.row !== undefined) {
-                onRowClick(filteredDataState[selectedCell.row]);
+                onRowClick(filteredData[selectedCell.row]);
             }
             else {
                 onRowClick(undefined);
             }
         }
-    }, [filteredDataState, selectedCell?.row]);
+    }, [filteredData, selectedCell?.row]);
 
     useEffect(() => {
         if (showRowNumberColumn) {
             console.debug("DataGrid adjust row number column width");
             if (containerRef.current) {
-                const maxRowNumber = filteredDataState.length; // Maksymalny numer wiersza
+                const maxRowNumber = filteredData.length; // Maksymalny numer wiersza
                 const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
                 const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily, 'bold') ?? 30, 30);
                 setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2 + 4); // Minimalna szerokość to 50px
@@ -794,7 +791,7 @@ export const DataGrid = <T extends object>({
         else {
             setRowNumberColumnWidth(0);
         }
-    }, [filteredDataState.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
+    }, [filteredData.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -806,7 +803,7 @@ export const DataGrid = <T extends object>({
         getValue: () => {
             if (selectedCell) {
                 const column = columnsState.current[selectedCell.column];
-                return filteredDataState[selectedCell.row][column.key];
+                return filteredData[selectedCell.row][column.key];
             }
             return null;
         },
@@ -828,17 +825,17 @@ export const DataGrid = <T extends object>({
         getVisibleColumns: () => ({ start: startColumn, end: endColumn }),
         getTotalSize: () => ({ height: totalHeight, width: columnsState.totalWidth }),
         getColumnCount: () => columnsState.current.length,
-        getRowCount: () => filteredDataState.length,
+        getRowCount: () => filteredData.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCell ? columnsState.current[selectedCell.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
         getData: (row) => {
             if (row === undefined) {
                 if (selectedCell) {
-                    return filteredDataState[selectedCell.row] || null;
+                    return filteredData[selectedCell.row] || null;
                 }
                 return null;
             }
-            return filteredDataState[row] || null;
+            return filteredData[row] || null;
         },
         getField: () => {
             if (selectedCell) {
@@ -962,7 +959,7 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
-        if (mode === "data" && adjustWidthExecuted && actionManager.current && filteredDataState.length > 0 && startRow >= 0) {
+        if (mode === "data" && adjustWidthExecuted && actionManager.current && filteredData.length > 0 && startRow >= 0) {
             console.debug("DataGrid adjust width to data");
             let canceled = false;
             requestAnimationFrame(() => {
@@ -973,7 +970,7 @@ export const DataGrid = <T extends object>({
             return () => { canceled = true; };
         }
         return;
-    }, [adjustWidthExecuted, actionManager.current, filteredDataState.length, mode, startRow]);
+    }, [adjustWidthExecuted, actionManager.current, filteredData.length, mode, startRow]);
 
     useEffect(() => {
         console.debug("DataGrid mount effect");
@@ -1150,7 +1147,7 @@ export const DataGrid = <T extends object>({
 
     function focusHandler(): void {
         setTimeout(() => {
-            if (!selectedCellRef.current && filteredDataState.length > 0) {
+            if (!selectedCellRef.current && filteredData.length > 0) {
                 updateSelectedCell({ row: 0, column: 0 });
             }
         }, 10);
@@ -1202,7 +1199,7 @@ export const DataGrid = <T extends object>({
                         height: rowHeight
                     }}
                 >
-                    {showRowNumberColumn && (filteredDataState.length > 0) && (
+                    {showRowNumberColumn && (filteredData.length > 0) && (
                         <StyledHeaderCell
                             key="row-number-cell"
                             className={clsx(
@@ -1322,7 +1319,7 @@ export const DataGrid = <T extends object>({
                         )
                     })}
                 </StyledHeader>
-                {filteredDataState.length === 0 && (
+                {filteredData.length === 0 && (
                     <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
                         {t("no-rows-to-display", "No rows to display")}
                     </StyledNoRowsInfo>
@@ -1337,7 +1334,7 @@ export const DataGrid = <T extends object>({
                 >
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
-                        const row = filteredDataState[absoluteRowIndex];
+                        const row = filteredData[absoluteRowIndex];
                         const isRowActive = selectedCell?.row === absoluteRowIndex;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
@@ -1357,7 +1354,7 @@ export const DataGrid = <T extends object>({
                                     height: rowHeight,
                                 }}
                             >
-                                {showRowNumberColumn && (filteredDataState.length > 0) && (
+                                {showRowNumberColumn && (filteredData.length > 0) && (
                                     <StyledCell
                                         key="row-number-cell"
                                         className={clsx(
@@ -1451,7 +1448,7 @@ export const DataGrid = <T extends object>({
                         }}
                         className={clsx("DataGrid-footer", classes)}
                     >
-                        {showRowNumberColumn && (filteredDataState.length > 0) && (
+                        {showRowNumberColumn && (filteredData.length > 0) && (
                             <StyledFooterCell
                                 key="row-number-cell"
                                 className={clsx(
