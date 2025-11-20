@@ -7,6 +7,9 @@ import PgCursor from 'pg-cursor';
 import logo from '../../resources/postgresql-logo.svg';
 import { DRIVER_UNIQUE_ID } from '../../common/consts';
 import { MetadataCollector } from './MetadataService';
+import path from 'path';
+import fs from 'fs/promises';
+import { DBORG_DATA_PATH, dataPath } from '../../../../src/main/api/dborg-path';
 
 const driverVersion: Version = {
     major: 1,
@@ -357,6 +360,7 @@ export class Connection extends driver.Connection {
     private metadata: MetadataCollector;
     private metadataPromise: Promise<api.DatabasesMetadata> | null = null;
     private pid: string | undefined;
+    private metadataFileName: string | undefined;
 
     constructor(properties: api.Properties, driver: Driver, client: pg.Client | pg.Pool, uniqueId?: string, pid?: string) {
         super(driver);
@@ -369,6 +373,7 @@ export class Connection extends driver.Connection {
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
         this.metadata = new MetadataCollector();
+        this.setMetadataFileName();
     }
 
     getUniqueId(): string {
@@ -587,19 +592,53 @@ export class Connection extends driver.Connection {
         }
     }
 
+    private setMetadataFileName(): void {
+        this.metadataFileName =
+            'pg_'
+            + [
+                this.properties?.user,
+                this.properties?.host,
+                this.properties?.port,
+                this.properties?.database
+            ]
+                .filter(Boolean)
+                .join("_")
+            + "_metadata";
+    }
+
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
         if (!this.metadataPromise || force) {
-            const client = new pg.Client(this.properties);
+            let client: pg.Client | undefined;
 
             // Tworzymy nową obietnicę tylko wtedy, gdy nie ma aktywnej lub wymuszono `force`
             this.metadataPromise = (async () => {
                 try {
+                    if (!force && this.metadataFileName) {
+                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
+                        if (await fs.access(filePath).then(() => true).catch(() => false)) {
+                            try {
+                                return await this.metadata.restoreMetadata(filePath);
+                            } catch (e) {
+                                console.error("Restoring metadata failed:", e);
+                            }
+                        }
+                    }
+
+                    const client = new pg.Client(this.properties);
                     this.metadata.setVersion(await this.getVersion());
                     await client.connect();
                     this.metadata.setClient(client);
-                    return await this.metadata.getMetadata(progress, force);
+                    const metadata = await this.metadata.getMetadata(progress, force);
+
+                    // Zapisujemy metadane do pliku po ich pobraniu
+                    if (this.metadataFileName) {
+                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
+                        this.metadata.storeMetadata(filePath).catch((e) => console.log("Storing metadata failed:", e));
+                    }
+
+                    return metadata;
                 } finally {
-                    await client.end();
+                    await client?.end();
                     // Resetujemy obietnicę po zakończeniu operacji
                     if (!force) {
                         this.metadataPromise = null;

@@ -2,6 +2,9 @@ import { Connection } from 'src/main/api/db';
 import * as api from '../../../../src/api/db';
 import Version from 'src/api/version';
 import pg from 'pg';
+import fs from 'fs/promises';
+import zlib from "zlib";
+import { version as dborgVersion, dborgReleaseName, version } from '../../../../src/api/consts';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private databases: api.DatabasesMetadata = {};
@@ -15,6 +18,33 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     setClient(client: pg.Client): void {
         this.client = client;
+    }
+
+    async restoreMetadata(fileName: string): Promise<api.DatabasesMetadata> {
+        const packed = await fs.readFile(fileName);
+        const json = zlib.gunzipSync(packed).toString("utf-8");
+        const parsed = JSON.parse(json);
+
+        // Sprawdź wersję
+        if (!parsed._version || parsed._version !== version.release) {
+            throw new Error(
+                `Incompatible metadata version: ${parsed._version ?? "unknown"} (expected ${version.release})`
+            );
+        }
+
+        this.databases = parsed.databases ?? parsed;
+        this.inited = true;
+        return this.databases;
+    }
+
+    async storeMetadata(fileName: string): Promise<void> {
+        const json = JSON.stringify({
+            _version: version.release,
+            _date: Date.now(),
+            databases: this.databases
+        }, null, 2);
+        const packed = zlib.gzipSync(json);
+        await fs.writeFile(fileName, packed);
     }
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
