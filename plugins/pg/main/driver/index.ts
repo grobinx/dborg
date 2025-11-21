@@ -632,8 +632,9 @@ export class Connection extends driver.Connection {
 
                     // Zapisujemy metadane do pliku po ich pobraniu
                     if (this.metadataFileName) {
-                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
-                        this.metadata.storeMetadata(filePath).catch((e) => console.log("Storing metadata failed:", e));
+                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
+                        await fs.mkdir(filePath, { recursive: true });
+                        this.metadata.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.log("Storing metadata failed:", e));
                     }
 
                     return metadata;
