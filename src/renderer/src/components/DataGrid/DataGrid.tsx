@@ -1335,7 +1335,7 @@ export const DataGrid = <T extends object>({
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const row = filteredData[absoluteRowIndex];
-                        const isRowActive = selectedCell?.row === absoluteRowIndex;
+                        const isActiveRow = mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
 
@@ -1347,7 +1347,7 @@ export const DataGrid = <T extends object>({
                                     classes,
                                     rowClass,
                                     selectedRows.includes(absoluteRowIndex) && "selected",
-                                    mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
+                                    isActiveRow && 'active-row',
                                 )}
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
@@ -1362,7 +1362,7 @@ export const DataGrid = <T extends object>({
                                             'row-number-cell',
                                             classes,
                                             'align-center',
-                                            mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
+                                            isActiveRow && 'active-row',
                                         )}
                                         style={{
                                             position: 'sticky',
@@ -1378,37 +1378,43 @@ export const DataGrid = <T extends object>({
                                 {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
                                     const absoluteColIndex = startColumn + localColIndex;
                                     const col = columnsState.current[absoluteColIndex];
-                                    const isCellActive = isRowActive && selectedCell?.column === absoluteColIndex;
+                                    const colWidth = col.width || 150;
+                                    const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
+                                    const isCellActive = isActiveRow && isActiveColumn;
                                     const columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
                                         : undefined) ?? col.dataType ?? 'string';
 
+                                    const cellValue = row[col.key];
                                     let styleDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
-                                    if (row[col.key] === undefined || row[col.key] === null) {
+                                    if (cellValue === undefined || cellValue === null) {
                                         styleDataType = "null";
                                     }
-                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(row[col.key])) {
+                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
                                         styleDataType = "null";
                                     }
+
+                                    const alignClass = styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start';
 
                                     let formattedValue: React.ReactNode;
                                     try {
                                         formattedValue = columnDataFormatter(
-                                            row[col.key],
+                                            cellValue,
                                             columnDataType,
                                             col.formatter,
                                             null_value,
                                             { maxLength: displayMaxLengh }
                                         );
-                                        if (typeof formattedValue === "string" && (searchState.current.text || '').trim() !== '') {
-                                            formattedValue = highlightText(formattedValue, searchState.current.text || "", theme);
+                                        const searchText = searchState.current.text?.trim();
+                                        if (typeof formattedValue === "string" && searchText) {
+                                            formattedValue = highlightText(formattedValue, searchText, theme);
                                         }
                                     } catch {
                                         formattedValue = "{error}";
                                         styleDataType = "error";
                                     }
 
-                                    const result = (
+                                    const cell = (
                                         <StyledCell
                                             key={localColIndex}
                                             data-r={absoluteRowIndex} // potrzebne do delegacji
@@ -1419,12 +1425,12 @@ export const DataGrid = <T extends object>({
                                                 isCellActive && "active-cell",
                                                 isCellActive && isFocused && "focused",
                                                 `data-type-${styleDataType}`,
-                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
-                                                mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row && 'active-row',
+                                                alignClass,
+                                                isActiveColumn && 'active-column',
+                                                isActiveRow && 'active-row',
                                             )}
                                             style={{
-                                                width: col.width || 150,
+                                                width: colWidth,
                                                 left: columnLeft,
                                             }}
                                         >
@@ -1432,9 +1438,9 @@ export const DataGrid = <T extends object>({
                                         </StyledCell>
                                     );
 
-                                    columnLeft += col.width || 150;
+                                    columnLeft += colWidth;
 
-                                    return result;
+                                    return cell;
                                 })}
                             </StyledRow>
                         );
