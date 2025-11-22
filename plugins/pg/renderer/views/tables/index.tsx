@@ -22,6 +22,9 @@ import statisticsTab from "./statisticsTab";
 import rlsPoliciesTab from "./rlsPoliciesTab";
 import aclTab from "./aclTab";
 import columnStatsTab from "./columnStatsTab";
+import partitionsTab from "./partitionsTab";
+import rulesTab from "./rulesTab";
+import sequencesTab from "./sequencesTab";
 
 interface TableRecord {
     schema_name: string;
@@ -145,6 +148,9 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         refresh(cid("rls-policies-tab-content"));
                         refresh(cid("acl-tab-content"));
                         refresh(cid("column-stats-tab-content"));
+                        refresh(cid("partitions-tab-content"));
+                        refresh(cid("rules-tab-content"));
+                        refresh(cid("sequences-tab-content"));
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -206,6 +212,9 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                                 rlsPoliciesTab(session, () => rowSchemaName, () => rowTableName),
                                 aclTab(session, () => rowSchemaName, () => rowTableName),
                                 columnStatsTab(session, () => rowSchemaName, () => rowTableName),
+                                partitionsTab(session, () => rowSchemaName, () => rowTableName),
+                                rulesTab(session, () => rowSchemaName, () => rowTableName),
+                                sequencesTab(session, () => rowSchemaName, () => rowTableName),
                             ],
                         }
                     },
