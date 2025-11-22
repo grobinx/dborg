@@ -17,26 +17,30 @@ export interface TableColumnRecord {
     description: string | null;
 }
 
-const tableColumnsTab = (
+const columnsTab = (
     session: IDatabaseSession,
     schemaName: () => string | null,
     tableName: () => string | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
 
+    const cid = (id: string) => {
+        return `${id}-${session.info.uniqueId}`;
+    }
+
     return {
-        id: "columns-tab-" + session.info.uniqueId,
+        id: cid("columns-tab"),
         type: "tab",
         label: {
-            id: "columns-tab-label-" + session.info.uniqueId,
+            id: cid("columns-tab-label"),
             type: "tablabel",
             label: t("columns", "Columns"),
         },
         content: {
-            id: "columns-tab-content-" + session.info.uniqueId,
+            id: cid("columns-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: "table-columns-grid-" + session.info.uniqueId,
+                id: cid("table-columns-grid"),
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
@@ -145,4 +149,4 @@ const tableColumnsTab = (
     };
 };
 
-export default tableColumnsTab;
+export default columnsTab;

@@ -4,26 +4,30 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IContentSlot, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 
-const tableIndexesTab = (
+const indexesTab = (
     session: IDatabaseSession,
     schemaName: () => string | null,
     tableName: () => string | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
 
+    const cid = (id: string) => {
+        return `${id}-${session.info.uniqueId}`;
+    }
+
     return {
-        id: "indexes-tab-" + session.info.uniqueId,
+        id: cid("indexes-tab"),
         type: "tab",
         label: {
-            id: "indexes-tab-label-" + session.info.uniqueId,
+            id: cid("indexes-tab-label"),
             type: "tablabel",
             label: t("indexes", "Indexes"),
         },
         content: {
-            id: "indexes-tab-content-" + session.info.uniqueId,
+            id: cid("indexes-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: "table-indexes-grid-" + session.info.uniqueId,
+                id: cid("table-indexes-grid"),
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
@@ -113,10 +117,10 @@ const tableIndexesTab = (
                         width: 350,
                     },
                 ] as ColumnDefinition[],
-                autoSaveId: "table-indexes-grid-" + session.profile.sch_id,
+                autoSaveId: `table-indexes-grid-${session.profile.sch_id}`,
             } as IGridSlot),
         }
     };
 };
 
-export default tableIndexesTab;
+export default indexesTab;

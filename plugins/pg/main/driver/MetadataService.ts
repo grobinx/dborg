@@ -401,7 +401,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             }
 
             if (progress) {
-                progress(`columns of schema: ${schema.name}`);
+                progress(`columns on schema: ${schema.name}`);
             }
 
             const { rows } = await this.client!.query(
