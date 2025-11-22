@@ -1366,7 +1366,7 @@ export const DataGrid = <T extends object>({
                                     const col = columnsState.current[absoluteColIndex];
                                     const colWidth = col.width || 150;
                                     const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
-                                    const isCellActive = isActiveRow && isActiveColumn;
+                                    const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
                                     const columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
                                         : undefined) ?? col.dataType ?? 'string';
