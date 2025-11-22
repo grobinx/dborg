@@ -25,6 +25,12 @@ import columnStatsTab from "./columnStatsTab";
 import partitionsTab from "./partitionsTab";
 import rulesTab from "./rulesTab";
 import sequencesTab from "./sequencesTab";
+import bloatTab from "./bloatTab";
+import ioStatsTab from "./ioStatsTab";
+import locksTab from "./locksTab";
+import publicationsTab from "./publicationsTab";
+import fdwTab from "./fdwTab";
+import queryPlansTab from "./queryPlansTab";
 
 interface TableRecord {
     schema_name: string;
@@ -151,6 +157,12 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         refresh(cid("partitions-tab-content"));
                         refresh(cid("rules-tab-content"));
                         refresh(cid("sequences-tab-content"));
+                        refresh(cid("bloat-tab-content"));
+                        refresh(cid("io-stats-tab-content"));
+                        refresh(cid("locks-tab-content"));
+                        refresh(cid("publications-tab-content"));
+                        refresh(cid("fdw-tab-content"));
+                        refresh(cid("query-plans-tab-content"));
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -215,6 +227,12 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                                 partitionsTab(session, () => rowSchemaName, () => rowTableName),
                                 rulesTab(session, () => rowSchemaName, () => rowTableName),
                                 sequencesTab(session, () => rowSchemaName, () => rowTableName),
+                                bloatTab(session, () => rowSchemaName, () => rowTableName),
+                                ioStatsTab(session, () => rowSchemaName, () => rowTableName),
+                                locksTab(session, () => rowSchemaName, () => rowTableName),
+                                publicationsTab(session, () => rowSchemaName, () => rowTableName),
+                                fdwTab(session, () => rowSchemaName, () => rowTableName),
+                                queryPlansTab(session, () => rowSchemaName, () => rowTableName),
                             ],
                         }
                     },

@@ -29,7 +29,7 @@ export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
 export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
 export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
 export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
-export type RecordsAsyncFactory = Promise<Record<string, any>[] | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[]> | undefined);
+export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[] | Record<string, any>> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
@@ -381,7 +381,7 @@ export function resolveBooleanFactory(factory: BooleanFactory | undefined, refre
 export function resolveActionsFactory(factory: ActionsFactory | undefined, refresh: RefreshSlotFunction): ActionKind[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | undefined> | undefined {
+export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | Record<string, any> | undefined> | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {

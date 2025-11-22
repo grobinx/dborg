@@ -62,7 +62,7 @@ select
   end as avg_row_size
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
-left join pg_stat_user_tables s on s.schemaname = n.nspname and s.relname = c.relname
+left join pg_stat_all_tables s on s.schemaname = n.nspname and s.relname = c.relname
 where n.nspname = $1 and c.relname = $2;
             `,
                         [schemaName(), tableName()]

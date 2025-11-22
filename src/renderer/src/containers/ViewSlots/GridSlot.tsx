@@ -37,13 +37,26 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = React.useState<string>("100%");
+    const [message, setMessage] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const fetchRows = async () => {
             setLoading(true);
             try {
-                setRows(await resolveRecordsFactory(slot.rows, refreshSlot) ?? []);
-                setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
+                const result = await resolveRecordsFactory(slot.rows, refreshSlot);
+                if (Array.isArray(result)) {
+                    setRows(result ?? []);
+                    setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
+                } else if (result && typeof result === "object") {
+                    setRows(Object.entries(result).map(([key, value]) => ({
+                        name: key,
+                        value: value,
+                    })));
+                    setColumns([
+                        { key: "name", label: t("name", "Name"), dataType: "string", width: 250 },
+                        { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
+                    ]);
+                }
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), {
                     reason: error,

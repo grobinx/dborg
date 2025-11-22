@@ -1,0 +1,76 @@
+import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import i18next from "i18next";
+import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+
+const publicationsTab = (
+    session: IDatabaseSession,
+    schemaName: () => string | null,
+    tableName: () => string | null
+): ITabSlot => {
+    const t = i18next.t.bind(i18next);
+    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+
+    return {
+        id: cid("publications-tab"),
+        type: "tab",
+        label: {
+            id: cid("publications-tab-label"),
+            type: "tablabel",
+            label: t("publications", "Publications"),
+        },
+        content: {
+            id: cid("publications-tab-content"),
+            type: "tabcontent",
+            content: () => ({
+                id: cid("table-publications-grid"),
+                type: "grid",
+                mode: "defined",
+                rows: async () => {
+                    if (!schemaName() || !tableName()) return [];
+
+                    const ver = (await (session as any).getVersion?.()) ?? "";
+                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
+
+                    if (major < 10) {
+                        return [{ info: "Logical replication available from PostgreSQL 10+" }];
+                    }
+
+                    const { rows } = await session.query(
+                        `
+select
+  p.pubname as publication_name,
+  p.pubowner::regrole::text as owner,
+  p.puballtables as all_tables,
+  p.pubinsert as publish_insert,
+  p.pubupdate as publish_update,
+  p.pubdelete as publish_delete,
+  case when pt.schemaname is not null then true else false end as table_included
+from pg_publication p
+left join pg_publication_tables pt
+  on pt.pubname = p.pubname
+ and pt.schemaname = $1
+ and pt.tablename = $2
+where p.puballtables or pt.schemaname is not null
+order by p.pubname;
+            `,
+                        [schemaName(), tableName()]
+                    );
+                    return rows;
+                },
+                columns: [
+                    { key: "publication_name", label: t("publication", "Publication"), dataType: "string", width: 220 },
+                    { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 150 },
+                    { key: "all_tables", label: t("all-tables", "All Tables"), dataType: "boolean", width: 110 },
+                    { key: "publish_insert", label: t("insert", "Insert"), dataType: "boolean", width: 90 },
+                    { key: "publish_update", label: t("update", "Update"), dataType: "boolean", width: 90 },
+                    { key: "publish_delete", label: t("delete", "Delete"), dataType: "boolean", width: 90 },
+                    { key: "table_included", label: t("included", "Included"), dataType: "boolean", width: 110 },
+                ] as ColumnDefinition[],
+                autoSaveId: `table-publications-grid-${session.profile.sch_id}`,
+            } as IGridSlot),
+        },
+    };
+};
+
+export default publicationsTab;
