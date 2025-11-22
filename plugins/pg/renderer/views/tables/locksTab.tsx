@@ -63,7 +63,7 @@ order by l.granted desc, l.pid;
                     { key: "application_name", label: t("app", "Application"), dataType: "string", width: 180 },
                     { key: "client_addr", label: t("client", "Client"), dataType: "string", width: 140 },
                     { key: "state", label: t("state", "State"), dataType: "string", width: 110 },
-                    { key: "query_duration", label: t("duration", "Duration"), dataType: "string", width: 130 },
+                    { key: "query_duration", label: t("duration", "Duration"), dataType: "duration", width: 130 },
                     { key: "query", label: t("query", "Query"), dataType: "string", width: 500 },
                 ] as ColumnDefinition[],
                 autoSaveId: `table-locks-grid-${session.profile.sch_id}`,
