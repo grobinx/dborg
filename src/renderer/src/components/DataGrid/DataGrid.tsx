@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { ColumnBaseType, columnBaseTypes, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
-import CommandPalette, { highlightText } from "../CommandPalette/CommandPalette";
+import CommandPalette from "../CommandPalette/CommandPalette";
 import Tooltip from "../Tooltip";
 import LoadingOverlay from "../useful/LoadingOverlay";
 import * as actions from "./actions";
@@ -21,6 +21,7 @@ import { filterToString, isColumnFilter, useColumnFilterState } from "./useColum
 import { useColumnsGroup } from "./useColumnsGroup";
 import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";
+import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 
 export type DataGridMode = "defined" | "data";
 
@@ -552,7 +553,7 @@ export const DataGrid = <T extends object>({
         }
     }, [columns]);
 
-    const filteredData = React.useMemo<T[]>(() => {
+    const displayData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet: T[] = [...(data || [])];
 
@@ -564,31 +565,16 @@ export const DataGrid = <T extends object>({
             resultSet = groupingColumns.groupData(resultSet, columnsState.current);
         }
 
-        // Wyszukiwanie
-        if (searchState.current.text) {
-            const queryParts = (searchState.current.caseSensitive
-                ? searchState.current.text
-                : searchState.current.text.toLowerCase())
-                .split(' ')
-                .filter(Boolean);
-
-            resultSet = resultSet.filter((row) => {
-                const matchesQuery = queryParts.every((part) =>
-                    Object.values(row).some((value) => {
-                        if (value === null || value === undefined) return false;
-                        const cellValue = searchState.current.caseSensitive
-                            ? value.toString()
-                            : value.toString().toLowerCase();
-
-                        if (searchState.current.wholeWord) {
-                            return cellValue.split(/\s+/).includes(part);
-                        }
-                        return cellValue.includes(part);
-                    })
-                );
-                return searchState.current.exclude ? !matchesQuery : matchesQuery;
-            });
-        }
+        resultSet = searchArray(
+            resultSet,
+            '*',
+            searchState.current.text,
+            {
+                matchMode: searchState.current.wholeWord ? 'wholeWord' : 'contains',
+                caseSensitive: searchState.current.caseSensitive,
+                exclude: searchState.current.exclude,
+            }
+        );
 
         // Sortowanie wielokolumnowe
         const sortedColumns = columnsState.current
@@ -633,20 +619,20 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         console.debug("DataGrid row correction");
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
-        if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= filteredData.length) {
-            updateSelectedCell(filteredData.length > 0 ? { row: filteredData.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
+        if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= displayData.length) {
+            updateSelectedCell(displayData.length > 0 ? { row: displayData.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
         }
-    }, [filteredData.length]);
+    }, [displayData.length]);
 
     const summaryRow = React.useMemo<Record<string, any>>(() => {
         if (!columnsState.anySummarized) return {};
         console.debug("DataGrid derive summaryRow (memo)");
         const dataForSummary = selectedRows.length > 0
-            ? selectedRows.map(i => filteredData[i]).filter(Boolean)
-            : filteredData;
+            ? selectedRows.map(i => displayData[i]).filter(Boolean)
+            : displayData;
         return calculateSummary(dataForSummary, columnsState.current);
     }, [
-        filteredData,
+        displayData,
         selectedRows,
         columnsState.stateChanged,
         columnsState.anySummarized
@@ -662,7 +648,7 @@ export const DataGrid = <T extends object>({
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
-                    ? filteredData[selectedCell.row]?.[columnsState.current[selectedCell.column]?.key]
+                    ? displayData[selectedCell.row]?.[columnsState.current[selectedCell.column]?.key]
                     : null;
 
                 const newStatus: DataGridStatus = {
@@ -671,7 +657,7 @@ export const DataGrid = <T extends object>({
                     isSummaryVisible: columnsState.anySummarized,
                     isRowNumberVisible: showRowNumberColumn,
                     columnCount: columnsState.current.length,
-                    rowCount: filteredData.length,
+                    rowCount: displayData.length,
                     position: selectedCell,
                     dataRowCount: data?.length || 0,
                     selectedRowCount: selectedRows.length,
@@ -697,7 +683,7 @@ export const DataGrid = <T extends object>({
         }
         return;
     }, [
-        filteredData,
+        displayData,
         selectedCell?.row,
         selectedCell?.column,
         loading,
@@ -721,7 +707,7 @@ export const DataGrid = <T extends object>({
             }
             return;
         }
-        const maxRow = filteredData.length - 1;
+        const maxRow = displayData.length - 1;
         const maxCol = columnsState.current.length - 1;
         if (maxRow < 0 || maxCol < 0) {
             if (selectedCellRef.current !== null) {
@@ -746,7 +732,7 @@ export const DataGrid = <T extends object>({
                 }
             });
         });
-    }, [filteredData.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
+    }, [displayData.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
     // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
     // useEffect(() => {
@@ -760,29 +746,29 @@ export const DataGrid = <T extends object>({
     //     }
     // }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
 
-    const totalHeight = filteredData.length * rowHeight;
-    const { startRow, endRow } = calculateVisibleRows(filteredData.length, rowHeight, containerHeight, scrollTop, containerRef);
+    const totalHeight = displayData.length * rowHeight;
+    const { startRow, endRow } = calculateVisibleRows(displayData.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
     const overscanFrom = Math.max(startRow - overscanRowCount, 0);
-    const overscanTo = Math.min(endRow + overscanRowCount, filteredData.length);
+    const overscanTo = Math.min(endRow + overscanRowCount, displayData.length);
 
     useEffect(() => {
         console.debug("DataGrid row click");
         if (onRowClick) {
             if (selectedCell?.row !== undefined) {
-                onRowClick(filteredData[selectedCell.row]);
+                onRowClick(displayData[selectedCell.row]);
             }
             else {
                 onRowClick(undefined);
             }
         }
-    }, [filteredData, selectedCell?.row]);
+    }, [displayData, selectedCell?.row]);
 
     useEffect(() => {
         if (showRowNumberColumn) {
             console.debug("DataGrid adjust row number column width");
             if (containerRef.current) {
-                const maxRowNumber = filteredData.length; // Maksymalny numer wiersza
+                const maxRowNumber = displayData.length; // Maksymalny numer wiersza
                 const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
                 const calculatedWidth = Math.max(calculateTextWidth(text, fontSize, fontFamily, 'bold') ?? 30, 30);
                 setRowNumberColumnWidth(calculatedWidth + cellPaddingX * 2 + 4); // Minimalna szerokość to 50px
@@ -791,7 +777,7 @@ export const DataGrid = <T extends object>({
         else {
             setRowNumberColumnWidth(0);
         }
-    }, [filteredData.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
+    }, [displayData.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -803,7 +789,7 @@ export const DataGrid = <T extends object>({
         getValue: () => {
             if (selectedCell) {
                 const column = columnsState.current[selectedCell.column];
-                return filteredData[selectedCell.row][column.key];
+                return displayData[selectedCell.row][column.key];
             }
             return null;
         },
@@ -825,17 +811,17 @@ export const DataGrid = <T extends object>({
         getVisibleColumns: () => ({ start: startColumn, end: endColumn }),
         getTotalSize: () => ({ height: totalHeight, width: columnsState.totalWidth }),
         getColumnCount: () => columnsState.current.length,
-        getRowCount: () => filteredData.length,
+        getRowCount: () => displayData.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCell ? columnsState.current[selectedCell.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
         getData: (row) => {
             if (row === undefined) {
                 if (selectedCell) {
-                    return filteredData[selectedCell.row] || null;
+                    return displayData[selectedCell.row] || null;
                 }
                 return null;
             }
-            return filteredData[row] || null;
+            return displayData[row] || null;
         },
         getField: () => {
             if (selectedCell) {
@@ -959,7 +945,7 @@ export const DataGrid = <T extends object>({
     }
 
     useEffect(() => {
-        if (mode === "data" && adjustWidthExecuted && actionManager.current && filteredData.length > 0 && startRow >= 0) {
+        if (mode === "data" && adjustWidthExecuted && actionManager.current && displayData.length > 0 && startRow >= 0) {
             console.debug("DataGrid adjust width to data");
             let canceled = false;
             requestAnimationFrame(() => {
@@ -970,7 +956,7 @@ export const DataGrid = <T extends object>({
             return () => { canceled = true; };
         }
         return;
-    }, [adjustWidthExecuted, actionManager.current, filteredData.length, mode, startRow]);
+    }, [adjustWidthExecuted, actionManager.current, displayData.length, mode, startRow]);
 
     useEffect(() => {
         console.debug("DataGrid mount effect");
@@ -1147,7 +1133,7 @@ export const DataGrid = <T extends object>({
 
     function focusHandler(): void {
         setTimeout(() => {
-            if (!selectedCellRef.current && filteredData.length > 0) {
+            if (!selectedCellRef.current && displayData.length > 0) {
                 updateSelectedCell({ row: 0, column: 0 });
             }
         }, 10);
@@ -1199,7 +1185,7 @@ export const DataGrid = <T extends object>({
                         height: rowHeight
                     }}
                 >
-                    {showRowNumberColumn && (filteredData.length > 0) && (
+                    {showRowNumberColumn && (displayData.length > 0) && (
                         <StyledHeaderCell
                             key="row-number-cell"
                             className={clsx(
@@ -1319,7 +1305,7 @@ export const DataGrid = <T extends object>({
                         )
                     })}
                 </StyledHeader>
-                {filteredData.length === 0 && (
+                {displayData.length === 0 && (
                     <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
                         {t("no-rows-to-display", "No rows to display")}
                     </StyledNoRowsInfo>
@@ -1334,7 +1320,7 @@ export const DataGrid = <T extends object>({
                 >
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
-                        const row = filteredData[absoluteRowIndex];
+                        const row = displayData[absoluteRowIndex];
                         const isActiveRow = mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
@@ -1354,7 +1340,7 @@ export const DataGrid = <T extends object>({
                                     height: rowHeight,
                                 }}
                             >
-                                {showRowNumberColumn && (filteredData.length > 0) && (
+                                {showRowNumberColumn && (displayData.length > 0) && (
                                     <StyledCell
                                         key="row-number-cell"
                                         className={clsx(
@@ -1407,7 +1393,14 @@ export const DataGrid = <T extends object>({
                                         );
                                         const searchText = searchState.current.text?.trim();
                                         if (typeof formattedValue === "string" && searchText) {
-                                            formattedValue = highlightText(formattedValue, searchText, theme);
+                                            formattedValue = 
+                                                highlightText(
+                                                    formattedValue, 
+                                                    searchText, 
+                                                    true, 
+                                                    searchState.current.caseSensitive, 
+                                                    theme.palette.primary.main
+                                                );
                                         }
                                     } catch {
                                         formattedValue = "{error}";
@@ -1454,7 +1447,7 @@ export const DataGrid = <T extends object>({
                         }}
                         className={clsx("DataGrid-footer", classes)}
                     >
-                        {showRowNumberColumn && (filteredData.length > 0) && (
+                        {showRowNumberColumn && (displayData.length > 0) && (
                             <StyledFooterCell
                                 key="row-number-cell"
                                 className={clsx(

@@ -27,7 +27,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "sum",
                     id: "dataGrid.actions.summaryFooter.sum",
                     label: t("dataGrid.actions.summaryFooter.sum", "Sum"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.sumDescription",
                         "Calculates the total sum of all numeric values in the column or string lenght."
                     ),
@@ -38,7 +38,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "avg",
                     id: "dataGrid.actions.summaryFooter.avg",
                     label: t("dataGrid.actions.summaryFooter.avg", "Average"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.avgDescription",
                         "Calculates the average (mean) of all numeric values in the column."
                     ),
@@ -49,7 +49,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "min",
                     id: "dataGrid.actions.summaryFooter.min",
                     label: t("dataGrid.actions.summaryFooter.min", "Minimum"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.minDescription",
                         "Finds the smallest value in the column."
                     ),
@@ -60,7 +60,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "max",
                     id: "dataGrid.actions.summaryFooter.max",
                     label: t("dataGrid.actions.summaryFooter.max", "Maximum"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.maxDescription",
                         "Finds the largest value in the column."
                     ),
@@ -71,7 +71,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "median",
                     id: "dataGrid.actions.summaryFooter.median",
                     label: t("dataGrid.actions.summaryFooter.median", "Median"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.medianDescription",
                         "Finds the median value in the column."
                     ),
@@ -82,7 +82,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "count",
                     id: "dataGrid.actions.summaryFooter.count",
                     label: t("dataGrid.actions.summaryFooter.count", "Count (not empty)"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.countDescription",
                         "Counts the total number of values in the column."
                     ),
@@ -93,7 +93,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "unique",
                     id: "dataGrid.actions.summaryFooter.unique",
                     label: t("dataGrid.actions.summaryFooter.unique", "Distinct count (Unique)"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.uniqueDescription",
                         "Counts the number of unique values in the column."
                     ),
@@ -104,7 +104,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "mode",
                     id: "dataGrid.actions.summaryFooter.mode",
                     label: t("dataGrid.actions.summaryFooter.mode", "Mode"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.modeDescription",
                         "Finds the most frequently occurring value in the column."
                     ),
@@ -115,7 +115,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "stdDev",
                     id: "dataGrid.actions.summaryFooter.stdDev",
                     label: t("dataGrid.actions.summaryFooter.stdDev", "Standard Deviation"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.stdDevDescription",
                         "Calculates the standard deviation of numeric values in the column."
                     ),
@@ -126,7 +126,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "range",
                     id: "dataGrid.actions.summaryFooter.range",
                     label: t("dataGrid.actions.summaryFooter.range", "Range"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.rangeDescription",
                         "Calculates the difference between the maximum and minimum values in the column."
                     ),
@@ -137,7 +137,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "truePercentage",
                     id: "dataGrid.actions.summaryFooter.truePercentage",
                     label: t("dataGrid.actions.summaryFooter.truePercentage", "True Percentage"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.truePercentageDescription",
                         "Calculates the percentage of 'true' values in the column."
                     ),
@@ -148,7 +148,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "minLength",
                     id: "dataGrid.actions.summaryFooter.minLength",
                     label: t("dataGrid.actions.summaryFooter.minLength", "Minimum Length"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.minLengthDescription",
                         "Finds the shortest string length in the column."
                     ),
@@ -159,7 +159,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "maxLength",
                     id: "dataGrid.actions.summaryFooter.maxLength",
                     label: t("dataGrid.actions.summaryFooter.maxLength", "Maximum Length"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.maxLengthDescription",
                         "Finds the longest string length in the column."
                     ),
@@ -170,7 +170,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "sumOfSquares",
                     id: "dataGrid.actions.summaryFooter.sumOfSquares",
                     label: t("dataGrid.actions.summaryFooter.sumOfSquares", "Sum of Squares"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.sumOfSquaresDescription",
                         "Calculates the sum of squares of numeric values in the column."
                     ),
@@ -181,7 +181,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "emptyCount",
                     id: "dataGrid.actions.summaryFooter.emptyCount",
                     label: t("dataGrid.actions.summaryFooter.emptyCount", "Empty Count"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.emptyCountDescription",
                         "Counts the number of empty or null values in the column."
                     ),
@@ -192,7 +192,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "variance",
                     id: "dataGrid.actions.summaryFooter.variance",
                     label: t("dataGrid.actions.summaryFooter.variance", "Variance"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.varianceDescription",
                         "Calculates the variance of numeric values in the column."
                     ),
@@ -203,7 +203,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "skewness",
                     id: "dataGrid.actions.summaryFooter.skewness",
                     label: t("dataGrid.actions.summaryFooter.skewness", "Skewness"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.skewnessDescription",
                         "Calculates the skewness of numeric values in the column."
                     ),
@@ -214,7 +214,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "kurtosis",
                     id: "dataGrid.actions.summaryFooter.kurtosis",
                     label: t("dataGrid.actions.summaryFooter.kurtosis", "Kurtosis"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.kurtosisDescription",
                         "Calculates the kurtosis of numeric values in the column."
                     ),
@@ -225,7 +225,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "iqr",
                     id: "dataGrid.actions.summaryFooter.iqr",
                     label: t("dataGrid.actions.summaryFooter.iqr", "Interquartile Range"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.iqrDescription",
                         "Calculates the interquartile range (IQR) of numeric values in the column."
                     ),
@@ -236,7 +236,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "sumOfAbsoluteDifferences",
                     id: "dataGrid.actions.summaryFooter.sumOfAbsoluteDifferences",
                     label: t("dataGrid.actions.summaryFooter.sumOfAbsoluteDifferences", "Sum of Absolute Differences"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.sumOfAbsoluteDifferencesDescription",
                         "Calculates the sum of absolute differences from the mean for numeric values in the column."
                     ),
@@ -247,7 +247,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "geometricMean",
                     id: "dataGrid.actions.summaryFooter.geometricMean",
                     label: t("dataGrid.actions.summaryFooter.geometricMean", "Geometric Mean"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.geometricMeanDescription",
                         "Calculates the geometric mean of numeric values in the column."
                     ),
@@ -258,7 +258,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "harmonicMean",
                     id: "dataGrid.actions.summaryFooter.harmonicMean",
                     label: t("dataGrid.actions.summaryFooter.harmonicMean", "Harmonic Mean"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.harmonicMeanDescription",
                         "Calculates the harmonic mean of numeric values in the column."
                     ),
@@ -269,7 +269,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "mostFrequentCharacter",
                     id: "dataGrid.actions.summaryFooter.mostFrequentCharacter",
                     label: t("dataGrid.actions.summaryFooter.mostFrequentCharacter", "Most Frequent Character"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.mostFrequentCharacterDescription",
                         "Finds the most frequently occurring character in the column."
                     ),
@@ -280,7 +280,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "mostFrequentWord",
                     id: "dataGrid.actions.summaryFooter.mostFrequentWord",
                     label: t("dataGrid.actions.summaryFooter.mostFrequentWord", "Most Frequent Word"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.mostFrequentWordDescription",
                         "Finds the most frequently occurring word in the column."
                     ),
@@ -291,7 +291,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "avgWordLength",
                     id: "dataGrid.actions.summaryFooter.avgWordLength",
                     label: t("dataGrid.actions.summaryFooter.avgWordLength", "Average Word Length"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.avgWordLengthDescription",
                         "Calculates the average length of words in the column."
                     ),
@@ -302,7 +302,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "longestCommonPrefix",
                     id: "dataGrid.actions.summaryFooter.longestCommonPrefix",
                     label: t("dataGrid.actions.summaryFooter.longestCommonPrefix", "Longest Common Prefix"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.longestCommonPrefixDescription",
                         "Finds the longest common prefix among strings in the column."
                     ),
@@ -313,7 +313,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "agg",
                     id: "dataGrid.actions.summaryFooter.agg",
                     label: t("dataGrid.actions.summaryFooter.agg", "Aggregate"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.aggDescription",
                         "Performs an aggregate operation on the column, allowing for custom aggregation logic."
                     ),
@@ -324,7 +324,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                     operation: "uniqueAgg",
                     id: "dataGrid.actions.summaryFooter.uniqueAgg",
                     label: t("dataGrid.actions.summaryFooter.uniqueAgg", "Unique Aggregate"),
-                    secondaryLabel: t(
+                    description: t(
                         "dataGrid.actions.summaryFooter.uniqueAggDescription",
                         "Performs an aggregate operation on unique values in the column."
                     ),

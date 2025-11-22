@@ -131,11 +131,11 @@ export interface Action<T> {
     label: string | ((context: T, ...args: any[]) => string);
 
     /**
-     * Etykieta dodatkowa akcji, która może być prezentowana użytkownikowi.
+     * Opis akcji, który może być prezentowany użytkownikowi.
      * @param context Obiekt, na którym akcja ma być wykonana.
      * @param args to dodatkowe argumenty przekazywane do funkcji, które mogą być użyte do dynamicznego generowania etykiety. Przygotuj się na to, że mogą być puste.
      */
-    secondaryLabel?: string | ((context: T, ...args: any[]) => string);
+    description?: string | ((context: T, ...args: any[]) => string);
 
     /**
      * Podpowiedź (tooltip) akcji, która będzie prezentowana użytkownikowi.
@@ -149,14 +149,6 @@ export interface Action<T> {
      * Może być to komponent React lub inny element reprezentujący ikonę.
      */
     icon?: React.ReactNode | ((context: T, ...args: any[]) => React.ReactNode);
-
-    /**
-     * Warunek wstępny (precondition), który musi być spełniony, aby akcja mogła zostać wykonana.
-     * Wywoływane tuż przed uruchomieniem akcji.
-     * @param context Obiekt, na którym akcja ma być wykonana.
-     * @return true, jeśli akcja może zostać wykonana; w przeciwnym razie false.
-     */
-    precondition?: (context: T) => boolean;
 
     /**
      * Tablica skrótów klawiszowych przypisanych do akcji.
@@ -334,7 +326,7 @@ export class ActionManager<T> {
         const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
 
         // Sprawdź warunek wstępny (precondition), jeśli istnieje
-        if (disabled || !visible || action.precondition && !action.precondition(context)) {
+        if (disabled || !visible) {
             return;
         }
 
@@ -372,7 +364,7 @@ export class ActionManager<T> {
             //const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
             const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
 
-            if (disabled || /*!visible || */action.precondition && !action.precondition(context)) {
+            if (disabled) {
                 this.resetSequence();
                 return true; // Sekwencja jest poprawna, ale akcja nie została wykonana
             }

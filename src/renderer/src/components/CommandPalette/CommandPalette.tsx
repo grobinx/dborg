@@ -11,6 +11,7 @@ import ButtonGroup from '../buttons/ButtonGroup';
 import { Shortcut } from '../Shortcut';
 import { TextField } from '../inputs/TextField';
 import { Adornment } from '../inputs/base/BaseInputField';
+import { highlightText } from '@renderer/hooks/useSearch';
 
 interface CommandPaletteProps {
     manager: ActionManager<any>;
@@ -42,36 +43,6 @@ const CommandList = styled(List, {
         color: theme.palette.text.primary,
     }
 });
-
-// Helper function to highlight matching text
-export const highlightText = (text: string, query: string, theme: Theme) => {
-    if (!query || query.trim() === '') return text;
-
-    // Funkcja pomocnicza do escapowania znaków specjalnych w wyrażeniu regularnym
-    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    // Rozdziel query na części oddzielone spacją i escapuj znaki specjalne
-    const queryParts = query.split(' ').filter(Boolean).map(escapeRegExp);
-
-    // Funkcja pomocnicza do sprawdzania, czy część tekstu pasuje do dowolnej części query
-    const matchQuery = (part: string) => {
-        return queryParts.some((q) => part.toLowerCase().includes(q.toLowerCase()));
-    };
-
-    // Rozdziel tekst na części, które pasują lub nie pasują do query
-    const regex = new RegExp(`(${queryParts.join('|')})`, 'gi');
-    const parts = text.split(regex);
-
-    return parts.map((part, index) =>
-        matchQuery(part) ? (
-            <span key={index} style={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
-                {part}
-            </span>
-        ) : (
-            part
-        )
-    );
-};
 
 const CommandPalette: React.FC<CommandPaletteProps> = ({
     manager,
@@ -215,7 +186,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
                     const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
                         const label = typeof command.label === "function" ? command.label(context) : command.label;
-                        const secondaryLabel = command.secondaryLabel ? (typeof command.secondaryLabel === "function" ? command.secondaryLabel(context) : command.secondaryLabel) : '';
+                        const secondaryLabel = command.description ? (typeof command.description === "function" ? command.description(context) : command.description) : '';
                         // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
                         return queryParts.every((part) =>
                             label.toLocaleLowerCase().includes(part) ||
@@ -578,23 +549,23 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     }
                                                     disabled={disabled}
                                                 >
-                                                    <ListItemIcon sx={{ color: 'inherit' }}>                                                    
+                                                    <ListItemIcon sx={{ color: 'inherit' }}>
                                                         {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
                                                     </ListItemIcon>
                                                     <ListItemText
                                                         primary={highlightText(
                                                             typeof action.label === "function" ? action.label(context) : action.label,
                                                             searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
-                                                            theme
+                                                            false, false, theme.palette.primary.main
                                                         )}
-                                                        {...(action.secondaryLabel
+                                                        {...(action.description
                                                             ? {
                                                                 secondary: highlightText(
-                                                                    typeof action.secondaryLabel === "function"
-                                                                        ? action.secondaryLabel(context)
-                                                                        : action.secondaryLabel,
+                                                                    typeof action.description === "function"
+                                                                        ? action.description(context)
+                                                                        : action.description,
                                                                     searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
-                                                                    theme
+                                                                    false, false, theme.palette.primary.main
                                                                 ),
                                                             }
                                                             : {})}

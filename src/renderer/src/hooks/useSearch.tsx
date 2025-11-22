@@ -191,29 +191,29 @@ export const highlightText = (text: string | undefined | null, search: string, i
     const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // Rozdziel query na części oddzielone spacją i escapuj znaki specjalne
-    const queryParts = search.split(' ').filter(Boolean).map(part => escapeRegExp(normalize(part, ignoreDiacritics, caseSensitive)));
+    const searchParts = search.split(' ').filter(Boolean).map(part => escapeRegExp(normalize(part, ignoreDiacritics, caseSensitive)));
 
-    // Funkcja pomocnicza do sprawdzania, czy część tekstu pasuje do dowolnej części query
-    const matchQuery = (part: string) => {
+    // Funkcja pomocnicza do sprawdzania, czy część tekstu pasuje do dowolnej części search
+    const matchSearch = (part: string) => {
         const normalizedPart = normalize(part, ignoreDiacritics, caseSensitive);
-        return queryParts.some((q) => normalizedPart.includes(q));
+        return searchParts.some((q) => normalizedPart.includes(q));
     };
 
-    // Rozdziel tekst na części, które pasują lub nie pasują do query
-    const regex = new RegExp(`(${queryParts.join('|')})`, 'gi');
+    // Rozdziel tekst na części, które pasują lub nie pasują do search
+    const regex = new RegExp(`(${searchParts.join('|')})`, 'gi');
     const normalizedText = normalize(text, ignoreDiacritics, caseSensitive);
-    const parts = normalizedText.split(regex);
+    const textParts = normalizedText.split(regex);
 
     // Znajdź odpowiadające oryginalne fragmenty tekstu
     let currentIndex = 0;
-    const result = parts.map((part, index) => {
+    const result = textParts.map((part, index) => {
         if (!part) return null;
         
         // Znajdź oryginalny fragment tekstu
         const originalPart = text.slice(currentIndex, currentIndex + part.length);
         currentIndex += part.length;
 
-        return matchQuery(part) ? (
+        return matchSearch(part) ? (
             <span key={index} style={{ fontWeight: 'bold', color: color ?? 'inherit' }}>
                 {originalPart}
             </span>

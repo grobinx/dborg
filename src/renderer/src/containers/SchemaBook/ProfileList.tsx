@@ -62,6 +62,7 @@ interface ProfileListContext {
     edit: (sprofileId: string) => void;
     clone: (profileId: string) => void;
     disconnect: (profileId: string) => void;
+    connected?: number;
 }
 
 const ProfileListContainer = styled(Stack, {
@@ -336,7 +337,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
             run: (context, profileId) => {
                 context.disconnect(profileId);
             },
-            visible: (_context, _profileId, connected) => (connected ?? 0) > 0,
+            visible: (context, _profileId, connected) => (connected ?? context.connected ?? 0) > 0,
         });
     }, []);
 
@@ -373,7 +374,8 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
             if ((profileId ?? selectedItem) != null) {
                 handleDisconnectAll((profileId ?? selectedItem) as string);
             }
-        }
+        },
+        connected: (data?.find(p => p.sch_id === (selectedItem ?? ''))?.connected)
     };
 
     React.useEffect(() => {
