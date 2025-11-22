@@ -45,11 +45,12 @@ select
   tidx_blks_read,
   tidx_blks_hit,
   round(100.0 * tidx_blks_hit / nullif(tidx_blks_hit + tidx_blks_read, 0), 2) as tidx_hit_ratio
-from pg_statio_user_tables
+from pg_statio_all_tables
 where schemaname = $1 and relname = $2;
             `,
                         [schemaName(), tableName()]
                     );
+                    if (rows.length === 0) return [];
                     const row = rows[0];
                     return Object.entries(row).map(([name, value]) => ({
                         name: t(name, name.replace(/_/g, " ")),
