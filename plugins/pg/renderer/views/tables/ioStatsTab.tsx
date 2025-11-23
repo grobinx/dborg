@@ -26,6 +26,7 @@ const ioStatsTab = (
                 id: cid("table-io-stats-grid"),
                 type: "grid",
                 mode: "defined",
+                pivot: true,
                 rows: async () => {
                     if (!schemaName() || !tableName()) return [];
                     const { rows } = await session.query(
@@ -50,16 +51,23 @@ where schemaname = $1 and relname = $2;
             `,
                         [schemaName(), tableName()]
                     );
-                    if (rows.length === 0) return [];
-                    const row = rows[0];
-                    return Object.entries(row).map(([name, value]) => ({
-                        name: t(name, name.replace(/_/g, " ")),
-                        value: value != null ? String(value) : "",
-                    }));
+                    return rows;
                 },
                 columns: [
-                    { key: "name", label: t("name", "Name"), dataType: "string", width: 220 },
-                    { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
+                    { key: "schemaname", label: t("schema", "Schema"), dataType: "string", width: 150 },
+                    { key: "relname", label: t("table", "Table"), dataType: "string", width: 200 },
+                    { key: "heap_blks_read", label: t("heap-read", "Heap Read"), dataType: "number", width: 130 },
+                    { key: "heap_blks_hit", label: t("heap-hit", "Heap Hit"), dataType: "number", width: 130 },
+                    { key: "heap_hit_ratio", label: t("heap-ratio", "Heap %"), dataType: "number", width: 100 },
+                    { key: "idx_blks_read", label: t("idx-read", "Idx Read"), dataType: "number", width: 130 },
+                    { key: "idx_blks_hit", label: t("idx-hit", "Idx Hit"), dataType: "number", width: 130 },
+                    { key: "idx_hit_ratio", label: t("idx-ratio", "Idx %"), dataType: "number", width: 100 },
+                    { key: "toast_blks_read", label: t("toast-read", "Toast Read"), dataType: "number", width: 130 },
+                    { key: "toast_blks_hit", label: t("toast-hit", "Toast Hit"), dataType: "number", width: 130 },
+                    { key: "toast_hit_ratio", label: t("toast-ratio", "Toast %"), dataType: "number", width: 100 },
+                    { key: "tidx_blks_read", label: t("tidx-read", "TIdx Read"), dataType: "number", width: 130 },
+                    { key: "tidx_blks_hit", label: t("tidx-hit", "TIdx Hit"), dataType: "number", width: 130 },
+                    { key: "tidx_hit_ratio", label: t("tidx-ratio", "TIdx %"), dataType: "number", width: 100 },
                 ] as ColumnDefinition[],
                 autoSaveId: `table-io-stats-grid-${session.profile.sch_id}`,
             } as IGridSlot),

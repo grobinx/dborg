@@ -7,6 +7,7 @@ import {
     IGridSlot,
     resolveActionDescriptorsFactory,
     resolveActionGroupDescriptorsFactory,
+    resolveBooleanFactory,
     resolveColumnDefinitionsFactory,
     resolveRecordsFactory
 } from "../../../../../plugins/manager/renderer/CustomSlots";
@@ -30,6 +31,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [refresh, setRefresh] = React.useState(false);
+    const [pivot, setPivot] = React.useState(false);
     const addToast = useToast();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
@@ -47,6 +49,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 if (Array.isArray(result)) {
                     setRows(result ?? []);
                     setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
+                    setPivot(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
                 } else if (result && typeof result === "object") {
                     setRows(Object.entries(result).map(([key, value]) => ({
                         name: key,
@@ -56,6 +59,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                         { key: "name", label: t("name", "Name"), dataType: "string", width: 250 },
                         { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
                     ]);
+                    setPivot(false);
                 }
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), {
@@ -172,6 +176,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     autoSaveId={slot.autoSaveId ?? slot.id}
                     mode={slot.mode}
                     onChange={(status) => setDataGridStatus(status)}
+                    pivot={pivot}
                 />
             </Box>
             {slot.status && slot.status.length > 0 && (

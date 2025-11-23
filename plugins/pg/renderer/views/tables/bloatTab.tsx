@@ -26,6 +26,7 @@ const bloatTab = (
                 id: cid("table-bloat-grid"),
                 type: "grid",
                 mode: "defined",
+                pivot: true,
                 rows: async () => {
                     if (!schemaName() || !tableName()) return [];
                     const { rows } = await session.query(
@@ -38,8 +39,8 @@ select
   s.n_live_tup,
   s.n_dead_tup,
   round(100.0 * s.n_dead_tup / nullif(s.n_live_tup + s.n_dead_tup, 0), 2) as dead_tup_pct,
-  to_char(s.last_vacuum, 'YYYY-MM-DD HH24:MI:SS') as last_vacuum,
-  to_char(s.last_autovacuum, 'YYYY-MM-DD HH24:MI:SS') as last_autovacuum,
+  s.last_vacuum,
+  s.last_autovacuum,
   (50 + 0.2 * s.n_live_tup)::bigint as autovacuum_threshold,
   case 
     when c.relpages > 0 and s.n_live_tup > 0 then
@@ -92,16 +93,23 @@ where s.schemaname = $1 and s.relname = $2;
             `,
                         [schemaName(), tableName()]
                     );
-                    if (rows.length === 0) return [];
-                    const row = rows[0];
-                    return Object.entries(row).map(([name, value]) => ({
-                        name: t(name, name.replace(/_/g, " ")),
-                        value: value != null ? String(value) : "",
-                    }));
+                    return rows;
                 },
                 columns: [
-                    { key: "name", label: t("name", "Name"), dataType: "string", width: 220 },
-                    { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
+                    { key: "database_name", label: t("database", "Database"), dataType: "string", width: 150 },
+                    { key: "schema_name", label: t("schema", "Schema"), dataType: "string", width: 150 },
+                    { key: "table_name", label: t("table", "Table"), dataType: "string", width: 200 },
+                    { key: "total_size", label: t("total-size", "Total Size"), dataType: "size", width: 120 },
+                    { key: "n_live_tup", label: t("live-tuples", "Live Tuples"), dataType: "number", width: 130 },
+                    { key: "n_dead_tup", label: t("dead-tuples", "Dead Tuples"), dataType: "number", width: 130 },
+                    { key: "dead_tup_pct", label: t("dead-pct", "Dead %"), dataType: "number", width: 100 },
+                    { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), dataType: "datetime", width: 180 },
+                    { key: "last_autovacuum", label: t("last-autovacuum", "Last Autovacuum"), dataType: "datetime", width: 180 },
+                    { key: "autovacuum_threshold", label: t("autovacuum-threshold", "Autovacuum Threshold"), dataType: "number", width: 180 },
+                    { key: "bloat_bytes", label: t("bloat-bytes", "Bloat (bytes)"), dataType: "number", width: 130 },
+                    { key: "bloat_pct", label: t("bloat-pct", "Bloat %"), dataType: "number", width: 100 },
+                    { key: "bloat_size", label: t("bloat-size", "Bloat Size"), dataType: "size", width: 120 },
+                    { key: "bloat_status", label: t("status", "Status"), dataType: "string", width: 180 },
                 ] as ColumnDefinition[],
                 autoSaveId: `table-bloat-grid-${session.profile.sch_id}`,
             } as IGridSlot),

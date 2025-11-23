@@ -26,6 +26,7 @@ const statisticsTab = (
                 id: cid("table-statistics-grid"),
                 type: "grid",
                 mode: "defined",
+                pivot: true,
                 rows: async () => {
                     if (!schemaName() || !tableName()) return [];
                     const { rows } = await session.query(
@@ -42,10 +43,10 @@ select
   s.n_tup_upd,
   s.n_tup_del,
   s.n_tup_hot_upd,
-  to_char(s.last_vacuum, 'YYYY-MM-DD HH24:MI:SS') as last_vacuum,
-  to_char(s.last_autovacuum, 'YYYY-MM-DD HH24:MI:SS') as last_autovacuum,
-  to_char(s.last_analyze, 'YYYY-MM-DD HH24:MI:SS') as last_analyze,
-  to_char(s.last_autoanalyze, 'YYYY-MM-DD HH24:MI:SS') as last_autoanalyze,
+  s.last_vacuum,
+  s.last_autovacuum,
+  s.last_analyze,
+  s.last_autoanalyze,
   s.vacuum_count,
   s.autovacuum_count,
   s.analyze_count,
@@ -55,16 +56,28 @@ where s.schemaname = $1 and s.relname = $2;
             `,
                         [schemaName(), tableName()]
                     );
-                    if (rows.length === 0) return [];
-                    const row = rows[0];
-                    return Object.entries(row).map(([name, value]) => ({
-                        name: t(name, name.replace(/_/g, " ")),
-                        value: value != null ? String(value) : "",
-                    }));
+                    return rows;
                 },
                 columns: [
-                    { key: "name", label: t("name", "Name"), dataType: "string", width: 220 },
-                    { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
+                    { key: "n_live_tup", label: t("n-live-tup", "Live Tuples"), dataType: "number", width: 130 },
+                    { key: "n_dead_tup", label: t("n-dead-tup", "Dead Tuples"), dataType: "number", width: 130 },
+                    { key: "n_mod_since_analyze", label: t("n-mod-since-analyze", "Mod Since Analyze"), dataType: "number", width: 160 },
+                    { key: "seq_scan", label: t("seq-scan", "Seq Scan"), dataType: "number", width: 110 },
+                    { key: "seq_tup_read", label: t("seq-tup-read", "Seq Tup Read"), dataType: "number", width: 140 },
+                    { key: "idx_scan", label: t("idx-scan", "Idx Scan"), dataType: "number", width: 110 },
+                    { key: "idx_tup_fetch", label: t("idx-tup-fetch", "Idx Tup Fetch"), dataType: "number", width: 140 },
+                    { key: "n_tup_ins", label: t("n-tup-ins", "Inserts"), dataType: "number", width: 110 },
+                    { key: "n_tup_upd", label: t("n-tup-upd", "Updates"), dataType: "number", width: 110 },
+                    { key: "n_tup_del", label: t("n-tup-del", "Deletes"), dataType: "number", width: 110 },
+                    { key: "n_tup_hot_upd", label: t("n-tup-hot-upd", "HOT Updates"), dataType: "number", width: 130 },
+                    { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), dataType: "datetime", width: 180 },
+                    { key: "last_autovacuum", label: t("last-autovacuum", "Last Autovacuum"), dataType: "datetime", width: 180 },
+                    { key: "last_analyze", label: t("last-analyze", "Last Analyze"), dataType: "datetime", width: 180 },
+                    { key: "last_autoanalyze", label: t("last-autoanalyze", "Last Autoanalyze"), dataType: "datetime", width: 180 },
+                    { key: "vacuum_count", label: t("vacuum-count", "Vacuum Count"), dataType: "number", width: 130 },
+                    { key: "autovacuum_count", label: t("autovacuum-count", "Autovacuum Count"), dataType: "number", width: 150 },
+                    { key: "analyze_count", label: t("analyze-count", "Analyze Count"), dataType: "number", width: 130 },
+                    { key: "autoanalyze_count", label: t("autoanalyze-count", "Autoanalyze Count"), dataType: "number", width: 160 },
                 ] as ColumnDefinition[],
                 autoSaveId: `table-statistics-grid-${session.profile.sch_id}`,
             } as IGridSlot),

@@ -313,6 +313,10 @@ export interface IGridSlot extends ICustomSlot {
      */
     columns?: ColumnDefinitionsFactory;
     /**
+     * Czy siatka ma być wyświetlana w trybie przestawnym (pivot) (opcjonalnie).
+     */
+    pivot?: BooleanFactory;
+    /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
     actions?: ActionFactory;

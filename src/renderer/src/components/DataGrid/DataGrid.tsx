@@ -7,7 +7,7 @@ import calculateTextWidth from "@renderer/utils/canvas";
 import clsx from "@renderer/utils/clsx";
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"; // Dodaj import useMemo
 import { useTranslation } from "react-i18next";
-import { ColumnBaseType, columnBaseTypes, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { ColumnBaseType, columnBaseTypes, ColumnDataType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
 import { ActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -431,8 +431,8 @@ const StyledLabel = styled('span', {
 }));
 
 export const DataGrid = <T extends object>({
-    columns,
-    data,
+    columns: initialColumns,
+    data: initialData,
     mode = "defined",
     pivot = false,
     columnsResizable = true,
@@ -498,6 +498,42 @@ export const DataGrid = <T extends object>({
             }, 100);
         }
     };
+
+    const { data, columns, pivotMap } = useMemo<{
+        data: T[],
+        columns: ColumnDefinition[],
+        pivotMap: Record<string, ColumnDataType> | null,
+    }>(() => {
+        if (!pivot) return { data: initialData, columns: initialColumns, pivotMap: null };
+        // Transponowanie: każda kolumna staje się wierszem
+        return {
+            data: initialColumns.map((col) => {
+                const row: any = { name: col.label, key: col.key };
+                initialData.forEach((dataRow, rowIndex) => {
+                    row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
+                });
+                return row as T;
+            }),
+            columns: [
+                {
+                    key: "name",
+                    label: t("name", "Name"),
+                    dataType: "string",
+                    width: 120,
+                } as ColumnDefinition,
+                ...initialData.map((_, rowIndex) => ({
+                    key: `value_of_${rowIndex}`,
+                    label: t("value-of-row", "Values of row {{number}}", { number: rowIndex + 1 }),
+                    dataType: "string",
+                    width: 200,
+                } as ColumnDefinition)),
+            ],
+            pivotMap: initialColumns.reduce((acc, col) => {
+                acc[col.key] = col.dataType;
+                return acc;
+            }, {} as Record<string, ColumnDataType>)
+        };
+    }, [pivot, initialColumns, initialData, t]);
 
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
     const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState, rowNumberColumnWidth);
@@ -1373,20 +1409,24 @@ export const DataGrid = <T extends object>({
                                     const colWidth = col.width || 150;
                                     const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
                                     const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
-                                    const columnDataType = (col.summary && groupingColumns.columns.length
+                                    let columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
                                         : undefined) ?? col.dataType ?? 'string';
 
-                                    const cellValue = row[col.key];
-                                    let styleDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
-                                    if (cellValue === undefined || cellValue === null) {
-                                        styleDataType = "null";
-                                    }
-                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
-                                        styleDataType = "null";
+                                    if (pivot && col.key.startsWith("value_of_")) {
+                                        columnDataType = pivotMap?.[row["key"]] ?? 'string';
                                     }
 
-                                    const alignClass = styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start';
+                                    const cellValue = row[col.key];
+                                    let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
+                                    if (cellValue === undefined || cellValue === null) {
+                                        baseDataType = "null";
+                                    }
+                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
+                                        baseDataType = "null";
+                                    }
+
+                                    const alignClass = baseDataType === 'number' ? 'align-end' : (baseDataType === 'boolean' || baseDataType === 'datetime') ? 'align-center' : 'align-start';
 
                                     let formattedValue: React.ReactNode;
                                     try {
@@ -1401,18 +1441,18 @@ export const DataGrid = <T extends object>({
                                         );
                                         const searchText = searchState.current.text?.trim();
                                         if (typeof formattedValue === "string" && searchText) {
-                                            formattedValue = 
+                                            formattedValue =
                                                 highlightText(
-                                                    formattedValue, 
-                                                    searchText, 
-                                                    true, 
-                                                    searchState.current.caseSensitive, 
+                                                    formattedValue,
+                                                    searchText,
+                                                    true,
+                                                    searchState.current.caseSensitive,
                                                     theme.palette.primary.main
                                                 );
                                         }
                                     } catch {
                                         formattedValue = "{error}";
-                                        styleDataType = "error";
+                                        baseDataType = "error";
                                     }
 
                                     const cell = (
@@ -1425,7 +1465,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 isCellActive && "active-cell",
                                                 isCellActive && isFocused && "focused",
-                                                `data-type-${styleDataType}`,
+                                                `data-type-${baseDataType}`,
                                                 alignClass,
                                                 isActiveColumn && 'active-column',
                                                 isActiveRow && 'active-row',

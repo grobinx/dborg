@@ -56,14 +56,18 @@ export type ColumnNumberType =
     | 'bigint'
     | 'decimal'
     | 'money'
-    | 'int';
+    | 'int'
+    | 'size'
+    | 'quantity';
 
 const columnNumberTypes: readonly ColumnNumberType[] = [
     "number",
     "bigint",
     "decimal",
     "money",
-    "int"
+    "int",
+    "size",
+    "quantity",
 ];
 
 export type ColumnBooleanType =
@@ -150,6 +154,8 @@ export const dataTypeToGeneralType: Record<UnionDataType, UnionDataType> = {
     decimal: 'decimal',
     money: 'decimal',
     int: 'bigint',
+    size: 'decimal',
+    quantity: 'decimal',
     boolean: 'boolean',
     bit: 'string',
     datetime: 'datetime',
@@ -183,6 +189,8 @@ export const dataTypeToBaseType: Record<UnionDataType, ColumnBaseType> = {
     decimal: 'number',
     money: 'number',
     int: 'number',
+    size: 'number',
+    quantity: 'number',
     boolean: 'boolean',
     bit: 'string',
     datetime: 'datetime',
@@ -246,6 +254,14 @@ export const typeToString = (dataType: ColumnDataType): string => {
 export const resolveDataTypeFromString = (value: string | null | undefined): ColumnDataType | null => {
     if (value === null || value === undefined) {
         return null;
+    }
+    // size/quantity – liczba + jednostka (np. "8192 bytes", "32 kB", "$100", "5 kg")
+    if (/^[\d.,]+\s*[a-zA-Z]+$/.test(value) || /^[a-zA-Z$€£¥]+\s*[\d.,]+$/.test(value)) {
+        // sprawdź, czy to typowa jednostka rozmiaru danych
+        if (/\d+\s*(bytes?|[KMGT]i?B|B)$/i.test(value)) {
+            return 'size';
+        }
+        return 'quantity';
     }
     // liczby całkowite i zmiennoprzecinkowe
     if (/^-?\d+$/.test(value)) {
@@ -517,7 +533,21 @@ function safeStringify(value: any): string {
 }
 
 // Funkcja pomocnicza do formatowania liczb
-const formatNumber = (value: any, _dataType: ColumnDataType, options: ValueToStringOptions): string => {
+const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringOptions): string => {
+    // size/quantity: wyciągnij liczbę i jednostkę
+    if (dataType === 'size' || dataType === 'quantity') {
+        const parsed = parseQuantity(value);
+        if (parsed) {
+            const { number, unit } = parsed;
+            const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
+                ? formatIntWithThousandsSeparator(number)
+                : String(number);
+            return `${formattedNum} ${unit}`;
+        }
+        // fallback: zwróć surową wartość
+        return String(value);
+    }
+
     // szybkie ścieżki dla number/bigint
     if (typeof value === 'number' && Number.isFinite(value)) {
         if (options.display && options.thousandsSeparator && Number.isInteger(value)) {
@@ -539,6 +569,24 @@ const formatNumber = (value: any, _dataType: ColumnDataType, options: ValueToStr
     }
 };
 
+// Parsuje wartość quantity/size na liczbę i jednostkę
+function parseQuantity(value: any): { number: number; unit: string } | null {
+    if (typeof value !== 'string') return null;
+    // jednostka na końcu: "8192 bytes", "32 kB"
+    const endMatch = value.match(/^([\d.,]+)\s*([a-zA-Z$€£¥]+)$/);
+    if (endMatch) {
+        const num = parseFloat(endMatch[1].replace(/,/g, ''));
+        return Number.isFinite(num) ? { number: num, unit: endMatch[2] } : null;
+    }
+    // jednostka na początku: "$100", "€50"
+    const startMatch = value.match(/^([a-zA-Z$€£¥]+)\s*([\d.,]+)$/);
+    if (startMatch) {
+        const num = parseFloat(startMatch[2].replace(/,/g, ''));
+        return Number.isFinite(num) ? { number: num, unit: startMatch[1] } : null;
+    }
+    return null;
+}
+
 // Funkcja pomocnicza do formatowania wartości boolean
 const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     return value === true ? 'true' : value === false ? 'false' : String(value);
@@ -546,9 +594,7 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToS
 
 // Funkcja pomocnicza do formatowania daty/czasu
 const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    const t = Array.isArray(dataType) ? dataType[0] : dataType;
-
-    if (t === 'duration') {
+    if (dataType === 'duration') {
         const dur = normalizeDuration(value);
         if (!dur.isValid) return String(value);
         // Zachowanie: krótszy format dla <24h, dłuższy dla >=24h
@@ -560,7 +606,7 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToS
     const dt = normalizeDateTime(value);
     if (!dt.isValid) return String(value);
 
-    switch (t) {
+    switch (dataType) {
         case 'date':
             return dt.toISODate() || '';
         case 'time':
@@ -573,8 +619,7 @@ const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToS
 
 // Funkcja pomocnicza do formatowania obiektów
 const formatObject = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
-    const t = Array.isArray(dataType) ? dataType[0] : dataType;
-    if (t === 'xml' || t === 'enum' || t === 'geometry') return String(value);
+    if (dataType === 'xml' || dataType === 'enum' || dataType === 'geometry') return String(value);
     // json i inne obiekty – bezpieczne stringify
     return safeStringify(value);
 };
@@ -658,8 +703,8 @@ export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDa
         case 'binary': {
             const len = (v: any) =>
                 (typeof Blob !== 'undefined' && v instanceof Blob) ? v.size :
-                (typeof Buffer !== 'undefined' && typeof v?.length === 'number') ? v.length :
-                String(v).length;
+                    (typeof Buffer !== 'undefined' && typeof v?.length === 'number') ? v.length :
+                        String(v).length;
             const a = len(value1), b = len(value2);
             return a < b ? -1 : a > b ? 1 : 0;
         }

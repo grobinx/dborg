@@ -26,6 +26,7 @@ const storageTab = (
                 id: cid("table-storage-grid"),
                 type: "grid",
                 mode: "defined",
+                pivot: true,
                 rows: async () => {
                     if (!schemaName() || !tableName()) return [];
                     const { rows } = await session.query(
@@ -67,16 +68,22 @@ where n.nspname = $1 and c.relname = $2;
             `,
                         [schemaName(), tableName()]
                     );
-                    if (rows.length === 0) return [];
-                    const row = rows[0];
-                    return Object.entries(row).map(([name, value]) => ({
-                        name: t(name, name.replace(/_/g, " ")),
-                        value,
-                    }));
+                    return rows;
                 },
                 columns: [
-                    { key: "name", label: t("name", "Name"), dataType: "string", width: 150 },
-                    { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
+                    { key: "relkind", label: t("relkind", "Kind"), dataType: "string", width: 80 },
+                    { key: "relkind_text", label: t("relkind-text", "Type"), dataType: "string", width: 180 },
+                    { key: "reloptions", label: t("reloptions", "Options"), dataType: "string", width: 300 },
+                    { key: "heap_bytes", label: t("heap-bytes", "Heap (bytes)"), dataType: "number", width: 140 },
+                    { key: "heap", label: t("heap", "Heap"), dataType: "size", width: 120 },
+                    { key: "toast_bytes", label: t("toast-bytes", "Toast (bytes)"), dataType: "number", width: 140 },
+                    { key: "toast", label: t("toast", "Toast"), dataType: "size", width: 120 },
+                    { key: "indexes_bytes", label: t("indexes-bytes", "Indexes (bytes)"), dataType: "number", width: 150 },
+                    { key: "indexes", label: t("indexes", "Indexes"), dataType: "size", width: 120 },
+                    { key: "total_bytes", label: t("total-bytes", "Total (bytes)"), dataType: "number", width: 140 },
+                    { key: "total", label: t("total", "Total"), dataType: "size", width: 120 },
+                    { key: "avg_row_size_bytes", label: t("avg-row-size-bytes", "Avg Row (bytes)"), dataType: "number", width: 150 },
+                    { key: "avg_row_size", label: t("avg-row-size", "Avg Row Size"), dataType: "size", width: 130 },
                 ] as ColumnDefinition[],
                 autoSaveId: `table-storage-grid-${session.profile.sch_id}`,
             } as IGridSlot),
