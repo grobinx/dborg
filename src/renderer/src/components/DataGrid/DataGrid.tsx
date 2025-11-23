@@ -36,6 +36,11 @@ interface DataGridProps<T extends object> {
      */
     mode?: DataGridMode;
     /**
+     * Czy tabela ma być wyświetlana jako tabela odwrócona (wiersze, kolumny)
+     * @default false
+     */
+    pivot?: boolean;
+    /**
      * Czy kolumny są resizowalne
      * @default false
      */
@@ -429,6 +434,7 @@ export const DataGrid = <T extends object>({
     columns,
     data,
     mode = "defined",
+    pivot = false,
     columnsResizable = true,
     overscanRowCount = 2,
     columnRowNumber,
@@ -1389,6 +1395,8 @@ export const DataGrid = <T extends object>({
                                             columnDataType,
                                             col.formatter,
                                             null_value,
+                                            row,
+                                            col.key,
                                             { maxLength: displayMaxLengh }
                                         );
                                         const searchText = searchState.current.text?.trim();

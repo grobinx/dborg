@@ -48,6 +48,8 @@ export interface TableCellPosition {
 
 export type SortDirection = "asc" | "desc";
 
+export type ColumnFormatter = (value: any, row: any, fieldName: string) => React.ReactNode;
+
 export interface ColumnDefinition {
     /**
      * Unikalny klucz identyfikujący kolumnę.
@@ -97,7 +99,7 @@ export interface ColumnDefinition {
      * @param value Wartość, która ma być sformatowana.
      * @returns 
      */
-    formatter?: (value: any) => React.ReactNode;
+    formatter?: ColumnFormatter;
 
     info?: ColumnInfo;
 }

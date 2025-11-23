@@ -1,5 +1,5 @@
 import React from "react";
-import { ColumnDefinition, SummaryOperation } from "./DataGridTypes";
+import { ColumnDefinition, ColumnFormatter, SummaryOperation } from "./DataGridTypes";
 import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 import { DateTime } from "luxon";
@@ -10,9 +10,11 @@ export const displayMaxLengh = 300;
 export const columnDataFormatter = (
     value: any, 
     dataType: api.ColumnDataType, 
-    formatter: ((value: any) => React.ReactNode) | undefined,
+    formatter: ColumnFormatter | undefined,
     nullValue: string, 
-    options: api.ValueToStringOptions
+    row: any,
+    fieldName: string,
+    options?: api.ValueToStringOptions,
 ) => {
     const nullFormatter = (value: any) => {
         if (value === null || value === undefined) {
@@ -29,7 +31,7 @@ export const columnDataFormatter = (
     };
 
     if (formatter) {
-        const formattedValue = formatter(value);
+        const formattedValue = formatter(value, row, fieldName);
         return nullFormatter(formattedValue);
     }
 
