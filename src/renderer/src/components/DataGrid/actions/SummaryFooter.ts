@@ -13,6 +13,7 @@ export const SummaryFooter = (): Action<DataGridActionContext<any>> => {
         label: t(SummaryFooter_ID, "Summary footer"),
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 5,
+        disabled: (context) => context.isPivoted(),
         run: (context) => {
             context.openCommandPalette("&", "");
         },

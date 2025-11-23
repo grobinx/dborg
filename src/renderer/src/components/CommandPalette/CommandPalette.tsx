@@ -253,10 +253,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
 
         const ignoreAction = (index: number) => {
-            const action = filteredCommands[index];
-            const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
-            const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
-            return visible && !disabled;
+            if (selectedGroup) {
+                const action = filteredCommands[index];
+                const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+                const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+                return visible && !disabled;
+            } else {
+                const group = manager.getRegisteredActionGroups()[index];
+                const disabled = typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false);
+                return !disabled;
+            }
         };
 
         const items = selectedGroup
@@ -341,8 +347,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             } else {
                 const selectedGroupItem = manager.getRegisteredActionGroups()[selectedIndex];
                 if (selectedGroupItem) {
-                    setSearchText(selectedGroupItem.prefix || '');
-                    setSelectedGroup(selectedGroupItem);
+                    const disabled = typeof selectedGroupItem.disabled === 'function' ? selectedGroupItem.disabled(context) : (selectedGroupItem.disabled ?? false);
+                    if (!disabled) {
+                        setSearchText(selectedGroupItem.prefix || '');
+                        setSelectedGroup(selectedGroupItem);
+                    }
                 }
             }
         }
@@ -585,10 +594,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 >
                                     <ListItemButton
                                         onClick={() => {
+                                            const isDisabled = typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false);
+                                            if (isDisabled) return;
                                             setSearchText(group.prefix || '');
-                                            setSelectedGroup(group); // Ustaw całą grupę
+                                            setSelectedGroup(group);
                                         }}
                                         selected={index === selectedIndex}
+                                        disabled={typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false)}
                                     >
                                         <ListItemText
                                             primary={group.label}

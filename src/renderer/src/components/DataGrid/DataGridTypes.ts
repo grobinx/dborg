@@ -244,6 +244,9 @@ export interface DataGridActionContext<T extends object> {
     toggleShowHiddenColumns: () => void;
     isShowHiddenColumns: () => boolean;
     resetHiddenColumns: () => void;
+    isPivoted: () => boolean;
+    togglePivot: () => void;
+    canPivot: () => boolean;
 }
 
 export interface DataGridContext<T extends object> {

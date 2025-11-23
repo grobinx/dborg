@@ -13,6 +13,7 @@ export const ToggleGroupColumn = (): Action<DataGridActionContext<any>> => {
         keybindings: ["Ctrl+G"],
         contextMenuGroupId: "data",
         contextMenuOrder: 1,
+        disabled: (context) => context.isPivoted(),
         run: (context) => {
             context.toggleGroupColumn();
         },

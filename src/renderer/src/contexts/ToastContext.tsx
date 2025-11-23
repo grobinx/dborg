@@ -1,8 +1,16 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { uuidv7 } from "uuidv7";
 import { useSetting } from "./SettingsContext";
+import { useMessages } from "./MessageContext";
 
 export type ToastType = "error" | "warning" | "success" | "info" | "hint";
+
+export const TOAST_ADD_MESSAGE = "toast:add";
+export interface ToastAddMessage {
+    type: ToastType;
+    message: string;
+    options?: ToastOptions;
+} 
 
 interface Toast {
     id: string;
@@ -40,8 +48,9 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [timeout] = useSetting<number>("app", "toast.timeout");
+    const { subscribe } = useMessages();
 
-    const addToast = (type: ToastType, message: string, options?: ToastOptions) => {
+    const addToast = useCallback((type: ToastType, message: string, options?: ToastOptions) => {
         const id = uuidv7();
         if (type === "error") {
             console.error(message, options?.reason);
@@ -61,15 +70,15 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             const updatedNotifications = [...prev, newNotification];
             return updatedNotifications;
         });
-    };
+    }, [timeout]);
 
-    const dispatchToast = (id: string) => {
+    const dispatchToast = useCallback((id: string) => {
         setToasts((prev) => {
             return prev.filter((notification) => notification.id !== id);
         });
-    };
+    }, []);
 
-    const showedToast = (id: string) => {
+    const showedToast = useCallback((id: string) => {
         setToasts((prev) => {
             const updatedToasts = prev.map((toast) =>
                 toast.id === id && !toast.shown
@@ -85,7 +94,17 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                 dispatchToast(id);
             }, toast.timeout);
         }
-    };
+    }, [toasts, dispatchToast]);
+
+    useEffect(() => {
+        const unsubscribe = subscribe(TOAST_ADD_MESSAGE, (msg: ToastAddMessage) => {
+            addToast(msg.type, msg.message, msg.options);
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [subscribe, addToast]);
 
     return (
         <ToastContext.Provider

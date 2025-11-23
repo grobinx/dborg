@@ -11,6 +11,7 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
         id: id,
         prefix: "&",
         label: t(id, "& Summary footer"),
+        disabled: (context) => context.isPivoted(),
         actions: (context: DataGridActionContext<any>) => {
             let actions: (Action<any> & { operation: SummaryOperation })[] = [];
             const summaryFooterOperation = context.getSummaryOperation();

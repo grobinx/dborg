@@ -353,6 +353,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     onMount={onMountHandle}
                     ref={dataGridRef}
                     autoSaveId={session.profile.sch_id}
+                    canPivot={true}
                 />
             </Box>
             <DataGridStatusBar

@@ -108,6 +108,8 @@ export interface ActionGroup<T = any> {
      * @default 'top'
      */
     position?: 'top' | 'bottom';
+
+    disabled?: boolean | ((context: T) => boolean);
 }
 
 export interface Action<T> {

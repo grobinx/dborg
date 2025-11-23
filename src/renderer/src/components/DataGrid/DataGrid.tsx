@@ -41,6 +41,11 @@ interface DataGridProps<T extends object> {
      */
     pivot?: boolean;
     /**
+     * Czy tabela może być odwrócona (wiersze, kolumny) przez użytkownika
+     * @default false
+     */
+    canPivot?: boolean;
+    /**
      * Czy kolumny są resizowalne
      * @default false
      */
@@ -434,7 +439,8 @@ export const DataGrid = <T extends object>({
     columns: initialColumns,
     data: initialData,
     mode = "defined",
-    pivot = false,
+    pivot: initialPivot = false,
+    canPivot = false,
     columnsResizable = true,
     overscanRowCount = 2,
     columnRowNumber,
@@ -468,6 +474,7 @@ export const DataGrid = <T extends object>({
     const [resizingColumn, setResizingColumn] = useState<number | null>(null);
     const filterColumns = useColumnFilterState();
     const groupingColumns = useColumnsGroup();
+    const [pivot, setPivot] = useState(initialPivot);
 
     const onSaveColumnsState = () => {
         return {
@@ -498,6 +505,10 @@ export const DataGrid = <T extends object>({
             }, 100);
         }
     };
+
+    React.useEffect(() => {
+        setPivot(initialPivot);
+    }, [initialPivot]);
 
     const { data, columns, pivotMap } = useMemo<{
         data: T[],
@@ -983,7 +994,10 @@ export const DataGrid = <T extends object>({
         isShowHiddenColumns: () => columnsState.showHiddenColumns,
         resetHiddenColumns: () => {
             columnsState.resetHiddenColumns();
-        }
+        },
+        isPivoted: () => pivot,
+        togglePivot: () => setPivot((prev) => !prev),
+        canPivot: () => canPivot,
     }
 
     useEffect(() => {
@@ -1055,6 +1069,7 @@ export const DataGrid = <T extends object>({
             if (mode === "data") {
                 actionManager.current.registerAction(actions.ToggleGroupColumn());
             }
+            actionManager.current.registerAction(actions.Pivot());
 
             actionManager.current.registerAction(actions.OpenCommandPalette());
             actionManager.current.registerAction(actions.GotoColumn());
