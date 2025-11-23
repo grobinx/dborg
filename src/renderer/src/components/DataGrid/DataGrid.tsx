@@ -998,6 +998,7 @@ export const DataGrid = <T extends object>({
         isPivoted: () => pivot,
         togglePivot: () => setPivot((prev) => !prev),
         canPivot: () => canPivot,
+        getPivotMap: () => pivotMap,
     }
 
     useEffect(() => {

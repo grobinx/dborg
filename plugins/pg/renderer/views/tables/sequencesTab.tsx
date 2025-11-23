@@ -26,6 +26,7 @@ const sequencesTab = (
                 id: cid("table-sequences-grid"),
                 type: "grid",
                 mode: "defined",
+                pivot: true,
                 rows: async () => {
                     if (!schemaName() || !tableName()) return [];
 

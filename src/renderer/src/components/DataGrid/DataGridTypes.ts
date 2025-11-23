@@ -247,6 +247,7 @@ export interface DataGridActionContext<T extends object> {
     isPivoted: () => boolean;
     togglePivot: () => void;
     canPivot: () => boolean;
+    getPivotMap: () => Record<string, ColumnDataType> | null;
 }
 
 export interface DataGridContext<T extends object> {

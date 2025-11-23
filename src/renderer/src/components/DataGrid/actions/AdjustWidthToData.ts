@@ -20,6 +20,7 @@ export const AdjustWidthToData = (): Action<DataGridActionContext<any>> => {
             const endRow = Math.min(context.getRowCount(), start + 100);
             const columns: ColumnDefinition[] = [];
             const columnsMaxWdith: number[] = [];
+            const pivotMap = context.getPivotMap();
 
             const sortPlaceWidth = context.getTextWidth("000") ?? 24;
             // Sprawdź szerokość etykiety kolumny
@@ -37,7 +38,8 @@ export const AdjustWidthToData = (): Action<DataGridActionContext<any>> => {
                 const data = context.getData(row);
                 for (let column = 0; column < columns.length; column++) {
                     const columnDefinition = columns[column];
-                    const value = valueToString(data[columnDefinition.key], columnDefinition.dataType, { maxLength: displayMaxLengh });
+                    const columnDataType = pivotMap ? pivotMap[data["key"] as string] : columnDefinition.dataType;
+                    const value = valueToString(data[columnDefinition.key], columnDataType, { maxLength: displayMaxLengh });
                     if (value !== undefined && value !== null) {
                         const width = context.getTextWidth(value.toString());
                         if (width) {

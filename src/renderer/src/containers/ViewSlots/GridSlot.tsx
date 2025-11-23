@@ -39,7 +39,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [boxHeight, setBoxHeight] = React.useState<string>("100%");
-    const [message, setMessage] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const fetchRows = async () => {

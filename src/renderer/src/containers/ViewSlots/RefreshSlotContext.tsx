@@ -9,8 +9,8 @@ type RefreshSlotContextType = {
 };
 
 export const RefreshSlotContext = createContext<RefreshSlotContextType>({
-    registerRefresh: () => () => {},
-    refreshSlot: (_id: string) => {},
+    registerRefresh: () => () => { },
+    refreshSlot: (_id: string) => { },
 });
 
 export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -26,9 +26,10 @@ export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ childre
     const refreshSlot = (id: string) => {
         const fn = refreshers.current.get(id);
         if (fn) {
-            setTimeout(() => {
-                fn();
-            }, 0);
+            setTimeout(() =>
+                requestAnimationFrame(() => {
+                    fn();
+                }), 0);
         }
     };
 
