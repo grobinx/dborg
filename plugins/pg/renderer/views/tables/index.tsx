@@ -158,7 +158,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         refresh(cid("rules-tab-content"));
                         refresh(cid("sequences-tab-content"));
                         refresh(cid("bloat-tab-content"));
-                        refresh(cid("io-stats-tab-content"));
+                        refresh(cid("io-stats-tab-grid-slot"));
                         refresh(cid("locks-tab-content"));
                         refresh(cid("publications-tab-content"));
                         refresh(cid("fdw-tab-content"));
