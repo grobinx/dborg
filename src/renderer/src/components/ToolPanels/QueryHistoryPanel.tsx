@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { ColumnDefinition } from "../DataGrid/DataGridTypes";
 import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelContent";
 import { DataGrid } from "../DataGrid/DataGrid";
-import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import Tooltip from "../Tooltip";
 import { ToolButton } from "../buttons/ToolButton";
 

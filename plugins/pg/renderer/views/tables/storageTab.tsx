@@ -12,15 +12,15 @@ const storageTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("storage-tab"),
+        id: cid("table-storage-tab"),
         type: "tab",
         label: {
-            id: cid("storage-tab-label"),
+            id: cid("table-storage-tab-label"),
             type: "tablabel",
             label: t("storage", "Storage"),
         },
         content: {
-            id: cid("storage-tab-content"),
+            id: cid("table-storage-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-storage-grid"),

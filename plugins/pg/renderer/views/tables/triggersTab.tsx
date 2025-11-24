@@ -12,15 +12,15 @@ const triggersTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("triggers-tab"),
+        id: cid("table-triggers-tab"),
         type: "tab",
         label: {
-            id: cid("triggers-tab-label"),
+            id: cid("table-triggers-tab-label"),
             type: "tablabel",
             label: t("triggers", "Triggers"),
         },
         content: {
-            id: cid("triggers-tab-content"),
+            id: cid("table-triggers-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-triggers-grid"),

@@ -13,15 +13,15 @@ const constraintsTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("constraints-tab"),
+        id: cid("table-constraints-tab"),
         type: "tab",
         label: {
-            id: cid("constraints-tab-label"),
+            id: cid("table-constraints-tab-label"),
             type: "tablabel",
             label: t("constraints", "Constraints"),
         },
         content: {
-            id: cid("constraints-tab-content"),
+            id: cid("table-constraints-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-constraints-grid"),

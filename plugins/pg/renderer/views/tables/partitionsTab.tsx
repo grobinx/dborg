@@ -12,15 +12,15 @@ const partitionsTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("partitions-tab"),
+        id: cid("table-partitions-tab"),
         type: "tab",
         label: {
-            id: cid("partitions-tab-label"),
+            id: cid("table-partitions-tab-label"),
             type: "tablabel",
             label: t("partitions", "Partitions"),
         },
         content: {
-            id: cid("partitions-tab-content"),
+            id: cid("table-partitions-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-partitions-grid"),

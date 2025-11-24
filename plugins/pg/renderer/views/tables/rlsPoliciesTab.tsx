@@ -12,15 +12,15 @@ const rlsPoliciesTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("rls-policies-tab"),
+        id: cid("table-rls-policies-tab"),
         type: "tab",
         label: {
-            id: cid("rls-policies-tab-label"),
+            id: cid("table-rls-policies-tab-label"),
             type: "tablabel",
             label: t("rls-policies", "RLS Policies"),
         },
         content: {
-            id: cid("rls-policies-tab-content"),
+            id: cid("table-rls-policies-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-rls-policies-grid"),

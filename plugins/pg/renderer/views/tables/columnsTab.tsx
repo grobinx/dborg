@@ -29,15 +29,15 @@ const columnsTab = (
     }
 
     return {
-        id: cid("columns-tab"),
+        id: cid("table-columns-tab"),
         type: "tab",
         label: {
-            id: cid("columns-tab-label"),
+            id: cid("table-columns-tab-label"),
             type: "tablabel",
             label: t("columns", "Columns"),
         },
         content: {
-            id: cid("columns-tab-content"),
+            id: cid("table-columns-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-columns-grid"),

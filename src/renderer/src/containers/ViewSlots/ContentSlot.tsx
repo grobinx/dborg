@@ -30,7 +30,6 @@ const StyledContentSlot = styled(Box)(() => ({
 
 const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "ContentSlot", props });
-    const theme = useTheme();
     const [titleSlot, setTitleSlot] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
@@ -47,6 +46,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        console.debug("ContentSlot updating content for slot:", slot.id);
         if (slot.title) {
             setTitleSlot(prev => ({
                 ...prev,
@@ -61,7 +61,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         }
         setMainSlot(prev => ({
             ...prev,
-            node: createContentComponent(slot.main, refreshSlot, mainSlot.ref)
+            node: createContentComponent(slot.main, refreshSlot, prev.ref)
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
 
@@ -71,6 +71,8 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         });
         return unregisterRefresh;
     }, [slot.id]);
+
+    console.debug("ContentSlot rendering slot:", slot.id);
 
     return (
         <StyledContentSlot

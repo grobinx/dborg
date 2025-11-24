@@ -12,15 +12,15 @@ const relationsTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("relations-tab"),
+        id: cid("table-relations-tab"),
         type: "tab",
         label: {
-            id: cid("relations-tab-label"),
+            id: cid("table-relations-tab-label"),
             type: "tablabel",
             label: t("relations", "Relations"),
         },
         content: {
-            id: cid("relations-tab-content"),
+            id: cid("table-relations-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-relations-grid"),

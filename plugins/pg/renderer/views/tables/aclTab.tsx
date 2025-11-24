@@ -12,15 +12,15 @@ const aclTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("acl-tab"),
+        id: cid("table-acl-tab"),
         type: "tab",
         label: {
-            id: cid("acl-tab-label"),
+            id: cid("table-acl-tab-label"),
             type: "tablabel",
             label: t("permissions", "Permissions"),
         },
         content: {
-            id: cid("acl-tab-content"),
+            id: cid("table-acl-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-acl-grid"),

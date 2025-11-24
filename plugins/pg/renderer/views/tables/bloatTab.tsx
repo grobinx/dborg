@@ -12,15 +12,15 @@ const bloatTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("bloat-tab"),
+        id: cid("table-bloat-tab"),
         type: "tab",
         label: {
-            id: cid("bloat-tab-label"),
+            id: cid("table-bloat-tab-label"),
             type: "tablabel",
             label: t("bloat", "Bloat"),
         },
         content: {
-            id: cid("bloat-tab-content"),
+            id: cid("table-bloat-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-bloat-grid"),

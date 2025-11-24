@@ -6,7 +6,6 @@ import { getLogLevelColor, useConsole, LogLevel, DefaultLogLevels, LogEntry } fr
 import { useTranslation } from "react-i18next";
 import TabPanelContent, { TabPanelContentOwnProps } from "../TabsPanel/TabPanelContent";
 import { Typography } from "@mui/material";
-import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { SplitPanel, SplitPanelGroup, Splitter } from "../SplitPanel";
 import { create } from "zustand";
 import * as Messages from '../../app/Messages';

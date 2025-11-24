@@ -12,15 +12,15 @@ const locksTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("locks-tab"),
+        id: cid("table-locks-tab"),
         type: "tab",
         label: {
-            id: cid("locks-tab-label"),
+            id: cid("table-locks-tab-label"),
             type: "tablabel",
             label: t("locks", "Locks"),
         },
         content: {
-            id: cid("locks-tab-content"),
+            id: cid("table-locks-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-locks-grid"),

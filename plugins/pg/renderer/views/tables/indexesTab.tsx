@@ -16,15 +16,15 @@ const indexesTab = (
     }
 
     return {
-        id: cid("indexes-tab"),
+        id: cid("table-indexes-tab"),
         type: "tab",
         label: {
-            id: cid("indexes-tab-label"),
+            id: cid("table-indexes-tab-label"),
             type: "tablabel",
             label: t("indexes", "Indexes"),
         },
         content: {
-            id: cid("indexes-tab-content"),
+            id: cid("table-indexes-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-indexes-grid"),

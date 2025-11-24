@@ -43,6 +43,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         const fetchRows = async () => {
             setLoading(true);
             try {
+                console.debug("GridSlot fetching rows for slot:", slot.id);
                 const result = await resolveRecordsFactory(slot.rows, refreshSlot);
                 if (Array.isArray(result)) {
                     setRows(result ?? []);
@@ -69,6 +70,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             }
         };
         fetchRows();
+        console.debug("GridSlot updating content for slot:", slot.id, refresh);
     }, [slot.columns, slot.rows, refresh]);
 
     React.useEffect(() => {
@@ -114,6 +116,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
         rowClick(row);
     }
 
+    //console.debug("GridSlot rendering slot:", slot.id);
+
     return (
         <Stack
             direction="column"
@@ -128,6 +132,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 sx={{
                     flex: 1,
                     overflow: "hidden",
+                    minHeight: 0,
                 }}
                 ref={ref}
             >

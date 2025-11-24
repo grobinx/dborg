@@ -12,15 +12,15 @@ const sequencesTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("sequences-tab"),
+        id: cid("table-sequences-tab"),
         type: "tab",
         label: {
-            id: cid("sequences-tab-label"),
+            id: cid("table-sequences-tab-label"),
             type: "tablabel",
             label: t("sequences", "Sequences"),
         },
         content: {
-            id: cid("sequences-tab-content"),
+            id: cid("table-sequences-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-sequences-grid"),

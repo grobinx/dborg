@@ -30,6 +30,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {
+        console.debug("TabContentSlot updating content for slot:", slot.id, refresh);
         setContent(prev => ({
             ...prev,
             node: createContentComponent(slot.content!, refreshSlot, prev.ref)

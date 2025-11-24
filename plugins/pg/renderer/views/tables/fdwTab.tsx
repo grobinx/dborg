@@ -12,15 +12,15 @@ const fdwTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("fdw-tab"),
+        id: cid("table-fdw-tab"),
         type: "tab",
         label: {
-            id: cid("fdw-tab-label"),
+            id: cid("table-fdw-tab-label"),
             type: "tablabel",
             label: t("fdw", "Foreign Data"),
         },
         content: {
-            id: cid("fdw-tab-content"),
+            id: cid("table-fdw-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-fdw-grid"),

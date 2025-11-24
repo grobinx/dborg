@@ -15,25 +15,25 @@ const ioStatsTab = (
     let ioStatsRows: Record<string, any>[] | null = null;
 
     return {
-        id: cid("io-stats-tab"),
+        id: cid("table-io-stats-tab"),
         type: "tab",
         label: {
-            id: cid("io-stats-tab-label"),
+            id: cid("table-io-stats-tab-label"),
             type: "tablabel",
             label: t("io-stats", "I/O Stats"),
         },
         content: {
-            id: cid("io-stats-tab-content"),
+            id: cid("table-io-stats-tab-content"),
             type: "tabcontent",
             content: {
-                id: cid("io-stats-tab-split"),
+                id: cid("table-io-stats-split"),
                 type: "split",
                 direction: "horizontal",
                 first: {
-                    id: cid("io-stats-tab-grid-slot"),
+                    id: cid("table-io-stats-grid-slot"),
                     type: "content",
                     main: (): IGridSlot => ({
-                        id: cid("io-stats-tab-grid"),
+                        id: cid("table-io-stats-grid"),
                         type: "grid",
                         mode: "defined",
                         pivot: true,
@@ -60,7 +60,7 @@ const ioStatsTab = (
                                 [schemaName(), tableName()]
                             );
                             ioStatsRows = rows;
-                            refresh(cid("io-stats-tab-chart-slot"));
+                            refresh(cid("table-io-stats-chart-slot"));
                             return rows;
                         },
                         columns: [
@@ -83,7 +83,7 @@ const ioStatsTab = (
                     } as IGridSlot),
                 },
                 second: {
-                    id: cid("io-stats-tab-chart-slot"),
+                    id: cid("table-io-stats-chart-slot"),
                     type: "rendered",
                     render: () => {
                         const theme = useTheme();
@@ -212,7 +212,7 @@ const ioStatsTab = (
                         );
                     }
                 },
-                autoSaveId: `io-stats-tab-split-${session.profile.sch_id}`,
+                autoSaveId: `table-io-stats-split-${session.profile.sch_id}`,
                 secondSize: 50,
             },
         },

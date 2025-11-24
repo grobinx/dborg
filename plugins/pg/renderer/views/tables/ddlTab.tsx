@@ -12,15 +12,15 @@ const ddlTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("ddl-tab"),
+        id: cid("table-ddl-tab"),
         type: "tab",
         label: {
-            id: cid("ddl-tab-label"),
+            id: cid("table-ddl-tab-label"),
             type: "tablabel",
             label: "DDL",
         },
         content: {
-            id: cid("ddl-tab-content"),
+            id: cid("table-ddl-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-ddl-grid"),

@@ -12,15 +12,15 @@ const queryPlansTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("query-plans-tab"),
+        id: cid("table-query-plans-tab"),
         type: "tab",
         label: {
-            id: cid("query-plans-tab-label"),
+            id: cid("table-query-plans-tab-label"),
             type: "tablabel",
             label: t("query-plans", "Query Plans"),
         },
         content: {
-            id: cid("query-plans-tab-content"),
+            id: cid("table-query-plans-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-query-plans-grid"),

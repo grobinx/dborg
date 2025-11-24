@@ -12,15 +12,15 @@ const rulesTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("rules-tab"),
+        id: cid("table-rules-tab"),
         type: "tab",
         label: {
-            id: cid("rules-tab-label"),
+            id: cid("table-rules-tab-label"),
             type: "tablabel",
             label: t("rules", "Rules"),
         },
         content: {
-            id: cid("rules-tab-content"),
+            id: cid("table-rules-tab-content"),
             type: "tabcontent",
             content: () => ({
                 id: cid("table-rules-grid"),
