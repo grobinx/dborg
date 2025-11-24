@@ -32,7 +32,6 @@ const bloatTab = (
                     const { rows } = await session.query(
                         `
 select
-  current_database() as database_name,
   s.schemaname as schema_name,
   s.relname as table_name,
   pg_total_relation_size(quote_ident(s.schemaname)||'.'||quote_ident(s.relname)) as total_bytes,
@@ -97,7 +96,6 @@ where s.schemaname = $1 and s.relname = $2;
                     return rows;
                 },
                 columns: [
-                    { key: "database_name", label: t("database", "Database"), dataType: "string", width: 150 },
                     { key: "schema_name", label: t("schema", "Schema"), dataType: "string", width: 150 },
                     { key: "table_name", label: t("table", "Table"), dataType: "string", width: 200 },
                     { key: "total_bytes", label: t("total-bytes", "Total Bytes"), dataType: "bigint", width: 130 },
