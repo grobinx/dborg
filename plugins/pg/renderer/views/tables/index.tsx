@@ -140,29 +140,31 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             rowSchemaName = null;
                             rowTableName = null;
                         }
-                        refresh(cid("tables-text"));
-                        refresh(cid("tables-title"));
-                        refresh(cid("table-tab-label"));
-                        refresh(cid("table-columns-tab-content"));
-                        refresh(cid("table-indexes-tab-content"));
-                        refresh(cid("table-constraints-tab-content"));
-                        refresh(cid("table-ddl-tab-content"));
-                        refresh(cid("table-relations-tab-content"));
-                        refresh(cid("table-triggers-tab-content"));
-                        refresh(cid("table-storage-tab-content"));
-                        refresh(cid("table-statistics-tab-content"));
-                        refresh(cid("table-rls-policies-tab-content"));
-                        refresh(cid("table-acl-tab-content"));
-                        refresh(cid("table-column-stats-tab-content"));
-                        refresh(cid("table-partitions-tab-content"));
-                        refresh(cid("table-rules-tab-content"));
-                        refresh(cid("table-sequences-tab-content"));
-                        refresh(cid("table-bloat-tab-content"));
-                        refresh(cid("table-io-stats-tab-content"));
-                        refresh(cid("table-locks-tab-content"));
-                        refresh(cid("table-publications-tab-content"));
-                        refresh(cid("table-fdw-tab-content"));
-                        refresh(cid("table-query-plans-tab-content"));
+                        if (rowSchemaName && rowTableName) {
+                            refresh(cid("tables-text"));
+                            refresh(cid("tables-title"));
+                            refresh(cid("table-tab-label"));
+                            refresh(cid("table-columns-tab-content"));
+                            refresh(cid("table-indexes-tab-content"));
+                            refresh(cid("table-constraints-tab-content"));
+                            refresh(cid("table-ddl-tab-content"));
+                            refresh(cid("table-relations-tab-content"));
+                            refresh(cid("table-triggers-tab-content"));
+                            refresh(cid("table-storage-tab-content"));
+                            refresh(cid("table-statistics-tab-content"));
+                            refresh(cid("table-rls-policies-tab-content"));
+                            refresh(cid("table-acl-tab-content"));
+                            refresh(cid("table-column-stats-tab-content"));
+                            refresh(cid("table-partitions-tab-content"));
+                            refresh(cid("table-rules-tab-content"));
+                            refresh(cid("table-sequences-tab-content"));
+                            refresh(cid("table-bloat-tab-content"));
+                            refresh(cid("table-io-stats-tab-content"));
+                            refresh(cid("table-locks-tab-content"));
+                            refresh(cid("table-publications-tab-content"));
+                            refresh(cid("table-fdw-tab-content"));
+                            refresh(cid("table-query-plans-tab-content"));
+                        }
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -212,7 +214,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         content: {
                             id: cid("table-columns-tabs"),
                             type: "tabs",
-                            tabs: [
+                            tabs: () => ([
                                 columnsTab(session, () => rowSchemaName, () => rowTableName),
                                 indexesTab(session, () => rowSchemaName, () => rowTableName),
                                 constraintsTab(session, () => rowSchemaName, () => rowTableName),
@@ -233,7 +235,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                                 publicationsTab(session, () => rowSchemaName, () => rowTableName),
                                 fdwTab(session, () => rowSchemaName, () => rowTableName),
                                 queryPlansTab(session, () => rowSchemaName, () => rowTableName),
-                            ],
+                            ]),
                         }
                     },
                     // actions: [

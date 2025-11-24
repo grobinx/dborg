@@ -49,6 +49,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setRows(result ?? []);
                     setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
                     setPivot(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
+                    console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
                     setRows(Object.entries(result).map(([key, value]) => ({
                         name: key,

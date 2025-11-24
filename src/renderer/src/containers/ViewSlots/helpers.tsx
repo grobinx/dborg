@@ -134,6 +134,8 @@ export function createSplitPartContent(
             return <SplitSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         } else if (resolvedPart.type === "tabs") {
             return <TabsSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        } else if (resolvedPart.type === "grid") {
+            return <GridSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         } else if (resolvedPart.type === "rendered") {
             return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         }

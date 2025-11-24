@@ -105,7 +105,8 @@ export type SplitSlotPartKind =
     ISplitSlot
     | ITabsSlot
     | IContentSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IGridSlot;
 
 /**
  * Slot typu split.
