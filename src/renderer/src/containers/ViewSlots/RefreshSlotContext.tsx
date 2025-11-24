@@ -1,4 +1,4 @@
-import React, { createContext, useRef, ReactNode } from "react";
+import React, { createContext, useRef, ReactNode, useCallback } from "react";
 
 export type RefreshSlotFunction = (id: string) => void;
 type RefreshFunction = () => void;
@@ -16,14 +16,14 @@ export const RefreshSlotContext = createContext<RefreshSlotContextType>({
 export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const refreshers = useRef(new Map<string, RefreshFunction>());
 
-    const registerRefresh = (id, fn) => {
+    const registerRefresh = useCallback((id: string, fn: RefreshFunction) => {
         refreshers.current.set(id, fn);
         return () => {
             refreshers.current.delete(id);
         };
-    };
+    }, []);
 
-    const refreshSlot = (id: string) => {
+    const refreshSlot = useCallback((id: string) => {
         const fn = refreshers.current.get(id);
         if (fn) {
             setTimeout(() =>
@@ -31,7 +31,7 @@ export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ childre
                     fn();
                 }), 0);
         }
-    };
+    }, []);
 
     return (
         <RefreshSlotContext.Provider value={{ registerRefresh, refreshSlot }}>

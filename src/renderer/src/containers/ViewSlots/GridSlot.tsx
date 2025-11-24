@@ -38,7 +38,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const { t } = useTranslation();
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
-    const [boxHeight, setBoxHeight] = React.useState<string>("100%");
 
     React.useEffect(() => {
         const fetchRows = async () => {
@@ -96,41 +95,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
         return () => rowClick.cancel();
     }, [rowClick]);
 
-    // Debounced height recalculation
-    const updateHeight = React.useMemo(
-        () =>
-            debounce(() => {
-                if (statusBarRef.current) {
-                    const statusBarHeight = statusBarRef.current.offsetHeight;
-                    setBoxHeight(`calc(100% - ${statusBarHeight}px)`);
-                } else {
-                    setBoxHeight("100%");
-                }
-            }, 50),
-        []
-    );
-
-    React.useEffect(() => {
-        const observer = new ResizeObserver(() => {
-            updateHeight();
-        });
-
-        if (statusBarRef.current) {
-            observer.observe(statusBarRef.current);
-        }
-        // initial
-        updateHeight();
-
-        return () => {
-            if (statusBarRef.current) {
-                observer.unobserve(statusBarRef.current);
-            }
-            observer.disconnect();
-            updateHeight.cancel();
-        };
-    }, [updateHeight]);
-
     function dataGridMountHandler(context: DataGridContext<any>): void {
+        console.debug("GridSlot mounted for slot:", slot.id);
         const actionGroups = resolveActionGroupDescriptorsFactory(slot.actionGroups, refreshSlot) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
@@ -160,8 +126,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
             <Box
                 key={slot.id}
                 sx={{
-                    width: "100%",
-                    height: boxHeight,
+                    flex: 1,
+                    overflow: "hidden",
                 }}
                 ref={ref}
             >

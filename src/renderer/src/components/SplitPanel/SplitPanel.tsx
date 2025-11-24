@@ -15,6 +15,7 @@ const StyledSplitPanel = styled(Panel, {
     slot: "panel",
 })(({ /*theme*/ }) => ({
     width: "100%",
+    height: "100%",
 }));
 
 const StyledSplitter = styled(PanelResizeHandle, {

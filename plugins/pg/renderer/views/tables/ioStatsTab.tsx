@@ -32,7 +32,7 @@ const ioStatsTab = (
                 first: {
                     id: cid("io-stats-tab-grid-slot"),
                     type: "content",
-                    main: () : IGridSlot => ({
+                    main: (): IGridSlot => ({
                         id: cid("io-stats-tab-grid"),
                         type: "grid",
                         mode: "defined",
@@ -87,102 +87,127 @@ const ioStatsTab = (
                     type: "rendered",
                     render: () => {
                         const theme = useTheme();
-                        
-                       if (!ioStatsRows || ioStatsRows.length === 0) {
-                           return (
-                               <div style={{ padding: 16, color: theme.palette.text.secondary }}>
-                                   <p>{t("no-data", "No data available")}</p>
-                               </div>
-                           );
-                       }
 
-                       const row = ioStatsRows[0];
+                        if (!ioStatsRows || ioStatsRows.length === 0) {
+                            return (
+                                <div style={{ padding: 16, color: theme.palette.text.secondary }}>
+                                    <p>{t("no-data", "No data available")}</p>
+                                </div>
+                            );
+                        }
 
-                       // Dane dla wykresu hit ratio
-                       const hitRatioData = [
-                           { name: 'Heap', ratio: row.heap_hit_ratio || 0 },
-                           { name: 'Index', ratio: row.idx_hit_ratio || 0 },
-                           { name: 'Toast', ratio: row.toast_hit_ratio || 0 },
-                           { name: 'Toast Idx', ratio: row.tidx_hit_ratio || 0 },
-                       ];
+                        const row = ioStatsRows[0];
 
-                       // Dane dla wykresu read vs hit
-                       const readHitData = [
-                           { 
-                               name: 'Heap', 
-                               read: row.heap_blks_read || 0, 
-                               hit: row.heap_blks_hit || 0 
-                           },
-                           { 
-                               name: 'Index', 
-                               read: row.idx_blks_read || 0, 
-                               hit: row.idx_blks_hit || 0 
-                           },
-                           { 
-                               name: 'Toast', 
-                               read: row.toast_blks_read || 0, 
-                               hit: row.toast_blks_hit || 0 
-                           },
-                           { 
-                               name: 'Toast Idx', 
-                               read: row.tidx_blks_read || 0, 
-                               hit: row.tidx_blks_hit || 0 
-                           },
-                       ];
+                        const hitRatioData = [
+                            { name: 'Heap', ratio: row.heap_hit_ratio || 0 },
+                            { name: 'Index', ratio: row.idx_hit_ratio || 0 },
+                            { name: 'Toast', ratio: row.toast_hit_ratio || 0 },
+                            { name: 'Toast Idx', ratio: row.tidx_hit_ratio || 0 },
+                        ];
 
-                       const getBarColor = (ratio: number) => {
-                           if (ratio >= 95) return theme.palette.success.main;
-                           if (ratio >= 80) return theme.palette.warning.main;
-                           return theme.palette.error.main;
-                       };
+                        const readHitData = [
+                            {
+                                name: 'Heap',
+                                read: row.heap_blks_read || 0,
+                                hit: row.heap_blks_hit || 0
+                            },
+                            {
+                                name: 'Index',
+                                read: row.idx_blks_read || 0,
+                                hit: row.idx_blks_hit || 0
+                            },
+                            {
+                                name: 'Toast',
+                                read: row.toast_blks_read || 0,
+                                hit: row.toast_blks_hit || 0
+                            },
+                            {
+                                name: 'Toast Idx',
+                                read: row.tidx_blks_read || 0,
+                                hit: row.tidx_blks_hit || 0
+                            },
+                        ];
+
+                        const getBarColor = (ratio: number) => {
+                            if (ratio >= 95) return theme.palette.success.main;
+                            if (ratio >= 80) return theme.palette.warning.main;
+                            return theme.palette.error.main;
+                        };
 
                         return (
-                           <div style={{ padding: 16, height: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-                               <div style={{ flex: 1 }}>
-                                   <h4 style={{ margin: '0 0 16px 0', color: theme.palette.text.primary }}>
-                                       {t("cache-hit-ratio", "Cache Hit Ratio (%)")}
-                                   </h4>
-                                   <ResponsiveContainer width="100%" height="100%">
-                                       <BarChart data={hitRatioData}>
-                                           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                           <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                                           <YAxis domain={[0, 100]} stroke={theme.palette.text.secondary} />
-                                           <Tooltip 
-                                               contentStyle={{ 
-                                                   backgroundColor: theme.palette.background.paper,
-                                                   border: `1px solid ${theme.palette.divider}`
-                                               }}
-                                           />
-                                           <Bar dataKey="ratio" name={t("hit-ratio", "Hit Ratio %")}>
-                                               {hitRatioData.map((entry, index) => (
-                                                   <Cell key={`cell-${index}`} fill={getBarColor(entry.ratio)} />
-                                               ))}
-                                           </Bar>
-                                       </BarChart>
-                                   </ResponsiveContainer>
-                               </div>
-                               
-                               <div style={{ flex: 1 }}>
-                                   <h4 style={{ margin: '0 0 16px 0', color: theme.palette.text.primary }}>
-                                       {t("blocks-read-vs-hit", "Blocks Read vs Hit")}
-                                   </h4>
-                                   <ResponsiveContainer width="100%" height="100%">
-                                       <BarChart data={readHitData}>
-                                           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                           <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                                           <YAxis stroke={theme.palette.text.secondary} />
-                                           <Tooltip 
-                                               contentStyle={{ 
-                                                   backgroundColor: theme.palette.background.paper,
-                                                   border: `1px solid ${theme.palette.divider}`
-                                               }}
-                                           />
-                                           <Legend />
-                                           <Bar dataKey="read" fill={theme.palette.error.main} name={t("read", "Read")} />
-                                           <Bar dataKey="hit" fill={theme.palette.success.main} name={t("hit", "Hit")} />
-                                       </BarChart>
-                                   </ResponsiveContainer>
-                               </div>
+                            <div style={{
+                                padding: 8,
+                                height: '100%',
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 16,
+                                boxSizing: 'border-box',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    minHeight: 0
+                                }}>
+                                    <h4 style={{
+                                        margin: '0 0 8px 0',
+                                        color: theme.palette.text.primary,
+                                        flexShrink: 0
+                                    }}>
+                                        {t("cache-hit-ratio", "Cache Hit Ratio (%)")}
+                                    </h4>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={hitRatioData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                            <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
+                                            <YAxis domain={[0, 100]} stroke={theme.palette.text.secondary} />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: theme.palette.background.paper,
+                                                    border: `1px solid ${theme.palette.divider}`
+                                                }}
+                                            />
+                                            <Bar dataKey="ratio" name={t("hit-ratio", "Hit Ratio %")}>
+                                                {hitRatioData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={getBarColor(entry.ratio)} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                <div style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    minHeight: 0
+                                }}>
+                                    <h4 style={{
+                                        margin: '0 0 8px 0',
+                                        color: theme.palette.text.primary,
+                                        flexShrink: 0
+                                    }}>
+                                        {t("blocks-read-vs-hit", "Blocks Read vs Hit")}
+                                    </h4>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={readHitData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                            <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
+                                            <YAxis stroke={theme.palette.text.secondary} />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: theme.palette.background.paper,
+                                                    border: `1px solid ${theme.palette.divider}`
+                                                }}
+                                            />
+                                            <Legend />
+                                            <Bar dataKey="read" fill={theme.palette.error.main} name={t("read", "Read")} />
+                                            <Bar dataKey="hit" fill={theme.palette.success.main} name={t("hit", "Hit")} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         );
                     }

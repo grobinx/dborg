@@ -45,7 +45,6 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const [minusHeight, setMinusHeight] = React.useState<number | null>(null);
 
     React.useEffect(() => {
         if (slot.title) {
@@ -73,22 +72,6 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         return unregisterRefresh;
     }, [slot.id]);
 
-    React.useEffect(() => {
-        // Funkcja pomocnicza do pobrania wysokości elementu po ref
-        const getHeight = (ref: React.Ref<HTMLDivElement>) => {
-            if (ref && typeof ref === "object" && "current" in ref && ref.current) {
-                return ref.current.offsetHeight || 0;
-            }
-            return 0;
-        };
-
-        // Oblicz wysokość titleSlot i textSlot
-        const titleHeight = getHeight(titleSlot.ref);
-        const textHeight = getHeight(textSlot.ref);
-
-        setMinusHeight(titleHeight + textHeight);
-    }, [titleSlot.node, textSlot.node]);
-
     return (
         <StyledContentSlot
             ref={ref}
@@ -102,7 +85,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                     width: "100%",
                     flex: 1,
                     minHeight: 0,
-                    height: `calc(100% - ${minusHeight}px)`,
+                    height: "100%",
                 }}
                 className={"ContentSlot-main-root"}
             >

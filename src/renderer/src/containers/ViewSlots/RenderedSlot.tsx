@@ -15,8 +15,6 @@ interface RenderedSlotOwnProps extends RenderedSlotProps {
 const StyledRenderedSlotBox = styled(Box)({
     width: "100%",
     height: "100%",
-    display: "flex",
-    flexDirection: "column",
 });
 
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
@@ -38,7 +36,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}
         >
-            <slot.render />
+            <slot.render refresh={refreshSlot} />
         </StyledRenderedSlotBox>
     );
 };
