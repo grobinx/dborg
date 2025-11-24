@@ -62,13 +62,11 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const { queueMessage, subscribe, unsubscribe } = useMessages();
 
     const [activeTab, setActiveTab] = React.useState(0);
-    const [contentHeight, setContentHeight] = React.useState<string | number>("auto");
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [tabsMap, setTabsMap] = React.useState<Map<string, TabStructure>>(new Map());
     const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
     const sourceDragIndexRef = React.useRef<number | null>(null);
 
-    const headerRef = React.useRef<HTMLDivElement>(null);
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
 
     const tabsActionContext: TabsActionContext = {
@@ -174,29 +172,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         };
     }, [tabs]);
 
-    const headerHeightRef = React.useRef(0);
-    React.useEffect(() => {
-        const observer = new ResizeObserver(() => {
-            if (headerRef.current) {
-                const headerHeight = headerRef.current.offsetHeight;
-                if (headerHeightRef.current !== headerHeight) {
-                    headerHeightRef.current = headerHeight;
-                    setContentHeight(`calc(100% - ${headerHeight}px)`);
-                }
-            }
-        });
-
-        if (headerRef.current) {
-            observer.observe(headerRef.current);
-        }
-
-        return () => {
-            if (headerRef.current) {
-                observer.unobserve(headerRef.current);
-            }
-        };
-    }, [tabPosition]);
-
     const handleDragStart = (event: React.DragEvent, sourceIndex: number) => {
         sourceDragIndexRef.current = sourceIndex;
         event.dataTransfer.effectAllowed = "move";
@@ -233,7 +208,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
     const tabHeader = (
         <StyledTabsHeader
-            ref={headerRef}
             className={`TabsPanel-header ${tabPosition === "top" ? "position-top" : "position-bottom"}`}
             sx={{ zIndex: 3 }}
         >
@@ -295,7 +269,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
             <StyledTabsContent
                 className="TabsPanel-content"
-                style={{ height: contentHeight }}
+                style={{ minHeight: 0 }}
             >
                 {tabs.map((tab, index) => (
                     <Box
