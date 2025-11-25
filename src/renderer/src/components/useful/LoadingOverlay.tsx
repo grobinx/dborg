@@ -34,23 +34,28 @@ function shuffleArray<T>(array: T[]): T[] {
     return arr;
 }
 
-const LoadingSpinner = styled("div")<{ speed: number; delays?: string[]; colors: string[] }>(({ speed, delays, colors }) => {
+const LoadingSpinner = styled("div")<{ 
+    speed: number; 
+    delays?: string[]; 
+    colors: string[];
+    size?: number;
+    borderWidth?: number;
+}>(({ speed, delays, colors, size = 54, borderWidth = 6 }) => {
     return {
-        width: "54px",
-        height: "54px",
+        width: `${size}px`,
+        height: `${size}px`,
         display: "inline-block",
         position: "relative",
         "& div": {
             boxSizing: "border-box",
             display: "block",
             position: "absolute",
-            width: "54px",
-            height: "54px",
-            border: "6px solid",
+            width: `${size}px`,
+            height: `${size}px`,
+            border: `${borderWidth}px solid`,
             borderColor: `${colors[0]} transparent transparent transparent`,
             borderRadius: "50%",
             animation: `lds-ring-spin ${speed}s cubic-bezier(0.5, 0, 0.5, 1) infinite`,
-            borderWidth: "6px",
         },
         "& div:nth-of-type(1)": {
             borderColor: `${colors[0]} transparent transparent transparent`,
@@ -75,12 +80,46 @@ const LoadingSpinner = styled("div")<{ speed: number; delays?: string[]; colors:
     };
 });
 
+const SmallSpinner = styled("div")<{ colors: string[] }>(({ colors }) => ({
+    width: "24px",
+    height: "24px",
+    display: "inline-block",
+    position: "relative",
+    "& div": {
+        boxSizing: "border-box",
+        display: "block",
+        position: "absolute",
+        width: "24px",
+        height: "24px",
+        border: "3px solid",
+        borderColor: `${colors[0]} transparent transparent transparent`,
+        borderRadius: "50%",
+        animation: "lds-ring-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+    },
+    "& div:nth-of-type(1)": {
+        borderColor: `${colors[0]} transparent transparent transparent`,
+        animationDelay: "-0.45s",
+    },
+    "& div:nth-of-type(2)": {
+        borderColor: `${colors[1]} transparent transparent transparent`,
+        animationDelay: "-0.3s",
+    },
+    "& div:nth-of-type(3)": {
+        borderColor: `${colors[2]} transparent transparent transparent`,
+        animationDelay: "-0.15s",
+    },
+    "& div:nth-of-type(4)": {
+        borderColor: `${colors[3]} transparent transparent transparent`,
+        animationDelay: "0s",
+    },
+}));
+
 const LoadingLabel = styled("div")<{ color: string }>(({ color }) => ({
     display: "flex",
     flexDirection: "row",
     gap: "6px",
     fontSize: "1.2rem",
-    color: color, // Kolor tekstu
+    color: color,
 }));
 
 const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(({ theme }) => ({
@@ -97,44 +136,24 @@ const StyledLoadingOverlay = styled("div")<{ labelPosition: "below" | "side" }>(
     flexDirection: "column",
     backgroundColor:
         theme.palette.mode === "dark"
-            ? "rgba(38, 50, 56, 0.6)" // ciemny paper z przezroczystością
-            : "rgba(255, 255, 255, 0.6)", // jasny paper z przezroczystością
+            ? "rgba(38, 50, 56, 0.6)"
+            : "rgba(255, 255, 255, 0.6)",
 }));
 
-interface LoadingOverlayProps {
-    /**
-     * Opcjonalny tekst do wyświetlenia obok spinnera.
-     * @default undefined
-     */
-    label?: string;
-    /**
-     * Opcjonalny kolor tekstu.
-     * @default theme.palette.action.active
-     */
-    color?: string;
-    /**
-     * Opcjonalne opóźnienie w milisekundach przed pokazaniem efektu ładowania.
-     * @default 1000
-     */
-    delay?: number;
-    /**
-     * Opcjonalna szybkość obracania się spinnera w sekundach.
-     * @default 1 sekunda
-     */
-    speed?: number;
-    /**
-     * Opcjonalna pozycja tekstu względem spinnera.
-     * @default "below"
-     */
-    labelPosition?: "below" | "side";
-    /**
-     * Opcjonalny opóźnienie po którym pokaże się czas który upłynął od momentu rozpoczęcia ładowania
-     */
-    timeDelaySec?: number;
+const SmallSpinnerContainer = styled("div")({
+    position: "absolute",
+    bottom: "16px",
+    right: "16px",
+    zIndex: 11,
+});
 
-    /**
-     * Opcjonalna funkcja do anulowania ładowania.
-     */
+interface LoadingOverlayProps {
+    label?: string;
+    color?: string;
+    delay?: number;
+    speed?: number;
+    labelPosition?: "below" | "side";
+    timeDelaySec?: number;
     onCancelLoading?: () => void;
 }
 
@@ -148,12 +167,11 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     onCancelLoading,
 }) => {
     const theme = useTheme();
-    const [show, setShow] = useState(false);
+    const [show, setShow] = useState<0 | 1 | 2>(0); // 0 = off, 1 = small spinner, 2 = full overlay
     const [elapsedTime, setElapsedTime] = useState<number | null>(null);
     const [startTime] = useState(Date.now());
     const { t } = useTranslation();
 
-    // Losuj kolory spinnera przy każdym montowaniu
     const [spinnerColors, setSpinnerColors] = useState(() => {
         return theme.palette.mode === "dark"
             ? shuffleArray(spinnerColorsDark)
@@ -169,12 +187,20 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     }, [theme.palette.mode]);
 
     useEffect(() => {
-        const timer = setTimeout(() => setShow(true), delay);
-        return () => clearTimeout(timer);
+        // Natychmiastowo po 1/10 delay pokaż mały spinner
+        const smallTimer = setTimeout(() => setShow(1), delay / 10);
+        
+        // Po delay pokaż pełny overlay
+        const fullTimer = setTimeout(() => setShow(2), delay);
+        
+        return () => {
+            clearTimeout(smallTimer);
+            clearTimeout(fullTimer);
+        };
     }, [delay]);
 
     useEffect(() => {
-        if (!show || !timeDelaySec) return;
+        if (show !== 2 || !timeDelaySec) return;
         const interval = setInterval(() => {
             const secondsElapsed = Math.floor((Date.now() - startTime) / 1000);
             if (secondsElapsed >= timeDelaySec) {
@@ -186,37 +212,48 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     color = color ?? theme.palette.action.active;
 
-    // Generuj losowe opóźnienia tylko raz na montowanie
     const [delays] = useState(() => getRandomDelays(4, -0.5, 0));
 
-    if (!show) return null;
-
     return (
-        <Zoom in={true}>
-            <StyledLoadingOverlay labelPosition={labelPosition}>
-                <LoadingSpinner speed={speed} delays={delays} colors={spinnerColors}>
-                    <div />
-                    <div />
-                    <div />
-                    <div />
-                </LoadingSpinner>
-                {label && [
-                    <LoadingLabel color={color} key="label">
-                        <span>{label}</span>
-                        {onCancelLoading !== undefined && (
-                            <Tooltip title={t("cancel", "Cancel")}>
-                                <ToolButton size="small" onClick={onCancelLoading}>
-                                    <theme.icons.Close />
-                                </ToolButton>
-                            </Tooltip>
-                        )}
-                    </LoadingLabel>,
-                    <LoadingLabel color={color} key="elapsed">
-                        {elapsedTime !== null && " " + Duration.fromObject({ seconds: elapsedTime }).toFormat("hh:mm:ss")}
-                    </LoadingLabel>
-                ]}
-            </StyledLoadingOverlay>
-        </Zoom>
+        <>
+            {show === 1 && (
+                <SmallSpinnerContainer>
+                    <LoadingSpinner colors={spinnerColors} speed={1.2} size={24} borderWidth={3}>
+                        <div />
+                        <div />
+                        <div />
+                        <div />
+                    </LoadingSpinner>
+                </SmallSpinnerContainer>
+            )}
+            {show === 2 && (
+                <Zoom in={true}>
+                    <StyledLoadingOverlay labelPosition={labelPosition}>
+                        <LoadingSpinner speed={speed} delays={delays} colors={spinnerColors} size={54} borderWidth={6}>
+                            <div />
+                            <div />
+                            <div />
+                            <div />
+                        </LoadingSpinner>
+                        {label && [
+                            <LoadingLabel color={color} key="label">
+                                <span>{label}</span>
+                                {onCancelLoading !== undefined && (
+                                    <Tooltip title={t("cancel", "Cancel")}>
+                                        <ToolButton size="small" onClick={onCancelLoading}>
+                                            <theme.icons.Close />
+                                        </ToolButton>
+                                    </Tooltip>
+                                )}
+                            </LoadingLabel>,
+                            <LoadingLabel color={color} key="elapsed">
+                                {elapsedTime !== null && " " + Duration.fromObject({ seconds: elapsedTime }).toFormat("hh:mm:ss")}
+                            </LoadingLabel>
+                        ]}
+                    </StyledLoadingOverlay>
+                </Zoom>
+            )}
+        </>
     );
 };
 

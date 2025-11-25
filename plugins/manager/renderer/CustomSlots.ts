@@ -318,6 +318,10 @@ export interface IGridSlot extends ICustomSlot {
      */
     pivot?: BooleanFactory;
     /**
+     * Kolumny dla odwróconej tabeli (opcjonalnie).
+     */
+    pivotColumns?: ColumnDefinitionsFactory;
+    /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
     actions?: ActionFactory;

@@ -41,6 +41,10 @@ interface DataGridProps<T extends object> {
      */
     pivot?: boolean;
     /**
+     * Kolumny dla odwróconej tabeli
+     */
+    pivotColumns?: ColumnDefinition[];
+    /**
      * Czy tabela może być odwrócona (wiersze, kolumny) przez użytkownika
      * @default false
      */
@@ -441,6 +445,7 @@ export const DataGrid = <T extends object>({
     mode = "defined",
     pivot: initialPivot = false,
     canPivot = false,
+    pivotColumns,
     columnsResizable = true,
     overscanRowCount = 2,
     columnRowNumber,
@@ -518,14 +523,31 @@ export const DataGrid = <T extends object>({
         if (!pivot) return { data: initialData, columns: initialColumns, pivotMap: null };
         // Transponowanie: każda kolumna staje się wierszem
         return {
-            data: initialColumns.map((col) => {
-                const row: any = { name: col.label, key: col.key };
-                initialData.forEach((dataRow, rowIndex) => {
-                    row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
-                });
-                return row as T;
-            }),
-            columns: [
+            data: pivotColumns?.length ?
+                initialColumns.map((col) => {
+                    const row: any = { [pivotColumns[0].key]: col.label, key: col.key };
+                    initialData.forEach((dataRow, rowIndex) => {
+                        if (pivotColumns.length > 1) {
+                            if (rowIndex < pivotColumns.length - 1) {
+                                row[pivotColumns[1].key] = dataRow[col.key as keyof T];
+                            }
+                            else {
+                                row[`${pivotColumns[1].key}_${rowIndex}`] = dataRow[col.key as keyof T];
+                            }
+                        }
+                        else {
+                            row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
+                        }
+                    });
+                    return row as T;
+                }) : initialColumns.map((col) => {
+                    const row: any = { name: col.label, key: col.key };
+                    initialData.forEach((dataRow, rowIndex) => {
+                        row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
+                    });
+                    return row as T;
+                }),
+            columns: pivotColumns?.length ? pivotColumns : [
                 {
                     key: "name",
                     label: t("name", "Name"),
@@ -544,7 +566,7 @@ export const DataGrid = <T extends object>({
                 return acc;
             }, {} as Record<string, ColumnDataType>)
         };
-    }, [pivot, initialColumns, initialData, t]);
+    }, [pivot, initialColumns, initialData, pivotColumns, t]);
 
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
     const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState, rowNumberColumnWidth);
@@ -594,10 +616,10 @@ export const DataGrid = <T extends object>({
         // Sprawdź, czy zmieniły się kolumny
         console.debug("Columns changed");
         if (!isSameColumnsSet(
-            initialColumns.map(col => ({ key: col.key, dataType: col.dataType })),
+            columns.map(col => ({ key: col.key, dataType: col.dataType })),
             columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            columnsRef.current = initialColumns;
+            columnsRef.current = columns;
             //groupingColumns.clearColumns();
             searchState.resetSearch();
             //filterColumns.clearFilters();
@@ -605,7 +627,7 @@ export const DataGrid = <T extends object>({
             updateSelectedCell({ row: 0, column: 0 });
             setPivot(initialPivot);
         }
-    }, [initialColumns]);
+    }, [columns]);
 
     const displayData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
@@ -1430,7 +1452,7 @@ export const DataGrid = <T extends object>({
                                         ? summaryOperationToBaseTypeMap[col.summary]
                                         : undefined) ?? col.dataType ?? 'string';
 
-                                    if (pivot && col.key.startsWith("value_of_")) {
+                                    if (pivot && absoluteColIndex > 0) {
                                         columnDataType = pivotMap?.[row["key"]] ?? 'string';
                                     }
 

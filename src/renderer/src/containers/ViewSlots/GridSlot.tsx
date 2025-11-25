@@ -27,17 +27,18 @@ const GridSlot: React.FC<GridSlotProps> = ({
     slot, ref
 }) => {
     const theme =  useTheme();
-    const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
-    const [rows, setRows] = React.useState<Record<string, any>[]>([]);
-    const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
-    const [loading, setLoading] = React.useState(false);
-    const [message, setMessage] = React.useState<string | undefined>(undefined);
-    const [refresh, setRefresh] = React.useState(false);
-    const [pivot, setPivot] = React.useState(false);
     const addToast = useToast();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
+    const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
+    const [rows, setRows] = React.useState<Record<string, any>[]>([]);
+    const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
+    const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
+    const [loading, setLoading] = React.useState(false);
+    const [message, setMessage] = React.useState<string | undefined>(undefined);
+    const [refresh, setRefresh] = React.useState(false);
+    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
 
@@ -51,6 +52,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setMessage(undefined);
                     setRows(result ?? []);
                     setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
+                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, refreshSlot));
                     setPivot(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
                     console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
@@ -63,11 +65,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
                         { key: "name", label: t("name", "Name"), dataType: "string", width: 250 },
                         { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
                     ]);
+                    setPivotColumns(undefined);
                     setPivot(false);
                 } else if (typeof result === "string") {
                     setMessage(result);
                     setRows([]);
                     setColumns([]);
+                    setPivotColumns(undefined);
                     setPivot(false);
                 }
             } catch (error) {
@@ -170,6 +174,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     mode={slot.mode}
                     onChange={(status) => setDataGridStatus(status)}
                     pivot={pivot}
+                    pivotColumns={pivotColumns}
                 />
                 )}
             </Box>
