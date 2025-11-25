@@ -120,7 +120,7 @@ const ioStatsTab = (
                                     />
                                     <Bar
                                         dataKey="ratio"
-                                        fill={theme.palette.success.main}
+                                        fill={theme.palette.primary.main}
                                         name={t("hit-ratio", "Hit Ratio %")}
                                         isAnimationActive={false}
                                         animationDuration={0}
