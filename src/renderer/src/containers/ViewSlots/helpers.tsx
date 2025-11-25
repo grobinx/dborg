@@ -34,6 +34,7 @@ import { CommandManager, isCommandDescriptor } from "@renderer/components/Comman
 import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { TextField } from "@renderer/components/inputs/TextField";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -173,30 +174,36 @@ export function createActionComponents(
                         actionManager = new ActionManager<typeof context>();
                     }
                     actionManager.registerAction(action);
-                    return <ToolButton
-                        key={action.id}
-                        action={action}
-                        actionContext={() => context}
-                        actionManager={actionManager}
-                        size="small"
-                    />;
+                    return (
+                        <ToolButton
+                            key={action.id}
+                            action={action}
+                            actionContext={() => context}
+                            actionManager={actionManager}
+                            size="small"
+                        />
+                    );
                 }
                 if (isITextField(action)) {
-                    if (action.type !== 'select') {
+                    if (action.type === 'select') {
                         const options = resolveSelectOptionsFactory(action.options, refreshSlot);
                         return;
                     }
-                    return <TextField
-                        key={index}
-                        //@todo: type={action.type}
-                        placeholder={action.placeholder}
-                        defaultValue={action.defaultValue ?? ""}
-                        onChange={value => {
-                            action.onChange(value);
-                        }}
-                        disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                        size="small"
-                    />
+                    return (
+                        <InputDecorator key={index} indicator={false} disableBlink>
+                            <TextField
+                                //@todo: type={action.type}
+                                placeholder={action.placeholder}
+                                defaultValue={action.defaultValue ?? ""}
+                                onChanged={value => {
+                                    action.onChange(value);
+                                }}
+                                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                                size="small"
+                                width={action.width}
+                            />
+                        </InputDecorator>
+                    );
                 }
                 if (isCommandDescriptor(action)) {
                     if (!commandManager) {

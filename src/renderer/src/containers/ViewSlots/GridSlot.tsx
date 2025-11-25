@@ -26,7 +26,7 @@ interface GridSlotProps {
 const GridSlot: React.FC<GridSlotProps> = ({
     slot, ref
 }) => {
-    const theme =  useTheme();
+    const theme = useTheme();
     const addToast = useToast();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
@@ -41,6 +41,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
 
     React.useEffect(() => {
         const fetchRows = async () => {

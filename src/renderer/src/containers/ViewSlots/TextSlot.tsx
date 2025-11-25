@@ -27,6 +27,13 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
         setText(resolveReactNodeFactory(slot.text, refreshSlot) ?? "");
     }, [slot.text, refresh]);
 

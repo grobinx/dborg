@@ -26,6 +26,13 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
         console.debug("SplitSlot updating content for slot:", slot.id);
         setFirst(prev => ({
             ...prev,

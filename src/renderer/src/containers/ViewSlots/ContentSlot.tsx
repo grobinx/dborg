@@ -46,6 +46,13 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
         console.debug("ContentSlot updating content for slot:", slot.id);
         if (slot.title) {
             setTitleSlot(prev => ({

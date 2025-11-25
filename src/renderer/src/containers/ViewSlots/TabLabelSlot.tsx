@@ -29,6 +29,21 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
+        if (active) {
+            slot?.onActivate?.(refreshSlot);
+        } else {
+            slot?.onDeactivate?.();
+        }
+    }, [active]);
+
+    React.useEffect(() => {
         setIcon(resolveIcon(theme, slot.icon));
         setLabel(resolveReactNodeFactory(slot.label, refreshSlot) ?? "");
     }, [slot.icon, slot.label, refresh]);

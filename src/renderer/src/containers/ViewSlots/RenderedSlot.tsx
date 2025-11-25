@@ -22,6 +22,13 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const { slot, ref, className, tabsItemID, ...other } = props;
     const [refresh, setRefresh] = React.useState(0);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+
+    React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
     
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {

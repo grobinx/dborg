@@ -24,6 +24,13 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const { queueMessage } = useMessages();
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
         if (resolvedTabSlots) {
             const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;

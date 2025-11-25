@@ -160,6 +160,7 @@ export interface ThemeIcons {
     Sort: IconWrapperFC;
     DragHandle: IconWrapperFC;
     DragIndicator: IconWrapperFC;
+    AutoRefresh: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {

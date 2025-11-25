@@ -65,11 +65,11 @@ export interface ITextField {
     /**
      * Domyśla wartość pola tekstowego.
      */
-    defaultValue?: string,
+    defaultValue?: any,
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      */
-    onChange: (value: string) => void,
+    onChange: (value: any) => void,
     /**
      * Czy pole tekstowe jest zablokowane.
      */
@@ -78,6 +78,10 @@ export interface ITextField {
      * Opcje dla typu select
      */
     options?: SelectOptionsFactory;
+    /**
+     * Maksymalna szerokość pola tekstowego (np. "100px", "50%").
+     */
+    width?: number | string;
 }
 
 export interface ISlot {
@@ -89,6 +93,9 @@ export interface ISlot {
      * Type of the slot (not defined in this base interface).
      */
     type: string;
+
+    onMount?: (refresh: RefreshSlotFunction) => void;
+    onUnmount?: () => void;
 }
 
 /**
@@ -178,6 +185,9 @@ export interface ITabLabelSlot extends ICustomSlot {
      * Tekst lub element etykiety zakładki.
      */
     label: ReactNodeFactory;
+
+    onActivate?: (refresh: RefreshSlotFunction) => void;
+    onDeactivate?: () => void;
 }
 
 export interface ITabContentSlot extends ICustomSlot {
@@ -186,6 +196,9 @@ export interface ITabContentSlot extends ICustomSlot {
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
     content: ContentSlotKindFactory;
+
+    onActivate?: (refresh: RefreshSlotFunction) => void;
+    onDeactivate?: () => void;
 }
 
 export type TabLabelSlotKind =

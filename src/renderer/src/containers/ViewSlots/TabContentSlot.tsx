@@ -32,6 +32,21 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const previousRefreshRef = React.useRef(refresh);
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
+        if (active) {
+            slot?.onActivate?.(refreshSlot);
+        } else {
+            slot?.onDeactivate?.();
+        }
+    }, [active]);
+
+    React.useEffect(() => {
         const isFirstActivation = active && !wasActiveRef.current;
         const refreshChanged = refresh !== previousRefreshRef.current;
 

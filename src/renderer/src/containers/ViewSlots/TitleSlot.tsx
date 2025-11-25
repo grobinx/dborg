@@ -33,6 +33,13 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
 
     React.useEffect(() => {
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.();
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
         setActionBar(<ActionsBar actions={slot.actions} actionSlotId={slot.actionSlotId} handleRef={ref} />);

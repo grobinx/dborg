@@ -27,10 +27,6 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
         actionContext: any | null
     } | null>(null);
 
-    if (!actions) {
-        return null;
-    }
-
     React.useEffect(() => {
         setActionComponents(createActionComponents(actions, actionSlotId, getRefSlot, refreshSlot, {}));
     }, [actions, actionSlotId]);

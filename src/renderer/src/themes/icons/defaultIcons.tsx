@@ -128,6 +128,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Sort: (props) => <IconWrapper {...props} className="sort"><MuiIcons.SortByAlpha fontSize="inherit" /></IconWrapper>,
             DragHandle: (props) => <IconWrapper {...props} className="drag-handle"><MuiIcons.DragHandle fontSize="inherit" /></IconWrapper>,
             DragIndicator: (props) => <IconWrapper {...props} className="drag-indicator"><MuiIcons.DragIndicator fontSize="inherit" /></IconWrapper>,
+            AutoRefresh: (props) => <IconWrapper {...props} className="auto-refresh"><MuiIcons.History fontSize="inherit" /></IconWrapper>,
         }
     }
 }
