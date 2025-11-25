@@ -199,7 +199,7 @@ export interface DataGridActionContext<T extends object> {
     getVisibleColumns: () => { start: number; end: number };
     getTotalSize: () => { height: number; width: number };
     getColumnCount: () => number;
-    getRowCount: () => number;
+    getRowCount: (oryginalData?: boolean) => number;
     getColumn: (index?: number) => ColumnDefinition | null;
     updateColumn: (index: number, newColumn: Partial<ColumnDefinition>) => void;
     getData: (row?: number) => T | null;

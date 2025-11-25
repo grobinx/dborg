@@ -33,7 +33,7 @@ const publicationsTab = (
                     const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
 
                     if (major < 10) {
-                        return [{ info: "Logical replication available from PostgreSQL 10+" }];
+                        return t("logical-replication-available-from-postgresql-10", "Logical replication available from PostgreSQL 10+");
                     }
 
                     const { rows } = await session.query(

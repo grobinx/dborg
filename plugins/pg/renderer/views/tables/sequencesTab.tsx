@@ -57,17 +57,18 @@ seqs as (
     o.rel as table_name,
     c.attname as column_name,
     case c.attidentity when 'a' then 'always' when 'd' then 'by default' else null end as identity_type,
-    c.default_expr,
+    pg_get_expr(ad.adbin, ad.adrelid) as default_expr,
     d.deptype,
     ns.nspname as sequence_schema,
     s.relname as sequence_name,
     format('%I.%I', ns.nspname, s.relname) as sequence_fqname
   from obj o
   join cols c on true
+  left join pg_attrdef ad on ad.adrelid = o.oid and ad.adnum = c.attnum
   join pg_depend d
     on d.refobjid = o.oid
    and d.refobjsubid = c.attnum
-   and d.deptype in ('a','i')        -- auto/identity dependency
+   and d.deptype in ('a','i')
   join pg_class s on s.oid = d.objid and s.relkind = 'S'
   join pg_namespace ns on ns.oid = s.relnamespace
 ),
@@ -113,42 +114,33 @@ with obj as (
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = $1 and c.relname = $2
 ),
-cols as (
-  select
-    a.attnum,
-    a.attname,
-    a.attidentity,
-    pg_get_expr(ad.adbin, ad.adrelid) as default_expr
-  from obj o
-  join pg_attribute a on a.attrelid = o.oid
-  left join pg_attrdef ad on ad.adrelid = a.attrelid and ad.adnum = a.attnum
-  where a.attnum > 0 and not a.attisdropped
-),
 seqs as (
   select
     o.nsp as table_schema,
     o.rel as table_name,
-    c.attname as column_name,
-    case c.attidentity when 'a' then 'always' when 'd' then 'by default' else null end as identity_type,
-    (c.default_expr ~* 'nextval\\(') as has_nextval,
+    a.attname as column_name,
+    null::text as identity_type,
+    pg_get_expr(ad.adbin, ad.adrelid) as default_expr,
     ns.nspname as sequence_schema,
     s.relname as sequence_name,
     format('%I.%I', ns.nspname, s.relname) as sequence_fqname
   from obj o
-  join cols c on true
+  join pg_attribute a on a.attrelid = o.oid
+  left join pg_attrdef ad on ad.adrelid = a.attrelid and ad.adnum = a.attnum
   join pg_depend d
     on d.refobjid = o.oid
-   and d.refobjsubid = c.attnum
-   and d.deptype in ('a','i')
+   and d.refobjsubid = a.attnum
+   and d.deptype = 'a'
   join pg_class s on s.oid = d.objid and s.relkind = 'S'
   join pg_namespace ns on ns.oid = s.relnamespace
+  where a.attnum > 0 and not a.attisdropped
 )
 select
   table_schema,
   table_name,
   column_name,
   identity_type,
-  has_nextval,
+  (default_expr ~* 'nextval\\(') as has_nextval,
   sequence_schema,
   sequence_name,
   sequence_fqname,

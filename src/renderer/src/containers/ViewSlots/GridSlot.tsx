@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
@@ -26,10 +26,12 @@ interface GridSlotProps {
 const GridSlot: React.FC<GridSlotProps> = ({
     slot, ref
 }) => {
+    const theme =  useTheme();
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [loading, setLoading] = React.useState(false);
+    const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState(false);
     const [pivot, setPivot] = React.useState(false);
     const addToast = useToast();
@@ -46,11 +48,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 console.debug("GridSlot fetching rows for slot:", slot.id);
                 const result = await resolveRecordsFactory(slot.rows, refreshSlot);
                 if (Array.isArray(result)) {
+                    setMessage(undefined);
                     setRows(result ?? []);
                     setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
                     setPivot(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
                     console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
+                    setMessage(undefined);
                     setRows(Object.entries(result).map(([key, value]) => ({
                         name: key,
                         value: value,
@@ -60,6 +64,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
                         { key: "value", label: t("value", "Value"), dataType: "string", width: 300 },
                     ]);
                     setPivot(false);
+                } else if (typeof result === "string") {
+                    setMessage(result);
+                    setRows([]);
+                    setColumns([]);
                 }
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), {
@@ -137,7 +145,20 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 }}
                 ref={ref}
             >
-                <DataGrid
+                {message ? (<Box
+                    sx={{
+                        padding: 8,
+                        color: theme.palette.text.disabled,
+                        textAlign: "center",
+                        alignContent: "center",
+                        height: "100%",
+                    }}
+                >
+                    <Typography>
+                        {message}
+                    </Typography>
+                </Box>
+                ) : (<DataGrid
                     columns={columns}
                     data={rows}
                     loading={loading ? t("loading---", "Loading...") : undefined}
@@ -149,6 +170,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     onChange={(status) => setDataGridStatus(status)}
                     pivot={pivot}
                 />
+                )}
             </Box>
             {slot.status && slot.status.length > 0 && (
                 <DataGridStatusBar

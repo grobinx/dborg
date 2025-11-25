@@ -20,6 +20,7 @@ const MenuBarTitle = styled(Typography, {
     textOverflow: 'ellipsis',
     lineHeight: undefined,
     height: "100%",
+    alignContent: "center",
 }));
 
 const MenuBarRoot = styled(Box, {

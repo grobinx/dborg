@@ -209,7 +209,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const tabHeader = (
         <StyledTabsHeader
             className={`TabsPanel-header ${tabPosition === "top" ? "position-top" : "position-bottom"}`}
-            sx={{ zIndex: 3 }}
+            sx={{ zIndex: 10 }}
         >
             <AppBar position="static" sx={{ flexDirection: "row" }}>
                 {buttons}

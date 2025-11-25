@@ -480,6 +480,7 @@ export const DataGrid = <T extends object>({
         return {
             filters: filterColumns.filters,
             grouping: groupingColumns.columns,
+            pivot: pivot
         };
     };
 
@@ -504,11 +505,10 @@ export const DataGrid = <T extends object>({
                 setAdjustWidthExecuted(true); // Wymuś ponowne przeliczenie szerokości kolumn
             }, 100);
         }
+        if (data?.pivot) {
+            setPivot(data?.pivot);
+        }
     };
-
-    React.useEffect(() => {
-        setPivot(initialPivot);
-    }, [initialPivot]);
 
     const { data, columns, pivotMap } = useMemo<{
         data: T[],
@@ -594,17 +594,18 @@ export const DataGrid = <T extends object>({
         // Sprawdź, czy zmieniły się kolumny
         console.debug("Columns changed");
         if (!isSameColumnsSet(
-            columns.map(col => ({ key: col.key, dataType: col.dataType })),
+            initialColumns.map(col => ({ key: col.key, dataType: col.dataType })),
             columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
         )) {
-            columnsRef.current = columns;
+            columnsRef.current = initialColumns;
             //groupingColumns.clearColumns();
             searchState.resetSearch();
             //filterColumns.clearFilters();
             //columnsState.resetHiddenColumns();
             updateSelectedCell({ row: 0, column: 0 });
+            setPivot(initialPivot);
         }
-    }, [columns]);
+    }, [initialColumns]);
 
     const displayData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
@@ -864,7 +865,7 @@ export const DataGrid = <T extends object>({
         getVisibleColumns: () => ({ start: startColumn, end: endColumn }),
         getTotalSize: () => ({ height: totalHeight, width: columnsState.totalWidth }),
         getColumnCount: () => columnsState.current.length,
-        getRowCount: () => displayData.length,
+        getRowCount: (originalData?: boolean) => !!originalData ? initialData.length : displayData.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCell ? columnsState.current[selectedCell.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
         getData: (row) => {
@@ -1503,7 +1504,7 @@ export const DataGrid = <T extends object>({
                         );
                     })}
                 </StyledRowsContainer>
-                {columnsState.anySummarized && (
+                {columnsState.anySummarized && (displayData.length > 0) && (
                     <StyledFooter
                         style={{
                             width: columnsState.totalWidth,

@@ -15,7 +15,7 @@ export const Pivot = (): Action<DataGridActionContext<any>> => {
         label: t(id, "Pivot data"),
         disabled: (context) => !context.canPivot(),
         run: (context) => {
-            if (context.getRowCount() > 200) {
+            if (context.getRowCount(true) > 200) {
                 queueMessage(TOAST_ADD_MESSAGE, {
                     type: "hint",
                     message: t("dataGrid.actions.pivot.tooManyRows", "Cannot pivot data with more than {{rows}} rows.", { rows: 200 }),

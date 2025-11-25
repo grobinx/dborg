@@ -32,6 +32,11 @@ export const WindowControlButtonLayout = (palette: Palette, _root: ThemeOptions)
                     },
                 },
             },
+            content: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+            }
         }
     }
 };

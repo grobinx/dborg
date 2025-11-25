@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, useTheme } from "@mui/material";
+import { AppBar, Box, useTheme } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
 import {
     IContentSlot
@@ -80,7 +80,11 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             className={`ContentSlot-root ${className ?? ""}`}
             {...other}
         >
-            {(titleSlot.node != null) && titleSlot.node}
+            {(titleSlot.node != null) && (
+                <AppBar position="static" sx={{ flexDirection: "row", zIndex: 10 }}>
+                    {titleSlot.node}
+                </AppBar>
+            )}
             <Box
                 key={slot.id + "-" + "inner-box"}
                 sx={{
