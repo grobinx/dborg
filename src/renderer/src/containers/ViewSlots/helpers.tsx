@@ -35,6 +35,7 @@ import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import Tooltip from "@renderer/components/Tooltip";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -189,7 +190,7 @@ export function createActionComponents(
                         const options = resolveSelectOptionsFactory(action.options, refreshSlot);
                         return;
                     }
-                    return (
+                    const field = (
                         <InputDecorator key={index} indicator={false} disableBlink>
                             <TextField
                                 //@todo: type={action.type}
@@ -204,6 +205,16 @@ export function createActionComponents(
                             />
                         </InputDecorator>
                     );
+                    if (action.tooltip) {
+                        return (
+                            <Tooltip key={index} title={action.tooltip}>
+                                <span>
+                                    {field}
+                                </span>
+                            </Tooltip>
+                        )
+                    }
+                    return field;
                 }
                 if (isCommandDescriptor(action)) {
                     if (!commandManager) {

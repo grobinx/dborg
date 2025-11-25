@@ -82,6 +82,10 @@ export interface ITextField {
      * Maksymalna szerokość pola tekstowego (np. "100px", "50%").
      */
     width?: number | string;
+    /**
+     * Podpowiedź wyświetlana po najechaniu na pole tekstowe.
+     */
+    tooltip?: string;
 }
 
 export interface ISlot {

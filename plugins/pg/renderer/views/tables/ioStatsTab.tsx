@@ -290,97 +290,6 @@ const ioStatsTab = (
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
-                        {/* Wykres Hit Ratio w czasie */}
-                        <div style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            minHeight: 0
-                        }}>
-                            <h4 style={{
-                                margin: '0 0 8px 0',
-                                color: theme.palette.text.primary,
-                                flexShrink: 0
-                            }}>
-                                {t("cache-hit-ratio-timeline", "Cache Hit Ratio Timeline (%)")}
-                            </h4>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={displayData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} />
-                                    <YAxis
-                                        domain={[0, 100]}
-                                        stroke={theme.palette.text.secondary}
-                                        label={{
-                                            value: '%',
-                                            angle: -90,
-                                            position: 'insideLeft',
-                                            fill: theme.palette.text.secondary
-                                        }}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: theme.palette.background.tooltip,
-                                            border: `1px solid ${theme.palette.divider}`
-                                        }}
-                                        wrapperStyle={{ zIndex: 9999 }}
-                                        formatter={(value: any) => value !== null ? `${num(value).toFixed(2)}%` : 'N/A'}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                    />
-                                    <Legend />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="heapRatio"
-                                        stroke={theme.palette.primary.main}
-                                        name={t("heap", "Heap")}
-                                        strokeWidth={2}
-                                        dot={{ r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="idxRatio"
-                                        stroke={theme.palette.secondary.main}
-                                        name={t("index", "Index")}
-                                        strokeWidth={2}
-                                        dot={{ r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="toastRatio"
-                                        stroke={theme.palette.warning.main}
-                                        name={t("toast", "Toast")}
-                                        strokeWidth={2}
-                                        dot={{ r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="tidxRatio"
-                                        stroke={theme.palette.info.main}
-                                        name={t("toast-idx", "Toast Idx")}
-                                        strokeWidth={2}
-                                        dot={{ r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-
                         {/* Wykres Read vs Hit w czasie (delta - różnice) */}
                         <div style={{
                             flex: 1,
@@ -636,7 +545,7 @@ const ioStatsTab = (
                             label: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-tab-label"),
                                 type: "tablabel",
-                                label: t("hit-timeline-chart", "Hit Timeline Chart"),
+                                label: t("timeline-chart", "Timeline Chart"),
                             }),
                             content: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-content"),
@@ -662,6 +571,7 @@ const ioStatsTab = (
                                         snapshotSize = num + 1;
                                     },
                                     width: 40,
+                                    tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
                                 },
                                 {
                                     id: cid("table-io-stats-hit-timeline-chart-start-refresh-action"),
@@ -687,6 +597,12 @@ const ioStatsTab = (
                 autoSaveId: `table-io-stats-split-${session.profile.sch_id}`,
                 secondSize: 50,
             }),
+            onDeactivate() {
+                if (autoRefreshIntervalId) {
+                    clearInterval(autoRefreshIntervalId);
+                    autoRefreshIntervalId = null;
+                }
+            },
         }),
     };
 };

@@ -69,6 +69,7 @@ export interface InputDecoratorProps {
     disableBlink?: boolean;
 
     sx?: SxProps;
+    ref?: React.Ref<HTMLDivElement>;
 }
 
 const StyledInputDecorator = styled('div', {
@@ -250,6 +251,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         sx,
         showValidity = true,
         disableBlink = false,
+        ref,
     } = props;
 
     const theme = useTheme();
@@ -434,6 +436,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     return (
         <InputDecoratorContext.Provider value={contextValue}>
             <StyledInputDecorator
+                ref={ref}
                 className={clsx(
                     "InputDecorator-root",
                     classes,
