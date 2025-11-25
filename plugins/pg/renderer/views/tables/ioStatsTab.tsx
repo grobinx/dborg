@@ -188,15 +188,23 @@ const ioStatsTab = (
                                         {t("blocks-read-vs-hit", "Blocks Read vs Hit")}
                                     </h4>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={readHitData}>
+                                        <BarChart data={readHitData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                             <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                                            <YAxis stroke={theme.palette.text.secondary} />
+                                            <YAxis 
+                                                stroke={theme.palette.text.secondary}
+                                                tickFormatter={(value) => {
+                                                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                                                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                                                    return value.toString();
+                                                }}
+                                            />
                                             <Tooltip
                                                 contentStyle={{
                                                     backgroundColor: theme.palette.background.paper,
                                                     border: `1px solid ${theme.palette.divider}`
                                                 }}
+                                                formatter={(value: number) => value.toLocaleString()}
                                             />
                                             <Legend />
                                             <Bar dataKey="read" fill={theme.palette.error.main} name={t("read", "Read")} />
