@@ -2,11 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { TableRecord } from ".";
 
 const queryPlansTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -27,7 +27,7 @@ const queryPlansTab = (
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
-                    if (!schemaName() || !tableName()) return [];
+                    if (!selectedRow()) return [];
 
                     // Check if pg_stat_statements is available
                     const { rows: extRows } = await session.query(
@@ -58,7 +58,7 @@ where query ~* $1
 order by total_exec_time desc
 limit 20;
             `,
-                        [`(from|join)\\s+["']?${schemaName()}["']?\\.["']?${tableName()}["']?`]
+                        [`(from|join)\\s+["']?${selectedRow()!.schema_name}["']?\\.["']?${selectedRow()!.table_name}["']?`]
                     );
 
                     return rows;

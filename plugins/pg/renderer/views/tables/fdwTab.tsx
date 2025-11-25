@@ -2,11 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { TableRecord } from ".";
 
 const fdwTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -27,7 +27,7 @@ const fdwTab = (
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
-                    if (!schemaName() || !tableName()) return [];
+                    if (!selectedRow()) return [];
                     const { rows } = await session.query(
                         `
 select
@@ -44,7 +44,7 @@ join pg_foreign_server s on s.oid = ft.ftserver
 join pg_foreign_data_wrapper w on w.oid = s.srvfdw
 where n.nspname = $1 and c.relname = $2 and c.relkind = 'f';
             `,
-                        [schemaName(), tableName()]
+                        [selectedRow()!.schema_name, selectedRow()!.table_name]
                     );
 
                     if (rows.length === 0) {

@@ -2,11 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { TableRecord } from ".";
 
 const storageTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -28,7 +28,7 @@ const storageTab = (
                 mode: "defined",
                 pivot: true,
                 rows: async () => {
-                    if (!schemaName() || !tableName()) return [];
+                    if (!selectedRow()) return [];
                     const { rows } = await session.query(
                         `
 select
@@ -66,7 +66,7 @@ join pg_namespace n on n.oid = c.relnamespace
 left join pg_stat_all_tables s on s.schemaname = n.nspname and s.relname = c.relname
 where n.nspname = $1 and c.relname = $2;
             `,
-                        [schemaName(), tableName()]
+                        [selectedRow()!.schema_name, selectedRow()!.table_name]
                     );
                     return rows;
                 },

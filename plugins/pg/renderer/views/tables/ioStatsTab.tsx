@@ -4,11 +4,11 @@ import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from "@mui/material";
+import { TableRecord } from ".";
 
 const ioStatsTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -35,7 +35,7 @@ const ioStatsTab = (
                     mode: "defined",
                     pivot: true,
                     rows: async (refresh) => {
-                        if (!schemaName() || !tableName()) return [];
+                        if (!selectedRow()) return [];
                         const { rows } = await session.query(
                             "select\n" +
                             "  schemaname,\n" +
@@ -54,7 +54,7 @@ const ioStatsTab = (
                             "  round(100.0 * tidx_blks_hit / nullif(tidx_blks_hit + tidx_blks_read, 0), 2) as tidx_hit_ratio\n" +
                             "from pg_statio_all_tables\n" +
                             "where schemaname = $1 and relname = $2;\n",
-                            [schemaName(), tableName()]
+                            [selectedRow()!.schema_name, selectedRow()!.table_name]
                         );
                         ioStatsRows = rows;
                         refresh(cid("table-io-stats-chart-slot"));

@@ -2,11 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { TableRecord } from ".";
 
 const aclTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -27,7 +27,7 @@ const aclTab = (
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
-                    if (!schemaName() || !tableName()) return [];
+                    if (!selectedRow()) return [];
 
                     const { rows } = await session.query(
                         `
@@ -115,7 +115,7 @@ from def d
 where d.privilege_type is not null and d.def_for_role is not null
 order by scope, role nulls first, privilege_type;
                         `,
-                        [schemaName(), tableName()]
+                        [selectedRow()!.schema_name, selectedRow()!.table_name]
                     );
 
                     return rows;

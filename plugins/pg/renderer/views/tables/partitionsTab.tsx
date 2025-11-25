@@ -2,11 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { TableRecord } from ".";
 
 const partitionsTab = (
     session: IDatabaseSession,
-    schemaName: () => string | null,
-    tableName: () => string | null
+    selectedRow: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -27,9 +27,9 @@ const partitionsTab = (
                 type: "grid",
                 mode: "defined",
                 rows: async () => {
-                    if (!schemaName() || !tableName()) return [];
+                    if (!selectedRow()) return [];
 
-                    const ver = (await (session as any).getVersion?.()) ?? "";
+                    const ver = session.getVersion() ?? "";
                     const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
 
                     const sqlPg10Plus = `
@@ -161,8 +161,8 @@ order by ord, related_schema nulls first, related_table nulls first;
 `;
 
                     const { rows } = await session.query(major >= 10 ? sqlPg10Plus : sqlLegacy, [
-                        schemaName(),
-                        tableName(),
+                        selectedRow()!.schema_name,
+                        selectedRow()!.table_name,
                     ]);
                     return rows;
                 },

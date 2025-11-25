@@ -32,21 +32,19 @@ import publicationsTab from "./publicationsTab";
 import fdwTab from "./fdwTab";
 import queryPlansTab from "./queryPlansTab";
 
-interface TableRecord {
+export interface TableRecord {
     schema_name: string;
     table_name: string;
     owner_name: string;
-    table_type: string;
+    table_type: "foreign" | "partitioned" | "regular" | null;
     description: string;
 }
 
 export function tablesView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
 
-    let description: string | null = null;
     let selectedSchemaName: string | null = null;
-    let rowSchemaName: string | null = null;
-    let rowTableName: string | null = null;
+    let selectedRow: TableRecord | null = null;
 
     const setSelectedSchemaName = async () => {
         const { rows } = await session.query<{ schema_name: string }>('select current_schema() as schema_name');
@@ -130,17 +128,8 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         },
                     ] as ColumnDefinition[],
                     onRowClick: (row: TableRecord | undefined, refresh: RefreshSlotFunction) => {
-                        if (row) {
-                            description = row.description;
-                            rowSchemaName = row.schema_name;
-                            rowTableName = row.table_name;
-                        }
-                        else {
-                            description = null;
-                            rowSchemaName = null;
-                            rowTableName = null;
-                        }
-                        if (rowSchemaName && rowTableName) {
+                        selectedRow = row ? row : null;
+                        if (selectedRow) {
                             refresh(cid("tables-text"));
                             refresh(cid("tables-title"));
                             refresh(cid("table-tab-label"));
@@ -193,7 +182,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                     id: cid("tables-text"),
                     type: "text",
                     text: () => {
-                        return description ? description : "No description.";
+                        return selectedRow && selectedRow.description ? selectedRow.description : "No description.";
                     },
                 } as ITextSlot
             },
@@ -205,7 +194,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                     label: {
                         id: cid("table-tab-label"),
                         type: "tablabel",
-                        label: () => rowTableName ? `${rowSchemaName}.${rowTableName}` : t("not-selected", "Not selected"),
+                        label: () => selectedRow ? `${selectedRow.schema_name}.${selectedRow.table_name}` : t("not-selected", "Not selected"),
                         icon: "DatabaseTables",
                     },
                     content: {
@@ -215,26 +204,26 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             id: cid("table-columns-tabs"),
                             type: "tabs",
                             tabs: () => ([
-                                columnsTab(session, () => rowSchemaName, () => rowTableName),
-                                indexesTab(session, () => rowSchemaName, () => rowTableName),
-                                constraintsTab(session, () => rowSchemaName, () => rowTableName),
-                                relationsTab(session, () => rowSchemaName, () => rowTableName),
-                                triggersTab(session, () => rowSchemaName, () => rowTableName),
-                                storageTab(session, () => rowSchemaName, () => rowTableName),
-                                statisticsTab(session, () => rowSchemaName, () => rowTableName),
-                                ddlTab(session, () => rowSchemaName, () => rowTableName),
-                                rlsPoliciesTab(session, () => rowSchemaName, () => rowTableName),
-                                aclTab(session, () => rowSchemaName, () => rowTableName),
-                                columnStatsTab(session, () => rowSchemaName, () => rowTableName),
-                                partitionsTab(session, () => rowSchemaName, () => rowTableName),
-                                rulesTab(session, () => rowSchemaName, () => rowTableName),
-                                sequencesTab(session, () => rowSchemaName, () => rowTableName),
-                                bloatTab(session, () => rowSchemaName, () => rowTableName),
-                                ioStatsTab(session, () => rowSchemaName, () => rowTableName),
-                                locksTab(session, () => rowSchemaName, () => rowTableName),
-                                publicationsTab(session, () => rowSchemaName, () => rowTableName),
-                                fdwTab(session, () => rowSchemaName, () => rowTableName),
-                                queryPlansTab(session, () => rowSchemaName, () => rowTableName),
+                                columnsTab(session, () => selectedRow),
+                                indexesTab(session, () => selectedRow),
+                                constraintsTab(session, () => selectedRow),
+                                relationsTab(session, () => selectedRow),
+                                triggersTab(session, () => selectedRow),
+                                storageTab(session, () => selectedRow),
+                                statisticsTab(session, () => selectedRow),
+                                ddlTab(session, () => selectedRow),
+                                rlsPoliciesTab(session, () => selectedRow),
+                                aclTab(session, () => selectedRow),
+                                columnStatsTab(session, () => selectedRow),
+                                partitionsTab(session, () => selectedRow),
+                                rulesTab(session, () => selectedRow),
+                                sequencesTab(session, () => selectedRow),
+                                bloatTab(session, () => selectedRow),
+                                ioStatsTab(session, () => selectedRow),
+                                locksTab(session, () => selectedRow),
+                                publicationsTab(session, () => selectedRow),
+                                fdwTab(session, () => selectedRow),
+                                queryPlansTab(session, () => selectedRow),
                             ]),
                         }
                     },
