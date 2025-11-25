@@ -68,6 +68,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setMessage(result);
                     setRows([]);
                     setColumns([]);
+                    setPivot(false);
                 }
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), {

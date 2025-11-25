@@ -160,11 +160,19 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         ShowRelationDataAction(context => {
                             const record = context.getData();
                             if (record) {
-                                sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                                    to: session.info.uniqueId,
-                                    from: cid("tables-grid"),
-                                    query: `select * from "${record.schema_name}"."${record.table_name}" tablesample system(10) limit 200`,
-                                });
+                                if (record.table_type !== "foreign") {
+                                    sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
+                                        to: session.info.uniqueId,
+                                        from: cid("tables-grid"),
+                                        query: `select * from "${record.schema_name}"."${record.table_name}" tablesample system(10) limit 200`,
+                                    });
+                                } else {
+                                    sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
+                                        to: session.info.uniqueId,
+                                        from: cid("tables-grid"),
+                                        query: `select * from "${record.schema_name}"."${record.table_name}" limit 200`,
+                                    });
+                                }
                             }
                         })
                     ],
