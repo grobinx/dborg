@@ -34,7 +34,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
 
@@ -42,7 +42,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         if (active) {
             slot?.onActivate?.(refreshSlot);
         } else {
-            slot?.onDeactivate?.();
+            slot?.onDeactivate?.(refreshSlot);
         }
     }, [active]);
 

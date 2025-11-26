@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import { icons } from "@renderer/themes/ThemeWrapper";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio
 interface IOStatsRecord {
@@ -552,57 +553,70 @@ const ioStatsTab = (
                                 id: cid("table-io-stats-hit-timeline-chart-content"),
                                 type: "tabcontent",
                                 content: () => hitTimelineChart(),
-                                onUnmount() {
+                                onUnmount(refresh) {
                                     if (autoRefreshIntervalId) {
                                         clearInterval(autoRefreshIntervalId);
                                         autoRefreshIntervalId = null;
+                                        refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
                                     }
                                 },
                             }),
-                            actions: (refresh) => [
-                                {
-                                    id: cid("table-io-stats-hit-timeline-chart-snapshot-size-action"),
-                                    type: "number",
-                                    defaultValue: String(snapshotSize - 1),
-                                    onChange(value: string) {
-                                        const num = Number(value);
-                                        if (isNaN(num) || num < 10 || num > 200) {
-                                            return;
-                                        }
-                                        snapshotSize = num + 1;
+                            toolBar: {
+                                id: cid("table-io-stats-hit-timeline-chart-toolbar"),
+                                type: "toolbar",
+                                tools: (refresh) => [
+                                    {
+                                        id: cid("table-io-stats-hit-timeline-chart-snapshot-size-action"),
+                                        type: "number",
+                                        defaultValue: String(snapshotSize - 1),
+                                        onChange(value: string) {
+                                            const num = Number(value);
+                                            if (isNaN(num) || num < 10 || num > 200) {
+                                                return;
+                                            }
+                                            snapshotSize = num + 1;
+                                        },
+                                        width: 40,
+                                        tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
                                     },
-                                    width: 40,
-                                    tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
-                                },
-                                {
-                                    id: cid("table-io-stats-hit-timeline-chart-start-refresh-action"),
-                                    label: t("auto-refresh", "Auto refresh"),
-                                    icon: "AutoRefresh",
-                                    run: () => {
-                                        if (autoRefreshIntervalId) {
-                                            clearInterval(autoRefreshIntervalId);
-                                            autoRefreshIntervalId = null;
-                                        }
-                                        else {
-                                            autoRefreshIntervalId = setInterval(() => {
-                                                refresh(cid("table-io-stats-grid"));
-                                            }, autoRefreshInterval * 1000);
-                                        }
-                                        refresh(cid("table-io-stats-hit-timeline-chart-tab"));
-                                    },
-                                    selected: () => autoRefreshIntervalId !== null,
-                                } as Action<any>
-                            ],
+                                    {
+                                        id: cid("table-io-stats-hit-timeline-chart-start-refresh-action"),
+                                        label: t("auto-refresh", "Auto refresh"),
+                                        icon: () => {
+                                            if (icons) {
+                                                if (autoRefreshIntervalId) {
+                                                    return <icons.AutoRefresh color="success" />;
+                                                }
+                                                return <icons.AutoRefresh color="error" />;
+                                            }
+                                            return null;
+                                        },
+                                        run: () => {
+                                            if (autoRefreshIntervalId) {
+                                                clearInterval(autoRefreshIntervalId);
+                                                autoRefreshIntervalId = null;
+                                            }
+                                            else {
+                                                autoRefreshIntervalId = setInterval(() => {
+                                                    refresh(cid("table-io-stats-grid"));
+                                                }, autoRefreshInterval * 1000);
+                                            }
+                                            refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
+                                        },
+                                    } as Action<any>
+                                ]
+                            },
                         },
                     ],
                 }),
                 autoSaveId: `table-io-stats-split-${session.profile.sch_id}`,
                 secondSize: 50,
             }),
-            onDeactivate() {
+            onDeactivate(refresh) {
                 if (autoRefreshIntervalId) {
                     clearInterval(autoRefreshIntervalId);
                     autoRefreshIntervalId = null;
+                    refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
                 }
             },
         }),

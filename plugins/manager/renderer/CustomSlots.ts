@@ -18,7 +18,8 @@ export type CustomSlotType =
     | "grid"
     | "editor"
     | "text"
-    | "rendered";
+    | "rendered"
+    | "toolbar";
 
 export type RefreshSlotCallback = (slotId: string) => void;
 
@@ -28,12 +29,12 @@ export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
 export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
 export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
-export type ToolBarFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
 export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
+export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
@@ -43,6 +44,7 @@ export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFun
 export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
+export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
 
 export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | ITextField;
 
@@ -99,7 +101,7 @@ export interface ISlot {
     type: string;
 
     onMount?: (refresh: RefreshSlotFunction) => void;
-    onUnmount?: () => void;
+    onUnmount?: (refresh: RefreshSlotFunction) => void;
 }
 
 /**
@@ -168,7 +170,7 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Akcje dostępne dla listy zakładek (opcjonalnie).
      */
-    actions?: ActionFactory;
+    tools?: ToolBarSlotFactory;
     /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
@@ -202,7 +204,7 @@ export interface ITabContentSlot extends ICustomSlot {
     content: ContentSlotKindFactory;
 
     onActivate?: (refresh: RefreshSlotFunction) => void;
-    onDeactivate?: () => void;
+    onDeactivate?: (refresh: RefreshSlotFunction) => void;
 }
 
 export type TabLabelSlotKind =
@@ -230,7 +232,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    actions?: ToolBarFactory;
+    toolBar?: ToolBarSlotFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
@@ -303,7 +305,7 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    actions?: ToolBarFactory;
+    toolBar?: ToolBarSlotFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
@@ -392,6 +394,14 @@ export interface ITextSlot extends ICustomSlot {
     maxLines?: number;
 }
 
+export interface IToolBarSlot extends ICustomSlot {
+    type: "toolbar";
+    /**
+     * Narzędzia do wyświetlenia na pasku narzędzi.
+     */
+    tools: ToolFactory;
+}
+
 export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
@@ -404,7 +414,7 @@ export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, r
 export function resolveBooleanFactory(factory: BooleanFactory | undefined, refresh: RefreshSlotFunction): boolean | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionsFactory(factory: ToolBarFactory | undefined, refresh: RefreshSlotFunction): ToolKind[] | undefined {
+export function resolveActionsFactory(factory: ToolFactory | undefined, refresh: RefreshSlotFunction): ToolKind[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
@@ -447,6 +457,9 @@ export function resolveContentSlotFactory(factory: ContentSlotFactory | undefine
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): ISelectOption[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveToolBarSlotFactory(factory: ToolBarSlotFactory | undefined, refresh: RefreshSlotFunction): IToolBarSlot | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 

@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 
@@ -35,15 +35,20 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
 
     React.useEffect(() => {
+        const resolvedToolBarSlot = resolveToolBarSlotFactory(slot.toolBar, refreshSlot);
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
-        setActionBar(<ToolBarSlot actions={slot.actions} actionSlotId={slot.actionSlotId} handleRef={ref} />);
-    }, [slot.title, slot.icon, slot.actions, refresh]);
+        if (resolvedToolBarSlot) {
+            setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} actionSlotId={slot.actionSlotId} handleRef={ref} />);
+        } else {
+            setActionBar(null);
+        }
+    }, [slot.title, slot.icon, slot.toolBar, refresh]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {

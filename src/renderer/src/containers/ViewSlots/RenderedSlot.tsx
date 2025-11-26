@@ -26,7 +26,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
     

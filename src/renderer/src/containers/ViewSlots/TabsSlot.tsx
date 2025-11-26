@@ -1,5 +1,5 @@
 import React from "react";
-import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
@@ -21,12 +21,12 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [refresh, setRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const { queueMessage } = useMessages();
+    const { queueMessage } = useMessages();19
 
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
 
@@ -46,12 +46,13 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                     if (defaultTabId && tab.id === defaultTabId) {
                         queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
                     }
+                    const resolvedToolBarSlot = resolveToolBarSlotFactory(tab.toolBar, refreshSlot);
                     return (
                         <TabPanel
                             key={tab.id}
                             itemID={tab.id}
                             label={label}
-                            buttons={<ToolBarSlot actions={tab.actions} actionSlotId={tab.actionSlotId} />}
+                            buttons={resolvedToolBarSlot ? <ToolBarSlot slot={resolvedToolBarSlot} actionSlotId={tab.actionSlotId} /> : undefined}
                             content={content}
                         />
                     );

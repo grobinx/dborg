@@ -1,11 +1,14 @@
 import React from "react";
-import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
+import { ThemeProvider, CssBaseline, createTheme, Theme } from "@mui/material";
 import { useSetting } from "../contexts/SettingsContext";
 import defaultDarkPalette from '../themes/palettes/defaultDark';
 import defaultLightPalette from '../themes/palettes/defaultLight';
 import defaultLayout from '../themes/layouts/defaultLayout';
 import defaultIcons from '../themes/icons/defaultIcons';
 import rootLayout from '../themes/layouts/root';
+import { ThemeIcons } from "./icons";
+
+export let icons: ThemeIcons | undefined = undefined;
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [uiTheme] = useSetting("ui", "theme");
@@ -44,20 +47,9 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         return { themeLight, themeDark };
     }, [fontSize, fontFamily, monospaceFontFamily]);
 
-    const [theme, setTheme] = React.useState(() => {
+    const selectedTheme = () => {
         const { themeLight, themeDark } = createThemes();
-        return uiTheme === "system"
-            ? prefersDarkMode
-                ? themeDark
-                : themeLight
-            : uiTheme === "light"
-                ? themeLight
-                : themeDark;
-    });
-
-    React.useEffect(() => {
-        const { themeLight, themeDark } = createThemes();
-        const selectedTheme =
+        const theme =
             uiTheme === "system"
                 ? prefersDarkMode
                     ? themeDark
@@ -65,7 +57,14 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                 : uiTheme === "light"
                     ? themeLight
                     : themeDark;
-        setTheme(selectedTheme);
+        icons = theme.icons;
+        return theme;
+    }
+
+    const [theme, setTheme] = React.useState<Theme>(() => selectedTheme());
+
+    React.useEffect(() => {
+        setTheme(selectedTheme());
     }, [uiTheme, prefersDarkMode, createThemes]);
 
     return (

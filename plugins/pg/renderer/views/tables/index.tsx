@@ -72,11 +72,15 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                     type: "title",
                     icon: "DatabaseTables",
                     title: () => t("pg-tables-with-schema", "Tables {{schemaName}}", { schemaName: selectedSchemaName }),
-                    actions: [
-                        RefreshGridAction_ID,
-                        SearchData_ID,
-                        SelectSchemaAction_ID,
-                    ],
+                    toolBar: {
+                        id: cid("tables-title-toolbar"),
+                        type: "toolbar",
+                        tools: [
+                            RefreshGridAction_ID,
+                            SearchData_ID,
+                            SelectSchemaAction_ID,
+                        ]
+                    },
                     actionSlotId: cid("tables-grid"),
                 } as ITitleSlot,
                 main: {

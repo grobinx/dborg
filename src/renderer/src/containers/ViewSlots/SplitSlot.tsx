@@ -28,7 +28,7 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
 

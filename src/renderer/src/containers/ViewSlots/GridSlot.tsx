@@ -45,7 +45,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
-            slot?.onUnmount?.();
+            slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
 

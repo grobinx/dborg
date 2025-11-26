@@ -1,5 +1,5 @@
-import { ToolBarFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
-import React, { useEffect } from "react";
+import { IToolBarSlot, ToolFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import React from "react";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
@@ -7,19 +7,20 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import { createActionComponents } from "./helpers";
 
-export interface ActionsBarProps {
-    actions?: ToolBarFactory;
+export interface ToolBarProps {
+    slot: IToolBarSlot;
     actionSlotId?: string;
     handleRef?: React.Ref<HTMLDivElement>;
 }
 
-const ToolBarSlot: React.FC<ActionsBarProps> = ({
-    actions,
+const ToolBarSlot: React.FC<ToolBarProps> = ({
+    slot,
     actionSlotId,
     handleRef
 }) => {
-    const { refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { getRefSlot } = useRefSlot();
+    const [refresh, setRefresh] = React.useState(false);
     const [actionComponents, setActionComponents] = React.useState<{
         actionComponents: React.ReactNode[],
         actionManager: ActionManager<any> | null,
@@ -28,8 +29,22 @@ const ToolBarSlot: React.FC<ActionsBarProps> = ({
     } | null>(null);
 
     React.useEffect(() => {
-        setActionComponents(createActionComponents(actions, actionSlotId, getRefSlot, refreshSlot, {}));
-    }, [actions, actionSlotId]);
+        slot?.onMount?.(refreshSlot);
+        return () => {
+            slot?.onUnmount?.(refreshSlot);
+        };
+    }, [slot]);
+
+    React.useEffect(() => {
+        setActionComponents(createActionComponents(slot.tools, actionSlotId, getRefSlot, refreshSlot, {}));
+    }, [slot.tools, actionSlotId, refresh]);
+
+    React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
+        });
+        return unregisterRefresh;
+    }, [slot.id]);
 
     // Handler onKeyDown
     const handleKeyDown = React.useCallback(
@@ -59,7 +74,7 @@ const ToolBarSlot: React.FC<ActionsBarProps> = ({
         return;
     }, [handleKeyDown]);
 
-    if (!actions) {
+    if (!slot.tools || slot.tools.length === 0) {
         return null;
     }
 
