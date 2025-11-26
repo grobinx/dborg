@@ -35,7 +35,7 @@ const ioStatsTab = (
     let ioStatsRows: IOStatsRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;
     let snapshotSize = 20 + 1;
-    const autoRefreshInterval = 1; // 1 sekund
+    const autoRefreshInterval = 5; // 1 sekund
     let autoRefreshIntervalId: NodeJS.Timeout | null = null;
 
     const hitChart = (): IRenderedSlot => {
@@ -153,6 +153,7 @@ const ioStatsTab = (
                                     <YAxis
                                         stroke={theme.palette.text.secondary}
                                         tickFormatter={(value) => {
+                                            if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}G`;
                                             if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
                                             if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
                                             return value.toString();
@@ -581,14 +582,15 @@ const ioStatsTab = (
                                         if (autoRefreshIntervalId) {
                                             clearInterval(autoRefreshIntervalId);
                                             autoRefreshIntervalId = null;
-                                            return;
                                         }
                                         else {
                                             autoRefreshIntervalId = setInterval(() => {
                                                 refresh(cid("table-io-stats-grid"));
                                             }, autoRefreshInterval * 1000);
                                         }
-                                    }
+                                        refresh(cid("table-io-stats-hit-timeline-chart-tab"));
+                                    },
+                                    selected: () => autoRefreshIntervalId !== null,
                                 } as Action<any>
                             ],
                         },

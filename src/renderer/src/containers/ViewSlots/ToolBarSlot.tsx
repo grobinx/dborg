@@ -1,4 +1,4 @@
-import { ActionsFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ToolBarFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React, { useEffect } from "react";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
@@ -8,12 +8,12 @@ import { CommandManager } from "@renderer/components/CommandPalette/CommandManag
 import { createActionComponents } from "./helpers";
 
 export interface ActionsBarProps {
-    actions?: ActionsFactory;
+    actions?: ToolBarFactory;
     actionSlotId?: string;
     handleRef?: React.Ref<HTMLDivElement>;
 }
 
-const ActionsBar: React.FC<ActionsBarProps> = ({
+const ToolBarSlot: React.FC<ActionsBarProps> = ({
     actions,
     actionSlotId,
     handleRef
@@ -70,4 +70,4 @@ const ActionsBar: React.FC<ActionsBarProps> = ({
     );
 };
 
-export default ActionsBar;
+export default ToolBarSlot;

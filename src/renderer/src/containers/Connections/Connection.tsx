@@ -19,7 +19,7 @@ import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveTabS
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
-import ActionsBar from "../ViewSlots/ActionsBar";
+import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
@@ -296,7 +296,7 @@ function createTabPanels(
                     key={tab.id}
                     itemID={tab.id}
                     label={label}
-                    buttons={<ActionsBar actions={tab.actions} actionSlotId={tab.actionSlotId} />}
+                    buttons={<ToolBarSlot actions={tab.actions} actionSlotId={tab.actionSlotId} />}
                     content={content}
                 />
             );

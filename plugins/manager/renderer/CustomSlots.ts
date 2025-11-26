@@ -28,7 +28,7 @@ export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
 export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
 export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
-export type ActionsFactory = ActionKind[] | ((refresh: RefreshSlotFunction) => ActionKind[]);
+export type ToolBarFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
 export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
@@ -44,7 +44,7 @@ export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunctio
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 
-export type ActionKind<T = any> = string | Action<T> | CommandDescriptor<T> | ITextField;
+export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | ITextField;
 
 export interface ISelectOption {
     value: string,
@@ -230,7 +230,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    actions?: ActionsFactory;
+    actions?: ToolBarFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
@@ -303,7 +303,7 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    actions?: ActionsFactory;
+    actions?: ToolBarFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
@@ -404,7 +404,7 @@ export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, r
 export function resolveBooleanFactory(factory: BooleanFactory | undefined, refresh: RefreshSlotFunction): boolean | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionsFactory(factory: ActionsFactory | undefined, refresh: RefreshSlotFunction): ActionKind[] | undefined {
+export function resolveActionsFactory(factory: ToolBarFactory | undefined, refresh: RefreshSlotFunction): ToolKind[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {

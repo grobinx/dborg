@@ -1,6 +1,6 @@
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import {
-    ActionsFactory,
+    ToolBarFactory,
     ContentSlotKindFactory,
     isITextField,
     resolveActionsFactory,
@@ -146,7 +146,7 @@ export function createSplitPartContent(
 }
 
 export function createActionComponents(
-    actions: ActionsFactory | undefined,
+    actions: ToolBarFactory | undefined,
     actionSlotId: string | undefined,
     getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
     refreshSlot: (id: string) => void,

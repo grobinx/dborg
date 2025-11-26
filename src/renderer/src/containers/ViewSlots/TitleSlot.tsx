@@ -4,7 +4,7 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
-import ActionsBar from "./ActionsBar";
+import ToolBarSlot from "./ToolBarSlot";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -42,7 +42,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     React.useEffect(() => {
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
         setIcon(resolveIcon(theme, slot.icon));
-        setActionBar(<ActionsBar actions={slot.actions} actionSlotId={slot.actionSlotId} handleRef={ref} />);
+        setActionBar(<ToolBarSlot actions={slot.actions} actionSlotId={slot.actionSlotId} handleRef={ref} />);
     }, [slot.title, slot.icon, slot.actions, refresh]);
 
     React.useEffect(() => {

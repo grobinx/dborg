@@ -6,7 +6,7 @@ import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createTabContent, createTabLabel } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
-import ActionsBar from "./ActionsBar";
+import ToolBarSlot from "./ToolBarSlot";
 
 interface TabsSlotProps {
 }
@@ -51,7 +51,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                             key={tab.id}
                             itemID={tab.id}
                             label={label}
-                            buttons={<ActionsBar actions={tab.actions} actionSlotId={tab.actionSlotId} />}
+                            buttons={<ToolBarSlot actions={tab.actions} actionSlotId={tab.actionSlotId} />}
                             content={content}
                         />
                     );

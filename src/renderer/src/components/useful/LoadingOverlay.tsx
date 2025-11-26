@@ -80,40 +80,6 @@ const LoadingSpinner = styled("div")<{
     };
 });
 
-const SmallSpinner = styled("div")<{ colors: string[] }>(({ colors }) => ({
-    width: "24px",
-    height: "24px",
-    display: "inline-block",
-    position: "relative",
-    "& div": {
-        boxSizing: "border-box",
-        display: "block",
-        position: "absolute",
-        width: "24px",
-        height: "24px",
-        border: "3px solid",
-        borderColor: `${colors[0]} transparent transparent transparent`,
-        borderRadius: "50%",
-        animation: "lds-ring-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite",
-    },
-    "& div:nth-of-type(1)": {
-        borderColor: `${colors[0]} transparent transparent transparent`,
-        animationDelay: "-0.45s",
-    },
-    "& div:nth-of-type(2)": {
-        borderColor: `${colors[1]} transparent transparent transparent`,
-        animationDelay: "-0.3s",
-    },
-    "& div:nth-of-type(3)": {
-        borderColor: `${colors[2]} transparent transparent transparent`,
-        animationDelay: "-0.15s",
-    },
-    "& div:nth-of-type(4)": {
-        borderColor: `${colors[3]} transparent transparent transparent`,
-        animationDelay: "0s",
-    },
-}));
-
 const LoadingLabel = styled("div")<{ color: string }>(({ color }) => ({
     display: "flex",
     flexDirection: "row",
