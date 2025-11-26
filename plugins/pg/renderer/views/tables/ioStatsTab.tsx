@@ -36,7 +36,7 @@ const ioStatsTab = (
     let ioStatsRows: IOStatsRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;
     let snapshotSize = 20 + 1;
-    const autoRefreshInterval = 5; // 1 sekund
+    let autoRefreshInterval = 5; // 1 sekund
     let autoRefreshIntervalId: NodeJS.Timeout | null = null;
 
     const hitChart = (): IRenderedSlot => {
@@ -566,18 +566,44 @@ const ioStatsTab = (
                                 type: "toolbar",
                                 tools: (refresh) => [
                                     {
-                                        id: cid("table-io-stats-hit-timeline-chart-snapshot-size-action"),
+                                        id: cid("table-io-stats-hit-timeline-chart-snapshot-size-field"),
                                         type: "number",
-                                        defaultValue: String(snapshotSize - 1),
-                                        onChange(value: string) {
-                                            const num = Number(value);
-                                            if (isNaN(num) || num < 10 || num > 200) {
-                                                return;
-                                            }
-                                            snapshotSize = num + 1;
+                                        defaultValue: snapshotSize - 1,
+                                        onChange(value: number | null) {
+                                            snapshotSize = (value ?? 10) + 1;
                                         },
-                                        width: 40,
+                                        width: 50,
+                                        min: 10,
+                                        max: 200,
+                                        step: 10,
                                         tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
+                                    },
+                                    {
+                                        id: cid("table-io-stats-hit-timeline-chart-refresh-interval-field"),
+                                        type: "select",
+                                        defaultValue: autoRefreshInterval,
+                                        options: [
+                                            { label: t("1-s", "1s"), value: 1 },
+                                            { label: t("2-s", "2s"), value: 2 },
+                                            { label: t("5-s", "5s"), value: 5 },
+                                            { label: t("10-s", "10s"), value: 10 },
+                                            { label: t("30-s", "30s"), value: 30 },
+                                            { label: t("60-s", "60s"), value: 60 },
+                                        ],
+                                        onChange(value: number | null) {
+                                            if (value) {
+                                                autoRefreshInterval = value;
+                                                // Zmień interwał odświeżania
+                                                if (autoRefreshIntervalId) {
+                                                    clearInterval(autoRefreshIntervalId);
+                                                    autoRefreshIntervalId = setInterval(() => {
+                                                        refresh(cid("table-io-stats-grid"));
+                                                    }, autoRefreshInterval * 1000);
+                                                }
+                                            }
+                                        },
+                                        width: 50,
+                                        tooltip: t("auto-refresh-interval", "Auto refresh interval"),
                                     },
                                     {
                                         id: cid("table-io-stats-hit-timeline-chart-start-refresh-action"),

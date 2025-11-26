@@ -10,9 +10,7 @@ import { useVisibleState } from '@renderer/hooks/useVisibleState';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
 import { useSearch } from '@renderer/hooks/useSearch';
 import { TextField } from './TextField';
-import { listItemSizeProperties } from '@renderer/themes/layouts/default/consts';
 import { resolveColor } from '@renderer/utils/colors';
-import { themeColors } from '@renderer/types/colors';
 import clsx from '@renderer/utils/clsx';
 import { InputDecorator } from './decorators/InputDecorator';
 
@@ -282,97 +280,99 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
 
 
     return (
-        <BaseInputField
-            ref={rootRef}
-            value={value}
-            type='select'
-            size={size}
-            color={color}
-            onChange={onChange}
-            disabled={disabled}
-            input={(
-                <Box
-                    ref={inputRef}
-                    sx={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'inherit',
-                        flexDirection: 'inherit',
-                        gap: 'inherit',
-                        outline: 'none',
-                        whiteSpace: multiValueDisplay === 'ellipsis' ? 'nowrap' : 'normal',
-                        overflow: multiValueDisplay === 'ellipsis' ? 'hidden' : undefined,
-                        textOverflow: multiValueDisplay === 'ellipsis' ? 'ellipsis' : undefined,
-                        flexWrap: multiValueDisplay === 'wrap' ? 'wrap' : 'nowrap',
-                        minWidth: 0,
-                    }}
-                >
-                    <SelectValueRenderer />
-                </Box>
-            )}
-            inputProps={{
-                ...inputProps,
-                onClick: (e) => {
-                    handleToggle();
-                    inputProps?.onClick?.(e);
-                },
-                onKeyDown: handleKeyDown,
-            }}
-            inputAdornments={
-                <Adornment position='input'>
-                    <span
-                        onClick={handleToggle}
-                        color={resolveColor(color, theme)}
-                        style={{
-                            cursor: 'pointer',
+        <>
+            <BaseInputField
+                ref={rootRef}
+                value={value}
+                type='select'
+                size={size}
+                color={color}
+                onChange={onChange}
+                disabled={disabled}
+                input={(
+                    <Box
+                        ref={inputRef}
+                        sx={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'inherit',
+                            flexDirection: 'inherit',
+                            gap: 'inherit',
+                            outline: 'none',
+                            whiteSpace: multiValueDisplay === 'ellipsis' ? 'nowrap' : 'normal',
+                            overflow: multiValueDisplay === 'ellipsis' ? 'hidden' : undefined,
+                            textOverflow: multiValueDisplay === 'ellipsis' ? 'ellipsis' : undefined,
+                            flexWrap: multiValueDisplay === 'wrap' ? 'wrap' : 'nowrap',
+                            minWidth: 0,
                         }}
                     >
-                        {open ? <theme.icons.ExpandLess color={color} /> : <theme.icons.ExpandMore color={color} />}
-                    </span>
-                    <Popover
-                        open={open && visibleRoot}
-                        anchorEl={rootRef.current}
-                        onClose={handleClose}
-                        onChangePlacement={setPlacement}
-                    >
-                        <StyledSelectFieldListBox
-                            className={clsx(
-                                'SelectField-listBox',
-                                `color-${color}`,
-                                `size-${size || 'medium'}`,
-                            )}
+                        <SelectValueRenderer />
+                    </Box>
+                )}
+                inputProps={{
+                    ...inputProps,
+                    onClick: (e) => {
+                        handleToggle();
+                        inputProps?.onClick?.(e);
+                    },
+                    onKeyDown: handleKeyDown,
+                }}
+                inputAdornments={
+                    <Adornment position='input'>
+                        <span
+                            onClick={handleToggle}
+                            color={resolveColor(color, theme)}
+                            style={{
+                                cursor: 'pointer',
+                            }}
                         >
-                            {placement !== 'top' && searchableField}
-                            <DescribedList
-                                ref={listRef}
-                                options={displayOptions}
-                                selected={selectedValues}
-                                focused={focusedItem}
-                                size={size}
-                                color={color}
-                                onItemClick={handleItemClick}
-                                style={{
-                                    maxHeight: listHeight,
-                                    width: (rootRef.current && (placement === 'bottom' || placement === 'top')) ? `${rootRef.current.offsetWidth}px` : "auto"
-                                }}
-                                description={placement === 'top' ? 'header' : 'footer'}
-                                tabIndex={-1}
-                                renderItem={searchable && searchText ?
-                                    (option, state) => {
-                                        if (!isOption(option)) return renderItem?.(option, state);
-                                        const highlighted = highlightText(typeof option.label === 'string' ? option.label : '');
-                                        return renderItem ? renderItem(option, state) : highlighted;
-                                    } :
-                                    renderItem
-                                }
-                            />
-                            {placement === 'top' && searchableField}
-                        </StyledSelectFieldListBox>
-                    </Popover>
-                </Adornment>
-            }
-            {...other}
-        />
+                            {open ? <theme.icons.ExpandLess color={color} /> : <theme.icons.ExpandMore color={color} />}
+                        </span>
+                    </Adornment>
+                }
+                {...other}
+            />
+            <Popover
+                open={open && visibleRoot}
+                anchorEl={rootRef.current}
+                onClose={handleClose}
+                onChangePlacement={setPlacement}
+            >
+                <StyledSelectFieldListBox
+                    className={clsx(
+                        'SelectField-listBox',
+                        `color-${color}`,
+                        `size-${size || 'medium'}`,
+                    )}
+                >
+                    {placement !== 'top' && searchableField}
+                    <DescribedList
+                        ref={listRef}
+                        options={displayOptions}
+                        selected={selectedValues}
+                        focused={focusedItem}
+                        size={size}
+                        color={color}
+                        onItemClick={handleItemClick}
+                        style={{
+                            maxHeight: listHeight,
+                            width: (rootRef.current && (placement === 'bottom' || placement === 'top')) ? `${rootRef.current.offsetWidth}px` : "auto"
+                        }}
+                        description={placement === 'top' ? 'header' : 'footer'}
+                        tabIndex={-1}
+                        renderItem={searchable && searchText ?
+                            (option, state) => {
+                                if (!isOption(option)) return renderItem?.(option, state);
+                                const highlighted = highlightText(typeof option.label === 'string' ? option.label : '');
+                                return renderItem ? renderItem(option, state) : highlighted;
+                            } :
+                            renderItem
+                        }
+                    />
+                    {placement === 'top' && searchableField}
+                </StyledSelectFieldListBox>
+            </Popover>
+        </>
     );
 };
 

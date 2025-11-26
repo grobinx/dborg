@@ -11,6 +11,7 @@ export function useValidation<T>(
 ): [boolean | FormattedContent, ((valid: boolean | FormattedContent) => void) | undefined | null] {
     const decoration = useInputDecorator();
     const [invalid, setInvalid] = React.useState<boolean | FormattedContent>(false);
+    const prevValueRef = React.useRef<T>(value);
 
     React.useEffect(() => {
         if (disabled || !validations || validations.length === 0) {
@@ -33,10 +34,11 @@ export function useValidation<T>(
                 return false;
             });
 
-            if (!invalid) {
+            if (!invalid && prevValueRef.current !== value) {
                 setInvalid(undefined);
                 onValid?.();
             }
+            prevValueRef.current = value;
         }, changedDelay);
 
         return () => clearTimeout(timeoutId);

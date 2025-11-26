@@ -2,7 +2,7 @@ import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTyp
 import {
     ToolFactory,
     ContentSlotKindFactory,
-    isITextField,
+    isIField,
     resolveActionsFactory,
     resolveBooleanFactory,
     resolveContentSlotKindFactory,
@@ -17,12 +17,15 @@ import {
     TabLabelSlotKindFactory,
     TextSlotKindFactory,
     TitleSlotKindFactory,
+    isTextField,
+    isNumberField,
+    isSelectField,
+    ISelectField,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
-import React, { HTMLInputTypeAttribute } from "react";
+import React from "react";
 import GridSlot from "./GridSlot";
 import ContentSlot from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
-import { MenuItem } from "@mui/material";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
 import TabContentSlot from "./TabContentSlot";
@@ -36,6 +39,8 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import Tooltip from "@renderer/components/Tooltip";
+import { NumberField } from "@renderer/components/inputs/NumberField";
+import { SelectField } from "@renderer/components/inputs/SelectField";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -145,6 +150,39 @@ export function createSplitPartContent(
     return null;
 }
 
+const ToolSelectedField: React.FC<ISelectField & { refreshSlot: (id: string) => void }> = (props) => {
+    const {
+        placeholder,
+        defaultValue,
+        onChange,
+        disabled,
+        width,
+        tooltip,
+        options,
+        refreshSlot,
+    } = props;
+
+    const [value, setValue] = React.useState<any | undefined>(defaultValue);
+
+    return (
+        <InputDecorator indicator={false} disableBlink>
+            <SelectField
+                placeholder={placeholder}
+                value={value}
+                onChange={setValue}
+                onChanged={value => {
+                    onChange(value);
+                }}
+                disabled={resolveBooleanFactory(disabled, refreshSlot)}
+                size="small"
+                width={width}
+                options={resolveSelectOptionsFactory(options, refreshSlot) || []}
+                tooltip={tooltip}
+            />
+        </InputDecorator>
+    );
+};
+
 export function createActionComponents(
     actions: ToolFactory | undefined,
     actionSlotId: string | undefined,
@@ -185,15 +223,11 @@ export function createActionComponents(
                         />
                     );
                 }
-                if (isITextField(action)) {
-                    if (action.type === 'select') {
-                        const options = resolveSelectOptionsFactory(action.options, refreshSlot);
-                        return;
-                    }
-                    const field = (
+
+                if (isTextField(action)) {
+                    return (
                         <InputDecorator key={index} indicator={false} disableBlink>
                             <TextField
-                                //@todo: type={action.type}
                                 placeholder={action.placeholder}
                                 defaultValue={action.defaultValue ?? ""}
                                 onChanged={value => {
@@ -202,28 +236,57 @@ export function createActionComponents(
                                 disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
                                 size="small"
                                 width={action.width}
+                                minLength={action.minLength}
+                                maxLength={action.maxLength}
+                                tooltip={action.tooltip}
                             />
                         </InputDecorator>
                     );
-                    if (action.tooltip) {
-                        return (
-                            <Tooltip key={index} title={action.tooltip}>
-                                <span>
-                                    {field}
-                                </span>
-                            </Tooltip>
-                        )
-                    }
-                    return field;
-                }
-                if (isCommandDescriptor(action)) {
-                    if (!commandManager) {
-                        commandManager = new CommandManager<typeof context>();
-                    }
-                    commandManager.registerCommand(action);
-                    return null;
+                } else if (isNumberField(action)) {
+                    return (
+                        <InputDecorator key={index} indicator={false} disableBlink>
+                            <NumberField
+                                placeholder={action.placeholder}
+                                defaultValue={action.defaultValue ?? action.min ?? 0}
+                                onChanged={value => {
+                                    action.onChange(value ?? action.min ?? 0);
+                                }}
+                                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                                size="small"
+                                width={action.width}
+                                min={action.min}
+                                max={action.max}
+                                step={action.step}
+                                tooltip={action.tooltip}
+                            />
+                        </InputDecorator>
+                    );
+                } else if (isSelectField(action)) {
+                    return (
+                        <ToolSelectedField
+                            key={index}
+                            type={action.type}
+                            placeholder={action.placeholder}
+                            defaultValue={action.defaultValue}
+                            onChange={action.onChange}
+                            disabled={action.disabled}
+                            width={action.width}
+                            options={action.options}
+                            refreshSlot={refreshSlot}
+                            tooltip={action.tooltip}
+                        />
+                    );
                 }
             }
+
+            if (isCommandDescriptor(action)) {
+                if (!commandManager) {
+                    commandManager = new CommandManager<typeof context>();
+                }
+                commandManager.registerCommand(action);
+                return null;
+            }
+
             if (typeof action === "string" && dataGridRef?.current) {
                 return <ToolButton
                     key={action}
@@ -233,6 +296,7 @@ export function createActionComponents(
                     size="small"
                 />;
             }
+
             return null
         }).filter(Boolean) as React.ReactNode[];
     }

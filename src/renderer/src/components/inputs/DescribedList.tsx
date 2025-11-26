@@ -1,9 +1,8 @@
 import { Theme } from "@emotion/react";
-import { alpha, styled, SxProps } from "@mui/material";
+import { styled, SxProps } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
 import { FormattedContent, FormattedContentItem, FormattedText } from "@renderer/components/useful/FormattedText";
-import { listItemSizeProperties } from "@renderer/themes/layouts/default/consts";
-import { ThemeColor, themeColors } from "@renderer/types/colors";
+import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import clsx from "@renderer/utils/clsx";
 import React, { useRef, useState } from "react";

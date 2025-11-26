@@ -114,6 +114,8 @@ export interface BaseInputProps<T = any> {
     onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
     onKeyUp?: (event: React.KeyboardEvent<HTMLElement>) => void;
 
+    tooltip?: FormattedContent;
+
     sx?: SxProps;
     style?: React.CSSProperties;
 }

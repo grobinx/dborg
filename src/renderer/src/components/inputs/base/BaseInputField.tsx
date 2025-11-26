@@ -5,6 +5,7 @@ import { FormattedContentItem, FormattedText } from '../../useful/FormattedText'
 import clsx from '../../../utils/clsx';
 import { useInputDecorator } from '../decorators/InputDecoratorContext';
 import { useValidation, validateRequired } from './useValidation';
+import Tooltip from '@renderer/components/Tooltip';
 
 interface BaseInputFieldProps<T> extends BaseInputProps<T> {
     /**
@@ -188,6 +189,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         children,
         autoFocus,
         dense,
+        tooltip,
         sx, style,
     } = props;
 
@@ -207,11 +209,11 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
     const [invalid] = useValidation(
         currentValue,
         disabled,
-        [
+        React.useMemo(() => [
             (value: any) => validateRequired(value, required),
             ...(validations ?? []),
             (value: any) => onValidate?.(value) ?? true
-        ],
+        ], [required, validations, onValidate]),
         () => {
             onChanged?.(currentValue);
         },
@@ -306,7 +308,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             StyledBaseInputFieldTextArea :
             StyledBaseInputFieldInput;
 
-    return (
+    const result = (
         <StyledBaseInputField
             className={clsx(
                 "InputField-root",
@@ -433,6 +435,16 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             )}
             {children}
         </StyledBaseInputField >
-    )
+    );
+
+    if (tooltip) {
+        return (
+            <Tooltip title={tooltip}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 }
 

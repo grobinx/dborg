@@ -3,6 +3,7 @@ import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandMa
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { Option } from "@renderer/components/inputs/DescribedList";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import * as monaco from "monaco-editor";
 import { HTMLInputTypeAttribute } from "react";
@@ -28,7 +29,7 @@ export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction)
 export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
 export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
-export type SelectOptionsFactory = ISelectOption[] | ((refresh: RefreshSlotFunction) => ISelectOption[]);
+export type SelectOptionsFactory = Option[] | ((refresh: RefreshSlotFunction) => Option[]);
 export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
@@ -46,7 +47,7 @@ export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction)
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
 
-export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | ITextField;
+export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | FieldTypeKind;
 
 export interface ISelectOption {
     value: string,
@@ -54,12 +55,10 @@ export interface ISelectOption {
     description?: string,
 }
 
-export interface ITextField {
-    /**
-     * Typ pola tekstowego, np. "text", "password", "email" itp.
-     * @default "text"
-     */
-    type?: HTMLInputTypeAttribute | "select",
+export type IFieldType = "text" | "number" | "select";
+
+export interface IField {
+    type: IFieldType;
     /**
      * Etykieta pola tekstowego.
      */
@@ -70,16 +69,13 @@ export interface ITextField {
     defaultValue?: any,
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
+     * Wywołanie jest z opóźnieniem
      */
     onChange: (value: any) => void,
     /**
      * Czy pole tekstowe jest zablokowane.
      */
     disabled?: BooleanFactory;
-    /**
-     * Opcje dla typu select
-     */
-    options?: SelectOptionsFactory;
     /**
      * Maksymalna szerokość pola tekstowego (np. "100px", "50%").
      */
@@ -89,6 +85,50 @@ export interface ITextField {
      */
     tooltip?: string;
 }
+
+export interface ITextField extends IField {
+    type: "text";
+    /**
+     * Domyśla wartość pola tekstowego.
+     */
+    defaultValue?: string,
+    /**
+     * Funkcja wywoływana po zmianie wartości pola tekstowego.
+     * Wywołanie jest z opóźnieniem
+     */
+    onChange: (value: string) => void,
+
+    minLength?: number;
+    maxLength?: number;
+}
+
+export interface INumberField extends IField {
+    type: "number";
+    /**
+     * Domyśla wartość pola tekstowego.
+     */
+    defaultValue?: number,
+    /**
+     * Funkcja wywoływana po zmianie wartości pola tekstowego.
+     * Wywołanie jest z opóźnieniem
+     */
+    onChange: (value: number) => void,
+
+    min?: number;
+    max?: number;
+    step?: number;
+}
+
+export interface ISelectField extends IField {
+    type: "select";
+
+    options: SelectOptionsFactory;
+}
+
+export type FieldTypeKind =
+    ITextField
+    | INumberField
+    | ISelectField;
 
 export interface ISlot {
     /**
@@ -456,17 +496,27 @@ export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefi
 export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, refresh: RefreshSlotFunction): IContentSlot | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): ISelectOption[] | undefined {
+export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): Option[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveToolBarSlotFactory(factory: ToolBarSlotFactory | undefined, refresh: RefreshSlotFunction): IToolBarSlot | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 
-export function isITextField(obj: any): obj is ITextField {
+export function isIField(obj: any): obj is FieldTypeKind {
     return (
         typeof obj === "object" &&
         obj !== null &&
-        typeof obj.onChange === "function"
+        typeof obj.onChange === "function" &&
+        "type" in obj
     );
+}
+export function isTextField(a: any): a is ITextField {
+    return isIField(a) && a.type === "text";
+}
+export function isNumberField(a: any): a is INumberField {
+    return isIField(a) && a.type === "number";
+}
+export function isSelectField(a: any): a is ISelectField {
+    return isIField(a) && a.type === "select";
 }
