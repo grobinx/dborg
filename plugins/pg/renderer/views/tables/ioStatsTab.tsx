@@ -376,22 +376,22 @@ const ioStatsTab = (
                             t("index-blocks-delta", "Index Blocks Delta"),
                             "idxRead",
                             "idxHit",
-                            theme.palette.error.light,
-                            theme.palette.success.light
+                            theme.palette.error.main,
+                            theme.palette.success.main
                         )}
                         {renderSingleChart(
                             t("toast-blocks-delta", "Toast Blocks Delta"),
                             "toastRead",
                             "toastHit",
-                            theme.palette.warning.main,
-                            theme.palette.primary.main
+                            theme.palette.error.main,
+                            theme.palette.success.main
                         )}
                         {renderSingleChart(
                             t("toast-index-blocks-delta", "Toast Index Blocks Delta"),
                             "tidxRead",
                             "tidxHit",
-                            theme.palette.warning.light,
-                            theme.palette.primary.light
+                            theme.palette.error.main,
+                            theme.palette.success.main
                         )}
                     </div>
                 );
