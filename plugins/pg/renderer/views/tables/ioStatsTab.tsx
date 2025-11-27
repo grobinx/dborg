@@ -232,7 +232,7 @@ const ioStatsTab = (
                         width: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 16,
+                        gap: 8,
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
@@ -361,7 +361,7 @@ const ioStatsTab = (
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
                         gridTemplateRows: '1fr 1fr',
-                        gap: 16,
+                        gap: 8,
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
@@ -437,8 +437,6 @@ const ioStatsTab = (
                     if (ioStatsRows.length > snapshotSize) {
                         ioStatsRows = ioStatsRows.slice(ioStatsRows.length - snapshotSize);
                     }
-                } else {
-                    ioStatsRows = [];
                 }
                 refresh(cid("table-io-stats-chart-slot"));
                 refresh(cid("table-io-stats-timeline-chart-slot"));
