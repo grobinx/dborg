@@ -10,8 +10,6 @@ import { icons } from "@renderer/themes/ThemeWrapper";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio
 interface IOStatsRecord {
-    schemaname: string;
-    relname: string;
     heap_blks_read: number;
     heap_blks_hit: number;
     heap_hit_ratio: number;
@@ -36,8 +34,159 @@ const ioStatsTab = (
     let ioStatsRows: IOStatsRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;
     let snapshotSize = 20 + 1;
-    let autoRefreshInterval = 5; // 1 sekund
+    let autoRefreshInterval = 5;
     let autoRefreshIntervalId: NodeJS.Timeout | null = null;
+
+    const num = (v: any) => {
+        const n = typeof v === 'number' ? v : Number(v);
+        return isFinite(n) ? n : 0;
+    };
+
+    const calculateTimelineData = () => {
+        const missingSnapshots = Math.max(0, snapshotSize - ioStatsRows.length);
+        const timelineData: any[] = [];
+
+        for (let i = 0; i < missingSnapshots; i++) {
+            timelineData.push({
+                snapshot: i + 1,
+                heapRead: null,
+                heapHit: null,
+                idxRead: null,
+                idxHit: null,
+                toastRead: null,
+                toastHit: null,
+                tidxRead: null,
+                tidxHit: null,
+            });
+        }
+
+        ioStatsRows.forEach((row, index) => {
+            if (index === 0) {
+                timelineData.push({
+                    snapshot: missingSnapshots + index + 1,
+                    heapRead: 0,
+                    heapHit: 0,
+                    idxRead: 0,
+                    idxHit: 0,
+                    toastRead: 0,
+                    toastHit: 0,
+                    tidxRead: 0,
+                    tidxHit: 0,
+                });
+            } else {
+                const prev = ioStatsRows[index - 1];
+                timelineData.push({
+                    snapshot: missingSnapshots + index + 1,
+                    heapRead: Math.max(0, num(row.heap_blks_read) - num(prev.heap_blks_read)),
+                    heapHit: Math.max(0, num(row.heap_blks_hit) - num(prev.heap_blks_hit)),
+                    idxRead: Math.max(0, num(row.idx_blks_read) - num(prev.idx_blks_read)),
+                    idxHit: Math.max(0, num(row.idx_blks_hit) - num(prev.idx_blks_hit)),
+                    toastRead: Math.max(0, num(row.toast_blks_read) - num(prev.toast_blks_read)),
+                    toastHit: Math.max(0, num(row.toast_blks_hit) - num(prev.toast_blks_hit)),
+                    tidxRead: Math.max(0, num(row.tidx_blks_read) - num(prev.tidx_blks_read)),
+                    tidxHit: Math.max(0, num(row.tidx_blks_hit) - num(prev.tidx_blks_hit)),
+                });
+            }
+        });
+
+        return timelineData
+            .slice(1)
+            .map((d: any, i: number) => ({ ...d, snapshot: i + 1 }));
+    };
+
+    const renderSingleChart = (
+        title: string,
+        readKey: string,
+        hitKey: string,
+        readColor: string,
+        hitColor: string
+    ) => {
+        const theme = useTheme();
+
+        if (!ioStatsRows || ioStatsRows.length === 0) {
+            return (
+                <div style={{ padding: 16, color: theme.palette.text.secondary }}>
+                    <p>{t("no-data", "No data available")}</p>
+                </div>
+            );
+        }
+
+        const displayData = calculateTimelineData();
+
+        return (
+            <div style={{
+                height: '100%',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                boxSizing: 'border-box',
+                overflow: 'hidden'
+            }}>
+                <h4 style={{
+                    margin: '0 0 8px 0',
+                    color: theme.palette.text.primary,
+                    flexShrink: 0,
+                    fontSize: '0.9rem'
+                }}>
+                    {title}
+                </h4>
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                        <XAxis 
+                            dataKey="snapshot" 
+                            stroke={theme.palette.text.secondary}
+                            style={{ fontSize: '0.75rem' }}
+                        />
+                        <YAxis
+                            stroke={theme.palette.text.secondary}
+                            style={{ fontSize: '0.75rem' }}
+                            tickFormatter={(value) => {
+                                if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                                if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                                return value.toString();
+                            }}
+                        />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: theme.palette.background.tooltip,
+                                border: `1px solid ${theme.palette.divider}`
+                            }}
+                            wrapperStyle={{ zIndex: 9999 }}
+                            formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
+                            isAnimationActive={false}
+                            animationDuration={0}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                        <Area
+                            type="monotone"
+                            dataKey={readKey}
+                            stackId="1"
+                            stroke={readColor}
+                            fill={readColor}
+                            fillOpacity={0.6}
+                            name={t("read", "Read")}
+                            isAnimationActive={false}
+                            animationDuration={0}
+                            connectNulls
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey={hitKey}
+                            stackId="1"
+                            stroke={hitColor}
+                            fill={hitColor}
+                            fillOpacity={0.6}
+                            name={t("hit", "Hit")}
+                            isAnimationActive={false}
+                            animationDuration={0}
+                            connectNulls
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </div>
+        );
+    };
 
     const hitChart = (): IRenderedSlot => {
         return {
@@ -55,11 +204,6 @@ const ioStatsTab = (
                 }
 
                 const row = ioStatsRows[ioStatsRows.length - 1];
-
-                const num = (v: any) => {
-                    const n = typeof v === 'number' ? v : Number(v);
-                    return isFinite(n) ? n : 0;
-                };
 
                 const hitRatioData = [
                     { name: 'Heap', ratio: num(row.heap_hit_ratio) },
@@ -209,231 +353,46 @@ const ioStatsTab = (
                     );
                 }
 
-                const num = (v: any) => {
-                    const n = typeof v === 'number' ? v : Number(v);
-                    return isFinite(n) ? n : 0;
-                };
-
-                // Oblicz ile brakuje snapshotów do pełnego rozmiaru
-                const missingSnapshots = Math.max(0, snapshotSize - ioStatsRows.length);
-
-                // Wypełnij brakujące snapshoty na początku
-                const timelineData: any[] = [];
-                for (let i = 0; i < missingSnapshots; i++) {
-                    timelineData.push({
-                        snapshot: i + 1,
-                        heapRatio: null,
-                        idxRatio: null,
-                        toastRatio: null,
-                        tidxRatio: null,
-                        heapRead: null,
-                        heapHit: null,
-                        idxRead: null,
-                        idxHit: null,
-                        toastRead: null,
-                        toastHit: null,
-                        tidxRead: null,
-                        tidxHit: null,
-                    });
-                }
-
-                // Oblicz różnice między kolejnymi odczytami
-                ioStatsRows.forEach((row, index) => {
-                    if (index === 0) {
-                        // Pierwszy snapshot - brak różnic
-                        timelineData.push({
-                            snapshot: missingSnapshots + index + 1,
-                            heapRatio: num(row.heap_hit_ratio),
-                            idxRatio: num(row.idx_hit_ratio),
-                            toastRatio: num(row.toast_hit_ratio),
-                            tidxRatio: num(row.tidx_hit_ratio),
-                            heapRead: 0,
-                            heapHit: 0,
-                            idxRead: 0,
-                            idxHit: 0,
-                            toastRead: 0,
-                            toastHit: 0,
-                            tidxRead: 0,
-                            tidxHit: 0,
-                        });
-                    } else {
-                        const prev = ioStatsRows[index - 1];
-                        timelineData.push({
-                            snapshot: missingSnapshots + index + 1,
-                            heapRatio: num(row.heap_hit_ratio),
-                            idxRatio: num(row.idx_hit_ratio),
-                            toastRatio: num(row.toast_hit_ratio),
-                            tidxRatio: num(row.tidx_hit_ratio),
-                            heapRead: Math.max(0, num(row.heap_blks_read) - num(prev.heap_blks_read)),
-                            heapHit: Math.max(0, num(row.heap_blks_hit) - num(prev.heap_blks_hit)),
-                            idxRead: Math.max(0, num(row.idx_blks_read) - num(prev.idx_blks_read)),
-                            idxHit: Math.max(0, num(row.idx_blks_hit) - num(prev.idx_blks_hit)),
-                            toastRead: Math.max(0, num(row.toast_blks_read) - num(prev.toast_blks_read)),
-                            toastHit: Math.max(0, num(row.toast_blks_hit) - num(prev.toast_blks_hit)),
-                            tidxRead: Math.max(0, num(row.tidx_blks_read) - num(prev.tidx_blks_read)),
-                            tidxHit: Math.max(0, num(row.tidx_blks_hit) - num(prev.tidx_blks_hit)),
-                        });
-                    }
-                });
-
-                // Usuń pierwszy snapshot (z zerową deltą) i ponumeruj od 1
-                const displayData = timelineData
-                    .slice(1)
-                    .map((d: any, i: number) => ({ ...d, snapshot: i + 1 }));
-
                 return (
                     <div style={{
                         padding: 8,
                         height: '100%',
                         width: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gridTemplateRows: '1fr 1fr',
                         gap: 16,
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
-                        {/* Wykres Read vs Hit w czasie (delta - różnice) */}
-                        <div style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            minHeight: 0
-                        }}>
-                            <h4 style={{
-                                margin: '0 0 8px 0',
-                                color: theme.palette.text.primary,
-                                flexShrink: 0
-                            }}>
-                                {t("blocks-delta-timeline", "Blocks Delta (Read/Hit)")}
-                            </h4>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={displayData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} />
-                                    <YAxis
-                                        stroke={theme.palette.text.secondary}
-                                        tickFormatter={(value) => {
-                                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                                            if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                                            return value.toString();
-                                        }}
-                                        label={{
-                                            value: t("blocks-delta", "Δ Blocks"),
-                                            angle: -90,
-                                            position: 'insideLeft',
-                                            fill: theme.palette.text.secondary
-                                        }}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: theme.palette.background.tooltip,
-                                            border: `1px solid ${theme.palette.divider}`
-                                        }}
-                                        wrapperStyle={{ zIndex: 9999 }}
-                                        formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                    />
-                                    <Legend />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="heapRead"
-                                        stackId="1"
-                                        stroke={theme.palette.error.dark}
-                                        fill={theme.palette.error.dark}
-                                        fillOpacity={0.6}
-                                        name={t("heap-read-delta", "Heap Read")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="heapHit"
-                                        stackId="1"
-                                        stroke={theme.palette.success.dark}
-                                        fill={theme.palette.success.dark}
-                                        fillOpacity={0.6}
-                                        name={t("heap-hit-delta", "Heap Hit")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="idxRead"
-                                        stackId="2"
-                                        stroke={theme.palette.error.light}
-                                        fill={theme.palette.error.light}
-                                        fillOpacity={0.4}
-                                        name={t("idx-read-delta", "Idx Read")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="idxHit"
-                                        stackId="2"
-                                        stroke={theme.palette.success.light}
-                                        fill={theme.palette.success.light}
-                                        fillOpacity={0.4}
-                                        name={t("idx-hit-delta", "Idx Hit")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="toastRead"
-                                        stackId="3"
-                                        stroke={theme.palette.warning.dark}
-                                        fill={theme.palette.warning.dark}
-                                        fillOpacity={0.5}
-                                        name={t("toast-read-delta", "Toast Read")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="toastHit"
-                                        stackId="3"
-                                        stroke={theme.palette.primary.dark}
-                                        fill={theme.palette.primary.dark}
-                                        fillOpacity={0.5}
-                                        name={t("toast-hit-delta", "Toast Hit")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="tidxRead"
-                                        stackId="4"
-                                        stroke={theme.palette.warning.light}
-                                        fill={theme.palette.warning.light}
-                                        fillOpacity={0.5}
-                                        name={t("tidx-read-delta", "Toast Idx Read")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="tidxHit"
-                                        stackId="4"
-                                        stroke={theme.palette.primary.light}
-                                        fill={theme.palette.primary.light}
-                                        fillOpacity={0.5}
-                                        name={t("tidx-hit-delta", "Toast Idx Hit")}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                        connectNulls
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {renderSingleChart(
+                            t("heap-blocks-delta", "Heap Blocks Delta"),
+                            "heapRead",
+                            "heapHit",
+                            theme.palette.error.main,
+                            theme.palette.success.main
+                        )}
+                        {renderSingleChart(
+                            t("index-blocks-delta", "Index Blocks Delta"),
+                            "idxRead",
+                            "idxHit",
+                            theme.palette.error.light,
+                            theme.palette.success.light
+                        )}
+                        {renderSingleChart(
+                            t("toast-blocks-delta", "Toast Blocks Delta"),
+                            "toastRead",
+                            "toastHit",
+                            theme.palette.warning.main,
+                            theme.palette.primary.main
+                        )}
+                        {renderSingleChart(
+                            t("toast-index-blocks-delta", "Toast Index Blocks Delta"),
+                            "tidxRead",
+                            "tidxHit",
+                            theme.palette.warning.light,
+                            theme.palette.primary.light
+                        )}
                     </div>
                 );
             }
@@ -457,8 +416,6 @@ const ioStatsTab = (
 
                 const { rows } = await session.query<IOStatsRecord>(
                     "select\n" +
-                    "  schemaname,\n" +
-                    "  relname,\n" +
                     "  heap_blks_read,\n" +
                     "  heap_blks_hit,\n" +
                     "  round(100.0 * heap_blks_hit / nullif(heap_blks_hit + heap_blks_read, 0), 2) as heap_hit_ratio,\n" +
@@ -488,8 +445,6 @@ const ioStatsTab = (
                 return rows;
             },
             columns: [
-                { key: "schemaname", label: t("schema", "Schema"), dataType: "string", width: 150 },
-                { key: "relname", label: t("table", "Table"), dataType: "string", width: 200 },
                 { key: "heap_blks_read", label: t("heap-read", "Heap Read"), dataType: "bigint", width: 130 },
                 { key: "heap_blks_hit", label: t("heap-hit", "Heap Hit"), dataType: "bigint", width: 130 },
                 { key: "heap_hit_ratio", label: t("heap-ratio", "Heap %"), dataType: "decimal", width: 100 },
@@ -547,7 +502,7 @@ const ioStatsTab = (
                             label: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-tab-label"),
                                 type: "tablabel",
-                                label: t("timeline-chart", "Timeline Chart"),
+                                label: t("timeline-delta-chart", "Timeline Delta Chart"),
                             }),
                             content: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-content"),
