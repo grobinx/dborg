@@ -37,6 +37,7 @@ import { UpperLetter } from "./svg/UpperLetter";
 import { LowerLetter } from "./svg/LowerLetter";
 import { CircleGauge } from "./svg/CircleGuage";
 import { Rotate } from "@renderer/components/useful/Rotate";
+import { Resume } from "./svg/Resume";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -129,6 +130,11 @@ const icons = (_palette: Palette): ThemeOptions => {
             DragHandle: (props) => <IconWrapper {...props} className="drag-handle"><MuiIcons.DragHandle fontSize="inherit" /></IconWrapper>,
             DragIndicator: (props) => <IconWrapper {...props} className="drag-indicator"><MuiIcons.DragIndicator fontSize="inherit" /></IconWrapper>,
             AutoRefresh: (props) => <IconWrapper {...props} className="auto-refresh"><MuiIcons.History fontSize="inherit" /></IconWrapper>,
+            Pause: (props) => <IconWrapper {...props} className="pause"><MuiIcons.PauseOutlined fontSize="inherit" /></IconWrapper>,
+            Stop: (props) => <IconWrapper {...props} className="stop"><MuiIcons.StopOutlined fontSize="inherit" /></IconWrapper>,
+            Clear: (props) => <IconWrapper {...props} className="clear"><MuiIcons.ClearAllOutlined fontSize="inherit" /></IconWrapper>,
+            Start: (props) => <IconWrapper {...props} className="start"><MuiIcons.PlayArrowOutlined fontSize="inherit" /></IconWrapper>,
+            Resume: (props) => <IconWrapper {...props} className="resume"><Resume fontSize="inherit" /></IconWrapper>,
         }
     }
 }

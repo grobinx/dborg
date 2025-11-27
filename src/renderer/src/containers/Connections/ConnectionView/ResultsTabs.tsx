@@ -9,6 +9,7 @@ import { uuidv7 } from "uuidv7";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { AutoRefreshBar } from "@renderer/components/AutoRefreshBar";
 
 export const SQL_RESULT_CLOSE = "sql-result:close";
 
@@ -84,6 +85,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
                     <theme.icons.AddTab color="success" />
                 </ToolButton>
             </Tooltip>
+            <AutoRefreshBar canClear onTick={() => console.log("tick")} />
         </TabPanelButtons>
     );
 

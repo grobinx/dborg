@@ -25,6 +25,8 @@ export type CustomSlotType =
 export type RefreshSlotCallback = (slotId: string) => void;
 
 export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolean);
+export type NumberFactory = number | ((refresh: RefreshSlotFunction) => number);
+export type NumberArrayFactory = number[] | ((refresh: RefreshSlotFunction) => number[]);
 export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode);
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
@@ -36,6 +38,8 @@ export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunctio
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
+export type AutoRefreshIntervalsFactory = IAutoRefreshInterval[] | ((refresh: RefreshSlotFunction) => IAutoRefreshInterval[]);
+export type AutoRefreshIntervalFactory = IAutoRefreshInterval | ((refresh: RefreshSlotFunction) => IAutoRefreshInterval);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
@@ -129,6 +133,114 @@ export type FieldTypeKind =
     ITextField
     | INumberField
     | ISelectField;
+
+export interface IAutoRefreshContext {
+    isActive: boolean;
+    interval: IAutoRefreshInterval;
+    start: () => void;
+    stop: () => void;
+    pause: () => void;
+    resume: () => void;
+    clear: () => void;
+    setInterval: (interval: IAutoRefreshInterval) => void;
+}
+
+export type IAutoRefreshInterval = 1 | 2 | 5 | 10 | 15 | 30 | 60 | 120 | 300 | 600 | 1800 | 3600;
+
+export interface IAutoRefresh {
+    /**
+     * Domyślny interwał odświeżania
+     * @default 5 seconds
+     */
+    defaultInterval?: IAutoRefreshInterval;
+    /**
+     * Dostępne opcje interwałów odświeżania
+     * @default [1, 2, 5, 10, 30, 60]
+     */
+    intervals?: IAutoRefreshInterval[];
+    /**
+     * Funkcja wywoływana co określony interwał czasu.
+     * @param refresh 
+     * @param context 
+     */
+    onInterval(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy montowaniu komponentu.
+     * @param refresh 
+     * @param context 
+     */
+    onMount?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy odmontowaniu komponentu.
+     * @param refresh 
+     * @param context 
+     */
+    onUnmount?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy starcie automatycznego odświeżania.
+     * @param refresh 
+     * @param context 
+     */
+    onStart?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy zatrzymaniu automatycznego odświeżania.
+     * @param refresh 
+     * @param context 
+     */
+    onStop?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy wstrzymaniu automatycznego odświeżania.
+     * @param refresh 
+     * @param context 
+     */
+    onPause?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy wznowieniu automatycznego odświeżania.
+     * @param refresh 
+     * @param context 
+     */
+    onResume?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy pokazaniu panelu auto refresh.
+     * @param refresh 
+     * @param context 
+     */
+    onShow?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana przy ukryciu panelu auto refresh.
+     * @param refresh 
+     * @param context 
+     */
+    onHide?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    /**
+     * Funkcja wywoływana po naciśnięciu przycisku "Clear".
+     */
+    onClear?(): void;
+    /**
+     * Czy przycisk "Clear" ma być dostępny.
+     */
+    canClear?: boolean;
+    /**
+     * Czy przycisk "Pause" ma być dostępny.
+     */
+    canPause?: boolean;
+    /**
+     * Czy automatyczne odświeżanie ma się uruchamiać przy montowaniu komponentu.
+     * @default false
+     */
+    autoStart?: "mount" | "show" | false;
+    /**
+     * Czy automatyczne odświeżanie ma się zatrzymać przy ukryciu panelu.
+     * @default false
+     */
+    autoStop?: "hide" | false;
+    /**
+     * Czy automatyczne odświeżanie ma się wstrzymać przy ukryciu panelu.
+     * Wznowi się auotmatycznie przy ponownym pokazaniu panelu.
+     * @default true
+     */
+    autoPause?: "hide" | false;
+}
 
 export interface ISlot {
     /**
@@ -500,6 +612,18 @@ export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | unde
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveToolBarSlotFactory(factory: ToolBarSlotFactory | undefined, refresh: RefreshSlotFunction): IToolBarSlot | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveNumberFactory(factory: NumberFactory | undefined, refresh: RefreshSlotFunction): number | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, refresh: RefreshSlotFunction): number[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveAutoRefreshIntervalsFactory(factory: AutoRefreshIntervalsFactory | undefined, refresh: RefreshSlotFunction): IAutoRefreshInterval[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveAutoRefreshIntervalFactory(factory: AutoRefreshIntervalFactory | undefined, refresh: RefreshSlotFunction): IAutoRefreshInterval | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 

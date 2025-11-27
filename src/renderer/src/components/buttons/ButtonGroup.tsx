@@ -163,8 +163,9 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         setCurrentValue(value);
     }, [value]);
 
+
     // Clone children i dodaj className oraz przekaż props
-    const processedChildren = React.Children.map(children, (child) => {
+    const processedChildren = React.useMemo(() => React.Children.map(children, (child, index) => {
         if (React.isValidElement<BaseButtonProps>(child)) {
             if (exclusive && typeof child.props.toggle !== 'string') {
                 console.error("<ButtonGroup> requires all children to be toggle (string) buttons when exclusive is true.");
@@ -193,7 +194,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
             });
         }
         return child;
-    });
+    }), [children, exclusive, currentValue, handleExclusiveChange, size, dense, color, disabled]);
 
     const StyledButtonGroup = React.useMemo(() => createStyledButtonGroup(componentName), [componentName]);
 

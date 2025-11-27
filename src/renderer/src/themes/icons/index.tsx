@@ -162,6 +162,11 @@ export interface ThemeIcons {
     DragHandle: IconWrapperFC;
     DragIndicator: IconWrapperFC;
     AutoRefresh: IconWrapperFC;
+    Pause: IconWrapperFC;
+    Stop: IconWrapperFC;
+    Clear: IconWrapperFC;
+    Start: IconWrapperFC;
+    Resume: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {

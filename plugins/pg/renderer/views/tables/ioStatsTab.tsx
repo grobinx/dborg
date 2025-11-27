@@ -7,6 +7,7 @@ import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { icons } from "@renderer/themes/ThemeWrapper";
+import sql from "../../../common/sql";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio
 interface IOStatsRecord {
@@ -415,21 +416,7 @@ const ioStatsTab = (
                 }
 
                 const { rows } = await session.query<IOStatsRecord>(
-                    "select\n" +
-                    "  heap_blks_read,\n" +
-                    "  heap_blks_hit,\n" +
-                    "  round(100.0 * heap_blks_hit / nullif(heap_blks_hit + heap_blks_read, 0), 2) as heap_hit_ratio,\n" +
-                    "  idx_blks_read,\n" +
-                    "  idx_blks_hit,\n" +
-                    "  round(100.0 * idx_blks_hit / nullif(idx_blks_hit + idx_blks_read, 0), 2) as idx_hit_ratio,\n" +
-                    "  toast_blks_read,\n" +
-                    "  toast_blks_hit,\n" +
-                    "  round(100.0 * toast_blks_hit / nullif(toast_blks_hit + toast_blks_read, 0), 2) as toast_hit_ratio,\n" +
-                    "  tidx_blks_read,\n" +
-                    "  tidx_blks_hit,\n" +
-                    "  round(100.0 * tidx_blks_hit / nullif(tidx_blks_hit + tidx_blks_read, 0), 2) as tidx_hit_ratio\n" +
-                    "from pg_statio_all_tables\n" +
-                    "where schemaname = $1 and relname = $2;\n",
+                    sql.tableIOStats(),
                     [selectedRow()!.schema_name, selectedRow()!.table_name]
                 );
                 if (rows.length > 0) {
