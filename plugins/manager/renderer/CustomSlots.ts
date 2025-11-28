@@ -1,3 +1,4 @@
+import { AutoRefreshClearOn, AutoRefreshInterval, AutoRefreshIntervals } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
@@ -38,8 +39,6 @@ export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunctio
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
-export type AutoRefreshIntervalsFactory = IAutoRefreshInterval[] | ((refresh: RefreshSlotFunction) => IAutoRefreshInterval[]);
-export type AutoRefreshIntervalFactory = IAutoRefreshInterval | ((refresh: RefreshSlotFunction) => IAutoRefreshInterval);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
@@ -136,34 +135,32 @@ export type FieldTypeKind =
 
 export interface IAutoRefreshContext {
     isActive: boolean;
-    interval: IAutoRefreshInterval;
+    interval: AutoRefreshInterval;
     start: () => void;
     stop: () => void;
     pause: () => void;
     resume: () => void;
     clear: () => void;
-    setInterval: (interval: IAutoRefreshInterval) => void;
+    setInterval: (interval: AutoRefreshInterval) => void;
 }
-
-export type IAutoRefreshInterval = 1 | 2 | 5 | 10 | 15 | 30 | 60 | 120 | 300 | 600 | 1800 | 3600;
 
 export interface IAutoRefresh {
     /**
      * Domyślny interwał odświeżania
      * @default 5 seconds
      */
-    defaultInterval?: IAutoRefreshInterval;
+    defaultInterval?: AutoRefreshInterval;
     /**
      * Dostępne opcje interwałów odświeżania
      * @default [1, 2, 5, 10, 30, 60]
      */
-    intervals?: IAutoRefreshInterval[];
+    intervals?: AutoRefreshIntervals;
     /**
      * Funkcja wywoływana co określony interwał czasu.
      * @param refresh 
      * @param context 
      */
-    onInterval(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onTick(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy montowaniu komponentu.
      * @param refresh 
@@ -224,6 +221,14 @@ export interface IAutoRefresh {
      * Czy przycisk "Pause" ma być dostępny.
      */
     canPause?: boolean;
+    /**
+     * Czy przycisk "Refresh" ma być dostępny.
+     */
+    canRefresh?: boolean;
+    /**
+     * Kiedy czyścić dane (wywoływać onClear) - przy starcie lub zatrzymaniu odświeżania.
+     */
+    clearOn?: AutoRefreshClearOn;
     /**
      * Czy automatyczne odświeżanie ma się uruchamiać przy montowaniu komponentu.
      * @default false
@@ -618,12 +623,6 @@ export function resolveNumberFactory(factory: NumberFactory | undefined, refresh
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, refresh: RefreshSlotFunction): number[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
-}
-export function resolveAutoRefreshIntervalsFactory(factory: AutoRefreshIntervalsFactory | undefined, refresh: RefreshSlotFunction): IAutoRefreshInterval[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
-}
-export function resolveAutoRefreshIntervalFactory(factory: AutoRefreshIntervalFactory | undefined, refresh: RefreshSlotFunction): IAutoRefreshInterval | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 

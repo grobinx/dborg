@@ -165,7 +165,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
 
 
     // Clone children i dodaj className oraz przekaż props
-    const processedChildren = React.useMemo(() => React.Children.map(children, (child, index) => {
+    const processedChildren = React.useMemo(() => React.Children.map(children, (child) => {
         if (React.isValidElement<BaseButtonProps>(child)) {
             if (exclusive && typeof child.props.toggle !== 'string') {
                 console.error("<ButtonGroup> requires all children to be toggle (string) buttons when exclusive is true.");
