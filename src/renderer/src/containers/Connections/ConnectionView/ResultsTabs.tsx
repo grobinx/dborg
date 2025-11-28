@@ -10,6 +10,7 @@ import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { AutoRefreshBar } from "@renderer/components/AutoRefreshBar";
+import sleep from "@renderer/utils/sleep";
 
 export const SQL_RESULT_CLOSE = "sql-result:close";
 
@@ -28,6 +29,8 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
     const { subscribe, unsubscribe, queueMessage } = useMessages();
 
     const tabsItemID = resultsTabsId(session);
+
+    const [ticking, setTicking] = useState(false);
 
     const handleAddSqlResult = () => {
         const newResultId = uuidv7();
@@ -85,7 +88,11 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
                     <theme.icons.AddTab color="success" />
                 </ToolButton>
             </Tooltip>
-            <AutoRefreshBar canClear onTick={() => console.log("tick")} />
+            <AutoRefreshBar canClear onTick={async () => {
+                setTicking(true);
+                await sleep(0.7);
+                setTicking(false);
+            }} canRefresh executing={ticking} />
         </TabPanelButtons>
     );
 

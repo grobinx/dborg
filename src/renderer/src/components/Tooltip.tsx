@@ -32,7 +32,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false,
 
     return (
         <MuiTooltip
-            title={<FormattedText text={title} />}
+            title={title && <FormattedText text={title} />}
             disableInteractive={!interactive}
             disableHoverListener={childIsDisabled}
             disableFocusListener={childIsDisabled}

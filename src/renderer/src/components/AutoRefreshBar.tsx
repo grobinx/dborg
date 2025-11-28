@@ -39,16 +39,24 @@ export interface AutoRefreshBarProps {
 
     /**
      * Czy przycisk "Clear" ma być dostępny.
+     * @default false
      */
     canClear?: boolean;
     /**
      * Czy przycisk "Pause" ma być dostępny.
+     * @default true
      */
     canPause?: boolean;
     /**
-     * Czy przycisk "Change Interval" ma być dostępny.
+     * Czy można zmieniać interwał odświeżania.
+     * @default true
      */
     canChangeInterval?: boolean;
+    /**
+     * Czy przycisk "Refresh" ma być dostępny.
+     * @default false
+     */
+    canRefresh?: boolean;
 
     /**
      * Aktualny stan automatycznego odświeżania
@@ -72,10 +80,17 @@ export interface AutoRefreshBarProps {
      * @returns 
      */
     onTick?: () => void;
+    /**
+     * Czy automatyczne odświeżanie jest w trakcie wykonywania.
+     * Stan musi być zarządzany z zewnątrz z tego powodu, że odświeżanie może być asynchroniczne.
+     * Ustaw tą wartość by na przycisku "Refresh" pokazać spinner.
+     * Ustawiony na true spowoduje również, że kolejny tick nie zostanie wywołany dopóki nie zakończy się obecne odświeżanie.
+     */
+    executing?: boolean;
 
     /**
      * Kiedy czyścić dane (wywoływać onClear) - przy starcie lub zatrzymaniu odświeżania
-     * @default "start"
+     * @default undefined
      */
     clearOn?: AutoRefreshClearOn;
 
@@ -94,6 +109,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
         canClear = false,
         canPause = true,
         canChangeInterval = true,
+        canRefresh = false,
         state,
         onStateChange,
         onStart,
@@ -102,7 +118,8 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
         onClear,
         onStop,
         onTick,
-        clearOn = "start",
+        executing,
+        clearOn,
         sx,
         style,
         ref,
@@ -149,7 +166,9 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 clearInterval(intervalIdRef.current);
             }
             intervalIdRef.current = setInterval(() => {
-                onTick?.();
+                if (!executing) {
+                    onTick?.();
+                }
             }, currentInterval * 1000);
         } else {
             if (intervalIdRef.current) {
@@ -207,7 +226,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                             }}
                             size="small"
                         >
-                            <theme.icons.Pause color="primary" />
+                            <theme.icons.Pause color="secondary" />
                         </ToolButton>
                     </Tooltip>
                 ) : (
@@ -221,7 +240,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                             disabled={currentState === "stopped"}
                             size="small"
                         >
-                            <theme.icons.Resume color="error" />
+                            <theme.icons.Resume color={currentState === "stopped" ? "main" : "error"} />
                         </ToolButton>
                     </Tooltip>
                 ))}
@@ -252,13 +271,26 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                         </ToolButton>
                     </Tooltip>
                 )}
+                {canRefresh && (
+                    <Tooltip title={t("auto-refresh.refresh-tooltip", "Refresh now")}>
+                        <ToolButton
+                            onClick={() => {
+                                onTick?.();
+                            }}
+                            size="small"
+                            loading={executing}
+                        >
+                            <theme.icons.Refresh color={executing ? "main" : "primary"} />
+                        </ToolButton>
+                    </Tooltip>
+                )}
                 {canClear && (
                     <Tooltip title={clearTooltip}>
                         <ToolButton
                             onClick={() => {
                                 onClear?.();
                             }}
-                            size="small"    
+                            size="small"
                         >
                             <theme.icons.Clear color="warning" />
                         </ToolButton>

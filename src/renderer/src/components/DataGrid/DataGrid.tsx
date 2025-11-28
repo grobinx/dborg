@@ -28,6 +28,12 @@ export type DataGridMode = "defined" | "data";
 interface DataGridProps<T extends object> {
     columns: ColumnDefinition[];
     data: T[];
+
+    /**
+     * Unikalne pole struktury. Grid bęzie próbował przy odświerzaniu odszukać rekord z wartością tego pola.
+     */
+    uniqueField?: keyof T;
+
     rowHeight?: number;
     /**
      * Czy tabela ma być wyświetlana jako tabela danych
@@ -442,6 +448,7 @@ const StyledLabel = styled('span', {
 export const DataGrid = <T extends object>({
     columns: initialColumns,
     data: initialData,
+    uniqueField,
     mode = "defined",
     pivot: initialPivot = false,
     canPivot = false,
@@ -480,6 +487,7 @@ export const DataGrid = <T extends object>({
     const filterColumns = useColumnFilterState();
     const groupingColumns = useColumnsGroup();
     const [pivot, setPivot] = useState(initialPivot);
+    const prevUniqueValueRef = useRef<any>(null);
 
     const onSaveColumnsState = () => {
         return {
@@ -780,6 +788,7 @@ export const DataGrid = <T extends object>({
             if (selectedCellRef.current !== null) {
                 setSelectedCell(null);
                 selectedCellRef.current = null;
+                prevUniqueValueRef.current = null;
             }
             return;
         }
@@ -789,6 +798,7 @@ export const DataGrid = <T extends object>({
             if (selectedCellRef.current !== null) {
                 setSelectedCell(null);
                 selectedCellRef.current = null;
+                prevUniqueValueRef.current = null;
             }
             return;
         }
@@ -801,6 +811,7 @@ export const DataGrid = <T extends object>({
         const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
+            prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.[uniqueField] : null;
             selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
