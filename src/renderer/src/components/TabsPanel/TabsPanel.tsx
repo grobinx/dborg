@@ -258,7 +258,17 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                     ))}
                 </Tabs>
                 <Box flexGrow={1} />
-                {tabsMap.get(tabs[activeTab]?.props.itemID!)?.buttons}
+                {tabs.map((tab, index) => (
+                    <Box
+                        key={tab.props.itemID}
+                        sx={{
+                            height: "100%",
+                        }}
+                        hidden={activeTab !== index}
+                    >
+                        {tabsMap.get(tab.props.itemID!)?.buttons}
+                    </Box>
+                ))}
             </AppBar>
         </StyledTabsHeader>
     );

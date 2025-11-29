@@ -32,13 +32,14 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
 
     const handleAddSqlResult = () => {
         const newResultId = uuidv7();
+        console.log("Adding new SQL Result Tab with ID:", newResultId);
         const newResultTab = (
             <TabPanel
                 key={newResultId}
                 itemID={newResultId}
-                label={<SqlResultLabel session={session} />}
-                content={<SqlResultContent session={session} />}
-                buttons={<SqlResultButtons session={session} />}
+                label={<SqlResultLabel key={`${newResultId}-label`} session={session} />}
+                content={<SqlResultContent key={`${newResultId}-content`} session={session} />}
+                buttons={<SqlResultButtons key={`${newResultId}-buttons`} session={session} />}
             />
         );
         setResultsTabs((prevTabs) => [...prevTabs, newResultTab]);

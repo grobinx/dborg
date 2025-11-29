@@ -23,8 +23,9 @@ import { durationToHuman } from "@renderer/common";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { AutoRefreshBar } from "@renderer/components/AutoRefreshBar";
+import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import sleep from "@renderer/utils/sleep";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -485,9 +486,30 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
     const executing = useSqlResultStore((state) => state.tabs[itemID!]?.executing ?? false);
     const setRefreshQuery = useSqlResultStore((state) => state.setRefreshQuery);
+    const [barRef, isVisible] = useVisibleState<HTMLDivElement>();
+    const [autorefreshState, setAutorefreshState] = React.useState<AutoRefreshState>("stopped");
+    const lastActiveStateRef = React.useRef<AutoRefreshState>("stopped");
+
+    React.useEffect(() => {
+        if (autorefreshState !== "paused") {
+            lastActiveStateRef.current = autorefreshState;
+        }
+    }, [autorefreshState]);
+
+    React.useEffect(() => {
+        if (isVisible === false) {
+            if (autorefreshState !== "stopped") {
+                setAutorefreshState("paused");
+            }
+        } else {
+            if (autorefreshState === "paused") {
+                setAutorefreshState(lastActiveStateRef.current);
+            }
+        }
+    }, [isVisible, autorefreshState]);
 
     return (
-        <TabPanelButtons>
+        <TabPanelButtons ref={barRef}>
             <InputDecorator indicator={false}>
                 <NumberField
                     placeholder={t("Fetch", "Fetch")}
@@ -511,6 +533,10 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                 }}
                 canPause={false}
                 executing={executing}
+                state={autorefreshState}
+                onStateChange={(newState) => {
+                    setAutorefreshState(newState);
+                }}
             />
         </TabPanelButtons>
     );

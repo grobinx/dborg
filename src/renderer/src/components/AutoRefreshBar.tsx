@@ -123,6 +123,13 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
     const [currentState, setCurrentState] = React.useState<AutoRefreshState>(state || "stopped");
     const intervalIdRef = React.useRef<NodeJS.Timeout | null>(null);
 
+    React.useEffect(() => {
+        console.log("AutoRefreshBar mounted");
+        return () => {
+            console.log("AutoRefreshBar unmounted");
+        };
+    }, []);
+
     // Synchronizacja kontrolowana
     React.useEffect(() => {
         if (interval !== undefined) {
@@ -230,7 +237,17 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                         </ToolButton>
                     </Tooltip>
                 ))}
-                {currentState === "stopped" ? (
+                {currentState === "paused" && canPause === false ? (
+                    <Tooltip title={resumeTooltip}>
+                        <ToolButton
+                            className="auto-refresh-resume-button"
+                            disabled
+                            size="small"
+                        >
+                            <theme.icons.Resume color="error" />
+                        </ToolButton>
+                    </Tooltip>
+                ) : currentState === "stopped" ? (
                     <Tooltip title={startTooltip}>
                         <ToolButton
                             className="auto-refresh-start-button"
