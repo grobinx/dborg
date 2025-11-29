@@ -122,6 +122,11 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
     const [currentInterval, setCurrentInterval] = React.useState<AutoRefreshInterval>(interval || defaultInterval);
     const [currentState, setCurrentState] = React.useState<AutoRefreshState>(state || "stopped");
     const intervalIdRef = React.useRef<NodeJS.Timeout | null>(null);
+    const executingRef = React.useRef<boolean>(executing || false);
+
+    React.useEffect(() => {
+        executingRef.current = executing || false;
+    }, [executing]);
 
     // Synchronizacja kontrolowana
     React.useEffect(() => {
@@ -152,7 +157,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 clearInterval(intervalIdRef.current);
             }
             intervalIdRef.current = setInterval(() => {
-                if (!executing) {
+                if (!executingRef.current) {
                     onTick?.();
                 }
             }, currentInterval * 1000);
@@ -162,7 +167,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 intervalIdRef.current = null;
             }
         }
-    }, [executing, currentInterval, currentState]);
+    }, [currentInterval, currentState]);
 
     const handleIntervalChange = (newInterval: AutoRefreshInterval) => {
         if (interval === undefined) {
