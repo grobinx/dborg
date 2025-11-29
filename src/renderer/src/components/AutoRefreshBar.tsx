@@ -12,7 +12,6 @@ import ButtonGroup from "./buttons/ButtonGroup";
 export type AutoRefreshInterval = 1 | 2 | 5 | 10 | 15 | 30 | 60 | 120 | 300 | 600;
 export type AutoRefreshIntervals = AutoRefreshInterval[];
 export type AutoRefreshState = "running" | "paused" | "stopped";
-export type AutoRefreshClearOn = "stop" | "start";
 
 export interface AutoRefreshBarProps {
     /**
@@ -88,12 +87,6 @@ export interface AutoRefreshBarProps {
      */
     executing?: boolean;
 
-    /**
-     * Kiedy czyścić dane (wywoływać onClear) - przy starcie lub zatrzymaniu odświeżania
-     * @default undefined
-     */
-    clearOn?: AutoRefreshClearOn;
-
     sx?: SxProps;
     style?: React.CSSProperties;
 
@@ -119,7 +112,6 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
         onStop,
         onTick,
         executing,
-        clearOn,
         sx,
         style,
         ref,
@@ -141,12 +133,6 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
     React.useEffect(() => {
         if (state !== undefined) {
             setCurrentState(state);
-            if (clearOn === "stop" && state === "stopped") {
-                onClear?.();
-            }
-            if (clearOn === "start" && state === "running") {
-                onClear?.();
-            }
         }
     }, [state]);
 
@@ -176,7 +162,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 intervalIdRef.current = null;
             }
         }
-    }, [currentInterval, currentState]);
+    }, [executing, currentInterval, currentState]);
 
     const handleIntervalChange = (newInterval: AutoRefreshInterval) => {
         if (interval === undefined) {
@@ -216,7 +202,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 />
             </InputDecorator>
             <ButtonGroup className="auto-refresh-button-group">
-                {canPause && (currentState === "running" ? (
+                {canPause && (currentState !== "paused" ? (
                     <Tooltip title={pauseTooltip}>
                         <ToolButton
                             className="auto-refresh-pause-button"
@@ -224,6 +210,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                                 handleStateChange("paused");
                                 onPause?.();
                             }}
+                            disabled={currentState === "stopped"}
                             size="small"
                         >
                             <theme.icons.Pause color="secondary" />
@@ -237,10 +224,9 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                                 handleStateChange("running");
                                 onResume?.();
                             }}
-                            disabled={currentState === "stopped"}
                             size="small"
                         >
-                            <theme.icons.Resume color={currentState === "stopped" ? "main" : "error"} />
+                            <theme.icons.Resume color="error" />
                         </ToolButton>
                     </Tooltip>
                 ))}

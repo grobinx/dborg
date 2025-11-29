@@ -30,8 +30,6 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
 
     const tabsItemID = resultsTabsId(session);
 
-    const [ticking, setTicking] = useState(false);
-
     const handleAddSqlResult = () => {
         const newResultId = uuidv7();
         const newResultTab = (
@@ -88,11 +86,6 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
                     <theme.icons.AddTab color="success" />
                 </ToolButton>
             </Tooltip>
-            <AutoRefreshBar canClear onTick={async () => {
-                setTicking(true);
-                await sleep(0.7);
-                setTicking(false);
-            }} canRefresh executing={ticking} />
         </TabPanelButtons>
     );
 

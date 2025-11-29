@@ -1,4 +1,4 @@
-import { AutoRefreshClearOn, AutoRefreshInterval, AutoRefreshIntervals } from "@renderer/components/AutoRefreshBar";
+import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
@@ -156,6 +156,15 @@ export interface IAutoRefresh {
      */
     intervals?: AutoRefreshIntervals;
     /**
+     * Początkowy stan automatycznego odświeżania
+     * @default "stopped"
+     */
+    initialState?: AutoRefreshState;
+    startStrategy?: "mount" | "show";
+    stopStrategy?: "unmount" | "hide";
+    pauseStrategy?: "hide";
+    resumeStrategy?: "show";
+    /**
      * Funkcja wywoływana co określony interwał czasu.
      * @param refresh 
      * @param context 
@@ -225,26 +234,6 @@ export interface IAutoRefresh {
      * Czy przycisk "Refresh" ma być dostępny.
      */
     canRefresh?: boolean;
-    /**
-     * Kiedy czyścić dane (wywoływać onClear) - przy starcie lub zatrzymaniu odświeżania.
-     */
-    clearOn?: AutoRefreshClearOn;
-    /**
-     * Czy automatyczne odświeżanie ma się uruchamiać przy montowaniu komponentu.
-     * @default false
-     */
-    autoStart?: "mount" | "show" | false;
-    /**
-     * Czy automatyczne odświeżanie ma się zatrzymać przy ukryciu panelu.
-     * @default false
-     */
-    autoStop?: "hide" | false;
-    /**
-     * Czy automatyczne odświeżanie ma się wstrzymać przy ukryciu panelu.
-     * Wznowi się auotmatycznie przy ponownym pokazaniu panelu.
-     * @default true
-     */
-    autoPause?: "hide" | false;
 }
 
 export interface ISlot {

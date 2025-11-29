@@ -16,7 +16,6 @@ import { SQL_RESULT_CLOSE } from "./ResultsTabs";
 import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_FOCUS, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
 import { QueryResultRow } from "src/api/db";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
-import { ToolLabel } from "@renderer/components/ToolLabel";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
@@ -24,6 +23,8 @@ import { durationToHuman } from "@renderer/common";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { AutoRefreshBar } from "@renderer/components/AutoRefreshBar";
+import sleep from "@renderer/utils/sleep";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -36,9 +37,13 @@ interface SqlResultState {
     tabs: {
         [id: string]: {
             maxFetchSize: number | null | undefined;
+            executing: boolean;
+            refreshQuery: boolean;
         };
     };
     setMaxFetchSize: (id: string, maxFetchSize: number | null | undefined) => void;
+    setExecuting: (id: string, executing: boolean) => void;
+    setRefreshQuery: (id: string) => void;
     removeState: (id: string) => void;
 }
 
@@ -50,6 +55,24 @@ const useSqlResultStore = create<SqlResultState>((set) => ({
             [id]: {
                 ...state.tabs[id],
                 maxFetchSize,
+            },
+        },
+    })),
+    setExecuting: (id, executing) => set((state) => ({
+        tabs: {
+            ...state.tabs,
+            [id]: {
+                ...state.tabs[id],
+                executing,
+            },
+        },
+    })),
+    setRefreshQuery: (id) => set((state) => ({
+        tabs: {
+            ...state.tabs,
+            [id]: {
+                ...state.tabs[id],
+                refreshQuery: (state.tabs[id]?.refreshQuery ?? false) ? false : true,
             },
         },
     })),
@@ -76,11 +99,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [rows, setRows] = React.useState<object[] | null>(null);
     const [query, setQuery] = React.useState<string | null>(null);
     const lastQuery = useRef<string | null>(null);
-    const [executing, setExecuting] = React.useState<boolean | null>(null);
     const executingRef = useRef<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
     const addToast = useToast();
-    const [forceQueryExecution, setForceQueryExecution] = React.useState(false);
     const [dataGridStatus, setDataGridStatus] = useState<DataGridStatus | undefined>(undefined);
     const [queryDuration, setQueryDuration] = useState<number | null>(null);
     const [fetchDuration, setFetchDuration] = useState<number | null>(null);
@@ -90,6 +111,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const cancelExecution = useRef<() => void>(null);
     const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize);
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
+    const executing = useSqlResultStore((state) => state.tabs[itemID!]?.executing ?? false);
+    const setExecuting = useSqlResultStore((state) => state.setExecuting);
+    const refreshQuery = useSqlResultStore((state) => state.tabs[itemID!]?.refreshQuery ?? false);
+    const setRefreshQuery = useSqlResultStore((state) => state.setRefreshQuery);
     const removeTabState = useSqlResultStore((state) => state.removeState);
     const { addQueryToHistory } = useQueryHistory();
     const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID, () => {
@@ -99,7 +124,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     });
 
     useEffect(() => {
-        executingRef.current = executing;
+        executingRef.current = executing ?? false;
     }, [executing]);
 
     useEffect(() => {
@@ -123,7 +148,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             icon: <theme.icons.Refresh />,
             keybindings: ["F5"],
             run: (_context) => {
-                setForceQueryExecution((prev) => !prev);
+                setRefreshQuery(itemID!);
             },
         });
     };
@@ -133,7 +158,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             let time = Date.now();
             cancelLoading.current = false;
             setUpdatedCount(null);
-            setExecuting(true);
+            setExecuting(itemID!, true);
             setRowsFetched(null);
             setQueryDuration(null);
             setFetchDuration(null);
@@ -190,7 +215,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     startTime: Date.now(),
                 });
             } finally {
-                setExecuting(false);
+                setExecuting(itemID!, false);
                 setRowsFetched(null);
                 if (cursor) {
                     try {
@@ -206,7 +231,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             try {
                 cancelLoading.current = false;
                 setUpdatedCount(null);
-                setExecuting(true);
+                setExecuting(itemID!, true);
                 setRowsFetched(null);
                 setQueryDuration(null);
                 const result = await session.execute(query!);
@@ -240,7 +265,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 });
             }
             finally {
-                setExecuting(false);
+                setExecuting(itemID!, false);
             }
         };
 
@@ -264,7 +289,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 executeCommand();
             }
         }
-    }, [session, query, forceQueryExecution]); // Dodano forceQueryExecution jako zależność
+    }, [session, query, refreshQuery]);
 
     React.useEffect(() => {
         if (executing === null) {
@@ -281,7 +306,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             }
             if (tabIsActiveRef.current) {
                 setQuery(message.query);
-                setForceQueryExecution((prev) => !prev); // Wymuszenie odświeżenia
+                setRefreshQuery(itemID!);
             }
         };
 
@@ -458,6 +483,8 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const theme = useTheme();
     const maxFetchSize = useSqlResultStore((state) => state.tabs[itemID!]?.maxFetchSize ?? null);
     const setMaxFetchSize = useSqlResultStore((state) => state.setMaxFetchSize);
+    const executing = useSqlResultStore((state) => state.tabs[itemID!]?.executing ?? false);
+    const setRefreshQuery = useSqlResultStore((state) => state.setRefreshQuery);
 
     return (
         <TabPanelButtons>
@@ -478,6 +505,13 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                     step={1000}
                 />
             </InputDecorator>
+            <AutoRefreshBar
+                onTick={async () => {
+                    setRefreshQuery(itemID!);
+                }}
+                canPause={false}
+                executing={executing}
+            />
         </TabPanelButtons>
     );
 };
