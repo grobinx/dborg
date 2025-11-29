@@ -123,13 +123,6 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
     const [currentState, setCurrentState] = React.useState<AutoRefreshState>(state || "stopped");
     const intervalIdRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    React.useEffect(() => {
-        console.log("AutoRefreshBar mounted");
-        return () => {
-            console.log("AutoRefreshBar unmounted");
-        };
-    }, []);
-
     // Synchronizacja kontrolowana
     React.useEffect(() => {
         if (interval !== undefined) {
