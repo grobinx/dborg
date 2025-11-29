@@ -40,11 +40,13 @@ interface SqlResultState {
             maxFetchSize: number | null | undefined;
             executing: boolean;
             refreshQuery: boolean;
+            resultLabel: string | null;
         };
     };
     setMaxFetchSize: (id: string, maxFetchSize: number | null | undefined) => void;
     setExecuting: (id: string, executing: boolean) => void;
     setRefreshQuery: (id: string) => void;
+    setResultLabel: (id: string, resultLabel: string | null) => void;
     removeState: (id: string) => void;
 }
 
@@ -73,7 +75,16 @@ const useSqlResultStore = create<SqlResultState>((set) => ({
             ...state.tabs,
             [id]: {
                 ...state.tabs[id],
-                refreshQuery: (state.tabs[id]?.refreshQuery ?? false) ? false : true,
+                refreshQuery: !(state.tabs[id]?.refreshQuery ?? false),
+            },
+        },
+    })),
+    setResultLabel: (id, resultLabel) => set((state) => ({
+        tabs: {
+            ...state.tabs,
+            [id]: {
+                ...state.tabs[id],
+                resultLabel,
             },
         },
     })),
@@ -116,6 +127,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const setExecuting = useSqlResultStore((state) => state.setExecuting);
     const refreshQuery = useSqlResultStore((state) => state.tabs[itemID!]?.refreshQuery ?? false);
     const setRefreshQuery = useSqlResultStore((state) => state.setRefreshQuery);
+    const setResultLabel = useSqlResultStore((state) => state.setResultLabel);
     const removeTabState = useSqlResultStore((state) => state.removeState);
     const { addQueryToHistory } = useQueryHistory();
     const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID, () => {
@@ -301,12 +313,26 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     }, [executing, itemID, session.info.uniqueId]);
 
     React.useEffect(() => {
+        const extractFirstLineComment = (query: string): string | null => {
+            const lines = query.trim().split('\n');
+            if (lines.length === 0) return null;
+
+            const firstLine = lines[0].trim();
+            if (firstLine.startsWith('--')) {
+                const comment = firstLine.substring(2).trim();
+                return comment.length > 0 ? comment : null;
+            }
+
+            return null;
+        };
+
         const handleSqlExecute = (message: { to: string, from: string, query: string }) => {
             if (message.to !== session.info.uniqueId || executingRef.current) {
                 return;
             }
             if (tabIsActiveRef.current) {
                 setQuery(message.query);
+                setResultLabel(itemID!, extractFirstLineComment(message.query));
                 setRefreshQuery(itemID!);
             }
         };
@@ -317,6 +343,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             }
             if (tabIsActiveRef.current) {
                 setQuery(null);
+                setResultLabel(itemID!, null);
                 setQueryDuration(null);
                 setColumns(message.columns);
                 setRows(message.data);
@@ -422,10 +449,10 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
     const { session, itemID, tabsItemID } = props;
     const theme = useTheme();
     const { subscribe, queueMessage } = useMessages();
-    const [label, setLabel] = useState<string>("Result");
     const { tabIsActive, tabIsActiveRef } = useTabs(tabsItemID, itemID);
     const [executing, setExecuting] = React.useState(false); // Dodano stan dla wykonywania zapytania
     const [highlight, setHighlight] = React.useState(false); // Stan dla zmiany koloru
+    const resultLabel = useSqlResultStore((state) => state.tabs[itemID!]?.resultLabel ?? "Result");
 
     React.useEffect(() => {
         const handleQueryExecuting = (message: { to: string, status: boolean }) => {
@@ -457,7 +484,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
             ) : (
                 <theme.icons.DatabaseTables /> // Wyświetl domyślną ikonę, gdy nie ma ładowania
             )}
-            <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{label}</span>
+            <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{resultLabel}</span>
             <ToolButton
                 component="div"
                 color="main"
