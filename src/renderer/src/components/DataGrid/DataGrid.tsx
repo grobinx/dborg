@@ -644,10 +644,7 @@ export const DataGrid = <T extends object>({
         // Filtry kolumn
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
-        // Grupowanie (tylko w trybie 'data')
-        if (mode === "data") {
-            resultSet = groupingColumns.groupData(resultSet, columnsState.current);
-        }
+        resultSet = groupingColumns.groupData(resultSet, columnsState.current);
 
         resultSet = searchArray(
             resultSet,
@@ -978,12 +975,12 @@ export const DataGrid = <T extends object>({
             return userData[key];
         },
         toggleGroupColumn() {
-            if (!selectedCell || mode !== "data") return;
+            if (!selectedCell) return;
             const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             groupingColumns.toggleColumn(columnKey);
         },
         isGroupedColumn: () => {
-            if (!selectedCell || mode !== "data") return false;
+            if (!selectedCell) return false;
             const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
             return groupingColumns.isInGroup(columnKey);
         },
@@ -1101,9 +1098,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.ResetColumnsLayout());
             actionManager.current.registerAction(actions.ToggleShowHiddenColumns());
             actionManager.current.registerAction(actions.ToggleHideColumn());
-            if (mode === "data") {
-                actionManager.current.registerAction(actions.ToggleGroupColumn());
-            }
+            actionManager.current.registerAction(actions.ToggleGroupColumn());
             actionManager.current.registerAction(actions.Pivot());
 
             actionManager.current.registerAction(actions.OpenCommandPalette());
