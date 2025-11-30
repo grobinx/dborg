@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot, ITextField } from "plugins/manager/renderer/CustomSlots";
+import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot, ITextField } from "plugins/manager/renderer/CustomSlots";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
@@ -35,8 +35,7 @@ const ioStatsTab = (
     let ioStatsRows: IOStatsRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;
     let snapshotSize = 20 + 1;
-    let autoRefreshInterval = 5;
-    let autoRefreshIntervalId: NodeJS.Timeout | null = null;
+    let snapshotCounter = 0;
 
     const num = (v: any) => {
         const n = typeof v === 'number' ? v : Number(v);
@@ -49,7 +48,7 @@ const ioStatsTab = (
 
         for (let i = 0; i < missingSnapshots; i++) {
             timelineData.push({
-                snapshot: i + 1,
+                snapshot: -1,
                 heapRead: null,
                 heapHit: null,
                 idxRead: null,
@@ -64,7 +63,7 @@ const ioStatsTab = (
         ioStatsRows.forEach((row, index) => {
             if (index === 0) {
                 timelineData.push({
-                    snapshot: missingSnapshots + index + 1,
+                    snapshot: -1,
                     heapRead: 0,
                     heapHit: 0,
                     idxRead: 0,
@@ -77,7 +76,7 @@ const ioStatsTab = (
             } else {
                 const prev = ioStatsRows[index - 1];
                 timelineData.push({
-                    snapshot: missingSnapshots + index + 1,
+                    snapshot: row.snapshot,
                     heapRead: Math.max(0, num(row.heap_blks_read) - num(prev.heap_blks_read)),
                     heapHit: Math.max(0, num(row.heap_blks_hit) - num(prev.heap_blks_hit)),
                     idxRead: Math.max(0, num(row.idx_blks_read) - num(prev.idx_blks_read)),
@@ -90,9 +89,40 @@ const ioStatsTab = (
             }
         });
 
-        return timelineData
-            .slice(1)
-            .map((d: any, i: number) => ({ ...d, snapshot: i + 1 }));
+        return timelineData.slice(1);
+    };
+
+    const calculateIncrementalData = () => {
+        const deltas = calculateTimelineData();
+        if (deltas.length === 0) return [];
+
+        let heapReadSum = 0, heapHitSum = 0;
+        let idxReadSum = 0, idxHitSum = 0;
+        let toastReadSum = 0, toastHitSum = 0;
+        let tidxReadSum = 0, tidxHitSum = 0;
+
+        return deltas.map(d => {
+            heapReadSum += num(d.heapRead ?? 0);
+            heapHitSum += num(d.heapHit ?? 0);
+            idxReadSum += num(d.idxRead ?? 0);
+            idxHitSum += num(d.idxHit ?? 0);
+            toastReadSum += num(d.toastRead ?? 0);
+            toastHitSum += num(d.toastHit ?? 0);
+            tidxReadSum += num(d.tidxRead ?? 0);
+            tidxHitSum += num(d.tidxHit ?? 0);
+
+            return {
+                snapshot: d.snapshot, // wykorzystuje realny `snapshot` (lub -1 dla braków)
+                heapReadC: heapReadSum,
+                heapHitC: heapHitSum,
+                idxReadC: idxReadSum,
+                idxHitC: idxHitSum,
+                toastReadC: toastReadSum,
+                toastHitC: toastHitSum,
+                tidxReadC: tidxReadSum,
+                tidxHitC: tidxHitSum,
+            };
+        });
     };
 
     const renderSingleChart = (
@@ -100,7 +130,8 @@ const ioStatsTab = (
         readKey: string,
         hitKey: string,
         readColor: string,
-        hitColor: string
+        hitColor: string,
+        dataFactory?: () => any[]
     ) => {
         const theme = useTheme();
 
@@ -112,7 +143,7 @@ const ioStatsTab = (
             );
         }
 
-        const displayData = calculateTimelineData();
+        const displayData = (dataFactory ? dataFactory() : calculateTimelineData());
 
         return (
             <div style={{
@@ -134,10 +165,11 @@ const ioStatsTab = (
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                        <XAxis 
-                            dataKey="snapshot" 
+                        <XAxis
+                            dataKey="snapshot"
                             stroke={theme.palette.text.secondary}
                             style={{ fontSize: '0.75rem' }}
+                            tickFormatter={(value) => value === -1 ? "-" : value.toString()}
                         />
                         <YAxis
                             stroke={theme.palette.text.secondary}
@@ -400,6 +432,72 @@ const ioStatsTab = (
         };
     };
 
+    const incrementalTimelineChart = (): IRenderedSlot => {
+        return {
+            id: cid("table-io-stats-incremental-chart-slot"),
+            type: "rendered",
+            render: () => {
+                const theme = useTheme();
+
+                if (!ioStatsRows || ioStatsRows.length === 0) {
+                    return (
+                        <div style={{ padding: 16, color: theme.palette.text.secondary }}>
+                            <p>{t("no-data", "No data available")}</p>
+                        </div>
+                    );
+                }
+
+                // Używamy tego samego layoutu co timeline (4 kafle)
+                return (
+                    <div style={{
+                        padding: 8,
+                        height: '100%',
+                        width: '100%',
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gridTemplateRows: '1fr 1fr',
+                        gap: 8,
+                        boxSizing: 'border-box',
+                        overflow: 'hidden'
+                    }}>
+                        {renderSingleChart(
+                            t("heap-blocks-cumulative", "Heap Blocks Cumulative"),
+                            "heapReadC",
+                            "heapHitC",
+                            theme.palette.error.main,
+                            theme.palette.success.main,
+                            calculateIncrementalData
+                        )}
+                        {renderSingleChart(
+                            t("index-blocks-cumulative", "Index Blocks Cumulative"),
+                            "idxReadC",
+                            "idxHitC",
+                            theme.palette.error.main,
+                            theme.palette.success.main,
+                            calculateIncrementalData
+                        )}
+                        {renderSingleChart(
+                            t("toast-blocks-cumulative", "Toast Blocks Cumulative"),
+                            "toastReadC",
+                            "toastHitC",
+                            theme.palette.error.main,
+                            theme.palette.success.main,
+                            calculateIncrementalData
+                        )}
+                        {renderSingleChart(
+                            t("toast-index-blocks-cumulative", "Toast Index Blocks Cumulative"),
+                            "tidxReadC",
+                            "tidxHitC",
+                            theme.palette.error.main,
+                            theme.palette.success.main,
+                            calculateIncrementalData
+                        )}
+                    </div>
+                );
+            }
+        };
+    };
+
     const grid = (): IGridSlot => {
         return {
             id: cid("table-io-stats-grid"),
@@ -413,6 +511,7 @@ const ioStatsTab = (
                     lastSelectedTable?.table_name !== selectedRow()!.table_name) {
                     ioStatsRows = [];
                     lastSelectedTable = selectedRow();
+                    snapshotCounter = 0;
                 }
 
                 const { rows } = await session.query<IOStatsRecord>(
@@ -420,13 +519,14 @@ const ioStatsTab = (
                     [selectedRow()!.schema_name, selectedRow()!.table_name]
                 );
                 if (rows.length > 0) {
-                    ioStatsRows.push(...rows);
+                    ioStatsRows.push(...rows.map(r => ({ ...r, snapshot: snapshotCounter++ })));
                     if (ioStatsRows.length > snapshotSize) {
                         ioStatsRows = ioStatsRows.slice(ioStatsRows.length - snapshotSize);
                     }
                 }
                 refresh(cid("table-io-stats-chart-slot"));
                 refresh(cid("table-io-stats-timeline-chart-slot"));
+                refresh(cid("table-io-stats-incremental-chart-slot"));
                 return rows;
             },
             columns: [
@@ -466,7 +566,47 @@ const ioStatsTab = (
                 id: cid("table-io-stats-split"),
                 type: "split",
                 direction: "horizontal",
-                first: () => grid(),
+                first: (): IContentSlot => ({
+                    id: cid("table-io-stats-grid-content-slot"),
+                    type: "content",
+                    title: () => ({
+                        id: cid("table-io-stats-grid-title"),
+                        type: "title",
+                        title: t("io-stats-data", "I/O Stats Data"),
+                        toolBar: {
+                            id: cid("table-io-stats-grid-toolbar"),
+                            type: "toolbar",
+                            tools: ([
+                                {
+                                    id: cid("table-io-stats-hit-timeline-chart-snapshot-size-field"),
+                                    type: "number",
+                                    defaultValue: snapshotSize - 1,
+                                    onChange(value: number | null) {
+                                        snapshotSize = (value ?? 10) + 1;
+                                    },
+                                    width: 50,
+                                    min: 10,
+                                    max: 200,
+                                    step: 10,
+                                    tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
+                                },
+                                {
+                                    onTick(refresh) {
+                                        refresh(cid("table-io-stats-grid"));
+                                    },
+                                    onClear(refresh) {
+                                        ioStatsRows = [];
+                                        snapshotCounter = 0;
+                                        refresh(cid("table-io-stats-grid"));
+                                    },
+                                    clearOn: "start",
+                                    canPause: false,
+                                } as IAutoRefresh,
+                            ])
+                        },
+                    }),
+                    main: () => grid()
+                }),
                 second: (): ITabsSlot => ({
                     id: cid("table-io-stats-charts-tabs"),
                     type: "tabs",
@@ -477,7 +617,7 @@ const ioStatsTab = (
                             label: () => ({
                                 id: cid("table-io-stats-hit-chart-tab-label"),
                                 type: "tablabel",
-                                label: t("hit-chart", "Hit Chart"),
+                                label: t("hit-chart", "Hit"),
                             }),
                             content: () => hitChart(),
                         },
@@ -487,104 +627,33 @@ const ioStatsTab = (
                             label: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-tab-label"),
                                 type: "tablabel",
-                                label: t("timeline-delta-chart", "Timeline Delta Chart"),
+                                label: t("timeline-delta-chart", "Timeline Delta"),
                             }),
                             content: () => ({
                                 id: cid("table-io-stats-hit-timeline-chart-content"),
                                 type: "tabcontent",
                                 content: () => hitTimelineChart(),
-                                onUnmount(refresh) {
-                                    if (autoRefreshIntervalId) {
-                                        clearInterval(autoRefreshIntervalId);
-                                        autoRefreshIntervalId = null;
-                                        refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
-                                    }
-                                },
                             }),
-                            toolBar: {
-                                id: cid("table-io-stats-hit-timeline-chart-toolbar"),
-                                type: "toolbar",
-                                tools: (refresh) => [
-                                    {
-                                        id: cid("table-io-stats-hit-timeline-chart-snapshot-size-field"),
-                                        type: "number",
-                                        defaultValue: snapshotSize - 1,
-                                        onChange(value: number | null) {
-                                            snapshotSize = (value ?? 10) + 1;
-                                        },
-                                        width: 50,
-                                        min: 10,
-                                        max: 200,
-                                        step: 10,
-                                        tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
-                                    },
-                                    {
-                                        id: cid("table-io-stats-hit-timeline-chart-refresh-interval-field"),
-                                        type: "select",
-                                        defaultValue: autoRefreshInterval,
-                                        options: [
-                                            { label: t("1-s", "1s"), value: 1 },
-                                            { label: t("2-s", "2s"), value: 2 },
-                                            { label: t("5-s", "5s"), value: 5 },
-                                            { label: t("10-s", "10s"), value: 10 },
-                                            { label: t("30-s", "30s"), value: 30 },
-                                            { label: t("60-s", "60s"), value: 60 },
-                                        ],
-                                        onChange(value: number | null) {
-                                            if (value) {
-                                                autoRefreshInterval = value;
-                                                // Zmień interwał odświeżania
-                                                if (autoRefreshIntervalId) {
-                                                    clearInterval(autoRefreshIntervalId);
-                                                    autoRefreshIntervalId = setInterval(() => {
-                                                        refresh(cid("table-io-stats-grid"));
-                                                    }, autoRefreshInterval * 1000);
-                                                }
-                                            }
-                                        },
-                                        width: 50,
-                                        tooltip: t("auto-refresh-interval", "Auto refresh interval"),
-                                    },
-                                    {
-                                        id: cid("table-io-stats-hit-timeline-chart-start-refresh-action"),
-                                        label: t("auto-refresh", "Auto refresh"),
-                                        icon: () => {
-                                            if (icons) {
-                                                if (autoRefreshIntervalId) {
-                                                    return <icons.AutoRefresh color="success" />;
-                                                }
-                                                return <icons.AutoRefresh color="error" />;
-                                            }
-                                            return null;
-                                        },
-                                        run: () => {
-                                            if (autoRefreshIntervalId) {
-                                                clearInterval(autoRefreshIntervalId);
-                                                autoRefreshIntervalId = null;
-                                            }
-                                            else {
-                                                autoRefreshIntervalId = setInterval(() => {
-                                                    refresh(cid("table-io-stats-grid"));
-                                                }, autoRefreshInterval * 1000);
-                                            }
-                                            refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
-                                        },
-                                    } as Action<any>
-                                ]
-                            },
+                        },
+                        {
+                            id: cid("table-io-stats-incremental-chart-tab"),
+                            type: "tab",
+                            label: () => ({
+                                id: cid("table-io-stats-incremental-chart-tab-label"),
+                                type: "tablabel",
+                                label: t("timeline-cumulative-chart", "Timeline Cumulative"),
+                            }),
+                            content: () => ({
+                                id: cid("table-io-stats-incremental-chart-content"),
+                                type: "tabcontent",
+                                content: () => incrementalTimelineChart(),
+                            }),
                         },
                     ],
                 }),
                 autoSaveId: `table-io-stats-split-${session.profile.sch_id}`,
                 secondSize: 50,
             }),
-            onDeactivate(refresh) {
-                if (autoRefreshIntervalId) {
-                    clearInterval(autoRefreshIntervalId);
-                    autoRefreshIntervalId = null;
-                    refresh(cid("table-io-stats-hit-timeline-chart-toolbar"));
-                }
-            },
         }),
     };
 };

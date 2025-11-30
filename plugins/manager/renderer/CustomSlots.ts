@@ -50,7 +50,7 @@ export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction)
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
 
-export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | FieldTypeKind;
+export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | FieldTypeKind | IAutoRefresh;
 
 export interface ISelectOption {
     value: string,
@@ -115,7 +115,7 @@ export interface INumberField extends IField {
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      * Wywołanie jest z opóźnieniem
      */
-    onChange: (value: number) => void,
+    onChange: (value: number | null) => void,
 
     min?: number;
     max?: number;
@@ -134,14 +134,24 @@ export type FieldTypeKind =
     | ISelectField;
 
 export interface IAutoRefreshContext {
-    isActive: boolean;
+    state: AutoRefreshState;
     interval: AutoRefreshInterval;
+    executing: boolean;
     start: () => void;
     stop: () => void;
     pause: () => void;
     resume: () => void;
     clear: () => void;
+    setState: (state: AutoRefreshState) => void;
     setInterval: (interval: AutoRefreshInterval) => void;
+    setExecuting: (value: boolean) => void;
+}
+
+export interface AutoRefreshLifecycle {
+    onHide?: "pause" | "stop";
+    onShow?: "resume" | "start";
+    onMount?: "start";
+    onUnmount?: "stop";
 }
 
 export interface IAutoRefresh {
@@ -156,14 +166,18 @@ export interface IAutoRefresh {
      */
     intervals?: AutoRefreshIntervals;
     /**
-     * Początkowy stan automatycznego odświeżania
-     * @default "stopped"
+     * Ustawienia cyklu życia automatycznego odświeżania.
+     * @default {
+     *   onHide: "pause",
+     *   onShow: "resume",
+     * }
      */
-    initialState?: AutoRefreshState;
-    startStrategy?: "mount" | "show";
-    stopStrategy?: "unmount" | "hide";
-    pauseStrategy?: "hide";
-    resumeStrategy?: "show";
+    lifecycle?: AutoRefreshLifecycle;
+    /**
+     * Ustawienia czyszczenia danych przy starcie lub zatrzymaniu automatycznego odświeżania.
+     * @default undefined
+     */
+    clearOn?: "stop" | "start";
     /**
      * Funkcja wywoływana co określony interwał czasu.
      * @param refresh 
@@ -221,17 +235,20 @@ export interface IAutoRefresh {
     /**
      * Funkcja wywoływana po naciśnięciu przycisku "Clear".
      */
-    onClear?(): void;
+    onClear?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
     /**
      * Czy przycisk "Clear" ma być dostępny.
+     * @default false
      */
     canClear?: boolean;
     /**
      * Czy przycisk "Pause" ma być dostępny.
+     * @default true
      */
     canPause?: boolean;
     /**
      * Czy przycisk "Refresh" ma być dostępny.
+     * @default false
      */
     canRefresh?: boolean;
 }
@@ -631,4 +648,11 @@ export function isNumberField(a: any): a is INumberField {
 }
 export function isSelectField(a: any): a is ISelectField {
     return isIField(a) && a.type === "select";
+}
+export function isAutoRefresh(obj: any): obj is IAutoRefresh {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.onTick === "function"
+    );
 }

@@ -125,6 +125,15 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
     const executingRef = React.useRef<boolean>(executing || false);
 
     React.useEffect(() => {
+        return () => {
+            if (intervalIdRef.current) {
+                clearInterval(intervalIdRef.current);
+                intervalIdRef.current = null;
+            }
+        };
+    }, []);
+
+    React.useEffect(() => {
         executingRef.current = executing || false;
     }, [executing]);
 
@@ -202,7 +211,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                     onChange={(value) => handleIntervalChange(value as AutoRefreshInterval)}
                     size="small"
                     disabled={canChangeInterval === false}
-                    width={40}
+                    width={50}
                     tooltip={selectIntervalTooltip}
                 />
             </InputDecorator>

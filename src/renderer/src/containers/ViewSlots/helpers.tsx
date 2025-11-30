@@ -21,6 +21,12 @@ import {
     isNumberField,
     isSelectField,
     ISelectField,
+    ITextField,
+    INumberField,
+    IAutoRefresh,
+    AutoRefreshLifecycle,
+    IAutoRefreshContext,
+    isAutoRefresh,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -41,6 +47,8 @@ import { InputDecorator } from "@renderer/components/inputs/decorators/InputDeco
 import Tooltip from "@renderer/components/Tooltip";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
+import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -150,36 +158,167 @@ export function createSplitPartContent(
     return null;
 }
 
-const ToolSelectedField: React.FC<ISelectField & { refreshSlot: (id: string) => void }> = (props) => {
+const ToolSelectedField: React.FC<{action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
     const {
-        placeholder,
-        defaultValue,
-        onChange,
-        disabled,
-        width,
-        tooltip,
-        options,
+        action,
         refreshSlot,
     } = props;
 
-    const [value, setValue] = React.useState<any | undefined>(defaultValue);
+    const [value, setValue] = React.useState<any | undefined>(action.defaultValue);
 
     return (
         <InputDecorator indicator={false} disableBlink>
             <SelectField
-                placeholder={placeholder}
+                placeholder={action.placeholder}
                 value={value}
                 onChange={setValue}
-                onChanged={value => {
-                    onChange(value);
-                }}
-                disabled={resolveBooleanFactory(disabled, refreshSlot)}
+                onChanged={action.onChange}
+                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
                 size="small"
-                width={width}
-                options={resolveSelectOptionsFactory(options, refreshSlot) || []}
-                tooltip={tooltip}
+                width={action.width}
+                options={resolveSelectOptionsFactory(action.options, refreshSlot) || []}
+                tooltip={action.tooltip}
             />
         </InputDecorator>
+    );
+};
+
+const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: string) => void }> = (props) => {
+    const {
+        action,
+        refreshSlot,
+    } = props;
+
+    const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
+
+    return (
+        <InputDecorator indicator={false} disableBlink>
+            <TextField
+                placeholder={action.placeholder}
+                value={value}
+                onChange={setValue}
+                onChanged={action.onChange}
+                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                size="small"
+                width={action.width}
+                minLength={action.minLength}
+                maxLength={action.maxLength}
+                tooltip={action.tooltip}
+            />
+        </InputDecorator>
+    );
+};
+
+const ToolNumberField: React.FC<{ action: INumberField, refreshSlot: (id: string) => void }> = (props) => {
+    const {
+        action,
+        refreshSlot,
+    } = props;
+
+    const [value, setValue] = React.useState<number | null>(action.defaultValue ?? action.min ?? null);
+
+    return (
+        <InputDecorator indicator={false} disableBlink>
+            <NumberField
+                placeholder={action.placeholder}
+                value={value}
+                onChange={value => setValue(value ?? null)}
+                onChanged={value => action.onChange(value ?? action.defaultValue ?? action.min ?? null)}
+                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                size="small"
+                width={action.width}
+                min={action.min}
+                max={action.max}
+                step={action.step}
+                tooltip={action.tooltip}
+            />
+        </InputDecorator>
+    );
+};
+
+const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: string) => void }> = (props) => {
+    const {
+        action,
+        refreshSlot,
+    } = props;
+    const lifecycle: AutoRefreshLifecycle = {
+        onHide: "pause",
+        onShow: "resume",
+        ...action.lifecycle,
+    }
+    const [executing, setExecuting] = React.useState<boolean>(false);
+    const [state, setState] = React.useState<AutoRefreshState>(lifecycle.onMount === "start" ? "running" : "stopped");
+    const prevState = React.useRef<AutoRefreshState>(state);
+    const [interval, setInterval] = React.useState<AutoRefreshInterval>(action.defaultInterval ?? 5);
+    const [barRef, isBarVisible] = useVisibleState<HTMLDivElement>();
+
+    React.useEffect(() => {
+        action.onMount?.(refreshSlot, context);
+        return () => {
+            action.onUnmount?.(refreshSlot, context);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        if (isBarVisible) {
+            if (lifecycle.onShow === "start" && prevState.current === "stopped") {
+                setState("running");
+            } else if (lifecycle.onShow === "resume" && prevState.current === "paused") {
+                setState("running");
+            }
+            action.onShow?.(refreshSlot, context);
+        } else {
+            if (lifecycle.onHide === "stop" && prevState.current === "running") {
+                setState("stopped");
+            } else if (lifecycle.onHide === "pause" && prevState.current === "running") {
+                setState("paused");
+            }
+            action.onHide?.(refreshSlot, context);
+        }
+    }, [isBarVisible]);
+
+    React.useEffect(() => {
+        if (state === "running" && action.clearOn === "start" && prevState.current === "stopped") {
+            action.onClear?.(refreshSlot, context);
+        }
+        if (state === "stopped" && action.clearOn === "stop" && prevState.current === "running") {
+            action.onClear?.(refreshSlot, context);
+        }
+        prevState.current = state;
+    }, [state]);
+
+    const context: IAutoRefreshContext = {
+        state,
+        interval,
+        executing,
+        start: () => setState("running"),
+        stop: () => setState("stopped"),
+        pause: () => setState("paused"),
+        resume: () => setState("running"),
+        clear: () => action.onClear?.(refreshSlot, context),
+        setState,
+        setInterval,
+        setExecuting,
+    };
+
+    return (
+        <AutoRefreshBar
+            ref={barRef}
+            state={state}
+            interval={interval}
+            onStateChange={setState}
+            onIntervalChange={setInterval}
+            onStart={action.onStart ? () => action.onStart?.(refreshSlot, context) : undefined}
+            onPause={action.onPause ? () => action.onPause?.(refreshSlot, context) : undefined}
+            onResume={action.onResume ? () => action.onResume?.(refreshSlot, context) : undefined}
+            onClear={action.onClear ? () => action.onClear?.(refreshSlot, context) : undefined}
+            onStop={action.onStop ? () => action.onStop?.(refreshSlot, context) : undefined}
+            onTick={action.onTick ? () => action.onTick?.(refreshSlot, context) : undefined}
+            executing={context.executing}
+            canClear={action.canClear}
+            canPause={action.canPause}
+            canRefresh={action.canRefresh}
+        />
     );
 };
 
@@ -226,54 +365,34 @@ export function createActionComponents(
 
                 if (isTextField(action)) {
                     return (
-                        <InputDecorator key={index} indicator={false} disableBlink>
-                            <TextField
-                                placeholder={action.placeholder}
-                                defaultValue={action.defaultValue ?? ""}
-                                onChanged={value => {
-                                    action.onChange(value);
-                                }}
-                                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                                size="small"
-                                width={action.width}
-                                minLength={action.minLength}
-                                maxLength={action.maxLength}
-                                tooltip={action.tooltip}
-                            />
-                        </InputDecorator>
+                        <ToolTextField
+                            key={index}
+                            action={action}
+                            refreshSlot={refreshSlot}
+                        />
                     );
                 } else if (isNumberField(action)) {
                     return (
-                        <InputDecorator key={index} indicator={false} disableBlink>
-                            <NumberField
-                                placeholder={action.placeholder}
-                                defaultValue={action.defaultValue ?? action.min ?? 0}
-                                onChanged={value => {
-                                    action.onChange(value ?? action.min ?? 0);
-                                }}
-                                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                                size="small"
-                                width={action.width}
-                                min={action.min}
-                                max={action.max}
-                                step={action.step}
-                                tooltip={action.tooltip}
-                            />
-                        </InputDecorator>
+                        <ToolNumberField
+                            key={index}
+                            action={action}
+                            refreshSlot={refreshSlot}
+                        />
                     );
                 } else if (isSelectField(action)) {
                     return (
                         <ToolSelectedField
                             key={index}
-                            type={action.type}
-                            placeholder={action.placeholder}
-                            defaultValue={action.defaultValue}
-                            onChange={action.onChange}
-                            disabled={action.disabled}
-                            width={action.width}
-                            options={action.options}
+                            action={action}
                             refreshSlot={refreshSlot}
-                            tooltip={action.tooltip}
+                        />
+                    );
+                } else if (isAutoRefresh(action)) {
+                    return (
+                        <ToolAutoRefreshBar
+                            key={index}
+                            action={action}
+                            refreshSlot={refreshSlot}
                         />
                     );
                 }
