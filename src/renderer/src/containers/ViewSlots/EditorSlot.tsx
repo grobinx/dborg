@@ -4,6 +4,7 @@ import Editor, { loader, Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import MonacoEditor from "@renderer/components/editor/MonacoEditor";
 import {
+    IEditorContext,
     IEditorSlot,
     resolveBooleanFactory,
     resolveEditorActionsFactory,
@@ -27,6 +28,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [readOnly, setReadOnly] = React.useState<boolean>(false);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
+
+    const context: IEditorContext = {
+    };
 
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
@@ -68,7 +72,22 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             editor.addAction(action);
         });
 
-        slot?.onEditorMount?.(editor, monaco, refreshSlot);
+        slot?.onMounted?.(refreshSlot);
+        editor.onDidChangeCursorPosition(() => {
+            slot?.onPositionChanged?.(refreshSlot, context);
+        });
+        editor.onDidChangeCursorSelection(() => {
+            slot?.onSelectionChanged?.(refreshSlot, context);
+        });
+        editor.onDidFocusEditorText(() => {
+            slot?.onFocus?.(refreshSlot, context);
+        });
+        editor.onDidBlurEditorText(() => {
+            slot?.onBlur?.(refreshSlot, context);
+        });
+        editor.onDidChangeModelContent(() => {
+            slot?.onContentChanged?.(refreshSlot, context);
+        });
     }
 
     return (

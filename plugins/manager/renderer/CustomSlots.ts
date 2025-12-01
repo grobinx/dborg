@@ -527,6 +527,9 @@ export interface IGridSlot extends ICustomSlot {
     status?: DataGridStatusPart[];
 }
 
+export interface IEditorContext {
+}
+
 /**
  * Slot typu edytor tekstowy.
  * Pozwala na wyświetlenie edytora z opcjonalnymi akcjami.
@@ -552,7 +555,12 @@ export interface IEditorSlot extends ICustomSlot {
      */
     readOnly?: BooleanFactory;
 
-    onEditorMount?: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco, refresh: RefreshSlotFunction) => void;
+    onMounted?: (refresh: RefreshSlotFunction) => void;
+    onPositionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    onSelectionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    onFocus?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    onBlur?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    onContentChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
 }
 
 /**
