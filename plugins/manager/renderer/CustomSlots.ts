@@ -1,3 +1,4 @@
+import { Monaco } from "@monaco-editor/react";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
@@ -37,7 +38,7 @@ export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string,
 export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
-export type EditorActionDescriptorsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
+export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
 
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
@@ -282,7 +283,8 @@ export type SplitSlotPartKind =
     | ITabsSlot
     | IContentSlot
     | IRenderedSlot
-    | IGridSlot;
+    | IGridSlot
+    | IEditorSlot;
 
 /**
  * Slot typu split.
@@ -534,11 +536,23 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: EditorActionDescriptorsFactory;
+    actions?: EditorActionsFactory;
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
     content: StringAsyncFactory;
+    /**
+     * Język składni edytora (np. "sql", "json").
+     * @default "sql"
+     */
+    language?: string;
+    /**
+     * Czy edytor ma być tylko do odczytu (opcjonalnie).
+     * @default false
+     */
+    readOnly?: BooleanFactory;
+
+    onEditorMount?: (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco, refresh: RefreshSlotFunction) => void;
 }
 
 /**
@@ -586,13 +600,13 @@ export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, 
 export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionDescriptorsFactory<T = any>(factory: ActionFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
+export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveActionGroupDescriptorsFactory<T = any>(factory: ActionGroupFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
+export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveEditorActionDescriptorsFactory(factory: EditorActionDescriptorsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {
+export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, refresh: RefreshSlotFunction): SplitSlotPartKind | undefined {

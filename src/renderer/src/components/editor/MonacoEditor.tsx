@@ -13,6 +13,7 @@ import { ToLowerCaseAction } from "./actions/ToLowerCase";
 import { ToUpperCaseAction } from "./actions/ToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
+import LoadingOverlay from "../useful/LoadingOverlay";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 self.MonacoEnvironment = {
@@ -39,19 +40,29 @@ interface MonacoEditorProps extends React.ComponentProps<typeof Editor> {
     editorKey?: string;
     onFocus?: () => void;
     onBlur?: () => void;
+    readOnly?: boolean;
+    loading?: string | boolean;
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
-    const { onMount, editorKey, onFocus, onBlur, ...other } = useThemeProps({ name: "MonacoEditor", props });
+    const { onMount, editorKey, onFocus, onBlur, readOnly, loading, ...other } = useThemeProps({ name: "MonacoEditor", props });
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [cursorPosition, setCursorPosition] = useState<{ line?: number; column?: number }>({ line: undefined, column: undefined });
     const [lineCount, setLineCount] = useState(0);
     const [lineLength, setLineLength] = useState<number | undefined>(undefined);
-    const [isReadOnly, setIsReadOnly] = useState(false);
+    const [isReadOnly, setIsReadOnly] = useState(readOnly ?? false);
     const [encoding, setEncoding] = useState("UTF-8");
     const [eolMode, setEolMode] = useState("LF"); // Dodano stan dla trybu końca linii
     const { t } = useTranslation();
     const theme = useTheme();
+
+    const encodingOptions = ["UTF-8", "UTF-16LE", "UTF-16BE", "ISO-8859-2", "Windows-1250"];
+
+    // Funkcja zmiany kodowania (tylko stan lokalny, Monaco nie obsługuje konwersji automatycznie)
+    const handleEncodingChange = (value: string) => {
+        setEncoding(value);
+        // Jeśli chcesz faktycznie konwertować tekst, musisz dodać własną logikę konwersji tutaj
+    };
 
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => {
         setEditorInstance(editor);
@@ -118,6 +129,10 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         };
     }, [editorInstance]);
 
+    React.useEffect(() => {
+        setIsReadOnly(readOnly ?? false);
+    }, [readOnly]);
+
     return (
         <Stack
             direction="column"
@@ -129,8 +144,11 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         >
             <Box
                 sx={{
+                    position: "relative",
                     flex: 1, // Editor zajmuje pozostałą przestrzeń
                     overflow: "hidden",
+                    height: "100%",
+                    width: "100%",
                 }}
             >
                 <Editor
@@ -139,10 +157,16 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                     options={{
                         minimap: { enabled: true },
                         stickyScroll: { enabled: true, maxLineCount: 1 },
+                        readOnly: isReadOnly,
                     }}
                     onMount={handleEditorDidMount}
                     {...other}
                 />
+                {loading && (
+                    <LoadingOverlay
+                        label={typeof loading === "string" && loading.trim() === "" || loading ? t("loading---", "Loading...") : loading}
+                    />
+                )}
             </Box>
             <StatusBar>
                 <StatusBarButton
@@ -180,25 +204,34 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                 <StatusBarButton key="line-count">
                     {t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount })}
                 </StatusBarButton>
-                <StatusBarButton key="encoding">
-                    {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
-                </StatusBarButton>
-                <StatusBarButton 
-                    key="eol-mode"
-                    options={["CRLF", "LF"]}
-                    optionSelected={eolMode}
-                    onOptionSelect={(value) => {
-                        if (editorInstance) {
-                            const newEol = value === "CRLF"
-                                ? monaco.editor.EndOfLineSequence.CRLF
-                                : monaco.editor.EndOfLineSequence.LF;
-                            editorInstance.getModel()?.setEOL(newEol);
-                            setEolMode(value);
-                        }
-                    }}
-                >
-                    {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode })}
-                </StatusBarButton>
+                {!isReadOnly && (
+                    <StatusBarButton
+                        key="encoding"
+                        options={encodingOptions}
+                        optionSelected={encoding}
+                        onOptionSelect={handleEncodingChange}
+                    >
+                        {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
+                    </StatusBarButton>
+                )}
+                {!isReadOnly && (
+                    <StatusBarButton
+                        key="eol-mode"
+                        options={["CRLF", "LF"]}
+                        optionSelected={eolMode}
+                        onOptionSelect={(value) => {
+                            if (editorInstance) {
+                                const newEol = value === "CRLF"
+                                    ? monaco.editor.EndOfLineSequence.CRLF
+                                    : monaco.editor.EndOfLineSequence.LF;
+                                editorInstance.getModel()?.setEOL(newEol);
+                                setEolMode(value);
+                            }
+                        }}
+                    >
+                        {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode })}
+                    </StatusBarButton>
+                )}
             </StatusBar>
         </Stack>
     );

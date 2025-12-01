@@ -49,6 +49,7 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import EditorSlot from "./EditorSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -67,6 +68,8 @@ export function createContentComponent(
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         } else if (resolvedContent.type === "split") {
             return <SplitSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "editor") {
+            return <EditorSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -153,6 +156,8 @@ export function createSplitPartContent(
             return <GridSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         } else if (resolvedPart.type === "rendered") {
             return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        } else if (resolvedPart.type === "editor") {
+            return <EditorSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         }
     }
     return null;

@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from ".";
 
 const ddlTab = (
@@ -23,14 +23,27 @@ const ddlTab = (
             id: cid("table-ddl-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("table-ddl-grid"),
-                type: "grid",
-                mode: "defined",
-                rows: async () => {
-                    if (!selectedRow()) return [];
+                id: cid("table-ddl-editor"),
+                type: "editor",
+                readOnly: true,
+                content: async (_refresh) => {
+                    if (!selectedRow()) return "";
 
-                    const { rows } = await session.query(
-                        `
+                    // Pobierz wersję serwera jako string, np. "12.16" lub "9.6.21"
+                    const versionStr = session.getVersion?.() ?? "";
+                    const major = parseInt(versionStr.split(".")[0], 10);
+
+                    const identityFragment = major >= 10
+                        ? `when att.attidentity in ('a','d')
+                            then format(' generated %s as identity',
+                                        case att.attidentity when 'a' then 'always' else 'by default' end)`
+                        : "";
+                    const generatedFragment = major >= 12
+                        ? `when att.attgenerated = 's'
+                            then format(' generated always as (%s) stored', pg_get_expr(ad.adbin, ad.adrelid))`
+                        : "";
+
+                    const sql = `
 with obj as (
   select c.oid, c.relkind, n.nspname as nsp, c.relname as rel
   from pg_class c
@@ -116,11 +129,8 @@ case
             case when coll.oid is not null and att.attcollation <> typ.typcollation
                  then format(' collate %I.%I', colln.nspname, coll.collname) else '' end,
             case
-              when att.attidentity in ('a','d')
-                then format(' generated %s as identity',
-                            case att.attidentity when 'a' then 'always' else 'by default' end)
-              when att.attgenerated = 's'
-                then format(' generated always as (%s) stored', pg_get_expr(ad.adbin, ad.adrelid))
+              ${identityFragment}
+              ${generatedFragment}
               when ad.adbin is not null
                 then format(' default %s', pg_get_expr(ad.adbin, ad.adrelid))
               else '' end,
@@ -161,22 +171,20 @@ case
     format('-- unsupported relkind: %s for %I.%I', o.relkind, o.nsp, o.rel)
 end as ddl
 from obj o;
-                        `,
+                    `;
+
+                    const { rows } = await session.query(
+                        sql,
                         [selectedRow()!.schema_name, selectedRow()!.table_name]
                     );
 
-                    return rows;
+                    if (rows.length === 0) {
+                        return "";
+                    }
+
+                    return rows[0].ddl;
                 },
-                columns: [
-                    {
-                        key: "ddl",
-                        label: t("ddl", "DDL"),
-                        dataType: "string",
-                        width: 1200,
-                    },
-                ] as ColumnDefinition[],
-                autoSaveId: `table-ddl-${session.profile.sch_id}`,
-            } as IGridSlot),
+            } as IEditorSlot),
         },
     };
 };

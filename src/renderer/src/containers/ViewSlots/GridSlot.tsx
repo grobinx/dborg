@@ -5,8 +5,8 @@ import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatu
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
     IGridSlot,
-    resolveActionDescriptorsFactory,
-    resolveActionGroupDescriptorsFactory,
+    resolveActionFactory,
+    resolveActionGroupFactory,
     resolveBooleanFactory,
     resolveColumnDefinitionsFactory,
     resolveRecordsFactory
@@ -120,11 +120,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
         console.debug("GridSlot mounted for slot:", slot.id);
-        const actionGroups = resolveActionGroupDescriptorsFactory(slot.actionGroups, refreshSlot) ?? [];
+        const actionGroups = resolveActionGroupFactory(slot.actionGroups, refreshSlot) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
         }
-        const actions = resolveActionDescriptorsFactory(slot.actions, refreshSlot) ?? [];
+        const actions = resolveActionFactory(slot.actions, refreshSlot) ?? [];
         if (actions.length) {
             context.addAction(...actions);
         }
