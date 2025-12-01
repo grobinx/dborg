@@ -32,7 +32,10 @@ declare global {
             },
             dialog: {
                 showOpenDialog: (options: OpenDialogOptions) => Promise<OpenDialogReturnValue>,
-            }
+            },
+            process: {
+                execFile: (file: string, args: string[]) => Promise<{ stdout: string; stderr: string }>,
+            },
         }
         dborg: {
             path: {

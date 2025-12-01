@@ -16,7 +16,7 @@ import { BooleanField } from "@renderer/components/inputs/BooleanField";
 import { DateField } from "@renderer/components/inputs/DateField";
 import { TimeField } from "@renderer/components/inputs/TimeField";
 import { DateTimeField } from "@renderer/components/inputs/DateTimeField";
-import { FileField } from "@renderer/components/inputs/FileField";
+import { FilePathField } from "@renderer/components/inputs/FileField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
 import { TagsField } from "@renderer/components/inputs/TagsField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
@@ -658,7 +658,7 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
                                 description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
                             >
-                                <FileField
+                                <FilePathField
                                     key={size}
                                     size={size}
                                     color="main"

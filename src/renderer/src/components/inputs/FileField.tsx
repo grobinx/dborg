@@ -9,14 +9,14 @@ import { useTranslation } from 'react-i18next';
 import Tooltip from '../Tooltip';
 import { OpenDialogOptions } from 'electron';
 
-interface FileFieldProps extends BaseInputProps {
+interface FilePathFieldProps extends BaseInputProps {
     placeholder?: FormattedContentItem;
     adornments?: React.ReactNode;
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     options?: OpenDialogOptions;
 }
 
-export const FileField: React.FC<FileFieldProps> = (props) => {
+export const FilePathField: React.FC<FilePathFieldProps> = (props) => {
     const {
         value: controlledValue,
         onChange,
@@ -52,7 +52,7 @@ export const FileField: React.FC<FileFieldProps> = (props) => {
             }}
             adornments={
                 <Adornment position="end">
-                    <Tooltip title={t("select-file", "Select file")}>
+                    <Tooltip title={t("select-file-path", "Select file path")}>
                         <IconButton
                             dense
                             size={size}
@@ -80,4 +80,4 @@ export const FileField: React.FC<FileFieldProps> = (props) => {
     )
 };
 
-FileField.displayName = "FileField";
+FilePathField.displayName = "FilePathField";

@@ -3,8 +3,15 @@ import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 import i18next from "i18next";
-import { settingsGroupDefaults } from "@renderer/contexts/SettingsContext";
+import { settingsGroupDefaults, useSetting } from "@renderer/contexts/SettingsContext";
 import { tablesView } from "./views/tables";
+import SettingsRegistry from "@renderer/components/settings/SettingsRegistry";
+import { useTranslation } from "react-i18next";
+import { FormattedText } from "@renderer/components/useful/FormattedText";
+import { Stack } from "@mui/material";
+import { Button } from "@renderer/components/buttons/Button";
+import { useToast } from "@renderer/contexts/ToastContext";
+import React from "react";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -61,14 +68,70 @@ const PostgresPlugin: Plugin = {
     }
 };
 
-interface TableRecord {
-    schema_name: string;
-    table_name: string;
-    owner_name: string;
-    table_type: string;
-    description: string;
+settingsGroupDefaults[PLUGIN_ID] = {
+    "pg_dump.path": "pg_dump",
+};
+
+const PgDumpDesc: React.FC = () => {
+    const { t } = useTranslation();
+    const [_pdDumpFilePath, setPgDumpFilePath] = useSetting<string>(PLUGIN_ID, "pg_dump.path");
+    const addToast = useToast();
+
+    return (
+        <Stack spacing={8} direction="column">
+            <FormattedText text={t(
+                "pg-dump-path-description",
+                "Specify the path to the pg_dump executable. Typically, `pg_dump` is found in the `bin` directory of your PostgreSQL installation. You can also add the `bin` directory to your `PATH` environment variable."
+            )} />
+            <Stack direction="row" spacing={8} alignItems="center">
+                <Button
+                    onClick={async () => {
+                        try {
+                            const { stdout, stderr } = await window.electron.process.execFile("where", ["pg_dump"]);
+                            const path = stdout.trim();
+                            if (path) {
+                                setPgDumpFilePath(path);
+                            }
+                            if (stderr) {
+                                console.warn("pg_dump auto-find stderr:", stderr);
+                            }
+                        } catch (error) {
+                            addToast("error", t("pg-dump-auto-find-error", "Failed to automatically find pg_dump path."), { reason: error });
+                        }
+                    }}
+                    size="small"
+                    color="secondary"
+                >
+                    {t("find", "Find")}
+                </Button>
+                <FormattedText text={t("pg-dump-auto-find-description", "By selecting this button, you can automatically find the path to pg_dump.")} />
+            </Stack>
+        </Stack>
+    );
 }
 
-settingsGroupDefaults[PLUGIN_ID] = {};
+SettingsRegistry.register((context) => {
+    const t = i18next.t.bind(i18next);
+
+    context.registerCollection({
+        key: PLUGIN_ID,
+        title: t("postgres-plugin-settings-title", "PostgreSQL Plugin Settings"),
+        groups: [
+            {
+                key: "pg-dump",
+                title: t("pg-dump-settings-title", "pg_dump Settings"),
+                settings: [
+                    {
+                        storageKey: "pg_dump.path",
+                        type: "filePath",
+                        storageGroup: PLUGIN_ID,
+                        label: t("pg-dump-path-label", "pg_dump Path"),
+                        description: <PgDumpDesc />,
+                    }
+                ],
+            }
+        ],
+    });
+});
 
 export default PostgresPlugin;

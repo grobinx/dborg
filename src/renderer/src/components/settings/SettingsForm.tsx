@@ -11,6 +11,7 @@ import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import { SelectField } from "../inputs/SelectField";
+import { FilePathField } from "../inputs/FileField";
 
 const StyledSettingsView = styled('div', {
     name: 'SettingsView',
@@ -145,6 +146,8 @@ const calculateWidth = (setting: SettingTypeUnion) => {
             return "80%";
         case "color":
             return defaultTextWidth;
+        case "filePath":
+            return "100%";
     }
     return defaultTextWidth;
 };
@@ -242,6 +245,28 @@ const SelectSetting: React.FC<{
     );
 };
 
+const FilePathSetting: React.FC<{
+    setting: Extract<SettingTypeUnion, { type: "filePath" }>,
+    selected?: boolean;
+    onSelect?: () => void;
+}> = ({ setting, selected, onSelect }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting);
+    return (
+        <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
+            <FilePathField
+                id={createKey(setting)}
+                value={value}
+                onChange={onChange}
+                onChanged={onChanged}
+                width={calculateWidth(setting)}
+                required={setting.required}
+                onValidate={setting.validate}
+                onFocus={onSelect}
+            />
+        </SettingDecorator>
+    );
+};
+
 const BooleanSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "boolean" }>,
     selected?: boolean;
@@ -275,6 +300,7 @@ const registry: Partial<Record<SettingType, React.FC<{
     number: ({ setting, selected, onSelect }) => <NumberSetting setting={setting} selected={selected} onSelect={onSelect} />,
     select: ({ setting, selected, onSelect }) => <SelectSetting setting={setting} selected={selected} onSelect={onSelect} />,
     boolean: ({ setting, selected, onSelect }) => <BooleanSetting setting={setting} selected={selected} onSelect={onSelect} />,
+    filePath: ({ setting, selected, onSelect }) => <FilePathSetting setting={setting} selected={selected} onSelect={onSelect} />,
 };
 
 export const SettingsViewItem: React.FC<{

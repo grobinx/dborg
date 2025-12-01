@@ -1,6 +1,8 @@
 import { electronAPI } from "@electron-toolkit/preload";
 import { BrowserWindow, ipcMain, ipcRenderer, IpcRendererEvent, Rectangle, Size, dialog, OpenDialogOptions, OpenDialogReturnValue, IpcMainInvokeEvent } from "electron";
 import { OnMovedFn, OnResizedFn, OnStateFn, WindowState } from "../../api/electron";
+import { execFile } from "node:child_process";
+import { handleResult, invokeResult, InvokeResult } from "../../api/ipc-helpers";
 
 const EVENT_ELECTRON_MAIN_RESIZED = "electron:main:resized";
 const EVENT_ELECTRON_MAIN_MOVED = "electron:main:moved";
@@ -12,6 +14,8 @@ const EVENT_ELECTRON_MAIN_FULLSCREEN = "electron:main:fullscreen";
 const EVENT_ELECTRON_MAIN_CLOSE = "electron:main:close";
 
 const EVENT_ELECTRON_DIALOG_OPENFILE = "electron:dialog:openfile";
+
+const EVENT_ELECTRON_PROCESS_EXECFILE = "electron:process:execfile";
 
 const windowState: WindowState = {
     minimized: false,
@@ -108,11 +112,23 @@ export function init(window: BrowserWindow): void {
     ipcMain.handle(EVENT_ELECTRON_MAIN_STATE, (): WindowState => windowState);
 
     ipcMain.handle(
-        EVENT_ELECTRON_DIALOG_OPENFILE, 
+        EVENT_ELECTRON_DIALOG_OPENFILE,
         (_: IpcMainInvokeEvent, options: OpenDialogOptions): Promise<OpenDialogReturnValue> => {
             return dialog.showOpenDialog(window, options);
         }
     );
+
+    ipcMain.handle(EVENT_ELECTRON_PROCESS_EXECFILE, (_: IpcMainInvokeEvent, file: string, args: string[]): Promise<InvokeResult> => {
+        return handleResult(new Promise((resolve, reject) => {
+            execFile(file, args, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({ stdout, stderr });
+                }
+            });
+        }));
+    });
 
     window.on('minimize', () => { updateState(window); });
     window.on('maximize', () => { updateState(window); });
@@ -187,5 +203,11 @@ export const preload = {
 
     dialog: {
         showOpenDialog: (options: OpenDialogOptions): Promise<OpenDialogReturnValue> => ipcRenderer.invoke(EVENT_ELECTRON_DIALOG_OPENFILE, options),
+    },
+
+    process: {
+        execFile: (file: string, args: string[]): Promise<{ stdout: string; stderr: string }> => {
+            return invokeResult(ipcRenderer.invoke(EVENT_ELECTRON_PROCESS_EXECFILE, file, args));
+        }
     }
 }

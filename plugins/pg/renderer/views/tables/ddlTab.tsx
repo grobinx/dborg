@@ -3,6 +3,8 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from ".";
+import { getSetting } from "@renderer/contexts/SettingsContext";
+import { PLUGIN_ID } from "../../PostgresPlugin";
 
 const ddlTab = (
     session: IDatabaseSession,
@@ -27,23 +29,51 @@ const ddlTab = (
                 type: "editor",
                 readOnly: true,
                 content: async (_refresh) => {
-                    if (!selectedRow()) return "";
+                    const row = selectedRow();
+                    if (!row) return "";
 
-                    // Pobierz wersję serwera jako string, np. "12.16" lub "9.6.21"
-                    const versionStr = session.getVersion?.() ?? "";
-                    const major = parseInt(versionStr.split(".")[0], 10);
+                    const properties = session.getProperties();
+                    const user = properties.user as string;
+                    const host = properties.host as string;
+                    const port = properties.port as number;
+                    const database = properties.database as string;
+                    const password = properties.password as string;
+                    const schema = row.schema_name;
+                    const table = row.table_name;
 
-                    const identityFragment = major >= 10
-                        ? `when att.attidentity in ('a','d')
+                    const pgDumpPath = getSetting(PLUGIN_ID, "pg_dump.path") || "pg_dump";
+
+                    const encode = (v: string) => encodeURIComponent(v ?? "");
+                    const uri = `postgresql://${encode(user)}:${encode(password)}@${host}:${port}/${encode(database)}`;
+
+                    // --schema-only ogranicza do definicji, --table wybiera konkretną tabelę (z uwzględnieniem schematu)
+                    const args = ["--schema-only", "--table", `${schema}.${table}`, uri];
+
+                    try {
+                        const { stdout, stderr } = await window.electron.process.execFile(pgDumpPath, args);
+                        if (stderr) {
+                            // pg_dump lub biblioteka może pisać ostrzeżenia na stderr; logujemy, ale zwracamy stdout
+                            console.warn("pg_dump stderr:", stderr);
+                        }
+                        // Zwracamy skrypt tworzenia tabeli
+                        return stdout;
+                    } catch (e: any) {
+
+                        // Pobierz wersję serwera jako string, np. "12.16" lub "9.6.21"
+                        const versionStr = session.getVersion?.() ?? "";
+                        const major = parseInt(versionStr.split(".")[0], 10);
+
+                        const identityFragment = major >= 10
+                            ? `when att.attidentity in ('a','d')
                             then format(' generated %s as identity',
                                         case att.attidentity when 'a' then 'always' else 'by default' end)`
-                        : "";
-                    const generatedFragment = major >= 12
-                        ? `when att.attgenerated = 's'
+                            : "";
+                        const generatedFragment = major >= 12
+                            ? `when att.attgenerated = 's'
                             then format(' generated always as (%s) stored', pg_get_expr(ad.adbin, ad.adrelid))`
-                        : "";
+                            : "";
 
-                    const sql = `
+                        const sql = `
 with obj as (
   select c.oid, c.relkind, n.nspname as nsp, c.relname as rel
   from pg_class c
@@ -173,16 +203,17 @@ end as ddl
 from obj o;
                     `;
 
-                    const { rows } = await session.query(
-                        sql,
-                        [selectedRow()!.schema_name, selectedRow()!.table_name]
-                    );
+                        const { rows } = await session.query(
+                            sql,
+                            [selectedRow()!.schema_name, selectedRow()!.table_name]
+                        );
 
-                    if (rows.length === 0) {
-                        return "";
+                        if (rows.length === 0) {
+                            return "";
+                        }
+
+                        return rows[0].ddl;
                     }
-
-                    return rows[0].ddl;
                 },
             } as IEditorSlot),
         },

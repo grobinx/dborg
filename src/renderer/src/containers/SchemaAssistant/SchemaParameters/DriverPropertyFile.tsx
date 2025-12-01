@@ -5,7 +5,7 @@ import { textFieldWidth } from './Utils';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@renderer/components/Tooltip';
 import { ToolButton } from '@renderer/components/buttons/ToolButton';
-import { FileField } from '@renderer/components/inputs/FileField';
+import { FilePathField } from '@renderer/components/inputs/FileField';
 
 interface DriverPropertyFileProps {
     property: PropertyInfo,
@@ -21,7 +21,7 @@ const DriverPropertyFile: React.FC<DriverPropertyFileProps> = (props) => {
     return (
         <Box className="item">
             <InputLabel>{property.title}</InputLabel>
-            <FileField
+            <FilePathField
                 id={property.name}
                 required={property.required}
                 value={value ?? ''}
