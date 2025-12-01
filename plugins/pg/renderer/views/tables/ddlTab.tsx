@@ -54,7 +54,12 @@ const ddlTab = (
                         }
                         return stdout;
                     } catch (e: any) {
-                        return `-- Failed to execute pg_dump: ${e?.message || e}`;
+                        return t(
+                            "failed-to-execute-pg_dump", 
+                            '-- Failed to execute pg_dump: {{message}}\n' +
+                            '-- Please ensure that pg_dump is installed and the path is correctly configured in the settings.', 
+                            { message: e.message || e.toString() }
+                        );
                     }
                 },
             } as IEditorSlot),
