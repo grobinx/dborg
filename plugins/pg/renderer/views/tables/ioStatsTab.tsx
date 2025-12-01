@@ -5,8 +5,6 @@ import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSl
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
-import { Action } from "@renderer/components/CommandPalette/ActionManager";
-import { icons } from "@renderer/themes/ThemeWrapper";
 import sql from "../../../common/sql";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio

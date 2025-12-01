@@ -5,21 +5,27 @@ import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSl
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
-import sql from "../../../common/sql"; // jeśli masz wspólne utilsy, w razie czego usuń
 
 interface StatRecord {
-    relname: string;
-    schemaname: string;
+    n_live_tup: number;
+    n_dead_tup: number;
+    n_mod_since_analyze: number;
     seq_scan: number;
+    seq_tup_read: number;
     idx_scan: number;
+    idx_tup_fetch: number;
     n_tup_ins: number;
     n_tup_upd: number;
     n_tup_del: number;
     n_tup_hot_upd: number;
-    n_live_tup: number;
-    n_dead_tup: number;
-    vacuum_count?: number;    // opcjonalnie, jeśli masz rozszerzone źródło
-    analyze_count?: number;   // opcjonalnie
+    last_vacuum: string | null;
+    last_autovacuum: string | null;
+    last_analyze: string | null;
+    last_autoanalyze: string | null;
+    vacuum_count: number;
+    autovacuum_count: number;
+    analyze_count: number;
+    autoanalyze_count: number;
     snapshot: number;
     timestamp: number;
     [key: string]: any;
@@ -114,7 +120,14 @@ const statisticsTab = (
                         <BarChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                             <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                            <YAxis stroke={theme.palette.text.secondary} />
+                            <YAxis
+                                stroke={theme.palette.text.secondary}
+                                tickFormatter={(value) => {
+                                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                                    return value.toString();
+                                }}
+                            />
                             <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
                             <Legend />
                             <Bar dataKey="seq_scan" fill={theme.palette.error.main} name={t("seq-scan", "Seq Scan")} isAnimationActive={false} />
