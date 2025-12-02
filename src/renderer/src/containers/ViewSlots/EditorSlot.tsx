@@ -106,6 +106,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             wordWrap={wordWrap}
             lineNumbers={lineNumbers}
             statusBar={statusBar}
+            miniMap={slot.miniMap}
         />
     );
 };

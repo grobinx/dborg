@@ -45,10 +45,15 @@ interface MonacoEditorProps extends React.ComponentProps<typeof Editor> {
     wordWrap?: boolean;
     lineNumbers?: boolean;
     statusBar?: boolean;
+    miniMap?: boolean;
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
-    const { onMount, editorKey, onFocus, onBlur, readOnly, loading, wordWrap, lineNumbers, statusBar, ...other } = useThemeProps({ name: "MonacoEditor", props });
+    const { 
+        onMount, editorKey, onFocus, onBlur, 
+        readOnly, loading, wordWrap, lineNumbers, statusBar, miniMap = true, 
+        ...other 
+    } = useThemeProps({ name: "MonacoEditor", props });
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [cursorPosition, setCursorPosition] = useState<{ line?: number; column?: number }>({ line: undefined, column: undefined });
     const [lineCount, setLineCount] = useState(0);
@@ -158,7 +163,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                     defaultLanguage="sql"
                     theme={theme.palette.mode === "dark" ? "vs-dark" : "light"}
                     options={{
-                        minimap: { enabled: true },
+                        minimap: { enabled: miniMap },
                         stickyScroll: { enabled: true, maxLineCount: 1 },
                         readOnly: isReadOnly,
                         wordWrap: wordWrap ? "on" : "off",

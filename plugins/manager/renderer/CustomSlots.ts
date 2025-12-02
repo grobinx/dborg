@@ -569,6 +569,11 @@ export interface IEditorSlot extends ICustomSlot {
      * @default true
      */
     statusBar?: boolean;
+    /**
+     * Czy minimapa ma być wyświetlana (opcjonalnie).
+     * @default true
+     */
+    miniMap?: boolean;
 
     onMounted?: (refresh: RefreshSlotFunction) => void;
     onPositionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;

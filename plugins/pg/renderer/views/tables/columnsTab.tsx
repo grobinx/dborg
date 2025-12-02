@@ -324,6 +324,7 @@ const columnsTab = (
                             wordWrap: true,
                             lineNumbers: false,
                             statusBar: false,
+                            miniMap: false,
                             content: async () => {
                                 if (!selected) {
                                     return "-- " + t("no-column-selected", "No column selected.");
