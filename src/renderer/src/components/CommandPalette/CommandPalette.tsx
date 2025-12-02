@@ -163,6 +163,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         const signal = controller.signal;
         const context = getContext?.();
 
+        console.debug("fetchCommands");
+
         const fetchCommands = async () => {
             if (!open || !manager) {
                 setFilteredCommands([]);
@@ -209,9 +211,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         return () => {
             controller.abort();
         };
-    }, [open, manager, searchText, selectedGroup, getContext]);
+    }, [open, manager, searchText, selectedGroup]);
 
     useEffect(() => {
+        console.debug("updateSelectedIndex");
         if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
 
         // Znajdź indeks akcji, która ma właściwość selected ustawioną na true
@@ -244,7 +247,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === 'Escape') {
             if (selectedGroup && selectedGroup.onCancel && getContext) {
                 selectedGroup.onCancel(getContext());
@@ -369,15 +372,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
 
     useEffect(() => {
+        console.debug("addEventListener");
         if (open) {
             document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('keydown', handleKeyDown);
         }
 
         return () => {
             if (open) {
                 document.removeEventListener('mousedown', handleClickOutside);
-                document.removeEventListener('keydown', handleKeyDown);
             }
         };
     }, [open, handleClose]);
@@ -400,6 +402,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     useEffect(() => {
         let isMounted = true;
         const context = getContext?.();
+
+        console.debug("fetchContextMenuActions");
 
         const fetchContextMenuActions = async () => {
             if (!manager) {
@@ -448,6 +452,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [manager]);
 
     useEffect(() => {
+        console.debug("updateListMaxHeight");
         if (listItemRef.current && inputRef.current) {
             const itemHeight = listItemRef.current.offsetHeight;
             setListMaxHeight(itemHeight * 6); // Ustaw maksymalną wysokość na 6 pozycji
@@ -456,6 +461,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     // Ensure all hooks are called, even if the component is not open
     useEffect(() => {
+        console.debug("updatePosition");
         if (open && parentRef?.current) {
             const parentRect = parentRef.current.getBoundingClientRect();
             const containerWidth = containerRef.current?.offsetWidth || 0;
@@ -498,6 +504,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                         value={searchText}
                         onChange={(value) => setSearchText(prev => prev !== value ? value : prev)}
                         inputRef={inputRef}
+                        onKeyDown={handleKeyDown}
                         adornments={
                             selectedGroup?.options?.length ? (
                                 <Adornment position="end">
@@ -515,8 +522,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                 <ToolButton
                                                     dense
                                                     onClick={() => handleOptionClick(option)}
-                                                    selected={getContext && typeof option.selected === 'function' ? option.selected(getContext()) : false}
-                                                    disabled={getContext && typeof option.disabled === 'function' ? option.disabled(getContext()) : false}
+                                                    selected={typeof option.selected === 'function' ? option.selected(context) : false}
+                                                    disabled={typeof option.disabled === 'function' ? option.disabled(context) : false}
                                                 >
                                                     {resolveIcon(theme, option.icon)}
                                                 </ToolButton>
@@ -553,7 +560,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     selected={
                                                         index === selectedIndex ||
                                                         (typeof action.selected === 'function' ? (
-                                                            getContext ? action.selected(getContext()) : false
+                                                            action.selected(context)
                                                         ) : false)
                                                     }
                                                     disabled={disabled}
