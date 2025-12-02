@@ -40,12 +40,20 @@ const columnsTab = (
             id: cid("table-columns-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("table-columns-grid"),
-                type: "grid",
-                mode: "defined",
-                rows: async () => {
-                    if (!selectedRow()) return [];
-                    const { rows } = await session.query<TableColumnRecord>(`
+                id: cid("table-columns-grid-content"),
+                type: "content",
+                title: {
+                    id: cid("table-columns-grid-title"),
+                    type: "title",
+                    title: t("columns", "Columns"),
+                },
+                main: () => ({
+                    id: cid("table-columns-grid"),
+                    type: "grid",
+                    mode: "defined",
+                    rows: async () => {
+                        if (!selectedRow()) return [];
+                        const { rows } = await session.query<TableColumnRecord>(`
                         select 
                             att.attnum as no, 
                             att.attname as name, 
@@ -74,35 +82,36 @@ const columnsTab = (
                             and cl.relname = $2
                             and att.atttypid != 0
                         order by no`,
-                        [selectedRow()!.schema_name, selectedRow()!.table_name]
-                    );
-                    return rows;
-                },
-                columns: [
-                    { key: "no", label: t("ordinal-number-short", "No"), width: 50, dataType: "number" },
-                    { key: "name", label: t("name", "Name"), width: 160, dataType: "string" },
-                    { key: "display_type", label: t("data-type", "Data Type"), width: 160, dataType: "string" },
-                    {
-                        key: "not_null",
-                        label: t("null", "Null"),
-                        width: 40,
-                        dataType: "boolean",
-                        formatter: (value: boolean) => (
-                            <Typography component="span" variant="inherit" color={value ? "success" : "warning"}>
-                                {value ? t("no", "No") : t("yes", "Yes")}
-                            </Typography>
-                        ),
+                            [selectedRow()!.schema_name, selectedRow()!.table_name]
+                        );
+                        return rows;
                     },
-                    { key: "default_value", label: t("default", "Default"), width: 120, dataType: "string" },
-                    { key: "foreign_key", label: t("fk", "FK"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
-                    { key: "primary_key", label: t("pk", "PK"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
-                    { key: "unique", label: t("unq", "Unq"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
-                    { key: "has_index", label: t("idx", "Idx"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
-                    { key: "description", label: t("comment", "Comment"), width: 350, dataType: "string" },
-                ] as ColumnDefinition[],
-                autoSaveId: "table-columns-grid-" + session.profile.sch_id,
-            } as IGridSlot),
-        }
+                    columns: [
+                        { key: "no", label: t("ordinal-number-short", "No"), width: 50, dataType: "number" },
+                        { key: "name", label: t("name", "Name"), width: 160, dataType: "string" },
+                        { key: "display_type", label: t("data-type", "Data Type"), width: 160, dataType: "string" },
+                        {
+                            key: "not_null",
+                            label: t("null", "Null"),
+                            width: 40,
+                            dataType: "boolean",
+                            formatter: (value: boolean) => (
+                                <Typography component="span" variant="inherit" color={value ? "success" : "warning"}>
+                                    {value ? t("no", "No") : t("yes", "Yes")}
+                                </Typography>
+                            ),
+                        },
+                        { key: "default_value", label: t("default", "Default"), width: 120, dataType: "string" },
+                        { key: "foreign_key", label: t("fk", "FK"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
+                        { key: "primary_key", label: t("pk", "PK"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
+                        { key: "unique", label: t("unq", "Unq"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
+                        { key: "has_index", label: t("idx", "Idx"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
+                        { key: "description", label: t("comment", "Comment"), width: 350, dataType: "string" },
+                    ] as ColumnDefinition[],
+                    autoSaveId: "table-columns-grid-" + session.profile.sch_id,
+                } as IGridSlot),
+            }),
+        },
     };
 };
 
