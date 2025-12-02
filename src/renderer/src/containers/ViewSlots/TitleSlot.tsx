@@ -41,7 +41,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         const resolvedToolBarSlot = resolveToolBarSlotFactory(slot.toolBar, refreshSlot);
-        setTitle(resolveReactNodeFactory(slot.title, refreshSlot) ?? "");
+        setTitle(resolveReactNodeFactory(slot.title, refreshSlot));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {
             setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} actionSlotId={slot.actionSlotId} handleRef={ref} />);
@@ -66,25 +66,29 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
             {...other}
         >
             {icon}
-            {isSimpleTitle ? (
-                <Typography
-                    variant="subtitle2"
-                    noWrap
-                    sx={{
-                        maxWidth: 320,
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                    }}
-                >
-                    {title}
-                </Typography>
-            ) : (
-                title
-            )}
-            <div style={{ flexGrow: 1 }} />
+            {title && (<>
+                {
+                    isSimpleTitle ? (
+                        <Typography
+                            variant="subtitle2"
+                            noWrap
+                            sx={{
+                                maxWidth: 320,
+                                textOverflow: "ellipsis",
+                                overflow: "hidden",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {title}
+                        </Typography>
+                    ) : (
+                        title
+                    )
+                }
+                <div style={{ flexGrow: 1 }} />
+            </>)}
             {actionBar}
-        </StyledTitleSlot>
+        </StyledTitleSlot >
     );
 };
 

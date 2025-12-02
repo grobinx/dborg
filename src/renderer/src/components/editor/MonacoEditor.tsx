@@ -42,10 +42,13 @@ interface MonacoEditorProps extends React.ComponentProps<typeof Editor> {
     onBlur?: () => void;
     readOnly?: boolean;
     loading?: string | boolean;
+    wordWrap?: boolean;
+    lineNumbers?: boolean;
+    statusBar?: boolean;
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
-    const { onMount, editorKey, onFocus, onBlur, readOnly, loading, ...other } = useThemeProps({ name: "MonacoEditor", props });
+    const { onMount, editorKey, onFocus, onBlur, readOnly, loading, wordWrap, lineNumbers, statusBar, ...other } = useThemeProps({ name: "MonacoEditor", props });
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [cursorPosition, setCursorPosition] = useState<{ line?: number; column?: number }>({ line: undefined, column: undefined });
     const [lineCount, setLineCount] = useState(0);
@@ -158,6 +161,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                         minimap: { enabled: true },
                         stickyScroll: { enabled: true, maxLineCount: 1 },
                         readOnly: isReadOnly,
+                        wordWrap: wordWrap ? "on" : "off",
+                        lineNumbers: lineNumbers ? "on" : "off",
                     }}
                     onMount={handleEditorDidMount}
                     {...other}
@@ -168,71 +173,73 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                     />
                 )}
             </Box>
-            <StatusBar>
-                <StatusBarButton
-                    key="read-only"
-                    toolTip={isReadOnly ? t("editor.statusBar.readOnly", "Read only") : t("editor.statusBar.editable", "Editable")}
-                >
-                    {isReadOnly
-                        ? <theme.icons.ReadOnlyEditor />
-                        : <theme.icons.EditableEditor />}
-                </StatusBarButton>
-                <StatusBarButton key="language-status">
-                    {t("editor.statusBar.language", "{{language}}", { language: other.language || "sql" })}
-                </StatusBarButton>
-                <StatusBarButton
-                    key="cursor-position"
-                    onClick={() => {
-                        if (editorInstance) {
-                            editorInstance.focus();
-                            editorInstance.trigger(null, "editor.action.gotoLine", null);
-                        }
-                    }}
-                >
-                    {t("editor.statusBar.cursorPosition", "Ln {{line}}, Col {{column}}", {
-                        line: cursorPosition.line,
-                        column: cursorPosition.column,
-                    })}
-                </StatusBarButton>
-                <StatusBarButton
-                    key="line-length"
-                >
-                    {t("editor.statusBar.lineLength", "Len {{length}}", {
-                        length: lineLength,
-                    })}
-                </StatusBarButton>
-                <StatusBarButton key="line-count">
-                    {t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount })}
-                </StatusBarButton>
-                {!isReadOnly && (
+            {statusBar !== false && (
+                <StatusBar>
                     <StatusBarButton
-                        key="encoding"
-                        options={encodingOptions}
-                        optionSelected={encoding}
-                        onOptionSelect={handleEncodingChange}
+                        key="read-only"
+                        toolTip={isReadOnly ? t("editor.statusBar.readOnly", "Read only") : t("editor.statusBar.editable", "Editable")}
                     >
-                        {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
+                        {isReadOnly
+                            ? <theme.icons.ReadOnlyEditor />
+                            : <theme.icons.EditableEditor />}
                     </StatusBarButton>
-                )}
-                {!isReadOnly && (
+                    <StatusBarButton key="language-status">
+                        {t("editor.statusBar.language", "{{language}}", { language: other.language || "sql" })}
+                    </StatusBarButton>
                     <StatusBarButton
-                        key="eol-mode"
-                        options={["CRLF", "LF"]}
-                        optionSelected={eolMode}
-                        onOptionSelect={(value) => {
+                        key="cursor-position"
+                        onClick={() => {
                             if (editorInstance) {
-                                const newEol = value === "CRLF"
-                                    ? monaco.editor.EndOfLineSequence.CRLF
-                                    : monaco.editor.EndOfLineSequence.LF;
-                                editorInstance.getModel()?.setEOL(newEol);
-                                setEolMode(value);
+                                editorInstance.focus();
+                                editorInstance.trigger(null, "editor.action.gotoLine", null);
                             }
                         }}
                     >
-                        {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode })}
+                        {t("editor.statusBar.cursorPosition", "Ln {{line}}, Col {{column}}", {
+                            line: cursorPosition.line,
+                            column: cursorPosition.column,
+                        })}
                     </StatusBarButton>
-                )}
-            </StatusBar>
+                    <StatusBarButton
+                        key="line-length"
+                    >
+                        {t("editor.statusBar.lineLength", "Len {{length}}", {
+                            length: lineLength,
+                        })}
+                    </StatusBarButton>
+                    <StatusBarButton key="line-count">
+                        {t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount })}
+                    </StatusBarButton>
+                    {!isReadOnly && (
+                        <StatusBarButton
+                            key="encoding"
+                            options={encodingOptions}
+                            optionSelected={encoding}
+                            onOptionSelect={handleEncodingChange}
+                        >
+                            {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
+                        </StatusBarButton>
+                    )}
+                    {!isReadOnly && (
+                        <StatusBarButton
+                            key="eol-mode"
+                            options={["CRLF", "LF"]}
+                            optionSelected={eolMode}
+                            onOptionSelect={(value) => {
+                                if (editorInstance) {
+                                    const newEol = value === "CRLF"
+                                        ? monaco.editor.EndOfLineSequence.CRLF
+                                        : monaco.editor.EndOfLineSequence.LF;
+                                    editorInstance.getModel()?.setEOL(newEol);
+                                    setEolMode(value);
+                                }
+                            }}
+                        >
+                            {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode })}
+                        </StatusBarButton>
+                    )}
+                </StatusBar>
+            )}
         </Stack>
     );
 };

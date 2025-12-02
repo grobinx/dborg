@@ -74,7 +74,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         return;
     }, [handleKeyDown]);
 
-    if (!slot.tools || slot.tools.length === 0) {
+    if (!slot.tools) {
         return null;
     }
 

@@ -40,7 +40,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     return (
         <StyledRenderedSlotBox
             ref={ref}
-            key={`${slot.id}-${refresh}`}
+            //key={`${slot.id}-${refresh}`}
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}
         >

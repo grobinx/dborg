@@ -1,6 +1,6 @@
 import { Monaco } from "@monaco-editor/react";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
-import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, ActionGroup, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
@@ -51,7 +51,7 @@ export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction)
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
 
-export type ToolKind<T = any> = string | Action<T> | CommandDescriptor<T> | FieldTypeKind | IAutoRefresh;
+export type ToolKind<T = any> = string | Action<T> | Actions<T> | CommandDescriptor<T> | FieldTypeKind | IAutoRefresh;
 
 export interface ISelectOption {
     value: string,
@@ -466,14 +466,14 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Tytuł (tekst lub element).
      */
-    title: ReactNodeFactory;
+    title?: ReactNodeFactory;
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
     toolBar?: ToolBarSlotFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
-     * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
+     * Działa jeśli w toolBar jest ciąg znaków z identyfikatorem akcji.
      */
     actionSlotId?: string;
 }
@@ -554,6 +554,21 @@ export interface IEditorSlot extends ICustomSlot {
      * @default false
      */
     readOnly?: BooleanFactory;
+    /**
+     * Czy edytor ma zawijać długie linie (opcjonalnie).
+     * @default false
+     */
+    wordWrap?: BooleanFactory;
+    /**
+     * Czy edytor ma wyświetlać numery linii (opcjonalnie).
+     * @default false
+     */
+    lineNumbers?: BooleanFactory;
+    /**
+     * Czy pasek stanu ma być wyświetlany (opcjonalnie).
+     * @default true
+     */
+    statusBar?: boolean;
 
     onMounted?: (refresh: RefreshSlotFunction) => void;
     onPositionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;

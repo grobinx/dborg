@@ -135,6 +135,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             Clear: (props) => <IconWrapper {...props} className="clear"><MuiIcons.ClearAllOutlined fontSize="inherit" /></IconWrapper>,
             Start: (props) => <IconWrapper {...props} className="start"><MuiIcons.PlayArrowOutlined fontSize="inherit" /></IconWrapper>,
             Resume: (props) => <IconWrapper {...props} className="resume"><Resume fontSize="inherit" /></IconWrapper>,
+            Comment: (props) => <IconWrapper {...props} className="comment"><MuiIcons.CommentOutlined fontSize="inherit" /></IconWrapper>,
+            CommentRemove: (props) => <IconWrapper {...props} className="comment-remove"><MuiIcons.CommentsDisabledOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

@@ -2,7 +2,6 @@ import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTyp
 import {
     ToolFactory,
     ContentSlotKindFactory,
-    isIField,
     resolveActionsFactory,
     resolveBooleanFactory,
     resolveContentSlotKindFactory,
@@ -38,7 +37,7 @@ import TabContentSlot from "./TabContentSlot";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import SplitSlot from "./SplitSlot";
-import { ActionManager, isAction } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, isAction, isActions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
@@ -50,6 +49,7 @@ import { SelectField } from "@renderer/components/inputs/SelectField";
 import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import EditorSlot from "./EditorSlot";
+import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -163,7 +163,7 @@ export function createSplitPartContent(
     return null;
 }
 
-const ToolSelectedField: React.FC<{action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
+const ToolSelectedField: React.FC<{ action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
     const {
         action,
         refreshSlot,
@@ -352,6 +352,27 @@ export function createActionComponents(
 
         actionComponents = resolvedActions.map((action, index) => {
             if (typeof action === "object") {
+                if (isActions(action)) {
+                    if (!actionManager) {
+                        actionManager = new ActionManager<typeof context>();
+                    }
+                    return (
+                        <ButtonGroup key={index}>
+                            {Object.values(action).map((groupAction) => {
+                                actionManager!.registerAction(groupAction);
+                                return (
+                                    <ToolButton
+                                        key={groupAction.id}
+                                        action={groupAction}
+                                        actionContext={() => context}
+                                        actionManager={actionManager!}
+                                        size="small"
+                                    />
+                                );
+                            })}
+                        </ButtonGroup>
+                    );
+                }
                 if (isAction(action)) {
                     if (!actionManager) {
                         actionManager = new ActionManager<typeof context>();
