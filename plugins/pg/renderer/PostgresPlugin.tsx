@@ -70,6 +70,7 @@ const PostgresPlugin: Plugin = {
 
 settingsGroupDefaults[PLUGIN_ID] = {
     "pg_dump.path": "pg_dump",
+    "pg_dump.use-for-ddl": false,
 };
 
 const PgDumpDesc: React.FC = () => {
@@ -127,6 +128,13 @@ SettingsRegistry.register((context) => {
                         storageGroup: PLUGIN_ID,
                         label: t("pg-dump-path-label", "pg_dump Path"),
                         description: <PgDumpDesc />,
+                    },
+                    {
+                        storageKey: "pg_dump.use-for-ddl",
+                        type: "boolean",
+                        storageGroup: PLUGIN_ID,
+                        label: t("pg-dump-use-for-ddl-label", "Use pg_dump for DDL"),
+                        description: t("pg-dump-use-for-ddl-description", "Enable or disable the use of pg_dump for generating DDL. Generating DDL using pg_dump may be slower than other methods, but it provides a more accurate representation of the database schema."),
                     }
                 ],
             }

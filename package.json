@@ -95,6 +95,7 @@
     "@types/node": "^24.5.2",
     "@types/react-dom": "^19.1.1",
     "@vitejs/plugin-react": "^5.0.4",
+    "baseline-browser-mapping": "^2.8.32",
     "electron": "^38.1.2",
     "electron-builder": "^26.0.12",
     "electron-vite": "^4.0.1",
