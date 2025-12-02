@@ -376,7 +376,7 @@ const columnDropDdl = (_version: string | undefined, table: TableRecord, column:
 
 const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, comment: string | null, remove: boolean): string => {
     let ddl = `COMMENT ON COLUMN ${table.schema_name}.${table.table_name}.${column.name} IS `;
-    ddl += remove ? "NULL" : `'${comment?.replace(/'/g, "''")}'`;
+    ddl += remove ? "NULL" : `'${comment?.replace(/'/g, "''") ?? ''}'`;
     return ddl + ";";
 };
 
