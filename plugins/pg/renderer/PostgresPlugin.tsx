@@ -105,7 +105,7 @@ const PgDumpDesc: React.FC = () => {
                 >
                     {t("find", "Find")}
                 </Button>
-                <FormattedText text={t("pg-dump-auto-find-description", "By selecting this button, you can automatically find the path to pg_dump.")} />
+                <FormattedText text={t("pg-dump-auto-find-description", "By selecting this button, you can automatically find the path to `pg_dump`.")} />
             </Stack>
         </Stack>
     );
@@ -134,7 +134,7 @@ SettingsRegistry.register((context) => {
                         type: "boolean",
                         storageGroup: PLUGIN_ID,
                         label: t("pg-dump-use-for-ddl-label", "Use pg_dump for DDL"),
-                        description: t("pg-dump-use-for-ddl-description", "Enable or disable the use of pg_dump for generating DDL. Generating DDL using pg_dump may be slower than other methods, but it provides a more accurate representation of the database schema."),
+                        description: t("pg-dump-use-for-ddl-description", "Enable or disable the use of `pg_dump` for generating DDL. Generating DDL using `pg_dump` may be slower than other methods, but it provides a more accurate representation of the database schema."),
                     }
                 ],
             }
