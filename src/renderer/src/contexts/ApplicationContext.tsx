@@ -277,7 +277,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.uniqueId,
                 } as Messages.SessionGetMetadataEnd);
             });
-        }, force ? 250 : 1000);
+        }, force ? 500 : 2000);
     }, []);
 
     // Reakcja na toggle deweloperski: przebudowa listy kontenerów
