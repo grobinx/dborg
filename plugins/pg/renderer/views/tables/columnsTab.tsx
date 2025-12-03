@@ -25,7 +25,7 @@ interface ColumnDetailRecord {
     // Typ szczegółowy
     type_schema: string;
     type_name: string;
-    base_type: string | null; // dla domen
+    base_type: string | null;
     is_array: boolean;
     array_elem_type: string | null;
     char_max_length: number | null;
@@ -38,28 +38,22 @@ interface ColumnDetailRecord {
     is_custom_collation: boolean;
 
     // Identity / Generated
-    identity_generation: string | null; // 'ALWAYS' | 'BY DEFAULT' | null
+    identity_generation: string | null;
     identity_start: string | null;
     identity_increment: string | null;
     identity_maximum: string | null;
     identity_minimum: string | null;
     identity_cycle: boolean | null;
-    generated_expr: string | null; // dla generated stored
+    generated_expr: string | null;
 
     // Storage
-    storage: string; // PLAIN/EXTENDED/MAIN/EXTERNAL
-    compression: string | null; // pglz/lz4 (PG14+)
+    storage: string;
+    compression: string | null;
     statistics_target: number | null;
 
     // Klucze i ograniczenia (szczegóły)
     pk_constraint_name: string | null;
     pk_position: number | null;
-    unique_constraints: string | null; // JSON array nazw
-    check_constraints: string | null; // JSON array {name, definition}
-    fk_constraints: string | null; // JSON array {name, ref_schema, ref_table, ref_columns, on_update, on_delete}
-
-    // Indeksy (szczegóły)
-    indexes: string | null; // JSON array {name, method, is_unique, is_primary, keys_position, definition}
 
     // Dziedziczenie / partycje
     is_inherited: boolean;
@@ -235,10 +229,6 @@ const columnsTab = (
                                 { key: "statistics_target", label: t("statistics-target", "Statistics Target"), width: 120, dataType: "number" },
                                 { key: "pk_constraint_name", label: t("pk-constraint-name", "PK Constraint Name"), width: 160, dataType: "string" },
                                 { key: "pk_position", label: t("pk-position", "PK Position"), width: 80, dataType: "number" },
-                                { key: "unique_constraints", label: t("unique-constraints", "Unique Constraints"), width: 200, dataType: "string" },
-                                { key: "check_constraints", label: t("check-constraints", "Check Constraints"), width: 200, dataType: "string" },
-                                { key: "fk_constraints", label: t("fk-constraints", "FK Constraints"), width: 200, dataType: "string" },
-                                { key: "indexes", label: t("indexes", "Indexes"), width: 200, dataType: "string" },
                                 { key: "is_inherited", label: t("is-inherited", "Is Inherited"), width: 100, dataType: "boolean" },
                                 ...(major >= 10 ? [
                                     { key: "is_partition_key", label: t("is-partition-key", "Is Partition Key"), width: 120, dataType: "boolean" },
@@ -661,15 +651,15 @@ const columnDetailQuery = (version: string | undefined) => {
     null::boolean as identity_cycle`;
 
     const partitionInfoSelect = major >= 10
-        ? `exists(select 1 from pg_partitioned_table pt where pt.partrelid = ii.attrelid and ii.attnum = any(pt.partattrs)) as is_partition_key`
+        ? `exists(select 1 from pg_partitioned_table pt where pt.partrelid = pk.attrelid and pk.attnum = any(pt.partattrs)) as is_partition_key`
         : `false as is_partition_key`;
 
     const partitionInfo = `
 partition_info as (
   select
-    ii.*,
+    pk.*,
     ${partitionInfoSelect}
-  from index_info ii
+  from pk_info pk
 )
 `;
 
@@ -735,58 +725,12 @@ pk_info as (
   left join pg_constraint pkc on pkc.conrelid = dg.attrelid and pkc.contype = 'p' 
     and dg.attnum = any(pkc.conkey)
 ),
-uniq_info as (
+partition_info as (
   select
     pk.*,
-    (select json_agg(conname) from pg_constraint uc 
-     where uc.conrelid = pk.attrelid and uc.contype = 'u' and pk.attnum = any(uc.conkey)) as unique_constraints
+    ${partitionInfoSelect}
   from pk_info pk
-),
-check_info as (
-  select
-    ui.*,
-    (select json_agg(json_build_object('name', cc.conname, 'definition', pg_get_constraintdef(cc.oid)))
-     from pg_constraint cc
-     where cc.conrelid = ui.attrelid and cc.contype = 'c'
-       and pg_get_constraintdef(cc.oid) like '%' || ui.attname || '%') as check_constraints
-  from uniq_info ui
-),
-fk_info as (
-  select
-    chi.*,
-    (select json_agg(json_build_object(
-       'name', fk.conname,
-       'ref_schema', rn.nspname,
-       'ref_table', rc.relname,
-       'ref_columns', (select array_agg(ratt.attname) from unnest(fk.confkey) with ordinality as fk_col(num, ord)
-                       join pg_attribute ratt on ratt.attrelid = fk.confrelid and ratt.attnum = fk_col.num),
-       'on_update', fk.confupdtype,
-       'on_delete', fk.confdeltype
-     ))
-     from pg_constraint fk
-     join pg_class rc on rc.oid = fk.confrelid
-     join pg_namespace rn on rn.oid = rc.relnamespace
-     where fk.conrelid = chi.attrelid and fk.contype = 'f' and chi.attnum = any(fk.conkey)) as fk_constraints
-  from check_info chi
-),
-index_info as (
-  select
-    fki.*,
-    (select json_agg(json_build_object(
-       'name', ic.relname,
-       'method', am.amname,
-       'is_unique', idx.indisunique,
-       'is_primary', idx.indisprimary,
-       'keys_position', array_position(idx.indkey, fki.attnum),
-       'definition', pg_get_indexdef(idx.indexrelid)
-     ))
-     from pg_index idx
-     join pg_class ic on ic.oid = idx.indexrelid
-     join pg_am am on am.oid = ic.relam
-     where idx.indrelid = fki.attrelid and fki.attnum = any(idx.indkey)) as indexes
-  from fk_info fki
-),
-${partitionInfo}
+)
 select
   type_schema,
   type_name,
@@ -815,11 +759,6 @@ select
   
   pk_constraint_name,
   pk_position,
-  unique_constraints::text,
-  check_constraints::text,
-  fk_constraints::text,
-  
-  indexes::text,
   
   is_inherited,
   is_partition_key

@@ -4,7 +4,7 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from ".";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl } from "../../../common/ddl";
+import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl } from "../../../common/ddl";
 
 const ddlTab = (
     session: IDatabaseSession,
@@ -75,14 +75,6 @@ const ddlTab = (
                         if (ownerRows.length > 0) {
                             ddl += "\n\n" + ownerRows[0].source;
                         }
-                        const { rows: indexRows } = await session.query(tableIndexesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (indexRows.length > 0) {
-                            ddl += "\n\n" + indexRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: triggerRows } = await session.query(tableTriggersDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (triggerRows.length > 0) {
-                            ddl += "\n\n" + triggerRows.map(r => r.source).join("\n");
-                        }
                         const { rows: commentRows } = await session.query(tableCommentDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (commentRows.length > 0) {
                             ddl += "\n\n" + commentRows[0].source;
@@ -90,6 +82,22 @@ const ddlTab = (
                         const { rows: commentsRows } = await session.query(tableColumnCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (commentsRows.length > 0) {
                             ddl += "\n\n" + commentsRows.map(r => r.source).join("\n");
+                        }
+                        const { rows: indexRows } = await session.query(tableIndexesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (indexRows.length > 0) {
+                            ddl += "\n\n" + indexRows.map(r => r.source).join("\n");
+                        }
+                        const { rows: indexCommentRows } = await session.query(tableIndexCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (indexCommentRows.length > 0) {
+                            ddl += "\n\n" + indexCommentRows.map(r => r.source).join("\n");
+                        }
+                        const { rows: triggerRows } = await session.query(tableTriggersDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (triggerRows.length > 0) {
+                            ddl += "\n\n" + triggerRows.map(r => r.source).join("\n");
+                        }
+                        const { rows: triggerCommentRows } = await session.query(tableTriggerCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (triggerCommentRows.length > 0) {
+                            ddl += "\n\n" + triggerCommentRows.map(r => r.source).join("\n");
                         }
                         return ddl;
                     }

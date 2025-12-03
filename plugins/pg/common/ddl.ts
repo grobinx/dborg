@@ -250,3 +250,52 @@ JOIN obj o ON o.oid = t.tgrelid
 WHERE t.tgrelid = o.oid AND NOT t.tgisinternal;
 `;
 }
+
+export function tableIndexCommentsDdl(version: string): string {
+    const major = parseInt(version.split(".")[0], 10);
+
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
+)
+SELECT
+    format(
+        'COMMENT ON INDEX %I.%I IS %L;',
+        n.nspname,
+        idx.relname,
+        d.description
+    ) AS source
+FROM obj o
+JOIN pg_index i ON i.indrelid = o.oid
+JOIN pg_class idx ON idx.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = idx.relnamespace
+LEFT JOIN pg_description d ON d.objoid = idx.oid AND d.classoid = 'pg_class'::regclass AND d.objsubid = 0;
+`;
+}
+
+export function tableTriggerCommentsDdl(version: string): string {
+    const major = parseInt(version.split(".")[0], 10);
+
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
+)
+SELECT
+    format(
+        'COMMENT ON TRIGGER %I ON %I.%I IS %L;',
+        t.tgname,
+        o.schema_name,
+        o.table_name,
+        d.description
+    ) AS source
+FROM obj o
+JOIN pg_trigger t ON t.tgrelid = o.oid AND NOT t.tgisinternal
+LEFT JOIN pg_description d ON d.objoid = t.oid AND d.classoid = 'pg_trigger'::regclass AND d.objsubid = 0;
+`;
+}
