@@ -235,7 +235,9 @@ const columnsTab = (
                                 { key: "fk_constraints", label: t("fk-constraints", "FK Constraints"), width: 200, dataType: "string" },
                                 { key: "indexes", label: t("indexes", "Indexes"), width: 200, dataType: "string" },
                                 { key: "is_inherited", label: t("is-inherited", "Is Inherited"), width: 100, dataType: "boolean" },
-                                { key: "is_partition_key", label: t("is-partition-key", "Is Partition Key"), width: 120, dataType: "boolean" },
+                                ...(major >= 10 ? [
+                                    { key: "is_partition_key", label: t("is-partition-key", "Is Partition Key"), width: 120, dataType: "boolean" },
+                                ] : []),
                             ] as ColumnDefinition[],
                             pivotColumns: [
                                 { key: "detail", label: t("details", "Details"), width: 200, dataType: "string" },
@@ -421,6 +423,19 @@ const columnDetailQuery = (version: string | undefined) => {
     null::text as identity_minimum,
     null::boolean as identity_cycle`;
 
+    const partitionInfoSelect = major >= 10
+        ? `exists(select 1 from pg_partitioned_table pt where pt.partrelid = ii.attrelid and ii.attnum = any(pt.partattrs)) as is_partition_key`
+        : `false as is_partition_key`;
+
+    const partitionInfo = `
+partition_info as (
+  select
+    ii.*,
+    ${partitionInfoSelect}
+  from index_info ii
+)
+`;
+
     return `
 with col as (
   select 
@@ -534,12 +549,7 @@ index_info as (
      where idx.indrelid = fki.attrelid and fki.attnum = any(idx.indkey)) as indexes
   from fk_info fki
 ),
-partition_info as (
-  select
-    ii.*,
-    exists(select 1 from pg_partitioned_table pt where pt.partrelid = ii.attrelid and ii.attnum = any(pt.partattrs)) as is_partition_key
-  from index_info ii
-)
+${partitionInfo}
 select
   type_schema,
   type_name,
