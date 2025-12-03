@@ -137,6 +137,12 @@ const icons = (_palette: Palette): ThemeOptions => {
             Resume: (props) => <IconWrapper {...props} className="resume"><Resume fontSize="inherit" /></IconWrapper>,
             Comment: (props) => <IconWrapper {...props} className="comment"><MuiIcons.CommentOutlined fontSize="inherit" /></IconWrapper>,
             CommentRemove: (props) => <IconWrapper {...props} className="comment-remove"><MuiIcons.CommentsDisabledOutlined fontSize="inherit" /></IconWrapper>,
+            DataType: (props) => <IconWrapper {...props} className="data-type"><MuiIcons.TagOutlined fontSize="inherit" /></IconWrapper>,
+            DefaultValue: (props) => <IconWrapper {...props} className="default-value"><MuiIcons.AdjustOutlined fontSize="inherit" /></IconWrapper>,
+            Rename: (props) => <IconWrapper {...props} className="rename"><MuiIcons.DriveFileRenameOutline fontSize="inherit" /></IconWrapper>,
+            Statistics: (props) => <IconWrapper {...props} className="statistics"><MuiIcons.BarChartOutlined fontSize="inherit" /></IconWrapper>,
+            Compress: (props) => <IconWrapper {...props} className="compress"><MuiIcons.CompressOutlined fontSize="inherit" /></IconWrapper>,
+            Sequence: (props) => <IconWrapper {...props} className="sequence"><MuiIcons.FormatListNumberedRtlOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

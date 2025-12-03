@@ -169,6 +169,12 @@ export interface ThemeIcons {
     Resume: IconWrapperFC;
     Comment: IconWrapperFC;
     CommentRemove: IconWrapperFC;
+    DataType: IconWrapperFC;
+    DefaultValue: IconWrapperFC;
+    Rename: IconWrapperFC;
+    Statistics: IconWrapperFC;
+    Compress: IconWrapperFC;
+    Sequence: IconWrapperFC;
 }
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {

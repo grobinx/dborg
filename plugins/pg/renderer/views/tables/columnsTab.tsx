@@ -81,7 +81,7 @@ const columnsTab = (
     let selected: TableColumnRecord | null = null;
     let columnDetails: ColumnDetailRecord | null = null;
     let scriptMode: "add" | "alter" | "drop" | "comment" = "add";
-    let scriptCommentMode: "set" | "remove" = "set";
+    let scriptNegationMode: boolean = false;
     let scriptAlterMode: ScriptAlterMode = "data-type";
 
     return {
@@ -201,6 +201,8 @@ const columnsTab = (
                                     refresh(cid("table-columns-column-editor"));
                                 }
 
+                                scriptNegationMode = false;
+
                                 return rows;
                             },
                             columns: [
@@ -265,6 +267,7 @@ const columnsTab = (
                                             icon: "Add",
                                             label: t("add-column", "Add Column"),
                                             run: () => {
+                                                scriptNegationMode = scriptMode === "add" ? !scriptNegationMode : false;
                                                 scriptMode = "add";
                                                 refresh(cid("table-columns-column-editor"));
                                                 refresh(cid("table-columns-column-editor-toolbar"));
@@ -276,6 +279,7 @@ const columnsTab = (
                                             icon: "EditableEditor",
                                             label: t("alter-column", "Alter Column"),
                                             run: () => {
+                                                scriptNegationMode = scriptMode === "alter" ? !scriptNegationMode : false;
                                                 scriptMode = "alter";
                                                 refresh(cid("table-columns-column-editor"));
                                                 refresh(cid("table-columns-column-editor-toolbar"));
@@ -287,6 +291,7 @@ const columnsTab = (
                                             icon: "Delete",
                                             label: t("drop-column", "Drop Column"),
                                             run: () => {
+                                                scriptNegationMode = scriptMode === "drop" ? !scriptNegationMode : false;
                                                 scriptMode = "drop";
                                                 refresh(cid("table-columns-column-editor"));
                                                 refresh(cid("table-columns-column-editor-toolbar"));
@@ -298,26 +303,116 @@ const columnsTab = (
                                             icon: "Comment",
                                             label: t("comment-column", "Comment Column"),
                                             run: () => {
+                                                scriptNegationMode = scriptMode === "comment" ? !scriptNegationMode : false;
                                                 scriptMode = "comment";
                                                 refresh(cid("table-columns-column-editor"));
                                                 refresh(cid("table-columns-column-editor-toolbar"));
                                             },
                                             selected: () => scriptMode === "comment",
-                                        }
+                                        },
                                     } as Actions<{}>,
-                                    ...(scriptMode === "comment" ? [
+                                    ...(scriptMode === "alter" ? [
                                         {
-                                            cmNullComment: {
-                                                id: cid("table-columns-column-editor-nullComment"),
-                                                icon: "CommentRemove",
-                                                label: t("remove-comment", "Remove Comment"),
+                                            cmDataType: {
+                                                id: cid("table-columns-column-editor-alter-data-type"),
+                                                icon: "DataType",
+                                                label: t("alter-data-type", "Alter Data Type"),
                                                 run: () => {
-                                                    scriptCommentMode = scriptCommentMode === "set" ? "remove" : "set";
+                                                    scriptNegationMode = scriptAlterMode === "data-type" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "data-type";
                                                     refresh(cid("table-columns-column-editor"));
                                                     refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
-                                                selected: () => scriptCommentMode === "remove",
-                                            }
+                                                selected: () => scriptAlterMode === "data-type",
+                                            },
+                                            cmDefault: {
+                                                id: cid("table-columns-column-editor-alter-default"),
+                                                icon: "DefaultValue",
+                                                label: t("alter-default", "Alter Default"),
+                                                run: () => {
+                                                    scriptNegationMode = scriptAlterMode === "default" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "default";
+                                                    refresh(cid("table-columns-column-editor"));
+                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                },
+                                                selected: () => scriptAlterMode === "default",
+                                            },
+                                            cmNotNull: {
+                                                id: cid("table-columns-column-editor-alter-not-null"),
+                                                icon: "Null",
+                                                label: t("alter-not-null", "Alter Not Null"),
+                                                run: () => {
+                                                    scriptNegationMode = scriptAlterMode === "not-null" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "not-null";
+                                                    refresh(cid("table-columns-column-editor"));
+                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                },
+                                                selected: () => scriptAlterMode === "not-null",
+                                            },
+                                            cmRename: {
+                                                id: cid("table-columns-column-editor-alter-rename"),
+                                                icon: "Rename",
+                                                label: t("alter-rename", "Alter Rename"),
+                                                run: () => {
+                                                    scriptNegationMode = scriptAlterMode === "rename" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "rename";
+                                                    refresh(cid("table-columns-column-editor"));
+                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                },
+                                                selected: () => scriptAlterMode === "rename",
+                                            },
+                                            cmCollation: {
+                                                id: cid("table-columns-column-editor-alter-collation"),
+                                                icon: "Sort",
+                                                label: t("alter-collation", "Alter Collation"),
+                                                run: () => {
+                                                    scriptNegationMode = scriptAlterMode === "collation" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "collation";
+                                                    refresh(cid("table-columns-column-editor"));
+                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                },
+                                                selected: () => scriptAlterMode === "collation",
+                                            },
+                                            cmStatistics: {
+                                                id: cid("table-columns-column-editor-alter-statistics"),
+                                                icon: "Statistics",
+                                                label: t("alter-statistics", "Alter Statistics"),
+                                                run: () => {
+                                                    scriptNegationMode = scriptAlterMode === "statistics" ? !scriptNegationMode : false;
+                                                    scriptAlterMode = "statistics";
+                                                    refresh(cid("table-columns-column-editor"));
+                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                },
+                                                selected: () => scriptAlterMode === "statistics",
+                                            },
+                                            ...(major >= 10 ? {
+                                                cmIdentity: {
+                                                    id: cid("table-columns-column-editor-alter-identity"),
+                                                    icon: "Sequence",
+                                                    label: t("alter-identity", "Alter Identity"),
+                                                    run: () => {
+                                                        scriptNegationMode = scriptAlterMode === "identity" ? !scriptNegationMode : false;
+                                                        scriptAlterMode = "identity";
+                                                        refresh(cid("table-columns-column-editor"));
+                                                        refresh(cid("table-columns-column-editor-toolbar"));
+                                                    },
+                                                    selected: () => scriptAlterMode === "identity",
+                                                }
+                                            } : {}),
+                                            ...(major >= 14 ? {
+                                                cmCompression: {
+                                                    id: cid("table-columns-column-editor-alter-compression"),
+                                                    icon: "Compress",
+                                                    label: t("alter-compression", "Alter Compression"),
+                                                    run: () => {
+                                                        scriptNegationMode = scriptAlterMode === "compression" ? !scriptNegationMode : false;
+                                                        scriptAlterMode = "compression";
+                                                        refresh(cid("table-columns-column-editor"));
+                                                        refresh(cid("table-columns-column-editor-toolbar"));
+                                                    },
+                                                    selected: () => scriptAlterMode === "compression",
+                                                }
+                                            } : {}),
                                         } as Actions<{}>
                                     ] : []),
                                 ],
@@ -341,9 +436,9 @@ const columnsTab = (
                                 } else if (scriptMode === "drop" && columnDetails) {
                                     return columnDropDdl(version, selectedRow()!, selected);
                                 } else if (scriptMode === "comment" && columnDetails) {
-                                    return columnCommentDdl(version, selectedRow()!, selected, scriptCommentMode === "remove");
+                                    return columnCommentDdl(version, selectedRow()!, selected, scriptNegationMode);
                                 } else if (scriptMode === "alter" && columnDetails) {
-                                    return columnAlterDdl(version, selectedRow()!, selected, scriptAlterMode);
+                                    return columnAlterDdl(version, selectedRow()!, selected, columnDetails, scriptAlterMode, scriptNegationMode);
                                 }
 
                                 return "";
@@ -382,55 +477,147 @@ const columnDropDdl = (_version: string | undefined, table: TableRecord, column:
     return ddl + ";";
 };
 
-const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, remove: boolean): string => {
+const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, negation: boolean): string => {
     let ddl = `COMMENT ON COLUMN ${table.schema_name}.${table.table_name}.${column.name} IS `;
-    ddl += remove ? "NULL" : `'${column.description?.replace(/'/g, "''") ?? ''}'`;
+    ddl += negation ? "NULL" : `'${column.description?.replace(/'/g, "''") ?? ''}'`;
     return ddl + ";";
 };
 
-const columnAlterDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, mode: ScriptAlterMode): string => {
-    let ddl = `ALTER TABLE ${table.schema_name}.${table.table_name} ALTER COLUMN ${column.name} `;
+const columnAlterDdl = (
+    version: string | undefined,
+    table: TableRecord,
+    column: TableColumnRecord,
+    details: ColumnDetailRecord,
+    mode: ScriptAlterMode,
+    negation: boolean
+): string => {
+    const major = parseInt((version ?? "0").split(".")[0], 10);
+    const qname = `${table.schema_name}.${table.table_name}`;
+    const col = column.name;
+    const base = `ALTER TABLE ${qname} ALTER COLUMN ${col} `;
 
     switch (mode) {
-        case "data-type":
-            ddl += `TYPE ${column.display_type};`;
-            break;
-        case "default":
-            if (column.default_value) {
-                ddl += `SET DEFAULT ${column.default_value};`;
-            } else {
-                ddl += `DROP DEFAULT;`;
+        case "data-type": {
+            // Uwaga: w praktyce zmiana typu może wymagać USING ...
+            return `${base}TYPE ${column.display_type};`;
+        }
+
+        case "default": {
+            // Przy negacji ustaw domyślną wartość zależnie od typu, jeśli default_value nie jest określone
+            if (negation) {
+                let defVal = column.default_value;
+                if (!defVal) {
+                    // Proste mapowanie typów na domyślne wartości
+                    switch (details.type_name) {
+                        case "integer":
+                        case "int":
+                        case "int4":
+                        case "smallint":
+                        case "int2":
+                        case "bigint":
+                        case "int8":
+                        case "serial":
+                        case "bigserial":
+                        case "real":
+                        case "float4":
+                        case "double precision":
+                        case "float8":
+                        case "numeric":
+                        case "decimal":
+                            defVal = "0";
+                            break;
+                        case "boolean":
+                        case "bool":
+                            defVal = "false";
+                            break;
+                        case "text":
+                        case "varchar":
+                        case "char":
+                        case "bpchar":
+                            defVal = "''";
+                            break;
+                        case "date":
+                            defVal = "CURRENT_DATE";
+                            break;
+                        case "timestamp":
+                        case "timestamp without time zone":
+                        case "timestamp with time zone":
+                            defVal = "CURRENT_TIMESTAMP";
+                            break;
+                        default:
+                            defVal = "NULL";
+                    }
+                    return `${base}SET DEFAULT ${defVal};`;
+                }
             }
-            break;
-        case "not-null":
-            if (column.not_null) {
-                ddl += `SET NOT NULL;`;
-            } else {
-                ddl += `DROP NOT NULL;`;
+            // Standardowo: jeśli default_value jest, ustaw, w przeciwnym razie usuń
+            if (column.default_value && !negation) {
+                return `${base}SET DEFAULT ${column.default_value};`;
             }
-            break;
-        case "rename":
-            ddl += `RENAME TO ${column.name};`;
-            break;
-        case "collation":
-            if (column.name) {
-                ddl += `SET COLLATION ${column.name};`;
-            } else {
-                ddl += `DROP COLLATION;`;
+            return `${base}DROP DEFAULT;`;
+        }
+
+        case "not-null": {
+            if (negation ? !column.not_null : column.not_null) {
+                return `${base}SET NOT NULL;`;
             }
-            break;
-        case "identity":
-            // To jest uproszczone - w praktyce może być bardziej skomplikowane
-            ddl += `SET GENERATED ${column.name};`;
-            break;
-        case "compression":
-            ddl += `SET COMPRESSION ${column.name};`;
-            break;
-        case "statistics":
-            ddl += `SET STATISTICS ${column.name};`;
-            break;
+            return `${base}DROP NOT NULL;`;
+        }
+
+        case "rename": {
+            // Wymaga docelowej nazwy z UI – placeholder:
+            return `ALTER TABLE ${qname} RENAME COLUMN ${col} TO ${col}; -- TODO: set new column name`;
+        }
+
+        case "collation": {
+            // Najbezpieczniej przez TYPE ... COLLATE ...
+            // Użyj bieżącego wyświetlanego typu i kolacji z details.*
+            if (!negation && details.collation_name) {
+                const coll =
+                    details.collation_schema
+                        ? `${details.collation_schema}.${details.collation_name}`
+                        : details.collation_name;
+                return `ALTER TABLE ${qname} ALTER COLUMN ${col} TYPE ${column.display_type} COLLATE ${coll};`;
+            }
+            // Usunięcie jawnej kolacji: ustawiamy TYPE bez COLLATE (wróci do domyślnej)
+            return `ALTER TABLE ${qname} ALTER COLUMN ${col} TYPE ${column.display_type}; -- drops explicit collation`;
+        }
+
+        case "identity": {
+            if (major < 10) return `-- Identity columns are not supported before PostgreSQL 10`;
+            // Jeśli negacja → usuń tożsamość, inaczej ustaw/utwórz zgodnie z details.identity_generation
+            if (negation) {
+                return `${base}DROP IDENTITY;`;
+            }
+            if (details.identity_generation) {
+                // Kolumna już jest identity – zmieniamy tryb
+                return `${base}SET GENERATED ${details.identity_generation};`;
+            }
+            // Brak identity – dodajemy (domyślnie BY DEFAULT)
+            return `${base}ADD GENERATED BY DEFAULT AS IDENTITY;`;
+        }
+
+        case "compression": {
+            if (major < 14) return `-- Column compression is not supported before PostgreSQL 14`;
+            // Mapowanie wartości z details.compression (PG zwraca zwykle 'p' lub 'l')
+            const current =
+                details.compression === 'l' || details.compression?.toLowerCase() === 'lz4'
+                    ? 'lz4'
+                    : 'pglz';
+            if (negation) {
+                // "Wyłączenie" → wróć do pglz (bezpieczny default)
+                return `${base}SET COMPRESSION pglz;`;
+            }
+            return `${base}SET COMPRESSION ${current};`;
+        }
+
+        case "statistics": {
+            // -1 oznacza domyślne; użyj istniejącej wartości lub domyślnej 100
+            if (negation) return `${base}SET STATISTICS -1;`;
+            const target = details.statistics_target ?? 100;
+            return `${base}SET STATISTICS ${target};`;
+        }
     }
-    return ddl;
 };
 
 const columnDetailQuery = (version: string | undefined) => {
