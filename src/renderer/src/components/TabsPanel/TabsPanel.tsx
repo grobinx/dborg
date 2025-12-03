@@ -262,7 +262,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                     <Box
                         key={tab.props.itemID}
                         sx={{
-                            height: "100%",
+                            alignSelf: "center",
                         }}
                         hidden={activeTab !== index}
                     >

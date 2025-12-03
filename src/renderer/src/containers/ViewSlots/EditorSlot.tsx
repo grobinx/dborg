@@ -99,7 +99,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     return (
         <MonacoEditor
             defaultValue={content}
-            language={slot.language || "sql"}
+            language={slot.language}
             onMount={handleOnMount}
             readOnly={readOnly}
             loading={loading}

@@ -5,6 +5,7 @@ import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandMa
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import * as monaco from "monaco-editor";
@@ -548,7 +549,7 @@ export interface IEditorSlot extends ICustomSlot {
      * Język składni edytora (np. "sql", "json").
      * @default "sql"
      */
-    language?: string;
+    language?: EditorLanguageId;
     /**
      * Czy edytor ma być tylko do odczytu (opcjonalnie).
      * @default false
