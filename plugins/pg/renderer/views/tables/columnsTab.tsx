@@ -68,6 +68,8 @@ interface ColumnDetailRecord {
     [key: string]: any;
 }
 
+type ScriptAlterMode = "data-type" | "default" | "not-null" | "rename" | "collation" | "identity" | "compression" | "statistics";
+
 const columnsTab = (
     session: IDatabaseSession,
     selectedRow: () => TableRecord | null
@@ -80,6 +82,7 @@ const columnsTab = (
     let columnDetails: ColumnDetailRecord | null = null;
     let scriptMode: "add" | "alter" | "drop" | "comment" = "add";
     let scriptCommentMode: "set" | "remove" = "set";
+    let scriptAlterMode: ScriptAlterMode = "data-type";
 
     return {
         id: cid("table-columns-tab"),
@@ -242,7 +245,8 @@ const columnsTab = (
                             pivotColumns: [
                                 { key: "detail", label: t("details", "Details"), width: 200, dataType: "string" },
                                 { key: "value", label: t("value", "Value"), width: 400, dataType: "string" },
-                            ]
+                            ],
+                            autoSaveId: "table-columns-info-panel-grid-" + session.profile.sch_id,
                         }),
                     }),
                     second: () => ({
@@ -337,8 +341,9 @@ const columnsTab = (
                                 } else if (scriptMode === "drop" && columnDetails) {
                                     return columnDropDdl(version, selectedRow()!, selected);
                                 } else if (scriptMode === "comment" && columnDetails) {
-                                    const comment = selected.description;
-                                    return columnCommentDdl(version, selectedRow()!, selected, comment, scriptCommentMode === "remove");
+                                    return columnCommentDdl(version, selectedRow()!, selected, scriptCommentMode === "remove");
+                                } else if (scriptMode === "alter" && columnDetails) {
+                                    return columnAlterDdl(version, selectedRow()!, selected, scriptAlterMode);
                                 }
 
                                 return "";
@@ -377,10 +382,55 @@ const columnDropDdl = (_version: string | undefined, table: TableRecord, column:
     return ddl + ";";
 };
 
-const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, comment: string | null, remove: boolean): string => {
+const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, remove: boolean): string => {
     let ddl = `COMMENT ON COLUMN ${table.schema_name}.${table.table_name}.${column.name} IS `;
-    ddl += remove ? "NULL" : `'${comment?.replace(/'/g, "''") ?? ''}'`;
+    ddl += remove ? "NULL" : `'${column.description?.replace(/'/g, "''") ?? ''}'`;
     return ddl + ";";
+};
+
+const columnAlterDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, mode: ScriptAlterMode): string => {
+    let ddl = `ALTER TABLE ${table.schema_name}.${table.table_name} ALTER COLUMN ${column.name} `;
+
+    switch (mode) {
+        case "data-type":
+            ddl += `TYPE ${column.display_type};`;
+            break;
+        case "default":
+            if (column.default_value) {
+                ddl += `SET DEFAULT ${column.default_value};`;
+            } else {
+                ddl += `DROP DEFAULT;`;
+            }
+            break;
+        case "not-null":
+            if (column.not_null) {
+                ddl += `SET NOT NULL;`;
+            } else {
+                ddl += `DROP NOT NULL;`;
+            }
+            break;
+        case "rename":
+            ddl += `RENAME TO ${column.name};`;
+            break;
+        case "collation":
+            if (column.name) {
+                ddl += `SET COLLATION ${column.name};`;
+            } else {
+                ddl += `DROP COLLATION;`;
+            }
+            break;
+        case "identity":
+            // To jest uproszczone - w praktyce może być bardziej skomplikowane
+            ddl += `SET GENERATED ${column.name};`;
+            break;
+        case "compression":
+            ddl += `SET COMPRESSION ${column.name};`;
+            break;
+        case "statistics":
+            ddl += `SET STATISTICS ${column.name};`;
+            break;
+    }
+    return ddl;
 };
 
 const columnDetailQuery = (version: string | undefined) => {
