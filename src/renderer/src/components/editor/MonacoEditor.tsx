@@ -51,7 +51,7 @@ interface MonacoEditorProps extends React.ComponentProps<typeof Editor> {
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const { 
         onMount, editorKey, onFocus, onBlur, 
-        readOnly, loading, wordWrap, lineNumbers, statusBar, miniMap = true, 
+        readOnly, loading, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true, 
         ...other 
     } = useThemeProps({ name: "MonacoEditor", props });
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
