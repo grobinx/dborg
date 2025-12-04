@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import PasswordDialog from "@renderer/dialogs/PasswordDialog";
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
-import { ProfileRecord, ProfileUsePasswordType } from "src/api/entities";
+import { ProfileRecord, ProfileUsePasswordType } from "../../../api/entities";
 
 export type ProfileEventType =
     | 'creating'

@@ -1,11 +1,9 @@
 import React from "react";
 import { StatusBarButton } from "@renderer/app/StatusBar";
-import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { useTheme } from "@mui/material";
-import { useTranslation } from "react-i18next";
-import * as api from "../../../../api/db";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
-import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
+import { useProfiles } from "@renderer/contexts/ProfilesContext";
+import { ProfileRecord } from "../../../../api/entities";
 
 interface ConnectionStatus {
     status: "connecting" | "connected" | "error";
