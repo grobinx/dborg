@@ -161,58 +161,68 @@ const ioStatsTab = (
                 </h4>
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                        <XAxis
-                            dataKey="snapshot"
-                            stroke={theme.palette.text.secondary}
-                            style={{ fontSize: '0.75rem' }}
-                            tickFormatter={(value) => value === -1 ? "-" : value.toString()}
-                        />
-                        <YAxis
-                            stroke={theme.palette.text.secondary}
-                            style={{ fontSize: '0.75rem' }}
-                            tickFormatter={(value) => {
-                                if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                                if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                                return value.toString();
-                            }}
-                        />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: theme.palette.background.tooltip,
-                                border: `1px solid ${theme.palette.divider}`
-                            }}
-                            wrapperStyle={{ zIndex: 9999 }}
-                            formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
-                            isAnimationActive={false}
-                            animationDuration={0}
-                        />
-                        <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-                        <Area
-                            type="monotone"
-                            dataKey={readKey}
-                            stackId="1"
-                            stroke={readColor}
-                            fill={readColor}
-                            fillOpacity={0.6}
-                            name={t("read", "Read")}
-                            isAnimationActive={false}
-                            animationDuration={0}
-                            connectNulls
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey={hitKey}
-                            stackId="1"
-                            stroke={hitColor}
-                            fill={hitColor}
-                            fillOpacity={0.6}
-                            name={t("hit", "Hit")}
-                            isAnimationActive={false}
-                            animationDuration={0}
-                            connectNulls
-                        />
-                    </AreaChart>
+                    <defs>
+                        <linearGradient id={`gradient-${readKey}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={readColor} stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor={readColor} stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id={`gradient-${hitKey}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={hitColor} stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor={hitColor} stopOpacity={0}/>
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                    <XAxis
+                        dataKey="snapshot"
+                        stroke={theme.palette.text.secondary}
+                        style={{ fontSize: '0.75rem' }}
+                        tickFormatter={(value) => value === -1 ? "-" : value.toString()}
+                    />
+                    <YAxis
+                        stroke={theme.palette.text.secondary}
+                        style={{ fontSize: '0.75rem' }}
+                        tickFormatter={(value) => {
+                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                            if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                            return value.toString();
+                        }}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: theme.palette.background.tooltip,
+                            border: `1px solid ${theme.palette.divider}`
+                        }}
+                        wrapperStyle={{ zIndex: 9999 }}
+                        formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
+                        isAnimationActive={false}
+                        animationDuration={0}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                    <Area
+                        type="monotone"
+                        dataKey={readKey}
+                        stackId="1"
+                        stroke={readColor}
+                        fill={`url(#gradient-${readKey})`}
+                        fillOpacity={1}
+                        name={t("read", "Read")}
+                        isAnimationActive={false}
+                        animationDuration={0}
+                        connectNulls
+                    />
+                    <Area
+                        type="monotone"
+                        dataKey={hitKey}
+                        stackId="1"
+                        stroke={hitColor}
+                        fill={`url(#gradient-${hitKey})`}
+                        fillOpacity={1}
+                        name={t("hit", "Hit")}
+                        isAnimationActive={false}
+                        animationDuration={0}
+                        connectNulls
+                    />
+                </AreaChart>
                 </ResponsiveContainer>
             </div>
         );

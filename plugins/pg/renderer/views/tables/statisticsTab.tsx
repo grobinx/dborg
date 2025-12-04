@@ -65,10 +65,6 @@ const statisticsTab = (
         render: () => {
             const theme = useTheme();
 
-            if (!statRows || statRows.length < 2) {
-                return <div style={{ padding: 16, color: theme.palette.text.secondary }}>{t("no-data-timeline", "Not enough data for timeline (need at least 2 snapshots)")}</div>;
-            }
-
             // DML timeline
             const data = buildTimelineData(statRows, (r: any) => ({
                 snapshot: r.snapshot ?? -1,
@@ -170,41 +166,112 @@ const statisticsTab = (
         }
     });
 
-    // Scans: seq_scan vs idx_scan – wykres słupkowy
+    // Scans: seq_scan vs idx_scan vs seq_tup_read vs idx_tup_fetch – cztery wykresy timeline
     const scansChart = (): IRenderedSlot => ({
         id: cid("table-statistics-scans-chart"),
         type: "rendered",
         render: () => {
             const theme = useTheme();
 
-            if (!statRows || statRows.length === 0) {
-                return <div style={{ padding: 16, color: theme.palette.text.secondary }}>{t("no-data", "No data available")}</div>;
-            }
-
-            const last = statRows[statRows.length - 1];
-            const data = [{ name: selectedRow()?.table_name ?? "table", seq_scan: num(last.seq_scan), idx_scan: num(last.idx_scan) }];
+            const data = buildTimelineData(statRows, (r: any) => ({
+                snapshot: r.snapshot ?? -1,
+                seq_scan: r.seq_scan != null ? num(r.seq_scan) : null,
+                idx_scan: r.idx_scan != null ? num(r.idx_scan) : null,
+                seq_tup_read: r.seq_tup_read != null ? num(r.seq_tup_read) : null,
+                idx_tup_fetch: r.idx_tup_fetch != null ? num(r.idx_tup_fetch) : null,
+            }));
 
             return (
-                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                    <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("scan-usage", "Scan Usage")}</h4>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                            <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                            <YAxis
-                                stroke={theme.palette.text.secondary}
-                                tickFormatter={(value) => {
-                                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                                    return value.toString();
-                                }}
-                            />
-                            <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
-                            <Legend />
-                            <Bar dataKey="seq_scan" fill={theme.palette.error.main} name={t("seq-scan", "Seq Scan")} isAnimationActive={false} />
-                            <Bar dataKey="idx_scan" fill={theme.palette.success.main} name={t("idx-scan", "Idx Scan")} isAnimationActive={false} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
+                    {/* Top Row */}
+                    <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                        {/* Sequential Scans Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("seq-scan", "Sequential Scans")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorSeqScan" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="seq_scan" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorSeqScan)" name={t("seq-scan", "Seq Scan")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Index Scans Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("idx-scan", "Index Scans")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorIdxScan" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="idx_scan" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIdxScan)" name={t("idx-scan", "Idx Scan")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Bottom Row */}
+                    <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                        {/* Sequential Tuples Read Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("seq-tup-read", "Sequential Tuples Read")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorSeqTupRead" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="seq_tup_read" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorSeqTupRead)" name={t("seq-tup-read", "Seq Tup Read")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Index Tuples Fetch Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("idx-tup-fetch", "Index Tuples Fetch")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorIdxTupFetch" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="idx_tup_fetch" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorIdxTupFetch)" name={t("idx-tup-fetch", "Idx Tup Fetch")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -216,10 +283,6 @@ const statisticsTab = (
         type: "rendered",
         render: () => {
             const theme = useTheme();
-
-            if (!statRows || statRows.length < 2) {
-                return <div style={{ padding: 16, color: theme.palette.text.secondary }}>{t("no-data-timeline", "Not enough data for timeline (need at least 2 snapshots)")}</div>;
-            }
 
             const data = buildTimelineData(statRows, (r: any) => ({
                 snapshot: r.snapshot ?? -1,

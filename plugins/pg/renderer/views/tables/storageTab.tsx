@@ -2,7 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
 
@@ -157,52 +157,119 @@ const storageTab = (
             render: () => {
                 const theme = useTheme();
 
-                if (!storageRows || storageRows.length < 1) {
-                    return (
-                        <div style={{ padding: 16, color: theme.palette.text.secondary }}>
-                            <p>{t("no-data-timeline", "Not enough data for timeline (need at least 2 snapshots)")}</p>
-                        </div>
-                    );
-                }
-
                 const timelineData = buildTimelineData();
 
                 return (
-                    <div style={{ padding: 8, height: '100%', width: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
-                        <h4 style={{ margin: '0 0 8px 0', color: theme.palette.text.primary, flexShrink: 0 }}>
-                            {t("storage-growth-timeline", "Storage Growth Timeline")}
-                        </h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={timelineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis
-                                    dataKey="snapshot"
-                                    stroke={theme.palette.text.secondary}
-                                    style={{ fontSize: '0.75rem' }}
-                                    tickFormatter={(v) => v === -1 ? "-" : String(v)}
-                                />
-                                <YAxis
-                                    stroke={theme.palette.text.secondary}
-                                    style={{ fontSize: '0.75rem' }}
-                                    tickFormatter={(value) => {
-                                        if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-                                        if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-                                        if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
-                                        return value?.toString?.() ?? "";
-                                    }}
-                                />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }}
-                                    formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))}
-                                    isAnimationActive={false}
-                                />
-                                <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-                                <Line type="monotone" dataKey="heap" stroke={theme.palette.primary.main} name={t("heap", "Heap")} isAnimationActive={false} dot={false} connectNulls />
-                                <Line type="monotone" dataKey="toast" stroke={theme.palette.warning.main} name={t("toast", "Toast")} isAnimationActive={false} dot={false} connectNulls />
-                                <Line type="monotone" dataKey="indexes" stroke={theme.palette.success.main} name={t("indexes", "Indexes")} isAnimationActive={false} dot={false} connectNulls />
-                                <Line type="monotone" dataKey="total" stroke={theme.palette.error.main} name={t("total", "Total")} isAnimationActive={false} strokeWidth={2} dot={false} connectNulls />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
+                        {/* Top Row */}
+                        <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                            {/* Heap Chart */}
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("heap", "Heap")}</h4>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                        <defs>
+                                            <linearGradient id="colorHeap" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                        <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                        <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(value) => {
+                                            if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                            if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+                                            if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+                                            return value?.toString?.() ?? "";
+                                        }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Legend />
+                                        <Area type="monotone" dataKey="heap" stroke={theme.palette.primary.main} fillOpacity={1} fill="url(#colorHeap)" name={t("heap", "Heap")} isAnimationActive={false} connectNulls />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Toast Chart */}
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("toast", "Toast")}</h4>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                        <defs>
+                                            <linearGradient id="colorToast" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                        <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                        <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(value) => {
+                                            if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                            if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+                                            if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+                                            return value?.toString?.() ?? "";
+                                        }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Legend />
+                                        <Area type="monotone" dataKey="toast" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorToast)" name={t("toast", "Toast")} isAnimationActive={false} connectNulls />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Bottom Row */}
+                        <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                            {/* Indexes Chart */}
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("indexes", "Indexes")}</h4>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                        <defs>
+                                            <linearGradient id="colorIndexes" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                        <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                        <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(value) => {
+                                            if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                            if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+                                            if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+                                            return value?.toString?.() ?? "";
+                                        }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Legend />
+                                        <Area type="monotone" dataKey="indexes" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIndexes)" name={t("indexes", "Indexes")} isAnimationActive={false} connectNulls />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Total Chart */}
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("total", "Total")}</h4>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                        <defs>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                        <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                        <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(value) => {
+                                            if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                            if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+                                            if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+                                            return value?.toString?.() ?? "";
+                                        }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Legend />
+                                        <Area type="monotone" dataKey="total" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorTotal)" name={t("total", "Total")} isAnimationActive={false} connectNulls />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
                     </div>
                 );
             }
