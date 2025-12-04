@@ -7,7 +7,7 @@ import DriverPropertyFile from "./DriverPropertyFile";
 import DriverPropertyString from "./DriverPropertyString";
 import { schemaPatternToName, setPropertyValue } from "./Utils";
 import DriverPropertyNumber from "./DriverPropertyNumber";
-import DriverPropertyPassword, { ProfileUsePasswordType } from "./DriverPropertyPassword";
+import DriverPropertyPassword from "./DriverPropertyPassword";
 import DriverPropertyBoolean from "./DriverPropertyBoolean";
 import { useTranslation } from "react-i18next";
 import ProfilePatternField from "./ProfilePatternField";
@@ -16,6 +16,7 @@ import { ProfileParametersType } from "./ProfileTypes";
 import DriverSummary from "../DriverSelect/DriverSummary";
 import debounce from '@renderer/utils/debounce';
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import { ProfileUsePasswordType } from "../../../../../api/entities";
 
 export interface ProfileParametersRef {
     getSchema: () => ProfileParametersType;

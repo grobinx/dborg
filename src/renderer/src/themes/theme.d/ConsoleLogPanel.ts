@@ -5,7 +5,6 @@ import { ConsoleLogPanel } from "@renderer/components/ToolPanels/ConsoleLogsPane
 export type ConsoleLogPanelComponentProps = Partial<React.ComponentProps<typeof ConsoleLogPanel>>;
 
 export type ConsoleLogPanelComponent = {
-    defaultProps?: ComponentsPropsList['ConsoleLogPanel'];
     styleOverrides?: ComponentsOverrides<Theme>['ConsoleLogPanel'];
 }
 

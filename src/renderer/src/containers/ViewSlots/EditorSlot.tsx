@@ -18,7 +18,7 @@ interface EditorSlotProps {
 }
 
 const EditorSlot: React.FC<EditorSlotProps> = ({
-    slot, ref
+    slot
 }) => {
     const theme = useTheme();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
@@ -72,7 +72,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         return unregisterRefresh;
     }, [slot.id]);
 
-    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
         editorInstanceRef.current = editor;
         actions.forEach(action => {
             editor.addAction(action);

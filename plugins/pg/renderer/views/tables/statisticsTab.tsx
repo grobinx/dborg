@@ -79,21 +79,92 @@ const statisticsTab = (
             }));
 
             return (
-                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                    <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("dml-timeline", "DML Timeline")}</h4>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                            <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
-                            <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                            <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
-                            <Legend />
-                            <Line type="monotone" dataKey="ins" stroke={theme.palette.success.main} name={t("insert", "Insert")} dot={false} isAnimationActive={false} connectNulls />
-                            <Line type="monotone" dataKey="upd" stroke={theme.palette.warning.main} name={t("update", "Update")} dot={false} isAnimationActive={false} connectNulls />
-                            <Line type="monotone" dataKey="del" stroke={theme.palette.error.main} name={t("delete", "Delete")} dot={false} isAnimationActive={false} connectNulls />
-                            <Line type="monotone" dataKey="hot" stroke={theme.palette.info.main} name={t("hot-update", "HOT Update")} dot={false} isAnimationActive={false} connectNulls />
-                        </LineChart>
-                    </ResponsiveContainer>
+                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
+                    {/* Top Row */}
+                    <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                        {/* Insert Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("inserts", "Inserts")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorIns" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Area type="monotone" dataKey="ins" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIns)" isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Update Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("updates", "Updates")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorUpd" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Area type="monotone" dataKey="upd" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorUpd)" isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Bottom Row */}
+                    <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
+                        {/* Delete Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("deletes", "Deletes")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorDel" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Area type="monotone" dataKey="del" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDel)" isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* HOT Update Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("hot-updates", "HOT Updates")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorHot" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Area type="monotone" dataKey="hot" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorHot)" isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
             );
         }

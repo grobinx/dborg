@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack, styled, useThemeProps } from '@mui/material';
 
-const StyledTabPanelContent = styled(Stack, {
+const StyledTabPanelContent: React.FC<React.ComponentProps<typeof Stack>> = styled(Stack, {
     name: "TabPanel",
     slot: "content",
 })(({ /*theme*/ }) => ({
