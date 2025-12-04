@@ -43,6 +43,8 @@ const data_grid_defined_font_size = 14;
 const settings_store_timeout = 1000; // 1 second
 const search_delay = 300; // 300 ms
 
+export type QueryHistoryDeduplicateMode = "none" | "time-based" | "aggressive";
+
 export const default_settings: ApplicationSettings = {
     app: {
         placement: 'left',
@@ -54,6 +56,12 @@ export const default_settings: ApplicationSettings = {
         "search.delay": search_delay,
 
         "i_am_developer": false,
+
+        "query_history.max_items": 10000,
+        "query_history.max_age_days": 90,
+        "query_history.compress_text": true,
+        "query_history.deduplicate_mode": "time-based",
+        "query_history.deduplicate_time_window": 60, // 1 minute
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
@@ -139,7 +147,76 @@ settingsRegistry.register((context) => {
                     step: 1000,
                 },
             ],
-        }],
+        },
+        {
+            key: 'query-history',
+            title: t('query-history-settings', 'Query History Settings'),
+            description: t('query-history-settings-description', 'Settings related to the query history management.'),
+            settings: [
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'query_history.max_items',
+                    label: t('query-history-max-items', 'Maximum Query History Items'),
+                    description: t('query-history-max-items-description', 'Maximum number of query history items to store.'),
+                    min: 100,
+                    max: 10000,
+                    step: 100,
+                },
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'query_history.max_age_days',
+                    label: t('query-history-max-age-days', 'Maximum Query History Age (Days)'),
+                    description: t('query-history-max-age-days-description', 'Maximum age of query history items in days.'),
+                    min: 1,
+                    max: 365,
+                    step: 7,
+                },
+                {
+                    type: 'boolean',
+                    storageGroup: 'app',
+                    storageKey: 'query_history.compress_text',
+                    label: t('query-history-compress-text', 'Compress Query Text'),
+                    description: t('query-history-compress-text-description', 'Enable or disable compression of query text in the history. Removes unnecessary spaces and new lines.'),
+                },
+                {
+                    type: 'select',
+                    storageGroup: 'app',
+                    storageKey: 'query_history.deduplicate_mode',
+                    label: t('query-history-deduplicate-mode', 'Query History Deduplication Mode'),
+                    description: t('query-history-deduplicate-mode-description', 'Determines how duplicate queries are handled in the history.'),
+                    options: [
+                        { 
+                            value: "none", 
+                            label: t('deduplication-none', 'None'), 
+                            description: t('deduplication-none-description', 'All queries are stored. Useful for comparing execution times of the same query.') 
+                        },
+                        { 
+                            value: "time-based", 
+                            label: t('deduplication-time-based', 'Time-based'), 
+                            description: t('deduplication-time-based-description', 'Keeps all queries within the time window (for performance testing), older duplicates are reduced to one historical entry.') 
+                        },
+                        { 
+                            value: "aggressive", 
+                            label: t('deduplication-aggressive', 'Aggressive'), 
+                            description: t('deduplication-aggressive-description', 'Keeps only the most recent execution of each unique query. Minimizes storage but loses execution history.') 
+                        },
+                    ],
+                },
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'query_history.deduplicate_time_window',
+                    label: t('query-history-deduplicate-time-window', 'Deduplication Time Window (seconds)'),
+                    description: t('query-history-deduplicate-time-window-description', 'Time window in seconds during which all duplicate queries are preserved. After this window, only one historical entry is kept per query. Useful for comparing cold vs cached query performance.'),
+                    min: 1,
+                    max: 600,
+                    step: 1,
+                },
+            ],
+        }
+        ],
     });
 
     context.registerCollection({

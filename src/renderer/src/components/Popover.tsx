@@ -36,14 +36,30 @@ export function Popover({
         fn({ state }: any) {
             onChangePlacement?.(state.placement);
         },
-    }), []);
+    }), [onChangePlacement]);
+
+    const maxWidthModifier = React.useMemo(() => ({
+        name: "maxWidth",
+        enabled: true,
+        phase: 'beforeWrite' as const,
+        fn({ state }: any) {
+            if (anchorEl) {
+                const anchorWidth = anchorEl.getBoundingClientRect().width;
+                state.styles.popper.maxWidth = `${anchorWidth}px`;
+            }
+        },
+    }), [anchorEl]);
+
+    const allModifiers = React.useMemo(() => {
+        return modifiers ?? [placementModifier, maxWidthModifier];
+    }, [modifiers, placementModifier, maxWidthModifier]);
 
     return (
         <Popper
             open={open}
             anchorEl={anchorEl}
             placement={placement}
-            modifiers={modifiers ?? [placementModifier]}
+            modifiers={allModifiers}
             style={{
                 zIndex: 1300,
             }}

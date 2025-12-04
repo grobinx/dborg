@@ -1,59 +1,326 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-
-const MAX_HISTORY_SIZE = 100; // Maksymalna liczba wpisów w historii
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useSetting } from "./SettingsContext";
+import { DateTime } from "luxon";
+import { DBORG_DATA_PATH_NAME } from "../../../api/dborg-path";
+import { useToast } from "./ToastContext";
+import { useTranslation } from "react-i18next";
+import SparkMD5 from "spark-md5";
+import { QueryHistoryDeduplicateMode } from "@renderer/app.config";
 
 export interface QueryHistoryEntry {
-    query: string; // Wykonane zapytanie
-    schema: string; // Schemat połączenia
-    executionTime?: number; // Czas wykonania zapytania (ms)
-    fetchTime?: number; // Czas pobrania danych (ms)
-    rows?: number; // Liczba pobranych wierszy
-    error?: string; // Ewentualny błąd
-    startTime: number; // Godzina uruchomienia zapytania
+    query: string;
+    schema: string;
+    executionTime?: number;
+    fetchTime?: number;
+    rows?: number;
+    error?: string;
+    startTime: number;
+    queryHash?: string;
 }
 
 interface QueryHistoryContextValue {
+    initialized: boolean;
     queryHistory: QueryHistoryEntry[];
     addQueryToHistory: (entry: QueryHistoryEntry) => void;
     clearQueryHistory: () => void;
+    reloadQueryHistory: () => Promise<void>;
 }
 
 const QueryHistoryContext = createContext<QueryHistoryContextValue | undefined>(undefined);
 
 export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [queryHistory, setQueryHistory] = useState<QueryHistoryEntry[]>([]);
+    const [historyInitialized, setHistoryInitialized] = useState<boolean>(false);
+    const [maxAgeDays] = useSetting<number>("app", "query_history.max_age_days");
+    const [maxItems] = useSetting<number>("app", "query_history.max_items");
+    const [compressQueryText] = useSetting<boolean>("app", "query_history.compress_text");
+    const [deduplicateMode] = useSetting<QueryHistoryDeduplicateMode>("app", "query_history.deduplicate_mode");
+    const [deduplicateTimeWindow] = useSetting<number>("app", "query_history.deduplicate_time_window"); // w ms
+    const addToast = useToast();
+    const { t } = useTranslation();
+    const [justFetched, setJustFetched] = useState<boolean>(false);
+    const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    const addQueryToHistory = (entry: QueryHistoryEntry) => {
-        setQueryHistory((prev) => {
-            const updatedHistory = [entry, ...prev]; // Tworzenie nowej tablicy
-            if (updatedHistory.length > MAX_HISTORY_SIZE) {
-                updatedHistory.pop(); // Usuń ostatni element, jeśli liczba przekracza MAX_HISTORY_SIZE
-            }
-            return updatedHistory; // Zwrócenie nowej referencji
-        });
-    };
-
-    const clearQueryHistory = () => {
-        setQueryHistory([]); // Czyść historię zapytań
-    };
-
-    // Co minutę usuń wpisy starsze niż godzina
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            setQueryHistory((prev) => {
-                if (prev.some((entry) => entry.startTime >= oneHourAgo)) {
-                    return prev.filter((entry) => entry.startTime >= oneHourAgo);
-                }
-                return prev;
-            });
-        }, 60 * 1000); // Uruchamiaj co minutę
-
-        return () => clearInterval(interval); // Wyczyść interval po odmontowaniu komponentu
+    // Oblicz hash zapytania dla deduplikacji (uwzględniając schemat)
+    const hashQuery = useCallback((query: string, schema: string): string => {
+        return SparkMD5.hash(query + '::' + schema);
     }, []);
 
+    // Kompresja zapytania (usunięcie zbędnych spacji/nowych linii, zachowując stringi)
+    const compressQuery = useCallback((query: string): string => {
+        let result = '';
+        let inString: string | null = null; // Typ aktualnego stringa: ', ", ` lub null
+        let escaped = false;
+
+        for (let i = 0; i < query.length; i++) {
+            const char = query[i];
+            const prevChar = i > 0 ? query[i - 1] : '';
+
+            // Obsługa escape sequences
+            if (escaped) {
+                result += char;
+                escaped = false;
+                continue;
+            }
+
+            if (char === '\\' && inString) {
+                result += char;
+                escaped = true;
+                continue;
+            }
+
+            // Wejście/wyjście ze stringa
+            if ((char === '"' || char === "'" || char === '`') && !inString) {
+                inString = char;
+                result += char;
+                continue;
+            }
+
+            if (char === inString) {
+                inString = null;
+                result += char;
+                continue;
+            }
+
+            // Jeśli w stringu, zachowaj wszystko
+            if (inString) {
+                result += char;
+                continue;
+            }
+
+            // Poza stringiem: kompresuj białe znaki
+            if (/\s/.test(char)) {
+                // Zamień wielokrotne spacje/nowe linie na pojedynczą spację
+                if (result.length > 0 && !/\s$/.test(result)) {
+                    result += ' ';
+                }
+                continue;
+            }
+
+            result += char;
+        }
+
+        return result.trim();
+    }, []);
+
+    // Wczytaj historię z pliku (z rozpakkowaniem)
+    const loadQueryHistory = useCallback(async () => {
+        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+        
+        const data = await window.dborg.file.readFile(`${dataPath}/query-history.json`).catch(() => null);
+        if (data) {
+            try {
+                let loadedHistory = JSON.parse(data);
+                
+                // Rozpakuj skompresowane zapytania jeśli są
+                loadedHistory = loadedHistory.map((entry: QueryHistoryEntry) => ({
+                    ...entry,
+                    query: entry.query // Query jest już normalny w pliku (rozpakowywany przy wczytaniu)
+                }));
+                
+                setQueryHistory(loadedHistory);
+                setJustFetched(true);
+                setHistoryInitialized(true);
+            } catch (error) {
+                addToast("error", t("error-parsing-query-history-json", "Error parsing query-history.json file."), { reason: error });
+                setHistoryInitialized(true);
+            }
+        } else {
+            setHistoryInitialized(true);
+        }
+    }, [addToast, t]);
+
+    // Zapisz historię do pliku (z opóźnieniem debounce + kompresja)
+    const storeQueryHistory = useCallback(async (history: QueryHistoryEntry[]) => {
+        const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
+
+        try {
+            // Przygotuj dane do zapisu - skompresuj zapytania
+            const dataToSave = history.map((entry) => ({
+                ...entry,
+                query: compressQueryText ? compressQuery(entry.query) : entry.query,
+                queryHash: hashQuery(entry.query, entry.schema) // Dodaj hash dla identyfikacji duplikatów (query + schema)
+            }));
+
+            // Konwersja do JSON z minifikacją (bez pretty-print dla mniejszego rozmiaru)
+            const jsonString = JSON.stringify(dataToSave);
+
+            await window.dborg.file.writeFile(`${dataPath}/query-history.json`, jsonString);
+        } catch (error) {
+            addToast("error", t("error-saving-query-history", "Error saving query history."), { reason: error });
+        }
+    }, [addToast, t, compressQuery, compressQueryText, hashQuery]);
+
+    // Załaduj historię przy starcie
+    useEffect(() => {
+        loadQueryHistory();
+    }, [loadQueryHistory]);
+
+    // Debounce zapisywania - zapisuj max co 2 sekundy
+    useEffect(() => {
+        if (!historyInitialized) {
+            return;
+        }
+        if (justFetched) {
+            setJustFetched(false);
+            return;
+        }
+
+        // Anuluj poprzedni timeout
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        // Ustaw nowy timeout
+        saveTimeoutRef.current = setTimeout(() => {
+            storeQueryHistory(queryHistory);
+        }, 2000);
+
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, [queryHistory, historyInitialized, justFetched, storeQueryHistory]);
+
+    const addQueryToHistory = useCallback((entry: QueryHistoryEntry) => {
+        const maxCount = maxItems;
+        const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+        const cutoffTime = Date.now() - maxAgeMs;
+
+        // Automatyczne dodanie znacznika czasu i hasha (uwzględniając schema)
+        const entryWithTimestamp: QueryHistoryEntry = {
+            ...entry,
+            startTime: entry.startTime ?? Date.now(),
+            queryHash: hashQuery(entry.query, entry.schema)
+        };
+
+        setQueryHistory((prev) => {
+            let updatedHistory = [entryWithTimestamp, ...prev];
+            
+            // Oportunistyczne czyszczenie po wieku
+            if (updatedHistory.length > 100) {
+                updatedHistory = updatedHistory.filter((e) => e.startTime >= cutoffTime);
+            }
+            
+            // Zastosuj deduplikację zgodnie z ustawieniami
+            if (deduplicateMode === "time-based") {
+                // Time-based: grupuj po hash (query + schema), w każdej grupie zachowaj wpisy z okna czasowego + 1 najstarszy
+                const timeWindow = deduplicateTimeWindow * 1000; 
+                const now = Date.now();
+                const deduped: QueryHistoryEntry[] = [];
+                const groups = new Map<string, QueryHistoryEntry[]>(); // hash -> lista wpisów
+
+                // Pogrupuj po hash (query + schema)
+                for (const entry of updatedHistory) {
+                    const key = entry.queryHash!;
+                    if (!groups.has(key)) {
+                        groups.set(key, []);
+                    }
+                    groups.get(key)!.push(entry);
+                }
+
+                // Dla każdej grupy zachowaj wpisy w oknie + 1 najstarszy spoza okna
+                for (const [hash, entries] of groups) {
+                    // Sortuj po czasie (najnowsze najpierw)
+                    entries.sort((a, b) => b.startTime - a.startTime);
+
+                    const inWindow: QueryHistoryEntry[] = [];
+                    let oldestOutsideWindow: QueryHistoryEntry | null = null;
+
+                    for (const entry of entries) {
+                        const age = now - entry.startTime;
+                        if (age < timeWindow) {
+                            // W oknie - zachowaj wszystkie
+                            inWindow.push(entry);
+                        } else {
+                            // Poza oknem - zachowaj tylko najstarszy
+                            if (!oldestOutsideWindow || entry.startTime < oldestOutsideWindow.startTime) {
+                                oldestOutsideWindow = entry;
+                            }
+                        }
+                    }
+
+                    // Dodaj wpisy z okna
+                    deduped.push(...inWindow);
+                    // Dodaj najstarszy spoza okna (jeśli istnieje)
+                    if (oldestOutsideWindow) {
+                        deduped.push(oldestOutsideWindow);
+                    }
+                }
+
+                // Posortuj z powrotem (najnowsze najpierw)
+                deduped.sort((a, b) => b.startTime - a.startTime);
+                updatedHistory = deduped;
+            } else if (deduplicateMode === "aggressive") {
+                // Aggressive: globalnie deduplikuj — zachowaj tylko ostatni z każdego hasha (query + schema)
+                const seen = new Map<string, QueryHistoryEntry>();
+
+                for (const entry of updatedHistory) {
+                    const key = entry.queryHash!;
+                    if (!seen.has(key) || entry.startTime > seen.get(key)!.startTime) {
+                        seen.set(key, entry); // Najnowszy wygrywa
+                    }
+                }
+
+                updatedHistory = Array.from(seen.values()).sort((a, b) => b.startTime - a.startTime);
+            }
+            // "none": brak deduplikacji
+            
+            // Ogranicz do maxItems
+            if (updatedHistory.length > maxCount) {
+                updatedHistory = updatedHistory.slice(0, maxCount);
+            }
+            
+            return updatedHistory;
+        });
+    }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow]);
+
+    const clearQueryHistory = useCallback(() => {
+        setQueryHistory([]);
+    }, []);
+
+    const reloadQueryHistory = useCallback(async () => {
+        await loadQueryHistory();
+    }, [loadQueryHistory]);
+
+    // Lazy cleanup w tle
+    useEffect(() => {
+        const cleanupHistory = () => {
+            const maxAgeMs = (maxAgeDays ?? 60) * 24 * 60 * 60 * 1000;
+            const cutoffTime = Date.now() - maxAgeMs;
+            const maxCount = maxItems ?? 1000;
+
+            const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+            
+            idleCallback(() => {
+                setQueryHistory((prev) => {
+                    if (prev.length === 0 || prev.length < maxCount * 0.8) {
+                        return prev;
+                    }
+
+                    let filtered = prev.filter((entry) => entry.startTime >= cutoffTime);
+                    
+                    if (filtered.length > maxCount) {
+                        filtered = filtered.slice(0, maxCount);
+                    }
+                    
+                    return filtered.length !== prev.length ? filtered : prev;
+                });
+            });
+        };
+
+        const startupTimeout = setTimeout(cleanupHistory, 5000);
+        const interval = setInterval(cleanupHistory, 6 * 60 * 60 * 1000);
+
+        return () => {
+            clearTimeout(startupTimeout);
+            clearInterval(interval);
+        };
+    }, [maxAgeDays, maxItems]);
+
     return (
-        <QueryHistoryContext.Provider value={{ queryHistory, addQueryToHistory, clearQueryHistory }}>
+        <QueryHistoryContext.Provider value={{ initialized: historyInitialized, queryHistory, addQueryToHistory, clearQueryHistory, reloadQueryHistory }}>
             {children}
         </QueryHistoryContext.Provider>
     );

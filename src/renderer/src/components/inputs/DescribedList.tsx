@@ -107,8 +107,16 @@ interface DescribedListProps<T = any> {
 
 const StyledDescribedListHeader = styled('div', { name: 'DescribedList', slot: 'header' })(() => ({}));
 const StyledDescribedListOption = styled('div', { name: 'DescribedList', slot: 'option' })(({ }) => ({}));
-const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ }) => ({}));
-const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ }) => ({}));
+const StyledDescribedListContainer = styled('div', { name: 'DescribedList', slot: 'container' })(({ }) => ({
+    minWidth: 0,
+    maxWidth: '100%',
+}));
+const StyledDescribedListDescription = styled('div', { name: 'DescribedList', slot: 'description' })(({ }) => ({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    minWidth: 0,
+    maxWidth: '100%',
+}));
 
 export function DescribedList<T = any>(props: DescribedListProps<T>) {
     const {
@@ -235,7 +243,10 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
             className={clsx('DescribedList-container', effectiveDescription === 'sidebar' && 'sidebar', classes)}
         >
             {effectiveDescription === 'header' && describedOption?.description && (
-                <StyledDescribedListDescription className={clsx("DescribedList-description", "header", classes)}>
+                <StyledDescribedListDescription 
+                    className={clsx("DescribedList-description", "header", classes)}
+                    style={{ width: '100%', maxWidth: '100%' }}
+                >
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
@@ -282,7 +293,10 @@ export function DescribedList<T = any>(props: DescribedListProps<T>) {
             />
 
             {effectiveDescription === 'footer' && describedOption?.description && (
-                <StyledDescribedListDescription className={clsx("DescribedList-description", "footer", classes)}>
+                <StyledDescribedListDescription 
+                    className={clsx("DescribedList-description", "footer", classes)}
+                    style={{ width: '100%', maxWidth: '100%' }}
+                >
                     {describedOption?.description
                         ? <FormattedText text={describedOption.description} />
                         : (descriptionBehavior === 'reserveSpace' ? <span /> : null)}
