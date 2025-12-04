@@ -2,7 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@mui/material";
 import { TableRecord } from ".";
 
@@ -150,27 +150,94 @@ const statisticsTab = (
                 return <div style={{ padding: 16, color: theme.palette.text.secondary }}>{t("no-data-timeline", "Not enough data for timeline (need at least 2 snapshots)")}</div>;
             }
 
-            // Live vs Dead timeline
             const data = buildTimelineData(statRows, (r: any) => ({
                 snapshot: r.snapshot ?? -1,
                 live: r.n_live_tup != null ? num(r.n_live_tup) : null,
                 dead: r.n_dead_tup != null ? num(r.n_dead_tup) : null,
             }));
 
+            // Data for pie chart (latest snapshot)
+            const lastRow = statRows[statRows.length - 1];
+            const liveCount = num(lastRow?.n_live_tup);
+            const deadCount = num(lastRow?.n_dead_tup);
+            const pieData = [
+                { name: t("live", "Live"), value: liveCount },
+                { name: t("dead", "Dead"), value: deadCount }
+            ];
+
+            const COLORS = [theme.palette.success.main, theme.palette.error.main];
+
             return (
-                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                    <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("live-dead-timeline", "Live vs Dead Tuples")}</h4>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                            <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
-                            <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                            <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
-                            <Legend />
-                            <Line type="monotone" dataKey="live" stroke={theme.palette.success.main} name={t("live", "Live")} dot={false} isAnimationActive={false} connectNulls />
-                            <Line type="monotone" dataKey="dead" stroke={theme.palette.error.main} name={t("dead", "Dead")} dot={false} isAnimationActive={false} connectNulls />
-                        </LineChart>
-                    </ResponsiveContainer>
+                <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", gap: 8, overflow: "hidden" }}>
+                    {/* Timeline Charts */}
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
+                        {/* Live Tuples Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("live-tuples", "Live Tuples")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorLive" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="live" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorLive)" name={t("live", "Live")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Dead Tuples Chart */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("dead-tuples", "Dead Tuples")}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="colorDead" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                                    <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
+                                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
+                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="dead" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDead)" name={t("dead", "Dead")} isAnimationActive={false} connectNulls />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Pie Chart */}
+                    <div style={{ flex: 0.6, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("live-dead-ratio", "Live/Dead Ratio")}</h4>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, value }) => `${name}: ${value.toLocaleString()}`}
+                                    outerRadius={80}
+                                    fill={theme.palette.background.paper}
+                                    dataKey="value"
+                                    isAnimationActive={false}
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(value: number) => value.toLocaleString()} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             );
         }

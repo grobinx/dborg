@@ -1,5 +1,5 @@
 import { DatabasesMetadata } from "src/api/db";
-import { ProfileRecord } from "../../contexts/ProfilesContext";
+import { ProfileRecord } from "../../../../api/entities";
 
 /**
  * Toggle the visibility of the tools panel.

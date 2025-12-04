@@ -66,7 +66,7 @@ type ScriptAlterMode = "data-type" | "default" | "not-null" | "rename" | "collat
 
 const columnsTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedTable: () => TableRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
@@ -105,7 +105,8 @@ const columnsTab = (
                         }
                     },
                     rows: async () => {
-                        if (!selectedRow()) return [];
+                        selected = null;
+                        if (!selectedTable()) return [];
                         const { rows } = await session.query<TableColumnRecord>(`
                         select 
                             att.attnum as no, 
@@ -135,7 +136,7 @@ const columnsTab = (
                             and cl.relname = $2
                             and att.atttypid != 0
                         order by no`,
-                            [selectedRow()!.schema_name, selectedRow()!.table_name]
+                            [selectedTable()!.schema_name, selectedTable()!.table_name]
                         );
                         return rows;
                     },
@@ -182,11 +183,11 @@ const columnsTab = (
                             type: "grid",
                             pivot: true,
                             rows: async () => {
-                                if (!selected) return [];
+                                if (!selected || !selectedTable()) return [];
 
                                 const { rows } = await session.query<ColumnDetailRecord>(columnDetailQuery(session.getVersion()), [
-                                    selectedRow()!.schema_name,
-                                    selectedRow()!.table_name,
+                                    selectedTable()!.schema_name,
+                                    selectedTable()!.table_name,
                                     selected!.name,
                                 ]);
 
@@ -422,13 +423,13 @@ const columnsTab = (
                                 }
                                 const version = session.getVersion();
                                 if (scriptMode === "add" && columnDetails) {
-                                    return columnAddDdl(version, selectedRow()!, selected, columnDetails);
+                                    return columnAddDdl(version, selectedTable()!, selected, columnDetails);
                                 } else if (scriptMode === "drop" && columnDetails) {
-                                    return columnDropDdl(version, selectedRow()!, selected);
+                                    return columnDropDdl(version, selectedTable()!, selected);
                                 } else if (scriptMode === "comment" && columnDetails) {
-                                    return columnCommentDdl(version, selectedRow()!, selected, scriptNegationMode);
+                                    return columnCommentDdl(version, selectedTable()!, selected, scriptNegationMode);
                                 } else if (scriptMode === "alter" && columnDetails) {
-                                    return columnAlterDdl(version, selectedRow()!, selected, columnDetails, scriptAlterMode, scriptNegationMode);
+                                    return columnAlterDdl(version, selectedTable()!, selected, columnDetails, scriptAlterMode, scriptNegationMode);
                                 }
 
                                 return "";
@@ -506,8 +507,6 @@ const columnAlterDdl = (
                         case "int2":
                         case "bigint":
                         case "int8":
-                        case "serial":
-                        case "bigserial":
                         case "real":
                         case "float4":
                         case "double precision":

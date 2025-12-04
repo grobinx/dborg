@@ -15,7 +15,7 @@ import { ContainerType, useContainers } from "@renderer/contexts/ApplicationCont
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { Button } from "@renderer/components/buttons/Button";
-import { ProfileRecord, useProfiles } from "@renderer/contexts/ProfilesContext";
+import { useProfiles } from "@renderer/contexts/ProfilesContext";
 import { Properties } from "src/api/db";
 
 export interface SchemaAssistantProps extends BoxProps {
@@ -171,13 +171,13 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     React.useEffect(() => {
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
         subscribe(Messages.SET_PROFILE_ID, handleSetSchemaIdMessage);
-        subscribe(Messages.STE_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
+        subscribe(Messages.SET_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
         subscribe(Messages.END_EDIT_PROFILE, handleEndEditSchemaMessage);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainerMessage);
             unsubscribe(Messages.SET_PROFILE_ID, handleSetSchemaIdMessage);
-            unsubscribe(Messages.STE_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
+            unsubscribe(Messages.SET_CLONE_PROFILE_ID, handleSetCloneSchemaIdMessage);
             unsubscribe(Messages.END_EDIT_PROFILE, handleEndEditSchemaMessage);
         };
     }, [

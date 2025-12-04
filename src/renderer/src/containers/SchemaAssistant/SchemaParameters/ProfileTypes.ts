@@ -1,5 +1,5 @@
 import { DriverInfo, Properties } from "src/api/db";
-import { ProfileUsePasswordType } from "./DriverPropertyPassword";
+import { ProfileUsePasswordType } from "../../../../../api/entities";
 
 export type ProfileParametersType = {
     uniqueId?: string,

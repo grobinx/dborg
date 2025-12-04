@@ -62,6 +62,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const listItemRef = useRef<HTMLLIElement>(null); // Referencja do elementu listy
+    const listRef = useRef<HTMLUListElement>(null);
     const [listMaxHeight, setListMaxHeight] = useState<number>(300); // Domyślna maksymalna wysokość
     const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -226,7 +227,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         if (selectedActionIndex !== -1) {
             setSelectedIndex(selectedActionIndex); // Ustaw selectedIndex na indeks wybranej akcji
-            scrollToItem(selectedActionIndex); // Przewiń do wybranej akcji
         } else if (filteredCommands.length > 0) {
             setSelectedIndex(0); // Jeśli żadna akcja nie jest wybrana, ustaw na pierwszy element
         } else {
@@ -234,12 +234,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
     }, [open, filteredCommands]);
 
-    const scrollToItem = (index: number) => {
-        const listItem = document.querySelectorAll<HTMLLIElement>(
-            selectedGroup ? '.command-list-item' : '.command-list-group-item'
-        )[index];
-        listItem?.scrollIntoView({ block: 'nearest' });
-    };
+    React.useEffect(() => {
+        requestAnimationFrame(() => {
+            const listItem = listRef.current?.querySelector<HTMLLIElement>('.focused');
+            listItem?.scrollIntoView({ block: 'nearest' });
+        });
+    }, [selectedIndex]);
 
     const handleClickOutside = (event: MouseEvent) => {
         if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -289,7 +289,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 const current = prev === null ? -1 : prev;
                 const nextIndex = findNextIndex(current, 1);
                 if (nextIndex !== null) {
-                    scrollToItem(nextIndex);
                     return nextIndex;
                 }
                 return prev;
@@ -302,7 +301,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 const current = prev === null ? items.length : prev;
                 const nextIndex = findNextIndex(current, -1);
                 if (nextIndex !== null) {
-                    scrollToItem(nextIndex);
                     return nextIndex;
                 }
                 return prev;
@@ -319,7 +317,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     if (candidate !== null) nextIndex = candidate;
                 }
                 if (nextIndex !== current) {
-                    scrollToItem(nextIndex);
                     return nextIndex;
                 }
                 return prev;
@@ -336,7 +333,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     if (candidate !== null) nextIndex = candidate;
                 }
                 if (nextIndex !== current) {
-                    scrollToItem(nextIndex);
                     return nextIndex;
                 }
                 return prev;
@@ -535,6 +531,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                         }
                     />
                     <CommandList
+                        ref={listRef}
                         disablePadding
                         dense
                         maxHeight={listMaxHeight} // Ustaw dynamiczną maksymalną wysokość
@@ -543,52 +540,35 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                             ? filteredCommands
                                 .map((action, index) => {
                                     const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
-                                    const tooltip = typeof action.tooltip === "function" ? action.tooltip(context) : action.tooltip;
                                     const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+                                    const selected = index === selectedIndex || (typeof action.selected === 'function' ? action.selected(context) : false);
+                                    const label = typeof action.label === "function" ? action.label(context) : action.label;
+                                    const description = typeof action.description === "function" ? action.description(context) : action.description;
+                                    const icon = resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon);
+                                    const search = searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText;
                                     return (
                                         <ListItem
                                             key={action.id}
                                             disablePadding
                                             dense
                                             ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
-                                            className="command-list-item"
+                                            className={index === selectedIndex ? 'focused' : undefined}
                                             sx={{ opacity: disabled ? 0.5 : 1, display: visible ? 'block' : 'none' }}
                                         >
-                                            <Tooltip title={tooltip}>
-                                                <ListItemButton
-                                                    onClick={() => handleCommandClick(action)}
-                                                    selected={
-                                                        index === selectedIndex ||
-                                                        (typeof action.selected === 'function' ? (
-                                                            action.selected(context)
-                                                        ) : false)
-                                                    }
-                                                    disabled={disabled}
-                                                >
-                                                    <ListItemIcon sx={{ color: 'inherit' }}>
-                                                        {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
-                                                    </ListItemIcon>
-                                                    <ListItemText
-                                                        primary={highlightText(
-                                                            typeof action.label === "function" ? action.label(context) : action.label,
-                                                            searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
-                                                            false, false, theme.palette.primary.main
-                                                        )}
-                                                        {...(action.description
-                                                            ? {
-                                                                secondary: highlightText(
-                                                                    typeof action.description === "function"
-                                                                        ? action.description(context)
-                                                                        : action.description,
-                                                                    searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText,
-                                                                    false, false, theme.palette.primary.main
-                                                                ),
-                                                            }
-                                                            : {})}
-                                                    />
-                                                    {action.keybindings && <Shortcut keybindings={action.keybindings} />}
-                                                </ListItemButton>
-                                            </Tooltip>
+                                            <ListItemButton
+                                                onClick={() => handleCommandClick(action)}
+                                                selected={selected}
+                                                disabled={disabled}
+                                            >
+                                                <ListItemIcon sx={{ color: 'inherit' }}>
+                                                    {icon}
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={highlightText(label, search, false, false, theme.palette.primary.main)}
+                                                    secondary={highlightText(description, search, false, false, theme.palette.primary.main)}
+                                                />
+                                                {action.keybindings && <Shortcut keybindings={action.keybindings} />}
+                                            </ListItemButton>
                                         </ListItem>
                                     )
                                 })
@@ -597,7 +577,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     key={group.prefix || index}
                                     disablePadding
                                     dense
-                                    className="command-list-group-item"
+                                    className={index === selectedIndex ? 'focused' : undefined}
                                 >
                                     <ListItemButton
                                         onClick={() => {
