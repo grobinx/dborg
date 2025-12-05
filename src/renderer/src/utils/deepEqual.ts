@@ -1,3 +1,6 @@
+import Decimal from "decimal.js";
+import { DateTime, Duration } from "luxon";
+
 /**
  * Zaawansowane porównanie głębokie dwóch struktur (obsługuje obiekty, tablice, daty, mapy, zbiory, cykle).
  */
@@ -9,6 +12,22 @@ export function deepEqual(a: any, b: any, seen = new WeakMap()): boolean {
     // Obsługa dat
     if (a instanceof Date && b instanceof Date) {
         return a.getTime() === b.getTime();
+    }
+
+    if (a instanceof RegExp && b instanceof RegExp) {
+        return a.source === b.source && a.flags === b.flags;
+    }
+
+    if (a instanceof DateTime && b instanceof DateTime) {
+        return a.toMillis() === b.toMillis();
+    }
+
+    if (a instanceof Duration && b instanceof Duration) {
+        return a.toMillis() === b.toMillis();
+    }
+
+    if (a instanceof Decimal && b instanceof Decimal) {
+        return a.equals(b);
     }
 
     // Obsługa Map
