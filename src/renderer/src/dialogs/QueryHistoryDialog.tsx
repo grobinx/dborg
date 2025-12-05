@@ -65,6 +65,9 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
         if (selected !== null && editorInstance) {
             editorInstance.setValue((filteredHistory || [])[selected]?.qh_query || "");
         }
+        else {
+            editorInstance?.setValue("");
+        }
     }, [selected, editorInstance]);
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
