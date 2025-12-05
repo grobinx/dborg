@@ -16,17 +16,17 @@ export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
 
     // Kolumny dla DataGrid
     const columns: ColumnDefinition[] = [
-        { key: "schema", label: t("schema", "Schema"), dataType: "string", width: 200 },
+        { key: "qh_profile_name", label: t("profile", "Profile"), dataType: "string", width: 200 },
         {
-            key: "query", label: t("query", "Query"), dataType: "string", width: 300, formatter: (value) => {
+            key: "qh_query", label: t("query", "Query"), dataType: "string", width: 300, formatter: (value) => {
                 return String(value).replace(/\s+/g, " ").trim();
             }
         },
-        { key: "executionTime", label: t("execution-time", "Execution Time"), dataType: "duration", width: 130 },
-        { key: "fetchTime", label: t("fetch-time", "Fetch Time"), dataType: "duration", width: 130 },
-        { key: "rows", label: t("rows", "Rows"), dataType: "number", width: 100 },
-        { key: "error", label: t("error", "Error"), dataType: "string", width: 300 },
-        { key: "startTime", label: t("start-time", "Start Time"), dataType: "datetime", width: 200 },
+        { key: "qh_execution_time", label: t("execution-time", "Execution Time"), dataType: "duration", width: 130 },
+        { key: "qh_fetch_time", label: t("fetch-time", "Fetch Time"), dataType: "duration", width: 130 },
+        { key: "qh_rows", label: t("rows", "Rows"), dataType: "number", width: 100 },
+        { key: "qh_error", label: t("error", "Error"), dataType: "string", width: 300 },
+        { key: "qh_start_time", label: t("start-time", "Start Time"), dataType: "datetime", width: 200 },
     ];
 
     return (
