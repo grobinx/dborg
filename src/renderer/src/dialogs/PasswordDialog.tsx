@@ -11,7 +11,6 @@ export interface PasswordDialogProps extends DefaultDialogProps {
 }
 
 function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogProps, string | null>) {
-    const { slotProps } = useThemeProps({ name: "Dialog", props: payload });
     const [password, setPassword] = React.useState('');
     const { t } = useTranslation();
     const textFieldRef = React.useRef<HTMLInputElement>(null);
@@ -55,10 +54,10 @@ function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogPr
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={() => onClose(null)} {...slotProps?.button}>
+                <Button onClick={() => onClose(null)}>
                     {t("cancel", "Cancel")}
                 </Button>
-                <Button color="success" onClick={() => onClose(password)} disabled={password === ""} {...slotProps?.button}>
+                <Button color="success" onClick={() => onClose(password)} disabled={password === ""}>
                     {t("ok", "Ok")}
                 </Button>
             </DialogActions>

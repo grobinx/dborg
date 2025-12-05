@@ -131,7 +131,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             width: 80,
                         },
                     ] as ColumnDefinition[],
-                    onRowClick: (row: TableRecord | undefined, refresh: RefreshSlotFunction) => {
+                    onRowSelect: (row: TableRecord | undefined, refresh: RefreshSlotFunction) => {
                         selectedRow = row ? row : null;
                         if (selectedRow) {
                             refresh(cid("tables-text"));

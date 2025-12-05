@@ -1,8 +1,8 @@
 import * as monaco from "monaco-editor";
 import { selectFragmentAroundCursor } from "../../../../../components/editor/editorUtils";
-import { TFunction } from "i18next";
+import { t } from "i18next";
 
-export function SelectCurrentCommand(t: TFunction<"translation", undefined>): monaco.editor.IActionDescriptor {
+export function SelectCurrentCommand(): monaco.editor.IActionDescriptor {
     const actionId = "editor.actions.selectCurrentCommand";
 
     return {

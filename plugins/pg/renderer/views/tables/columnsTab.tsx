@@ -97,7 +97,7 @@ const columnsTab = (
                     id: cid("table-columns-grid"),
                     type: "grid",
                     mode: "defined",
-                    onRowClick(row: TableColumnRecord, refresh) {
+                    onRowSelect(row: TableColumnRecord, refresh) {
                         selected = row;
                         if (selected) {
                             refresh(cid("table-columns-info-panel-title"));

@@ -1,9 +1,8 @@
 import * as monaco from "monaco-editor";
-import { TFunction } from "i18next";
+import { t } from "i18next";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
 
 export function ExecuteQueryAction(
-    t: TFunction<"translation", undefined>,
     onAction: (query: string) => void
 ): monaco.editor.IActionDescriptor {
     const actionId = "editor.actions.executeQuery";

@@ -1,9 +1,7 @@
 import * as monaco from "monaco-editor";
-import { TFunction } from "i18next";
-import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
+import { t } from "i18next";
 
 export function AddSqlEditorTab(
-    t: TFunction<"translation", undefined>,
     run: () => void
 ): monaco.editor.IActionDescriptor {
     const actionId = "editor.actions.addSqlEditorTab";

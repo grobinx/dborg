@@ -1,8 +1,7 @@
 import * as monaco from "monaco-editor";
-import { TFunction } from "i18next";
+import { t } from "i18next";
 
 export function CloseSqlEditorTab(
-    t: TFunction<"translation", undefined>,
     run: () => void
 ): monaco.editor.IActionDescriptor {
     const actionId = "editor.actions.closeSqlEditorTab";

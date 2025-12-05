@@ -27,6 +27,10 @@ import { use } from "i18next";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { SelectQueryHistoryAction } from "./editor/actions/SelectQueryHistoryAction";
+import { ProfileRecord } from "src/api/entities";
+import QueryHistoryDialog from "@renderer/dialogs/QueryHistoryDialog";
+import { editor } from "monaco-editor";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
@@ -49,6 +53,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const { session, tabsItemID, itemID, editorContentManager } = props;
     const addToast = useToast();
     const { t } = useTranslation();
+    const dialogs = useDialogs();
     const firstLineRef = useRef<string>("");
     const contentLoadedRef = useRef(false);
     const [editorInstance, setEditorInstance] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -66,6 +71,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             editorInstance.focus();
         }
     });
+    const [openSelectQueryHistoryDialog, setOpenSelectQueryHistoryDialog] = React.useState(false);
 
     useEffect(() => {
         editorInstanceRef.current = editorInstance;
@@ -282,7 +288,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         setEditorInstance(editor); // Ustaw editor w stanie
 
         // Dodanie polecenia do listy poleceń edytora
-        editor.addAction(ExecuteQueryAction(t, (query: string) => {
+        editor.addAction(ExecuteQueryAction((query: string) => {
             if ((query ?? "").trim() === "") {
                 return;
             }
@@ -311,10 +317,12 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 query: query,
             });
         }));
-        editor.addAction(SelectCurrentCommand(t));
-        editor.addAction(AddSqlEditorTab(t, () => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
-        editor.addAction(CloseSqlEditorTab(t, () => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
-        editor.addAction(MenuReopenSqlEditorTab(t, () => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
+        editor.addAction(SelectCurrentCommand());
+        editor.addAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
+        editor.addAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
+        editor.addAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
+        editor.addAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
+
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
             queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.uniqueId });
         });
@@ -353,11 +361,45 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     };
 
     return (
-        <MonacoEditor
-            defaultValue=""
-            onMount={handleEditorDidMount}
-            language="sql"
-        />
+        <>
+            <MonacoEditor
+                onMount={handleEditorDidMount}
+                language="sql"
+            />
+            <QueryHistoryDialog
+                open={openSelectQueryHistoryDialog}
+                onClose={(result) => {
+                    setOpenSelectQueryHistoryDialog(false);
+                    if (result && editorInstance) {
+                        const selection = editorInstance.getSelection();
+                        if (selection && !selection.isEmpty()) {
+                            editorInstance.executeEdits("select-query-history", [
+                                {
+                                    range: selection,
+                                    text: result.query,
+                                },
+                            ]);
+                        } else {
+                            const position = editorInstance.getPosition();
+                            if (position) {
+                                editorInstance.executeEdits("select-query-history", [
+                                    {
+                                        range: new monaco.Range(
+                                            position.lineNumber,
+                                            position.column,
+                                            position.lineNumber,
+                                            position.column
+                                        ),
+                                        text: result.query,
+                                    },
+                                ]);
+                            }
+                        }
+                    }
+                }}
+                profileName={(session.getUserData("profile") as ProfileRecord).sch_name}
+            />
+        </>
     );
 };
 

@@ -14,7 +14,7 @@ const YES_TEXT = <Typography component="span" sx={{ color: 'success.main', fontW
 const NO_TEXT = <Typography component="span" sx={{ color: 'error.main', fontWeight: 'bold' }}>No</Typography>;
 
 function DriverInfoDialog({ open, onClose, payload }: DialogProps<DriverInfoDialogProps>) {
-    const { driver, slotProps } = useThemeProps({ name: "Dialog", props: payload });
+    const { driver } = useThemeProps({ name: "Dialog", props: payload });
     const { t } = useTranslation();
 
     return (
@@ -104,7 +104,7 @@ function DriverInfoDialog({ open, onClose, payload }: DialogProps<DriverInfoDial
 
             {/* Akcje dialogu */}
             <DialogActions>
-                <Button onClick={() => onClose()} color="primary" {...slotProps?.button}>
+                <Button onClick={() => onClose()} color="primary">
                     {t("close", "Close")}
                 </Button>
             </DialogActions>

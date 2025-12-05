@@ -109,7 +109,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const rowClick = React.useMemo(
         () =>
             debounce((row: Record<string, any> | undefined) => {
-                slot.onRowClick?.(row, refreshSlot);
+                slot.onRowSelect?.(row, refreshSlot);
             }, 250),
         [slot.id, refreshSlot]
     );
@@ -133,7 +133,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         }));
     }
 
-    function handleRowClick(row: Record<string, any> | undefined) {
+    function handleRowSelect(row: Record<string, any> | undefined) {
         rowClick(row);
     }
 
@@ -174,7 +174,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     columns={columns}
                     data={rows}
                     loading={loading ? t("loading---", "Loading...") : undefined}
-                    onRowClick={handleRowClick}
+                    onRowSelect={handleRowSelect}
                     ref={dataGridRef}
                     onMount={dataGridMountHandler}
                     autoSaveId={slot.autoSaveId ?? slot.id}

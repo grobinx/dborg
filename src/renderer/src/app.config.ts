@@ -178,7 +178,7 @@ settingsRegistry.register((context) => {
                     storageGroup: 'app',
                     storageKey: 'query_history.compress_text',
                     label: t('query-history-compress-text', 'Compress Query Text'),
-                    description: t('query-history-compress-text-description', 'Enable or disable compression of query text in the history. Removes unnecessary spaces and new lines.'),
+                    description: t('query-history-compress-text-description', 'Enable compression of query text in the history. Removes unnecessary spaces and new lines.'),
                 },
                 {
                     type: 'select',

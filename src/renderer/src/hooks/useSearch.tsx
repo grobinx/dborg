@@ -16,7 +16,7 @@ export type MatchMode = 'contains' | 'wholeWord' | 'start' | 'end';
 /**
  * Definicje pól wyszukiwania dla struktur danych.
  */
-export interface SearchOptions {
+export interface SearchOptions<T,> {
     /** Tryb dopasowania tekstu w wyszukiwaniu */
     matchMode?: MatchMode;
     /** Czy wszystkie części wyszukiwanego tekstu muszą pasować (true) czy dowolna (false), domyślnie true */
@@ -31,6 +31,8 @@ export interface SearchOptions {
     minLength?: number;
     /** Czy dzielić tekst wyszukiwania spacją i wyszukiwać wszystkie części w dowolnej kolejności, domyślnie true */
     splitWords?: boolean;
+    /** Opcjonalna funkcja filtrująca element podczas wyszukiwania */
+    filter?: (item: T) => boolean;
 }
 
 
@@ -48,7 +50,7 @@ const normalize = (s: string, ignoreDiacritics: boolean, caseSensitive: boolean)
     return result;
 };
 
-export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchText: string | null, options?: SearchOptions): T[] => {
+export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchText: string | null, options?: SearchOptions<T>): T[] => {
     const {
         matchMode = 'contains',
         matchAll = true,
@@ -57,6 +59,7 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
         ignoreDiacritics = true,
         minLength = 1,
         splitWords = true,
+        filter,
     } = options || {};
 
     if (data.length === 0) return data;
@@ -105,6 +108,7 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
     }
 
     return data.filter(item => {
+        if (filter && !filter(item)) return false; // apply custom filter first
         for (const field of resolvedFields) {
             if (item[field] === null || item[field] === undefined) continue;
             const value = String(item[field]);
@@ -131,7 +135,7 @@ export const useSearch = <T,>(
     data: T[] | null,
     fields: ((keyof T)[]) | '*' = '*',
     searchText: string | null,
-    options?: SearchOptions,
+    options?: SearchOptions<T>,
     delay: number = 300,
     highlightColor: ThemeColor = 'primary',
 ): [T[] | null, (text: string | undefined | null) => React.ReactNode] => {

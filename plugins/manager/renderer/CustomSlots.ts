@@ -515,9 +515,9 @@ export interface IGridSlot extends ICustomSlot {
      */
     actionGroups?: ActionGroupFactory;
     /**
-     * Callback po kliknięciu w wiersz (opcjonalnie).
+     * Callback po zaznaczeniu wiersza (opcjonalnie).
      */
-    onRowClick?: (row: any | undefined, refresh: (id: string) => void) => void;
+    onRowSelect?: (row: any | undefined, refresh: (id: string) => void) => void;
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */

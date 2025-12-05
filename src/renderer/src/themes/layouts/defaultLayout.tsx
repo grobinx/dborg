@@ -125,6 +125,18 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
             MuiDialogContent: {
                 defaultProps: {
                     dividers: true,
+                },
+                styleOverrides: {
+                    root: {
+                        padding: 8,
+                    }
+                }
+            },
+            MuiDialogTitle: {
+                styleOverrides: {
+                    root: {
+                        padding: 8,
+                    }
                 }
             },
             MuiTextField: {
