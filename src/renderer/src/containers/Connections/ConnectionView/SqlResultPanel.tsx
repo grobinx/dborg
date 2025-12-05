@@ -209,7 +209,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setRows(rows);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.profile.sch_name,
+                    profileName: session.profile.sch_name,
                     executionTime: info.duration,
                     fetchTime: fetchTime,
                     rows: rows.length,
@@ -221,7 +221,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setRows([]);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.profile.sch_name,
+                    profileName: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
                         : String(error),
@@ -261,7 +261,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setUpdatedCount(result.updateCount ?? null);
                 addQueryToHistory({
                     query: query!,
-                    schema: session.profile.sch_name,
+                    profileName: session.profile.sch_name,
                     executionTime: result.duration,
                     rows: result.updateCount ?? undefined,
                     startTime: Date.now(),
@@ -270,7 +270,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 addToast("error", "Error executing command", { reason: error, source: session.profile.sch_name });
                 addQueryToHistory({
                     query: query!,
-                    schema: session.profile.sch_name,
+                    profileName: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
                         : String(error),

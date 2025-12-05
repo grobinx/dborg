@@ -6,10 +6,12 @@ import { useToast } from "./ToastContext";
 import { useTranslation } from "react-i18next";
 import SparkMD5 from "spark-md5";
 import { QueryHistoryDeduplicateMode } from "@renderer/app.config";
+import { uuidv7 } from "uuidv7";
+import { QueryHistoryRecord } from "../../../api/entities";
 
 export interface QueryHistoryEntry {
     query: string;
-    schema: string;
+    profileName: string;
     executionTime?: number;
     fetchTime?: number;
     rows?: number;
@@ -42,8 +44,8 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Oblicz hash zapytania dla deduplikacji (uwzględniając schemat)
-    const hashQuery = useCallback((query: string, schema: string): string => {
-        return SparkMD5.hash(query + '::' + schema);
+    const hashQuery = useCallback((query: string, profileName: string): string => {
+        return SparkMD5.hash(query + '::' + profileName);
     }, []);
 
     // Kompresja zapytania (usunięcie zbędnych spacji/nowych linii, zachowując stringi)
@@ -54,7 +56,6 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         for (let i = 0; i < query.length; i++) {
             const char = query[i];
-            const prevChar = i > 0 ? query[i - 1] : '';
 
             // Obsługa escape sequences
             if (escaped) {
@@ -111,13 +112,6 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (data) {
             try {
                 let loadedHistory = JSON.parse(data);
-                
-                // Rozpakuj skompresowane zapytania jeśli są
-                loadedHistory = loadedHistory.map((entry: QueryHistoryEntry) => ({
-                    ...entry,
-                    query: entry.query // Query jest już normalny w pliku (rozpakowywany przy wczytaniu)
-                }));
-                
                 setQueryHistory(loadedHistory);
                 setJustFetched(true);
                 setHistoryInitialized(true);
@@ -135,21 +129,14 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const dataPath = await window.dborg.path.get(DBORG_DATA_PATH_NAME);
 
         try {
-            // Przygotuj dane do zapisu - skompresuj zapytania
-            const dataToSave = history.map((entry) => ({
-                ...entry,
-                query: compressQueryText ? compressQuery(entry.query) : entry.query,
-                queryHash: hashQuery(entry.query, entry.schema) // Dodaj hash dla identyfikacji duplikatów (query + schema)
-            }));
-
             // Konwersja do JSON z minifikacją (bez pretty-print dla mniejszego rozmiaru)
-            const jsonString = JSON.stringify(dataToSave);
+            const jsonString = JSON.stringify(history);
 
             await window.dborg.file.writeFile(`${dataPath}/query-history.json`, jsonString);
         } catch (error) {
             addToast("error", t("error-saving-query-history", "Error saving query history."), { reason: error });
         }
-    }, [addToast, t, compressQuery, compressQueryText, hashQuery]);
+    }, [addToast, t]);
 
     // Załaduj historię przy starcie
     useEffect(() => {
@@ -189,14 +176,29 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const cutoffTime = Date.now() - maxAgeMs;
 
         // Automatyczne dodanie znacznika czasu i hasha (uwzględniając schema)
-        const entryWithTimestamp: QueryHistoryEntry = {
+        const query = compressQueryText ? compressQuery(entry.query) : entry.query;
+        const preparedEntry: QueryHistoryEntry = {
             ...entry,
+            query,
             startTime: entry.startTime ?? Date.now(),
-            queryHash: hashQuery(entry.query, entry.schema)
+            queryHash: hashQuery(query, entry.profileName)
+        };
+        const preparedRecord: QueryHistoryRecord = {
+            qh_id: uuidv7(),
+            qh_created: DateTime.now().toSQL(),
+            qh_updated: DateTime.now().toSQL(),
+            qh_profile_name: preparedEntry.profileName,
+            qh_query: query,
+            qh_hash: hashQuery(query, entry.profileName),
+            qh_start_time: DateTime.fromMillis(preparedEntry.startTime).toISO()!,
+            qh_execution_time: preparedEntry.executionTime ?? null,
+            qh_fetch_time: preparedEntry.fetchTime ?? null,
+            qh_rows: preparedEntry.rows ?? null,
+            qh_error: preparedEntry.error ?? null,
         };
 
         setQueryHistory((prev) => {
-            let updatedHistory = [entryWithTimestamp, ...prev];
+            let updatedHistory = [preparedEntry, ...prev];
             
             // Oportunistyczne czyszczenie po wieku
             if (updatedHistory.length > 100) {
@@ -274,7 +276,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
             
             return updatedHistory;
         });
-    }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow]);
+    }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow, compressQuery, compressQueryText]);
 
     const clearQueryHistory = useCallback(() => {
         setQueryHistory([]);

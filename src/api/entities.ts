@@ -53,3 +53,17 @@ export interface DborgRecord {
         electron: string;
     };
 }
+
+export interface QueryHistoryRecord {
+    qh_id: string;
+    qh_created: string; // ISO 8601
+    qh_updated: string; // ISO 8601
+    qh_profile_name: string;
+    qh_query: string;
+    qh_hash: string;
+    qh_start_time: string; // ISO 8601
+    qh_execution_time: number | null;
+    qh_fetch_time: number | null;
+    qh_rows: number | null;
+    qh_error: string | null;
+}

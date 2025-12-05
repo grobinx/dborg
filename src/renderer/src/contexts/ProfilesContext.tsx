@@ -112,7 +112,6 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const loadedProfiles = JSON.parse(data);
                 setProfiles(loadedProfiles);
                 setJustFetched(true);
-                setProfilesInitialized(true);
                 setOryginalProfilesData(data);
             } catch (error) {
                 addToast("error", t("error-parsing-profiles-json", "Error parsing profiles.json file."), { reason: error });
@@ -120,6 +119,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 throw error;
             }
         }
+        setProfilesInitialized(true);
         emitEvent('fetching', { status: 'success' });
     }, []);
 
