@@ -633,7 +633,7 @@ export const DataGrid = <T extends object>({
             //filterColumns.clearFilters();
             //columnsState.resetHiddenColumns();
             updateSelectedCell({ row: 0, column: 0 });
-            setPivot(initialPivot);
+            //setPivot(initialPivot);
         }
     }, [columns]);
 
@@ -1080,7 +1080,6 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerActionGroup(actions.GotoColumnGroup());
             actionManager.current.registerActionGroup(actions.SearchDataGroup());
             actionManager.current.registerActionGroup(actions.SummaryFooterGroup());
-            actionManager.current.registerActionGroup(actions.FilterColumnDataGroup());
 
             actionManager.current.registerAction(actions.IncreaseFontSize());
             actionManager.current.registerAction(actions.DecreaseFontSize());
@@ -1105,6 +1104,9 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.GotoColumn());
             actionManager.current.registerAction(actions.SearchData());
             actionManager.current.registerAction(actions.SummaryFooter());
+
+            actionManager.current.registerActionGroup(actions.FilterColumnDataGroup());
+            actionManager.current.registerAction(actions.FilterColumnValue());
             actionManager.current.registerAction(actions.FilterColumnData());
         }
 

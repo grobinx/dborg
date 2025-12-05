@@ -25,3 +25,4 @@ export * from "./ToggleHideColumn";
 export * from "./ToggleShowHiddenColumns";
 export * from "./SearchReset";
 export * from "./Pivot";
+export * from "./FilterColumnValue";
