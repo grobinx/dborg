@@ -143,6 +143,9 @@ const icons = (_palette: Palette): ThemeOptions => {
             Statistics: (props) => <IconWrapper {...props} className="statistics"><MuiIcons.BarChartOutlined fontSize="inherit" /></IconWrapper>,
             Compress: (props) => <IconWrapper {...props} className="compress"><MuiIcons.CompressOutlined fontSize="inherit" /></IconWrapper>,
             Sequence: (props) => <IconWrapper {...props} className="sequence"><MuiIcons.FormatListNumberedRtlOutlined fontSize="inherit" /></IconWrapper>,
+            File: (props) => <IconWrapper {...props} className="file"><MuiIcons.InsertDriveFileOutlined fontSize="inherit" /></IconWrapper>,
+            Folder: (props) => <IconWrapper {...props} className="folder"><MuiIcons.FolderOutlined fontSize="inherit" /></IconWrapper>,
+            Link: (props) => <IconWrapper {...props} className="link"><MuiIcons.LinkOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

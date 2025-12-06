@@ -465,6 +465,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     const { session, editorContentManager, itemID, tabsItemID } = props;
     const theme = useTheme();
     const [label, setLabel] = React.useState<string>("SQL Editor");
+    const [fileLabel, setFileLabel] = React.useState<string | null>(null);
     const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
 
@@ -472,7 +473,9 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
         if (itemID) {
             const state = editorContentManager.getState(itemID);
             if (state?.externalPath) {
-                setLabel(state.fileName.split(".").slice(0, -1).join("."));
+                const fileLabel = state.fileName.split(".").slice(0, -1).join("."); 
+                setFileLabel(fileLabel);
+                setLabel(fileLabel);
             }
         }
     }, [itemID, editorContentManager]);
@@ -486,7 +489,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             if (data.isComment) {
                 setLabel(data.content);
             } else {
-                setLabel("SQL Editor");
+                setLabel(fileLabel ?? "SQL Editor");
             }
         };
 
@@ -494,7 +497,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
         return () => {
             unsubscribe(SQL_EDITOR_FIRST_LINE_CHANGED, handleFirstLineChanged);
         };
-    }, [tabsItemID, itemID]);
+    }, [tabsItemID, itemID, fileLabel]);
 
     return (
         <TabPanelLabel>

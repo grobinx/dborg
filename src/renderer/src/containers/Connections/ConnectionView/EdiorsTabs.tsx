@@ -16,11 +16,18 @@ import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
+import { editorExtLanguages } from "@renderer/contexts/EditorContentManager";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
 export const SQL_EDITOR_ADD = "sql-editor:new";
 export const SQL_EDITOR_MENU_REOPEN = "sql-editor:menu-reopen";
+
+export interface SqlEditorAddMessage {
+    tabsItemID: string;
+    editorId?: string;
+    externalFile?: string;
+}
 
 const StyledEditorsTabs = styled(Stack, {
     name: "EditorsTabs",
@@ -131,7 +138,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
             );
         };
 
-        const handleAddSqlEditor = async (message: { tabsItemID: string, editorId?: string }) => {
+        const handleAddSqlEditor = async (message: SqlEditorAddMessage) => {
             if (message.tabsItemID !== tabsItemID) return;
 
             const newEditorId = message.editorId || uuidv7();
@@ -145,7 +152,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 />
             );
             if (!message.editorId) {
-                await editorContentManager.addEditor(newEditorId);
+                await editorContentManager.addEditor(newEditorId, undefined, message.externalFile);
             }
             else {
                 editorContentManager.setOpen(newEditorId, true);
@@ -188,13 +195,32 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     };
 
     const handleSelectEditor = (editorId: string) => {
-        queueMessage(SQL_EDITOR_ADD, { tabsItemID, editorId });
+        queueMessage(SQL_EDITOR_ADD, { tabsItemID, editorId } as SqlEditorAddMessage);
         handleMenuClose();
     };
 
-    const handleOpenExternalFile = () => {
-        // Tu dodaj logikę otwierania pliku, np. przez dialog systemowy
-        // Możesz użyć window.dborg.file.openDialog() lub innego API
+    const handleOpenExternalFile = async () => {
+        // Tworzymy filtry na podstawie editorExtLanguages
+        const filters = Object.entries(editorExtLanguages)
+            .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
+            .map(([lang, exts]) => ({
+                name: `${lang.charAt(0).toUpperCase() + lang.slice(1)} Files`,
+                extensions: exts as string[],
+            }));
+
+        filters.push({ name: "All Files", extensions: ["*"] });
+
+        const result = await window.electron.dialog.showOpenDialog({
+            title: t("open-sql-file", "Open SQL File"),
+            properties: ["openFile"],
+            filters,
+        });
+        if (result.canceled || result.filePaths.length === 0) {
+            return;
+        }
+        const externalFile = result.filePaths[0];
+        queueMessage(SQL_EDITOR_ADD, { tabsItemID, externalFile } as SqlEditorAddMessage);
+        handleMenuClose();
     };
 
     // Lokalny renderer dla przycisku dodawania SQL edytora
@@ -204,7 +230,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 <ButtonGroup>
                     <Tooltip title={t("add-sql-editor-tab", "Add SQL Editor Tab")}>
                         <ToolButton
-                            onClick={() => queueMessage(SQL_EDITOR_ADD, { tabsItemID })}
+                            onClick={() => queueMessage(SQL_EDITOR_ADD, { tabsItemID } as SqlEditorAddMessage)}
                             size="small"
                             color="main"
                         >
@@ -232,18 +258,25 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                     key={state.editorId}
                                     interactive
                                     title={
-                                        state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
-                                            <SyntaxHighlighter
-                                                language="sql"
-                                                style={theme.palette.mode === "dark" ? vs2015 : vs}
-                                                customStyle={{
-                                                    maxWidth: "500px",
-                                                    width: "auto",
-                                                }}
-                                            >
-                                                {"...\n" + state.sampleLines + "\n..."}
-                                            </SyntaxHighlighter>
-                                        ) : "" // Jeśli sampleLines jest puste, nie pokazuj nic
+                                        <>
+                                            {state.externalPath && (
+                                                <div>
+                                                    <strong>{t("file-path", "File Path:")}</strong> {state.externalPath}/{state.fileName}
+                                                </div>
+                                            )}
+                                            {state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
+                                                <SyntaxHighlighter
+                                                    language="sql"
+                                                    style={theme.palette.mode === "dark" ? vs2015 : vs}
+                                                    customStyle={{
+                                                        maxWidth: "500px",
+                                                        width: "auto",
+                                                    }}
+                                                >
+                                                    {"...\n" + state.sampleLines + "\n..."}
+                                                </SyntaxHighlighter>
+                                            ) : ""}
+                                        </>
                                     }
                                     placement="right"
                                     slotProps={{
@@ -259,10 +292,14 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                         key={state.editorId}
                                         onClick={() => handleSelectEditor(state.editorId)}
                                     >
-                                        {state.label ? state.label : "-"}
-                                        {", " + t("Lines", "Lines {{count}}", { count: state.lines || 0 })}
-                                        {", " + t("cursor-position", "Ln {{line}}, Col {{column}}", { line: state.position?.line || 0, column: state.position?.column || 0 })}
-                                        {", " + t("last-modified", "{{date}}", { date: DateTime.fromMillis(state.lastModified).toSQL() })}
+                                        {state.externalPath && <theme.icons.File />}
+                                        {[
+                                            state.externalPath && state.fileName,
+                                            state.label,
+                                            t("Lines", "Lines {{count}}", { count: state.lines || 0 }),
+                                            t("cursor-position", "Ln {{line}}, Col {{column}}", { line: state.position?.line || 0, column: state.position?.column || 0 }),
+                                            t("last-modified", "{{date}}", { date: DateTime.fromMillis(state.lastModified).toSQL() }),
+                                        ].filter(Boolean).join(" - ")}
                                     </MenuItem>
                                 </Tooltip>
                             ))

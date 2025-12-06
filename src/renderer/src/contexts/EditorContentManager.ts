@@ -1,5 +1,6 @@
 import { Mutex } from "async-mutex";
 import { DBORG_EDITORS_PATH_NAME } from "../../../../src/api/dborg-path";
+import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 
 export interface ContentState {
     editorId: string;
@@ -29,6 +30,32 @@ export interface EditorState {
     order?: number;
     externalPath?: string;
 }
+
+export const editorExtLanguages: Partial<Record<EditorLanguageId, string[]>> = {
+    sql: [
+        "sql", "psql", "pgsql", "mysql", "sqlite", "db2", "tsql", "mssql", "ora", "plsql",
+        "hql", "cql", "dbql", "script", "dsql", "ibsql", "isql", "out", "dump"
+    ],
+    java: ["java"],
+    javascript: ["js", "jsx"],
+    typescript: ["ts", "tsx"],
+    python: ["py"],
+    json: ["json"],
+    xml: ["xml", "html", "xhtml", "svg"],
+    yaml: ["yaml", "yml"],
+    csharp: ["cs"],
+    php: ["php"],
+    ruby: ["rb"],
+    go: ["go"],
+    css: ["css", "scss", "less"],
+    shell: ["sh", "bash", "zsh"],
+    html: ["html", "htm", "xhtml", "svg", "xml", "mhtml"],
+    less: ["less"],
+    markdown: ["md", "markdown"],
+    plaintext: ["txt", "text", "log"],
+    powershell: ["ps1", "psm1"],
+    scss: ["scss"],
+};
 
 export interface IEditorContentManager {
     /**
@@ -195,8 +222,9 @@ export interface IEditorContentManager {
      * Dodaje nowy edytor do menedżera.
      * @param editorId - Identyfikator edytora.
      * @param type 
+     * @param filePath - Opcjonalna ścieżka do zewnętrznego pliku.
      */
-    addEditor(editorId: string, type?: string): Promise<void>;
+    addEditor(editorId: string, type?: string, filePath?: string): Promise<void>;
 
     reorder(): void;
 }
@@ -566,9 +594,22 @@ class EditorContentManager implements IEditorContentManager {
         }
     }
 
-    async addEditor(editorId: string, type?: string): Promise<void> {
+    async addEditor(editorId: string, type?: string, filePath?: string): Promise<void> {
         if (this.editorStates.has(editorId)) {
             throw new Error(`Editor with ID "${editorId}" already exists.`);
+        }
+
+        let externalPath: string | undefined = undefined;
+        let fileName: string | undefined = undefined;
+        if (filePath) {
+            // Normalizacja separatorów ścieżki
+            const normalizedPath = filePath.replace(/\\/g, "/");
+            externalPath = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
+            fileName = normalizedPath.substring(normalizedPath.lastIndexOf("/") + 1);
+            if (!type) {
+                const ext = fileName.split('.').pop();
+                type = ext || "txt";
+            }
         }
 
         await this.mutex.runExclusive(async () => {
@@ -581,10 +622,11 @@ class EditorContentManager implements IEditorContentManager {
                 position: { top: 0, line: 0, column: 0 }, // Domyślna pozycja kursora
                 lines: 0, // Domyślna liczba linii
                 sampleLines: "", // Domyślny podgląd linii
-                fileName: `${editorId}.${type ?? "txt"}`, // Domyślna nazwa pliku
+                fileName: fileName ?? `${editorId}.${type ?? "txt"}`, // Domyślna nazwa pliku
                 open: true, // Domyślnie edytor jest otwarty
                 lastModified: Date.now(), // Aktualny czas jako czas ostatniej modyfikacji
                 order: this.editorStates.size,
+                externalPath,
             };
 
             // Tworzenie nowego stanu zawartości
@@ -599,6 +641,10 @@ class EditorContentManager implements IEditorContentManager {
             // Dodanie nowych stanów do odpowiednich map
             this.editorStates.set(editorId, newEditorState);
             this.contentStates.set(editorId, newContentState);
+
+            if (filePath) {
+                await this.loadContent(editorId);
+            }
 
             await this.saveStates();
             await this.saveContent(editorId);
