@@ -42,15 +42,22 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = useThemeProps({ name: "Connection", props });
-    const theme = useTheme();
     const { selectedContainer, selectedView } = useContainers();
     const { selectedSession } = useSessions();
-    const [selectedThis, setSelectedThis] = React.useState(false);
+    const [selectedThis, setSelectedThis] = React.useState(isSelectedThis());
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
+
+    function isSelectedThis() {
+        return (
+            selectedContainer?.type === "connections" &&
+            selectedSession?.getUniqueId() === session.info.uniqueId &&
+            selectedView !== null
+        );
+    }
 
     // Przechowuj utworzone widoki w stanie
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
@@ -59,10 +66,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
-        const selectedThis =
-            selectedContainer?.type === "connections" &&
-            selectedSession?.getUniqueId() === session.info.uniqueId &&
-            selectedView !== null;
+        const selectedThis = isSelectedThis();
         setSelectedThis(selectedThis);
 
         if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {

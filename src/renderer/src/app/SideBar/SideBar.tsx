@@ -72,23 +72,21 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         };
     }, []);
 
-    const renderViewButtons = (views: View[]) => {
-        return ([
-            ...views.map(({ id, icon, label, tooltip }, index) => (
-                <ViewButton
-                    key={id}
-                    selected={selectedView?.id === id}
-                    onClick={() => queueMessage(Messages.SWITCH_VIEW, id)}
-                    icon={resolveIcon(theme, icon)}
-                    label={label}
-                    expanded={expanded}
-                    placement={placement}
-                    index={index}
-                    toolTip={tooltip}
-                />
-            ))
-        ]);
-    }
+    const viewButtons = React.useMemo(() => {
+        return views?.map(({ id, icon, label, tooltip }, index) => (
+            <ViewButton
+                key={id}
+                selected={selectedView?.id === id}
+                onClick={() => queueMessage(Messages.SWITCH_VIEW, id)}
+                icon={resolveIcon(theme, icon)}
+                label={label}
+                expanded={expanded}
+                placement={placement}
+                index={index}
+                toolTip={tooltip}
+            />
+        ));
+    }, [views, selectedView, theme, expanded, placement]);
 
     // Handle sidebar context menu
     const handleSideBarContextMenu = (event: React.MouseEvent) => {
@@ -135,10 +133,10 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 {children}
             </Stack>
             <Stack direction={horizontal ? "column" : "row"} flexGrow={1}>
-                {(selectedContainer?.section === "first" && views) && renderViewButtons(views)}
+                {(selectedContainer?.section === "first" && views) && viewButtons}
             </Stack>
             <Stack direction={horizontal ? "column-reverse" : "row-reverse"} flexGrow={1}>
-                {(selectedContainer?.section === "last" && views) && renderViewButtons(views)}
+                {(selectedContainer?.section === "last" && views) && viewButtons}
             </Stack>
             <Divider orientation={horizontal ? "horizontal" : "vertical"} flexItem />
             {containers?.filter(container => container.section === "last").map((container) => {
