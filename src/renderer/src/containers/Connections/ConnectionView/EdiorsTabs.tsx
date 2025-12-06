@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Stack, styled, useTheme, Menu, MenuItem } from "@mui/material";
+import { Stack, styled, useTheme, Menu, MenuItem, Divider } from "@mui/material";
 import { SqlEditorButtons, SqlEditorContent, SqlEditorLabel } from "./SqlEditorPanel";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
@@ -71,14 +71,9 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                         <TabPanel
                             key={editor.editorId}
                             itemID={editor.editorId}
-                            label={<SqlEditorLabel session={session} />}
-                            content={
-                                <SqlEditorContent
-                                    session={session}
-                                    editorContentManager={editorContentManager}
-                                />
-                            }
-                            buttons={<SqlEditorButtons session={session} />}
+                            label={<SqlEditorLabel session={session} editorContentManager={editorContentManager} />}
+                            content={<SqlEditorContent session={session} editorContentManager={editorContentManager} />}
+                            buttons={<SqlEditorButtons session={session} editorContentManager={editorContentManager} />}
                         />);
                 });
                 setEditorsTabs(tabs);
@@ -88,14 +83,9 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                     <TabPanel
                         key={newEditorId}
                         itemID={newEditorId}
-                        label={<SqlEditorLabel session={session} />}
-                        content={
-                            <SqlEditorContent
-                                session={session}
-                                editorContentManager={editorContentManager}
-                            />
-                        }
-                        buttons={<SqlEditorButtons session={session} />}
+                        label={<SqlEditorLabel session={session} editorContentManager={editorContentManager} />}
+                        content={<SqlEditorContent session={session} editorContentManager={editorContentManager} />}
+                        buttons={<SqlEditorButtons session={session} editorContentManager={editorContentManager} />}
                     />,
                 ]);
                 editorContentManager.addEditor(newEditorId);
@@ -149,12 +139,9 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 <TabPanel
                     key={newEditorId}
                     itemID={newEditorId}
-                    label={<SqlEditorLabel session={session} />}
-                    content={<SqlEditorContent
-                        session={session}
-                        editorContentManager={editorContentManager}
-                    />}
-                    buttons={<SqlEditorButtons session={session} />}
+                    label={<SqlEditorLabel session={session} editorContentManager={editorContentManager} />}
+                    content={<SqlEditorContent session={session} editorContentManager={editorContentManager} />}
+                    buttons={<SqlEditorButtons session={session} editorContentManager={editorContentManager} />}
                 />
             );
             if (!message.editorId) {
@@ -164,7 +151,9 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                 editorContentManager.setOpen(newEditorId, true);
             }
             setEditorsTabs((prevTabs) => [...prevTabs, newEditor]);
-            queueMessage(SWITCH_PANEL_TAB, tabsItemID, newEditorId);
+            requestAnimationFrame(() => {
+                queueMessage(SWITCH_PANEL_TAB, tabsItemID, newEditorId);
+            });
         };
 
         const handleMenuReopenSqlEditor = async (message: { tabsItemID: string }) => {
@@ -203,6 +192,11 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
         handleMenuClose();
     };
 
+    const handleOpenExternalFile = () => {
+        // Tu dodaj logikę otwierania pliku, np. przez dialog systemowy
+        // Możesz użyć window.dborg.file.openDialog() lub innego API
+    };
+
     // Lokalny renderer dla przycisku dodawania SQL edytora
     const renderSqlEditorButtons = () => {
         return (
@@ -236,6 +230,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                             closedEditors.map((state) => (
                                 <Tooltip
                                     key={state.editorId}
+                                    interactive
                                     title={
                                         state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
                                             <SyntaxHighlighter
@@ -274,6 +269,10 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                         ) : (
                             <MenuItem disabled>{t("no-closed-editors", "No closed editors available")}</MenuItem>
                         )}
+                        <Divider />
+                        <MenuItem onClick={handleOpenExternalFile}>
+                            {t("open-file", "Open file...")}
+                        </MenuItem>
                     </Menu>
                 </ButtonGroup>
             </TabPanelButtons >

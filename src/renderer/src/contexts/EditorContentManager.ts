@@ -27,6 +27,7 @@ export interface EditorState {
     open: boolean;
     lastModified: number;
     order?: number;
+    externalPath?: string;
 }
 
 export interface IEditorContentManager {
@@ -270,7 +271,8 @@ class EditorContentManager implements IEditorContentManager {
             throw new Error(`EditorState not found for editorId: ${editorId}`);
         }
 
-        const filePath = `${this.baseDir}/${editorState.fileName}`;
+        const path = editorState.externalPath ?? this.baseDir;
+        const filePath = `${path}/${editorState.fileName}`;
 
         // Sprawdzenie, czy plik istnieje
         const fileExists = await window.dborg.file.exists(filePath);
@@ -306,9 +308,10 @@ class EditorContentManager implements IEditorContentManager {
             return; // Jeśli zawartość nie została załadowana, zakończ metodę
         }
 
-        const filePath = `${this.baseDir}/${editorState.fileName}`;
+        const path = editorState.externalPath ?? this.baseDir;
+        const filePath = `${path}/${editorState.fileName}`;
         const content = contentState.content || ""; // Pobierz zawartość do zapisania
-        await window.dborg.path.ensureDir(this.baseDir);
+        await window.dborg.path.ensureDir(path);
         await window.dborg.file.writeFile(filePath, content);
 
         contentState.saved = true;
@@ -365,18 +368,18 @@ class EditorContentManager implements IEditorContentManager {
             if (state.type !== type) {
                 const oldFileName = state.fileName;
                 const newFileName = `${editorId}.${type}`;
-                const oldFilePath = `${this.baseDir}/${oldFileName}`;
+                const path = state.externalPath ?? this.baseDir;
+                const oldFilePath = `${path}/${oldFileName}`;
+                const newFilePath = `${path}/${newFileName}`;
 
-                // Usuń poprzedni plik, jeśli istnieje
+                // Zmień nazwę pliku na systemie plików, jeśli istnieje
                 if (await window.dborg.file.exists(oldFilePath)) {
-                    await window.dborg.file.deleteFile(oldFilePath);
+                    await window.dborg.file.renameFile(oldFilePath, newFilePath);
                 }
 
                 // Zaktualizuj nazwę pliku i typ w stanie edytora
                 state.fileName = newFileName;
                 state.type = type;
-
-                await this.saveContent(editorId); // Zapisz zawartość edytora do nowego pliku
 
                 // Oznacz edytory jako wymagające zapisu
                 this.editorsSaved = false;
@@ -508,9 +511,12 @@ class EditorContentManager implements IEditorContentManager {
             this.editorStates.delete(editorId);
             this.contentStates.delete(editorId);
 
-            const filePath = `${this.baseDir}/${editorState.fileName}`;
-            if (await window.dborg.file.exists(filePath)) {
-                await window.dborg.file.deleteFile(filePath);
+            // Usuń plik tylko wtedy, gdy nie jest to ścieżka zewnętrzna
+            if (!editorState.externalPath) {
+                const filePath = `${this.baseDir}/${editorState.fileName}`;
+                if (await window.dborg.file.exists(filePath)) {
+                    await window.dborg.file.deleteFile(filePath);
+                }
             }
 
             await this.saveStates();
@@ -578,7 +584,7 @@ class EditorContentManager implements IEditorContentManager {
                 fileName: `${editorId}.${type ?? "txt"}`, // Domyślna nazwa pliku
                 open: true, // Domyślnie edytor jest otwarty
                 lastModified: Date.now(), // Aktualny czas jako czas ostatniej modyfikacji
-                order: this.editorStates.size, 
+                order: this.editorStates.size,
             };
 
             // Tworzenie nowego stanu zawartości

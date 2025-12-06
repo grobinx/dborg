@@ -53,7 +53,6 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const { session, tabsItemID, itemID, editorContentManager } = props;
     const addToast = useToast();
     const { t } = useTranslation();
-    const dialogs = useDialogs();
     const firstLineRef = useRef<string>("");
     const contentLoadedRef = useRef(false);
     const [editorInstance, setEditorInstance] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -405,11 +404,12 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
 
 interface SqlEditorButtonsProps {
     session: IDatabaseSession,
+    editorContentManager: EditorContentManager,
     itemID?: string,
 }
 
 export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
-    const { session, itemID } = props;
+    const { session, editorContentManager, itemID } = props;
     const { t } = useTranslation();
     const theme = useTheme();
     const dialogs = useDialogs();
@@ -417,8 +417,15 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
 
     const handleDeleteSqlEditor = () => {
         if (itemID) {
+            const tDeleteFile = t("delete-sql-editor-tab-confirm", "Are you sure you want to delete this SQL Editor tab?");
+            const tUndone = t("this-action-cannot-be-undone", "This action cannot be undone and content will be permanently deleted.");
+            const tUndeoneExternal = t("this-action-cannot-be-undone-external", "This action cannot be undone but the file will remain on disk.");
+
+            const state = editorContentManager.getState(itemID);
+            const isExternalFile = state?.externalPath ? true : false;
+
             dialogs.confirm(
-                t("delete-sql-editor-tab-confirm", "Are you sure you want to delete this SQL Editor tab? This action cannot be undone."),
+                tDeleteFile + "\n" + (isExternalFile ? tUndeoneExternal : tUndone),
                 {
                     title: t("delete-sql-editor-tab", "Delete content of SQL Editor tab"),
                     severity: "warning",
@@ -450,15 +457,25 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
 interface SqlEditorLabelProps {
     session: IDatabaseSession;
     tabsItemID?: string;
+    editorContentManager: EditorContentManager;
     itemID?: string;
 }
 
 export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
-    const { session, itemID, tabsItemID } = props;
+    const { session, editorContentManager, itemID, tabsItemID } = props;
     const theme = useTheme();
     const [label, setLabel] = React.useState<string>("SQL Editor");
     const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
+
+    React.useEffect(() => {
+        if (itemID) {
+            const state = editorContentManager.getState(itemID);
+            if (state?.externalPath) {
+                setLabel(state.fileName.split(".").slice(0, -1).join("."));
+            }
+        }
+    }, [itemID, editorContentManager]);
 
     React.useEffect(() => {
         const handleFirstLineChanged = (data: { isComment: boolean; content: string; itemID?: string }) => {
