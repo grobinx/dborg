@@ -81,11 +81,11 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
 
     const selectedValues = multiple ? value : value !== undefined && value !== null ? [value] : [];
 
-    const [filteredOptions, highlightText] = useSearch(
-        React.useMemo(() => options.filter(isOption), [options]),
-        ['label', 'value', 'description'],
+    const [filteredOptions, highlightText] = useSearch({
+        data: React.useMemo(() => options.filter(isOption), [options]),
+        fields: ['label', 'value', 'description'],
         searchText,
-    );
+    });
 
     const displayOptions = React.useMemo(() => {
         if (!searchable || !searchText.trim()) {

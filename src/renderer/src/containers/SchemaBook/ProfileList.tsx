@@ -217,7 +217,12 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const { sessions } = useApplicationContext();
     const [data, setData] = React.useState<Profile[] | null>(null);
     const sortedData = useSort(data, profileIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
-    const [searchedData, highlightText] = useSearch(sortedData, searchFields, search, undefined, searchDelay);
+    const [searchedData, highlightText] = useSearch({
+        data: sortedData,
+        fields: searchFields,
+        searchText: search,
+        delay: searchDelay,
+    });
     const groupedData = useGroup(sortedData, profileGroup);
     const displayData = React.useMemo(() => {
         if (!groupList || !searchedData) {

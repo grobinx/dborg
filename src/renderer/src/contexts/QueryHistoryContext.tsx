@@ -197,53 +197,40 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             // Zastosuj deduplikację zgodnie z ustawieniami
             if (deduplicateMode === "time-based") {
-                // Time-based: grupuj po hash (query + schema), w każdej grupie zachowaj wpisy z okna czasowego + 1 najstarszy
                 const timeWindow = deduplicateTimeWindow * 1000;
                 const now = Date.now();
-                const deduped: QueryHistoryRecord[] = [];
-                const groups = new Map<string, QueryHistoryRecord[]>(); // hash -> lista wpisów
+                const inWindow: QueryHistoryRecord[] = [];
+                const dedupMap = new Map<string, QueryHistoryRecord>();
+                const createdMap = new Map<string, string>();
 
-                // Pogrupuj po hash (query + schema)
                 for (const entry of updatedHistory) {
+                    const age = now - DateTime.fromISO(entry.qh_start_time).toMillis();
                     const key = entry.qh_hash!;
-                    if (!groups.has(key)) {
-                        groups.set(key, []);
-                    }
-                    groups.get(key)!.push(entry);
-                }
-
-                // Dla każdej grupy zachowaj wpisy w oknie + 1 najstarszy spoza okna
-                for (const [hash, entries] of groups) {
-                    // Sortuj po czasie (najnowsze najpierw)
-                    entries.sort((a, b) => DateTime.fromISO(b.qh_start_time).toMillis() - DateTime.fromISO(a.qh_start_time).toMillis());
-
-                    const inWindow: QueryHistoryRecord[] = [];
-                    let oldestOutsideWindow: QueryHistoryRecord | null = null;
-
-                    for (const entry of entries) {
-                        const age = now - DateTime.fromISO(entry.qh_start_time).toMillis();
-                        if (age < timeWindow) {
-                            // W oknie - zachowaj wszystkie
-                            inWindow.push(entry);
-                        } else {
-                            // Poza oknem - zachowaj tylko najstarszy
-                            if (!oldestOutsideWindow || DateTime.fromISO(entry.qh_start_time).toMillis() < DateTime.fromISO(oldestOutsideWindow.qh_start_time).toMillis()) {
-                                oldestOutsideWindow = entry;
-                            }
+                    if (age < timeWindow) {
+                        // W oknie czasowym: zachowaj wszystkie
+                        inWindow.push(entry);
+                    } else {
+                        // Poza oknem: deduplikuj, zachowaj najnowszy wpis, ale qh_created z najstarszego
+                        if (!dedupMap.has(key) || DateTime.fromISO(entry.qh_start_time).toMillis() > DateTime.fromISO(dedupMap.get(key)!.qh_start_time).toMillis()) {
+                            dedupMap.set(key, entry); // Najnowszy wpis
+                        }
+                        // Zapamiętaj najstarszy qh_created dla danego hash
+                        if (!createdMap.has(key) || DateTime.fromISO(entry.qh_created).toMillis() < DateTime.fromISO(createdMap.get(key)!).toMillis()) {
+                            createdMap.set(key, entry.qh_created);
                         }
                     }
-
-                    // Dodaj wpisy z okna
-                    deduped.push(...inWindow);
-                    // Dodaj najstarszy spoza okna (jeśli istnieje)
-                    if (oldestOutsideWindow) {
-                        deduped.push(oldestOutsideWindow);
-                    }
                 }
 
-                // Posortuj z powrotem (najnowsze najpierw)
-                deduped.sort((a, b) => DateTime.fromISO(b.qh_start_time).toMillis() - DateTime.fromISO(a.qh_start_time).toMillis());
-                updatedHistory = deduped;
+                // Ustaw qh_created z najstarszego dla każdego hash
+                for (const [key, record] of dedupMap.entries()) {
+                    record.qh_created = createdMap.get(key)!;
+                }
+
+                // Połącz wyniki: najpierw wpisy z okna, potem zdeduplikowane najnowsze spoza okna z qh_created z najstarszego
+                updatedHistory = [
+                    ...inWindow,
+                    ...Array.from(dedupMap.values())
+                ].sort((a, b) => DateTime.fromISO(b.qh_start_time).toMillis() - DateTime.fromISO(a.qh_start_time).toMillis());
             } else if (deduplicateMode === "aggressive") {
                 // Aggressive: globalnie deduplikuj — zachowaj tylko ostatni z każdego hasha (query + schema)
                 const seen = new Map<string, QueryHistoryRecord>();

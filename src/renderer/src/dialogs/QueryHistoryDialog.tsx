@@ -34,12 +34,16 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
     const [fontSize] = useSetting<number>("ui", "fontSize");
     const [editorInstance, setEditorInstance] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
-    const itemHeight = fontSize * 1.8;
+    const itemHeight = (fontSize + 8) * 1.2;
 
-    const [filteredHistory, highlightText] = useSearch(
-        queryHistory, ['qh_query'], search,
-        { filter: (item) => !profileName || item.qh_profile_name === profileName }
-    );
+    console.log("Rendering QueryHistoryDialog with profileName:", profileName);
+
+    const [filteredHistory, highlightText] = useSearch({
+        data: queryHistory,
+        fields: ['qh_query'],
+        searchText: search,
+        filter: React.useCallback((item) => !profileName || item.qh_profile_name === profileName, [profileName]),
+    });
 
     const [selected, setSelected, handleKeyDown] = useKeyboardNavigation(
         {
@@ -117,7 +121,13 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
                                     virtual={true}
                                     renderItem={(item, _stat) => {
                                         return (
-                                            <Stack sx={{ fontFamily: monospaceFontFamily, width: "100%", fontSize: fontSize }}>
+                                            <Stack
+                                                sx={{
+                                                    fontFamily: monospaceFontFamily,
+                                                    width: "100%",
+                                                    fontSize: fontSize,
+                                                    paddingX: 8,
+                                                }}>
                                                 <Ellipsis>
                                                     {highlightText(item.qh_query)}
                                                 </Ellipsis>

@@ -1,4 +1,5 @@
 import { useTheme } from "@mui/material/styles";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 import { ThemeColor } from "@renderer/types/colors";
 import { resolveColor } from "@renderer/utils/colors";
 import debounce from "@renderer/utils/debounce";
@@ -13,10 +14,27 @@ import React from "react";
  */
 export type MatchMode = 'contains' | 'wholeWord' | 'start' | 'end';
 
+export interface UseSearchProps<T,> {
+    /** Dane do przeszukania */
+    data: T[] | null;
+    /** Pola do przeszukania, wszystkie pola lub tablica nazw pól */
+    fields: ((keyof T)[]) | '*';
+    /** Tekst do wyszukania, null lub pusty string oznacza brak wyszukiwania */
+    searchText: string | null;
+    /** Opcje wyszukiwania */
+    options?: SearchOptions;
+    /** Opóźnienie przed wykonaniem wyszukiwania w ms */
+    delay?: number;
+    /** Kolor podświetlenia dopasowanego tekstu */
+    highlightColor?: ThemeColor;
+    /** Opcjonalna funkcja filtrująca element podczas wyszukiwania */
+    filter?: (item: T) => boolean;
+}
+
 /**
  * Definicje pól wyszukiwania dla struktur danych.
  */
-export interface SearchOptions<T,> {
+export interface SearchOptions {
     /** Tryb dopasowania tekstu w wyszukiwaniu */
     matchMode?: MatchMode;
     /** Czy wszystkie części wyszukiwanego tekstu muszą pasować (true) czy dowolna (false), domyślnie true */
@@ -31,8 +49,6 @@ export interface SearchOptions<T,> {
     minLength?: number;
     /** Czy dzielić tekst wyszukiwania spacją i wyszukiwać wszystkie części w dowolnej kolejności, domyślnie true */
     splitWords?: boolean;
-    /** Opcjonalna funkcja filtrująca element podczas wyszukiwania */
-    filter?: (item: T) => boolean;
 }
 
 
@@ -50,7 +66,13 @@ const normalize = (s: string, ignoreDiacritics: boolean, caseSensitive: boolean)
     return result;
 };
 
-export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchText: string | null, options?: SearchOptions<T>): T[] => {
+export const searchArray = <T,>(
+    data: T[], 
+    fields: ((keyof T)[]) | '*', 
+    searchText: string | null, 
+    options?: SearchOptions,
+    filter?: (item: T) => boolean
+): T[] => {
     const {
         matchMode = 'contains',
         matchAll = true,
@@ -59,18 +81,20 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
         ignoreDiacritics = true,
         minLength = 1,
         splitWords = true,
-        filter,
     } = options || {};
 
+    searchText = searchText?.trim() ?? '';
+
     if (data.length === 0) return data;
-    if (!searchText || searchText.length === 0) return data;
-    if (searchText.length < minLength) return data;
+
+    // Jeśli searchText jest pusty lub za krótki, ale filter istnieje, filtruj tylko przez filter
+    if ((searchText.length === 0 || searchText.length < minLength)) {
+        return filter ? data.filter(item => filter(item)) : data;
+    }
 
     const searchParts =
         (splitWords ? searchText.split(' ') : [searchText])
             .map(part => normalize(part, ignoreDiacritics, caseSensitive));
-
-    if (searchParts.length === 0) return data;
 
     const matches = (value: string): boolean => {
         let v = normalize(value, ignoreDiacritics, caseSensitive);
@@ -108,7 +132,7 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
     }
 
     return data.filter(item => {
-        if (filter && !filter(item)) return false; // apply custom filter first
+        if (filter && !filter(item)) return false;
         for (const field of resolvedFields) {
             if (item[field] === null || item[field] === undefined) continue;
             const value = String(item[field]);
@@ -131,19 +155,21 @@ export const searchArray = <T,>(data: T[], fields: ((keyof T)[]) | '*', searchTe
  * @param options 
  * @returns T[] | null - przefiltrowane dane lub null jeżeli brak danych wejściowych, string - aktualny tekst po wyszukiwaniu
  */
-export const useSearch = <T,>(
-    data: T[] | null,
-    fields: ((keyof T)[]) | '*' = '*',
-    searchText: string | null,
-    options?: SearchOptions<T>,
-    delay: number = 300,
-    highlightColor: ThemeColor = 'primary',
-): [T[] | null, (text: string | undefined | null) => React.ReactNode] => {
+export const useSearch = <T,>({
+    data,
+    fields = '*',
+    searchText,
+    options,
+    delay: initialDelay,
+    highlightColor = 'primary',
+    filter,
+}: UseSearchProps<T>): [T[] | null, (text: string | undefined | null) => React.ReactNode] => {
     const theme = useTheme();
     const [searchedData, setSearchedData] = React.useState<T[] | null>(data);
     const [searchedText, setSearchedText] = React.useState<string>(searchText ?? '');
     const searchedTextRef = React.useRef<string>(searchedText);
     const [firstRun, setFirstRun] = React.useState<boolean>(true);
+    const [delay] = useSetting<number>("app", "search.delay");
 
     React.useEffect(() => {
         if (!data) {
@@ -155,20 +181,20 @@ export const useSearch = <T,>(
         // if first run or searchText didn't change during debounce, search immediately
         if (firstRun || searchedTextRef.current === searchText) {
             setFirstRun(false);
-            const results = searchArray(data, fields, searchText, options);
+            const results = searchArray(data, fields, searchText, options, filter);
             setSearchedData(results);
             setSearchedText(searchText ?? '');
             return;
         }
 
         const debouncedSearch = debounce(() => {
-            const results = searchArray(data, fields, searchText, options);
+            const results = searchArray(data, fields, searchText, options, filter);
             setSearchedData(results);
             setSearchedText(searchText ?? '');
-        }, delay);
+        }, initialDelay ?? delay);
         debouncedSearch();
         return () => debouncedSearch.clear();
-    }, [data, JSON.stringify(fields), searchText, options]);
+    }, [data, JSON.stringify(fields), searchText, options, filter]);
 
     React.useEffect(() => {
         searchedTextRef.current = searchedText;
@@ -212,7 +238,7 @@ export const highlightText = (text: string | undefined | null, search: string, i
     let currentIndex = 0;
     const result = textParts.map((part, index) => {
         if (!part) return null;
-        
+
         // Znajdź oryginalny fragment tekstu
         const originalPart = text.slice(currentIndex, currentIndex + part.length);
         currentIndex += part.length;
