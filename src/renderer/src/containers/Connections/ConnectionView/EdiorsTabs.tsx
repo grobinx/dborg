@@ -200,6 +200,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     };
 
     const handleOpenExternalFile = async () => {
+        handleMenuClose();
         // Tworzymy filtry na podstawie editorExtLanguages
         const filters = Object.entries(editorExtLanguages)
             .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
@@ -211,7 +212,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
         filters.push({ name: "All Files", extensions: ["*"] });
 
         const result = await window.electron.dialog.showOpenDialog({
-            title: t("open-sql-file", "Open SQL File"),
+            title: t("open-file", "Open File"),
             properties: ["openFile"],
             filters,
         });
@@ -220,7 +221,6 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
         }
         const externalFile = result.filePaths[0];
         queueMessage(SQL_EDITOR_ADD, { tabsItemID, externalFile } as SqlEditorAddMessage);
-        handleMenuClose();
     };
 
     // Lokalny renderer dla przycisku dodawania SQL edytora

@@ -150,6 +150,22 @@ export interface IEditorContentManager {
     getLastModified: (editorId: string) => number;
 
     /**
+     * Ustawia zewnętrzną ścieżkę pliku dla danego edytora.
+     * Akcja zamienia plik wewnętrzny na zewnętrzny. Jest to proces nieodwracalny.
+     * Ustawienie pliku automatycznie zapisuje zawartość w nowym pliku, wewnętrzny zostaje usunięty.
+     * @param editorId - Identyfikator edytora.
+     * @param externalFilePath - Zewnętrzna ścieżka pliku
+     */
+    setExternalFile: (editorId: string, externalFilePath: string) => Promise<void>;
+
+    /**
+     * Pobiera zewnętrzną ścieżkę pliku dla danego edytora.
+     * @param editorId - Identyfikator edytora.
+     * @returns Zewnętrzna ścieżka pliku jako `string` lub `undefined`.
+     */
+    getExternalPath: (editorId: string) => string | undefined;
+
+    /**
      * Pobiera zawartość edytora.
      * Jeśli zawartość nie została załadowana, metoda ją ładuje.
      * @param editorId - Identyfikator edytora.
@@ -185,6 +201,7 @@ export interface IEditorContentManager {
 
     /**
      * Usuwa stan edytora i zawartości dla danego `editorId`.
+     * Chyba, że jest to plik zewnętrzny, wtedy usuwa tylko stan.
      * @param editorId - Identyfikator edytora.
      */
     remove: (editorId: string) => Promise<void>;
@@ -255,6 +272,18 @@ class EditorContentManager implements IEditorContentManager {
         this.saveTimeout = null; // Inicjalizacja zmiennej timeoutu
         this.editorsSaved = true;
         this.editorsLoaded = false;
+    }
+
+    private normalizePath(path: string): string {
+        return path.replace(/\\/g, "/");
+    }
+
+    private splitPath(filePath: string): { normalizedPath: string, dir: string; fileName: string, ext: string | undefined } {
+        const normalizedPath = this.normalizePath(filePath);
+        const dir = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
+        const fileName = normalizedPath.substring(normalizedPath.lastIndexOf("/") + 1);
+        const ext = fileName.split(".").pop();
+        return { normalizedPath, dir, fileName, ext };
     }
 
     async loadStates(): Promise<void> {
@@ -452,6 +481,32 @@ class EditorContentManager implements IEditorContentManager {
         return editorState ? editorState.lastModified : 0;
     }
 
+    async setExternalFile(editorId: string, externalFilePath: string): Promise<void> {
+        const { dir: externalPath, fileName, ext, normalizedPath } = this.splitPath(externalFilePath);
+
+        if (normalizedPath !== `${externalPath ?? this.baseDir}/${fileName}`) {
+            // Zapisz aktualną zawartość do nowego pliku zewnętrznego
+            const content = await this.getContent(editorId);
+            await window.dborg.path.ensureDir(externalPath);
+            await window.dborg.file.writeFile(normalizedPath, content);
+
+            await window.dborg.file.deleteFile(`${this.baseDir}/${this.getFileName(editorId)}`);
+
+            this.updateEditorState(editorId, state => {
+                state.externalPath = externalPath;
+                state.fileName = fileName;
+                state.type = ext ?? "txt";
+            });
+
+            await this.saveStates();
+        }
+    }
+
+    getExternalPath(editorId: string): string | undefined {
+        const state = this.getState(editorId);
+        return state ? state.externalPath : undefined;
+    }
+
     async getContent(editorId: string): Promise<string> {
         const contentState = this.contentStates.get(editorId);
         if (!contentState || !contentState.loaded) {
@@ -599,15 +654,15 @@ class EditorContentManager implements IEditorContentManager {
             throw new Error(`Editor with ID "${editorId}" already exists.`);
         }
 
+        
+
         let externalPath: string | undefined = undefined;
         let fileName: string | undefined = undefined;
         if (filePath) {
-            // Normalizacja separatorów ścieżki
-            const normalizedPath = filePath.replace(/\\/g, "/");
-            externalPath = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
-            fileName = normalizedPath.substring(normalizedPath.lastIndexOf("/") + 1);
+            const { dir, fileName: fName, ext } = this.splitPath(filePath);
+            externalPath = dir;
+            fileName = fName;
             if (!type) {
-                const ext = fileName.split('.').pop();
                 type = ext || "txt";
             }
         }
