@@ -245,6 +245,13 @@ export interface IEditorContentManager {
 
     reorder(): void;
 
+    /**
+     * Subskrybuje zmiany określonej właściwości edytora.
+     * @param editorId - Identyfikator edytora.
+     * @param property - Właściwość do obserwacji.
+     * @param callback - Funkcja wywoływana przy zmianie właściwości.
+     * @returns Funkcja do odsubskrybowania zmian.
+     */
     onPropertyChange: (editorId: string, property: keyof EditorState | "content", callback: (value: any) => void) => () => void;
 }
 
