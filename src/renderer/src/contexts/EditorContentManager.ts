@@ -245,13 +245,15 @@ export interface IEditorContentManager {
 
     reorder(): void;
 
-    //onChange: (editorId: string, property: keyof EditorState | "content", callback: (value: any) => void) => () => void;
+    onPropertyChange: (editorId: string, property: keyof EditorState | "content", callback: (value: any) => void) => () => void;
 }
 
 let editorsBaseDir: string | null = null;
 (async () => {
     editorsBaseDir = await window.dborg.path.get(DBORG_EDITORS_PATH_NAME);
 })();
+
+type EditorPropertySubscriber = (value: any) => void;
 
 class EditorContentManager implements IEditorContentManager {
     private schemaId: string;
@@ -264,6 +266,9 @@ class EditorContentManager implements IEditorContentManager {
     private editorsLoaded: boolean;
     private typeChangeLock: Set<string> = new Set();
     private mutex: Mutex = new Mutex(); // Mutex do synchronizacji
+
+    // Mapowanie: editorId -> property -> Set<callback>
+    private propertySubscribers: Map<string, Map<keyof EditorState | "content", Set<EditorPropertySubscriber>>> = new Map();
 
     constructor(schemaId: string) {
         this.schemaId = schemaId;
@@ -437,8 +442,10 @@ class EditorContentManager implements IEditorContentManager {
                 }
 
                 // Zaktualizuj nazwę pliku i typ w stanie edytora
-                state.fileName = newFileName;
-                state.type = type;
+                this.updateEditorState(editorId, state => {
+                    state.fileName = newFileName;
+                    state.type = type;
+                });
 
                 // Oznacz edytory jako wymagające zapisu
                 this.editorsSaved = false;
@@ -564,9 +571,13 @@ class EditorContentManager implements IEditorContentManager {
         const sampleLines = lines.slice(startLine, endLine).join("\n");
 
         // Aktualizuj stan edytora
-        editorState.lines = lineCount; // Aktualizuj liczbę linii
-        editorState.sampleLines = sampleLines; // Aktualizuj otaczające wiersze
-        editorState.lastModified = Date.now(); // Aktualizacja lastModified w EditorState
+        this.updateEditorState(editorId, state => {
+            state.lines = lineCount; // Aktualizuj liczbę linii
+            state.sampleLines = sampleLines; // Aktualizuj otaczające wiersze
+            state.lastModified = Date.now(); // Aktualizacja lastModified w EditorState
+        });
+
+        this.notifyPropertyChange(editorId, "content", content);
 
         this.editorsSaved = false; // Oznaczenie, że edytory wymagają zapisu
         this.scheduleSave();
@@ -637,16 +648,71 @@ class EditorContentManager implements IEditorContentManager {
         });
     }
 
+    /**
+     * Subskrybuje zmiany konkretnej właściwości dla konkretnego edytora.
+     * @param editorId - Identyfikator edytora.
+     * @param property - Nazwa właściwości (np. "fileName", "open", "content").
+     * @param callback - Funkcja wywoływana przy zmianie (otrzymuje tylko nową wartość).
+     * @returns Funkcja do odsubskrybowania.
+     */
+    onPropertyChange(
+        editorId: string,
+        property: keyof EditorState | "content",
+        callback: EditorPropertySubscriber
+    ): () => void {
+        if (!this.propertySubscribers.has(editorId)) {
+            this.propertySubscribers.set(editorId, new Map());
+        }
+        const propMap = this.propertySubscribers.get(editorId)!;
+        if (!propMap.has(property)) {
+            propMap.set(property, new Set());
+        }
+        propMap.get(property)!.add(callback);
+
+        // Zwróć funkcję do odsubskrybowania
+        return () => {
+            propMap.get(property)!.delete(callback);
+        };
+    }
+
+    /**
+     * Powiadamia subskrybentów o zmianie właściwości dla danego edytora.
+     */
+    private notifyPropertyChange(
+        editorId: string,
+        property: keyof EditorState | "content",
+        value: any
+    ) {
+        const propMap = this.propertySubscribers.get(editorId);
+        if (propMap) {
+            const subs = propMap.get(property);
+            if (subs) {
+                for (const cb of subs) {
+                    cb(value);
+                }
+            }
+        }
+    }
+
+    // Przykład użycia w updateEditorState:
     private updateEditorState(editorId: string, updateFn: (state: EditorState) => void, saveImmediately: boolean = false): void {
         const state = this.getState(editorId);
         if (state) {
+            const before = { ...state };
             updateFn(state);
-            this.editorsSaved = false; // Oznaczenie, że edytory wymagają zapisu
+            this.editorsSaved = false;
+
+            // Powiadom o zmianie każdej właściwości, która się zmieniła
+            for (const key of Object.keys(state) as (keyof EditorState)[]) {
+                if (state[key] !== before[key]) {
+                    this.notifyPropertyChange(editorId, key, state[key]);
+                }
+            }
 
             if (saveImmediately) {
                 this.saveStates().catch(error => console.error("Error saving states:", error));
             } else {
-                this.scheduleSave(); // Zaplanuj zapis, jeśli nie zapisujemy natychmiast
+                this.scheduleSave();
             }
         }
     }
@@ -656,7 +722,7 @@ class EditorContentManager implements IEditorContentManager {
             throw new Error(`Editor with ID "${editorId}" already exists.`);
         }
 
-        
+
 
         let externalPath: string | undefined = undefined;
         let fileName: string | undefined = undefined;

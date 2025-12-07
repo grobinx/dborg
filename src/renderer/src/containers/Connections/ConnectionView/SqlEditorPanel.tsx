@@ -35,7 +35,6 @@ import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
-export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
 export const SQL_EDITOR_SHOW_STRUCTURE = "sql-editor:show-structure";
 
@@ -234,12 +233,6 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         } else {
             editorContentManager.setLabel(itemID!, null);
         }
-
-        queueMessage(SQL_EDITOR_FIRST_LINE_CHANGED, {
-            isComment,
-            content: strippedContent,
-            itemID,
-        });
     };
 
     useEffect(() => {
@@ -467,7 +460,7 @@ interface SqlEditorLabelProps {
 export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     const { session, editorContentManager, itemID, tabsItemID } = props;
     const theme = useTheme();
-    const [label, setLabel] = React.useState<string>("SQL Editor");
+    const [label, setLabel] = React.useState<string>(editorContentManager.getLabel(itemID!) ?? "SQL Editor");
     const [fileLabel, setFileLabel] = React.useState<string | null>(null);
     const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
@@ -484,23 +477,13 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     }, [itemID, editorContentManager]);
 
     React.useEffect(() => {
-        const handleFirstLineChanged = (data: { isComment: boolean; content: string; itemID?: string }) => {
-            if (itemID !== data.itemID) {
-                return; // Sprawdź, czy itemID się zgadza
-            }
-
-            if (data.isComment) {
-                setLabel(data.content);
-            } else {
-                setLabel(fileLabel ?? "SQL Editor");
-            }
-        };
-
-        subscribe(SQL_EDITOR_FIRST_LINE_CHANGED, handleFirstLineChanged);
+        const offChangeLabel = editorContentManager.onPropertyChange(itemID!, "label", (newLabel: string | null) => {
+            setLabel(newLabel ?? fileLabel ?? "SQL Editor")
+        });
         return () => {
-            unsubscribe(SQL_EDITOR_FIRST_LINE_CHANGED, handleFirstLineChanged);
+            offChangeLabel();
         };
-    }, [tabsItemID, itemID, fileLabel]);
+    }, [tabsItemID, itemID, fileLabel, editorContentManager]);
 
     return (
         <TabPanelLabel>
