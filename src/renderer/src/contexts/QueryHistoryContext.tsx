@@ -44,7 +44,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     // Oblicz hash zapytania dla deduplikacji (uwzględniając schemat)
     const hashQuery = useCallback((query: string, profileName: string): string => {
-        return SparkMD5.hash(query + '::' + profileName);
+        return SparkMD5.hash(compressQuery(query) + '::' + profileName);
     }, []);
 
     // Kompresja zapytania (usunięcie zbędnych spacji/nowych linii, zachowując stringi)
@@ -172,14 +172,13 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const cutoffTime = Date.now() - maxAgeMs;
 
         // Automatyczne dodanie znacznika czasu i hasha (uwzględniając schema)
-        const query = compressQueryText ? compressQuery(entry.query) : entry.query;
         const preparedRecord: QueryHistoryRecord = {
             qh_id: uuidv7(),
             qh_created: DateTime.now().toSQL(),
             qh_updated: DateTime.now().toSQL(),
             qh_profile_name: entry.profileName,
-            qh_query: query,
-            qh_hash: hashQuery(query, entry.profileName),
+            qh_query: compressQueryText ? compressQuery(entry.query) : entry.query,
+            qh_hash: hashQuery(entry.query, entry.profileName),
             qh_start_time: DateTime.fromMillis(entry.startTime ?? Date.now()).toISO()!,
             qh_execution_time: entry.executionTime ?? null,
             qh_fetch_time: entry.fetchTime ?? null,

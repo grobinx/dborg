@@ -15,7 +15,7 @@ const theme = createTheme({
             menuBar: darken(colors.blueGrey[900], 0.2),
             statusBar: darken(colors.blueGrey[900], 0.5),
             table: {
-                header: darken(colors.teal[900], 0.2),
+                header: colors.teal[900],
                 container: darken(colors.blueGrey[900], 0.2),
                 footer: colors.brown[900],
                 selected: darken(colors.lime[900], 0.5),

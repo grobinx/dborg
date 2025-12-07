@@ -244,6 +244,8 @@ export interface IEditorContentManager {
     addEditor(editorId: string, type?: string, filePath?: string): Promise<void>;
 
     reorder(): void;
+
+    //onChange: (editorId: string, property: keyof EditorState | "content", callback: (value: any) => void) => () => void;
 }
 
 let editorsBaseDir: string | null = null;
