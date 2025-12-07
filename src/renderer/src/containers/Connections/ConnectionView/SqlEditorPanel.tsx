@@ -1,4 +1,4 @@
-import MonacoEditor from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import React, { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
@@ -13,7 +13,7 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useDialogs } from "@toolpad/core";
 import { SelectCurrentCommand } from "./editor/actions/SelectCurrentCommand";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { SQL_EDITOR_ADD, SQL_EDITOR_CLOSE, SQL_EDITOR_DELETE, SQL_EDITOR_MENU_REOPEN, SQL_EDITOR_OPEN_FILE } from "./EdiorsTabs";
+import { SQL_EDITOR_ADD, SQL_EDITOR_CLOSE, SQL_EDITOR_DELETE, SQL_EDITOR_MENU_REOPEN, SQL_EDITOR_OPEN_FILE, SQL_EDITOR_SAVE_FILE } from "./EdiorsTabs";
 import { AddSqlEditorTab } from "./editor/actions/AddSqlEditorTab";
 import { CloseSqlEditorTab } from "./editor/actions/CloseSqlEditorTab";
 import { MenuReopenSqlEditorTab } from "./editor/actions/MenuReopenSqlEditorTab";
@@ -33,6 +33,7 @@ import QueryHistoryDialog from "@renderer/dialogs/QueryHistoryDialog";
 import { editor } from "monaco-editor";
 import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
+import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -314,6 +315,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         editor.addAction(SelectCurrentCommand());
         editor.addAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
         editor.addAction(OpenFileSqlEditorTab(() => { queueMessage(SQL_EDITOR_OPEN_FILE, { tabsItemID }); }));
+        editor.addAction(SaveEditorTabAsFile(() => { queueMessage(SQL_EDITOR_SAVE_FILE, { tabsItemID, editorId: itemID }); }));
         editor.addAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
         editor.addAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         editor.addAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
@@ -359,41 +361,48 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         <>
             <MonacoEditor
                 onMount={handleEditorDidMount}
-                language="sql"
+                language={editorContentManager.getLanguage(itemID!) || "sql"}
+                encoding={editorContentManager.getEncoding(itemID!) || "UTF-8"}
+                eol={editorContentManager.getEol(itemID!) || "LF"}
+                onLanguageChange={language => editorContentManager.setLanguage(itemID!, language)}
+                onEncodingChange={encoding => editorContentManager.setEncoding(itemID!, encoding)}
+                onEolChange={eol => editorContentManager.setEol(itemID!, eol)}
             />
-            <QueryHistoryDialog
-                open={openSelectQueryHistoryDialog}
-                onClose={(result) => {
-                    setOpenSelectQueryHistoryDialog(false);
-                    if (result && editorInstance) {
-                        const selection = editorInstance.getSelection();
-                        if (selection && !selection.isEmpty()) {
-                            editorInstance.executeEdits("select-query-history", [
-                                {
-                                    range: selection,
-                                    text: result.query,
-                                },
-                            ]);
-                        } else {
-                            const position = editorInstance.getPosition();
-                            if (position) {
+            {openSelectQueryHistoryDialog && (
+                <QueryHistoryDialog
+                    open={true}
+                    onClose={(result) => {
+                        setOpenSelectQueryHistoryDialog(false);
+                        if (result && editorInstance) {
+                            const selection = editorInstance.getSelection();
+                            if (selection && !selection.isEmpty()) {
                                 editorInstance.executeEdits("select-query-history", [
                                     {
-                                        range: new monaco.Range(
-                                            position.lineNumber,
-                                            position.column,
-                                            position.lineNumber,
-                                            position.column
-                                        ),
+                                        range: selection,
                                         text: result.query,
                                     },
                                 ]);
+                            } else {
+                                const position = editorInstance.getPosition();
+                                if (position) {
+                                    editorInstance.executeEdits("select-query-history", [
+                                        {
+                                            range: new monaco.Range(
+                                                position.lineNumber,
+                                                position.column,
+                                                position.lineNumber,
+                                                position.column
+                                            ),
+                                            text: result.query,
+                                        },
+                                    ]);
+                                }
                             }
                         }
-                    }
-                }}
-                profileName={(session.getUserData("profile") as ProfileRecord).sch_name}
-            />
+                    }}
+                    profileName={(session.getUserData("profile") as ProfileRecord).sch_name}
+                />
+            )}
         </>
     );
 };
@@ -460,8 +469,10 @@ interface SqlEditorLabelProps {
 export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     const { session, editorContentManager, itemID, tabsItemID } = props;
     const theme = useTheme();
-    const [label, setLabel] = React.useState<string>(editorContentManager.getLabel(itemID!) ?? "SQL Editor");
+    const [label, setLabel] = React.useState<string | null>(editorContentManager.getLabel(itemID!));
     const [fileLabel, setFileLabel] = React.useState<string | null>(null);
+    const [language, setLanguage] = React.useState<EditorLanguageId | null>(editorContentManager.getLanguage(itemID!) || "sql");
+    const [saved, setSaved] = React.useState<boolean>(true);
     const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
 
@@ -471,25 +482,51 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             if (state?.externalPath) {
                 const fileLabel = state.fileName.split(".").slice(0, -1).join(".");
                 setFileLabel(fileLabel);
-                setLabel(fileLabel);
             }
         }
     }, [itemID, editorContentManager]);
 
     React.useEffect(() => {
-        const offChangeLabel = editorContentManager.onPropertyChange(itemID!, "label", (newLabel: string | null) => {
+        const offChangeLabel = editorContentManager.onStateChange(itemID!, "label", (newLabel: string | null) => {
             setLabel(newLabel ?? fileLabel ?? "SQL Editor")
         });
+        const offChageFileName = editorContentManager.onStateChange(itemID!, "fileName", (newFileName: string | null) => {
+            if (newFileName) {
+                const fileLabel = newFileName.split(".").slice(0, -1).join(".");
+                setFileLabel(fileLabel);
+            }
+        });
+        const offChangeLanguage = editorContentManager.onStateChange(itemID!, "language", (newLanguage: EditorLanguageId) => {
+            setLanguage(newLanguage);
+        });
+        const offChangeSaved = editorContentManager.onStateChange(itemID!, "saved", (newSaved: boolean) => {
+            setSaved(newSaved);
+        });
+
         return () => {
             offChangeLabel();
+            offChageFileName();
+            offChangeLanguage();
+            offChangeSaved();
         };
     }, [tabsItemID, itemID, fileLabel, editorContentManager]);
 
+    let Icon = theme.icons.File;
+    switch (language) {
+        case "json": Icon = theme.icons.JsonEditor; break;
+        case "sql": Icon = theme.icons.SqlEditor; break;
+        case "html": Icon = theme.icons.HtmlEditor; break;
+        case "css": Icon = theme.icons.CssEditor; break;
+        case "javascript": Icon = theme.icons.JsEditor; break;
+        case "xml": Icon = theme.icons.XmlEditor; break;
+        case "markdown": Icon = theme.icons.MarkdownEditor; break;
+    }
+
     return (
         <TabPanelLabel>
-            <theme.icons.SqlEditor />
+            <Icon color={saved !== undefined && !saved ? "warning" : undefined} />
             <div style={{ display: "flex", maxWidth: 300 }}>
-                <Ellipsis blured={false}>{label}</Ellipsis>
+                <Ellipsis blured={false}>{label ?? fileLabel ?? "SQL Editor"}</Ellipsis>
             </div>
             <ToolButton
                 component="div"

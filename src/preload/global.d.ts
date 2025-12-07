@@ -3,8 +3,14 @@
 // loaded in tsconfig.web.json
 
 import { OnMovedFn, OnResizedFn, OnStateFn } from "@api/electron"
-import { Dialog, OpenDialogOptions, OpenDialogReturnValue, Rectangle, Size } from "electron"
-import { CommandResult, ConnectionInfo, Cursor, CursorInfo, DatabasesMetadata, DriverInfo, Properties, QueryResult, StatementResult } from "src/api/db"
+import { 
+    Dialog, MessageBoxOptions, MessageBoxReturnValue, OpenDialogOptions, OpenDialogReturnValue, Rectangle, 
+    SaveDialogOptions, SaveDialogReturnValue, Size 
+} from "electron"
+import { 
+    CommandResult, ConnectionInfo, Cursor, CursorInfo, DatabasesMetadata, 
+    DriverInfo, Properties, QueryResult, StatementResult 
+} from "src/api/db"
 import { FileChangeEvent } from "src/main/api/dborg-file"
 
 declare global {
@@ -32,6 +38,9 @@ declare global {
             },
             dialog: {
                 showOpenDialog: (options: OpenDialogOptions) => Promise<OpenDialogReturnValue>,
+                showSaveDialog: (options: SaveDialogOptions) => Promise<SaveDialogReturnValue>,
+                showErrorBox: (title: string, content: string) => Promise<void>,
+                showMessageBox: (options: MessageBoxOptions) => Promise<MessageBoxReturnValue>,
             },
             process: {
                 execFile: (file: string, args: string[]) => Promise<{ stdout: string; stderr: string }>,

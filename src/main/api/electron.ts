@@ -1,5 +1,11 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import { BrowserWindow, ipcMain, ipcRenderer, IpcRendererEvent, Rectangle, Size, dialog, OpenDialogOptions, OpenDialogReturnValue, IpcMainInvokeEvent } from "electron";
+import {
+    BrowserWindow, ipcMain, ipcRenderer, IpcRendererEvent, Rectangle, Size, dialog,
+    OpenDialogOptions, OpenDialogReturnValue, IpcMainInvokeEvent, SaveDialogOptions,
+    SaveDialogReturnValue,
+    MessageBoxOptions,
+    MessageBoxReturnValue
+} from "electron";
 import { OnMovedFn, OnResizedFn, OnStateFn, WindowState } from "../../api/electron";
 import { execFile } from "node:child_process";
 import { handleResult, invokeResult, InvokeResult } from "../../api/ipc-helpers";
@@ -14,6 +20,9 @@ const EVENT_ELECTRON_MAIN_FULLSCREEN = "electron:main:fullscreen";
 const EVENT_ELECTRON_MAIN_CLOSE = "electron:main:close";
 
 const EVENT_ELECTRON_DIALOG_OPENFILE = "electron:dialog:openfile";
+const EVENT_ELECTRON_DIALOG_SAVEFILE = "electron:dialog:savefile";
+const EVENT_ELECTRON_DIALOG_ERROR = "electron:dialog:error";
+const EVENT_ELECTRON_DIALOG_MESSAGE = "electron:dialog:message";
 
 const EVENT_ELECTRON_PROCESS_EXECFILE = "electron:process:execfile";
 
@@ -117,6 +126,24 @@ export function init(window: BrowserWindow): void {
             return dialog.showOpenDialog(window, options);
         }
     );
+    ipcMain.handle(
+        EVENT_ELECTRON_DIALOG_SAVEFILE,
+        (_: IpcMainInvokeEvent, options: SaveDialogOptions): Promise<SaveDialogReturnValue> => {
+            return dialog.showSaveDialog(window, options);
+        }
+    );
+    ipcMain.handle(
+        EVENT_ELECTRON_DIALOG_ERROR,
+        (_: IpcMainInvokeEvent, title: string, content: string): void => {
+            dialog.showErrorBox(title, content);
+        }
+    );
+    ipcMain.handle(
+        EVENT_ELECTRON_DIALOG_MESSAGE,
+        (_: IpcMainInvokeEvent, options: MessageBoxOptions): Promise<MessageBoxReturnValue> => {
+            return dialog.showMessageBox(window, options);
+        }
+    );
 
     ipcMain.handle(EVENT_ELECTRON_PROCESS_EXECFILE, (_: IpcMainInvokeEvent, file: string, args: string[]): Promise<InvokeResult> => {
         return handleResult(new Promise((resolve, reject) => {
@@ -203,6 +230,9 @@ export const preload = {
 
     dialog: {
         showOpenDialog: (options: OpenDialogOptions): Promise<OpenDialogReturnValue> => ipcRenderer.invoke(EVENT_ELECTRON_DIALOG_OPENFILE, options),
+        showSaveDialog: (options: SaveDialogOptions): Promise<SaveDialogReturnValue> => ipcRenderer.invoke(EVENT_ELECTRON_DIALOG_SAVEFILE, options),
+        showErrorBox: (title: string, content: string): Promise<void> => ipcRenderer.invoke(EVENT_ELECTRON_DIALOG_ERROR, title, content),
+        showMessageBox: (options: MessageBoxOptions): Promise<MessageBoxReturnValue> => ipcRenderer.invoke(EVENT_ELECTRON_DIALOG_MESSAGE, options),
     },
 
     process: {

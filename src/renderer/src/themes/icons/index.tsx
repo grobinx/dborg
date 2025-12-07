@@ -111,6 +111,12 @@ export interface ThemeIcons {
     Loading: IconWrapperFC;
     Refresh: IconWrapperFC;
     SqlEditor: IconWrapperFC;
+    JsonEditor: IconWrapperFC;
+    HtmlEditor: IconWrapperFC;
+    CssEditor: IconWrapperFC;
+    JsEditor: IconWrapperFC;
+    XmlEditor: IconWrapperFC;
+    MarkdownEditor: IconWrapperFC;
     DatabaseTables: IconWrapperFC;
     DatabaseViews: IconWrapperFC;
     DataGrid: IconWrapperFC;

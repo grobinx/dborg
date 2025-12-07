@@ -17,13 +17,13 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { editorExtLanguages } from "@renderer/contexts/EditorContentManager";
-import { Shortcut } from "@renderer/components/Shortcut";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
 export const SQL_EDITOR_ADD = "sql-editor:new";
 export const SQL_EDITOR_MENU_REOPEN = "sql-editor:menu-reopen";
 export const SQL_EDITOR_OPEN_FILE = "sql-editor:open-file";
+export const SQL_EDITOR_SAVE_FILE = "sql-editor:save-file";
 
 export interface SqlEditorAddMessage {
     tabsItemID: string;
@@ -61,6 +61,18 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [closedEditors, setClosedEditors] = useState<EditorState[]>([]);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
+
+    const fileFilters = useMemo(() => {
+        const filters = Object.entries(editorExtLanguages)
+            .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
+            .map(([lang, exts]) => ({
+                name: t("{{type}} Files", { type: lang.charAt(0).toUpperCase() + lang.slice(1) }),
+                extensions: exts as string[],
+            }));
+
+        filters.push({ name: t("all-files", "All Files"), extensions: ["*"] });
+        return filters;
+    }, [t]);
 
     useEffect(() => {
         const initializeTabs = async () => {
@@ -180,20 +192,11 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
 
         const handleOpenFile = async (message: { tabsItemID: string }) => {
             if (message.tabsItemID !== tabsItemID) return;
-            
-            const filters = Object.entries(editorExtLanguages)
-                .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
-                .map(([lang, exts]) => ({
-                    name: `${lang.charAt(0).toUpperCase() + lang.slice(1)} Files`,
-                    extensions: exts as string[],
-                }));
-
-            filters.push({ name: "All Files", extensions: ["*"] });
 
             const result = await window.electron.dialog.showOpenDialog({
                 title: t("open-file", "Open File"),
                 properties: ["openFile"],
-                filters,
+                filters: fileFilters,
             });
             if (result.canceled || result.filePaths.length === 0) {
                 return;
@@ -201,19 +204,43 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
             queueMessage(SQL_EDITOR_ADD, { tabsItemID, externalFile: result.filePaths[0] } as SqlEditorAddMessage);
         };
 
+        const handleSaveFile = async (message: { tabsItemID: string; editorId: string }) => {
+            if (message.tabsItemID !== tabsItemID) return;
+
+            const state = editorContentManager.getState(message.editorId);
+            if (!state) {
+                console.error("Editor state not found for ID:", message.editorId);
+                return;
+            }
+
+            const result = await window.electron.dialog.showSaveDialog({
+                title: t("save-file", "Save File"),
+                defaultPath: state.label ?? (state.externalPath ? state.fileName : undefined) ?? "untitled.sql",
+                filters: fileFilters,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            await editorContentManager.setExternalFile(message.editorId, result.filePath);
+        };
+
         subscribe(SQL_EDITOR_DELETE, handleDeleteSqlEditor);
         subscribe(SQL_EDITOR_CLOSE, handleCloseSqlEditor);
         subscribe(SQL_EDITOR_ADD, handleAddSqlEditor);
         subscribe(SQL_EDITOR_MENU_REOPEN, handleMenuReopenSqlEditor);
         subscribe(SQL_EDITOR_OPEN_FILE, handleOpenFile);
+        subscribe(SQL_EDITOR_SAVE_FILE, handleSaveFile);
         return () => {
             unsubscribe(SQL_EDITOR_DELETE, handleDeleteSqlEditor);
             unsubscribe(SQL_EDITOR_CLOSE, handleCloseSqlEditor);
             unsubscribe(SQL_EDITOR_ADD, handleAddSqlEditor);
             unsubscribe(SQL_EDITOR_MENU_REOPEN, handleMenuReopenSqlEditor);
             unsubscribe(SQL_EDITOR_OPEN_FILE, handleOpenFile);
+            unsubscribe(SQL_EDITOR_SAVE_FILE, handleSaveFile);
         };
-    }, [editorContentManager, editorsTabs, session]);
+    }, [editorContentManager, editorsTabs, session, fileFilters]);
 
     const menuButtonRef = React.useRef<HTMLButtonElement | null>(null); // Dodanie referencji
 

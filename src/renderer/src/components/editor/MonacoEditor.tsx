@@ -30,7 +30,7 @@ if (typeof self !== "undefined") {
 }
 
 export type EditorEolMode = "CRLF" | "LF";
-export const defaultEditorEolMode: EditorEolMode = "LF";
+export const defaultEditorEolMode: EditorEolMode = "CRLF";
 export const editorEolModes: EditorEolMode[] = ["CRLF", "LF"];
 
 export type EditorEncoding = "UTF-8" | "UTF-16LE" | "UTF-16BE" | "ISO-8859-2" | "Windows-1250";
@@ -66,9 +66,11 @@ interface MonacoEditorProps {
     statusBar?: boolean;
     miniMap?: boolean;
     language?: EditorLanguageId;
+    encoding?: EditorEncoding;
+    eol?: EditorEolMode;
 
-    onLanguageChange?: (languageId: string) => void;
-    onEncodingChange?: (encoding: string) => void;
+    onLanguageChange?: (languageId: EditorLanguageId) => void;
+    onEncodingChange?: (encoding: EditorEncoding) => void;
     onEolChange?: (eol: EditorEolMode) => void;
 
     onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => void;
@@ -78,7 +80,9 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const {
         onMount, editorKey, onFocus, onBlur, defaultValue,
         readOnly, loading, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
-        language = defaultEditorLanguageId,
+        language: initialLanguage = defaultEditorLanguageId,
+        encoding: initialEncoding = defaultEditorEncoding,
+        eol: initialEol = defaultEditorEolMode,
         onLanguageChange, onEncodingChange, onEolChange,
         ...other
     } = useThemeProps({ name: "MonacoEditor", props });
@@ -87,11 +91,24 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [lineCount, setLineCount] = useState(0);
     const [lineLength, setLineLength] = useState<number | undefined>(undefined);
     const [isReadOnly, setIsReadOnly] = useState(readOnly ?? false);
-    const [encoding, setEncoding] = useState<EditorEncoding>(defaultEditorEncoding);
-    const [eolMode, setEolMode] = useState<EditorEolMode>(defaultEditorEolMode);
-    const [languageId, setLanguageId] = useState<EditorLanguageId>(language); // nowy stan języka
+    const [encoding, setEncoding] = useState<EditorEncoding>(initialEncoding);
+    const [eol, setEol] = useState<EditorEolMode>(initialEol);
+    const [language, setLanguage] = useState<EditorLanguageId>(initialLanguage);
+    const [saved, setSaved] = useState<boolean>(true);
     const { t } = useTranslation();
     const theme = useTheme();
+
+    React.useEffect(() => {
+        setLanguage(initialLanguage);
+    }, [initialLanguage]);
+
+    React.useEffect(() => {
+        setEncoding(initialEncoding);
+    }, [initialEncoding]);
+
+    React.useEffect(() => {
+        setEol(initialEol);
+    }, [initialEol]);
 
     const handleEncodingChange = (value: EditorEncoding) => {
         setEncoding(value);
@@ -99,7 +116,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     };
 
     const handleLanguageChange = (value: EditorLanguageId) => {
-        setLanguageId(value);
+        setLanguage(value);
         // zmiana języka modelu w monaco
         const model = editorInstance?.getModel();
         if (model && value) {
@@ -137,7 +154,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         const updateEolMode = () => {
             const eol = editor.getModel()?.getEOL();
             const newMode = eol === "\r\n" ? "CRLF" : "LF";
-            setEolMode(newMode);
+            setEol(newMode);
             onEolChange?.(newMode); // powiadom warstwę I/O przy zmianach treści wpływających na EOL
         };
         disposables.push(editor.onDidChangeModelContent(updateEolMode));
@@ -152,8 +169,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
         // Ustaw początkowy język modelu na podstawie state
         const model = editor.getModel();
-        if (model && languageId) {
-            monaco.editor.setModelLanguage(model, languageId);
+        if (model && language) {
+            monaco.editor.setModelLanguage(model, language);
         }
 
         if (onMount) onMount(editor, monacoApi);
@@ -201,8 +218,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
     // aktualizuj język, jeśli zmieni się props.language z zewnątrz
     React.useEffect(() => {
-        if (language && language !== languageId) {
-            setLanguageId(language);
+        if (language && language !== language) {
+            setLanguage(language);
             const model = editorInstance?.getModel();
             if (model) {
                 monaco.editor.setModelLanguage(model, language);
@@ -210,7 +227,15 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [language]);
+    }, [language, editorInstance]);
+
+    React.useEffect(() => {
+        if (editorInstance) {
+            editorInstance.getModel()?.setEOL(eol === "CRLF"
+                ? monaco.editor.EndOfLineSequence.CRLF
+                : monaco.editor.EndOfLineSequence.LF);
+        }
+    }, [eol, editorInstance]);
 
     const loadingLabel =
         typeof loading === "string"
@@ -223,7 +248,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                 <Editor
                     defaultValue={defaultValue}
                     key={editorKey}
-                    defaultLanguage={languageId}
+                    defaultLanguage={language}
                     theme={theme.palette.mode === "dark" ? "vs-dark" : "light"}
                     options={{
                         minimap: { enabled: miniMap },
@@ -279,10 +304,10 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                         last: [
                             <StatusBarButton key="language-status"
                                 options={editorLanguageIds}
-                                optionSelected={languageId}
+                                optionSelected={language}
                                 onOptionSelect={handleLanguageChange}
                             >
-                                {t("editor.statusBar.language", "{{language}}", { language: languageId })}
+                                {t("editor.statusBar.language", "{{language}}", { language: language })}
                             </StatusBarButton>,
                             ...(!isReadOnly ? [
                                 <StatusBarButton
@@ -298,19 +323,19 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                 <StatusBarButton
                                     key="eol-mode"
                                     options={editorEolModes}
-                                    optionSelected={eolMode}
+                                    optionSelected={eol}
                                     onOptionSelect={(value) => {
                                         if (editorInstance) {
                                             const newEol = value === "CRLF"
                                                 ? monaco.editor.EndOfLineSequence.CRLF
                                                 : monaco.editor.EndOfLineSequence.LF;
                                             editorInstance.getModel()?.setEOL(newEol);
-                                            setEolMode(value);
+                                            setEol(value);
                                             onEolChange?.(value); // powiadom warstwę I/O
                                         }
                                     }}
                                 >
-                                    {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode })}
+                                    {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode: eol })}
                                 </StatusBarButton>
                             ] : []),
                         ]

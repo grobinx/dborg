@@ -36,8 +36,6 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
     const [editorInstance, setEditorInstance] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
     const itemHeight = (fontSize + 8) * 1.2;
 
-    console.log("Rendering QueryHistoryDialog with profileName:", profileName);
-
     const [filteredHistory, highlightText] = useSearch({
         data: queryHistory,
         fields: ['qh_query'],

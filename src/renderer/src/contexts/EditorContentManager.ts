@@ -1,6 +1,6 @@
 import { Mutex } from "async-mutex";
 import { DBORG_EDITORS_PATH_NAME } from "../../../../src/api/dborg-path";
-import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
+import { EditorEncoding, EditorEolMode, EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 
 export interface ContentState {
     editorId: string;
@@ -29,6 +29,9 @@ export interface EditorState {
     lastModified: number;
     order?: number;
     externalPath?: string;
+    language?: EditorLanguageId;
+    encoding?: EditorEncoding;
+    eol?: EditorEolMode;
 }
 
 export const editorExtLanguages: Partial<Record<EditorLanguageId, string[]>> = {
@@ -150,6 +153,48 @@ export interface IEditorContentManager {
     getLastModified: (editorId: string) => number;
 
     /**
+     * Ustawia język edytora.
+     * @param editorId 
+     * @param language 
+     */
+    setLanguage(editorId: string, language: EditorLanguageId): void;
+
+    /**
+     * Pobiera język edytora.
+     * @param editorId 
+     * @returns 
+     */
+    getLanguage(editorId: string): EditorLanguageId | null;
+
+    /**
+     * Ustawia kodowanie edytora.
+     * @param editorId
+     * @param encoding
+     */
+    setEncoding(editorId: string, encoding: EditorEncoding): void;
+
+    /**
+     * Pobiera kodowanie edytora.
+     * @param editorId
+     * @returns
+     */
+    getEncoding(editorId: string): EditorEncoding | null;
+
+    /**
+     * Ustawia tryb końca linii edytora.
+     * @param editorId
+     * @param eol
+     */
+    setEol(editorId: string, eol: EditorEolMode): void;
+
+    /**
+     * Pobiera tryb końca linii edytora.
+     * @param editorId
+     * @returns
+     */
+    getEol(editorId: string): EditorEolMode | null;
+
+    /**
      * Ustawia zewnętrzną ścieżkę pliku dla danego edytora.
      * Akcja zamienia plik wewnętrzny na zewnętrzny. Jest to proces nieodwracalny.
      * Ustawienie pliku automatycznie zapisuje zawartość w nowym pliku, wewnętrzny zostaje usunięty.
@@ -252,7 +297,7 @@ export interface IEditorContentManager {
      * @param callback - Funkcja wywoływana przy zmianie właściwości.
      * @returns Funkcja do odsubskrybowania zmian.
      */
-    onPropertyChange: (editorId: string, property: keyof EditorState | "content", callback: (value: any) => void) => () => void;
+    onStateChange: (editorId: string, property: keyof EditorState | "content" | "saved", callback: (value: any) => void) => () => void;
 }
 
 let editorsBaseDir: string | null = null;
@@ -275,7 +320,7 @@ class EditorContentManager implements IEditorContentManager {
     private mutex: Mutex = new Mutex(); // Mutex do synchronizacji
 
     // Mapowanie: editorId -> property -> Set<callback>
-    private propertySubscribers: Map<string, Map<keyof EditorState | "content", Set<EditorPropertySubscriber>>> = new Map();
+    private propertySubscribers: Map<string, Map<keyof EditorState | "content" | "saved", Set<EditorPropertySubscriber>>> = new Map();
 
     constructor(schemaId: string) {
         this.schemaId = schemaId;
@@ -386,6 +431,8 @@ class EditorContentManager implements IEditorContentManager {
         await window.dborg.file.writeFile(filePath, content);
 
         contentState.saved = true;
+
+        this.notifyPropertyChange(editorId, "saved", content);
     }
 
     getState(editorId: string): EditorState | null {
@@ -497,16 +544,50 @@ class EditorContentManager implements IEditorContentManager {
         return editorState ? editorState.lastModified : 0;
     }
 
+    setLanguage(editorId: string, language: EditorLanguageId): void {
+        this.updateEditorState(editorId, state => {
+            state.language = language;
+        });
+    }
+
+    getLanguage(editorId: string): EditorLanguageId | null {
+        const state = this.getState(editorId);
+        return state?.language ?? null;
+    }
+
+    setEncoding(editorId: string, encoding: EditorEncoding): void {
+        this.updateEditorState(editorId, state => {
+            state.encoding = encoding;
+        });
+    }
+
+    getEncoding(editorId: string): EditorEncoding | null {
+        const state = this.getState(editorId);
+        return state?.encoding ?? null;
+    }
+
+    setEol(editorId: string, eol: EditorEolMode): void {
+        this.updateEditorState(editorId, state => {
+            state.eol = eol;
+        });
+    }
+
+    getEol(editorId: string): EditorEolMode | null {
+        const state = this.getState(editorId);
+        return state?.eol ?? null;
+    }
+
     async setExternalFile(editorId: string, externalFilePath: string): Promise<void> {
         const { dir: externalPath, fileName, ext, normalizedPath } = this.splitPath(externalFilePath);
 
-        if (normalizedPath !== `${externalPath ?? this.baseDir}/${fileName}`) {
+        if (normalizedPath !== `${externalPath ?? this.baseDir}/${this.getFileName(editorId)}`) {
             // Zapisz aktualną zawartość do nowego pliku zewnętrznego
             const content = await this.getContent(editorId);
             await window.dborg.path.ensureDir(externalPath);
             await window.dborg.file.writeFile(normalizedPath, content);
 
-            await window.dborg.file.deleteFile(`${this.baseDir}/${this.getFileName(editorId)}`);
+            // Usuń stary plik wewnętrzny/zewnętrzny
+            await window.dborg.file.deleteFile(`${externalPath ?? this.baseDir}/${this.getFileName(editorId)}`);
 
             this.updateEditorState(editorId, state => {
                 state.externalPath = externalPath;
@@ -585,6 +666,7 @@ class EditorContentManager implements IEditorContentManager {
         });
 
         this.notifyPropertyChange(editorId, "content", content);
+        this.notifyPropertyChange(editorId, "saved", false);
 
         this.editorsSaved = false; // Oznaczenie, że edytory wymagają zapisu
         this.scheduleSave();
@@ -662,9 +744,9 @@ class EditorContentManager implements IEditorContentManager {
      * @param callback - Funkcja wywoływana przy zmianie (otrzymuje tylko nową wartość).
      * @returns Funkcja do odsubskrybowania.
      */
-    onPropertyChange(
+    onStateChange(
         editorId: string,
-        property: keyof EditorState | "content",
+        property: keyof EditorState | "content" | "saved",
         callback: EditorPropertySubscriber
     ): () => void {
         if (!this.propertySubscribers.has(editorId)) {
@@ -687,7 +769,7 @@ class EditorContentManager implements IEditorContentManager {
      */
     private notifyPropertyChange(
         editorId: string,
-        property: keyof EditorState | "content",
+        property: keyof EditorState | "content" | "saved",
         value: any
     ) {
         const propMap = this.propertySubscribers.get(editorId);
