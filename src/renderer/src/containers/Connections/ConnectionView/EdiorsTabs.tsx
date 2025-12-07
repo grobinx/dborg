@@ -302,7 +302,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                     >
                                         {state.externalPath && <theme.icons.File />}
                                         {[
-                                            state.externalPath && !state.label && state.fileName,
+                                            state.externalPath && !state.label && (state.fileName.length > 25 ? state.fileName.slice(0, 22) + "..." : state.fileName),
                                             state.label,
                                             t("Lines", "Lines {{count}}", { count: state.lines || 0 }),
                                             t("cursor-position", "Ln {{line}}, Col {{column}}", { line: state.position?.line || 0, column: state.position?.column || 0 }),

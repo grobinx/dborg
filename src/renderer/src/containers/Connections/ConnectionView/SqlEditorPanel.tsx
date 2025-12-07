@@ -505,7 +505,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     return (
         <TabPanelLabel>
             <theme.icons.SqlEditor />
-            <div style={{ display: "flex", maxWidth: "360px" }}>
+            <div style={{ display: "flex", maxWidth: 300 }}>
                 <Ellipsis blured={false}>{label}</Ellipsis>
             </div>
             <ToolButton
