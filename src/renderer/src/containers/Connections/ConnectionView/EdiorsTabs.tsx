@@ -301,7 +301,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                             )}
                                             {state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
                                                 <SyntaxHighlighter
-                                                    language="sql"
+                                                    language={state.language || "sql"}
                                                     style={theme.palette.mode === "dark" ? vs2015 : vs}
                                                     customStyle={{
                                                         //maxWidth: "500px",

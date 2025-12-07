@@ -82,6 +82,7 @@
     "react-transition-group": "^4.4.5",
     "recharts": "^3.5.0",
     "spark-md5": "^3.0.2",
+    "sql-formatter": "^15.6.10",
     "sql-taaf": "^1.0.14",
     "sqlite3": "^5.1.7",
     "uuidv7": "^1.0.2",

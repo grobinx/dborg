@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Editor, { loader, Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
+import * as sqlFormatter from "sql-formatter";
 
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
@@ -28,6 +29,44 @@ if (typeof self !== "undefined") {
         },
     };
 }
+
+monaco.languages.registerDocumentFormattingEditProvider("sql", {
+    provideDocumentFormattingEdits(model) {
+        const formatted = sqlFormatter.format(
+            model.getValue(),
+            {
+                language: "postgresql",
+                useTabs: false,
+                linesBetweenQueries: 1,
+                tabWidth: 4,
+            }
+        );
+        return [
+            {
+                range: model.getFullModelRange(),
+                text: formatted,
+            },
+        ];
+    },
+});
+
+monaco.languages.registerDocumentRangeFormattingEditProvider("sql", {
+    provideDocumentRangeFormattingEdits(model, range) {
+        const selectedText = model.getValueInRange(range);
+        const formatted = sqlFormatter.format(selectedText, {
+            language: "postgresql",
+            useTabs: false,
+            linesBetweenQueries: 1,
+            tabWidth: 4,
+        });
+        return [
+            {
+                range,
+                text: formatted,
+            },
+        ];
+    },
+});
 
 export type EditorEolMode = "CRLF" | "LF";
 export const defaultEditorEolMode: EditorEolMode = "CRLF";

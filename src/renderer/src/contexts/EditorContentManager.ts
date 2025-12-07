@@ -44,7 +44,7 @@ export const editorExtLanguages: Partial<Record<EditorLanguageId, string[]>> = {
     typescript: ["ts", "tsx"],
     python: ["py"],
     json: ["json"],
-    xml: ["xml", "html", "xhtml", "svg"],
+    xml: ["xml"],
     yaml: ["yaml", "yml"],
     csharp: ["cs"],
     php: ["php"],
@@ -52,7 +52,7 @@ export const editorExtLanguages: Partial<Record<EditorLanguageId, string[]>> = {
     go: ["go"],
     css: ["css", "scss", "less"],
     shell: ["sh", "bash", "zsh"],
-    html: ["html", "htm", "xhtml", "svg", "xml", "mhtml"],
+    html: ["html", "htm", "xhtml", "svg", "mhtml"],
     less: ["less"],
     markdown: ["md", "markdown"],
     plaintext: ["txt", "text", "log"],
@@ -811,16 +811,23 @@ class EditorContentManager implements IEditorContentManager {
             throw new Error(`Editor with ID "${editorId}" already exists.`);
         }
 
-
-
         let externalPath: string | undefined = undefined;
         let fileName: string | undefined = undefined;
+        let language: EditorLanguageId | undefined = undefined;
         if (filePath) {
             const { dir, fileName: fName, ext } = this.splitPath(filePath);
             externalPath = dir;
             fileName = fName;
             if (!type) {
                 type = ext || "txt";
+            }
+            if (type) {
+                for (const [lang, exts] of Object.entries(editorExtLanguages)) {
+                    if (exts?.includes(type)) {
+                        language = lang as EditorLanguageId;
+                        break;
+                    }
+                }
             }
         }
 
@@ -839,6 +846,7 @@ class EditorContentManager implements IEditorContentManager {
                 lastModified: Date.now(), // Aktualny czas jako czas ostatniej modyfikacji
                 order: this.editorStates.size,
                 externalPath,
+                language,
             };
 
             // Tworzenie nowego stanu zawartości
