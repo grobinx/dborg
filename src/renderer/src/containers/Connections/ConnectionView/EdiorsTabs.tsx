@@ -17,11 +17,13 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { editorExtLanguages } from "@renderer/contexts/EditorContentManager";
+import { Shortcut } from "@renderer/components/Shortcut";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
 export const SQL_EDITOR_ADD = "sql-editor:new";
 export const SQL_EDITOR_MENU_REOPEN = "sql-editor:menu-reopen";
+export const SQL_EDITOR_OPEN_FILE = "sql-editor:open-file";
 
 export interface SqlEditorAddMessage {
     tabsItemID: string;
@@ -176,15 +178,40 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
             setClosedEditors(closed);
         };
 
+        const handleOpenFile = async (message: { tabsItemID: string }) => {
+            if (message.tabsItemID !== tabsItemID) return;
+            
+            const filters = Object.entries(editorExtLanguages)
+                .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
+                .map(([lang, exts]) => ({
+                    name: `${lang.charAt(0).toUpperCase() + lang.slice(1)} Files`,
+                    extensions: exts as string[],
+                }));
+
+            filters.push({ name: "All Files", extensions: ["*"] });
+
+            const result = await window.electron.dialog.showOpenDialog({
+                title: t("open-file", "Open File"),
+                properties: ["openFile"],
+                filters,
+            });
+            if (result.canceled || result.filePaths.length === 0) {
+                return;
+            }
+            queueMessage(SQL_EDITOR_ADD, { tabsItemID, externalFile: result.filePaths[0] } as SqlEditorAddMessage);
+        };
+
         subscribe(SQL_EDITOR_DELETE, handleDeleteSqlEditor);
         subscribe(SQL_EDITOR_CLOSE, handleCloseSqlEditor);
         subscribe(SQL_EDITOR_ADD, handleAddSqlEditor);
         subscribe(SQL_EDITOR_MENU_REOPEN, handleMenuReopenSqlEditor);
+        subscribe(SQL_EDITOR_OPEN_FILE, handleOpenFile);
         return () => {
             unsubscribe(SQL_EDITOR_DELETE, handleDeleteSqlEditor);
             unsubscribe(SQL_EDITOR_CLOSE, handleCloseSqlEditor);
             unsubscribe(SQL_EDITOR_ADD, handleAddSqlEditor);
             unsubscribe(SQL_EDITOR_MENU_REOPEN, handleMenuReopenSqlEditor);
+            unsubscribe(SQL_EDITOR_OPEN_FILE, handleOpenFile);
         };
     }, [editorContentManager, editorsTabs, session]);
 
@@ -199,28 +226,9 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
         handleMenuClose();
     };
 
-    const handleOpenExternalFile = async () => {
+    const handleOpenFile = async () => {
+        queueMessage(SQL_EDITOR_OPEN_FILE, { tabsItemID });
         handleMenuClose();
-        // Tworzymy filtry na podstawie editorExtLanguages
-        const filters = Object.entries(editorExtLanguages)
-            .filter(([_, exts]) => Array.isArray(exts) && exts.length > 0)
-            .map(([lang, exts]) => ({
-                name: `${lang.charAt(0).toUpperCase() + lang.slice(1)} Files`,
-                extensions: exts as string[],
-            }));
-
-        filters.push({ name: "All Files", extensions: ["*"] });
-
-        const result = await window.electron.dialog.showOpenDialog({
-            title: t("open-file", "Open File"),
-            properties: ["openFile"],
-            filters,
-        });
-        if (result.canceled || result.filePaths.length === 0) {
-            return;
-        }
-        const externalFile = result.filePaths[0];
-        queueMessage(SQL_EDITOR_ADD, { tabsItemID, externalFile } as SqlEditorAddMessage);
     };
 
     // Lokalny renderer dla przycisku dodawania SQL edytora
@@ -261,7 +269,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                         <>
                                             {state.externalPath && (
                                                 <div>
-                                                    <strong>{t("file-path", "File Path:")}</strong> {state.externalPath}/{state.fileName}
+                                                    {state.externalPath}/{state.fileName}
                                                 </div>
                                             )}
                                             {state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
@@ -269,7 +277,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                                     language="sql"
                                                     style={theme.palette.mode === "dark" ? vs2015 : vs}
                                                     customStyle={{
-                                                        maxWidth: "500px",
+                                                        //maxWidth: "500px",
                                                         width: "auto",
                                                     }}
                                                 >
@@ -294,7 +302,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                     >
                                         {state.externalPath && <theme.icons.File />}
                                         {[
-                                            state.externalPath && state.fileName,
+                                            state.externalPath && !state.label && state.fileName,
                                             state.label,
                                             t("Lines", "Lines {{count}}", { count: state.lines || 0 }),
                                             t("cursor-position", "Ln {{line}}, Col {{column}}", { line: state.position?.line || 0, column: state.position?.column || 0 }),
@@ -307,7 +315,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                             <MenuItem disabled>{t("no-closed-editors", "No closed editors available")}</MenuItem>
                         )}
                         <Divider />
-                        <MenuItem onClick={handleOpenExternalFile}>
+                        <MenuItem onClick={handleOpenFile}>
                             {t("open-file", "Open file...")}
                         </MenuItem>
                     </Menu>

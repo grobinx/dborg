@@ -4,7 +4,7 @@ import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
 import { ExecuteQueryAction } from "./editor/actions/ExecuteQueryAction";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "@mui/material";
+import { Stack, useTheme } from "@mui/material";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
@@ -13,7 +13,7 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useDialogs } from "@toolpad/core";
 import { SelectCurrentCommand } from "./editor/actions/SelectCurrentCommand";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { SQL_EDITOR_ADD, SQL_EDITOR_CLOSE, SQL_EDITOR_DELETE, SQL_EDITOR_MENU_REOPEN } from "./EdiorsTabs";
+import { SQL_EDITOR_ADD, SQL_EDITOR_CLOSE, SQL_EDITOR_DELETE, SQL_EDITOR_MENU_REOPEN, SQL_EDITOR_OPEN_FILE } from "./EdiorsTabs";
 import { AddSqlEditorTab } from "./editor/actions/AddSqlEditorTab";
 import { CloseSqlEditorTab } from "./editor/actions/CloseSqlEditorTab";
 import { MenuReopenSqlEditorTab } from "./editor/actions/MenuReopenSqlEditorTab";
@@ -31,6 +31,8 @@ import { SelectQueryHistoryAction } from "./editor/actions/SelectQueryHistoryAct
 import { ProfileRecord } from "src/api/entities";
 import QueryHistoryDialog from "@renderer/dialogs/QueryHistoryDialog";
 import { editor } from "monaco-editor";
+import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
+import { Ellipsis } from "@renderer/components/useful/Elipsis";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_FIRST_LINE_CHANGED = "sql-editor:first-line-changed";
@@ -318,6 +320,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         }));
         editor.addAction(SelectCurrentCommand());
         editor.addAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
+        editor.addAction(OpenFileSqlEditorTab(() => { queueMessage(SQL_EDITOR_OPEN_FILE, { tabsItemID }); }));
         editor.addAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
         editor.addAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         editor.addAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
@@ -473,7 +476,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
         if (itemID) {
             const state = editorContentManager.getState(itemID);
             if (state?.externalPath) {
-                const fileLabel = state.fileName.split(".").slice(0, -1).join("."); 
+                const fileLabel = state.fileName.split(".").slice(0, -1).join(".");
                 setFileLabel(fileLabel);
                 setLabel(fileLabel);
             }
@@ -502,7 +505,9 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     return (
         <TabPanelLabel>
             <theme.icons.SqlEditor />
-            <span>{label}</span>
+            <div style={{ display: "flex", maxWidth: "360px" }}>
+                <Ellipsis blured={false}>{label}</Ellipsis>
+            </div>
             <ToolButton
                 component="div"
                 color="main"

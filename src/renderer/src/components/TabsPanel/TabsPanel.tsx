@@ -3,7 +3,6 @@ import { styled, Box, Tabs, Tab, useThemeProps, AppBar, Stack, Menu, MenuItem } 
 import TabPanel from "./TabPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB, TAB_PANEL_CHANGED, TAB_PANEL_CLICK, TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "../../app/Messages";
-import { CommandManager } from "../CommandPalette/CommandManager";
 
 export interface TabStructure {
     itemID: string;

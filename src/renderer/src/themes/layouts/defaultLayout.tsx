@@ -174,6 +174,7 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 styleOverrides: {
                     root: {
                         textTransform: 'none',
+                        maxWidth: 500,
                     },
                 },
                 defaultProps: {
