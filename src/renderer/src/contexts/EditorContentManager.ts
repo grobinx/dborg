@@ -4,7 +4,6 @@ import { EditorEncoding, EditorEolMode, EditorLanguageId } from "@renderer/compo
 
 export interface ContentState {
     editorId: string;
-    schemaId: string;
     loaded: boolean;
     saved: boolean;
     content?: string;
@@ -17,18 +16,17 @@ interface CursorPosition {
 }
 
 export interface EditorsState {
-    schemaId: string;
+    profileId?: string;
     activeId: string | null;
     editors: EditorState[];
 }
 
 function isEditorsState(obj: any): obj is EditorsState {
-    return obj && typeof obj === "object" && "schemaId" in obj && "activeId" in obj && "editors" in obj;
+    return obj && typeof obj === "object" && "profileId" in obj && "activeId" in obj && "editors" in obj;
 }
 
 export interface EditorState {
     editorId: string;
-    schemaId: string;
     label: string | null;
     type: string;
     position: CursorPosition;
@@ -331,7 +329,7 @@ let editorsBaseDir: string | null = null;
 type EditorPropertySubscriber = (value: any) => void;
 
 class EditorContentManager implements IEditorContentManager {
-    private schemaId: string;
+    private profileId: string;
     private activeEditorId: string | null = null;
     private baseDir: string;
     private statesFile: string;
@@ -346,9 +344,9 @@ class EditorContentManager implements IEditorContentManager {
     // Mapowanie: editorId -> property -> Set<callback>
     private propertySubscribers: Map<string, Map<keyof EditorState | "content" | "saved", Set<EditorPropertySubscriber>>> = new Map();
 
-    constructor(schemaId: string) {
-        this.schemaId = schemaId;
-        this.baseDir = editorsBaseDir + "/" + this.schemaId;
+    constructor(profileId: string) {
+        this.profileId = profileId;
+        this.baseDir = editorsBaseDir + "/" + this.profileId;
         this.statesFile = `${this.baseDir}/editors.json`;
         this.editorStates = new Map();
         this.contentStates = new Map();
@@ -398,7 +396,6 @@ class EditorContentManager implements IEditorContentManager {
                 if (!this.contentStates.has(state.editorId)) {
                     this.contentStates.set(state.editorId, {
                         editorId: state.editorId,
-                        schemaId: this.schemaId,
                         loaded: false,
                         saved: false,
                     });
@@ -412,7 +409,7 @@ class EditorContentManager implements IEditorContentManager {
         const states = Array.from(this.editorStates.values());
         await window.dborg.path.ensureDir(this.baseDir);
         const editorsStates: EditorsState = {
-            schemaId: this.schemaId,
+            profileId: this.profileId,
             activeId: this.activeEditorId,
             editors: states,
         };
@@ -437,7 +434,6 @@ class EditorContentManager implements IEditorContentManager {
         // Tworzenie lub aktualizacja stanu zawartości
         const contentState: ContentState = {
             editorId,
-            schemaId: this.schemaId,
             loaded: true,
             saved: true,
             content: content,
@@ -667,7 +663,6 @@ class EditorContentManager implements IEditorContentManager {
         if (!contentState) {
             contentState = {
                 editorId,
-                schemaId: this.schemaId,
                 loaded: true,
                 saved: false,
                 content: content,
@@ -686,7 +681,6 @@ class EditorContentManager implements IEditorContentManager {
         if (!editorState) {
             editorState = {
                 editorId,
-                schemaId: this.schemaId,
                 label: null,
                 type: "txt", // Domyślny typ, jeśli nie istnieje
                 position: { top: 0, line: 0, column: 0 }, // Domyślna pozycja
@@ -884,7 +878,6 @@ class EditorContentManager implements IEditorContentManager {
             // Tworzenie nowego stanu edytora
             const newEditorState: EditorState = {
                 editorId,
-                schemaId: this.schemaId,
                 label: null,
                 type: type ?? "txt", // Domyślny typ
                 position: { top: 0, line: 0, column: 0 }, // Domyślna pozycja kursora
@@ -901,7 +894,6 @@ class EditorContentManager implements IEditorContentManager {
             // Tworzenie nowego stanu zawartości
             const newContentState: ContentState = {
                 editorId,
-                schemaId: this.schemaId,
                 content: "",
                 loaded: true, // Zawartość nie jest jeszcze załadowana
                 saved: false, // Zawartość nie jest jeszcze zapisana
