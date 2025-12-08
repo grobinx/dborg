@@ -34,6 +34,7 @@ import { editor } from "monaco-editor";
 import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
+import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -306,6 +307,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 }
             }
 
+            console.log(extractSqlParameters(query));
+
             queueMessage(SQL_EDITOR_EXECUTE_QUERY, {
                 to: session.info.uniqueId,
                 from: itemID,
@@ -367,6 +370,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 onLanguageChange={language => editorContentManager.setLanguage(itemID!, language)}
                 onEncodingChange={encoding => editorContentManager.setEncoding(itemID!, encoding)}
                 onEolChange={eol => editorContentManager.setEol(itemID!, eol)}
+                onFocus={editorContentManager.setActive.bind(editorContentManager, itemID!)}
             />
             {openSelectQueryHistoryDialog && (
                 <QueryHistoryDialog

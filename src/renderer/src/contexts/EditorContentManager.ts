@@ -16,6 +16,16 @@ interface CursorPosition {
     column: number;
 }
 
+export interface EditorsState {
+    schemaId: string;
+    activeId: string | null;
+    editors: EditorState[];
+}
+
+function isEditorsState(obj: any): obj is EditorsState {
+    return obj && typeof obj === "object" && "schemaId" in obj && "activeId" in obj && "editors" in obj;
+}
+
 export interface EditorState {
     editorId: string;
     schemaId: string;
@@ -102,6 +112,19 @@ export interface IEditorContentManager {
      * @returns `true`, jeśli edytor jest otwarty, w przeciwnym razie `false`.
      */
     isOpen: (editorId: string) => boolean;
+
+    /**
+     * Ustawia aktywny edytor.
+     * @param editorId 
+     * @returns 
+     */
+    setActive: (editorId: string) => void;
+
+    /**
+     * Pobiera identyfikator aktywnego edytora.
+     * @returns Identyfikator aktywnego edytora lub `null`, jeśli brak aktywnego edytora.
+     */
+    getActive: () => string | null;
 
     /**
      * Ustawia typ edytora.
@@ -309,6 +332,7 @@ type EditorPropertySubscriber = (value: any) => void;
 
 class EditorContentManager implements IEditorContentManager {
     private schemaId: string;
+    private activeEditorId: string | null = null;
     private baseDir: string;
     private statesFile: string;
     private editorStates: Map<string, EditorState>;
@@ -331,6 +355,7 @@ class EditorContentManager implements IEditorContentManager {
         this.saveTimeout = null; // Inicjalizacja zmiennej timeoutu
         this.editorsSaved = true;
         this.editorsLoaded = false;
+        this.activeEditorId = null;
     }
 
     private normalizePath(path: string): string {
@@ -351,10 +376,19 @@ class EditorContentManager implements IEditorContentManager {
         }
 
         await this.mutex.runExclusive(async () => {
+            let editorsStates: EditorsState | null = null;
             let states: EditorState[] = [];
             if (await window.dborg.file.exists(this.statesFile)) {
                 const data = await window.dborg.file.readFile(this.statesFile);
-                states = JSON.parse(data);
+                const parsed = JSON.parse(data);
+                if (isEditorsState(parsed)) {
+                    editorsStates = parsed;
+                    states = editorsStates.editors;
+                    this.activeEditorId = editorsStates.activeId;
+                }
+                else if (Array.isArray(parsed)) {
+                    states = parsed as EditorState[];
+                }
             }
 
             states.forEach(state => {
@@ -377,7 +411,13 @@ class EditorContentManager implements IEditorContentManager {
     async saveStates(): Promise<void> {
         const states = Array.from(this.editorStates.values());
         await window.dborg.path.ensureDir(this.baseDir);
-        await window.dborg.file.writeFile(this.statesFile, JSON.stringify(states, null, 2));
+        const editorsStates: EditorsState = {
+            schemaId: this.schemaId,
+            activeId: this.activeEditorId,
+            editors: states,
+        };
+        //await window.dborg.file.writeFile(this.statesFile, JSON.stringify(states, null, 2));
+        await window.dborg.file.writeFile(this.statesFile, JSON.stringify(editorsStates, null, 2));
         this.editorsSaved = true; // Ustawienie flagi zapisania
     }
 
@@ -462,12 +502,21 @@ class EditorContentManager implements IEditorContentManager {
         this.updateEditorState(editorId, state => {
             state.open = open;
         }, true);
-        this.saveStates();
     }
 
     isOpen(editorId: string): boolean {
         const state = this.getState(editorId);
         return state ? state.open : false;
+    }
+
+    setActive(editorId: string): void {
+        this.activeEditorId = editorId;
+        this.editorsSaved = false;
+        this.scheduleSave();
+    }
+
+    getActive(): string | null {
+        return this.activeEditorId;
     }
 
     async setType(editorId: string, type: string): Promise<void> {

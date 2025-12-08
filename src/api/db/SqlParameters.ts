@@ -19,8 +19,22 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     while ((match = regexString.exec(query)) !== null) {
         stringRanges.push({ start: match.index, end: regexString.lastIndex });
     }
-    function isInString(index: number): boolean {
-        return stringRanges.some(r => index >= r.start && index < r.end);
+
+    // Zakresy komentarzy
+    const commentRanges: Array<{ start: number; end: number }> = [];
+    const regexLineComment = /--.*$/gm;
+    const regexBlockComment = /\/\*[\s\S]*?\*\//g;
+
+    while ((match = regexLineComment.exec(query)) !== null) {
+        commentRanges.push({ start: match.index, end: regexLineComment.lastIndex });
+    }
+    while ((match = regexBlockComment.exec(query)) !== null) {
+        commentRanges.push({ start: match.index, end: regexBlockComment.lastIndex });
+    }
+
+    function isInStringOrComment(index: number): boolean {
+        return stringRanges.some(r => index >= r.start && index < r.end)
+            || commentRanges.some(r => index >= r.start && index < r.end);
     }
 
     const params: SqlParameterInfo[] = [];
@@ -36,7 +50,7 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     for (const { re, type } of regexes) {
         while ((match = re.exec(query)) !== null) {
             const idx = match.index;
-            if (isInString(idx)) continue;
+            if (isInStringOrComment(idx)) continue;
             // IGNORUJ podwójny dwukropek (PostgreSQL cast)
             if (type === "named" && idx > 0 && query[idx - 1] === ":") continue;
             if (type === "named" && query.slice(idx, idx + 2) === "::") continue;

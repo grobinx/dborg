@@ -98,6 +98,12 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                         />);
                 });
                 setEditorsTabs(tabs);
+                if (editorContentManager.getActive()) {
+                    const activeEditorId = editorContentManager.getActive()!;
+                    requestAnimationFrame(() => {
+                        queueMessage(SWITCH_PANEL_TAB, tabsItemID, activeEditorId);
+                    });
+                }
             } else {
                 const newEditorId = uuidv7();
                 setEditorsTabs([
