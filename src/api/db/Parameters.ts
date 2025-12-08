@@ -1,3 +1,5 @@
+import { ParameterPlaceholderStyle } from "./Driver";
+
 // Możesz użyć takiego typu:
 export interface SqlParameterInfo {
     name: string | number;      // nazwa lub numer parametru
@@ -24,6 +26,7 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
         { re: /:([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /@([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /\$([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
+        { re: /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, type: "named" },
         { re: /\$([0-9]+)/g, type: "positional" },
         { re: /\?/g, type: "question" },
     ];
@@ -51,7 +54,7 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     return params;
 }
 
-function makePlaceholder(template: string, nameOrIndex: string | number): string {
+function makePlaceholder(template: ParameterPlaceholderStyle, nameOrIndex: string | number): string {
     if (template.includes("$n")) return template.replace("$n", String(nameOrIndex));
     if (template.includes(":name")) return template.replace(":name", String(nameOrIndex));
     if (template.includes("@name")) return template.replace("@name", String(nameOrIndex));
@@ -63,7 +66,7 @@ function makePlaceholder(template: string, nameOrIndex: string | number): string
 export function replaceNamedParamsWithPositional(
     sql: string,
     params: SqlParameterInfo[],
-    parameterPlaceholder: string
+    parameterPlaceholder: ParameterPlaceholderStyle
 ): string {
     // Znajdź zakresy stringów
     const stringRanges: Array<{ start: number; end: number }> = [];

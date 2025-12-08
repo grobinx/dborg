@@ -398,7 +398,7 @@ export type DatabaseObjectType =
     "default_constraint" | "rule" | "policy" | "event_trigger" | "materialized_view_log" | "table_partition";
 export type DatabaseObjectTypes = DatabaseObjectType[];
 
-export type ParameterPlaceholderStyle = "?" | "$n" | ":name" | "@name" | "$name";
+export type ParameterPlaceholderStyle = "?" | "$n" | ":name" | "@name" | "$name" | "{name}";
 
 export interface DatabaseSupports {
     /**
