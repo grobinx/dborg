@@ -1,10 +1,12 @@
 import { ParameterPlaceholderStyle } from "./Driver";
 
+export type ParamType = "named" | "positional" | "question";
+
 // Możesz użyć takiego typu:
 export interface SqlParameterInfo {
     name: string | number;      // nazwa lub numer parametru
     position: number;           // indeks wystąpienia w zapytaniu (od 0)
-    paramType: "named" | "positional" | "question"; // typ parametru
+    paramType: ParamType; // typ parametru
 }
 
 // Przykład funkcji wyciągającej parametry:
@@ -22,7 +24,7 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     }
 
     const params: SqlParameterInfo[] = [];
-    const regexes: { re: RegExp; type: "named" | "positional" | "question" }[] = [
+    const regexes: { re: RegExp; type: ParamType }[] = [
         { re: /:([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /@([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /\$([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
