@@ -10,6 +10,7 @@ const rlsPoliciesTab = (
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
 
     return {
         id: cid("table-rls-policies-tab"),
@@ -28,11 +29,12 @@ const rlsPoliciesTab = (
                 mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
+                    const selectPermissive = major >= 15 ? "permissive," : "";
                     const { rows } = await session.query(
                         `
 select
   policyname,
-  permissive,
+  ${selectPermissive}
   cmd as command,
   array_to_string(roles, ', ') as roles,
   qual as using_expr,
@@ -47,7 +49,9 @@ order by policyname;
                 },
                 columns: [
                     { key: "policyname", label: t("policy-name", "Policy Name"), dataType: "string", width: 220 },
-                    { key: "permissive", label: t("permissive", "Permissive"), dataType: "boolean", width: 110 },
+                    ...(major >= 15 ? [
+                        { key: "permissive", label: t("permissive", "Permissive"), dataType: "boolean", width: 110 }
+                    ] : []),
                     { key: "command", label: t("command", "Command"), dataType: "string", width: 120 },
                     { key: "roles", label: t("roles", "Roles"), dataType: "string", width: 220 },
                     { key: "using_expr", label: t("using", "Using"), dataType: "string", width: 420 },

@@ -107,6 +107,8 @@ interface MonacoEditorProps {
     language?: EditorLanguageId;
     encoding?: EditorEncoding;
     eol?: EditorEolMode;
+    insertSpaces?: boolean;
+    tabSize?: number;
 
     onLanguageChange?: (languageId: EditorLanguageId) => void;
     onEncodingChange?: (encoding: EditorEncoding) => void;
@@ -122,9 +124,14 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         language: initialLanguage = defaultEditorLanguageId,
         encoding: initialEncoding = defaultEditorEncoding,
         eol: initialEol = defaultEditorEolMode,
+        insertSpaces: initialInsertSpaces = true,
+        tabSize: initialTabSize = 4,
         onLanguageChange, onEncodingChange, onEolChange,
         ...other
     } = useThemeProps({ name: "MonacoEditor", props });
+
+    const theme = useTheme();
+    const { t } = useTranslation();
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [cursorPosition, setCursorPosition] = useState<{ line?: number; column?: number }>({ line: undefined, column: undefined });
     const [lineCount, setLineCount] = useState(0);
@@ -133,9 +140,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [encoding, setEncoding] = useState<EditorEncoding>(initialEncoding);
     const [eol, setEol] = useState<EditorEolMode>(initialEol);
     const [language, setLanguage] = useState<EditorLanguageId>(initialLanguage);
-    const [saved, setSaved] = useState<boolean>(true);
-    const { t } = useTranslation();
-    const theme = useTheme();
+    const [insertSpaces, setInsertSpaces] = useState<boolean>(initialInsertSpaces);
+    const [tabSize, setTabSize] = useState<number>(initialTabSize);
 
     React.useEffect(() => {
         setLanguage(initialLanguage);
@@ -148,6 +154,14 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     React.useEffect(() => {
         setEol(initialEol);
     }, [initialEol]);
+
+    React.useEffect(() => {
+        setInsertSpaces(initialInsertSpaces);
+    }, [initialInsertSpaces]);
+
+    React.useEffect(() => {
+        setTabSize(initialTabSize);
+    }, [initialTabSize]);
 
     const handleEncodingChange = (value: EditorEncoding) => {
         setEncoding(value);
@@ -251,9 +265,11 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                 lineNumbers: lineNumbers ? "on" : "off",
                 minimap: { enabled: miniMap },
                 stickyScroll: { enabled: true, maxLineCount: 1 },
+                insertSpaces,
+                tabSize,
             });
         }
-    }, [wordWrap, lineNumbers, miniMap, editorInstance]);
+    }, [wordWrap, lineNumbers, miniMap, insertSpaces, tabSize, editorInstance]);
 
     // aktualizuj język, jeśli zmieni się props.language z zewnątrz
     React.useEffect(() => {
@@ -348,6 +364,19 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                             >
                                 {t("editor.statusBar.language", "{{language}}", { language: language })}
                             </StatusBarButton>,
+                            <StatusBarButton
+                                key="indentation"
+                                onClick={() => {
+                                    if (editorInstance) {
+                                        editorInstance.trigger(null, 'editor.action.showCommands', null);
+                                    }
+                                }}
+                            >
+                                {t("editor.statusBar.indentation", "{{type}}: {{size}}", {
+                                    type: insertSpaces ? t("editor.statusBar.spaces", "Spaces") : t("editor.statusBar.tabs", "Tabs"),
+                                    size: tabSize,
+                                })}
+                            </StatusBarButton>,
                             ...(!isReadOnly ? [
                                 <StatusBarButton
                                     key="encoding"
@@ -377,6 +406,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode: eol })}
                                 </StatusBarButton>
                             ] : []),
+
                         ]
                     }}
                 />

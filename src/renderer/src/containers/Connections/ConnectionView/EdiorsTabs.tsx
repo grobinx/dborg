@@ -293,13 +293,13 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                     key={state.editorId}
                                     interactive
                                     title={
-                                        <>
-                                            {state.externalPath && (
-                                                <div>
-                                                    {state.externalPath}/{state.fileName}
-                                                </div>
-                                            )}
-                                            {state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
+                                        state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
+                                            <>
+                                                {state.externalPath && (
+                                                    <div>
+                                                        {state.externalPath}/{state.fileName}
+                                                    </div>
+                                                )}
                                                 <SyntaxHighlighter
                                                     language={state.language || "sql"}
                                                     style={theme.palette.mode === "dark" ? vs2015 : vs}
@@ -310,8 +310,8 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                                 >
                                                     {"...\n" + state.sampleLines + "\n..."}
                                                 </SyntaxHighlighter>
-                                            ) : ""}
-                                        </>
+                                            </>
+                                        ) : ""
                                     }
                                     placement="right"
                                     slotProps={{
