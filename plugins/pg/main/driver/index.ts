@@ -693,7 +693,7 @@ export class Driver extends driver.Driver {
                 pooling: true,
                 parameterizedQueries: true,
             },
-            parameterPlaceholder: "$1",
+            parameterPlaceholder: "$n",
         }
     }
 

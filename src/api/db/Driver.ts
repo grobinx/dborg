@@ -398,6 +398,8 @@ export type DatabaseObjectType =
     "default_constraint" | "rule" | "policy" | "event_trigger" | "materialized_view_log" | "table_partition";
 export type DatabaseObjectTypes = DatabaseObjectType[];
 
+export type ParameterPlaceholderStyle = "?" | "$n" | ":name" | "@name" | "$name";
+
 export interface DatabaseSupports {
     /**
      * Database name
@@ -456,13 +458,13 @@ export interface DatabaseSupports {
     };
     /**
      * Regexp placeholder pattern for parameterized queries
-     * @example $1, $2, $3, etc for PostgreSQL
-     * @example ? for SQLite, MySQL, MSSQL, etc
-     * @example :param1, :param2, :param3, etc for Oracle
-     * @example @param1, @param2, @param3, etc for SQL Server
-     * @example $param1, $param2, $param3, etc for ClickHouse
+     * @example "$n" for PostgreSQL
+     * @example "?" for SQLite, MySQL, MSSQL, etc
+     * @example ":name" for Oracle
+     * @example "@name" for SQL Server
+     * @example "$name" for ClickHouse
      */
-    parameterPlaceholder: string;
+    parameterPlaceholder: ParameterPlaceholderStyle;
 }
 
 /**
