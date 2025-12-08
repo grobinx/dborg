@@ -10,7 +10,7 @@ import { PasswordField } from '@renderer/components/inputs/PasswordField';
 export interface PasswordDialogProps extends DefaultDialogProps {
 }
 
-function PasswordDialog({ open, onClose, payload }: DialogProps<PasswordDialogProps, string | null>) {
+function PasswordDialog({ open, onClose }: DialogProps<PasswordDialogProps, string | null>) {
     const [password, setPassword] = React.useState('');
     const { t } = useTranslation();
     const textFieldRef = React.useRef<HTMLInputElement>(null);
