@@ -4,7 +4,7 @@ import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot, ITextField } from "plugins/manager/renderer/CustomSlots";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio
 interface IOStatsRecord {

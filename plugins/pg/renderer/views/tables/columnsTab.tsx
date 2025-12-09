@@ -3,7 +3,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 import { Action, Actions } from "@renderer/components/CommandPalette/ActionManager";
 
 export interface TableColumnRecord {

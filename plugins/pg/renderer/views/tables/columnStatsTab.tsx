@@ -9,7 +9,7 @@ import {
     ITabSlot,
     ITabsSlot
 } from "plugins/manager/renderer/CustomSlots";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 import {
     ResponsiveContainer,
     LineChart,

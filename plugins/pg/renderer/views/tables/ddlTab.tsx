@@ -1,7 +1,7 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { PLUGIN_ID } from "../../PostgresPlugin";
 import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl } from "../../../common/ddl";

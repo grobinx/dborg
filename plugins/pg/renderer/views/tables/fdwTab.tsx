@@ -2,7 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IContentSlot, IGridSlot, ISplitSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 
 interface FdwRecord {
     foreign_table: string;

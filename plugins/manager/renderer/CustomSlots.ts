@@ -419,7 +419,7 @@ export interface IRenderedSlot extends ICustomSlot {
     /**
      * Zawartość slotu (funkcja renderująca).
      */
-    render: React.FC<{ refresh: (id: string) => void }>;
+    render: React.FC<{ refresh: RefreshSlotFunction }>;
 }
 
 export type ContentSlotKind =

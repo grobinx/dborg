@@ -4,7 +4,7 @@ import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
 import i18next from "i18next";
 import { settingsGroupDefaults, useSetting } from "@renderer/contexts/SettingsContext";
-import { tablesView } from "./views/tables";
+import { tablesView } from "./views/tables/tablesView";
 import SettingsRegistry from "@renderer/components/settings/SettingsRegistry";
 import { useTranslation } from "react-i18next";
 import { FormattedText } from "@renderer/components/useful/FormattedText";
@@ -12,6 +12,7 @@ import { Stack } from "@mui/material";
 import { Button } from "@renderer/components/buttons/Button";
 import { useToast } from "@renderer/contexts/ToastContext";
 import React from "react";
+import { databaseView } from "./views/database/databaseView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -35,6 +36,7 @@ const PostgresPlugin: Plugin = {
             const t = i18next.t.bind(i18next);
 
             return [
+                databaseView(session),
                 tablesView(session),
                 {
                     type: "connection",

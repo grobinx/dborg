@@ -4,7 +4,7 @@ import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
-import { TableRecord } from ".";
+import { TableRecord } from "./tablesView";
 
 interface StorageRecord {
     relkind: string;

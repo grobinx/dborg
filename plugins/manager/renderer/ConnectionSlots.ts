@@ -1,4 +1,4 @@
-import { IContentSlot, ContentSlotKindFactory, ISlot, TabSlotsFactory, ContentSlotFactory } from "./CustomSlots";
+import { ContentSlotKindFactory, ISlot, TabSlotsFactory, ContentSlotFactory } from "./CustomSlots";
 
 export type ConnectionViewSlotType =
     "integrated"
@@ -18,7 +18,7 @@ export interface IConnectionViewSlot extends ISlot {
 
 export interface IConnectionRootSlot extends IConnectionViewSlot {
     type: "root";
-    slot: ContentSlotFactory;
+    slot: ContentSlotKindFactory;
 }
 
 export interface IConnectionIntegratedSlot extends IConnectionViewSlot {

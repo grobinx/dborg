@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveTabSlotsFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
@@ -23,6 +23,7 @@ import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
+import { create } from "domain";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -105,6 +106,11 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                             ),
                         }));
                     }
+                } else if (slot.type === "root") {
+                    const rootSlot = resolveContentSlotKindFactory(slot.slot, refreshSlot);
+                    if (rootSlot) {
+                        setRootViewsMap(prev => ({ ...prev, [selectedView.id]: createContentComponent(rootSlot, refreshSlot) }));
+                    }
                 }
             } else if (selectedView.type === "rendered" && selectedView.render !== null) {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
@@ -114,44 +120,47 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 
     return (
         <StyledConnection className="Connection-root" {...other}>
-            <SplitPanelGroup
-                direction="horizontal"
-                autoSaveId={`connection-panel-left-${session.profile.sch_id}`}
-            >
-                <SplitPanel defaultSize={20} hidden={!selectedThis}>
-                    {Object.entries(sideViewsMap).map(([id, node]) => (
-                        <Box
-                            key={id}
-                            hidden={selectedView?.id !== id}
-                            sx={{
-                                height: "100%",
-                                width: "100%",
-                            }}
-                        >
-                            {node}
-                        </Box>
-                    ))}
-                </SplitPanel>
-                <Splitter hidden={!selectedThis} />
-                <SplitPanel>
-                    <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.profile.sch_id}`}>
-                        <SplitPanel>
-                            <EditorsTabs
-                                session={session}
-                                editorContentManager={editorContentManager}
-                                additionalTabs={editorTabsMap[selectedView?.id ?? ""] ?? undefined}
-                            />
-                        </SplitPanel>
-                        <Splitter />
-                        <SplitPanel defaultSize={20}>
-                            <ResultsTabs
-                                session={session}
-                                additionalTabs={resultTabsMap[selectedView?.id ?? ""] ?? undefined}
-                            />
-                        </SplitPanel>
-                    </SplitPanelGroup>
-                </SplitPanel>
-            </SplitPanelGroup>
+            {rootViewsMap[selectedView?.id ?? ""]}
+            <Box hidden={rootViewsMap[selectedView?.id ?? ""] !== undefined} sx={{ height: "100%", width: "100%" }}>
+                <SplitPanelGroup
+                    direction="horizontal"
+                    autoSaveId={`connection-panel-left-${session.profile.sch_id}`}
+                >
+                    <SplitPanel defaultSize={20} hidden={!selectedThis || !sideViewsMap[selectedView?.id ?? ""]}>
+                        {Object.entries(sideViewsMap).map(([id, node]) => (
+                            <Box
+                                key={id}
+                                hidden={selectedView?.id !== id}
+                                sx={{
+                                    height: "100%",
+                                    width: "100%",
+                                }}
+                            >
+                                {node}
+                            </Box>
+                        ))}
+                    </SplitPanel>
+                    <Splitter hidden={!selectedThis} />
+                    <SplitPanel>
+                        <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.profile.sch_id}`}>
+                            <SplitPanel>
+                                <EditorsTabs
+                                    session={session}
+                                    editorContentManager={editorContentManager}
+                                    additionalTabs={editorTabsMap[selectedView?.id ?? ""] ?? undefined}
+                                />
+                            </SplitPanel>
+                            <Splitter />
+                            <SplitPanel defaultSize={20}>
+                                <ResultsTabs
+                                    session={session}
+                                    additionalTabs={resultTabsMap[selectedView?.id ?? ""] ?? undefined}
+                                />
+                            </SplitPanel>
+                        </SplitPanelGroup>
+                    </SplitPanel>
+                </SplitPanelGroup>
+            </Box>
         </StyledConnection>
     );
 }
