@@ -65,25 +65,30 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const listRef = useRef<HTMLUListElement>(null);
     const [listMaxHeight, setListMaxHeight] = useState<number>(300); // Domyślna maksymalna wysokość
     const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const onCloseRef = useRef(onClose);
+    const getContextRef = useRef(getContext);
 
     // State for context menu
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
 
-    const handleClose = () => {
-        onClose();
+    onCloseRef.current = onClose;
+    getContextRef.current = getContext;
+
+    const handleClose = React.useCallback(() => {
+        onCloseRef.current();
         setSearchText('');
         setSelectedGroup(null);
         parentRef?.current?.focus();
-    };
+    }, [parentRef]);
 
-    const handleOptionClick = (option: ActionGroupOption<any>) => {
-        if (getContext) {
-            option.run(getContext());
+    const handleOptionClick = React.useCallback((option: ActionGroupOption<any>) => {
+        if (getContextRef.current) {
+            option.run(getContextRef.current());
             Promise.resolve().then(() => {
                 inputRef?.current?.focus();
             });
         }
-    };
+    }, []);
 
     // Handle context menu event
     useEffect(() => {
@@ -110,9 +115,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         };
     }, [open]);
 
-    const handleContextMenuClose = () => {
+    const handleContextMenuClose = React.useCallback(() => {
         setContextMenu(null);
-    };
+    }, []);
 
     useEffect(() => {
         if (open && manager) {
@@ -123,11 +128,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 pfx === prefix
             );
             if (matchingGroup) {
-                if (matchingGroup.getSearchText && getContext) {
-                    newSearchText = matchingGroup.getSearchText(getContext());
+                if (matchingGroup.getSearchText && getContextRef.current) {
+                    newSearchText = matchingGroup.getSearchText(getContextRef.current());
                 }
-                if (matchingGroup.onOpen && getContext) {
-                    matchingGroup.onOpen(getContext());
+                if (matchingGroup.onOpen && getContextRef.current) {
+                    matchingGroup.onOpen(getContextRef.current());
                 }
             }
             setSearchText(prev => prev !== (prefix ?? '>') + (newSearchText) ? (prefix ?? '>') + (newSearchText) : prev);
@@ -162,7 +167,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     useEffect(() => {
         const controller = new AbortController();
         const signal = controller.signal;
-        const context = getContext?.();
+        const context = getContextRef.current?.();
 
         console.debug("fetchCommands");
 
@@ -221,7 +226,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         // Znajdź indeks akcji, która ma właściwość selected ustawioną na true
         const selectedActionIndex = filteredCommands.findIndex(
             (action) => typeof action.selected === 'function' ? (
-                getContext ? action.selected(getContext()) : false
+                getContextRef.current ? action.selected(getContextRef.current()) : false
             ) : false
         );
 
@@ -241,16 +246,22 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         });
     }, [selectedIndex]);
 
-    const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-            handleClose();
-        }
-    };
+    const handleCommandClick = React.useCallback((action: Action<any>) => {
+        Promise.resolve().then(() => {
+            if (getContextRef.current) {
+                manager.executeAction(action, getContextRef.current());
+                if (onAction) {
+                    onAction(action);
+                }
+            }
+        });
+        handleClose();
+    }, [manager, onAction, handleClose]);
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === 'Escape') {
-            if (selectedGroup && selectedGroup.onCancel && getContext) {
-                selectedGroup.onCancel(getContext());
+            if (selectedGroup && selectedGroup.onCancel && getContextRef.current) {
+                selectedGroup.onCancel(getContextRef.current());
             }
             handleClose();
         }
@@ -365,10 +376,17 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 return false;
             });
         }
-    };
+    }, [selectedGroup, handleOptionClick, handleCommandClick, handleClose, filteredCommands, selectedIndex, manager]);
 
     useEffect(() => {
         console.debug("addEventListener");
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                handleClose();
+            }
+        };
+
         if (open) {
             document.addEventListener('mousedown', handleClickOutside);
         }
@@ -380,24 +398,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         };
     }, [open, handleClose]);
 
-    const handleCommandClick = (action: Action<any>) => {
-        Promise.resolve().then(() => {
-            if (getContext) {
-                manager.executeAction(action, getContext());
-                if (onAction) {
-                    onAction(action);
-                }
-            }
-        });
-        handleClose();
-    };
-
     // Helper function to group and sort context menu actions
     const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: Action<any>[]; }[]>([]);
 
     useEffect(() => {
         let isMounted = true;
-        const context = getContext?.();
+        const context = getContextRef.current?.();
 
         console.debug("fetchContextMenuActions");
 
@@ -485,7 +491,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
     }, [open, listMaxHeight, filteredCommands, selectedGroup]);
 
-    const context = getContext?.();
+    const context = getContextRef.current?.();
 
     return (
         <>
@@ -553,10 +559,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                             dense
                                             ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
                                             className={index === selectedIndex ? 'focused' : undefined}
-                                            sx={{ opacity: disabled ? 0.5 : 1, display: visible ? 'block' : 'none' }}
+                                            sx={{ opacity: disabled ? 0.7 : 1, display: visible ? 'block' : 'none' }}
                                         >
                                             <ListItemButton
-                                                onClick={() => handleCommandClick(action)}
+                                                onClick={handleCommandClick.bind(null, action)}
                                                 selected={selected}
                                                 disabled={disabled}
                                             >
@@ -566,6 +572,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                 <ListItemText
                                                     primary={highlightText(label, search, false, false, theme.palette.primary.main)}
                                                     secondary={highlightText(description, search, false, false, theme.palette.primary.main)}
+                                                    slotProps={{
+                                                        primary: { variant: 'body1' },
+                                                        secondary: { variant: 'description' },
+                                                    }}
                                                 />
                                                 {action.keybindings && <Shortcut keybindings={action.keybindings} />}
                                             </ListItemButton>
