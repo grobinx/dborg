@@ -157,6 +157,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Always calculate filteredCommands, even if the component is not open
     const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
     const cachedActions = useRef<Record<string, Action<any>[]>>({});
+    const commandsHasIcons = useMemo(() => filteredCommands.some(action => !!action.icon), [filteredCommands]);
 
     useEffect(() => {
         if (!open) {
@@ -566,9 +567,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                 selected={selected}
                                                 disabled={disabled}
                                             >
-                                                <ListItemIcon sx={{ color: 'inherit' }}>
-                                                    {icon}
-                                                </ListItemIcon>
+                                                {commandsHasIcons && (
+                                                    <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
+                                                        {icon}
+                                                    </ListItemIcon>
+                                                )}
                                                 <ListItemText
                                                     primary={highlightText(label, search, false, false, theme.palette.primary.main)}
                                                     secondary={highlightText(description, search, false, false, theme.palette.primary.main)}

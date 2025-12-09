@@ -18,13 +18,13 @@ export const ShortcutLayout = (_palette: Palette, _root: ThemeOptions): Shortcut
                     opacity: 0.5,
                 },
                 '&.size-small': {
-                    fontSize: '0.6em',
-                },
-                '&.size-medium': {
                     fontSize: '0.75em',
                 },
-                '&.size-large': {
+                '&.size-medium': {
                     fontSize: '0.9em',
+                },
+                '&.size-large': {
+                    fontSize: '1.1em',
                 },
             },
             chord: {
