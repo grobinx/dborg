@@ -8,6 +8,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { ThemeIconName } from "@renderer/themes/icons";
 import * as monaco from "monaco-editor";
 import { HTMLInputTypeAttribute } from "react";
 
@@ -31,7 +32,7 @@ export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolea
 export type NumberFactory = number | ((refresh: RefreshSlotFunction) => number);
 export type NumberArrayFactory = number[] | ((refresh: RefreshSlotFunction) => number[]);
 export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
-export type IconFactory = React.ReactNode | (() => React.ReactNode);
+export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
 export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
 export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
 export type SelectOptionsFactory = Option[] | ((refresh: RefreshSlotFunction) => Option[]);
@@ -150,8 +151,8 @@ export interface IAutoRefreshContext {
 }
 
 export interface AutoRefreshLifecycle {
-    onHide?: "pause" | "stop";
-    onShow?: "resume" | "start";
+    onHide?: "pause" | "stop" | "ignore";
+    onShow?: "resume" | "start" | "ignore";
     onMount?: "start";
     onUnmount?: "stop";
 }

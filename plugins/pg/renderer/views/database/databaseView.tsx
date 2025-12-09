@@ -4,11 +4,14 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
-import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ITabSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { sendMessage } from "@renderer/contexts/MessageContext";
+import { title } from "process";
+import { Typography } from "@mui/material";
+import activityTab from "./activityTab";
 
 export function databaseView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
@@ -29,21 +32,28 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
     return {
         type: "connection",
         id: cid("database-view"),
-        icon: "Warning",
-        label: t("database-tables", "Tables"),
+        icon: "DatabaseSettings",
+        label: t("database", "Database"),
+        tooltip: t("database-information", "Database Information"),
+        section: "last",
         slot: {
             id: cid("database-slot"),
             type: "root",
             slot: {
                 id: cid("database-content"),
-                type: "rendered",
-                render: () => {
-                    return <div>
-                        <h1>{t("database-information", "Database Information")}</h1>
-                        <p>{t("connected-to-database", "Connected to database")}: {database}</p>
-                        <p>{t("use-the-actions-to-manage-database-objects", "Use the actions to manage database objects.")}</p>
-                    </div>;
+                type: "content",
+                title: {
+                    id: cid("database-title"),
+                    type: "title",
+                    title: <Typography variant="h6">{t("database-information", "Database Information")}</Typography>,
                 },
+                main: () => ({
+                    id: cid("database-info-tabs"),
+                    type: "tabs",
+                    tabs: [
+                        activityTab(session, database),
+                    ],
+                }),
             },
         }
     };

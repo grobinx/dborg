@@ -184,7 +184,10 @@ export interface ThemeIcons {
     File: IconWrapperFC;
     Folder: IconWrapperFC;
     Link: IconWrapperFC;
+    DatabaseSettings: IconWrapperFC;
 }
+
+export type ThemeIconName = keyof ThemeIcons;
 
 export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.ReactNode), alt?: string) => {
     if (typeof icon === 'function') {

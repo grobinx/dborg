@@ -48,6 +48,7 @@ export interface IView {
     icon: React.ReactNode;
     label: string;
     tooltip?: string;
+    section?: SidebarSection;
 }
 
 export type View =

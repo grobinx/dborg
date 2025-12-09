@@ -120,7 +120,11 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 
     return (
         <StyledConnection className="Connection-root" {...other}>
-            {rootViewsMap[selectedView?.id ?? ""]}
+            {Object.entries(rootViewsMap).map(([id, node]) => (
+                <Box key={id} hidden={selectedView?.id !== id} sx={{ height: "100%", width: "100%" }}>
+                    {node}
+                </Box>
+            ))}
             <Box hidden={rootViewsMap[selectedView?.id ?? ""] !== undefined} sx={{ height: "100%", width: "100%" }}>
                 <SplitPanelGroup
                     direction="horizontal"

@@ -72,8 +72,24 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         };
     }, []);
 
-    const viewButtons = React.useMemo(() => {
-        return views?.map(({ id, icon, label, tooltip }, index) => (
+    const viewButtonsFirst = React.useMemo(() => {
+        return views?.filter(view => (view.section ?? selectedContainer?.section) === "first").map(({ id, icon, label, tooltip }, index) => (
+            <ViewButton
+                key={id}
+                selected={selectedView?.id === id}
+                onClick={() => queueMessage(Messages.SWITCH_VIEW, id)}
+                icon={resolveIcon(theme, icon)}
+                label={label}
+                expanded={expanded}
+                placement={placement}
+                index={index}
+                toolTip={tooltip}
+            />
+        ));
+    }, [views, selectedView, theme, expanded, placement]);
+
+    const viewButtonsLast = React.useMemo(() => {
+        return views?.filter(view => (view.section ?? selectedContainer?.section) === "last").map(({ id, icon, label, tooltip }, index) => (
             <ViewButton
                 key={id}
                 selected={selectedView?.id === id}
@@ -133,10 +149,10 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                 {children}
             </Stack>
             <Stack direction={horizontal ? "column" : "row"} flexGrow={1}>
-                {(selectedContainer?.section === "first" && views) && viewButtons}
+                {viewButtonsFirst}
             </Stack>
             <Stack direction={horizontal ? "column-reverse" : "row-reverse"} flexGrow={1}>
-                {(selectedContainer?.section === "last" && views) && viewButtons}
+                {viewButtonsLast}
             </Stack>
             <Divider orientation={horizontal ? "horizontal" : "vertical"} flexItem />
             {containers?.filter(container => container.section === "last").map((container) => {

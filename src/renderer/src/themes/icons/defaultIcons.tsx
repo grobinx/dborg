@@ -152,6 +152,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             File: (props) => <IconWrapper {...props} className="file"><MuiIcons.InsertDriveFileOutlined fontSize="inherit" /></IconWrapper>,
             Folder: (props) => <IconWrapper {...props} className="folder"><MuiIcons.FolderOutlined fontSize="inherit" /></IconWrapper>,
             Link: (props) => <IconWrapper {...props} className="link"><MuiIcons.LinkOutlined fontSize="inherit" /></IconWrapper>,
+            DatabaseSettings: (props) => <IconWrapper {...props} className="database-settings"><BsIcons.DatabaseFillGear fontSize="inherit" /></IconWrapper>,
         }
     }
 }

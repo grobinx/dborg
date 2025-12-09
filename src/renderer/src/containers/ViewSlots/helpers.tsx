@@ -266,17 +266,21 @@ const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: str
 
     React.useEffect(() => {
         if (isBarVisible) {
-            if (lifecycle.onShow === "start" && prevState.current === "stopped") {
+            if (lifecycle.onShow === "start") {
                 setState("running");
-            } else if (lifecycle.onShow === "resume" && prevState.current === "paused") {
+            } else if (lifecycle.onShow === "resume") {
                 setState("running");
+            } else if (lifecycle.onShow === "ignore") {
+                // no action
             }
             action.onShow?.(refreshSlot, context);
         } else {
-            if (lifecycle.onHide === "stop" && prevState.current === "running") {
+            if (lifecycle.onHide === "stop") {
                 setState("stopped");
-            } else if (lifecycle.onHide === "pause" && prevState.current === "running") {
+            } else if (lifecycle.onHide === "pause") {
                 setState("paused");
+            } else if (lifecycle.onHide === "ignore") {
+                // no action
             }
             action.onHide?.(refreshSlot, context);
         }
@@ -291,6 +295,19 @@ const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: str
         }
         prevState.current = state;
     }, [state]);
+
+    React.useEffect(() => {
+        if (lifecycle.onMount === "start") {
+            setState("running");
+        }
+        action.onMount?.(refreshSlot, context);
+        return () => {
+            if (lifecycle.onUnmount === "stop") {
+                setState("stopped");
+            }
+            action.onUnmount?.(refreshSlot, context);
+        }
+    }, []);
 
     const context: IAutoRefreshContext = {
         state,
@@ -311,6 +328,7 @@ const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: str
             ref={barRef}
             state={state}
             interval={interval}
+            intervals={action.intervals}
             onStateChange={setState}
             onIntervalChange={setInterval}
             onStart={action.onStart ? () => action.onStart?.(refreshSlot, context) : undefined}

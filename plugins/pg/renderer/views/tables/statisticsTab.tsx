@@ -358,7 +358,6 @@ const statisticsTab = (
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={({ name, value }) => `${name}: ${value.toLocaleString()}`}
                                     outerRadius={80}
                                     fill={theme.palette.background.paper}
                                     dataKey="value"
@@ -371,6 +370,23 @@ const statisticsTab = (
                                 <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(value: number) => value.toLocaleString()} />
                             </PieChart>
                         </ResponsiveContainer>
+                        {/* Dodaj legendę pod wykresem */}
+                        <div style={{ display: "flex", gap: 8, marginTop: 8, flexDirection: "column" }}>
+                            {pieData.map((entry, index) => (
+                                <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+                                    <span style={{
+                                        display: "inline-block",
+                                        width: 14,
+                                        height: 14,
+                                        backgroundColor: COLORS[index % COLORS.length],
+                                        borderRadius: 3,
+                                        marginRight: 4,
+                                    }} />
+                                    <span style={{ color: theme.palette.text.primary, fontWeight: 500 }}>{entry.name}:</span>
+                                    <span style={{ color: theme.palette.text.secondary }}>{entry.value.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             );
