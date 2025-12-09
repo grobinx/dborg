@@ -134,7 +134,17 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                     <ContainerButton
                         key={container.type}
                         selected={selectedContainer?.type === container.type}
-                        onClick={() => queueMessage(Messages.SWITCH_CONTAINER, container.type)}
+                        onClick={() => {
+                            if (selectedContainer?.type !== container.type) {
+                                queueMessage(Messages.SWITCH_CONTAINER, container.type);
+                            }
+                            if (selectedContainer?.type === container.type && container.type === "connections") {
+                                const view = views?.find(view => view.id === selectedView?.id);
+                                if (view) {
+                                    queueMessage(Messages.SWITCH_VIEW, view.id);
+                                }
+                            }
+                        }}
                         expanded={expanded}
                         placement={placement}
                         icon={resolveIcon(theme, container.icon)}
