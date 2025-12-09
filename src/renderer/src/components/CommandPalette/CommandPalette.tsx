@@ -640,7 +640,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         dense
                                         disabled={disabled}
                                     >
-                                        <ListItemIcon sx={{ color: 'inherit' }}>
+                                        <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
                                             {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
                                         </ListItemIcon>
                                         <ListItemText>

@@ -35,11 +35,37 @@ interface ShortcutChordProps {
     keybinding: string;
     active?: boolean;
     hidden?: boolean;
+    dense?: boolean;
     sx?: SxProps;
     style?: React.CSSProperties;
 }
 
-function ShortcutChord({ keybinding, active = true, hidden = false, sx, style }: ShortcutChordProps) {
+function denseKey(key: string, dense: boolean): string {
+    if (!dense) return key;
+
+    const replacements: Record<string, string> = {
+        "Control": "Ct",
+        "Ctrl": "Ctr",
+        "Alt": "Alt",
+        "Shift": "Shf",
+        "Meta": "Cmd",
+        "Command": "Cmd",
+        "Escape": "Esc",
+        "Enter": "↵",
+        "Tab": "Tab",
+        "ArrowLeft": "←",
+        "ArrowRight": "→",
+        "ArrowUp": "↑",
+        "ArrowDown": "↓",
+        "Backspace": "⌫",
+        "Delete": "Del",
+        "Space": "␣",
+    };
+
+    return replacements[key.trim()] ?? key.trim();
+}
+
+function ShortcutChord({ keybinding, active = true, hidden = false, dense = true, sx, style }: ShortcutChordProps) {
     return (
         <ShortcutChordStyled
             className={clsx(
@@ -59,7 +85,7 @@ function ShortcutChord({ keybinding, active = true, hidden = false, sx, style }:
                             hidden && "hidden"
                         )}
                     >
-                        {key}
+                        {denseKey(key, dense)}
                     </ShortcutKeyStyled>
                     {idx < array.length - 1 && "+"}
                 </React.Fragment>
@@ -73,6 +99,7 @@ interface ShortcutProps {
     active?: boolean;
     hidden?: boolean;
     size?: Size;
+    dense?: boolean;
     sx?: SxProps;
     style?: React.CSSProperties;
 }
@@ -83,7 +110,8 @@ export function Shortcut({
     hidden = false,
     sx,
     style,
-    size = "small"
+    size = "small",
+    dense = true,
 }: ShortcutProps) {
     return (
         <ShortcutRootStyled
@@ -99,11 +127,11 @@ export function Shortcut({
             {Array.isArray(keybindings) ?
                 keybindings.filter(Boolean).map((keybinding, idx, array) => (
                     <React.Fragment key={idx}>
-                        <ShortcutChord keybinding={keybinding} active={active} hidden={hidden} />
+                        <ShortcutChord keybinding={keybinding} active={active} hidden={hidden} dense={dense} />
                         {idx < array.length - 1 && "→"}
                     </React.Fragment>
                 )) :
-                <ShortcutChord keybinding={keybindings} active={active} hidden={hidden} />
+                <ShortcutChord keybinding={keybindings} active={active} hidden={hidden} dense={dense} />
             }
         </ShortcutRootStyled>
     );
