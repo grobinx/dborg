@@ -75,7 +75,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const setSelectedLogId = useConsoleLogState(state => state.setSelectedLogId);
     const [fontSize] = useSetting<number>("ui", "fontSize", 20);
     const [monospaceFontFamily] = useSetting("ui", "monospaceFontFamily");
-    const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? (fontSize * 1.5));
+    const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? ((fontSize + 8) * 1.2));
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [detailLogId, setDetailLogId] = React.useState<string | null>(null);
 

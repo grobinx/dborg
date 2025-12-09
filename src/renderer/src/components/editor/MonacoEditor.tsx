@@ -364,20 +364,20 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                             >
                                 {t("editor.statusBar.language", "{{language}}", { language: language })}
                             </StatusBarButton>,
-                            <StatusBarButton
-                                key="indentation"
-                                onClick={() => {
-                                    if (editorInstance) {
-                                        editorInstance.trigger(null, 'editor.action.showCommands', null);
-                                    }
-                                }}
-                            >
-                                {t("editor.statusBar.indentation", "{{type}}: {{size}}", {
-                                    type: insertSpaces ? t("editor.statusBar.spaces", "Spaces") : t("editor.statusBar.tabs", "Tabs"),
-                                    size: tabSize,
-                                })}
-                            </StatusBarButton>,
                             ...(!isReadOnly ? [
+                                <StatusBarButton
+                                    key="indentation"
+                                    onClick={() => {
+                                        if (editorInstance) {
+                                            editorInstance.trigger(null, 'editor.action.showCommands', null);
+                                        }
+                                    }}
+                                >
+                                    {t("editor.statusBar.indentation", "{{type}}: {{size}}", {
+                                        type: insertSpaces ? t("editor.statusBar.spaces", "Spaces") : t("editor.statusBar.tabs", "Tabs"),
+                                        size: tabSize,
+                                    })}
+                                </StatusBarButton>,
                                 <StatusBarButton
                                     key="encoding"
                                     options={editorEncodings}
@@ -385,9 +385,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     onOptionSelect={handleEncodingChange}
                                 >
                                     {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
-                                </StatusBarButton>
-                            ] : []),
-                            ...(!isReadOnly ? [
+                                </StatusBarButton>,
                                 <StatusBarButton
                                     key="eol-mode"
                                     options={editorEolModes}
@@ -404,10 +402,9 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     }}
                                 >
                                     {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode: eol })}
-                                </StatusBarButton>
+                                </StatusBarButton>,
                             ] : []),
-
-                        ]
+                        ],
                     }}
                 />
             )
