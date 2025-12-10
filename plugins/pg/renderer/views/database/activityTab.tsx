@@ -45,6 +45,7 @@ const activityTab = (
     let activityRows: ActivityRecord[] = [];
     let snapshotSize = 50 + 1;
     let snapshotCounter = 0;
+    let maxConnections = 0; // Dodaj zmienną dla max_connections
 
     const num = (v: any) => {
         const n = typeof v === "number" ? v : Number(v);
@@ -53,6 +54,20 @@ const activityTab = (
 
     // Wersja serwera
     let version = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
+
+    // Pobierz max_connections
+    async function fetchMaxConnections() {
+        try {
+            const { rows } = await session.query<{ setting: string }>(`
+                SELECT setting FROM pg_settings WHERE name = 'max_connections'
+            `);
+            if (rows.length > 0) {
+                maxConnections = parseInt(rows[0].setting, 10);
+            }
+        } catch (error) {
+            console.error("Error fetching max_connections:", error);
+        }
+    }
 
     // Pobierz dane z pg_stat_database
     async function fetchActivityData() {
@@ -118,6 +133,7 @@ const activityTab = (
                     snapshot: r.snapshot ?? -1,
                     timestamp: r.timestamp ?? Date.now(),
                     numbackends: num(r.numbackends),
+                    max_connections: maxConnections, // Dodaj max_connections do danych
                     backends_idle: num(r.backends_idle),
                     backends_idle_in_transaction: num(r.backends_idle_in_transaction),
                     backends_active: num(r.backends_active),
@@ -175,9 +191,37 @@ const activityTab = (
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                 <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
+                                <YAxis 
+                                    stroke={theme.palette.text.secondary} 
+                                    style={{ fontSize: "0.75rem" }} 
+                                    domain={[0, maxConnections > 0 ? maxConnections : 'auto']}
+                                />
                                 <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="numbackends" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorNumBackends)" name={t("numbackends", "Active Connections")} isAnimationActive={false} connectNulls />
+                                <Legend />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="numbackends" 
+                                    stroke={theme.palette.info.main} 
+                                    fillOpacity={1} 
+                                    fill="url(#colorNumBackends)" 
+                                    name={t("numbackends", "Active Connections")} 
+                                    isAnimationActive={false} 
+                                    connectNulls 
+                                />
+                                {maxConnections > 0 && (
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="max_connections" 
+                                        stroke={theme.palette.error.main} 
+                                        strokeDasharray="5 5"
+                                        fill="none"
+                                        strokeWidth={2}
+                                        name={t("max-connections", "Max Connections")} 
+                                        isAnimationActive={false} 
+                                        connectNulls 
+                                        dot={false}
+                                    />
+                                )}
                             </AreaChart>
                         </ResponsiveContainer>
                     </Grid>
@@ -453,7 +497,10 @@ const activityTab = (
                     onClear(refresh) {
                         activityRows = [];
                         snapshotCounter = 0;
-                        refresh(cid("database-activity-charts"));
+                        // Pobierz max_connections przy pierwszym uruchomieniu
+                        fetchMaxConnections().then(() => {
+                            refresh(cid("database-activity-charts"));
+                        });
                     },
                     clearOn: "start",
                     canPause: true,
