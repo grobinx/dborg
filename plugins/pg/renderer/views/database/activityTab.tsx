@@ -153,7 +153,7 @@ const activityTab = (
                     blk_read_time: num(r.blk_read_time),
                     blk_write_time: num(r.blk_write_time),
                 };
-            });
+            }).slice(-snapshotSize + 1);
 
             const CustomTooltip = ({ active, payload }: any) => {
                 if (active && payload && payload.length) {
