@@ -182,7 +182,7 @@ const storageTab = (
                                             if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
                                         <Legend />
                                         <Area type="monotone" dataKey="heap" stroke={theme.palette.primary.main} fillOpacity={1} fill="url(#colorHeap)" name={t("heap", "Heap")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
@@ -208,7 +208,7 @@ const storageTab = (
                                             if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
                                         <Legend />
                                         <Area type="monotone" dataKey="toast" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorToast)" name={t("toast", "Toast")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
@@ -237,7 +237,7 @@ const storageTab = (
                                             if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
                                         <Legend />
                                         <Area type="monotone" dataKey="indexes" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIndexes)" name={t("indexes", "Indexes")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
@@ -263,7 +263,7 @@ const storageTab = (
                                             if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
+                                        <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
                                         <Legend />
                                         <Area type="monotone" dataKey="total" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorTotal)" name={t("total", "Total")} isAnimationActive={false} connectNulls />
                                     </AreaChart>

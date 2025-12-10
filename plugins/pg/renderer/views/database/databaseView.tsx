@@ -1,15 +1,6 @@
-import { SearchData_ID } from "@renderer/components/DataGrid/actions";
-import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
-import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
-import { IGridSlot, ITabSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
-import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
-import { ShowRelationDataAction } from "../../actions/ShowRelationData";
-import { sendMessage } from "@renderer/contexts/MessageContext";
-import { title } from "process";
 import { Typography } from "@mui/material";
 import activityTab from "./activityTab";
 

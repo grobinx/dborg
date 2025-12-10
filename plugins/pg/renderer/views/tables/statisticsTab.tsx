@@ -92,7 +92,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Area type="monotone" dataKey="ins" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIns)" isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -112,7 +112,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Area type="monotone" dataKey="upd" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorUpd)" isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -135,7 +135,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Area type="monotone" dataKey="del" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDel)" isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -155,7 +155,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Area type="monotone" dataKey="hot" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorHot)" isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -199,7 +199,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="seq_scan" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorSeqScan)" name={t("seq-scan", "Seq Scan")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -220,7 +220,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="idx_scan" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIdxScan)" name={t("idx-scan", "Idx Scan")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -244,7 +244,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="seq_tup_read" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorSeqTupRead)" name={t("seq-tup-read", "Seq Tup Read")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -265,7 +265,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="idx_tup_fetch" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorIdxTupFetch)" name={t("idx-tup-fetch", "Idx Tup Fetch")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -319,7 +319,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="live" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorLive)" name={t("live", "Live")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -340,7 +340,7 @@ const statisticsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
-                                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                    <Tooltip />
                                     <Legend />
                                     <Area type="monotone" dataKey="dead" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDead)" name={t("dead", "Dead")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
@@ -367,7 +367,7 @@ const statisticsTab = (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} formatter={(value: number) => value.toLocaleString()} />
+                                <Tooltip formatter={(value: number) => value.toLocaleString()} />
                             </PieChart>
                         </ResponsiveContainer>
                         {/* Dodaj legendę pod wykresem */}

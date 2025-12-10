@@ -380,7 +380,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         updateViewsForContainer(selectedContainer, session);
     }, [sessions, selectedContainer, updateViewsForContainer]);
 
-    const handleSchemaConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
+    const handleProfileConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
         setSessions(prev => {
             const newSession = new DatabaseSession(connection);
             initMetadata(newSession);
@@ -424,7 +424,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             if (e.status === "success") handleSchemaDisconnectSuccess(e.connectionUniqueId);
         });
         const offConnecting = onEvent("connecting", e => {
-            if (e.status === "success") handleSchemaConnectSuccess(e.connection!);
+            if (e.status === "success") handleProfileConnectSuccess(e.connection!);
         });
 
         subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
@@ -450,7 +450,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         handleEditSchema,
         handleCloneEditSchema,
         handleTabConnectionsChanged,
-        handleSchemaConnectSuccess,
+        handleProfileConnectSuccess,
         handleSchemaDisconnectSuccess,
         handleRefreshMetadata,
         onEvent,

@@ -42,10 +42,9 @@ interface ConnectionsOwnProps extends ConnectionProps {
 }
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
-    const { session, children, tabsItemID, ...other } = useThemeProps({ name: "Connection", props });
+    const { session, children, tabsItemID, ...other } = props;
     const { selectedContainer, selectedView } = useContainers();
     const { selectedSession } = useSessions();
-    const [selectedThis, setSelectedThis] = React.useState(isSelectedThis());
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
 
@@ -68,12 +67,10 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 
     useEffect(() => {
         const selectedThis = isSelectedThis();
-        setSelectedThis(selectedThis);
-
-        if (selectedView && selectedView.id && !sideViewsMap[selectedView.id] && selectedThis) {
+        if (selectedView && selectedView.id && selectedThis) {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
-                if (slot.type === "integrated") {
+                if (slot.type === "integrated" && !sideViewsMap[selectedView.id]) {
                     const side = resolveContentSlotFactory(slot.side, refreshSlot);
                     if (side) {
                         setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot key={side.id} slot={side} /> }));
@@ -106,17 +103,19 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                             ),
                         }));
                     }
-                } else if (slot.type === "root") {
+                } else if (slot.type === "root" && !rootViewsMap[selectedView.id]) {
                     const rootSlot = resolveContentSlotKindFactory(slot.slot, refreshSlot);
                     if (rootSlot) {
                         setRootViewsMap(prev => ({ ...prev, [selectedView.id]: createContentComponent(rootSlot, refreshSlot) }));
                     }
                 }
-            } else if (selectedView.type === "rendered" && selectedView.render !== null) {
+            } else if (selectedView.type === "rendered" && selectedView.render !== null && !sideViewsMap[selectedView.id]) {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
     }, [selectedView, session, sideViewsMap, selectedContainer]);
+
+    console.log("ConnectionContentInner rendering", session.info.uniqueId, selectedView?.id);
 
     return (
         <StyledConnection className="Connection-root" {...other}>
@@ -130,7 +129,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                     direction="horizontal"
                     autoSaveId={`connection-panel-left-${session.profile.sch_id}`}
                 >
-                    <SplitPanel defaultSize={20} hidden={!selectedThis || !sideViewsMap[selectedView?.id ?? ""]}>
+                    <SplitPanel defaultSize={20} hidden={!sideViewsMap[selectedView?.id ?? ""]}>
                         {Object.entries(sideViewsMap).map(([id, node]) => (
                             <Box
                                 key={id}
@@ -144,7 +143,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                             </Box>
                         ))}
                     </SplitPanel>
-                    <Splitter hidden={!selectedThis} />
+                    <Splitter hidden={!sideViewsMap[selectedView?.id ?? ""]} />
                     <SplitPanel>
                         <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.profile.sch_id}`}>
                             <SplitPanel>

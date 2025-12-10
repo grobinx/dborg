@@ -93,6 +93,15 @@ const activityTab = (
         return padded;
     };
 
+    // Dodaj funkcję formatowania liczb
+    const formatNumberShort = (value: number) => {
+        if (value == null) return "";
+        if (Math.abs(value) >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "G";
+        if (Math.abs(value) >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+        if (Math.abs(value) >= 1_000) return (value / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+        return value.toString();
+    };
+
     // Wykresy
     const activityCharts = (): IRenderedSlot => ({
         id: cid("database-activity-charts"),
@@ -119,8 +128,8 @@ const activityTab = (
                     tup_updated: prev ? Math.max(0, num(r.tup_updated) - num(prev.tup_updated)) : 0,
                     tup_deleted: prev ? Math.max(0, num(r.tup_deleted) - num(prev.tup_deleted)) : 0,
                     conflicts: prev ? Math.max(0, num(r.conflicts) - num(prev.conflicts)) : 0,
-                    temp_files: num(r.temp_files),
-                    temp_bytes: num(r.temp_bytes),
+                    temp_files: prev ? Math.max(0, num(r.temp_files) - num(prev.temp_files)) : 0,
+                    temp_bytes: prev ? Math.max(0, num(r.temp_bytes) - num(prev.temp_bytes)) : 0,
                     deadlocks: prev ? Math.max(0, num(r.deadlocks) - num(prev.deadlocks)) : 0,
                     blk_read_time: num(r.blk_read_time),
                     blk_write_time: num(r.blk_write_time),
@@ -238,7 +247,11 @@ const activityTab = (
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                 <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
+                                <YAxis 
+                                    stroke={theme.palette.text.secondary} 
+                                    style={{ fontSize: "0.75rem" }} 
+                                    tickFormatter={formatNumberShort} // <-- DODAJ TO
+                                />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
                                 <Area type="monotone" dataKey="blks_read" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorBlksRead)" name={t("blks-read", "Blocks Read")} isAnimationActive={false} connectNulls />
@@ -262,7 +275,11 @@ const activityTab = (
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                 <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
+                                <YAxis 
+                                    stroke={theme.palette.text.secondary} 
+                                    style={{ fontSize: "0.75rem" }} 
+                                    tickFormatter={formatNumberShort} // <-- DODAJ TO
+                                />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
                                 <Area type="monotone" dataKey="tup_returned" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorReturned)" name={t("tup-returned", "Returned")} isAnimationActive={false} connectNulls />
@@ -319,7 +336,7 @@ const activityTab = (
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                         <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
                                         <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                        <Tooltip content={<CustomTooltip />} />
                                         <Legend />
                                         <Area type="monotone" dataKey="conflicts" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorConflicts)" name={t("conflicts", "Conflicts")} isAnimationActive={false} connectNulls />
                                         <Area type="monotone" dataKey="deadlocks" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDeadlocks)" name={t("deadlocks", "Deadlocks")} isAnimationActive={false} connectNulls />
@@ -342,11 +359,25 @@ const activityTab = (
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                         <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                        <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                        <YAxis
+                                            yAxisId="left"
+                                            stroke={theme.palette.info.main}
+                                            style={{ fontSize: "0.75rem" }}
+                                            tickFormatter={formatNumberShort}
+                                            label={{ value: t("temp-files", "Temp Files"), angle: -90, position: "insideLeft", fill: theme.palette.info.main, fontSize: 12 }}
+                                        />
+                                        <YAxis
+                                            yAxisId="right"
+                                            orientation="right"
+                                            stroke={theme.palette.success.main}
+                                            style={{ fontSize: "0.75rem" }}
+                                            tickFormatter={formatNumberShort}
+                                            label={{ value: t("temp-bytes", "Temp Bytes"), angle: -90, position: "insideRight", fill: theme.palette.success.main, fontSize: 12 }}
+                                        />
+                                        <Tooltip content={<CustomTooltip />} />
                                         <Legend />
-                                        <Area type="monotone" dataKey="temp_files" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorTempFiles)" name={t("temp-files", "Temp Files")} isAnimationActive={false} connectNulls />
-                                        <Area type="monotone" dataKey="temp_bytes" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorTempBytes)" name={t("temp-bytes", "Temp Bytes")} isAnimationActive={false} connectNulls />
+                                        <Area type="monotone" dataKey="temp_files" yAxisId="left" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorTempFiles)" name={t("temp-files", "Temp Files")} isAnimationActive={false} connectNulls />
+                                        <Area type="monotone" dataKey="temp_bytes" yAxisId="right" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorTempBytes)" name={t("temp-bytes", "Temp Bytes")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </Grid>
@@ -367,7 +398,7 @@ const activityTab = (
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                         <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
                                         <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                        <Tooltip contentStyle={{ backgroundColor: theme.palette.background.tooltip, border: `1px solid ${theme.palette.divider}` }} />
+                                        <Tooltip content={<CustomTooltip />} />
                                         <Legend />
                                         <Area type="monotone" dataKey="blk_read_time" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorBlkReadTime)" name={t("blk-read-time", "Read Time")} isAnimationActive={false} connectNulls />
                                         <Area type="monotone" dataKey="blk_write_time" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorBlkWriteTime)" name={t("blk-write-time", "Write Time")} isAnimationActive={false} connectNulls />
