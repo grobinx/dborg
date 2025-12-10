@@ -26,6 +26,7 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import sleep from "@renderer/utils/sleep";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { CopyDataButton } from "@renderer/components/CopyDataButton";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -564,6 +565,9 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                 onStateChange={(newState) => {
                     setAutorefreshState(newState);
                 }}
+            />
+            <CopyDataButton
+                getData={() => []}
             />
         </TabPanelButtons>
     );

@@ -9,6 +9,7 @@ import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { ThemeIconName } from "@renderer/themes/icons";
+import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
 import { HTMLInputTypeAttribute } from "react";
 
@@ -53,7 +54,15 @@ export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction)
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
 
-export type ToolKind<T = any> = string | Action<T> | Actions<T> | CommandDescriptor<T> | FieldTypeKind | IAutoRefresh;
+export type ToolKind<T = any> =
+    | string
+    | Action<T>
+    | Actions<T>
+    | CommandDescriptor<T>
+    | FieldTypeKind
+    | IAutoRefresh
+    | ICopyData
+    ;
 
 export interface ISelectOption {
     value: string,
@@ -255,6 +264,21 @@ export interface IAutoRefresh {
      */
     canRefresh?: boolean;
 }
+
+export interface ICopyData<T = any> {
+    /**
+     * Dostępne formaty eksportu danych.
+     * @default undefined - all formats
+     */
+    formats?: ExportFormat[];
+    /**
+     * Funkcja zwracająca dane do skopiowania.
+     * 
+     * @param refresh 
+     * @returns 
+     */
+    getData: (refresh: RefreshSlotFunction) => T;
+} 
 
 export interface ISlot {
     /**
@@ -698,5 +722,12 @@ export function isAutoRefresh(obj: any): obj is IAutoRefresh {
         typeof obj === "object" &&
         obj !== null &&
         typeof obj.onTick === "function"
+    );
+}
+export function isCopyData(obj: any): obj is ICopyData {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.getData === "function"
     );
 }

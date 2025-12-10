@@ -1,6 +1,30 @@
-export type ExportFormat = 
+export type ExportFormat =
     | 'json' | 'csv' | 'tsv' | 'markdown' | 'html' | 'redmine' | 'xml'
     | 'sql' | 'yaml' | 'latex' | 'jira' | 'ascii' | 'rst' | 'bbcode' | 'excel-xml';
+
+export interface ExportFormatDescription {
+    label: string;
+    mimeType: string;
+    fileExtension: string;
+}
+
+export const exportFormats: Record<ExportFormat, ExportFormatDescription> = {
+    json: { label: 'JSON', mimeType: 'application/json', fileExtension: 'json' },
+    csv: { label: 'CSV', mimeType: 'text/csv', fileExtension: 'csv' },
+    tsv: { label: 'TSV', mimeType: 'text/tab-separated-values', fileExtension: 'tsv' },
+    markdown: { label: 'Markdown Table', mimeType: 'text/markdown', fileExtension: 'md' },
+    html: { label: 'HTML Table', mimeType: 'text/html', fileExtension: 'html' },
+    redmine: { label: 'Redmine Wiki Table', mimeType: 'text/plain', fileExtension: 'txt' },
+    xml: { label: 'XML', mimeType: 'application/xml', fileExtension: 'xml' },
+    sql: { label: 'SQL INSERT Statements', mimeType: 'application/sql', fileExtension: 'sql' },
+    yaml: { label: 'YAML', mimeType: 'application/x-yaml', fileExtension: 'yaml' },
+    latex: { label: 'LaTeX Table', mimeType: 'application/x-latex', fileExtension: 'tex' },
+    jira: { label: 'Jira Markup Table', mimeType: 'text/plain', fileExtension: 'txt' },
+    ascii: { label: 'ASCII Table', mimeType: 'text/plain', fileExtension: 'txt' },
+    rst: { label: 'reStructuredText Table', mimeType: 'text/x-rst', fileExtension: 'rst' },
+    bbcode: { label: 'BBCode Table', mimeType: 'text/plain', fileExtension: 'txt' },
+    'excel-xml': { label: 'Excel XML', mimeType: 'application/vnd.ms-excel', fileExtension: 'xml' },
+};
 
 // Bazowe opcje wspólne dla wszystkich formatów
 interface BaseExportOptions {
@@ -71,8 +95,8 @@ interface ExcelXMLExportOptions extends BaseExportOptions {
 
 export interface ExportResult {
     content: string;
-    mimeType: string;
-    fileExtension: string;
+    mimeType: string | undefined;
+    fileExtension: string | undefined;
 }
 
 /**
@@ -344,7 +368,7 @@ const toXML = (data: Record<string, any>[], options: XMLExportOptions): string =
     const columns = getColumns(data, options);
     const rootElement = options.rootElement ?? 'root';
     const itemElement = options.itemElement ?? 'item';
-    
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<${rootElement}>\n`;
 
     data.forEach((row, index) => {
@@ -507,7 +531,7 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
     const borderStyle = options.borderStyle || 'single';
 
     const borders = {
-        single: { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│', cross: '┼', t: '┬', b: '┴', l: '├', r: '┤' },
+        single: { tl: '┌', tr: '┐', bl: '└', br: '╯', h: '─', v: '│', cross: '┼', t: '┬', b: '┴', l: '├', r: '┤' },
         double: { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║', cross: '╬', t: '╦', b: '╩', l: '╠', r: '╣' },
         rounded: { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│', cross: '┼', t: '┬', b: '┴', l: '├', r: '┤' },
         minimal: { tl: ' ', tr: ' ', bl: ' ', br: ' ', h: '-', v: '|', cross: '+', t: '+', b: '+', l: '+', r: '+' }
@@ -529,8 +553,8 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
 
     // Top border
     lines.push(
-        b.tl + 
-        widths.map(w => b.h.repeat(w + 2)).join(b.t) + 
+        b.tl +
+        widths.map(w => b.h.repeat(w + 2)).join(b.t) +
         b.tr
     );
 
@@ -541,8 +565,8 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
 
         // Header separator
         lines.push(
-            b.l + 
-            widths.map(w => b.h.repeat(w + 2)).join(b.cross) + 
+            b.l +
+            widths.map(w => b.h.repeat(w + 2)).join(b.cross) +
             b.r
         );
     }
@@ -558,8 +582,8 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
 
     // Bottom border
     lines.push(
-        b.bl + 
-        widths.map(w => b.h.repeat(w + 2)).join(b.b) + 
+        b.bl +
+        widths.map(w => b.h.repeat(w + 2)).join(b.b) +
         b.br
     );
 
@@ -644,7 +668,7 @@ const toRST = (data: Record<string, any>[], options: RSTExportOptions): string =
 const toExcelXML = (data: Record<string, any>[], options: ExcelXMLExportOptions): string => {
     const columns = getColumns(data, options);
     const sheetName = options.sheetName || 'Sheet1';
-    
+
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<?mso-application progid="Excel.Sheet"?>\n';
     xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
@@ -727,105 +751,32 @@ export function arrayTo(
     }
 
     let content: string;
-    let mimeType: string;
-    let fileExtension: string;
 
     switch (format) {
-        case 'json':
-            content = toJSON(data, options as JSONExportOptions);
-            mimeType = 'application/json';
-            fileExtension = 'json';
-            break;
-
+        case 'json': content = toJSON(data, options as JSONExportOptions); break;
         case 'csv':
-        case 'tsv':
-            content = toCSV(data, format, options as CSVExportOptions);
-            mimeType = format === 'tsv' ? 'text/tab-separated-values' : 'text/csv';
-            fileExtension = format;
-            break;
-
-        case 'markdown':
-            content = toMarkdown(data, options as TableExportOptions);
-            mimeType = 'text/markdown';
-            fileExtension = 'md';
-            break;
-
-        case 'html':
-            content = toHTML(data, options as TableExportOptions);
-            mimeType = 'text/html';
-            fileExtension = 'html';
-            break;
-
-        case 'redmine':
-            content = toRedmine(data, options as TableExportOptions);
-            mimeType = 'text/plain';
-            fileExtension = 'txt';
-            break;
-
-        case 'jira':
-            content = toJira(data, options as TableExportOptions);
-            mimeType = 'text/plain';
-            fileExtension = 'txt';
-            break;
-
-        case 'bbcode':
-            content = toBBCode(data, options as TableExportOptions);
-            mimeType = 'text/plain';
-            fileExtension = 'txt';
-            break;
-
-        case 'xml':
-            content = toXML(data, options as XMLExportOptions);
-            mimeType = 'application/xml';
-            fileExtension = 'xml';
-            break;
-
-        case 'sql':
-            content = toSQL(data, options as SQLExportOptions);
-            mimeType = 'application/sql';
-            fileExtension = 'sql';
-            break;
-
-        case 'yaml':
-            content = toYAML(data, options as YAMLExportOptions);
-            mimeType = 'text/yaml';
-            fileExtension = 'yaml';
-            break;
-
-        case 'latex':
-            content = toLaTeX(data, options as LaTeXExportOptions);
-            mimeType = 'application/x-latex';
-            fileExtension = 'tex';
-            break;
-
-        case 'ascii':
-            content = toASCII(data, options as ASCIITableExportOptions);
-            mimeType = 'text/plain';
-            fileExtension = 'txt';
-            break;
-
-        case 'rst':
-            content = toRST(data, options as RSTExportOptions);
-            mimeType = 'text/x-rst';
-            fileExtension = 'rst';
-            break;
-
-        case 'excel-xml':
-            content = toExcelXML(data, options as ExcelXMLExportOptions);
-            mimeType = 'application/vnd.ms-excel';
-            fileExtension = 'xml';
-            break;
+        case 'tsv': content = toCSV(data, format, options as CSVExportOptions); break;
+        case 'markdown': content = toMarkdown(data, options as TableExportOptions); break;
+        case 'html': content = toHTML(data, options as TableExportOptions); break;
+        case 'redmine': content = toRedmine(data, options as TableExportOptions); break;
+        case 'jira': content = toJira(data, options as TableExportOptions); break;
+        case 'bbcode': content = toBBCode(data, options as TableExportOptions); break;
+        case 'xml': content = toXML(data, options as XMLExportOptions); break;
+        case 'sql': content = toSQL(data, options as SQLExportOptions); break;
+        case 'yaml': content = toYAML(data, options as YAMLExportOptions); break;
+        case 'latex': content = toLaTeX(data, options as LaTeXExportOptions); break;
+        case 'ascii': content = toASCII(data, options as ASCIITableExportOptions); break;
+        case 'rst': content = toRST(data, options as RSTExportOptions); break;
+        case 'excel-xml': content = toExcelXML(data, options as ExcelXMLExportOptions); break;
 
         default:
             content = '';
-            mimeType = 'text/plain';
-            fileExtension = 'txt';
     }
 
     return {
         content,
-        mimeType,
-        fileExtension,
+        mimeType: exportFormats[format].mimeType,
+        fileExtension: exportFormats[format].fileExtension,
     };
 }
 
