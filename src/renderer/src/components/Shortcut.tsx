@@ -65,7 +65,7 @@ function denseKey(key: string, dense: boolean): string {
     return replacements[key.trim()] ?? key.trim();
 }
 
-function ShortcutChord({ keybinding, active = true, hidden = false, dense = true, sx, style }: ShortcutChordProps) {
+function ShortcutChord({ keybinding, active = true, hidden = false, dense = false, sx, style }: ShortcutChordProps) {
     return (
         <ShortcutChordStyled
             className={clsx(
@@ -111,7 +111,7 @@ export function Shortcut({
     sx,
     style,
     size = "small",
-    dense = true,
+    dense = false,
 }: ShortcutProps) {
     return (
         <ShortcutRootStyled

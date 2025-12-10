@@ -10,7 +10,6 @@ export const SearchDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
     const caseSensitiveId = "dataGrid.group.searchData.actions.caseSensitive";
     const excludeTextId = "dataGrid.group.searchData.actions.excludeText";
 
-    let queryTimeout: NodeJS.Timeout | null = null;
     let oldSearchText: string | undefined = undefined;
 
     return {
@@ -21,16 +20,8 @@ export const SearchDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
         position: "bottom",
         actions: (context, searchText) => {
             if (searchText !== oldSearchText) {
-                // Resetuj poprzedni timeout przy każdej zmianie
-                if (queryTimeout) {
-                    clearTimeout(queryTimeout);
-                }
-
-                // Ustaw nowy timeout z opóźnieniem 300ms
-                queryTimeout = setTimeout(() => {
-                    context.setSearchText(searchText);
-                    oldSearchText = searchText;
-                }, 300);
+                context.setSearchText(searchText);
+                oldSearchText = searchText;
             }
 
             const actions: Action<any>[] = [

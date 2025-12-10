@@ -12,6 +12,9 @@ import { Shortcut } from '../Shortcut';
 import { TextField } from '../inputs/TextField';
 import { Adornment } from '../inputs/base/BaseInputField';
 import { highlightText } from '@renderer/hooks/useSearch';
+import { InputDecorator } from '../inputs/decorators/InputDecorator';
+import debounce from '@renderer/utils/debounce';
+import { useSetting } from '@renderer/contexts/SettingsContext';
 
 interface CommandPaletteProps {
     manager: ActionManager<any>;
@@ -58,7 +61,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const { t } = useTranslation();
     const [searchText, setSearchText] = useState(initSearchText ?? '');
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const [selectedGroup, setSelectedGroup] = useState<ActionGroup | null>(null); // Zmieniono na przechowywanie całej grupy
+    const [selectedGroup, setSelectedGroup] = useState<ActionGroup | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const listItemRef = useRef<HTMLLIElement>(null); // Referencja do elementu listy
@@ -67,9 +70,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const onCloseRef = useRef(onClose);
     const getContextRef = useRef(getContext);
-
-    // State for context menu
+    const [searchDelay] = useSetting<number>("app", "search.delay");
+    const [refresh, setRefresh] = useState(true);
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
+    const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
+    const cachedActions = useRef<Record<string, Action<any>[]>>({});
+    const commandsHasIcons = useMemo(() => filteredCommands.some(action => !!action.icon), [filteredCommands]);
 
     onCloseRef.current = onClose;
     getContextRef.current = getContext;
@@ -78,12 +84,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         onCloseRef.current();
         setSearchText('');
         setSelectedGroup(null);
+        setFilteredCommands([]);
         parentRef?.current?.focus();
     }, [parentRef]);
 
     const handleOptionClick = React.useCallback((option: ActionGroupOption<any>) => {
         if (getContextRef.current) {
             option.run(getContextRef.current());
+            setRefresh(prev => !prev);
             Promise.resolve().then(() => {
                 inputRef?.current?.focus();
             });
@@ -154,71 +162,59 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
     }, [open, searchText, manager]);
 
-    // Always calculate filteredCommands, even if the component is not open
-    const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
-    const cachedActions = useRef<Record<string, Action<any>[]>>({});
-    const commandsHasIcons = useMemo(() => filteredCommands.some(action => !!action.icon), [filteredCommands]);
-
     useEffect(() => {
         if (!open) {
             cachedActions.current = {}; // Wyczyść pamięć podręczną po zamknięciu
         }
     }, [open]);
 
-    useEffect(() => {
-        const controller = new AbortController();
-        const signal = controller.signal;
-        const context = getContextRef.current?.();
+    const fetchCommands = React.useCallback(async (
+        manager: ActionManager<any>,
+        searchText: string,
+        selectedGroup: ActionGroup | null,
+    ) => {
+        // Usuń prefix z searchQuery, jeśli istnieje
+        const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
+            ? searchText.slice((selectedGroup?.prefix || '').length).trim()
+            : searchText;
 
+        if (selectedGroup && (selectedGroup?.mode ?? "actions") === "actions") {
+            // Tryb "actions": pobierz akcje tylko raz na zmianę `open`
+            if (!cachedActions.current[selectedGroup.prefix || ""]) {
+                const actions = await manager.getRegisteredActions(selectedGroup.prefix, getContextRef.current?.());
+                cachedActions.current[selectedGroup.prefix || ""] = actions;
+            }
+            const queryParts = queryWithoutPrefix.toLocaleLowerCase().split(' ').filter(Boolean);
+
+            const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
+                const label = typeof command.label === "function" ? command.label(getContextRef.current?.()) : command.label;
+                const secondaryLabel = command.description ? (typeof command.description === "function" ? command.description(context) : command.description) : '';
+                return queryParts.every((part) =>
+                    label.toLocaleLowerCase().includes(part) ||
+                    (secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
+                );
+            });
+            setFilteredCommands(actions);
+        } else {
+            // Tryb "filter": pobierz akcje za każdym razem
+            const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContextRef.current?.(), queryWithoutPrefix);
+            setFilteredCommands(actions);
+        }
+    }, []);
+
+    useEffect(() => {
         console.debug("fetchCommands");
 
-        const fetchCommands = async () => {
-            if (!open || !manager) {
-                setFilteredCommands([]);
-                return;
-            }
+        if (open) {
+            const instance = debounce(() => fetchCommands(manager, searchText, selectedGroup), searchDelay);
+            instance();
 
-            // Usuń prefix z searchQuery, jeśli istnieje
-            const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
-                ? searchText.slice((selectedGroup?.prefix || '').length).trim()
-                : searchText;
-
-            if (selectedGroup && (selectedGroup?.mode ?? "actions") === "actions") {
-                // Tryb "actions": pobierz akcje tylko raz na zmianę `open`
-                if (!cachedActions.current[selectedGroup.prefix || ""]) {
-                    const actions = await manager.getRegisteredActions(selectedGroup.prefix, context);
-                    cachedActions.current[selectedGroup.prefix || ""] = actions; // Zapisz w pamięci podręcznej
-                }
-                if (!signal.aborted) {
-                    // Rozdziel query na fragmenty oddzielone spacją
-                    const queryParts = queryWithoutPrefix.toLocaleLowerCase().split(' ').filter(Boolean);
-
-                    const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
-                        const label = typeof command.label === "function" ? command.label(context) : command.label;
-                        const secondaryLabel = command.description ? (typeof command.description === "function" ? command.description(context) : command.description) : '';
-                        // Sprawdź, czy wszystkie fragmenty query pasują do label lub secondaryLabel
-                        return queryParts.every((part) =>
-                            label.toLocaleLowerCase().includes(part) ||
-                            (secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
-                        );
-                    });
-                    setFilteredCommands(actions);
-                }
-            } else {
-                // Tryb "filter": pobierz akcje za każdym razem
-                const actions = await manager.getRegisteredActions(selectedGroup?.prefix, context, queryWithoutPrefix);
-                if (!signal.aborted) {
-                    setFilteredCommands(actions);
-                }
-            }
-        };
-
-        fetchCommands();
-
-        return () => {
-            controller.abort();
-        };
-    }, [open, manager, searchText, selectedGroup]);
+            return () => {
+                instance.cancel();
+            };
+        }
+        return;
+    }, [open, manager, searchText, selectedGroup, fetchCommands, refresh]);
 
     useEffect(() => {
         console.debug("updateSelectedIndex");
@@ -465,31 +461,33 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Ensure all hooks are called, even if the component is not open
     useEffect(() => {
         console.debug("updatePosition");
-        if (open && parentRef?.current) {
-            const parentRect = parentRef.current.getBoundingClientRect();
-            const containerWidth = containerRef.current?.offsetWidth || 0;
-            const containerHeight = containerRef.current?.offsetHeight || 0;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+        requestAnimationFrame(() => {
+            if (open && parentRef?.current) {
+                const parentRect = parentRef.current.getBoundingClientRect();
+                const containerWidth = containerRef.current?.offsetWidth || 0;
+                const containerHeight = containerRef.current?.offsetHeight || 0;
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
 
-            let top = parentRect.top;
-            let left = (parentRect.left + parentRect.width) / 2 - containerWidth / 2;
+                let top = parentRect.top;
+                let left = (parentRect.left + parentRect.width) / 2 - containerWidth / 2;
 
-            // Jeśli pozycja grupy to "bottom", ustaw okno przy dolnej krawędzi
-            if (selectedGroup?.position === "bottom") {
-                top = parentRect.top + parentRect.height - containerHeight - 8; // 8px margines od dołu
-            } else {
-                // Korekta, by nie wychodziło poza ekran pionowo
-                if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
-                if (top < 8) top = 8;
+                // Jeśli pozycja grupy to "bottom", ustaw okno przy dolnej krawędzi
+                if (selectedGroup?.position === "bottom") {
+                    top = parentRect.top + parentRect.height - containerHeight - 8; // 8px margines od dołu
+                } else {
+                    // Korekta, by nie wychodziło poza ekran pionowo
+                    if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
+                    if (top < 8) top = 8;
+                }
+
+                // Korekta, by nie wychodziło poza ekran poziomo
+                if (left < 8) left = 8;
+                if (left + containerWidth > viewportWidth - 8) left = viewportWidth - containerWidth - 8;
+
+                setPosition({ top, left });
             }
-
-            // Korekta, by nie wychodziło poza ekran poziomo
-            if (left < 8) left = 8;
-            if (left + containerWidth > viewportWidth - 8) left = viewportWidth - containerWidth - 8;
-
-            setPosition({ top, left });
-        }
+        });
     }, [open, listMaxHeight, filteredCommands, selectedGroup]);
 
     const context = getContextRef.current?.();
@@ -502,41 +500,43 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     style={{ top: position.top, left: position.left }}
                     elevation={4}
                 >
-                    <TextField
-                        placeholder={selectedGroup ? "" : t("select-command-group-prefix", "Select command group prefix...")}
-                        value={searchText}
-                        onChange={(value) => setSearchText(prev => prev !== value ? value : prev)}
-                        inputRef={inputRef}
-                        onKeyDown={handleKeyDown}
-                        adornments={
-                            selectedGroup?.options?.length ? (
-                                <Adornment position="end">
-                                    <ButtonGroup>
-                                        {selectedGroup.options.map((option) => (
-                                            <Tooltip
-                                                key={option.id}
-                                                title={
-                                                    [[
-                                                        option.label,
-                                                        option.keybinding && (<Shortcut keybindings={option.keybinding} />)
-                                                    ]]
-                                                }
-                                            >
-                                                <ToolButton
-                                                    dense
-                                                    onClick={() => handleOptionClick(option)}
-                                                    selected={typeof option.selected === 'function' ? option.selected(context) : false}
-                                                    disabled={typeof option.disabled === 'function' ? option.disabled(context) : false}
+                    <InputDecorator indicator={false} disableBlink>
+                        <TextField
+                            placeholder={selectedGroup ? "" : t("select-command-group-prefix", "Select command group prefix...")}
+                            value={searchText}
+                            onChange={setSearchText}
+                            inputRef={inputRef}
+                            onKeyDown={handleKeyDown}
+                            adornments={
+                                selectedGroup?.options?.length ? (
+                                    <Adornment position="end">
+                                        <ButtonGroup>
+                                            {selectedGroup.options.map((option) => (
+                                                <Tooltip
+                                                    key={option.id}
+                                                    title={
+                                                        [[
+                                                            option.label,
+                                                            option.keybinding && (<Shortcut keybindings={option.keybinding} />)
+                                                        ]]
+                                                    }
                                                 >
-                                                    {resolveIcon(theme, option.icon)}
-                                                </ToolButton>
-                                            </Tooltip>
-                                        ))}
-                                    </ButtonGroup>
-                                </Adornment>
-                            ) : undefined
-                        }
-                    />
+                                                    <ToolButton
+                                                        dense
+                                                        onClick={() => handleOptionClick(option)}
+                                                        selected={typeof option.selected === 'function' ? option.selected(context) : false}
+                                                        disabled={typeof option.disabled === 'function' ? option.disabled(context) : false}
+                                                    >
+                                                        {resolveIcon(theme, option.icon)}
+                                                    </ToolButton>
+                                                </Tooltip>
+                                            ))}
+                                        </ButtonGroup>
+                                    </Adornment>
+                                ) : undefined
+                            }
+                        />
+                    </InputDecorator>
                     <CommandList
                         ref={listRef}
                         disablePadding
@@ -573,8 +573,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     </ListItemIcon>
                                                 )}
                                                 <ListItemText
-                                                    primary={highlightText(label, search, false, false, theme.palette.primary.main)}
-                                                    secondary={highlightText(description, search, false, false, theme.palette.primary.main)}
+                                                    primary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(label, search, false, false, theme.palette.primary.main) : label}
+                                                    secondary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(description, search, false, false, theme.palette.primary.main) : description}
                                                     slotProps={{
                                                         primary: { variant: 'body1' },
                                                         secondary: { variant: 'description' },

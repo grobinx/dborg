@@ -17,7 +17,7 @@ import * as actions from "./actions";
 import { createDataGridCommands } from "./DataGridCommands";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
-import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
+import { ColumnFilter, filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import { useColumnsGroup } from "./useColumnsGroup";
 import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";

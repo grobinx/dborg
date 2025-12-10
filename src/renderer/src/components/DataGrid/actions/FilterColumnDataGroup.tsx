@@ -14,7 +14,6 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
     const likeId = "dataGrid.group.filterColumn.actions.Like";
     const nullId = "dataGrid.group.filterColumn.actions.Null";
 
-    let queryTimeout: NodeJS.Timeout | null = null;
     let oldSearchText: string | undefined = undefined;
 
     return {
@@ -47,27 +46,21 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                 context.filterActive(false);
             }
 
+            const parts = (searchText ?? '').split(' ').filter(part => part.trim() !== '');
             if (searchText !== oldSearchText || setFilter) {
-                // Resetuj poprzedni timeout przy każdej zmianie
-                if (queryTimeout) {
-                    clearTimeout(queryTimeout);
-                }
-
-                // Ustaw nowy timeout z opóźnieniem 300ms
-                queryTimeout = setTimeout(() => {
-                    const parts = (searchText ?? '').split(' ').filter(part => part.trim() !== '');
-                    context.setFilter(filter?.operator, filter?.not, parts);
-                    oldSearchText = searchText;
-                }, 300);
+                context.setFilter(filter?.operator, filter?.not, parts);
+                oldSearchText = searchText;
             }
 
+            console.log('Current filter:', JSON.stringify(filter));
+            console.log("searchText:", searchText);
             const actions: Action<any>[] = [
                 {
                     id: leaveResultOfId,
                     label: t(
                         leaveResultOfId,
                         "Leave a result of {{filter}}", {
-                        filter: filterToString(filter.operator, filter.not, filter?.values)
+                        filter: filterToString(filter!.operator, filter!.not, parts)
                     }),
                     run: () => {
                         context.filterActive(true);
@@ -107,7 +100,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                     let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.equals = !operators.equals;
                     if (operators.equals && !validateSimpleOperators(operators)) {
-                        operators = resetSimpleOperators({equals: true});
+                        operators = resetSimpleOperators({ equals: true });
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators) ?? 'equal',
@@ -133,7 +126,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                     let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.lessThan = !operators.lessThan;
                     if (operators.lessThan && !validateSimpleOperators(operators)) {
-                        operators = resetSimpleOperators({lessThan: true});
+                        operators = resetSimpleOperators({ lessThan: true });
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators),
@@ -159,7 +152,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                     let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.greaterThan = !operators.greaterThan;
                     if (operators.greaterThan && !validateSimpleOperators(operators)) {
-                        operators = resetSimpleOperators({greaterThan: true});
+                        operators = resetSimpleOperators({ greaterThan: true });
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators),
@@ -185,7 +178,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                     let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.like = !operators.like;
                     if (operators.like && !validateSimpleOperators(operators)) {
-                        operators = resetSimpleOperators({like: true});
+                        operators = resetSimpleOperators({ like: true });
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators),
@@ -211,7 +204,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                     let operators: SimpleOperators = convertToSimpleOperators(filter.operator);
                     operators.isNull = !operators.isNull;
                     if (operators.isNull && !validateSimpleOperators(operators)) {
-                        operators = resetSimpleOperators({isNull: true});
+                        operators = resetSimpleOperators({ isNull: true });
                     }
                     context.setFilter(
                         convertToColumnsFilterOperator(operators),

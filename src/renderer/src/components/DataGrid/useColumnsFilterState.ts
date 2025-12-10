@@ -63,7 +63,7 @@ export function useColumnFilterState() {
     const [filters, setFilters] = useState<ColumnFilterState>({});
     const [activeFilters, setActiveFilters] = useState<ColumnFilterState>({});
 
-    const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
+    const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]): void => {
         setFilters((prev) => {
             const existingFilter = prev[key];
             const isDifferent =
