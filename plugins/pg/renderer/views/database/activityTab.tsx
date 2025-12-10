@@ -4,6 +4,9 @@ import { IAutoRefresh, IContentSlot, IRenderedSlot, ITabSlot } from "plugins/man
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Grid2 as Grid, useTheme } from "@mui/material";
 import React, { useEffect } from "react";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import { CopyValueToClipboard } from "@renderer/components/DataGrid/actions";
+import { copyToClipboard, exportToClipboard } from "@renderer/utils/arrayTo";
 
 interface ActivityRecord {
     datid: number;
@@ -443,6 +446,8 @@ const activityTab = (
                     onTick(refresh) {
                         fetchActivityData().then(() => {
                             refresh(cid("database-activity-charts"));
+                        }).catch(error => {
+                            console.error("Error fetching activity data:", error);
                         });
                     },
                     onClear(refresh) {
@@ -451,7 +456,7 @@ const activityTab = (
                         refresh(cid("database-activity-charts"));
                     },
                     clearOn: "start",
-                    canPause: false,
+                    canPause: true,
                     lifecycle: {
                         onHide: "ignore",
                         onShow: "ignore",
@@ -459,6 +464,14 @@ const activityTab = (
                     intervals: [5, 10, 15, 30, 60, 120],
                     defaultInterval: 10,
                 } as IAutoRefresh,
+                {
+                    id: cid("database-activity-copy-activity-snapshots"),
+                    label: t("copy-snapshots", "Copy Snapshots"),
+                    icon: "Copy",
+                    run: () => {
+                        exportToClipboard(activityRows, "excel-xml");
+                    }
+                } as Action<any>
             ]
         }
     };

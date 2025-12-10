@@ -153,6 +153,11 @@ const icons = (_palette: Palette): ThemeOptions => {
             Folder: (props) => <IconWrapper {...props} className="folder"><MuiIcons.FolderOutlined fontSize="inherit" /></IconWrapper>,
             Link: (props) => <IconWrapper {...props} className="link"><MuiIcons.LinkOutlined fontSize="inherit" /></IconWrapper>,
             DatabaseSettings: (props) => <IconWrapper {...props} className="database-settings"><BsIcons.DatabaseFillGear fontSize="inherit" /></IconWrapper>,
+            Copy: (props) => <IconWrapper {...props} className="copy"><MuiIcons.ContentCopyOutlined fontSize="inherit" /></IconWrapper>,
+            Paste: (props) => <IconWrapper {...props} className="paste"><MuiIcons.ContentPasteOutlined fontSize="inherit" /></IconWrapper>,
+            Cut: (props) => <IconWrapper {...props} className="cut"><MuiIcons.ContentCutOutlined fontSize="inherit" /></IconWrapper>,
+            Undo: (props) => <IconWrapper {...props} className="undo"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
+            Redo: (props) => <IconWrapper {...props} className="redo"><MuiIcons.RedoOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

@@ -185,6 +185,11 @@ export interface ThemeIcons {
     Folder: IconWrapperFC;
     Link: IconWrapperFC;
     DatabaseSettings: IconWrapperFC;
+    Copy: IconWrapperFC;
+    Paste: IconWrapperFC;
+    Cut: IconWrapperFC;
+    Undo: IconWrapperFC;
+    Redo: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

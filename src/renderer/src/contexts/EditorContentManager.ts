@@ -625,14 +625,16 @@ class EditorContentManager implements IEditorContentManager {
     async setExternalFile(editorId: string, externalFilePath: string): Promise<void> {
         const { dir: externalPath, fileName, ext, normalizedPath } = this.splitPath(externalFilePath);
 
-        if (normalizedPath !== `${externalPath ?? this.baseDir}/${this.getFileName(editorId)}`) {
+        if (normalizedPath !== `${this.getExternalPath(editorId) ?? this.baseDir}/${this.getFileName(editorId)}`) {
             // Zapisz aktualną zawartość do nowego pliku zewnętrznego
             const content = await this.getContent(editorId);
             await window.dborg.path.ensureDir(externalPath);
             await window.dborg.file.writeFile(normalizedPath, content);
 
-            // Usuń stary plik wewnętrzny/zewnętrzny
-            await window.dborg.file.deleteFile(`${externalPath ?? this.baseDir}/${this.getFileName(editorId)}`);
+            // Usuń stary plik wewnętrzny
+            if (!this.getExternalPath(editorId)) {
+                await window.dborg.file.deleteFile(`${this.baseDir}/${this.getFileName(editorId)}`);
+            }
 
             this.updateEditorState(editorId, state => {
                 state.externalPath = externalPath;
