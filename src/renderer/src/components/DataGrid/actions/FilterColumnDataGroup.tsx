@@ -99,7 +99,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
             {
                 id: equalsId,
                 icon: 'Equal',
-                label: t(equalsId, "Equals, [<] Less then or equals, [>] Greater then or equals, [<][>] Between"),
+                label: t(equalsId, "Equals,\n[=][<] Less then or equals,\n[=][>] Greater then or equals,\n[<][=][>] Between"),
                 keybinding: 'Ctrl+=',
                 run: (context) => {
                     const filter = context.getFilter();
@@ -125,7 +125,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
             {
                 id: lessId,
                 icon: 'LessThan',
-                label: t(lessId, "Less than, [=] Less then or Equals, [=][>] Between, [~] Ends with"),
+                label: t(lessId, "Less than,\n[<][=] Less then or Equals,\n[<][=][>] Between,\n[~][<] Ends with"),
                 keybinding: 'Ctrl+,',
                 run: (context) => {
                     const filter = context.getFilter();
@@ -151,7 +151,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
             {
                 id: greaterThanId,
                 icon: 'GreaterThan',
-                label: t(greaterThanId, "Greater than, [=] Greater than or Equals, [=][>] Between, [~] Starts with"),
+                label: t(greaterThanId, "Greater than,\n[>][=] Greater than or Equals,\n[<][=][>] Between,\n[~][>] Starts with"),
                 keybinding: 'Ctrl+.',
                 run: (context) => {
                     const filter = context.getFilter();
@@ -177,7 +177,7 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
             {
                 id: likeId,
                 icon: 'SuchLike',
-                label: t(likeId, "Like, [>] Starts with, [<] Ends with"),
+                label: t(likeId, "Like,\n[~][>] Starts with,\n[~][<] Ends with"),
                 keybinding: 'Ctrl+`',
                 run: (context) => {
                     const filter = context.getFilter();
