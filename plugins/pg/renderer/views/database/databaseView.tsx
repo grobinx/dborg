@@ -33,17 +33,19 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
             slot: {
                 id: cid("database-content"),
                 type: "content",
-                title: {
-                    id: cid("database-title"),
-                    type: "title",
-                    title: <Typography variant="h6">{t("database-information", "Database Information")}</Typography>,
-                },
                 main: () => ({
                     id: cid("database-info-tabs"),
                     type: "tabs",
                     tabs: [
                         activityTab(session, database),
                     ],
+                    toolBar: {
+                        id: cid("database-info-tabs-toolbar"),
+                        type: "rendered",
+                        render: () => {
+                            return <Typography variant="body1">{t("database-information", "Database Information")}</Typography>;
+                        }
+                    }
                 }),
             },
         }

@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 
@@ -40,7 +40,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     }, [slot]);
 
     React.useEffect(() => {
-        const resolvedToolBarSlot = resolveToolBarSlotFactory(slot.toolBar, refreshSlot);
+        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, refreshSlot);
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {

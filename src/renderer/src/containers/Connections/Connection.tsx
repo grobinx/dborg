@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
 import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
@@ -307,7 +307,7 @@ function createTabPanels(
             if (index === 0) {
                 queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
             }
-            const resolvedToolBarSlot = resolveToolBarSlotFactory(tab.toolBar, refreshSlot);
+            const resolvedToolBarSlot = resolveToolBarSlotKindFactory(tab.toolBar, refreshSlot);
             return (
                 <TabPanel
                     key={tab.id}

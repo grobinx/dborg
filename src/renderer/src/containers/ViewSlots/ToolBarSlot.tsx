@@ -1,4 +1,4 @@
-import { IToolBarSlot, ToolFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IToolBarSlot, ToolBarSlotKind, ToolFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
@@ -8,7 +8,7 @@ import { CommandManager } from "@renderer/components/CommandPalette/CommandManag
 import { createActionComponents } from "./helpers";
 
 export interface ToolBarProps {
-    slot: IToolBarSlot;
+    slot: ToolBarSlotKind;
     actionSlotId?: string;
     handleRef?: React.Ref<HTMLDivElement>;
 }
@@ -27,6 +27,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         commandManager: CommandManager<any> | null,
         actionContext: any | null
     } | null>(null);
+    const [renderNode, setRenderNode] = React.useState<React.ReactNode>(null);
 
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
@@ -36,8 +37,12 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     }, [slot]);
 
     React.useEffect(() => {
+        if (slot.type === "rendered") {
+            setRenderNode(<slot.render refresh={refreshSlot} />);
+            return;
+        }
         setActionComponents(createActionComponents(slot.tools, actionSlotId, getRefSlot, refreshSlot, {}));
-    }, [slot.tools, actionSlotId, refresh]);
+    }, [slot, actionSlotId, refresh]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
@@ -74,12 +79,13 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         return;
     }, [handleKeyDown]);
 
-    if (!slot.tools) {
+    if (!actionComponents && !renderNode) {
         return null;
     }
 
     return (
         <TabPanelButtons>
+            {renderNode}
             {actionComponents?.actionComponents}
         </TabPanelButtons>
     );

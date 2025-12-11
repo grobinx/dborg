@@ -11,7 +11,6 @@ import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotC
 import { ThemeIconName } from "@renderer/themes/icons";
 import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
-import { HTMLInputTypeAttribute } from "react";
 
 export type CustomSlotType =
     "split"
@@ -52,7 +51,7 @@ export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFun
 export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
-export type ToolBarSlotFactory = IToolBarSlot | ((refresh: RefreshSlotFunction) => IToolBarSlot);
+export type ToolBarSlotKindFactory = ToolBarSlotKind | ((refresh: RefreshSlotFunction) => ToolBarSlotKind);
 
 export type ToolKind<T = any> =
     | string
@@ -361,7 +360,7 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Akcje dostępne dla listy zakładek (opcjonalnie).
      */
-    tools?: ToolBarSlotFactory;
+    toolBar?: ToolBarSlotKindFactory;
     /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
@@ -423,7 +422,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    toolBar?: ToolBarSlotFactory;
+    toolBar?: ToolBarSlotKindFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
@@ -496,7 +495,7 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    toolBar?: ToolBarSlotFactory;
+    toolBar?: ToolBarSlotKindFactory;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w toolBar jest ciąg znaków z identyfikatorem akcji.
@@ -633,6 +632,10 @@ export interface IToolBarSlot extends ICustomSlot {
     tools: ToolFactory;
 }
 
+export type ToolBarSlotKind =
+    IToolBarSlot
+    | IRenderedSlot;
+
 export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
@@ -690,7 +693,7 @@ export function resolveContentSlotFactory(factory: ContentSlotFactory | undefine
 export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): Option[] | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveToolBarSlotFactory(factory: ToolBarSlotFactory | undefined, refresh: RefreshSlotFunction): IToolBarSlot | undefined {
+export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, refresh: RefreshSlotFunction): ToolBarSlotKind | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveNumberFactory(factory: NumberFactory | undefined, refresh: RefreshSlotFunction): number | undefined {
