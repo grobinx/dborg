@@ -10,8 +10,8 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { Button } from "@renderer/components/buttons/Button";
 import MonacoEditor from "@renderer/components/editor/MonacoEditor";
-import { useTheme } from "@mui/material";
 import type { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
+import { createRoot } from "react-dom/client";
 
 type DataType = Record<string, any>;
 
@@ -26,83 +26,111 @@ interface CopyDataDialogProps {
 
 const formatOptionsMap = {
     json: [
-        { key: "pretty", label: "Pretty print", type: "checkbox" }
+        { key: "pretty", label: "Pretty print", type: "checkbox" },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     csv: [
         { key: "delimiter", label: "Delimiter", type: "text", default: "," },
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "quote", label: "Quote character", type: "text", default: '"' },
+        { key: "quoteStrings", label: "Quote strings", type: "checkbox", default: true },
+        { key: "quoteAll", label: "Quote all values", type: "checkbox", default: false },
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     tsv: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "quote", label: "Quote character", type: "text", default: '"' },
+        { key: "quoteStrings", label: "Quote strings", type: "checkbox", default: false },
+        { key: "quoteAll", label: "Quote all values", type: "checkbox", default: false },
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     markdown: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     html: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     redmine: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     jira: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     bbcode: [
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     xml: [
         { key: "rootElement", label: "Root element", type: "text", default: "root" },
-        { key: "itemElement", label: "Item element", type: "text", default: "item" }
+        { key: "itemElement", label: "Item element", type: "text", default: "item" },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     sql: [
         { key: "tableName", label: "Table name", type: "text", default: "table_name" },
         { key: "identifierQuote", label: "Identifier quote", type: "text", default: `"` },
         { key: "includeCreateTable", label: "Include CREATE TABLE", type: "checkbox", default: false },
-        { key: "batchSize", label: "Batch size", type: "number", default: 100 }
+        { key: "batchSize", label: "Batch size", type: "number", default: 100 },
+        { key: "nullValue", label: "Null value", type: "text", default: "NULL" }
     ],
     yaml: [
-        { key: "indent", label: "Indent", type: "number", default: 2 }
+        { key: "indent", label: "Indent", type: "number", default: 2 },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     latex: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "tableStyle", label: "Table style", type: "select", options: ["basic", "booktabs", "longtable"], default: "basic" }
+        { key: "tableStyle", label: "Table style", type: "select", options: ["basic", "booktabs", "longtable"], default: "basic" },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     ascii: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "borderStyle", label: "Border style", type: "select", options: ["single", "double", "rounded", "minimal"], default: "single" }
+        { key: "borderStyle", label: "Border style", type: "select", options: ["single", "double", "rounded", "minimal"], default: "single" },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     rst: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "tableStyle", label: "Table style", type: "select", options: ["grid", "simple"], default: "grid" }
+        { key: "tableStyle", label: "Table style", type: "select", options: ["grid", "simple"], default: "grid" },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     "excel-xml": [
         { key: "sheetName", label: "Sheet name", type: "text", default: "Sheet1" },
-        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true }
+        { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     js: [
-        { key: "variableName", label: "Variable name", type: "text", default: "data" }
+        { key: "variableName", label: "Variable name", type: "text", default: "data" },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     ts: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "typeName", label: "Type name", type: "text", default: "Row" }
+        { key: "typeName", label: "Type name", type: "text", default: "Row" },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     java: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "className", label: "Class name", type: "text", default: "Row" }
+        { key: "className", label: "Class name", type: "text", default: "Row" },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     cpp: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "typeName", label: "Type name", type: "text", default: "Row" }
+        { key: "typeName", label: "Type name", type: "text", default: "Row" },
+        { key: "nullValue", label: "Null value", type: "text", default: "nullptr" }
     ],
     php: [
-        { key: "variableName", label: "Variable name", type: "text", default: "data" }
+        { key: "variableName", label: "Variable name", type: "text", default: "data" },
+        { key: "nullValue", label: "Null value", type: "text", default: "null" }
     ],
     perl: [
-        { key: "variableName", label: "Variable name", type: "text", default: "data" }
+        { key: "variableName", label: "Variable name", type: "text", default: "data" },
+        { key: "nullValue", label: "Null value", type: "text", default: "undef" }
     ],
     pascal: [
         { key: "variableName", label: "Variable name", type: "text", default: "Data" },
-        { key: "typeName", label: "Type name", type: "text", default: "TRecord" }
+        { key: "typeName", label: "Type name", type: "text", default: "TRecord" },
+        { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
 };
 
@@ -307,7 +335,7 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                     })}
                     <FormControl fullWidth>
                         <FormLabel>{t("preview", "Preview")}</FormLabel>
-                        <div style={{ height: 250 }}>
+                        <div style={{ height: 170 }}>
                             <MonacoEditor
                                 value={preview}
                                 language={formatToLanguageId[format]}

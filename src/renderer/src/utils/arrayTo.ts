@@ -52,6 +52,9 @@ interface JSONExportOptions extends BaseExportOptions {
 interface CSVExportOptions extends BaseExportOptions {
     includeHeaders?: boolean;
     delimiter?: string;
+    quoteStrings?: boolean;
+    quote?: string; // Znak cudzysłowu (domyślnie ")
+    quoteAll?: boolean; // Czy cytować wszystkie wartości (domyślnie false - tylko gdy potrzebne)
 }
 
 // Opcje specyficzne dla tabel (Markdown, HTML, Redmine, Jira, BBCode)
@@ -186,11 +189,23 @@ const normalizeValue = (
 /**
  * Escapes a value for CSV format
  */
-const escapeCSV = (value: string, delimiter: string = ','): string => {
-    if (value.includes(delimiter) || value.includes('"') || value.includes('\n')) {
-        return `"${value.replace(/"/g, '""')}"`;
+const escapeCSV = (value: any, delimiter: string = ',', quote: string = '"', quoteAll: boolean = false, quoteStrings: boolean = false): string => {
+    const strValue = String(value);
+    const isString = typeof value === 'string';
+    
+    const needsQuoting = quoteAll || 
+        (quoteStrings && isString) ||
+        strValue.includes(delimiter) || 
+        strValue.includes(quote) || 
+        strValue.includes('\n') || 
+        strValue.includes('\r');
+    
+    if (needsQuoting) {
+        // Podwój znak cudzysłowu wewnątrz wartości
+        const escaped = strValue.replace(new RegExp(quote, 'g'), quote + quote);
+        return `${quote}${escaped}${quote}`;
     }
-    return value;
+    return strValue;
 };
 
 /**
@@ -266,17 +281,24 @@ const toJSON = (data: Record<string, any>[], options: JSONExportOptions): string
  */
 const toCSV = (data: Record<string, any>[], format: 'csv' | 'tsv', options: CSVExportOptions): string => {
     const delimiter = format === 'tsv' ? '\t' : (options.delimiter ?? ',');
+    const quoteStrings = options.quoteStrings ?? false;
+    const quote = options.quote ?? '"';
+    const quoteAll = options.quoteAll ?? false;
     const columns = getColumns(data, options);
     const lines: string[] = [];
 
     if (options.includeHeaders !== false) {
-        lines.push(columns.map(col => escapeCSV(col, delimiter)).join(delimiter));
+        lines.push(columns.map(col => escapeCSV(col, delimiter, quote, quoteAll, quoteStrings)).join(delimiter));
     }
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = normalizeValue(row[col], options);
-            return escapeCSV(value, delimiter);
+            const value = row[col]; // Nie normalizuj od razu, żeby zachować typ
+            if (value === null || value === undefined) {
+                return options.nullValue ?? '';
+            }
+            // Przekaż oryginalną wartość do escapeCSV, żeby sprawdzić czy to string
+            return escapeCSV(value, delimiter, quote, quoteAll, quoteStrings);
         });
         lines.push(values.join(delimiter));
     });
@@ -298,7 +320,11 @@ const toMarkdown = (data: Record<string, any>[], options: TableExportOptions): s
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            if (rawValue === null || rawValue === undefined) {
+                return (options.nullValue ?? '').replace(/\|/g, '\\|');
+            }
+            const value = normalizeValue(rawValue, options);
             return value.replace(/\|/g, '\\|');
         });
         lines.push('| ' + values.join(' | ') + ' |');
@@ -326,7 +352,10 @@ const toHTML = (data: Record<string, any>[], options: TableExportOptions): strin
     data.forEach(row => {
         html += '    <tr>\n';
         columns.forEach(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
             html += `      <td>${escapeHTML(value)}</td>\n`;
         });
         html += '    </tr>\n';
@@ -349,7 +378,11 @@ const toRedmine = (data: Record<string, any>[], options: TableExportOptions): st
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            if (rawValue === null || rawValue === undefined) {
+                return (options.nullValue ?? '').replace(/\|/g, '\\|');
+            }
+            const value = normalizeValue(rawValue, options);
             return value.replace(/\|/g, '\\|');
         });
         lines.push('| ' + values.join(' | ') + ' |');
@@ -371,7 +404,11 @@ const toJira = (data: Record<string, any>[], options: TableExportOptions): strin
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            if (rawValue === null || rawValue === undefined) {
+                return (options.nullValue ?? '').replace(/\|/g, '\\|');
+            }
+            const value = normalizeValue(rawValue, options);
             return value.replace(/\|/g, '\\|');
         });
         lines.push('| ' + values.join(' | ') + ' |');
@@ -398,7 +435,10 @@ const toBBCode = (data: Record<string, any>[], options: TableExportOptions): str
     data.forEach(row => {
         bbcode += '[tr]';
         columns.forEach(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
             bbcode += `[td]${value}[/td]`;
         });
         bbcode += '[/tr]\n';
@@ -421,7 +461,10 @@ const toXML = (data: Record<string, any>[], options: XMLExportOptions): string =
     data.forEach((row, index) => {
         xml += `  <${itemElement} index="${index}">\n`;
         columns.forEach(col => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
             xml += `    <${escapeXML(col)}>${escapeXML(value)}</${escapeXML(col)}>\n`;
         });
         xml += `  </${itemElement}>\n`;
@@ -458,7 +501,7 @@ const toSQL = (data: Record<string, any>[], options: SQLExportOptions): string =
             const vals = columns.map(col => {
                 const value = row[col];
                 if (value === null || value === undefined) {
-                    return 'NULL';
+                    return options.nullValue ?? 'NULL';
                 }
                 if (typeof value === 'number') {
                     return value.toString();
@@ -495,7 +538,7 @@ const toYAML = (data: Record<string, any>[], options: YAMLExportOptions): string
             let yamlValue: string;
 
             if (value === null || value === undefined) {
-                yamlValue = 'null';
+                yamlValue = options.nullValue ?? 'null';
             } else if (typeof value === 'string') {
                 yamlValue = value.includes('\n') || value.includes(':') || value.includes('#')
                     ? `"${value.replace(/"/g, '\\"')}"`
@@ -549,7 +592,13 @@ const toLaTeX = (data: Record<string, any>[], options: LaTeXExportOptions): stri
     }
 
     data.forEach(row => {
-        const values = columns.map(col => escapeLatex(normalizeValue(row[col], options)));
+        const values = columns.map(col => {
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
+            return escapeLatex(value);
+        });
         lines.push(values.join(' & ') + ' \\\\');
         if (style !== 'booktabs') {
             lines.push('\\hline');
@@ -591,7 +640,11 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
     const widths = columns.map(col => {
         let max = col.length;
         data.forEach(row => {
-            const len = normalizeValue(row[col], options).length;
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
+            const len = value.length;
             if (len > max) max = len;
         });
         return max;
@@ -622,7 +675,10 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
     // Rows
     data.forEach(row => {
         const values = columns.map((col, i) => {
-            const value = normalizeValue(row[col], options);
+            const rawValue = row[col];
+            const value = rawValue === null || rawValue === undefined 
+                ? (options.nullValue ?? '') 
+                : normalizeValue(rawValue, options);
             return ' ' + value.padEnd(widths[i]) + ' ';
         }).join(b.v);
         lines.push(b.v + values + b.v);
@@ -650,7 +706,11 @@ const toRST = (data: Record<string, any>[], options: RSTExportOptions): string =
         const widths = columns.map(col => {
             let max = col.length;
             data.forEach(row => {
-                const len = normalizeValue(row[col], options).length;
+                const rawValue = row[col];
+                const value = rawValue === null || rawValue === undefined 
+                    ? (options.nullValue ?? '') 
+                    : normalizeValue(rawValue, options);
+                const len = value.length;
                 if (len > max) max = len;
             });
             return max;
@@ -669,7 +729,11 @@ const toRST = (data: Record<string, any>[], options: RSTExportOptions): string =
 
         data.forEach(row => {
             const values = columns.map((col, i) => {
-                return normalizeValue(row[col], options).padEnd(widths[i]);
+                const rawValue = row[col];
+                const value = rawValue === null || rawValue === undefined 
+                    ? (options.nullValue ?? '') 
+                    : normalizeValue(rawValue, options);
+                return value.padEnd(widths[i]);
             }).join(' ');
             lines.push(values);
         });
@@ -681,7 +745,11 @@ const toRST = (data: Record<string, any>[], options: RSTExportOptions): string =
         const widths = columns.map(col => {
             let max = col.length;
             data.forEach(row => {
-                const len = normalizeValue(row[col], options).length;
+                const rawValue = row[col];
+                const value = rawValue === null || rawValue === undefined 
+                    ? (options.nullValue ?? '') 
+                    : normalizeValue(rawValue, options);
+                const len = value.length;
                 if (len > max) max = len;
             });
             return max;
@@ -700,7 +768,11 @@ const toRST = (data: Record<string, any>[], options: RSTExportOptions): string =
 
         data.forEach(row => {
             const values = '| ' + columns.map((col, i) => {
-                return normalizeValue(row[col], options).padEnd(widths[i]);
+                const rawValue = row[col];
+                const value = rawValue === null || rawValue === undefined 
+                    ? (options.nullValue ?? '') 
+                    : normalizeValue(rawValue, options);
+                return value.padEnd(widths[i]);
             }).join(' | ') + ' |';
             lines.push(values);
             lines.push(topBorder);
@@ -782,11 +854,17 @@ const toPascal = (data: Record<string, any>[], options: PascalExportOptions = {}
         `\n  end;\n`;
     // Dane
     const arr = data.map(row => {
-        const fields = columns.map(col => `${col}: ${JSON.stringify(row[col] ?? "")}`).join('; ');
+        const fields = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? "") 
+                : value;
+            return `${col}: ${JSON.stringify(finalValue)}`;
+        }).join('; ');
         return `    (${fields})`;
     });
     return `${typeDef}\nvar\n  ${varName}: array[1..${arr.length}] of ${typeName} = (\n${arr.join(',\n')}\n  );`;
-};
+}
 
 /**
  * Convert array of objects to various formats
@@ -945,7 +1023,13 @@ export function exportToFile(
 const toJS = (data: Record<string, any>[], options: JSExportOptions = {}): string => {
     const columns = getColumns(data, options);
     const arr = data.map(row => {
-        const obj = columns.map(col => `${JSON.stringify(col)}: ${JSON.stringify(row[col])}`).join(', ');
+        const obj = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? null) 
+                : value;
+            return `${JSON.stringify(col)}: ${JSON.stringify(finalValue)}`;
+        }).join(', ');
         return `{ ${obj} }`;
     });
     const varName = options.variableName || "data";
@@ -961,7 +1045,13 @@ const toTS = (data: Record<string, any>[], options: TSExportOptions = {}): strin
     const varName = options.variableName || "data";
     const type = `type ${typeName} = { ${columns.map(col => `${col}: any`).join('; ')} };`;
     const arr = data.map(row => {
-        const obj = columns.map(col => `${JSON.stringify(col)}: ${JSON.stringify(row[col])}`).join(', ');
+        const obj = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? null) 
+                : value;
+            return `${JSON.stringify(col)}: ${JSON.stringify(finalValue)}`;
+        }).join(', ');
         return `{ ${obj} }`;
     });
     return `${type}\nconst ${varName}: ${typeName}[] = [\n  ${arr.join(',\n  ')}\n];`;
@@ -975,7 +1065,13 @@ const toJava = (data: Record<string, any>[], options: JavaExportOptions = {}): s
     const varName = options.variableName || "data";
     const className = options.className || "Row";
     const arr = data.map(row => {
-        const vals = columns.map(col => JSON.stringify(row[col])).join(", ");
+        const vals = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? null) 
+                : value;
+            return JSON.stringify(finalValue);
+        }).join(", ");
         return `    new Object[]{ ${vals} }`;
     });
     return `// class ${className} { ... }\nObject[][] ${varName} = {\n${arr.join(",\n")}\n};`;
@@ -989,7 +1085,13 @@ const toCPP = (data: Record<string, any>[], options: CPPExportOptions = {}): str
     const varName = options.variableName || "data";
     const typeName = options.typeName || "Row";
     const arr = data.map(row => {
-        const vals = columns.map(col => JSON.stringify(row[col])).join(", ");
+        const vals = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? "") 
+                : value;
+            return JSON.stringify(finalValue);
+        }).join(", ");
         return `    { ${vals} }`;
     });
     return `// struct ${typeName} { ... }\nstd::vector<std::array<std::string, ${columns.length}>> ${varName} = {\n${arr.join(",\n")}\n};`;
@@ -1002,7 +1104,13 @@ const toPHP = (data: Record<string, any>[], options: PHPExportOptions = {}): str
     const columns = getColumns(data, options);
     const varName = options.variableName || "data";
     const arr = data.map(row => {
-        const obj = columns.map(col => `'${col}' => ${JSON.stringify(row[col])}`).join(', ');
+        const obj = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? null) 
+                : value;
+            return `'${col}' => ${JSON.stringify(finalValue)}`;
+        }).join(', ');
         return `    [${obj}]`;
     });
     return `$${varName} = [\n${arr.join(",\n")}\n];`;
@@ -1015,7 +1123,13 @@ const toPerl = (data: Record<string, any>[], options: PerlExportOptions = {}): s
     const columns = getColumns(data, options);
     const varName = options.variableName || "data";
     const arr = data.map(row => {
-        const obj = columns.map(col => `'${col}' => ${JSON.stringify(row[col])}`).join(', ');
+        const obj = columns.map(col => {
+            const value = row[col];
+            const finalValue = value === null || value === undefined 
+                ? (options.nullValue ?? null) 
+                : value;
+            return `'${col}' => ${JSON.stringify(finalValue)}`;
+        }).join(', ');
         return `    { ${obj} }`;
     });
     return `my @${varName} = (\n${arr.join(",\n")}\n);`;

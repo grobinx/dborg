@@ -597,6 +597,7 @@ export const DataGrid = <T extends object>({
     const [isScrolling, setIsScrolling] = useState(false);
     const scrollStopTimer = useRef<number | null>(null);
     const [fontSize, setFontSize] = useState(settingFontSize);
+    const [dialogContent, setDialogContent] = useState<React.ReactNode | null>(null);
 
     useImperativeHandle(ref, () => dataGridActionContext);
 
@@ -909,6 +910,12 @@ export const DataGrid = <T extends object>({
             }
             return displayData[row] || null;
         },
+        getRows() {
+            return displayData;
+        },
+        getSelectedRows() {
+            return selectedRows;
+        },
         getField: () => {
             if (selectedCell) {
                 return columnsState.current[selectedCell.column].key as keyof T;
@@ -1034,6 +1041,9 @@ export const DataGrid = <T extends object>({
         togglePivot: () => setPivot((prev) => !prev),
         canPivot: () => canPivot,
         getPivotMap: () => pivotMap,
+        showDialog: (dialog) => {
+            setDialogContent(dialog);
+        }
     }
 
     useEffect(() => {
@@ -1643,6 +1653,7 @@ export const DataGrid = <T extends object>({
                     </StyledFooter>
                 )}
             </StyledTableContainer>
+            {dialogContent}
         </StyledTable>
     );
 };

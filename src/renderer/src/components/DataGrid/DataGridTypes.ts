@@ -203,6 +203,10 @@ export interface DataGridActionContext<T extends object> {
     getColumn: (index?: number) => ColumnDefinition | null;
     updateColumn: (index: number, newColumn: Partial<ColumnDefinition>) => void;
     getData: (row?: number) => T | null;
+    /** Zwraca wszystkie wiersze */
+    getRows: () => T[];
+    /** Zwraca indeksy zaznaczonych wierszy */
+    getSelectedRows: () => number[];
     getField: () => keyof T | null;
     openCommandPalette: (prefix: string, query: string) => void;
     closeCommandPalette: () => void;
@@ -248,6 +252,7 @@ export interface DataGridActionContext<T extends object> {
     togglePivot: () => void;
     canPivot: () => boolean;
     getPivotMap: () => Record<string, ColumnDataType> | null;
+    showDialog: (dialog: React.ReactNode) => void;
 }
 
 export interface DataGridContext<T extends object> {
