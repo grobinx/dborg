@@ -12,7 +12,7 @@ import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
-import { useContainers, useSessions } from "@renderer/contexts/ApplicationContext";
+import { useContainers, useSessions, useSessionState } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
 import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
@@ -42,21 +42,12 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = props;
-    const { selectedContainer, selectedView,  } = useContainers();
-    const { selectedSession } = useSessions();
+    const { selectedView } = useSessionState(session.info.uniqueId);
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
-
-    function isSelectedThis() {
-        return (
-            selectedContainer?.type === "connections" &&
-            selectedSession?.getUniqueId() === session.info.uniqueId &&
-            selectedView !== null
-        );
-    }
 
     // Przechowuj utworzone widoki w stanie
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
@@ -65,8 +56,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
-        const selectedThis = isSelectedThis();
-        if (selectedView && selectedView.id && selectedThis) {
+        if (selectedView) {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
                 if (slot.type === "integrated" && !sideViewsMap[selectedView.id]) {
@@ -112,7 +102,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
-    }, [selectedView, session, sideViewsMap, selectedContainer]);
+    }, [selectedView, session, sideViewsMap]);
 
     console.log("ConnectionContentInner rendering", session.info.uniqueId, selectedView?.id);
 

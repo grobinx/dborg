@@ -81,6 +81,7 @@ interface ApplicationState {
     selectedView: View | null;
     sessions: IDatabaseSession[] | null;
     selectedSession: IDatabaseSession | null;
+    getSessionState: (sessionId: string) => { views: View[]; selectedView: View | null };
 }
 
 // ============================================================================
@@ -300,6 +301,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [updateSessionViews]);
 
+    const getSessionState = React.useCallback((sessionId: string) => {
+        return {
+            views: sessionViewStateRef.current[sessionId]?.views || [],
+            selectedView: sessionViewStateRef.current[sessionId]?.views.find(v => v.id === sessionViewStateRef.current[sessionId]?.selectedViewId) || null,
+        };
+    }, []);
+
     // ========================================================================
     // HANDLERS
     // ========================================================================
@@ -488,6 +496,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 selectedView,
                 sessions,
                 selectedSession,
+                getSessionState,
             }}
         >
             {children}
@@ -515,4 +524,9 @@ export const useContainers = () => {
 export const useSessions = () => {
     const { sessions, selectedSession } = useApplicationContext();
     return { sessions, selectedSession };
+};
+
+export const useSessionState = (sessionId: string) => {
+    const { getSessionState } = useApplicationContext();
+    return getSessionState(sessionId);
 };
