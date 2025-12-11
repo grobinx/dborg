@@ -1,6 +1,6 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IAutoRefresh, ICopyData, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Grid2 as Grid, useTheme } from "@mui/material";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
@@ -584,13 +584,10 @@ const activityTab = (
                     defaultInterval: 10,
                 } as IAutoRefresh,
                 {
-                    id: cid("database-activity-copy-activity-snapshots"),
-                    label: t("copy-snapshots", "Copy Snapshots"),
-                    icon: "Copy",
-                    run: () => {
-                        exportToClipboard(activityRows, "excel-xml");
+                    getData: () => {
+                        return activityRows;
                     }
-                } as Action<any>
+                } as ICopyData
             ]
         }
     };

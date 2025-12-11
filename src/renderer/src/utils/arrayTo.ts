@@ -1,6 +1,7 @@
 export type ExportFormat =
     | 'json' | 'csv' | 'tsv' | 'markdown' | 'html' | 'redmine' | 'xml'
-    | 'sql' | 'yaml' | 'latex' | 'jira' | 'ascii' | 'rst' | 'bbcode' | 'excel-xml';
+    | 'sql' | 'yaml' | 'latex' | 'jira' | 'ascii' | 'rst' | 'bbcode' | 'excel-xml'
+    | 'js' | 'ts' | 'java' | 'cpp' | 'php' | 'perl' | "pascal";
 
 export interface ExportFormatDescription {
     label: string;
@@ -24,6 +25,13 @@ export const exportFormats: Record<ExportFormat, ExportFormatDescription> = {
     rst: { label: 'reStructuredText Table', mimeType: 'text/x-rst', fileExtension: 'rst' },
     bbcode: { label: 'BBCode Table', mimeType: 'text/plain', fileExtension: 'txt' },
     'excel-xml': { label: 'Excel XML', mimeType: 'application/vnd.ms-excel', fileExtension: 'xml' },
+    js:   { label: 'JavaScript Array', mimeType: 'application/javascript', fileExtension: 'js' },
+    ts:   { label: 'TypeScript Array', mimeType: 'application/typescript', fileExtension: 'ts' },
+    java: { label: 'Java Array',       mimeType: 'text/x-java-source',      fileExtension: 'java' },
+    cpp:  { label: 'C++ Array',        mimeType: 'text/x-c++src',           fileExtension: 'cpp' },
+    php:  { label: 'PHP Array',        mimeType: 'application/x-httpd-php', fileExtension: 'php' },
+    perl: { label: 'Perl Array',       mimeType: 'text/x-perl',             fileExtension: 'pl' },
+    pascal: { label: 'Pascal Array',   mimeType: 'text/x-pascal',           fileExtension: 'pas' },
 };
 
 // Bazowe opcje wspólne dla wszystkich formatów
@@ -60,6 +68,7 @@ interface XMLExportOptions extends BaseExportOptions {
 // Opcje specyficzne dla SQL
 interface SQLExportOptions extends BaseExportOptions {
     tableName?: string;
+    identifierQuote?: string;
     includeCreateTable?: boolean;
     batchSize?: number;
 }
@@ -91,6 +100,44 @@ interface RSTExportOptions extends BaseExportOptions {
 interface ExcelXMLExportOptions extends BaseExportOptions {
     sheetName?: string;
     includeHeaders?: boolean;
+}
+
+// Opcje specyficzne dla JavaScript
+interface JSExportOptions extends BaseExportOptions {
+    variableName?: string;
+}
+
+// Opcje specyficzne dla TypeScript
+interface TSExportOptions extends BaseExportOptions {
+    variableName?: string;
+    typeName?: string;
+}
+
+// Opcje specyficzne dla Java
+interface JavaExportOptions extends BaseExportOptions {
+    variableName?: string;
+    className?: string;
+}
+
+// Opcje specyficzne dla C++
+interface CPPExportOptions extends BaseExportOptions {
+    variableName?: string;
+    typeName?: string;
+}
+
+// Opcje specyficzne dla PHP
+interface PHPExportOptions extends BaseExportOptions {
+    variableName?: string;
+}
+
+// Opcje specyficzne dla Perl
+interface PerlExportOptions extends BaseExportOptions {
+    variableName?: string;
+}
+
+interface PascalExportOptions extends BaseExportOptions {
+    variableName?: string;
+    typeName?: string;
 }
 
 export interface ExportResult {
@@ -391,18 +438,19 @@ const toSQL = (data: Record<string, any>[], options: SQLExportOptions): string =
     const columns = getColumns(data, options);
     const tableName = options.tableName || 'table_name';
     const batchSize = options.batchSize || 100;
+    const identifierQuote = options.identifierQuote ?? '"';
     const lines: string[] = [];
 
     if (options.includeCreateTable) {
-        lines.push(`-- CREATE TABLE ${tableName} (`);
+        lines.push(`CREATE TABLE ${identifierQuote}${tableName}${identifierQuote} (`);
         columns.forEach((col, idx) => {
             const comma = idx < columns.length - 1 ? ',' : '';
-            lines.push(`--   ${col} VARCHAR(255)${comma}`);
+            lines.push(`   ${identifierQuote}${col}${identifierQuote} VARCHAR(255)${comma}`);
         });
-        lines.push('-- );\n');
+        lines.push(');\n');
     }
 
-    const columnList = columns.map(c => `\`${c}\``).join(', ');
+    const columnList = columns.map(c => `${identifierQuote}${c}${identifierQuote}`).join(', ');
 
     for (let i = 0; i < data.length; i += batchSize) {
         const batch = data.slice(i, i + batchSize);
@@ -423,7 +471,7 @@ const toSQL = (data: Record<string, any>[], options: SQLExportOptions): string =
             return `(${vals.join(', ')})`;
         });
 
-        lines.push(`INSERT INTO \`${tableName}\` (${columnList})`);
+        lines.push(`INSERT INTO ${identifierQuote}${tableName}${identifierQuote} (${columnList})`);
         lines.push(`VALUES ${values.join(',\n       ')};`);
         lines.push('');
     }
@@ -724,6 +772,22 @@ const toExcelXML = (data: Record<string, any>[], options: ExcelXMLExportOptions)
     return xml;
 };
 
+const toPascal = (data: Record<string, any>[], options: PascalExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const varName = options.variableName || "Data";
+    const typeName = options.typeName || "TRecord";
+    // Definicja typu rekordu
+    const typeDef = `type\n  ${typeName} = record\n` +
+        columns.map(col => `    ${col}: string;`).join('\n') +
+        `\n  end;\n`;
+    // Dane
+    const arr = data.map(row => {
+        const fields = columns.map(col => `${col}: ${JSON.stringify(row[col] ?? "")}`).join('; ');
+        return `    (${fields})`;
+    });
+    return `${typeDef}\nvar\n  ${varName}: array[1..${arr.length}] of ${typeName} = (\n${arr.join(',\n')}\n  );`;
+};
+
 /**
  * Convert array of objects to various formats
  */
@@ -737,6 +801,13 @@ export function arrayTo(data: Record<string, any>[], format: 'latex', options?: 
 export function arrayTo(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): ExportResult;
 export function arrayTo(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): ExportResult;
 export function arrayTo(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'js', options?: JSExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): ExportResult;
 export function arrayTo(
     data: Record<string, any>[],
     format: ExportFormat,
@@ -768,7 +839,13 @@ export function arrayTo(
         case 'ascii': content = toASCII(data, options as ASCIITableExportOptions); break;
         case 'rst': content = toRST(data, options as RSTExportOptions); break;
         case 'excel-xml': content = toExcelXML(data, options as ExcelXMLExportOptions); break;
-
+        case 'js': content = toJS(data, options as JSExportOptions); break;
+        case 'ts': content = toTS(data, options as TSExportOptions); break;
+        case 'java': content = toJava(data, options as JavaExportOptions); break;
+        case 'cpp': content = toCPP(data, options as CPPExportOptions); break;
+        case 'php': content = toPHP(data, options as PHPExportOptions); break;
+        case 'perl': content = toPerl(data, options as PerlExportOptions); break;
+        case 'pascal': content = toPascal(data, options as PascalExportOptions); break;
         default:
             content = '';
     }
@@ -806,6 +883,13 @@ export async function exportToClipboard(data: Record<string, any>[], format: 'la
 export async function exportToClipboard(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): Promise<boolean>;
 export async function exportToClipboard(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): Promise<boolean>;
 export async function exportToClipboard(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'js', options?: JSExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): Promise<boolean>;
 export async function exportToClipboard(
     data: Record<string, any>[],
     format: ExportFormat,
@@ -828,6 +912,13 @@ export function exportToFile(data: Record<string, any>[], format: 'latex', optio
 export function exportToFile(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions, filename?: string): void;
 export function exportToFile(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions, filename?: string): void;
 export function exportToFile(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'js', options?: JSExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'ts', options?: TSExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'java', options?: JavaExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'php', options?: PHPExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions, filename?: string): void;
 export function exportToFile(
     data: Record<string, any>[],
     format: ExportFormat,
@@ -847,3 +938,85 @@ export function exportToFile(
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
+/**
+ * Convert to JavaScript
+ */
+const toJS = (data: Record<string, any>[], options: JSExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const arr = data.map(row => {
+        const obj = columns.map(col => `${JSON.stringify(col)}: ${JSON.stringify(row[col])}`).join(', ');
+        return `{ ${obj} }`;
+    });
+    const varName = options.variableName || "data";
+    return `const ${varName} = [\n  ${arr.join(',\n  ')}\n];`;
+};
+
+/**
+ * Convert to TypeScript
+ */
+const toTS = (data: Record<string, any>[], options: TSExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const typeName = options.typeName || "Row";
+    const varName = options.variableName || "data";
+    const type = `type ${typeName} = { ${columns.map(col => `${col}: any`).join('; ')} };`;
+    const arr = data.map(row => {
+        const obj = columns.map(col => `${JSON.stringify(col)}: ${JSON.stringify(row[col])}`).join(', ');
+        return `{ ${obj} }`;
+    });
+    return `${type}\nconst ${varName}: ${typeName}[] = [\n  ${arr.join(',\n  ')}\n];`;
+};
+
+/**
+ * Convert to Java
+ */
+const toJava = (data: Record<string, any>[], options: JavaExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const varName = options.variableName || "data";
+    const className = options.className || "Row";
+    const arr = data.map(row => {
+        const vals = columns.map(col => JSON.stringify(row[col])).join(", ");
+        return `    new Object[]{ ${vals} }`;
+    });
+    return `// class ${className} { ... }\nObject[][] ${varName} = {\n${arr.join(",\n")}\n};`;
+};
+
+/**
+ * Convert to C++
+ */
+const toCPP = (data: Record<string, any>[], options: CPPExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const varName = options.variableName || "data";
+    const typeName = options.typeName || "Row";
+    const arr = data.map(row => {
+        const vals = columns.map(col => JSON.stringify(row[col])).join(", ");
+        return `    { ${vals} }`;
+    });
+    return `// struct ${typeName} { ... }\nstd::vector<std::array<std::string, ${columns.length}>> ${varName} = {\n${arr.join(",\n")}\n};`;
+};
+
+/**
+ * Convert to PHP
+ */
+const toPHP = (data: Record<string, any>[], options: PHPExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const varName = options.variableName || "data";
+    const arr = data.map(row => {
+        const obj = columns.map(col => `'${col}' => ${JSON.stringify(row[col])}`).join(', ');
+        return `    [${obj}]`;
+    });
+    return `$${varName} = [\n${arr.join(",\n")}\n];`;
+};
+
+/**
+ * Convert to Perl
+ */
+const toPerl = (data: Record<string, any>[], options: PerlExportOptions = {}): string => {
+    const columns = getColumns(data, options);
+    const varName = options.variableName || "data";
+    const arr = data.map(row => {
+        const obj = columns.map(col => `'${col}' => ${JSON.stringify(row[col])}`).join(', ');
+        return `    { ${obj} }`;
+    });
+    return `my @${varName} = (\n${arr.join(",\n")}\n);`;
+};

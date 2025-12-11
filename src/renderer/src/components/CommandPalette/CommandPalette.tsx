@@ -151,6 +151,35 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     // ========== EFFECTS ==========
 
     useEffect(() => {
+        if (!open || !manager || !prefix) return;
+
+        // Znajdź grupę po nowym prefixie
+        const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix: pfx }) => pfx === prefix) ?? null;
+        setSelectedGroup(matchingGroup);
+
+        // Zachowaj część wpisaną przez użytkownika po prefiksie poprzedniej grupy
+        const prevPrefix = selectedGroup?.prefix || '';
+        const typedQuery = searchText.startsWith(prevPrefix)
+            ? searchText.slice(prevPrefix.length).trim()
+            : '';
+
+        // Ustaw nowy searchText z nowym prefixem i poprzednim zapytaniem
+        const newSearchText = (prefix ?? '') + (typedQuery ? ` ${typedQuery}` : '');
+        setSearchText(newSearchText);
+
+        // Wyczyść cache akcji, żeby nie blokować przełączenia grupy
+        cachedActions.current = {};
+
+        // Natychmiast pobierz akcje dla nowej grupy (bez debounce)
+        (async () => {
+            await fetchCommands(manager, newSearchText, matchingGroup);
+            // Ustaw fokus na input i zresetuj zaznaczenie
+            inputRef.current?.focus();
+            setSelectedIndex(null);
+        })();
+    }, [open, manager, prefix]);
+
+    useEffect(() => {
         console.debug("updateSelectedIndex");
         if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
 

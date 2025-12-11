@@ -271,12 +271,22 @@ export interface ICopyData<T = any> {
      */
     formats?: ExportFormat[];
     /**
+     * Domyślny format eksportu danych.
+     * @default "csv"
+     */
+    defaultFormat?: ExportFormat;
+    /**
      * Funkcja zwracająca dane do skopiowania.
      * 
      * @param refresh 
      * @returns 
      */
     getData: (refresh: RefreshSlotFunction) => T;
+    /**
+     * Czy pokazać powiadomienie o skopiowaniu danych.
+     * @default true
+     */
+    showNotification?: boolean;
 } 
 
 export interface ISlot {

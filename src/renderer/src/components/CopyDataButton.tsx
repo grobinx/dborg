@@ -5,11 +5,15 @@ import { ToolButton } from "./buttons/ToolButton";
 import { useTheme, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
 import Tooltip from "./Tooltip";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { CopyDataDialog } from "@renderer/dialogs/CopyDataDialog";
 
 export interface CopyDataButtonProps<T extends Record<string, any> = Record<string, any>> {
-    getData: () => T[];
+    getData: () => T[] | null;
     formats?: ExportFormat[];
     defaultFormat?: ExportFormat;
+    showNotification?: boolean;
+    showOptionDialog?: boolean;
 }
 
 export const CopyDataButton = <T extends Record<string, any> = Record<string, any>,>(props: CopyDataButtonProps<T>) => {
@@ -17,18 +21,39 @@ export const CopyDataButton = <T extends Record<string, any> = Record<string, an
         getData,
         formats,
         defaultFormat = "csv",
+        showNotification = true,
+        showOptionDialog = true,
     } = props;
 
     const theme = useTheme();
     const { t } = useTranslation();
+    const addToast = useToast();
     const [selectedFormat, setSelectedFormat] = React.useState<ExportFormat>(defaultFormat);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [openDialog, setOpenDialog] = React.useState<boolean>(false);
+    const [data, setData] = React.useState<T[] | null>(null);
 
     const availableFormats = formats ?? (Object.keys(exportFormats) as ExportFormat[]);
 
     const handleCopy = async (format: ExportFormat) => {
         const data = getData();
-        await exportToClipboard(data, format as any);
+        setData(data);
+        if (data) {
+            if (showOptionDialog) {
+                setOpenDialog(true);
+            }
+            else {
+                const result = await exportToClipboard(data, format as any);
+                if (showNotification) {
+                    if (result) {
+                        addToast("success", t("data-copied", "Data copied to clipboard in {{format}} format.", { format: exportFormats[format].label }));
+                    }
+                    else {
+                        addToast("error", t("data-copy-failed", "Failed to copy data to clipboard."));
+                    }
+                }
+            }
+        }
         setSelectedFormat(format);
     };
 
@@ -56,10 +81,14 @@ export const CopyDataButton = <T extends Record<string, any> = Record<string, an
                         <theme.icons.Copy />
                     </ToolButton>
                 </Tooltip>
-                <Tooltip title={t("select-format-and-export", "Select format and export")}>
+                <Tooltip title={t("copy-as-selected-format", "Copy as selected format")}>
                     <ToolButton
                         onClick={handleMenuOpen}
                         size="small"
+                        style={{
+                            minWidth: "0.8rem",
+                            padding: 2,
+                        }}
                     >
                         <theme.icons.ExpandMore />
                     </ToolButton>
@@ -80,6 +109,16 @@ export const CopyDataButton = <T extends Record<string, any> = Record<string, an
                     </MenuItem>
                 ))}
             </Menu>
+            {showOptionDialog && openDialog && data !== null && (
+                <CopyDataDialog
+                    open={true}
+                    onClose={() => setOpenDialog(false)}
+                    format={selectedFormat}
+                    data={data}
+                    columns={undefined}
+                    showNotification={showNotification}
+                />
+            )}
         </>
     )
 }

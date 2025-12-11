@@ -109,6 +109,7 @@ interface MonacoEditorProps {
     eol?: EditorEolMode;
     insertSpaces?: boolean;
     tabSize?: number;
+    value?: string;
 
     onLanguageChange?: (languageId: EditorLanguageId) => void;
     onEncodingChange?: (encoding: EditorEncoding) => void;
@@ -119,7 +120,7 @@ interface MonacoEditorProps {
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const {
-        onMount, editorKey, onFocus, onBlur, defaultValue,
+        onMount, editorKey, onFocus, onBlur, defaultValue, value,
         readOnly, loading, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
         language: initialLanguage = defaultEditorLanguageId,
         encoding: initialEncoding = defaultEditorEncoding,
@@ -302,6 +303,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
             <Box sx={{ position: "relative", flex: 1, overflow: "hidden", height: "100%", width: "100%" }}>
                 <Editor
                     defaultValue={defaultValue}
+                    value={value}
                     key={editorKey}
                     defaultLanguage={language}
                     theme={theme.palette.mode === "dark" ? "vs-dark" : "light"}

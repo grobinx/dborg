@@ -916,11 +916,13 @@ export const DataGrid = <T extends object>({
             return null;
         },
         openCommandPalette: (prefix, query) => {
-            setCommandPalettePrefix(prefix);
-            setOpenCommandPalette(true);
-            if (prefix === "*") {
-                searchState.current.text = query ?? "";
-            }
+            Promise.resolve().then(() => {
+                setCommandPalettePrefix(prefix);
+                setOpenCommandPalette(true);
+                if (prefix === "*") {
+                    searchState.current.text = query ?? "";
+                }
+            });
         },
         closeCommandPalette: () => setOpenCommandPalette(false),
         moveColumn: (from, to) => columnsState.moveColumn(from, to),
@@ -1082,6 +1084,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerActionGroup(actions.GotoColumnGroup());
             actionManager.current.registerActionGroup(actions.SearchDataGroup());
             actionManager.current.registerActionGroup(actions.SummaryFooterGroup());
+            actionManager.current.registerActionGroup(actions.CopyDataGroup());
 
             actionManager.current.registerAction(actions.IncreaseFontSize());
             actionManager.current.registerAction(actions.DecreaseFontSize());
@@ -1101,11 +1104,11 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.ToggleHideColumn());
             actionManager.current.registerAction(actions.ToggleGroupColumn());
             actionManager.current.registerAction(actions.Pivot());
-
             actionManager.current.registerAction(actions.OpenCommandPalette());
             actionManager.current.registerAction(actions.GotoColumn());
             actionManager.current.registerAction(actions.SearchData());
             actionManager.current.registerAction(actions.SummaryFooter());
+            actionManager.current.registerAction(actions.CopyData());
 
             actionManager.current.registerActionGroup(actions.FilterColumnDataGroup());
             actionManager.current.registerAction(actions.FilterColumnValue());
@@ -1227,65 +1230,334 @@ export const DataGrid = <T extends object>({
         }
     }, [onRowDoubleClick, displayData]);
 
-        function focusHandler(): void {
-            setTimeout(() => {
-                if (!selectedCellRef.current && displayData.length > 0) {
-                    updateSelectedCell({ row: 0, column: 0 });
-                }
-            }, 10);
-        }
+    function focusHandler(): void {
+        setTimeout(() => {
+            if (!selectedCellRef.current && displayData.length > 0) {
+                updateSelectedCell({ row: 0, column: 0 });
+            }
+        }, 10);
+    }
 
-        return (
-            <StyledTable
-                className={clsx("DataGrid-table", classes, isFocused && 'focused')}
+    return (
+        <StyledTable
+            className={clsx("DataGrid-table", classes, isFocused && 'focused')}
+            style={{
+                ['--dg-cell-px' as any]: `${cellPaddingX}px`,
+                ['--dg-cell-py' as any]: `${cellPaddingY}px`,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+            }}
+        >
+
+            {loading && (
+                <LoadingOverlay
+                    label={loading.trim() === "" ? t("loading---", "Loading...") : loading}
+                    onCancelLoading={onCancelLoading}
+                />
+            )}
+
+            <StyledTableContainer
+                ref={containerRef}
+                className={clsx("DataGrid-tableContainer", classes, isFocused && 'focused')}
+                tabIndex={0}
+                onKeyDown={!loading ? handleKeyDown : undefined}
+                onScroll={!loading ? onScroll : undefined}
+                onFocus={focusHandler}
                 style={{
-                    ['--dg-cell-px' as any]: `${cellPaddingX}px`,
-                    ['--dg-cell-py' as any]: `${cellPaddingY}px`,
-                    fontFamily: fontFamily,
-                    fontSize: fontSize,
+                    pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
+
                 }}
             >
-
-                {loading && (
-                    <LoadingOverlay
-                        label={loading.trim() === "" ? t("loading---", "Loading...") : loading}
-                        onCancelLoading={onCancelLoading}
-                    />
-                )}
-
-                <StyledTableContainer
-                    ref={containerRef}
-                    className={clsx("DataGrid-tableContainer", classes, isFocused && 'focused')}
-                    tabIndex={0}
-                    onKeyDown={!loading ? handleKeyDown : undefined}
-                    onScroll={!loading ? onScroll : undefined}
-                    onFocus={focusHandler}
+                <CommandPalette
+                    manager={actionManager.current!}
+                    open={openCommandPalette}
+                    onClose={() => setOpenCommandPalette(false)}
+                    getContext={() => dataGridActionContext}
+                    parentRef={containerRef}
+                    prefix={commandPalettePrefix}
+                    searchText={commandPalettePrefix === "*" ? searchState.current.text ?? "" : ""}
+                />
+                <StyledHeader
+                    className={clsx("DataGrid-header", classes)}
                     style={{
-                        pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
-
+                        width: columnsState.totalWidth,
+                        height: rowHeight
                     }}
                 >
-                    <CommandPalette
-                        manager={actionManager.current!}
-                        open={openCommandPalette}
-                        onClose={() => setOpenCommandPalette(false)}
-                        getContext={() => dataGridActionContext}
-                        parentRef={containerRef}
-                        prefix={commandPalettePrefix}
-                        searchText={commandPalettePrefix === "*" ? searchState.current.text ?? "" : ""}
-                    />
-                    <StyledHeader
-                        className={clsx("DataGrid-header", classes)}
-                        style={{
-                            width: columnsState.totalWidth,
-                            height: rowHeight
-                        }}
-                    >
-                        {showRowNumberColumn && (displayData.length > 0) && (
+                    {showRowNumberColumn && (displayData.length > 0) && (
+                        <StyledHeaderCell
+                            key="row-number-cell"
+                            className={clsx(
+                                "DataGrid-headerCell",
+                                "row-number-cell",
+                                classes,
+                            )}
+                            style={{
+                                position: 'sticky',
+                                zIndex: 5,
+                                width: rowNumberColumnWidth,
+                                left: 0,
+                                textAlign: 'center',
+                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                borderRight: `1px solid ${theme.palette.divider}`,
+                            }}
+                        >
+                            #
+                        </StyledHeaderCell>
+                    )}
+                    {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                        const absoluteColIndex = startColumn + localColIndex;
+                        const col = columnsState.current[absoluteColIndex];
+                        return (
                             <StyledHeaderCell
-                                key="row-number-cell"
+                                key={localColIndex}
                                 className={clsx(
                                     "DataGrid-headerCell",
+                                    classes,
+                                    mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                )}
+                                style={{
+                                    width: col.width || 150,
+                                    left: columnsState.columnLeft(absoluteColIndex),
+                                }}
+                                onClick={() => {
+                                    if (!resizingColumn) {
+                                        updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
+                                        dataGridActionContext.sortData(absoluteColIndex);
+                                    }
+                                }}
+                            >
+                                <StyledHeaderCellContent
+                                    className={clsx(
+                                        "DataGrid-headerCellContent",
+                                        classes,
+                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                    )}
+                                >
+                                    <StyledLabel>
+                                        {col.label}
+                                    </StyledLabel>
+                                    <StyledGrow />
+                                    {(filterColumns.getFilter(col.key, true) !== null) && (
+                                        <Tooltip
+                                            title={t("filter-description", 'Filter {{column}} {{filter}}', {
+                                                column: col.label,
+                                                filter: filterToString(filterColumns.getFilter(col.key, true)!)
+                                            })}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    filterColumns.filterActive(col.key, false)
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                <theme.icons.Filter />
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {groupingColumns.isInGroup(col.key) && (
+                                        <Tooltip
+                                            title={t("grouped-column", "Grouped column")}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    groupingColumns.toggleColumn(col.key);
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                <span className="group-icon">[]</span>
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {columnsState.showHiddenColumns && (
+                                        <Tooltip
+                                            title={t("toggle-hidden", "Toggle hidden")}
+                                        >
+                                            <StyledIconContainer
+                                                onClick={(event) => {
+                                                    columnsState.toggleHidden(col.key);
+                                                    event.stopPropagation();
+                                                }}
+                                            >
+                                                {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                    {col.sortDirection && (
+                                        <Tooltip
+                                            title={t("toggle-sort", "Toggle sort")}
+                                        >
+                                            <StyledIconContainer>
+                                                <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
+                                                {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
+                                            </StyledIconContainer>
+                                        </Tooltip>
+                                    )}
+                                </StyledHeaderCellContent>
+                                {(col.resizable ?? columnsResizable) && (
+                                    <div
+                                        className="resize-handle"
+                                        onMouseDown={(event) => handleMouseDown(startColumn + localColIndex, event)}
+                                    />
+                                )}
+                            </StyledHeaderCell>
+                        )
+                    })}
+                </StyledHeader>
+                {displayData.length === 0 && (
+                    <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
+                        {t("no-rows-to-display", "No rows to display")}
+                    </StyledNoRowsInfo>
+                )}
+                <StyledRowsContainer
+                    style={{
+                        height: totalHeight,
+                        width: columnsState.totalWidth,
+                    }}
+                    className={clsx("DataGrid-rowsContainer", classes)}
+                    onMouseDown={onRowsContainerMouseDown} // delegacja
+                    onDoubleClick={handleRowDoubleClick}
+                >
+                    {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
+                        const absoluteRowIndex = overscanFrom + localRowIndex;
+                        const row = displayData[absoluteRowIndex];
+                        const isActiveRow = mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row;
+                        const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
+                        let columnLeft = columnsState.columnLeft(startColumn);
+
+                        return (
+                            <StyledRow
+                                key={localRowIndex}
+                                className={clsx(
+                                    'DataGrid-row',
+                                    classes,
+                                    rowClass,
+                                    selectedRows.includes(absoluteRowIndex) && "selected",
+                                    isActiveRow && 'active-row',
+                                )}
+                                style={{
+                                    top: absoluteRowIndex * rowHeight,
+                                    height: rowHeight,
+                                }}
+                            >
+                                {showRowNumberColumn && (displayData.length > 0) && (
+                                    <StyledCell
+                                        key="row-number-cell"
+                                        className={clsx(
+                                            "DataGrid-cell",
+                                            'row-number-cell',
+                                            classes,
+                                            'align-center',
+                                            isActiveRow && 'active-row',
+                                        )}
+                                        style={{
+                                            position: 'sticky',
+                                            zIndex: 5,
+                                            width: rowNumberColumnWidth,
+                                            left: 0,
+                                        }}
+                                        onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
+                                    >
+                                        {absoluteRowIndex + 1}
+                                    </StyledCell>
+                                )}
+                                {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                                    const absoluteColIndex = startColumn + localColIndex;
+                                    const col = columnsState.current[absoluteColIndex];
+                                    const colWidth = col.width || 150;
+                                    const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
+                                    const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
+                                    let columnDataType = (col.summary && groupingColumns.columns.length
+                                        ? summaryOperationToBaseTypeMap[col.summary]
+                                        : undefined) ?? col.dataType ?? 'string';
+
+                                    if (pivot && absoluteColIndex > 0) {
+                                        columnDataType = pivotMap?.[row["key"]] ?? 'string';
+                                    }
+
+                                    const cellValue = row[col.key];
+                                    let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
+                                    if (cellValue === undefined || cellValue === null) {
+                                        baseDataType = "null";
+                                    }
+                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
+                                        baseDataType = "null";
+                                    }
+
+                                    const alignClass = baseDataType === 'number' ? 'align-end' : (baseDataType === 'boolean' || baseDataType === 'datetime') ? 'align-center' : 'align-start';
+
+                                    let formattedValue: React.ReactNode;
+                                    try {
+                                        formattedValue = columnDataFormatter(
+                                            cellValue,
+                                            columnDataType,
+                                            col.formatter,
+                                            null_value,
+                                            row,
+                                            col.key,
+                                            { maxLength: displayMaxLengh }
+                                        );
+                                        const searchText = searchState.current.text?.trim();
+                                        if (typeof formattedValue === "string" && searchText) {
+                                            formattedValue =
+                                                highlightText(
+                                                    formattedValue,
+                                                    searchText,
+                                                    true,
+                                                    searchState.current.caseSensitive,
+                                                    theme.palette.primary.main
+                                                );
+                                        }
+                                    } catch {
+                                        formattedValue = "{error}";
+                                        baseDataType = "error";
+                                    }
+
+                                    const cell = (
+                                        <StyledCell
+                                            key={localColIndex}
+                                            data-r={absoluteRowIndex} // potrzebne do delegacji
+                                            data-c={absoluteColIndex} // potrzebne do delegacji
+                                            className={clsx(
+                                                "DataGrid-cell",
+                                                classes,
+                                                isCellActive && "active-cell",
+                                                isCellActive && isFocused && "focused",
+                                                `data-type-${baseDataType}`,
+                                                alignClass,
+                                                isActiveColumn && 'active-column',
+                                                isActiveRow && 'active-row',
+                                            )}
+                                            style={{
+                                                width: colWidth,
+                                                left: columnLeft,
+                                            }}
+                                        >
+                                            {formattedValue}
+                                        </StyledCell>
+                                    );
+
+                                    columnLeft += colWidth;
+
+                                    return cell;
+                                })}
+                            </StyledRow>
+                        );
+                    })}
+                </StyledRowsContainer>
+                {columnsState.anySummarized && (displayData.length > 0) && (
+                    <StyledFooter
+                        style={{
+                            width: columnsState.totalWidth,
+                            height: (rowHeight * footerCaptionHeightFactor) + rowHeight
+                        }}
+                        className={clsx("DataGrid-footer", classes)}
+                    >
+                        {showRowNumberColumn && (displayData.length > 0) && (
+                            <StyledFooterCell
+                                key="row-number-cell"
+                                className={clsx(
+                                    'DataGrid-footerCell',
                                     "row-number-cell",
                                     classes,
                                 )}
@@ -1293,353 +1565,84 @@ export const DataGrid = <T extends object>({
                                     position: 'sticky',
                                     zIndex: 5,
                                     width: rowNumberColumnWidth,
+                                    height: "100%",
                                     left: 0,
-                                    textAlign: 'center',
-                                    borderBottom: `1px solid ${theme.palette.divider}`,
+                                    borderTop: `1px solid ${theme.palette.divider}`,
                                     borderRight: `1px solid ${theme.palette.divider}`,
                                 }}
-                            >
-                                #
-                            </StyledHeaderCell>
+                            />
                         )}
                         {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
                             const absoluteColIndex = startColumn + localColIndex;
                             const col = columnsState.current[absoluteColIndex];
+                            let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
+
                             return (
-                                <StyledHeaderCell
-                                    key={localColIndex}
+                                <StyledFooterCell
+                                    key={col.key}
                                     className={clsx(
-                                        "DataGrid-headerCell",
+                                        'DataGrid-footerCell',
                                         classes,
-                                        mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                        `data-type-${styleDataType}`,
+                                        styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                     )}
                                     style={{
                                         width: col.width || 150,
-                                        left: columnsState.columnLeft(absoluteColIndex),
+                                        left: columnsState.columnLeft(startColumn + localColIndex),
                                     }}
                                     onClick={() => {
-                                        if (!resizingColumn) {
-                                            updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
-                                            dataGridActionContext.sortData(absoluteColIndex);
-                                        }
+                                        handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
+                                        actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
                                     }}
                                 >
-                                    <StyledHeaderCellContent
-                                        className={clsx(
-                                            "DataGrid-headerCellContent",
-                                            classes,
-                                            mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
-                                        )}
-                                    >
-                                        <StyledLabel>
-                                            {col.label}
-                                        </StyledLabel>
-                                        <StyledGrow />
-                                        {(filterColumns.getFilter(col.key, true) !== null) && (
-                                            <Tooltip
-                                                title={t("filter-description", 'Filter {{column}} {{filter}}', {
-                                                    column: col.label,
-                                                    filter: filterToString(filterColumns.getFilter(col.key, true)!)
-                                                })}
-                                            >
-                                                <StyledIconContainer
-                                                    onClick={(event) => {
-                                                        filterColumns.filterActive(col.key, false)
-                                                        event.stopPropagation();
-                                                    }}
-                                                >
-                                                    <theme.icons.Filter />
-                                                </StyledIconContainer>
-                                            </Tooltip>
-                                        )}
-                                        {groupingColumns.isInGroup(col.key) && (
-                                            <Tooltip
-                                                title={t("grouped-column", "Grouped column")}
-                                            >
-                                                <StyledIconContainer
-                                                    onClick={(event) => {
-                                                        groupingColumns.toggleColumn(col.key);
-                                                        event.stopPropagation();
-                                                    }}
-                                                >
-                                                    <span className="group-icon">[]</span>
-                                                </StyledIconContainer>
-                                            </Tooltip>
-                                        )}
-                                        {columnsState.showHiddenColumns && (
-                                            <Tooltip
-                                                title={t("toggle-hidden", "Toggle hidden")}
-                                            >
-                                                <StyledIconContainer
-                                                    onClick={(event) => {
-                                                        columnsState.toggleHidden(col.key);
-                                                        event.stopPropagation();
-                                                    }}
-                                                >
-                                                    {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
-                                                </StyledIconContainer>
-                                            </Tooltip>
-                                        )}
-                                        {col.sortDirection && (
-                                            <Tooltip
-                                                title={t("toggle-sort", "Toggle sort")}
-                                            >
-                                                <StyledIconContainer>
-                                                    <span className="sort-icon">{col.sortDirection === "asc" ? "▲" : "▼"}</span>
-                                                    {col.sortOrder !== undefined && <span className="sort-order">{col.sortOrder}</span>}
-                                                </StyledIconContainer>
-                                            </Tooltip>
-                                        )}
-                                    </StyledHeaderCellContent>
-                                    {(col.resizable ?? columnsResizable) && (
-                                        <div
-                                            className="resize-handle"
-                                            onMouseDown={(event) => handleMouseDown(startColumn + localColIndex, event)}
-                                        />
-                                    )}
-                                </StyledHeaderCell>
-                            )
-                        })}
-                    </StyledHeader>
-                    {displayData.length === 0 && (
-                        <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
-                            {t("no-rows-to-display", "No rows to display")}
-                        </StyledNoRowsInfo>
-                    )}
-                    <StyledRowsContainer
-                        style={{
-                            height: totalHeight,
-                            width: columnsState.totalWidth,
-                        }}
-                        className={clsx("DataGrid-rowsContainer", classes)}
-                        onMouseDown={onRowsContainerMouseDown} // delegacja
-                        onDoubleClick={handleRowDoubleClick}
-                    >
-                        {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
-                            const absoluteRowIndex = overscanFrom + localRowIndex;
-                            const row = displayData[absoluteRowIndex];
-                            const isActiveRow = mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row;
-                            const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
-                            let columnLeft = columnsState.columnLeft(startColumn);
-
-                            return (
-                                <StyledRow
-                                    key={localRowIndex}
-                                    className={clsx(
-                                        'DataGrid-row',
-                                        classes,
-                                        rowClass,
-                                        selectedRows.includes(absoluteRowIndex) && "selected",
-                                        isActiveRow && 'active-row',
-                                    )}
-                                    style={{
-                                        top: absoluteRowIndex * rowHeight,
-                                        height: rowHeight,
-                                    }}
-                                >
-                                    {showRowNumberColumn && (displayData.length > 0) && (
-                                        <StyledCell
-                                            key="row-number-cell"
+                                    {(col.summary !== undefined) && [
+                                        <StyledFooterCellHeader
+                                            key="header"
                                             className={clsx(
-                                                "DataGrid-cell",
-                                                'row-number-cell',
+                                                "DataGrid-footerCellHeader",
                                                 classes,
-                                                'align-center',
-                                                isActiveRow && 'active-row',
+                                                `data-type-${styleDataType}`,
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
-                                            style={{
-                                                position: 'sticky',
-                                                zIndex: 5,
-                                                width: rowNumberColumnWidth,
-                                                left: 0,
-                                            }}
-                                            onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
                                         >
-                                            {absoluteRowIndex + 1}
-                                        </StyledCell>
-                                    )}
-                                    {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
-                                        const absoluteColIndex = startColumn + localColIndex;
-                                        const col = columnsState.current[absoluteColIndex];
-                                        const colWidth = col.width || 150;
-                                        const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
-                                        const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
-                                        let columnDataType = (col.summary && groupingColumns.columns.length
-                                            ? summaryOperationToBaseTypeMap[col.summary]
-                                            : undefined) ?? col.dataType ?? 'string';
-
-                                        if (pivot && absoluteColIndex > 0) {
-                                            columnDataType = pivotMap?.[row["key"]] ?? 'string';
-                                        }
-
-                                        const cellValue = row[col.key];
-                                        let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
-                                        if (cellValue === undefined || cellValue === null) {
-                                            baseDataType = "null";
-                                        }
-                                        else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
-                                            baseDataType = "null";
-                                        }
-
-                                        const alignClass = baseDataType === 'number' ? 'align-end' : (baseDataType === 'boolean' || baseDataType === 'datetime') ? 'align-center' : 'align-start';
-
-                                        let formattedValue: React.ReactNode;
-                                        try {
-                                            formattedValue = columnDataFormatter(
-                                                cellValue,
-                                                columnDataType,
-                                                col.formatter,
-                                                null_value,
-                                                row,
-                                                col.key,
-                                                { maxLength: displayMaxLengh }
-                                            );
-                                            const searchText = searchState.current.text?.trim();
-                                            if (typeof formattedValue === "string" && searchText) {
-                                                formattedValue =
-                                                    highlightText(
-                                                        formattedValue,
-                                                        searchText,
-                                                        true,
-                                                        searchState.current.caseSensitive,
-                                                        theme.palette.primary.main
-                                                    );
-                                            }
-                                        } catch {
-                                            formattedValue = "{error}";
-                                            baseDataType = "error";
-                                        }
-
-                                        const cell = (
-                                            <StyledCell
-                                                key={localColIndex}
-                                                data-r={absoluteRowIndex} // potrzebne do delegacji
-                                                data-c={absoluteColIndex} // potrzebne do delegacji
-                                                className={clsx(
-                                                    "DataGrid-cell",
-                                                    classes,
-                                                    isCellActive && "active-cell",
-                                                    isCellActive && isFocused && "focused",
-                                                    `data-type-${baseDataType}`,
-                                                    alignClass,
-                                                    isActiveColumn && 'active-column',
-                                                    isActiveRow && 'active-row',
-                                                )}
-                                                style={{
-                                                    width: colWidth,
-                                                    left: columnLeft,
-                                                }}
+                                            <StyledLabel>
+                                                {summaryOperationDisplayMap[col.summary] || ""}
+                                            </StyledLabel>
+                                            <StyledGrow />
+                                            <Tooltip
+                                                title={t("summary-off", "Toggle summary off")}
                                             >
-                                                {formattedValue}
-                                            </StyledCell>
-                                        );
-
-                                        columnLeft += colWidth;
-
-                                        return cell;
-                                    })}
-                                </StyledRow>
+                                                <StyledIconContainer
+                                                    onClick={(event) => {
+                                                        columnsState.setSummary(col.key);
+                                                        event.stopPropagation();
+                                                    }}
+                                                >
+                                                    <theme.icons.Close />
+                                                </StyledIconContainer>
+                                            </Tooltip>
+                                        </StyledFooterCellHeader>,
+                                        <StyledFooterCellContent
+                                            key="content"
+                                            className={clsx(
+                                                "DataGrid-footerCellContent",
+                                                classes,
+                                                `data-type-${styleDataType}`,
+                                                styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
+                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                            )}
+                                        >
+                                            {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
+                                        </StyledFooterCellContent>
+                                    ]}
+                                </StyledFooterCell>
                             );
                         })}
-                    </StyledRowsContainer>
-                    {columnsState.anySummarized && (displayData.length > 0) && (
-                        <StyledFooter
-                            style={{
-                                width: columnsState.totalWidth,
-                                height: (rowHeight * footerCaptionHeightFactor) + rowHeight
-                            }}
-                            className={clsx("DataGrid-footer", classes)}
-                        >
-                            {showRowNumberColumn && (displayData.length > 0) && (
-                                <StyledFooterCell
-                                    key="row-number-cell"
-                                    className={clsx(
-                                        'DataGrid-footerCell',
-                                        "row-number-cell",
-                                        classes,
-                                    )}
-                                    style={{
-                                        position: 'sticky',
-                                        zIndex: 5,
-                                        width: rowNumberColumnWidth,
-                                        height: "100%",
-                                        left: 0,
-                                        borderTop: `1px solid ${theme.palette.divider}`,
-                                        borderRight: `1px solid ${theme.palette.divider}`,
-                                    }}
-                                />
-                            )}
-                            {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
-                                const absoluteColIndex = startColumn + localColIndex;
-                                const col = columnsState.current[absoluteColIndex];
-                                let styleDataType: ColumnBaseType | 'null' = toBaseType((col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType);
-
-                                return (
-                                    <StyledFooterCell
-                                        key={col.key}
-                                        className={clsx(
-                                            'DataGrid-footerCell',
-                                            classes,
-                                            `data-type-${styleDataType}`,
-                                            styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                            mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
-                                        )}
-                                        style={{
-                                            width: col.width || 150,
-                                            left: columnsState.columnLeft(startColumn + localColIndex),
-                                        }}
-                                        onClick={() => {
-                                            handleCellClick(selectedCell?.row ?? 0, absoluteColIndex);
-                                            actionManager.current?.executeAction(actions.SummaryFooter_ID, dataGridActionContext);
-                                        }}
-                                    >
-                                        {(col.summary !== undefined) && [
-                                            <StyledFooterCellHeader
-                                                key="header"
-                                                className={clsx(
-                                                    "DataGrid-footerCellHeader",
-                                                    classes,
-                                                    `data-type-${styleDataType}`,
-                                                    styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                    mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
-                                                )}
-                                            >
-                                                <StyledLabel>
-                                                    {summaryOperationDisplayMap[col.summary] || ""}
-                                                </StyledLabel>
-                                                <StyledGrow />
-                                                <Tooltip
-                                                    title={t("summary-off", "Toggle summary off")}
-                                                >
-                                                    <StyledIconContainer
-                                                        onClick={(event) => {
-                                                            columnsState.setSummary(col.key);
-                                                            event.stopPropagation();
-                                                        }}
-                                                    >
-                                                        <theme.icons.Close />
-                                                    </StyledIconContainer>
-                                                </Tooltip>
-                                            </StyledFooterCellHeader>,
-                                            <StyledFooterCellContent
-                                                key="content"
-                                                className={clsx(
-                                                    "DataGrid-footerCellContent",
-                                                    classes,
-                                                    `data-type-${styleDataType}`,
-                                                    styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                    mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
-                                                )}
-                                            >
-                                                {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
-                                            </StyledFooterCellContent>
-                                        ]}
-                                    </StyledFooterCell>
-                                );
-                            })}
-                        </StyledFooter>
-                    )}
-                </StyledTableContainer>
-            </StyledTable>
-        );
-    };
+                    </StyledFooter>
+                )}
+            </StyledTableContainer>
+        </StyledTable>
+    );
+};

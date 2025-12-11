@@ -26,3 +26,5 @@ export * from "./ToggleShowHiddenColumns";
 export * from "./SearchReset";
 export * from "./Pivot";
 export * from "./FilterColumnValue";
+export * from "./CopyData";
+export * from "./CopyDataGroup";

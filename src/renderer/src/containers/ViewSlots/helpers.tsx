@@ -3,9 +3,7 @@ import {
     ToolFactory,
     ContentSlotKindFactory,
     resolveActionsFactory,
-    resolveBooleanFactory,
     resolveContentSlotKindFactory,
-    resolveSelectOptionsFactory,
     resolveSplitSlotPartKindFactory,
     resolveTabContentSlotKindFactory,
     resolveTabLabelKindFactory,
@@ -19,13 +17,8 @@ import {
     isTextField,
     isNumberField,
     isSelectField,
-    ISelectField,
-    ITextField,
-    INumberField,
-    IAutoRefresh,
-    AutoRefreshLifecycle,
-    IAutoRefreshContext,
     isAutoRefresh,
+    isCopyData,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -41,15 +34,11 @@ import { ActionManager, isAction, isActions } from "@renderer/components/Command
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { TextField } from "@renderer/components/inputs/TextField";
-import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import Tooltip from "@renderer/components/Tooltip";
-import { NumberField } from "@renderer/components/inputs/NumberField";
-import { SelectField } from "@renderer/components/inputs/SelectField";
-import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
-import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import EditorSlot from "./EditorSlot";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
+import { ToolNumberField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
+import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
+import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -163,188 +152,6 @@ export function createSplitPartContent(
     return null;
 }
 
-const ToolSelectedField: React.FC<{ action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
-    const {
-        action,
-        refreshSlot,
-    } = props;
-
-    const [value, setValue] = React.useState<any | undefined>(action.defaultValue);
-
-    return (
-        <InputDecorator indicator={false} disableBlink>
-            <SelectField
-                placeholder={action.placeholder}
-                value={value}
-                onChange={setValue}
-                onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                size="small"
-                width={action.width}
-                options={resolveSelectOptionsFactory(action.options, refreshSlot) || []}
-                tooltip={action.tooltip}
-            />
-        </InputDecorator>
-    );
-};
-
-const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: string) => void }> = (props) => {
-    const {
-        action,
-        refreshSlot,
-    } = props;
-
-    const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
-
-    return (
-        <InputDecorator indicator={false} disableBlink>
-            <TextField
-                placeholder={action.placeholder}
-                value={value}
-                onChange={setValue}
-                onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                size="small"
-                width={action.width}
-                minLength={action.minLength}
-                maxLength={action.maxLength}
-                tooltip={action.tooltip}
-            />
-        </InputDecorator>
-    );
-};
-
-const ToolNumberField: React.FC<{ action: INumberField, refreshSlot: (id: string) => void }> = (props) => {
-    const {
-        action,
-        refreshSlot,
-    } = props;
-
-    const [value, setValue] = React.useState<number | null>(action.defaultValue ?? action.min ?? null);
-
-    return (
-        <InputDecorator indicator={false} disableBlink>
-            <NumberField
-                placeholder={action.placeholder}
-                value={value}
-                onChange={value => setValue(value ?? null)}
-                onChanged={value => action.onChange(value ?? action.defaultValue ?? action.min ?? null)}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
-                size="small"
-                width={action.width}
-                min={action.min}
-                max={action.max}
-                step={action.step}
-                tooltip={action.tooltip}
-            />
-        </InputDecorator>
-    );
-};
-
-const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: string) => void }> = (props) => {
-    const {
-        action,
-        refreshSlot,
-    } = props;
-    const lifecycle: AutoRefreshLifecycle = {
-        onHide: "pause",
-        onShow: "resume",
-        ...action.lifecycle,
-    }
-    const [executing, setExecuting] = React.useState<boolean>(false);
-    const [state, setState] = React.useState<AutoRefreshState>(lifecycle.onMount === "start" ? "running" : "stopped");
-    const prevState = React.useRef<AutoRefreshState>(state);
-    const [interval, setInterval] = React.useState<AutoRefreshInterval>(action.defaultInterval ?? 5);
-    const [barRef, isBarVisible] = useVisibleState<HTMLDivElement>();
-
-    React.useEffect(() => {
-        action.onMount?.(refreshSlot, context);
-        return () => {
-            action.onUnmount?.(refreshSlot, context);
-        }
-    }, []);
-
-    React.useEffect(() => {
-        if (isBarVisible) {
-            if (lifecycle.onShow === "start") {
-                setState("running");
-            } else if (lifecycle.onShow === "resume") {
-                setState("running");
-            } else if (lifecycle.onShow === "ignore") {
-                // no action
-            }
-            action.onShow?.(refreshSlot, context);
-        } else {
-            if (lifecycle.onHide === "stop") {
-                setState("stopped");
-            } else if (lifecycle.onHide === "pause") {
-                setState("paused");
-            } else if (lifecycle.onHide === "ignore") {
-                // no action
-            }
-            action.onHide?.(refreshSlot, context);
-        }
-    }, [isBarVisible]);
-
-    React.useEffect(() => {
-        if (state === "running" && action.clearOn === "start" && prevState.current === "stopped") {
-            action.onClear?.(refreshSlot, context);
-        }
-        if (state === "stopped" && action.clearOn === "stop" && prevState.current === "running") {
-            action.onClear?.(refreshSlot, context);
-        }
-        prevState.current = state;
-    }, [state]);
-
-    React.useEffect(() => {
-        if (lifecycle.onMount === "start") {
-            setState("running");
-        }
-        action.onMount?.(refreshSlot, context);
-        return () => {
-            if (lifecycle.onUnmount === "stop") {
-                setState("stopped");
-            }
-            action.onUnmount?.(refreshSlot, context);
-        }
-    }, []);
-
-    const context: IAutoRefreshContext = {
-        state,
-        interval,
-        executing,
-        start: () => setState("running"),
-        stop: () => setState("stopped"),
-        pause: () => setState("paused"),
-        resume: () => setState("running"),
-        clear: () => action.onClear?.(refreshSlot, context),
-        setState,
-        setInterval,
-        setExecuting,
-    };
-
-    return (
-        <AutoRefreshBar
-            ref={barRef}
-            state={state}
-            interval={interval}
-            intervals={action.intervals}
-            onStateChange={setState}
-            onIntervalChange={setInterval}
-            onStart={action.onStart ? () => action.onStart?.(refreshSlot, context) : undefined}
-            onPause={action.onPause ? () => action.onPause?.(refreshSlot, context) : undefined}
-            onResume={action.onResume ? () => action.onResume?.(refreshSlot, context) : undefined}
-            onClear={action.onClear ? () => action.onClear?.(refreshSlot, context) : undefined}
-            onStop={action.onStop ? () => action.onStop?.(refreshSlot, context) : undefined}
-            onTick={action.onTick ? () => action.onTick?.(refreshSlot, context) : undefined}
-            executing={context.executing}
-            canClear={action.canClear}
-            canPause={action.canPause}
-            canRefresh={action.canRefresh}
-        />
-    );
-};
-
 export function createActionComponents(
     actions: ToolFactory | undefined,
     actionSlotId: string | undefined,
@@ -434,6 +241,14 @@ export function createActionComponents(
                 } else if (isAutoRefresh(action)) {
                     return (
                         <ToolAutoRefreshBar
+                            key={index}
+                            action={action}
+                            refreshSlot={refreshSlot}
+                        />
+                    );
+                } else if (isCopyData(action)) {
+                    return (
+                        <ToolCopyDataButton
                             key={index}
                             action={action}
                             refreshSlot={refreshSlot}
