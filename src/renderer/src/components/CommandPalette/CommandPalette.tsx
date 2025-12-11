@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material'; // Import komponentu Button
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material';
 import { styled } from '@mui/system';
 import { Action, ActionGroup, ActionGroupOption, ActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
@@ -59,50 +59,220 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const [searchText, setSearchText] = useState(initSearchText ?? '');
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const [selectedGroup, setSelectedGroup] = useState<ActionGroup | null>(null);
+    const [searchDelay] = useSetting<number>("app", "search.delay");
+
+    // ========== REFS ==========
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const listItemRef = useRef<HTMLLIElement>(null); // Referencja do elementu listy
+    const listItemRef = useRef<HTMLLIElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
-    const [listMaxHeight, setListMaxHeight] = useState<number>(300); // Domyślna maksymalna wysokość
-    const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const onCloseRef = useRef(onClose);
     const getContextRef = useRef(getContext);
-    const [searchDelay] = useSetting<number>("app", "search.delay");
-    const [refresh, setRefresh] = useState(true);
-    const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
-    const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
     const cachedActions = useRef<Record<string, Action<any>[]>>({});
-    const commandsHasIcons = useMemo(() => filteredCommands.some(action => !!action.icon), [filteredCommands]);
+    const debouncedFetchRef = useRef<ReturnType<typeof debounce> | null>(null);
 
     onCloseRef.current = onClose;
     getContextRef.current = getContext;
 
-    const handleClose = React.useCallback(() => {
+    // ========== STATE ==========
+    const [searchText, setSearchText] = useState(initSearchText ?? '');
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<ActionGroup | null>(null);
+    const [listMaxHeight, setListMaxHeight] = useState<number>(300);
+    const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
+    const [filteredCommands, setFilteredCommands] = useState<Action<any>[]>([]);
+    const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: Action<any>[]; }[]>([]);
+
+    const context = getContextRef.current?.();
+    const commandsHasIcons = useMemo(() => filteredCommands.some(action => !!action.icon), [filteredCommands]);
+
+    // ========== CALLBACKS ==========
+
+    const handleClose = useCallback(() => {
         onCloseRef.current();
         setSearchText('');
         setSelectedGroup(null);
         setFilteredCommands([]);
+        setSelectedIndex(null);
         parentRef?.current?.focus();
+        cachedActions.current = {};
     }, [parentRef]);
 
-    const handleOptionClick = React.useCallback((option: ActionGroupOption<any>) => {
+    const handleCommandClick = useCallback((action: Action<any>) => {
+        if (getContextRef.current) {
+            manager.executeAction(action, getContextRef.current());
+            if (onAction) {
+                onAction(action);
+            }
+        }
+        handleClose();
+    }, [manager, onAction, handleClose]);
+
+    const handleOptionClick = useCallback((option: ActionGroupOption<any>) => {
         if (getContextRef.current) {
             option.run(getContextRef.current());
-            setRefresh(prev => !prev);
-            Promise.resolve().then(() => {
-                inputRef?.current?.focus();
-            });
         }
+        setTimeout(() => inputRef?.current?.focus(), 0);
     }, []);
 
-    // Handle context menu event
+    const fetchCommands = useCallback(async (
+        manager: ActionManager<any>,
+        searchText: string,
+        selectedGroup: ActionGroup | null,
+    ) => {
+        const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
+            ? searchText.slice((selectedGroup?.prefix || '').length).trim()
+            : searchText;
+
+        if (selectedGroup) {
+            if ((selectedGroup?.mode ?? "actions") === "actions") {
+                if (!cachedActions.current[selectedGroup.prefix || ""]) {
+                    const actions = await manager.getRegisteredActions(selectedGroup.prefix, getContextRef.current?.());
+                    cachedActions.current[selectedGroup.prefix || ""] = actions;
+                }
+                const queryParts = queryWithoutPrefix.toLowerCase().split(' ').filter(Boolean);
+                const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
+                    const label = typeof command.label === "function" ? command.label(getContextRef.current?.()) : command.label;
+                    const description = command.description ? (typeof command.description === "function" ? command.description(context) : command.description) : '';
+                    return queryParts.every((part) =>
+                        label.toLowerCase().includes(part) ||
+                        description.toLowerCase().includes(part)
+                    );
+                });
+                setFilteredCommands(actions);
+                setSelectedIndex(0);
+            } else {
+                const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContextRef.current?.(), queryWithoutPrefix);
+                setFilteredCommands(actions);
+                setSelectedIndex(0);
+            }
+        }
+    }, [context]);
+
+    // ========== EFFECTS ==========
+
+    // Effect 1: Open/Close
+    useEffect(() => {
+        if (!open) {
+            handleClose();
+            return;
+        }
+
+        if (!manager) return;
+
+        const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix: pfx }) =>
+            pfx === prefix
+        );
+
+        let newSearchText = initSearchText ?? '';
+        if (matchingGroup) {
+            if (matchingGroup.getSearchText && getContextRef.current) {
+                newSearchText = matchingGroup.getSearchText(getContextRef.current());
+            }
+            if (matchingGroup.onOpen && getContextRef.current) {
+                matchingGroup.onOpen(getContextRef.current());
+            }
+        }
+
+        setSearchText((prefix ?? '>') + newSearchText);
+        setSelectedGroup(matchingGroup ?? null);
+        setSelectedIndex(null);
+        inputRef.current?.focus();
+    }, [open, manager, prefix, initSearchText, handleClose]);
+
+    // Effect 2: Detect group from searchText prefix
+    useEffect(() => {
+        if (!open || !manager) return;
+
+        const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix }) =>
+            prefix && searchText.toLowerCase().startsWith(prefix.toLowerCase())
+        );
+
+        setSelectedGroup(matchingGroup ?? null);
+    }, [searchText, manager, open]);
+
+    // Effect 3: Fetch commands with debounce
+    useEffect(() => {
+        if (!open || !selectedGroup) {
+            setFilteredCommands([]);
+            return;
+        }
+
+        debouncedFetchRef.current?.cancel();
+        debouncedFetchRef.current = debounce(() => {
+            fetchCommands(manager, searchText, selectedGroup);
+        }, searchDelay);
+
+        debouncedFetchRef.current();
+
+        return () => {
+            debouncedFetchRef.current?.cancel();
+        };
+    }, [open, selectedGroup, searchText, manager, fetchCommands, searchDelay]);
+
+    // Effect 4: Scroll to selected item
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            const listItem = listRef.current?.querySelector<HTMLLIElement>('.focused');
+            listItem?.scrollIntoView({ block: 'nearest' });
+        });
+    }, [selectedIndex]);
+
+    // Effect 5: Update list item height
+    useEffect(() => {
+        if (listItemRef.current && inputRef.current) {
+            const itemHeight = listItemRef.current.offsetHeight;
+            setListMaxHeight(itemHeight * 6);
+        }
+    }, [filteredCommands]);
+
+    // Effect 6: Update container position
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            if (!open || !parentRef?.current) return;
+
+            const parentRect = parentRef.current.getBoundingClientRect();
+            const containerWidth = containerRef.current?.offsetWidth || 0;
+            const containerHeight = containerRef.current?.offsetHeight || 0;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            let top = parentRect.top;
+            let left = (parentRect.left + parentRect.width / 2) - (containerWidth / 2);
+
+            if (selectedGroup?.position === 'bottom') {
+                top = parentRect.top + parentRect.height - containerHeight - 8;
+            } else {
+                if (top + containerHeight > vh - 8) top = vh - containerHeight - 8;
+                if (top < 8) top = 8;
+            }
+
+            if (left < 8) left = 8;
+            if (left + containerWidth > vw - 8) left = vw - containerWidth - 8;
+
+            setPosition({ top, left });
+        });
+    }, [open, listMaxHeight, selectedGroup, parentRef]);
+
+    // Effect 7: Click outside
+    useEffect(() => {
+        if (!open) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                handleClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open, handleClose]);
+
+    // Effect 8: Context menu
     useEffect(() => {
         const handleContextMenu = (event: MouseEvent) => {
             if (open) {
-                // Jeśli okno jest widoczne, zablokuj menu kontekstowe
                 event.preventDefault();
                 return;
             }
@@ -117,150 +287,67 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         };
 
         document.addEventListener('contextmenu', handleContextMenu);
+        return () => document.removeEventListener('contextmenu', handleContextMenu);
+    }, [open, parentRef]);
 
-        return () => {
-            document.removeEventListener('contextmenu', handleContextMenu);
+    // Effect 9: Fetch context menu actions
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchContextMenuActions = async () => {
+            if (!manager) {
+                if (isMounted) setGroupedContextMenuActions([]);
+                return;
+            }
+
+            const actionsWithGroup = (await manager.getRegisteredActions('>'))
+                .filter(action => {
+                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+                    return visible && action.contextMenuGroupId;
+                });
+
+            const grouped = actionsWithGroup.reduce((acc, action) => {
+                const groupId = action.contextMenuGroupId!;
+                if (!acc[groupId]) acc[groupId] = [];
+                acc[groupId].push(action);
+                return acc;
+            }, {} as Record<string, Action<any>[]>);
+
+            const sortedGroups = Object.entries(grouped)
+                .sort(([groupA], [groupB]) => {
+                    if (groupA === "layout") return -1;
+                    if (groupB === "layout") return 1;
+                    if (groupA === "commandPalette") return 1;
+                    if (groupB === "commandPalette") return -1;
+                    return groupA.localeCompare(groupB);
+                })
+                .map(([groupId, actions]) => ({
+                    groupId,
+                    actions: actions.sort((a, b) => {
+                        const orderA = a.contextMenuOrder || 0;
+                        const orderB = b.contextMenuOrder || 0;
+                        const labelA = typeof a.label === 'function' ? a.label(context) : a.label;
+                        const labelB = typeof b.label === 'function' ? b.label(context) : b.label;
+                        return orderA - orderB || labelA.localeCompare(labelB);
+                    }),
+                }));
+
+            if (isMounted) setGroupedContextMenuActions(sortedGroups);
         };
-    }, [open]);
 
-    const handleContextMenuClose = React.useCallback(() => {
-        setContextMenu(null);
-    }, []);
+        fetchContextMenuActions();
+        return () => { isMounted = false; };
+    }, [manager, context]);
 
-    useEffect(() => {
-        if (open && manager) {
-            // Ustaw prefix w polu tekstowym przy otwarciu okna
-            setSelectedIndex(null);
-            let newSearchText = initSearchText ?? '';
-            const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix: pfx }) =>
-                pfx === prefix
-            );
-            if (matchingGroup) {
-                if (matchingGroup.getSearchText && getContextRef.current) {
-                    newSearchText = matchingGroup.getSearchText(getContextRef.current());
-                }
-                if (matchingGroup.onOpen && getContextRef.current) {
-                    matchingGroup.onOpen(getContextRef.current());
-                }
-            }
-            setSearchText(prev => prev !== (prefix ?? '>') + (newSearchText) ? (prefix ?? '>') + (newSearchText) : prev);
-            inputRef.current?.focus();
-        }
-    }, [open, manager]);
+    // ========== KEYBOARD HANDLING ==========
 
-    useEffect(() => {
-        if (!open || !manager) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
-
-        const matchingGroup = manager.getRegisteredActionGroups().find(({ prefix }) =>
-            prefix && searchText.toLowerCase().startsWith(prefix.toLowerCase())
-        );
-
-        if (matchingGroup) {
-            setSelectedGroup(prev => prev !== matchingGroup ? matchingGroup : prev); // Ustaw całą grupę
-        } else {
-            setSelectedGroup(null);
-        }
-    }, [open, searchText, manager]);
-
-    useEffect(() => {
-        if (!open) {
-            cachedActions.current = {}; // Wyczyść pamięć podręczną po zamknięciu
-        }
-    }, [open]);
-
-    const fetchCommands = React.useCallback(async (
-        manager: ActionManager<any>,
-        searchText: string,
-        selectedGroup: ActionGroup | null,
-    ) => {
-        // Usuń prefix z searchQuery, jeśli istnieje
-        const queryWithoutPrefix = searchText.startsWith(selectedGroup?.prefix || '')
-            ? searchText.slice((selectedGroup?.prefix || '').length).trim()
-            : searchText;
-
-        if (selectedGroup && (selectedGroup?.mode ?? "actions") === "actions") {
-            // Tryb "actions": pobierz akcje tylko raz na zmianę `open`
-            if (!cachedActions.current[selectedGroup.prefix || ""]) {
-                const actions = await manager.getRegisteredActions(selectedGroup.prefix, getContextRef.current?.());
-                cachedActions.current[selectedGroup.prefix || ""] = actions;
-            }
-            const queryParts = queryWithoutPrefix.toLocaleLowerCase().split(' ').filter(Boolean);
-
-            const actions = cachedActions.current[selectedGroup.prefix || ""].filter((command) => {
-                const label = typeof command.label === "function" ? command.label(getContextRef.current?.()) : command.label;
-                const secondaryLabel = command.description ? (typeof command.description === "function" ? command.description(context) : command.description) : '';
-                return queryParts.every((part) =>
-                    label.toLocaleLowerCase().includes(part) ||
-                    (secondaryLabel?.toLocaleLowerCase().includes(part) ?? false)
-                );
-            });
-            setFilteredCommands(actions);
-        } else {
-            // Tryb "filter": pobierz akcje za każdym razem
-            const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContextRef.current?.(), queryWithoutPrefix);
-            setFilteredCommands(actions);
-        }
-    }, []);
-
-    useEffect(() => {
-        console.debug("fetchCommands");
-
-        if (open) {
-            const instance = debounce(() => fetchCommands(manager, searchText, selectedGroup), searchDelay);
-            instance();
-
-            return () => {
-                instance.cancel();
-            };
-        }
-        return;
-    }, [open, manager, searchText, selectedGroup, fetchCommands, refresh]);
-
-    useEffect(() => {
-        console.debug("updateSelectedIndex");
-        if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
-
-        // Znajdź indeks akcji, która ma właściwość selected ustawioną na true
-        const selectedActionIndex = filteredCommands.findIndex(
-            (action) => typeof action.selected === 'function' ? (
-                getContextRef.current ? action.selected(getContextRef.current()) : false
-            ) : false
-        );
-
-        if (selectedActionIndex !== -1) {
-            setSelectedIndex(selectedActionIndex); // Ustaw selectedIndex na indeks wybranej akcji
-        } else if (filteredCommands.length > 0) {
-            setSelectedIndex(0); // Jeśli żadna akcja nie jest wybrana, ustaw na pierwszy element
-        } else {
-            setSelectedIndex(null); // Jeśli brak akcji, usuń zaznaczenie
-        }
-    }, [open, filteredCommands]);
-
-    React.useEffect(() => {
-        requestAnimationFrame(() => {
-            const listItem = listRef.current?.querySelector<HTMLLIElement>('.focused');
-            listItem?.scrollIntoView({ block: 'nearest' });
-        });
-    }, [selectedIndex]);
-
-    const handleCommandClick = React.useCallback((action: Action<any>) => {
-        Promise.resolve().then(() => {
-            if (getContextRef.current) {
-                manager.executeAction(action, getContextRef.current());
-                if (onAction) {
-                    onAction(action);
-                }
-            }
-        });
-        handleClose();
-    }, [manager, onAction, handleClose]);
-
-    const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+    const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === 'Escape') {
             if (selectedGroup && selectedGroup.onCancel && getContextRef.current) {
                 selectedGroup.onCancel(getContextRef.current());
             }
             handleClose();
+            return;
         }
 
         const ignoreAction = (index: number) => {
@@ -276,11 +363,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             }
         };
 
-        const items = selectedGroup
-            ? filteredCommands
-            : manager.getRegisteredActionGroups();
+        const items = selectedGroup ? filteredCommands : manager.getRegisteredActionGroups();
 
-        // Pomocnicza funkcja do znalezienia następnego indeksu spełniającego ignoreAction
         const findNextIndex = (start: number, step: number) => {
             let idx = start;
             const len = items.length;
@@ -296,11 +380,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setSelectedIndex(prev => {
                 const current = prev === null ? -1 : prev;
                 const nextIndex = findNextIndex(current, 1);
-                if (nextIndex !== null) {
-                    return nextIndex;
-                }
-                return prev;
+                return nextIndex !== null ? nextIndex : prev;
             });
+            return;
         }
 
         if (event.key === 'ArrowUp') {
@@ -308,11 +390,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setSelectedIndex(prev => {
                 const current = prev === null ? items.length : prev;
                 const nextIndex = findNextIndex(current, -1);
-                if (nextIndex !== null) {
-                    return nextIndex;
-                }
-                return prev;
+                return nextIndex !== null ? nextIndex : prev;
             });
+            return;
         }
 
         if (event.key === 'PageDown') {
@@ -324,11 +404,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     const candidate = findNextIndex(nextIndex, 1);
                     if (candidate !== null) nextIndex = candidate;
                 }
-                if (nextIndex !== current) {
-                    return nextIndex;
-                }
-                return prev;
+                return nextIndex !== current ? nextIndex : prev;
             });
+            return;
         }
 
         if (event.key === 'PageUp') {
@@ -340,11 +418,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     const candidate = findNextIndex(nextIndex, -1);
                     if (candidate !== null) nextIndex = candidate;
                 }
-                if (nextIndex !== current) {
-                    return nextIndex;
-                }
-                return prev;
+                return nextIndex !== current ? nextIndex : prev;
             });
+            return;
         }
 
         if (event.key === 'Enter' && selectedIndex !== null) {
@@ -361,6 +437,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     }
                 }
             }
+            return;
         }
 
         if (selectedGroup?.options?.length) {
@@ -373,288 +450,176 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 return false;
             });
         }
-    }, [selectedGroup, handleOptionClick, handleCommandClick, handleClose, filteredCommands, selectedIndex, manager]);
+    }, [selectedGroup, filteredCommands, selectedIndex, manager, context, handleCommandClick, handleOptionClick, handleClose]);
 
-    useEffect(() => {
-        console.debug("addEventListener");
+    // ========== RENDER ==========
 
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                handleClose();
-            }
-        };
+    const handleContextMenuClose = useCallback(() => {
+        setContextMenu(null);
+    }, []);
 
-        if (open) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            if (open) {
-                document.removeEventListener('mousedown', handleClickOutside);
-            }
-        };
-    }, [open, handleClose]);
-
-    // Helper function to group and sort context menu actions
-    const [groupedContextMenuActions, setGroupedContextMenuActions] = useState<{ groupId: string; actions: Action<any>[]; }[]>([]);
-
-    useEffect(() => {
-        let isMounted = true;
-        const context = getContextRef.current?.();
-
-        console.debug("fetchContextMenuActions");
-
-        const fetchContextMenuActions = async () => {
-            if (!manager) {
-                if (isMounted) setGroupedContextMenuActions([]);
-                return;
-            }
-
-            const actionsWithGroup = (await manager.getRegisteredActions('>'))
-                .filter(action => {
-                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
-                    return visible && action.contextMenuGroupId;
-                });
-
-            const grouped = actionsWithGroup.reduce((acc, action) => {
-                const groupId = action.contextMenuGroupId!;
-                if (!acc[groupId]) {
-                    acc[groupId] = [];
+    if (!open) {
+        return (
+            <Menu
+                open={contextMenu !== null}
+                onClose={handleContextMenuClose}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                    contextMenu !== null
+                        ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                        : undefined
                 }
-                acc[groupId].push(action);
-                return acc;
-            }, {} as Record<string, Action<any>[]>);
-
-            const sortedGroups = Object.entries(grouped)
-                .sort(([groupA], [groupB]) => {
-                    if (groupA === "layout") return -1; // "layout" na początku
-                    if (groupB === "layout") return 1;
-                    if (groupA === "commandPalette") return 1; // "commandPalette" na końcu
-                    if (groupB === "commandPalette") return -1;
-                    return groupA.localeCompare(groupB); // Pozostałe grupy alfabetycznie
-                })
-                .map(([groupId, actions]) => ({
-                    groupId,
-                    actions: actions.sort((a, b) => {
-                        const orderA = a.contextMenuOrder || 0;
-                        const orderB = b.contextMenuOrder || 0;
-                        const labelA = typeof a.label === 'function' ? a.label(context) : a.label;
-                        const labelB = typeof b.label === 'function' ? b.label(context) : b.label;
-                        return orderA - orderB || labelA.localeCompare(labelB); // Sortowanie po contextMenuOrder, a potem po label
+            >
+                {groupedContextMenuActions.flatMap(({ groupId, actions }, groupIndex) => [
+                    groupIndex > 0 && <Divider key={`divider-${groupId}`} />,
+                    ...actions.map(action => {
+                        const tooltip = typeof action.tooltip === "function" ? action.tooltip(context) : action.tooltip;
+                        const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+                        const label = typeof action.label === "function" ? action.label(context) : action.label;
+                        return (
+                            <Tooltip key={action.id} title={tooltip || ''}>
+                                <MenuItem
+                                    onClick={() => {
+                                        handleContextMenuClose();
+                                        handleCommandClick(action);
+                                    }}
+                                    dense
+                                    disabled={disabled}
+                                >
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
+                                        {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
+                                    </ListItemIcon>
+                                    <ListItemText>{label}</ListItemText>
+                                    {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
+                                </MenuItem>
+                            </Tooltip>
+                        )
                     }),
-                }));
-
-            if (isMounted) setGroupedContextMenuActions(sortedGroups);
-        };
-        fetchContextMenuActions();
-        return () => { isMounted = false; };
-    }, [manager]);
-
-    useEffect(() => {
-        console.debug("updateListMaxHeight");
-        if (listItemRef.current && inputRef.current) {
-            const itemHeight = listItemRef.current.offsetHeight;
-            setListMaxHeight(itemHeight * 6); // Ustaw maksymalną wysokość na 6 pozycji
-        }
-    }, [filteredCommands]); // Wywołaj ponownie, gdy zmienią się komendy
-
-    // Ensure all hooks are called, even if the component is not open
-    useEffect(() => {
-        console.debug("updatePosition");
-        requestAnimationFrame(() => {
-            if (open && parentRef?.current) {
-                const parentRect = parentRef.current.getBoundingClientRect();
-                const containerWidth = containerRef.current?.offsetWidth || 0;
-                const containerHeight = containerRef.current?.offsetHeight || 0;
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-
-                let top = parentRect.top;
-                let left = (parentRect.left + parentRect.width) / 2 - containerWidth / 2;
-
-                // Jeśli pozycja grupy to "bottom", ustaw okno przy dolnej krawędzi
-                if (selectedGroup?.position === "bottom") {
-                    top = parentRect.top + parentRect.height - containerHeight - 8; // 8px margines od dołu
-                } else {
-                    // Korekta, by nie wychodziło poza ekran pionowo
-                    if (top + containerHeight > viewportHeight - 8) top = viewportHeight - containerHeight - 8;
-                    if (top < 8) top = 8;
-                }
-
-                // Korekta, by nie wychodziło poza ekran poziomo
-                if (left < 8) left = 8;
-                if (left + containerWidth > viewportWidth - 8) left = viewportWidth - containerWidth - 8;
-
-                setPosition({ top, left });
-            }
-        });
-    }, [open, listMaxHeight, filteredCommands, selectedGroup]);
-
-    const context = getContextRef.current?.();
+                ])}
+            </Menu>
+        );
+    }
 
     return (
-        <>
-            {open && (
-                <CommandPaletteContainer
-                    ref={containerRef}
-                    style={{ top: position.top, left: position.left }}
-                    elevation={4}
-                >
-                    <InputDecorator indicator={false} disableBlink>
-                        <TextField
-                            placeholder={selectedGroup ? "" : t("select-command-group-prefix", "Select command group prefix...")}
-                            value={searchText}
-                            onChange={setSearchText}
-                            inputRef={inputRef}
-                            onKeyDown={handleKeyDown}
-                            adornments={
-                                selectedGroup?.options?.length ? (
-                                    <Adornment position="end">
-                                        <ButtonGroup>
-                                            {selectedGroup.options.map((option) => (
-                                                <Tooltip
-                                                    key={option.id}
-                                                    title={
-                                                        [[
-                                                            option.label,
-                                                            option.keybinding && (<Shortcut keybindings={option.keybinding} />)
-                                                        ]]
-                                                    }
-                                                >
-                                                    <ToolButton
-                                                        dense
-                                                        onClick={() => handleOptionClick(option)}
-                                                        selected={typeof option.selected === 'function' ? option.selected(context) : false}
-                                                        disabled={typeof option.disabled === 'function' ? option.disabled(context) : false}
-                                                    >
-                                                        {resolveIcon(theme, option.icon)}
-                                                    </ToolButton>
-                                                </Tooltip>
-                                            ))}
-                                        </ButtonGroup>
-                                    </Adornment>
-                                ) : undefined
-                            }
-                        />
-                    </InputDecorator>
-                    <CommandList
-                        ref={listRef}
-                        disablePadding
-                        dense
-                        maxHeight={listMaxHeight} // Ustaw dynamiczną maksymalną wysokość
-                    >
-                        {selectedGroup
-                            ? filteredCommands
-                                .map((action, index) => {
-                                    const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
-                                    const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
-                                    const selected = index === selectedIndex || (typeof action.selected === 'function' ? action.selected(context) : false);
-                                    const label = typeof action.label === "function" ? action.label(context) : action.label;
-                                    const description = typeof action.description === "function" ? action.description(context) : action.description;
-                                    const icon = resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon);
-                                    const search = searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText;
-                                    return (
-                                        <ListItem
-                                            key={action.id}
-                                            disablePadding
-                                            dense
-                                            ref={index === 0 ? listItemRef : null} // Przypisz referencję do pierwszego elementu
-                                            className={index === selectedIndex ? 'focused' : undefined}
-                                            sx={{ opacity: disabled ? 0.7 : 1, display: visible ? 'block' : 'none' }}
+        <CommandPaletteContainer
+            ref={containerRef}
+            style={{ top: position.top, left: position.left }}
+            elevation={4}
+        >
+            <InputDecorator indicator={false} disableBlink>
+                <TextField
+                    placeholder={selectedGroup ? "" : t("select-command-group-prefix", "Select command group prefix...")}
+                    value={searchText}
+                    onChange={setSearchText}
+                    inputRef={inputRef}
+                    onKeyDown={handleKeyDown}
+                    adornments={
+                        selectedGroup?.options?.length ? (
+                            <Adornment position="end">
+                                <ButtonGroup>
+                                    {selectedGroup.options.map((option) => (
+                                        <Tooltip
+                                            key={option.id}
+                                            title={
+                                                [[
+                                                    option.label,
+                                                    option.keybinding && (<Shortcut keybindings={option.keybinding} />)
+                                                ]]
+                                            }
                                         >
-                                            <ListItemButton
-                                                onClick={handleCommandClick.bind(null, action)}
-                                                selected={selected}
-                                                disabled={disabled}
+                                            <ToolButton
+                                                dense
+                                                onClick={() => handleOptionClick(option)}
+                                                selected={typeof option.selected === 'function' ? option.selected(context) : false}
+                                                disabled={typeof option.disabled === 'function' ? option.disabled(context) : false}
                                             >
-                                                {commandsHasIcons && (
-                                                    <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
-                                                        {icon}
-                                                    </ListItemIcon>
-                                                )}
-                                                <ListItemText
-                                                    primary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(label, search, false, false, theme.palette.primary.main) : label}
-                                                    secondary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(description, search, false, false, theme.palette.primary.main) : description}
-                                                    slotProps={{
-                                                        primary: { variant: 'body1' },
-                                                        secondary: { variant: 'description' },
-                                                    }}
-                                                />
-                                                {action.keybindings && <Shortcut keybindings={action.keybindings} />}
-                                            </ListItemButton>
-                                        </ListItem>
-                                    )
-                                })
-                            : manager.getRegisteredActionGroups().map((group, index) => (
+                                                {resolveIcon(theme, option.icon)}
+                                            </ToolButton>
+                                        </Tooltip>
+                                    ))}
+                                </ButtonGroup>
+                            </Adornment>
+                        ) : undefined
+                    }
+                />
+            </InputDecorator>
+            <CommandList
+                ref={listRef}
+                disablePadding
+                dense
+                maxHeight={listMaxHeight}
+            >
+                {selectedGroup
+                    ? filteredCommands
+                        .map((action, index) => {
+                            const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
+                            const visible = typeof action.visible === 'function' ? action.visible(context) : (action.visible ?? true);
+                            const selected = index === selectedIndex || (typeof action.selected === 'function' ? action.selected(context) : false);
+                            const label = typeof action.label === "function" ? action.label(context) : action.label;
+                            const description = typeof action.description === "function" ? action.description(context) : action.description;
+                            const icon = resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon);
+                            const search = searchText.startsWith(selectedGroup?.prefix || '') ? searchText.slice((selectedGroup?.prefix || '').length).trim() : searchText;
+                            return (
                                 <ListItem
-                                    key={group.prefix || index}
+                                    key={action.id}
                                     disablePadding
                                     dense
+                                    ref={index === 0 ? listItemRef : null}
                                     className={index === selectedIndex ? 'focused' : undefined}
+                                    sx={{ opacity: disabled ? 0.7 : 1, display: visible ? 'block' : 'none' }}
                                 >
                                     <ListItemButton
-                                        onClick={() => {
-                                            const isDisabled = typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false);
-                                            if (isDisabled) return;
-                                            setSearchText(group.prefix || '');
-                                            setSelectedGroup(group);
-                                        }}
-                                        selected={index === selectedIndex}
-                                        disabled={typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false)}
-                                    >
-                                        <ListItemText
-                                            primary={group.label}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                    </CommandList>
-                </CommandPaletteContainer>
-            )}
-            {/* Context Menu */}
-            {(groupedContextMenuActions.length > 0) && (
-                <Menu
-                    open={contextMenu !== null}
-                    onClose={handleContextMenuClose}
-                    anchorReference="anchorPosition"
-                    anchorPosition={
-                        contextMenu !== null
-                            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-                            : undefined
-                    }
-                >
-                    {groupedContextMenuActions.flatMap(({ groupId, actions }, groupIndex) => [
-                        groupIndex > 0 && <Divider key={`divider-${groupId}`} />,
-                        ...actions.map(action => {
-                            const tooltip = typeof action.tooltip === "function" ? action.tooltip(context) : action.tooltip;
-                            const disabled = typeof action.disabled === 'function' ? action.disabled(context) : (action.disabled ?? false);
-                            const label = typeof action.label === "function" ? action.label(context) : action.label;
-                            return (
-                                <Tooltip key={action.id} title={tooltip || ''}>
-                                    <MenuItem
-                                        key={action.id}
-                                        onClick={() => {
-                                            handleContextMenuClose();
-                                            handleCommandClick(action);
-                                        }}
-                                        dense
+                                        onClick={() => handleCommandClick(action)}
+                                        selected={selected}
                                         disabled={disabled}
                                     >
-                                        <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
-                                            {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
-                                        </ListItemIcon>
-                                        <ListItemText>
-                                            {label}
-                                        </ListItemText>
-                                        {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
-                                    </MenuItem>
-                                </Tooltip>
+                                        {commandsHasIcons && (
+                                            <ListItemIcon sx={{ color: 'inherit', minWidth: "2.2em" }}>
+                                                {icon}
+                                            </ListItemIcon>
+                                        )}
+                                        <ListItemText
+                                            primary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(label, search, false, false, theme.palette.primary.main) : label}
+                                            secondary={(selectedGroup?.mode ?? "actions") === "actions" ? highlightText(description, search, false, false, theme.palette.primary.main) : description}
+                                            slotProps={{
+                                                primary: { variant: 'body1' },
+                                                secondary: { variant: 'description' },
+                                            }}
+                                        />
+                                        {action.keybindings && <Shortcut keybindings={action.keybindings} />}
+                                    </ListItemButton>
+                                </ListItem>
                             )
-                        }),
-                    ])}
-                </Menu>
-            )}
-        </>
+                        })
+                    : manager.getRegisteredActionGroups().map((group, index) => (
+                        <ListItem
+                            key={group.prefix || index}
+                            disablePadding
+                            dense
+                            className={index === selectedIndex ? 'focused' : undefined}
+                        >
+                            <ListItemButton
+                                onClick={() => {
+                                    const isDisabled = typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false);
+                                    if (isDisabled) return;
+                                    setSearchText(group.prefix || '');
+                                    setSelectedGroup(group);
+                                }}
+                                selected={index === selectedIndex}
+                                disabled={typeof group.disabled === 'function' ? group.disabled(context) : (group.disabled ?? false)}
+                            >
+                                <ListItemText
+                                    primary={group.label}
+                                    slotProps={{
+                                        primary: { variant: 'body1' },
+                                        secondary: { variant: 'description' },
+                                    }}
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    ))}
+            </CommandList>
+        </CommandPaletteContainer>
     );
 };
 
