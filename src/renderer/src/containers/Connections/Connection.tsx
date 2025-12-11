@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { Stack, styled, useTheme, useThemeProps, Badge, Box } from "@mui/material"; // Importuj Badge z Material-UI
+import { Stack, styled, useTheme, Box } from "@mui/material"; // Importuj Badge z Material-UI
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useTranslation } from "react-i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
-import { EditorsTabs, editorsTabsId, SQL_EDITOR_CLOSE } from "./ConnectionView/EdiorsTabs";
+import { EditorsTabs, editorsTabsId } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import "./ConnectionStatusBar";
 import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
@@ -16,14 +16,13 @@ import { useContainers, useSessions } from "@renderer/contexts/ApplicationContex
 import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
 import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
-import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
-import { createContentComponent, createTabContent, createTabLabel, createActionComponents } from "../ViewSlots/helpers";
-import { RefSlotProvider, useRefSlot } from "../ViewSlots/RefSlotContext";
+import TabPanel from "@renderer/components/TabsPanel/TabPanel";
+import { createContentComponent, createTabContent, createTabLabel } from "../ViewSlots/helpers";
+import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
 import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
-import { create } from "domain";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -43,7 +42,7 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = props;
-    const { selectedContainer, selectedView } = useContainers();
+    const { selectedContainer, selectedView,  } = useContainers();
     const { selectedSession } = useSessions();
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
