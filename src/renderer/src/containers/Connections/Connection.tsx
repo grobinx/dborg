@@ -102,7 +102,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                 setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <selectedView.render key={selectedView.id} /> }));
             }
         }
-    }, [selectedView, session, sideViewsMap]);
+    }, [selectedView, session, sideViewsMap, rootViewsMap]);
 
     console.log("ConnectionContentInner rendering", session.info.uniqueId, selectedView?.id);
 

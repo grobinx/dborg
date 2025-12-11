@@ -141,16 +141,34 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     );
                 });
                 setFilteredCommands(actions);
-                setSelectedIndex(0);
             } else {
                 const actions = await manager.getRegisteredActions(selectedGroup?.prefix, getContextRef.current?.(), queryWithoutPrefix);
                 setFilteredCommands(actions);
-                setSelectedIndex(0);
             }
         }
     }, [context]);
 
     // ========== EFFECTS ==========
+
+    useEffect(() => {
+        console.debug("updateSelectedIndex");
+        if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
+
+        // Znajdź indeks akcji, która ma właściwość selected ustawioną na true
+        const selectedActionIndex = filteredCommands.findIndex(
+            (action) => typeof action.selected === 'function' ? (
+                getContextRef.current ? action.selected(getContextRef.current()) : false
+            ) : false
+        );
+
+        if (selectedActionIndex !== -1) {
+            setSelectedIndex(selectedActionIndex); // Ustaw selectedIndex na indeks wybranej akcji
+        } else if (filteredCommands.length > 0) {
+            setSelectedIndex(0); // Jeśli żadna akcja nie jest wybrana, ustaw na pierwszy element
+        } else {
+            setSelectedIndex(null); // Jeśli brak akcji, usuń zaznaczenie
+        }
+    }, [open, filteredCommands]);
 
     // Effect 1: Open/Close
     useEffect(() => {
