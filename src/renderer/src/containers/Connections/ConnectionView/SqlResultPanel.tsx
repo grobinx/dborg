@@ -23,10 +23,8 @@ import { durationToHuman } from "@renderer/common";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
-import sleep from "@renderer/utils/sleep";
+import { AutoRefreshBar, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { CopyDataButton } from "@renderer/components/CopyDataButton";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -565,9 +563,6 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                 onStateChange={(newState) => {
                     setAutorefreshState(newState);
                 }}
-            />
-            <CopyDataButton
-                getData={() => []}
             />
         </TabPanelButtons>
     );

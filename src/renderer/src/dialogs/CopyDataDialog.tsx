@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl } from "@mui/material";
-import { arrayTo, ExportFormat, exportFormats, exportToClipboard } from "@renderer/utils/arrayTo";
+import { Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Paper } from "@mui/material";
+import { arrayTo, Column, ExportFormat, exportFormats, exportToClipboard } from "@renderer/utils/arrayTo";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
@@ -19,7 +19,7 @@ interface CopyDataDialogProps {
     open: boolean;
     onClose: () => void;
     data: DataType[] | null;
-    columns?: string[];
+    columns?: Column[];
     showNotification?: boolean;
     format: ExportFormat;
 }
@@ -165,7 +165,10 @@ const LOCAL_STORAGE_KEY = "copyDataDialog.options";
 function loadFormatOptions(format: ExportFormat): Record<string, any> {
     try {
         const all = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "{}");
-        return all[format] || {};
+        const options = all[format] || {};
+        // Usuń columns z załadowanych opcji
+        const { columns, ...rest } = options;
+        return rest;
     } catch {
         return {};
     }
@@ -174,7 +177,9 @@ function loadFormatOptions(format: ExportFormat): Record<string, any> {
 function saveFormatOptions(format: ExportFormat, options: Record<string, any>) {
     try {
         const all = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "{}");
-        all[format] = options;
+        // Usuń columns przed zapisem
+        const { columns, ...optionsToSave } = options;
+        all[format] = optionsToSave;
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(all));
     } catch {
         // ignore
@@ -199,6 +204,9 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
         for (const opt of formatOptionsMap[format] ?? []) {
             if ("default" in opt) {
                 opts[opt.key] = saved[opt.key] !== undefined ? saved[opt.key] : opt.default;
+            }
+            else {
+                opts[opt.key] = saved[opt.key] !== undefined ? saved[opt.key] : undefined;
             }
         }
         if (columns) opts.columns = columns;
@@ -335,7 +343,7 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                     })}
                     <FormControl fullWidth>
                         <FormLabel>{t("preview", "Preview")}</FormLabel>
-                        <div style={{ height: 170 }}>
+                        <Paper sx={{ height: 170 }}>
                             <MonacoEditor
                                 value={preview}
                                 language={formatToLanguageId[format]}
@@ -344,7 +352,7 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                                 lineNumbers={false}
                                 wordWrap={false}
                             />
-                        </div>
+                        </Paper>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>

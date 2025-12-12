@@ -1,7 +1,7 @@
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
 import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
-import { exportFormats } from "@renderer/utils/arrayTo";
+import { Column, exportFormats } from "@renderer/utils/arrayTo";
 import { CopyDataDialog } from "@renderer/dialogs/CopyDataDialog";
 
 export const CopyDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
@@ -22,11 +22,14 @@ export const CopyDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
                     if (selectedRows.length > 0) {
                         data = selectedRows.map(i => data[i]);
                     }
-                    const columns: string[] = [];
+                    const columns: Column[] = [];
                     for (let i = 0; i < context.getColumnCount(); i++) {
                         const column = context.getColumn(i);
                         if (column && !column?.hidden) {
-                            columns.push(column.key as string);
+                            columns.push({
+                                key: column.key as string,
+                                dataType: column.dataType,
+                            });
                         }
                     }
                     context.showDialog(
