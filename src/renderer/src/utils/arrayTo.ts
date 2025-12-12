@@ -875,7 +875,7 @@ const toPascal = (data: Record<string, any>[], options: PascalExportOptions = {}
     const typeName = options.typeName || "TRecord";
     // Definicja typu rekordu
     const typeDef = `type\n  ${typeName} = record\n` +
-        columns.map(col => `    ${col}: string;`).join('\n') +
+        columns.map(col => `    ${col.key}: string;`).join('\n') +
         `\n  end;\n`;
     // Dane
     const arr = data.map(row => {
@@ -1068,7 +1068,7 @@ const toTS = (data: Record<string, any>[], options: TSExportOptions = {}): strin
     const columns = getColumns(data, options);
     const typeName = options.typeName || "Row";
     const varName = options.variableName || "data";
-    const type = `type ${typeName} = { ${columns.map(col => `${col}: any`).join('; ')} };`;
+    const type = `type ${typeName} = { ${columns.map(col => `${col.key}: any`).join('; ')} };`;
     const arr = data.map(row => {
         const obj = columns.map(col => {
             const value = row[col.key];
