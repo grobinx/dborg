@@ -13,7 +13,7 @@ import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Duration } from "luxon";
 import { SQL_RESULT_CLOSE } from "./ResultsTabs";
-import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_FOCUS, SQL_EDITOR_SHOW_STRUCTURE } from "./SqlEditorPanel";
+import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_FOCUS, SQL_EDITOR_SHOW_STRUCTURE, SqlEditorExecuteQueryMessage } from "./SqlEditorPanel";
 import { QueryResultRow } from "src/api/db";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
@@ -25,6 +25,8 @@ import { InputDecorator } from "@renderer/components/inputs/decorators/InputDeco
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { AutoRefreshBar, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import SqlParametersDialog, { SqlParameterValue } from "@renderer/dialogs/SqlParametersDialog";
+import { extractSqlParameters, SqlParameterInfo } from "../../../../../../src/api/db/SqlParameters";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -134,6 +136,25 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             dataGridRef.current.focus();
         }
     });
+    const [sqlParametersDialogOpen, setSqlParametersDialogOpen] = useState(false);
+    const [sqlParameters, setSqlParameters] = useState<SqlParameterInfo[]>([]);
+    // Resolver promisy dialogu parametrów
+    const sqlParamsPromiseRef = useRef<{
+        resolve: (v: Record<string, SqlParameterValue>) => void,
+        reject: () => void
+    } | null>(null);
+
+    // Funkcja otwierająca dialog i zwracająca Promise
+    const askForSqlParams = (params: SqlParameterInfo[]): Promise<Record<string, SqlParameterValue> | null> => {
+        setSqlParameters(params);
+        setSqlParametersDialogOpen(true);
+        return new Promise((resolve) => {
+            sqlParamsPromiseRef.current = {
+                resolve: (values) => resolve(values),
+                reject: () => resolve(null)
+            };
+        });
+    };
 
     useEffect(() => {
         executingRef.current = executing ?? false;
@@ -325,10 +346,33 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             return null;
         };
 
-        const handleSqlExecute = (message: { to: string, from: string, query: string }) => {
+        const handleSqlExecute = async (message: SqlEditorExecuteQueryMessage) => {
             if (message.to !== session.info.uniqueId || executingRef.current) {
                 return;
             }
+            const params = extractSqlParameters(message.query);
+
+            // Jeśli są parametry – poczekaj na wypełnienie/ANULUJ
+            if (params.length) {
+                const values = await askForSqlParams(params);
+                if (values === null) {
+                    // anulowano – nie ustawiaj query
+                    return;
+                }
+                // tutaj możesz ewentualnie zachować values do późniejszego bindowania
+            }
+
+            const extractFirstLineComment = (query: string): string | null => {
+                const lines = query.trim().split('\n');
+                if (lines.length === 0) return null;
+                const firstLine = lines[0].trim();
+                if (firstLine.startsWith('--')) {
+                    const comment = firstLine.substring(2).trim();
+                    return comment.length > 0 ? comment : null;
+                }
+                return null;
+            };
+
             if (tabIsActiveRef.current) {
                 setQuery(message.query);
                 setResultLabel(itemID!, extractFirstLineComment(message.query));
@@ -432,6 +476,21 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                 {t("updated-rows", "Updated {{count}} row(s)", { count: updatedCount })}
                             </StatusBarButton>),
                     ],
+                }}
+            />
+            <SqlParametersDialog
+                profileId={session.profile.sch_id}
+                open={sqlParametersDialogOpen}
+                onClose={() => {
+                    setSqlParametersDialogOpen(false);
+                    sqlParamsPromiseRef.current?.reject();
+                    sqlParamsPromiseRef.current = null;
+                }}
+                parameters={sqlParameters}
+                onSubmit={(values: Record<string, SqlParameterValue>) => {
+                    setSqlParametersDialogOpen(false);
+                    sqlParamsPromiseRef.current?.resolve(values);
+                    sqlParamsPromiseRef.current = null;
                 }}
             />
         </Stack>

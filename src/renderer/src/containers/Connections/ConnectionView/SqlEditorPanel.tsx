@@ -40,6 +40,12 @@ import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
 export const SQL_EDITOR_SHOW_STRUCTURE = "sql-editor:show-structure";
 
+export interface SqlEditorExecuteQueryMessage {
+    to: string,
+    from: string,
+    query: string,
+}
+
 export const SQL_EDITOR_FOCUS = "sql-editor:focus";
 export interface SqlEditorFocusMessage {
     sessionId: string;
@@ -313,7 +319,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 to: session.info.uniqueId,
                 from: itemID,
                 query: query,
-            });
+            } as SqlEditorExecuteQueryMessage);
         }));
         editor.addAction(SelectCurrentCommand());
         editor.addAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));

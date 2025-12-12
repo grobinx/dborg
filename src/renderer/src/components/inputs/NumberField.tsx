@@ -67,7 +67,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
 
     const handleIncrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
-        const newValue = Math.max(Math.min((valueRef.current ?? 0) + amount, max ?? Infinity), min ?? -Infinity);
+        const newValue = Math.max(Math.min((Number.isNaN(valueRef.current) ? 0 : valueRef.current ?? 0) + amount, max ?? Infinity), min ?? -Infinity);
 
         if (isControlled) {
             onChange?.(newValue);
@@ -78,7 +78,7 @@ export const NumberField: React.FC<NumberFieldProps> = (props) => {
 
     const handleDecrement = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const amount = e.shiftKey ? ((step ?? 1) * 10) : (step ?? 1);
-        const newValue = Math.min(Math.max((valueRef.current ?? 0) - amount, min ?? -Infinity), max ?? Infinity);
+        const newValue = Math.min(Math.max((Number.isNaN(valueRef.current) ? 0 : valueRef.current ?? 0) - amount, min ?? -Infinity), max ?? Infinity);
 
         if (isControlled) {
             onChange?.(newValue);

@@ -7,6 +7,7 @@ export interface SqlParameterInfo {
     name: string | number;      // nazwa lub numer parametru
     position: number;           // indeks wystąpienia w zapytaniu (od 0)
     paramType: ParamType; // typ parametru
+    index: number;      // indeks parametru w kolejności występowania (od 0)
 }
 
 // Przykład funkcji wyciągającej parametry:
@@ -55,11 +56,11 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
             if (type === "named" && idx > 0 && query[idx - 1] === ":") continue;
             if (type === "named" && query.slice(idx, idx + 2) === "::") continue;
             if (type === "question") {
-                params.push({ name: "?", position: idx, paramType: type });
+                params.push({ name: "?", position: idx, paramType: type, index: params.length });
             } else if (type === "positional") {
-                params.push({ name: Number(match[1]), position: idx, paramType: type });
+                params.push({ name: Number(match[1]), position: idx, paramType: type, index: params.length });
             } else if (match[1]) {
-                params.push({ name: match[1], position: idx, paramType: type });
+                params.push({ name: match[1], position: idx, paramType: type, index: params.length });
             }
         }
     }
@@ -88,7 +89,7 @@ export function replaceNamedParamsWithPositional(
     const stringRanges: Array<{ start: number; end: number }> = [];
     const regexString = /('([^']|\\')*')|("([^"]|\\")*")/g;
     let match: RegExpExecArray | null;
-    
+
     while ((match = regexString.exec(sql)) !== null) {
         stringRanges.push({ start: match.index, end: regexString.lastIndex });
     }

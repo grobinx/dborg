@@ -9,7 +9,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { sendMessage } from "@renderer/contexts/MessageContext";
-import { SQL_EDITOR_EXECUTE_QUERY } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
+import { SQL_EDITOR_EXECUTE_QUERY, SqlEditorExecuteQueryMessage } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import columnsTab from "./columnsTab";
 import indexesTab from "./indexesTab";
@@ -169,13 +169,13 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                                         to: session.info.uniqueId,
                                         from: cid("tables-grid"),
                                         query: `select * from "${record.schema_name}"."${record.table_name}" tablesample system(10) limit 200`,
-                                    });
+                                    } as SqlEditorExecuteQueryMessage);
                                 } else {
                                     sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
                                         to: session.info.uniqueId,
                                         from: cid("tables-grid"),
                                         query: `select * from "${record.schema_name}"."${record.table_name}" limit 200`,
-                                    });
+                                    } as SqlEditorExecuteQueryMessage);
                                 }
                             }
                         })
