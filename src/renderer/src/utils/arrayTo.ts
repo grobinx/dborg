@@ -47,8 +47,6 @@ interface BaseExportOptions {
     columns?: Column[];
     nullValue?: string;
     booleanFormat?: 'text' | 'number' | 'yesno';
-    dateFormat?: (date: Date) => string;
-    numberFormat?: (num: number) => string;
 }
 
 // Opcje specyficzne dla JSON
@@ -203,30 +201,27 @@ const normalizeValue = (
 /**
  * Escapes a value for CSV format
  */
-const escapeCSV = (value: any, dataType: ColumnDataType, delimiter: string = ',', quote: string = '"', quoteAll: boolean = false, quoteStrings: boolean = false): string => {
-    const strValue = valueToString(value, dataType, normalizeToStringOptions);
+const escapeCSV = (value: string, dataType: ColumnDataType, delimiter: string = ',', quote: string = '"', quoteAll: boolean = false, quoteStrings: boolean = false): string => {
     const baseType = toBaseType(dataType);
     const isString = baseType === "string" || baseType === "datetime";
 
     const needsQuoting = quoteAll ||
         (quoteStrings && isString) ||
-        strValue.includes(delimiter) ||
-        strValue.includes(quote) ||
-        strValue.includes('\n') ||
-        strValue.includes('\r');
+        value.includes(delimiter) ||
+        value.includes(quote) ||
+        value.includes('\n') ||
+        value.includes('\r');
 
     if (needsQuoting) {
         // Podwój znak cudzysłowu wewnątrz wartości
-        const escaped = strValue.replace(new RegExp(quote, 'g'), quote + quote);
+        const escaped = value.replace(new RegExp(quote, 'g'), quote + quote);
         return `${quote}${escaped}${quote}`;
     }
-    return strValue;
+    return value;
 };
 
-const escapeTSV = (value: any, dataType: ColumnDataType): string => {
-    const strValue = valueToString(value, dataType, normalizeToStringOptionsTSV);
-    let escaped = strValue.replace(/\t/g, '    '); // Zamień tabulatory na spacje
-    return escaped;
+const escapeTSV = (value: string, _dataType: ColumnDataType): string => {
+    return value.replace(/\t/g, '    ');;
 };
 
 /**
@@ -322,11 +317,11 @@ const toCSV = (data: Record<string, any>[], options: CSVExportOptions): string =
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = row[col.key]; // Nie normalizuj od razu, żeby zachować typ
-            if (value === null || value === undefined) {
+            const rawValue = row[col.key]; // Nie normalizuj od razu, żeby zachować typ
+            if (rawValue === null || rawValue === undefined) {
                 return options.nullValue ?? '';
             }
-            // Przekaż oryginalną wartość do escapeCSV, żeby sprawdzić czy to string
+            const value = normalizeValue(rawValue, col.dataType, options);
             return escapeCSV(value, resolveValueType(value, col.dataType), delimiter, quote, quoteAll, quoteStrings);
         });
         lines.push(values.join(delimiter));
@@ -349,11 +344,11 @@ const toTSV = (data: Record<string, any>[], options: TSVExportOptions): string =
 
     data.forEach(row => {
         const values = columns.map(col => {
-            const value = row[col.key]; // Nie normalizuj od razu, żeby zachować typ
-            if (value === null || value === undefined) {
+            const rawValue = row[col.key]; // Nie normalizuj od razu, żeby zachować typ
+            if (rawValue === null || rawValue === undefined) {
                 return options.nullValue ?? '';
             }
-            // Przekaż oryginalną wartość do escapeTSV, żeby sprawdzić czy to string
+            const value = normalizeValue(rawValue, col.dataType, options);
             return escapeTSV(value, resolveValueType(value, col.dataType));
         });
         lines.push(values.join(delimiter));

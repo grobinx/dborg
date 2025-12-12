@@ -27,7 +27,7 @@ interface CopyDataDialogProps {
 const formatOptionsMap = {
     json: [
         { key: "pretty", label: "Pretty print", type: "checkbox" },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     csv: [
         { key: "delimiter", label: "Delimiter", type: "text", default: "," },
@@ -35,101 +35,115 @@ const formatOptionsMap = {
         { key: "quoteStrings", label: "Quote strings", type: "checkbox", default: true },
         { key: "quoteAll", label: "Quote all values", type: "checkbox", default: false },
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     tsv: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     markdown: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     html: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     redmine: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     jira: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     bbcode: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     xml: [
         { key: "rootElement", label: "Root element", type: "text", default: "root" },
         { key: "itemElement", label: "Item element", type: "text", default: "item" },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     sql: [
         { key: "tableName", label: "Table name", type: "text", default: "table_name" },
         { key: "identifierQuote", label: "Identifier quote", type: "text", default: `"` },
         { key: "includeCreateTable", label: "Include CREATE TABLE", type: "checkbox", default: false },
         { key: "batchSize", label: "Batch size", type: "number", default: 100 },
-        { key: "nullValue", label: "Null value", type: "text", default: "NULL" }
+        { key: "nullValue", label: "Null value", type: "text", default: "NULL" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     yaml: [
         { key: "indent", label: "Indent", type: "number", default: 2 },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     latex: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
         { key: "tableStyle", label: "Table style", type: "select", options: ["basic", "booktabs", "longtable"], default: "basic" },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     ascii: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
         { key: "borderStyle", label: "Border style", type: "select", options: ["single", "double", "rounded", "minimal"], default: "single" },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     datatext: [
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     rst: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
         { key: "tableStyle", label: "Table style", type: "select", options: ["grid", "simple"], default: "grid" },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     "excel-xml": [
         { key: "sheetName", label: "Sheet name", type: "text", default: "Sheet1" },
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
+        { key: "booleanFormat", label: "Boolean format", type: "select", options: ["text", "number", "yesno"], default: "text" }
     ],
     js: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     ts: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
         { key: "typeName", label: "Type name", type: "text", default: "Row" },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     java: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
         { key: "className", label: "Class name", type: "text", default: "Row" },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     cpp: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
         { key: "typeName", label: "Type name", type: "text", default: "Row" },
-        { key: "nullValue", label: "Null value", type: "text", default: "nullptr" }
+        { key: "nullValue", label: "Null value", type: "text", default: "nullptr" },
     ],
     php: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "nullValue", label: "Null value", type: "text", default: "null" }
+        { key: "nullValue", label: "Null value", type: "text", default: "null" },
     ],
     perl: [
         { key: "variableName", label: "Variable name", type: "text", default: "data" },
-        { key: "nullValue", label: "Null value", type: "text", default: "undef" }
+        { key: "nullValue", label: "Null value", type: "text", default: "undef" },
     ],
     pascal: [
         { key: "variableName", label: "Variable name", type: "text", default: "Data" },
         { key: "typeName", label: "Type name", type: "text", default: "TRecord" },
-        { key: "nullValue", label: "Null value", type: "text", default: "" }
+        { key: "nullValue", label: "Null value", type: "text", default: "" },
     ],
 };
 
