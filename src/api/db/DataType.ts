@@ -562,7 +562,8 @@ const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStri
     // ogólna ścieżka: Decimal
     try {
         const dec = value instanceof Decimal ? value : new Decimal(value);
-        if (!options.display || !options.thousandsSeparator) return dec.toString();
+        if (!options.display) return dec.toString();
+        if (!options.thousandsSeparator) return formatDecimal(dec);
         return formatDecimalWithThousandsSeparator(dec);
     } catch {
         return String(value);
@@ -647,6 +648,11 @@ function formatDecimalWithThousandsSeparator(value: Decimal): string {
     const [intPart, fracPart] = value.toString().split(".");
     const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
     return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
+}
+
+function formatDecimal(value: Decimal): string {
+    const [intPart, fracPart] = value.toString().split(".");
+    return fracPart !== undefined ? `${intPart}${decimalSeparator}${fracPart}` : intPart;
 }
 
 function formatIntWithThousandsSeparator(n: number | string | bigint): string {

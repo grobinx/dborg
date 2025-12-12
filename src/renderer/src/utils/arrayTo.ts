@@ -3,7 +3,7 @@ import { ColumnDataType, resolvePrimitiveType, toBaseType, valueToString, ValueT
 export type ExportFormat =
     | 'json' | 'csv' | 'tsv' | 'markdown' | 'html' | 'redmine' | 'xml'
     | 'sql' | 'yaml' | 'latex' | 'jira' | 'ascii' | 'rst' | 'bbcode' | 'excel-xml'
-    | 'js' | 'ts' | 'java' | 'cpp' | 'php' | 'perl' | "pascal";
+    | 'js' | 'ts' | 'java' | 'cpp' | 'php' | 'perl' | "pascal" | 'datatext';
 
 export interface ExportFormatDescription {
     label: string;
@@ -24,6 +24,7 @@ export const exportFormats: Record<ExportFormat, ExportFormatDescription> = {
     latex: { label: 'LaTeX Table', mimeType: 'application/x-latex', fileExtension: 'tex' },
     jira: { label: 'Jira Markup Table', mimeType: 'text/plain', fileExtension: 'txt' },
     ascii: { label: 'ASCII Table', mimeType: 'text/plain', fileExtension: 'txt' },
+    datatext: { label: 'DataText Format', mimeType: 'text/plain', fileExtension: 'txt' },
     rst: { label: 'reStructuredText Table', mimeType: 'text/x-rst', fileExtension: 'rst' },
     bbcode: { label: 'BBCode Table', mimeType: 'text/plain', fileExtension: 'txt' },
     'excel-xml': { label: 'Excel XML', mimeType: 'application/vnd.ms-excel', fileExtension: 'xml' },
@@ -55,13 +56,17 @@ interface JSONExportOptions extends BaseExportOptions {
     pretty?: boolean;
 }
 
-// Opcje specyficzne dla CSV/TSV
+// Opcje specyficzne dla CSV
 interface CSVExportOptions extends BaseExportOptions {
     includeHeaders?: boolean;
     delimiter?: string;
     quoteStrings?: boolean;
     quote?: string; // Znak cudzysłowu (domyślnie ")
     quoteAll?: boolean; // Czy cytować wszystkie wartości (domyślnie false - tylko gdy potrzebne)
+}
+
+interface TSVExportOptions extends BaseExportOptions {
+    includeHeaders?: boolean;
 }
 
 // Opcje specyficzne dla tabel (Markdown, HTML, Redmine, Jira, BBCode)
@@ -98,6 +103,9 @@ interface LaTeXExportOptions extends BaseExportOptions {
 interface ASCIITableExportOptions extends BaseExportOptions {
     includeHeaders?: boolean;
     borderStyle?: 'single' | 'double' | 'rounded' | 'minimal';
+}
+
+interface DataTextExportOptions extends BaseExportOptions {
 }
 
 // Opcje specyficzne dla reStructuredText
@@ -161,6 +169,11 @@ const normalizeToStringOptions: ValueToStringOptions = {
     thousandsSeparator: false,
 };
 
+const normalizeToStringOptionsTSV: ValueToStringOptions = {
+    display: true,
+    thousandsSeparator: false,
+};
+
 /**
  * Normalizes a value for export
  */
@@ -208,6 +221,12 @@ const escapeCSV = (value: any, dataType: ColumnDataType, delimiter: string = ','
         return `${quote}${escaped}${quote}`;
     }
     return strValue;
+};
+
+const escapeTSV = (value: any, dataType: ColumnDataType): string => {
+    const strValue = valueToString(value, dataType, normalizeToStringOptionsTSV);
+    let escaped = strValue.replace(/\t/g, '    '); // Zamień tabulatory na spacje
+    return escaped;
 };
 
 /**
@@ -289,8 +308,8 @@ const toJSON = (data: Record<string, any>[], options: JSONExportOptions): string
 /**
  * Convert to CSV
  */
-const toCSV = (data: Record<string, any>[], format: 'csv' | 'tsv', options: CSVExportOptions): string => {
-    const delimiter = format === 'tsv' ? '\t' : (options.delimiter ?? ',');
+const toCSV = (data: Record<string, any>[], options: CSVExportOptions): string => {
+    const delimiter = options.delimiter ?? ',';
     const quoteStrings = options.quoteStrings ?? false;
     const quote = options.quote ?? '"';
     const quoteAll = options.quoteAll ?? false;
@@ -309,6 +328,33 @@ const toCSV = (data: Record<string, any>[], format: 'csv' | 'tsv', options: CSVE
             }
             // Przekaż oryginalną wartość do escapeCSV, żeby sprawdzić czy to string
             return escapeCSV(value, resolveValueType(value, col.dataType), delimiter, quote, quoteAll, quoteStrings);
+        });
+        lines.push(values.join(delimiter));
+    });
+
+    return lines.join('\n');
+};
+
+/**
+ * Convert to CSV
+ */
+const toTSV = (data: Record<string, any>[], options: TSVExportOptions): string => {
+    const delimiter = '\t';
+    const columns = getColumns(data, options);
+    const lines: string[] = [];
+
+    if (options.includeHeaders !== false) {
+        lines.push(columns.map(col => escapeTSV(col.key, "string")).join(delimiter));
+    }
+
+    data.forEach(row => {
+        const values = columns.map(col => {
+            const value = row[col.key]; // Nie normalizuj od razu, żeby zachować typ
+            if (value === null || value === undefined) {
+                return options.nullValue ?? '';
+            }
+            // Przekaż oryginalną wartość do escapeTSV, żeby sprawdzić czy to string
+            return escapeTSV(value, resolveValueType(value, col.dataType));
         });
         lines.push(values.join(delimiter));
     });
@@ -720,6 +766,51 @@ const toASCII = (data: Record<string, any>[], options: ASCIITableExportOptions):
 };
 
 /**
+ * Convert to DataText Format
+ * @example
+ * -id---name------age---
+ *  1    Alice     30
+ */
+const toDataText = (data: Record<string, any>[], options: DataTextExportOptions): string => {
+    const columns = getColumns(data, options);
+
+    // Calculate column widths based on header and data
+    const widths = columns.map(col => {
+        let max = col.key.length;
+        data.forEach(row => {
+            const rawValue = row[col.key];
+            const value = rawValue === null || rawValue === undefined
+                ? (options.nullValue ?? '')
+                : normalizeValue(rawValue, resolveValueType(rawValue, col.dataType), options);
+            if (value.length > max) max = value.length;
+        });
+        return max;
+    });
+
+    const lines: string[] = [];
+
+    // Header line with dashes
+    if (options.includeHeaders !== false) {
+        const header = columns.map((col, i) => '-' + col.key.padEnd(widths[i], '-')).join('');
+        lines.push(header);
+    }
+
+    // Data lines with leading space
+    data.forEach(row => {
+        const values = columns.map((col, i) => {
+            const rawValue = row[col.key];
+            const value = rawValue === null || rawValue === undefined
+                ? (options.nullValue ?? '')
+                : normalizeValue(rawValue, resolveValueType(rawValue, col.dataType), options);
+            return ' ' + value.padEnd(widths[i]);
+        }).join('');
+        lines.push(values);
+    });
+
+    return lines.join('\n');
+};
+
+/**
  * Convert to reStructuredText table
  */
 const toRST = (data: Record<string, any>[], options: RSTExportOptions): string => {
@@ -892,157 +983,6 @@ const toPascal = (data: Record<string, any>[], options: PascalExportOptions = {}
 }
 
 /**
- * Convert array of objects to various formats
- */
-export function arrayTo(data: Record<string, any>[], format: 'json', options?: JSONExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'csv' | 'tsv', options?: CSVExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'js', options?: JSExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): ExportResult;
-export function arrayTo(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): ExportResult;
-export function arrayTo(
-    data: Record<string, any>[],
-    format: ExportFormat,
-    options: BaseExportOptions = {}
-): ExportResult {
-    if (!Array.isArray(data) || data.length === 0) {
-        return {
-            content: '',
-            mimeType: 'text/plain',
-            fileExtension: 'txt',
-        };
-    }
-
-    let content: string;
-
-    switch (format) {
-        case 'json': content = toJSON(data, options as JSONExportOptions); break;
-        case 'csv':
-        case 'tsv': content = toCSV(data, format, options as CSVExportOptions); break;
-        case 'markdown': content = toMarkdown(data, options as TableExportOptions); break;
-        case 'html': content = toHTML(data, options as TableExportOptions); break;
-        case 'redmine': content = toRedmine(data, options as TableExportOptions); break;
-        case 'jira': content = toJira(data, options as TableExportOptions); break;
-        case 'bbcode': content = toBBCode(data, options as TableExportOptions); break;
-        case 'xml': content = toXML(data, options as XMLExportOptions); break;
-        case 'sql': content = toSQL(data, options as SQLExportOptions); break;
-        case 'yaml': content = toYAML(data, options as YAMLExportOptions); break;
-        case 'latex': content = toLaTeX(data, options as LaTeXExportOptions); break;
-        case 'ascii': content = toASCII(data, options as ASCIITableExportOptions); break;
-        case 'rst': content = toRST(data, options as RSTExportOptions); break;
-        case 'excel-xml': content = toExcelXML(data, options as ExcelXMLExportOptions); break;
-        case 'js': content = toJS(data, options as JSExportOptions); break;
-        case 'ts': content = toTS(data, options as TSExportOptions); break;
-        case 'java': content = toJava(data, options as JavaExportOptions); break;
-        case 'cpp': content = toCPP(data, options as CPPExportOptions); break;
-        case 'php': content = toPHP(data, options as PHPExportOptions); break;
-        case 'perl': content = toPerl(data, options as PerlExportOptions); break;
-        case 'pascal': content = toPascal(data, options as PascalExportOptions); break;
-        default:
-            content = '';
-    }
-
-    return {
-        content,
-        mimeType: exportFormats[format].mimeType,
-        fileExtension: exportFormats[format].fileExtension,
-    };
-}
-
-/**
- * Copy to clipboard
- */
-export const copyToClipboard = async (text: string): Promise<boolean> => {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch (error) {
-        console.error('Failed to copy to clipboard:', error);
-        return false;
-    }
-};
-
-/**
- * Export and copy to clipboard
- */
-export async function exportToClipboard(data: Record<string, any>[], format: 'json', options?: JSONExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'csv' | 'tsv', options?: CSVExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'js', options?: JSExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): Promise<boolean>;
-export async function exportToClipboard(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): Promise<boolean>;
-export async function exportToClipboard(
-    data: Record<string, any>[],
-    format: ExportFormat,
-    options: BaseExportOptions = {}
-): Promise<boolean> {
-    const result = arrayTo(data, format as any, options);
-    return copyToClipboard(result.content);
-}
-
-/**
- * Export and download as file
- */
-export function exportToFile(data: Record<string, any>[], format: 'json', options?: JSONExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'csv' | 'tsv', options?: CSVExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'js', options?: JSExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'ts', options?: TSExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'java', options?: JavaExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'php', options?: PHPExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions, filename?: string): void;
-export function exportToFile(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions, filename?: string): void;
-export function exportToFile(
-    data: Record<string, any>[],
-    format: ExportFormat,
-    options: BaseExportOptions = {},
-    filename?: string
-): void {
-    const result = arrayTo(data, format as any, options);
-    const finalFilename = filename || `export.${result.fileExtension}`;
-
-    const blob = new Blob([result.content], { type: result.mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = finalFilename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-/**
  * Convert to JavaScript
  */
 const toJS = (data: Record<string, any>[], options: JSExportOptions = {}): string => {
@@ -1159,3 +1099,160 @@ const toPerl = (data: Record<string, any>[], options: PerlExportOptions = {}): s
     });
     return `my @${varName} = (\n${arr.join(",\n")}\n);`;
 };
+
+/**
+ * Convert array of objects to various formats
+ */
+export function arrayTo(data: Record<string, any>[], format: 'json', options?: JSONExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'csv', options?: CSVExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'tsv', options?: TSVExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'datatext', options?: DataTextExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'js', options?: JSExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): ExportResult;
+export function arrayTo(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): ExportResult;
+export function arrayTo(
+    data: Record<string, any>[],
+    format: ExportFormat,
+    options: BaseExportOptions = {}
+): ExportResult {
+    if (!Array.isArray(data) || data.length === 0) {
+        return {
+            content: '',
+            mimeType: 'text/plain',
+            fileExtension: 'txt',
+        };
+    }
+
+    let content: string;
+
+    switch (format) {
+        case 'json': content = toJSON(data, options as JSONExportOptions); break;
+        case 'csv': content = toCSV(data, options as CSVExportOptions); break;
+        case 'tsv': content = toTSV(data, options as CSVExportOptions); break;
+        case 'markdown': content = toMarkdown(data, options as TableExportOptions); break;
+        case 'html': content = toHTML(data, options as TableExportOptions); break;
+        case 'redmine': content = toRedmine(data, options as TableExportOptions); break;
+        case 'jira': content = toJira(data, options as TableExportOptions); break;
+        case 'bbcode': content = toBBCode(data, options as TableExportOptions); break;
+        case 'xml': content = toXML(data, options as XMLExportOptions); break;
+        case 'sql': content = toSQL(data, options as SQLExportOptions); break;
+        case 'yaml': content = toYAML(data, options as YAMLExportOptions); break;
+        case 'latex': content = toLaTeX(data, options as LaTeXExportOptions); break;
+        case 'ascii': content = toASCII(data, options as ASCIITableExportOptions); break;
+        case 'datatext': content = toDataText(data, options as DataTextExportOptions); break;
+        case 'rst': content = toRST(data, options as RSTExportOptions); break;
+        case 'excel-xml': content = toExcelXML(data, options as ExcelXMLExportOptions); break;
+        case 'js': content = toJS(data, options as JSExportOptions); break;
+        case 'ts': content = toTS(data, options as TSExportOptions); break;
+        case 'java': content = toJava(data, options as JavaExportOptions); break;
+        case 'cpp': content = toCPP(data, options as CPPExportOptions); break;
+        case 'php': content = toPHP(data, options as PHPExportOptions); break;
+        case 'perl': content = toPerl(data, options as PerlExportOptions); break;
+        case 'pascal': content = toPascal(data, options as PascalExportOptions); break;
+        default:
+            content = '';
+    }
+
+    return {
+        content,
+        mimeType: exportFormats[format].mimeType,
+        fileExtension: exportFormats[format].fileExtension,
+    };
+}
+
+/**
+ * Copy to clipboard
+ */
+export const copyToClipboard = async (text: string): Promise<boolean> => {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+        return false;
+    }
+};
+
+/**
+ * Export and copy to clipboard
+ */
+export async function exportToClipboard(data: Record<string, any>[], format: 'json', options?: JSONExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'csv', options?: CSVExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'tsv', options?: TSVExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'datatext', options?: DataTextExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'js', options?: JSExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'ts', options?: TSExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'java', options?: JavaExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'php', options?: PHPExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions): Promise<boolean>;
+export async function exportToClipboard(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions): Promise<boolean>;
+export async function exportToClipboard(
+    data: Record<string, any>[],
+    format: ExportFormat,
+    options: BaseExportOptions = {}
+): Promise<boolean> {
+    const result = arrayTo(data, format as any, options);
+    return copyToClipboard(result.content);
+}
+
+/**
+ * Export and download as file
+ */
+export function exportToFile(data: Record<string, any>[], format: 'json', options?: JSONExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'csv' | 'tsv', options?: CSVExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'markdown' | 'html' | 'redmine' | 'jira' | 'bbcode', options?: TableExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'xml', options?: XMLExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'sql', options?: SQLExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'yaml', options?: YAMLExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'latex', options?: LaTeXExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'ascii', options?: ASCIITableExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'datatext', options?: DataTextExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'rst', options?: RSTExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'excel-xml', options?: ExcelXMLExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'js', options?: JSExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'ts', options?: TSExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'java', options?: JavaExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'cpp', options?: CPPExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'php', options?: PHPExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'perl', options?: PerlExportOptions, filename?: string): void;
+export function exportToFile(data: Record<string, any>[], format: 'pascal', options?: PascalExportOptions, filename?: string): void;
+export function exportToFile(
+    data: Record<string, any>[],
+    format: ExportFormat,
+    options: BaseExportOptions = {},
+    filename?: string
+): void {
+    const result = arrayTo(data, format as any, options);
+    const finalFilename = filename || `export.${result.fileExtension}`;
+
+    const blob = new Blob([result.content], { type: result.mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = finalFilename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}

@@ -38,9 +38,6 @@ const formatOptionsMap = {
         { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
     tsv: [
-        { key: "quote", label: "Quote character", type: "text", default: '"' },
-        { key: "quoteStrings", label: "Quote strings", type: "checkbox", default: false },
-        { key: "quoteAll", label: "Quote all values", type: "checkbox", default: false },
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
         { key: "nullValue", label: "Null value", type: "text", default: "" }
     ],
@@ -89,6 +86,8 @@ const formatOptionsMap = {
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
         { key: "borderStyle", label: "Border style", type: "select", options: ["single", "double", "rounded", "minimal"], default: "single" },
         { key: "nullValue", label: "Null value", type: "text", default: "" }
+    ],
+    datatext: [
     ],
     rst: [
         { key: "includeHeaders", label: "Include headers", type: "checkbox", default: true },
@@ -148,6 +147,7 @@ const formatToLanguageId: Record<ExportFormat, EditorLanguageId> = {
     latex: "plaintext",
     jira: "plaintext",
     ascii: "plaintext",
+    datatext: "plaintext",
     rst: "plaintext",
     bbcode: "plaintext",
     "excel-xml": "xml",
