@@ -790,10 +790,8 @@ const toDataText = (data: Record<string, any>[], options: DataTextExportOptions)
     const lines: string[] = [];
 
     // Header line with dashes
-    if (options.includeHeaders !== false) {
-        const header = columns.map((col, i) => '-' + col.key.padEnd(widths[i], '-')).join('');
-        lines.push(header);
-    }
+    const header = columns.map((col, i) => '-' + col.key.padEnd(widths[i], '-')).join('');
+    lines.push(header);
 
     // Data lines with leading space
     data.forEach(row => {
