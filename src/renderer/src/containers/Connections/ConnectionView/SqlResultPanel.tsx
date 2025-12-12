@@ -143,6 +143,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         resolve: (v: Record<string, SqlParameterValue>) => void,
         reject: () => void
     } | null>(null);
+    const [sqlParameterValues, setSqlParameterValues] = useState<Record<string, SqlParameterValue>>({});
 
     // Funkcja otwierająca dialog i zwracająca Promise
     const askForSqlParams = (params: SqlParameterInfo[]): Promise<Record<string, SqlParameterValue> | null> => {
@@ -359,7 +360,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     // anulowano – nie ustawiaj query
                     return;
                 }
-                // tutaj możesz ewentualnie zachować values do późniejszego bindowania
+                setSqlParameterValues(values);
+            }
+            else {
+                setSqlParameterValues({});
             }
 
             if (tabIsActiveRef.current) {
