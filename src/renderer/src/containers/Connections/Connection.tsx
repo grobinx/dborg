@@ -23,6 +23,7 @@ import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -45,6 +46,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { selectedView } = useSessionState(session.info.uniqueId);
     const { refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
+    const [orientation] = useSetting("dborg", "general.layout.orientation");
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
@@ -134,7 +136,10 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                     </SplitPanel>
                     <Splitter hidden={!sideViewsMap[selectedView?.id ?? ""]} />
                     <SplitPanel>
-                        <SplitPanelGroup direction="vertical" autoSaveId={`connection-panel-${session.profile.sch_id}`}>
+                        <SplitPanelGroup
+                            direction={orientation === "horizontal" ? "vertical" : "horizontal"}
+                            autoSaveId={`connection-panel-${session.profile.sch_id}`}
+                        >
                             <SplitPanel>
                                 <EditorsTabs
                                     session={session}

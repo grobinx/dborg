@@ -24,7 +24,7 @@ const StyledIconWrapper = styled('span', {
     width: "1em", // Ustawienie szerokości
     height: "1em", // Ustawienie wysokości
     alignItems: "center",
-    fontSize: "1.2em",
+    //fontSize: "1.2em",
 }));
 
 export function IconWrapper(props: IconWrapperOwnProps): React.ReactElement<IconWrapperOwnProps> {

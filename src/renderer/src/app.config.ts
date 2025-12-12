@@ -15,6 +15,15 @@ export interface AppSettings extends TSettings {
 export interface DborgSettings extends TSettings {
     "data_grid.null_value"?: string;
     "data_grid.colors_enabled"?: boolean;
+    "data_grid.active_highlight"?: boolean;
+    "data_grid.data.colors_enabled"?: boolean;
+    "data_grid.defined.colors_enabled"?: boolean;
+    "data_grid.data.font_size"?: number;
+    "data_grid.defined.font_size"?: number;
+    "data_grid.data.row_number_column"?: boolean;
+    "data_grid.defined.row_number_column"?: boolean;
+
+    "general.layout.orientation"?: 'horizontal' | 'vertical';
 }
 
 export interface UiSettings extends TSettings {
@@ -72,6 +81,8 @@ export const default_settings: ApplicationSettings = {
         "data_grid.defined.font_size": data_grid_defined_font_size,
         "data_grid.data.row_number_column": true,
         "data_grid.defined.row_number_column": false,
+
+        "general.layout.orientation": "horizontal",
     },
     ui: {
         theme: 'system',
@@ -93,7 +104,7 @@ settingsRegistry.register((context) => {
         title: t('application-settings', 'Application Settings'),
         description: t('application-settings-description', 'Settings related to the application behavior and appearance.'),
         groups: [{
-            key: 'general',
+            key: 'app-general',
             title: t('general-settings', 'General Settings'),
             description: t('general-settings-description', 'Settings that apply to the entire application.'),
             settings: [
@@ -187,20 +198,20 @@ settingsRegistry.register((context) => {
                     label: t('query-history-deduplicate-mode', 'Query History Deduplication Mode'),
                     description: t('query-history-deduplicate-mode-description', 'Determines how duplicate queries are handled in the history.'),
                     options: [
-                        { 
-                            value: "none", 
-                            label: t('deduplication-none', 'None'), 
-                            description: t('deduplication-none-description', 'All queries are stored. Useful for comparing execution times of the same query.') 
+                        {
+                            value: "none",
+                            label: t('deduplication-none', 'None'),
+                            description: t('deduplication-none-description', 'All queries are stored. Useful for comparing execution times of the same query.')
                         },
-                        { 
-                            value: "time-based", 
-                            label: t('deduplication-time-based', 'Time-based'), 
-                            description: t('deduplication-time-based-description', 'Keeps all queries within the time window (for performance testing), older duplicates are reduced to one historical entry.') 
+                        {
+                            value: "time-based",
+                            label: t('deduplication-time-based', 'Time-based'),
+                            description: t('deduplication-time-based-description', 'Keeps all queries within the time window (for performance testing), older duplicates are reduced to one historical entry.')
                         },
-                        { 
-                            value: "aggressive", 
-                            label: t('deduplication-aggressive', 'Aggressive'), 
-                            description: t('deduplication-aggressive-description', 'Keeps only the most recent execution of each unique query. Minimizes storage but loses execution history.') 
+                        {
+                            value: "aggressive",
+                            label: t('deduplication-aggressive', 'Aggressive'),
+                            description: t('deduplication-aggressive-description', 'Keeps only the most recent execution of each unique query. Minimizes storage but loses execution history.')
                         },
                     ],
                 },
@@ -226,102 +237,122 @@ settingsRegistry.register((context) => {
             'orbada-settings-description',
             'Settings related to the Orbada database management. That is, settings concerning elements that display and process data.'
         ),
-        groups: [{
-            key: 'grid',
-            title: t('grid', 'Grid'),
-            description: t('data-grid-description', 'Settings for the data grid display.'),
-            settings: [
-                {
-                    type: 'string',
-                    storageGroup: 'dborg',
-                    storageKey: 'data_grid.null_value',
-                    category: t('content', 'Content'),
-                    label: t('null-value-representation', 'Null Value Representation'),
-                    description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
-                },
-            ],
-            groups: [
-                {
-                    key: 'data-grid',
-                    title: t('settings.data-grid', 'Data grid'),
-                    description: t('settings.data-grid-description', 'Settings for the main data grid display.'),
-                    settings: [
-                        {
-                            type: 'boolean',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.active_highlight',
-                            category: t('appearance', 'Appearance'),
-                            label: t('settings.highlight-active-cell', 'Highlight active row and column'),
-                            description: t('settings.highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
-                        },
-                        {
-                            type: 'boolean',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.data.colors_enabled',
-                            category: t('appearance', 'Appearance'),
-                            label: t('settings.enable-colors', 'Enable colors in grid'),
-                            description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
-                        },
-                        {
-                            type: 'number',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.data.font_size',
-                            category: t('appearance', 'Appearance'),
-                            label: t('settings.font-size', 'Grid font size'),
-                            description: t('settings.font-size-description', 'Font size for the grid.'),
-                            min: 10,
-                            max: 24,
-                            step: 1,
-                        },
-                        {
-                            type: 'boolean',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.data.row_number_column',
-                            category: t('behavior', 'Behavior'),
-                            label: t('settings.show-row-numbers', 'Show row numbers column'),
-                            description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
-                        },
-                    ],
-                },
-                {
-                    key: 'defined-grid',
-                    title: t('settings.defined-grid', 'Defined grid'),
-                    description: t(
-                        'settings.defined-grid-description',
-                        'Settings for the defined grid display. Defined grid is the grid with predefined columns, like in table list or foreign keys.'
-                    ),
-                    settings: [
-                        {
-                            type: 'boolean',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.defined.colors_enabled',
-                            category: t('appearance', 'Appearance'),
-                            label: t('settings.enable-colors', 'Enable colors in grid'),
-                            description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
-                        },
-                        {
-                            type: 'number',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.defined.font_size',
-                            category: t('appearance', 'Appearance'),
-                            label: t('settings.font-size', 'Grid font size'),
-                            description: t('settings.font-size-description', 'Font size for the grid.'),
-                            min: 10,
-                            max: 24,
-                            step: 1,
-                        },
-                        {
-                            type: 'boolean',
-                            storageGroup: 'dborg',
-                            storageKey: 'data_grid.defined.row_number_column',
-                            category: t('behavior', 'Behavior'),
-                            label: t('settings.show-row-numbers', 'Show row numbers column'),
-                            description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
-                        },
-                    ],
-                },
-            ],
-        }],
+        groups: [
+            {
+                key: 'dborg-general',
+                title: t('general-settings', 'General Settings'),
+                description: t('general-settings-description', 'General settings for Orbada application.'),
+                settings: [
+                    {
+                        type: 'select',
+                        storageGroup: 'dborg',
+                        storageKey: 'general.layout.orientation',
+                        label: t('layout-orientation', 'Layout Orientation'),
+                        description: t('layout-orientation-description', 'Orientation of the main layout.'),
+                        options: [
+                            { value: 'horizontal', label: t('horizontal', 'Horizontal') },
+                            { value: 'vertical', label: t('vertical', 'Vertical') },
+                        ],
+                    },
+                ],
+            },
+            {
+                key: 'grid',
+                title: t('grid', 'Grid'),
+                description: t('data-grid-description', 'Settings for the data grid display.'),
+                settings: [
+                    {
+                        type: 'string',
+                        storageGroup: 'dborg',
+                        storageKey: 'data_grid.null_value',
+                        category: t('content', 'Content'),
+                        label: t('null-value-representation', 'Null Value Representation'),
+                        description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
+                    },
+                ],
+                groups: [
+                    {
+                        key: 'data-grid',
+                        title: t('settings.data-grid', 'Data grid'),
+                        description: t('settings.data-grid-description', 'Settings for the main data grid display.'),
+                        settings: [
+                            {
+                                type: 'boolean',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.active_highlight',
+                                category: t('appearance', 'Appearance'),
+                                label: t('settings.highlight-active-cell', 'Highlight active row and column'),
+                                description: t('settings.highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
+                            },
+                            {
+                                type: 'boolean',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.data.colors_enabled',
+                                category: t('appearance', 'Appearance'),
+                                label: t('settings.enable-colors', 'Enable colors in grid'),
+                                description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
+                            },
+                            {
+                                type: 'number',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.data.font_size',
+                                category: t('appearance', 'Appearance'),
+                                label: t('settings.font-size', 'Grid font size'),
+                                description: t('settings.font-size-description', 'Font size for the grid.'),
+                                min: 10,
+                                max: 24,
+                                step: 1,
+                            },
+                            {
+                                type: 'boolean',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.data.row_number_column',
+                                category: t('behavior', 'Behavior'),
+                                label: t('settings.show-row-numbers', 'Show row numbers column'),
+                                description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
+                            },
+                        ],
+                    },
+                    {
+                        key: 'defined-grid',
+                        title: t('settings.defined-grid', 'Defined grid'),
+                        description: t(
+                            'settings.defined-grid-description',
+                            'Settings for the defined grid display. Defined grid is the grid with predefined columns, like in table list or foreign keys.'
+                        ),
+                        settings: [
+                            {
+                                type: 'boolean',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.defined.colors_enabled',
+                                category: t('appearance', 'Appearance'),
+                                label: t('settings.enable-colors', 'Enable colors in grid'),
+                                description: t('settings.enable-colors-description', 'Enable or disable color coding based on the field type in the grid.'),
+                            },
+                            {
+                                type: 'number',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.defined.font_size',
+                                category: t('appearance', 'Appearance'),
+                                label: t('settings.font-size', 'Grid font size'),
+                                description: t('settings.font-size-description', 'Font size for the grid.'),
+                                min: 10,
+                                max: 24,
+                                step: 1,
+                            },
+                            {
+                                type: 'boolean',
+                                storageGroup: 'dborg',
+                                storageKey: 'data_grid.defined.row_number_column',
+                                category: t('behavior', 'Behavior'),
+                                label: t('settings.show-row-numbers', 'Show row numbers column'),
+                                description: t('settings.show-row-numbers-description', 'Show or hide the row numbers column in the grid.'),
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
     });
 
     context.registerCollection({
