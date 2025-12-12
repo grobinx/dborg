@@ -362,17 +362,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 // tutaj możesz ewentualnie zachować values do późniejszego bindowania
             }
 
-            const extractFirstLineComment = (query: string): string | null => {
-                const lines = query.trim().split('\n');
-                if (lines.length === 0) return null;
-                const firstLine = lines[0].trim();
-                if (firstLine.startsWith('--')) {
-                    const comment = firstLine.substring(2).trim();
-                    return comment.length > 0 ? comment : null;
-                }
-                return null;
-            };
-
             if (tabIsActiveRef.current) {
                 setQuery(message.query);
                 setResultLabel(itemID!, extractFirstLineComment(message.query));
