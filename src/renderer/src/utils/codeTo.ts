@@ -3,7 +3,8 @@
  */
 export type TargetLanguage = 
     | 'js' | 'ts' | 'java' | 'cpp' | 'pascal' | 'php' | 'perl' 
-    | 'python' | 'csharp' | 'go' | 'rust' | 'kotlin' | 'swift';
+    | 'python' | 'csharp' | 'go' | 'rust' | 'kotlin' | 'swift'
+    | 'ruby' | 'groovy' | 'scala' | 'sql' | 'bash' | 'powershell';
 
 /**
  * Options for converting code to selected language
@@ -19,66 +20,73 @@ export interface CodeToCodeOptions {
     addSemicolon?: boolean;
     /** Indentation for lines in case of concatenation (default 4 spaces) */
     indent?: string;
+    /** Whether to add newline character at end of each line in concatenation mode (default true) */
+    addLineBreaks?: boolean;
 }
 
 /**
  * Programming language configuration
  */
 interface LanguageConfig {
+    // STRING DELIMITERS
     /** Basic delimiter for strings (" or ') */
     stringDelimiter: string;
     /** Delimiter for multiline strings (if supported) */
     multilineDelimiter?: string;
     /** Closing delimiter for multiline strings (if different from opening) */
     multilineClosingDelimiter?: string;
+    /** Prefix before multiline delimiter (e.g. "@" in C#, "r#" in Rust) */
+    multilinePrefix?: string;
+
+    // ESCAPE RULES
     /** Escape character (usually \) */
     escapeChar: string;
-    /** How to escape newline character in standard string */
+    /** How to escape newline in standard string */
     newlineEscape: string;
-    /** Whether language requires semicolon at end of statement */
-    needsSemicolon: boolean;
+
+    // CONCATENATION & LINE BREAKS
+    /** String concatenation operator (+ or .) */
+    concatenation: string;
+    /** Representation of line break in concatenation mode */
+    lineBreakLiteral?: string;
+    /** Whether line break is outside delimiter (true: 'text'#13#10, false: "text\n") */
+    lineBreakOutsideDelimiter?: boolean;
+
+    // VARIABLE DECLARATION
     /** Variable declaration prefix (const, var, my, $, etc.) */
     declarationPrefix: string;
     /** Suffix after variable name (e.g. ": string" in TypeScript) */
     declarationSuffix?: string;
-    /** Whether to add space after prefix (e.g. "const " vs "$") */
+    /** Whether to add space after prefix */
     spaceAfterPrefix: boolean;
-    /** String concatenation operator */
-    concatenation: string;
+
+    // STATEMENT ENDING
+    /** Whether language requires semicolon at end of statement */
+    needsSemicolon: boolean;
+
+    // MULTILINE SUPPORT
     /** Whether language supports multiline strings */
     supportsMultiline: boolean;
-    /** Prefix before multiline delimiter (e.g. "@" in C#) */
-    multilinePrefix?: string;
     /** Whether multiline requires \n at beginning/end */
     multilineNeedsNewlines: boolean;
-    /** Escape rules for multiline strings */
+
+    // ESCAPE RULES FOR MULTILINE
     multilineEscapeRules: {
-        /** Whether to escape backslash */
         escapeBackslash?: boolean;
-        /** Whether to escape delimiter inside string */
         escapeDelimiter?: boolean;
-        /** How to escape delimiter (e.g. "" for C#, \\"\\"\\" for Python) */
         delimiterEscapeSequence?: string;
-        /** Whether to escape interpolation (${} in JS) */
         escapeInterpolation?: boolean;
-        /** Pattern to match interpolation (e.g. "\$\{" for JS/TS) */
         interpolationPattern?: string;
-        /** How to escape interpolation */
         interpolationEscape?: string;
     };
-    /** Escape rules for standard strings */
+
+    // ESCAPE RULES FOR STANDARD STRINGS
     standardEscapeRules: {
-        /** Whether to escape backslash */
         escapeBackslash: boolean;
-        /** Whether to escape newline character */
         escapeNewline: boolean;
-        /** Whether to escape carriage return character */
         escapeCarriageReturn: boolean;
-        /** Whether to escape tab character */
         escapeTab: boolean;
-        /** Whether to escape quotes */
         escapeQuotes: boolean;
-        /** How to escape quotes (default \") */
         quoteEscapeSequence?: string;
     };
 }
@@ -86,16 +94,18 @@ interface LanguageConfig {
 /**
  * Configurations for all supported languages
  */
-const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
+export const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
     js: {
         stringDelimiter: '"',
         multilineDelimiter: '`',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'const',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -114,15 +124,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     ts: {
         stringDelimiter: '"',
         multilineDelimiter: '`',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'const',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -141,15 +154,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     java: {
         stringDelimiter: '"',
         multilineDelimiter: '"""',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'String',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -165,16 +181,19 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     cpp: {
         stringDelimiter: '"',
         multilineDelimiter: 'R"(',
         multilineClosingDelimiter: ')"',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'std::string',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: true,
         multilineEscapeRules: {
@@ -189,14 +208,17 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     pascal: {
         stringDelimiter: "'",
         escapeChar: "'",
-        newlineEscape: "' + #10 + '",
+        newlineEscape: '#13#10',
+        lineBreakLiteral: '#13#10',
+        lineBreakOutsideDelimiter: true,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'var',
         spaceAfterPrefix: true,
-        concatenation: " + ",
         supportsMultiline: false,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {},
@@ -209,16 +231,19 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             quoteEscapeSequence: "''"
         }
     },
+
     php: {
         stringDelimiter: '"',
         multilineDelimiter: '<<<SQL',
         multilineClosingDelimiter: 'SQL',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' . ',
         needsSemicolon: true,
         declarationPrefix: '$',
         spaceAfterPrefix: false,
-        concatenation: ' . ',
         supportsMultiline: true,
         multilineNeedsNewlines: true,
         multilineEscapeRules: {
@@ -233,16 +258,19 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     perl: {
         stringDelimiter: '"',
         multilineDelimiter: "<<'SQL'",
         multilineClosingDelimiter: 'SQL',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' . ',
         needsSemicolon: true,
         declarationPrefix: 'my $',
         spaceAfterPrefix: false,
-        concatenation: ' . ',
         supportsMultiline: true,
         multilineNeedsNewlines: true,
         multilineEscapeRules: {
@@ -257,15 +285,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     python: {
         stringDelimiter: '"',
         multilineDelimiter: '"""',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: false,
         declarationPrefix: '',
         spaceAfterPrefix: false,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -281,16 +312,19 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     csharp: {
         stringDelimiter: '"',
         multilineDelimiter: '"',
         multilinePrefix: '@',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\r\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: true,
         declarationPrefix: 'string',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -306,15 +340,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     go: {
         stringDelimiter: '"',
         multilineDelimiter: '`',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: false,
         declarationPrefix: 'var',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -330,16 +367,19 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     rust: {
         stringDelimiter: '"',
         multilineDelimiter: 'r#"',
         multilineClosingDelimiter: '"#',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: '.to_owned() + ',
         needsSemicolon: true,
         declarationPrefix: 'let',
         spaceAfterPrefix: true,
-        concatenation: '.to_owned() + ',
         supportsMultiline: true,
         multilineNeedsNewlines: true,
         multilineEscapeRules: {
@@ -354,15 +394,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     kotlin: {
         stringDelimiter: '"',
         multilineDelimiter: '"""',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: false,
         declarationPrefix: 'val',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -378,15 +421,18 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeQuotes: true
         }
     },
+
     swift: {
         stringDelimiter: '"',
         multilineDelimiter: '"""',
         escapeChar: '\\',
         newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
         needsSemicolon: false,
         declarationPrefix: 'let',
         spaceAfterPrefix: true,
-        concatenation: ' + ',
         supportsMultiline: true,
         multilineNeedsNewlines: false,
         multilineEscapeRules: {
@@ -401,14 +447,168 @@ const LANGUAGE_CONFIGS: Record<TargetLanguage, LanguageConfig> = {
             escapeTab: true,
             escapeQuotes: true
         }
+    },
+
+    ruby: {
+        stringDelimiter: '"',
+        multilineDelimiter: '<<~SQL',
+        multilineClosingDelimiter: 'SQL',
+        escapeChar: '\\',
+        newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
+        needsSemicolon: false,
+        declarationPrefix: '',
+        spaceAfterPrefix: false,
+        supportsMultiline: true,
+        multilineNeedsNewlines: true,
+        multilineEscapeRules: {
+            escapeBackslash: true,
+            escapeDelimiter: false
+        },
+        standardEscapeRules: {
+            escapeBackslash: true,
+            escapeNewline: true,
+            escapeCarriageReturn: true,
+            escapeTab: true,
+            escapeQuotes: true
+        }
+    },
+
+    groovy: {
+        stringDelimiter: '"',
+        multilineDelimiter: '"""',
+        escapeChar: '\\',
+        newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
+        needsSemicolon: true,
+        declarationPrefix: 'def',
+        spaceAfterPrefix: true,
+        supportsMultiline: true,
+        multilineNeedsNewlines: false,
+        multilineEscapeRules: {
+            escapeBackslash: true,
+            escapeDelimiter: false
+        },
+        standardEscapeRules: {
+            escapeBackslash: true,
+            escapeNewline: true,
+            escapeCarriageReturn: true,
+            escapeTab: true,
+            escapeQuotes: true
+        }
+    },
+
+    scala: {
+        stringDelimiter: '"',
+        multilineDelimiter: '"""',
+        escapeChar: '\\',
+        newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
+        needsSemicolon: true,
+        declarationPrefix: 'val',
+        spaceAfterPrefix: true,
+        supportsMultiline: true,
+        multilineNeedsNewlines: false,
+        multilineEscapeRules: {
+            escapeBackslash: false,
+            escapeDelimiter: false
+        },
+        standardEscapeRules: {
+            escapeBackslash: true,
+            escapeNewline: true,
+            escapeCarriageReturn: true,
+            escapeTab: true,
+            escapeQuotes: true
+        }
+    },
+
+    sql: {
+        stringDelimiter: "'",
+        escapeChar: "'",
+        newlineEscape: '\\n',
+        lineBreakLiteral: 'CHR(10)',
+        lineBreakOutsideDelimiter: true,
+        concatenation: ' || ',
+        needsSemicolon: true,
+        declarationPrefix: '',
+        spaceAfterPrefix: false,
+        supportsMultiline: false,
+        multilineNeedsNewlines: false,
+        multilineEscapeRules: {},
+        standardEscapeRules: {
+            escapeBackslash: false,
+            escapeNewline: false,
+            escapeCarriageReturn: false,
+            escapeTab: false,
+            escapeQuotes: true,
+            quoteEscapeSequence: "''"
+        }
+    },
+
+    bash: {
+        stringDelimiter: '"',
+        multilineDelimiter: "<<'EOF'",
+        multilineClosingDelimiter: 'EOF',
+        escapeChar: '\\',
+        newlineEscape: '\\n',
+        lineBreakLiteral: '\\n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: '',
+        needsSemicolon: false,
+        declarationPrefix: '',
+        spaceAfterPrefix: false,
+        supportsMultiline: true,
+        multilineNeedsNewlines: true,
+        multilineEscapeRules: {
+            escapeBackslash: false,
+            escapeDelimiter: false
+        },
+        standardEscapeRules: {
+            escapeBackslash: true,
+            escapeNewline: true,
+            escapeCarriageReturn: false,
+            escapeTab: true,
+            escapeQuotes: true
+        }
+    },
+
+    powershell: {
+        stringDelimiter: '"',
+        multilineDelimiter: '@"',
+        multilineClosingDelimiter: '"@',
+        escapeChar: '`',
+        newlineEscape: '`n',
+        lineBreakLiteral: '`n',
+        lineBreakOutsideDelimiter: false,
+        concatenation: ' + ',
+        needsSemicolon: false,
+        declarationPrefix: '$',
+        spaceAfterPrefix: false,
+        supportsMultiline: true,
+        multilineNeedsNewlines: true,
+        multilineEscapeRules: {
+            escapeBackslash: false,
+            escapeDelimiter: false
+        },
+        standardEscapeRules: {
+            escapeBackslash: false,
+            escapeNewline: true,
+            escapeCarriageReturn: false,
+            escapeTab: true,
+            escapeQuotes: true,
+            quoteEscapeSequence: '`"'
+        }
     }
 };
 
 /**
  * Escapes string for multiline strings according to language rules
- * @param text Text to escape
- * @param config Language configuration
- * @returns Escaped text
  */
 function escapeMultilineString(text: string, config: LanguageConfig): string {
     let result = text;
@@ -433,9 +633,6 @@ function escapeMultilineString(text: string, config: LanguageConfig): string {
 
 /**
  * Escapes string for standard strings according to language rules
- * @param text Text to escape
- * @param config Language configuration
- * @returns Escaped text
  */
 function escapeStandardString(text: string, config: LanguageConfig): string {
     let result = text;
@@ -458,11 +655,10 @@ function escapeStandardString(text: string, config: LanguageConfig): string {
     }
 
     if (rules.escapeQuotes) {
+        const quoteRegex = new RegExp(config.stringDelimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
         if (rules.quoteEscapeSequence) {
-            const quoteRegex = new RegExp(config.stringDelimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
             result = result.replace(quoteRegex, rules.quoteEscapeSequence);
         } else {
-            const quoteRegex = new RegExp(config.stringDelimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
             result = result.replace(quoteRegex, config.escapeChar + config.stringDelimiter);
         }
     }
@@ -472,25 +668,6 @@ function escapeStandardString(text: string, config: LanguageConfig): string {
 
 /**
  * Converts text to code in selected programming language
- * @param text Text to convert
- * @param options Conversion options
- * @returns Code ready to paste in source
- * @example
- * ```typescript
- * const sql = `SELECT * FROM users
- * WHERE id = 1
- * AND name = "John"`;
- * 
- * codeTo(sql, { language: 'js', variableName: 'query' });
- * // const query = `SELECT * FROM users
- * // WHERE id = 1
- * // AND name = "John"`;
- * 
- * codeTo(sql, { language: 'java', useMultiline: false });
- * // String query = "SELECT * FROM users\n" +
- * //     "WHERE id = 1\n" +
- * //     "AND name = \"John\"";
- * ```
  */
 export function codeTo(text: string, options: CodeToCodeOptions): string {
     const config = LANGUAGE_CONFIGS[options.language];
@@ -498,6 +675,8 @@ export function codeTo(text: string, options: CodeToCodeOptions): string {
     const useMultiline = options.useMultiline ?? true;
     const indent = options.indent || '    ';
     const addSemicolon = options.addSemicolon ?? config.needsSemicolon;
+    const addLineBreaks = options.addLineBreaks ?? true;
+    const lineBreak = config.lineBreakLiteral || config.newlineEscape;
 
     const lines = text.split('\n');
     const isMultiLine = lines.length > 1;
@@ -548,12 +727,27 @@ export function codeTo(text: string, options: CodeToCodeOptions): string {
     } else {
         // Multiple lines concatenation
         const escapedLines = lines.map(line => escapeStandardString(line, config));
-        result += escapedLines
-            .map((line, i) => {
-                const prefix = i === 0 ? '' : indent;
-                return `${prefix}${config.stringDelimiter}${line}${config.stringDelimiter}`;
-            })
-            .join(config.concatenation + '\n');
+        
+        const parts = escapedLines.map((line, i) => {
+            const prefix = i === 0 ? '' : indent;
+            const isLastLine = i === escapedLines.length - 1;
+            
+            if (config.lineBreakOutsideDelimiter && addLineBreaks && !isLastLine) {
+                // Line break outside: 'text' || CHR(10) ||
+                return `${prefix}${config.stringDelimiter}${line}${config.stringDelimiter} ${config.concatenation} ${lineBreak} ${config.concatenation}`;
+            } else {
+                // Line break inside: "text\n"
+                const lineBreakStr = (addLineBreaks && !isLastLine) ? lineBreak : '';
+                return `${prefix}${config.stringDelimiter}${line}${lineBreakStr}${config.stringDelimiter}`;
+            }
+        });
+
+        // Join parts
+        if (config.lineBreakOutsideDelimiter && addLineBreaks) {
+            result += parts.join('\n');
+        } else {
+            result += parts.join(config.concatenation + '\n');
+        }
     }
 
     if (addSemicolon) result += ';';
@@ -562,23 +756,28 @@ export function codeTo(text: string, options: CodeToCodeOptions): string {
 
 /**
  * Returns list of all available target languages
- * @returns Array of objects with language ID and name
  */
 export function getAvailableLanguages(): Array<{ id: TargetLanguage; name: string }> {
     return [
         { id: 'js', name: 'JavaScript' },
         { id: 'ts', name: 'TypeScript' },
         { id: 'java', name: 'Java' },
+        { id: 'groovy', name: 'Groovy' },
+        { id: 'scala', name: 'Scala' },
+        { id: 'kotlin', name: 'Kotlin' },
         { id: 'cpp', name: 'C++' },
-        { id: 'pascal', name: 'Pascal' },
+        { id: 'csharp', name: 'C#' },
+        { id: 'python', name: 'Python' },
+        { id: 'ruby', name: 'Ruby' },
         { id: 'php', name: 'PHP' },
         { id: 'perl', name: 'Perl' },
-        { id: 'python', name: 'Python' },
-        { id: 'csharp', name: 'C#' },
+        { id: 'bash', name: 'Bash' },
+        { id: 'powershell', name: 'PowerShell' },
         { id: 'go', name: 'Go' },
         { id: 'rust', name: 'Rust' },
-        { id: 'kotlin', name: 'Kotlin' },
-        { id: 'swift', name: 'Swift' }
+        { id: 'swift', name: 'Swift' },
+        { id: 'pascal', name: 'Pascal' },
+        { id: 'sql', name: 'SQL' }
     ];
 }
 

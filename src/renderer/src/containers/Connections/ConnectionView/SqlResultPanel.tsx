@@ -27,6 +27,7 @@ import { AutoRefreshBar, AutoRefreshState } from "@renderer/components/AutoRefre
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import SqlParametersDialog from "@renderer/dialogs/SqlParametersDialog";
 import { extractSqlParameters, mapSqlParamsToValues, replaceNamedParamsWithPositional, SqlParameterInfo, SqlParametersValue, SqlParameterValue } from "../../../../../../src/api/db/SqlParameters";
+import CodeToDialog from "@renderer/dialogs/CodeToDialog";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -571,6 +572,7 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
     const [barRef, isVisible] = useVisibleState<HTMLDivElement>();
     const [autorefreshState, setAutorefreshState] = React.useState<AutoRefreshState>("stopped");
     const lastActiveStateRef = React.useRef<AutoRefreshState>("stopped");
+    const [codeToDialogOpen, setCodeToDialogOpen] = React.useState(false);
 
     React.useEffect(() => {
         if (autorefreshState !== "paused") {
@@ -619,6 +621,53 @@ export const SqlResultButtons: React.FC<SqlResultButtonsProps> = (props) => {
                 onStateChange={(newState) => {
                     setAutorefreshState(newState);
                 }}
+            />
+            <ToolButton
+                component="div"
+                color="main"
+                onClick={() => setCodeToDialogOpen(true)}
+                size="small"
+            >
+                <theme.icons.Add />
+            </ToolButton>
+            <CodeToDialog
+                open={codeToDialogOpen}
+                onClose={() => setCodeToDialogOpen(false)}
+                text={`select schema_name, owner_name, constraint_name, table_name, columns, fk_table_name, fk_columns, constraint_type, 
+       "deferrable", "deferred", validated, update_rule, delete_rule, match_type, domain_name, constraint_def, description
+  from (select ns.nspname schema_name, pg_catalog.pg_get_userbyid(c.relowner) as owner_name, con.conname constraint_name, 
+               c.relname table_name, array_to_string(array(select a.attname from pg_catalog.pg_attribute a join (select con.conkey[k] col from pg_catalog.generate_subscripts(con.conkey, 1) k) k on k.col = a.attnum and c.oid = a.attrelid), ', ') as columns,
+               r.relname fk_table_name, array_to_string(array(select a.attname from pg_catalog.pg_attribute a join (select con.confkey[k] col from pg_catalog.generate_subscripts(con.confkey, 1) k) k on k.col = a.attnum and c.oid = a.attrelid), ', ') fk_columns,
+               case con.contype when 'c' then 'CHECK'::text when 'p' then 'PRIMARY KEY'::text when 'f' then 'FOREIGN KEY'::text when 'u' then 'UNIQUE'::text when 't' then 'TRIGGER'::text when 'x' then 'EXCLUDE'::text else con.contype::varchar end constraint_type,
+               case when con.condeferrable then 'Y' else 'N' end "deferrable",
+               case when con.condeferred then 'Y' else 'N' end "deferred",
+               case when con.convalidated then 'Y' else 'N' end validated,
+               case con.confupdtype when 'a' then null when 'r' then 'RESTRICT' when 'c' then 'CASCADE' when 'n' then 'SET NULL' when 'd' then 'SET DEFAULT' end update_rule,
+               case con.confdeltype when 'a' then null when 'r' then 'RESTRICT' when 'c' then 'CASCADE' when 'n' then 'SET NULL' when 'd' then 'SET DEFAULT' end delete_rule,
+               case con.confmatchtype when 'f' then 'FULL' when 'p' then 'PARTIAL' when 'u' then 'SIMPLE' end match_type,
+               t.typname domain_name,
+               pg_get_constraintdef(con.oid, true) constraint_def,
+               d.description
+          from pg_catalog.pg_constraint con
+               left join pg_catalog.pg_namespace ns on ns.oid = con.connamespace
+               left join pg_catalog.pg_class c on c.oid = con.conrelid
+               left join pg_catalog.pg_type t on t.oid = con.contypid
+               left join pg_catalog.pg_description d on d.classoid = 'pg_constraint'::regclass and d.objoid = con.oid and d.objsubid = 0
+               left join pg_catalog.pg_class r on r.oid = con.confrelid
+        union all
+        select ns.nspname schema_name, pg_catalog.pg_get_userbyid(c.relowner) as owner_name, null::text constraint_name, 
+               c.relname table_name, a.attname as columns, null::text fk_table_name, null::text fk_columns,
+               'NOT NULL' constraint_type, 'N' "deferrable", 'N' "deferred", 'Y' validated, null::text update_rule, null::text delete_rule, null::text match_type, null::text domain_name,
+               a.attname||' IS NOT NULL' constraint_def, null::text description
+          from pg_catalog.pg_namespace ns
+               join pg_catalog.pg_class c on ns.oid = c.relnamespace
+               join pg_catalog.pg_attribute a on c.oid = a.attrelid
+         where a.attnum > 0
+           and not a.attisdropped
+           and a.attnotnull) c
+ where (schema_name = :SCHEMA_NAME or (schema_name = any (current_schemas(false)) and :SCHEMA_NAME = current_schema() and schema_name <> 'public' and :TABLE_NAME::varchar is null))
+   and (table_name = :TABLE_NAME or :TABLE_NAME::varchar is null)
+ order by constraint_name, table_name, columns;`}
             />
         </TabPanelButtons>
     );

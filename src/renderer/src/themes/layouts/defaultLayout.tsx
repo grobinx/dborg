@@ -128,7 +128,10 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                 },
                 styleOverrides: {
                     root: {
+                        display: 'flex',
+                        flexDirection: 'column',
                         padding: 8,
+                        gap: 8,
                     }
                 }
             },
