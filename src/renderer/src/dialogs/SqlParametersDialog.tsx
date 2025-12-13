@@ -4,7 +4,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableRow,
     Box, Typography
 } from "@mui/material";
-import { SqlParameterInfo, ParamType } from "../../../api/db/SqlParameters";
+import { SqlParameterInfo, ParamType, SqlParameterValue, SqlParametersValue } from "../../../api/db/SqlParameters";
 import {
     ColumnBaseType,
     columnBaseTypes,
@@ -24,7 +24,7 @@ import { useTranslation } from "react-i18next";
 const STORAGE_NAMESPACE = "dborg.sqlParams";
 const getProfileKey = (profileId: string) => `${STORAGE_NAMESPACE}.${profileId}`;
 
-function loadProfileParams(profileId?: string): Record<string, SqlParameterValue> | undefined {
+function loadProfileParams(profileId?: string): SqlParametersValue | undefined {
     if (!profileId) return undefined;
     try {
         const raw = localStorage.getItem(getProfileKey(profileId));
@@ -35,7 +35,7 @@ function loadProfileParams(profileId?: string): Record<string, SqlParameterValue
     return undefined;
 }
 
-function saveProfileParams(profileId: string | undefined, values: Record<string, SqlParameterValue>) {
+function saveProfileParams(profileId: string | undefined, values: SqlParametersValue) {
     if (!profileId) return;
     try {
         localStorage.setItem(getProfileKey(profileId), JSON.stringify(values));
@@ -49,18 +49,13 @@ function clearProfileParams(profileId?: string) {
     } catch { /* ignore */ }
 }
 
-export interface SqlParameterValue {
-    type: ColumnBaseType;
-    value: any;
-}
-
 export interface SqlParametersDialogProps {
     profileId?: string;
     open: boolean;
     parameters: SqlParameterInfo[];
-    initialValues?: Record<string, { type?: ColumnBaseType; value: any } | any>;
+    initialValues?: SqlParametersValue;
     onClose: () => void;
-    onSubmit: (values: Record<string, SqlParameterValue>) => void;
+    onSubmit: (values: SqlParametersValue) => void;
 }
 
 type Group = {
@@ -170,7 +165,7 @@ export const SqlParametersDialog: React.FC<SqlParametersDialogProps> = ({
     const groups = useMemo(() => groupParams(parameters), [parameters]);
     const [rows, setRows] = useState<RowModel[]>([]);
 
-    const buildRows = (saved?: Record<string, SqlParameterValue>) => {
+    const buildRows = (saved?: SqlParametersValue) => {
         const next: RowModel[] = groups.map(g => {
             // initialValues ma priorytet nad zapisanymi
             const init = (initialValues?.[g.key] ?? saved?.[g.key]) as (SqlParameterValue | any | undefined);
@@ -230,10 +225,13 @@ export const SqlParametersDialog: React.FC<SqlParametersDialogProps> = ({
     };
 
     const handleSubmit = () => {
-        const out: Record<string, SqlParameterValue> = {};
+        const out: SqlParametersValue = {};
         for (const r of rows) out[r.key] = { type: r.type, value: r.isNull ? null : r.value };
-        // zapisz do localStorage dla profilu
-        saveProfileParams(profileId, out);
+
+        // zachowaj wcześniejsze zapisane wartości (także te, których nie ma w bieżącej liście)
+        const prev = loadProfileParams(profileId) ?? {};
+        saveProfileParams(profileId, { ...prev, ...out });
+
         onSubmit(out);
     };
 

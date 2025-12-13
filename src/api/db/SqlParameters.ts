@@ -1,14 +1,27 @@
+import { ColumnBaseType } from "./DataType";
 import { ParameterPlaceholderStyle } from "./Driver";
 
 export type ParamType = "named" | "positional" | "question";
 
-// Możesz użyć takiego typu:
+/**
+ * Informacje o parametrze SQL wyekstrahowanym z zapytania.
+ */
 export interface SqlParameterInfo {
     name: string | number;      // nazwa lub numer parametru
     position: number;           // indeks wystąpienia w zapytaniu (od 0)
     paramType: ParamType; // typ parametru
     index: number;      // indeks parametru w kolejności występowania (od 0)
 }
+
+/**
+ * Wartość parametru SQL wraz z jego typem danych.
+ */
+export interface SqlParameterValue {
+    type: ColumnBaseType;
+    value: any;
+}
+
+export type SqlParametersValue = Record<string, SqlParameterValue>;
 
 // Przykład funkcji wyciągającej parametry:
 export function extractSqlParameters(query: string): SqlParameterInfo[] {
@@ -71,13 +84,19 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     return params;
 }
 
-function makePlaceholder(template: ParameterPlaceholderStyle, nameOrIndex: string | number): string {
-    if (template.includes("$n")) return template.replace("$n", String(nameOrIndex));
-    if (template.includes(":name")) return template.replace(":name", String(nameOrIndex));
-    if (template.includes("@name")) return template.replace("@name", String(nameOrIndex));
-    if (template.includes("$name")) return template.replace("$name", String(nameOrIndex));
-    if (template.includes("{name}")) return template.replace("{name}", String(nameOrIndex));
-    return template; // np. "?"
+function makePlaceholder(template: ParameterPlaceholderStyle, index: number, name?: string | number): string {
+    const idx = String(index);
+    const nm = String(name ?? "");
+    
+    // Szablon mówi nam, jak formatować placeholder
+    if (template === "$n") return "$" + idx;           // $1, $2, ...
+    if (template === ":name") return ":" + nm;         // :SCHEMA_NAME, :id, ...
+    if (template === "@name") return "@" + nm;         // @SCHEMA_NAME, @id, ...
+    if (template === "$name") return "$" + nm;         // $SCHEMA_NAME, $id, ...
+    if (template === "{name}") return "{" + nm + "}";  // {SCHEMA_NAME}, {id}, ...
+    if (template === "?") return "?";                  // zawsze ?
+    
+    return template; // fallback
 }
 
 export function replaceNamedParamsWithPositional(
@@ -85,40 +104,112 @@ export function replaceNamedParamsWithPositional(
     params: SqlParameterInfo[],
     parameterPlaceholder: ParameterPlaceholderStyle
 ): string {
-    // Znajdź zakresy stringów
-    const stringRanges: Array<{ start: number; end: number }> = [];
-    const regexString = /('([^']|\\')*')|("([^"]|\\")*")/g;
-    let match: RegExpExecArray | null;
+    // Zamieniaj od końca, by nie przesuwać indeksów
+    const sortedParams = [...params].sort((a, b) => b.position - a.position);
 
-    while ((match = regexString.exec(sql)) !== null) {
-        stringRanges.push({ start: match.index, end: regexString.lastIndex });
-    }
-    function isInString(index: number): boolean {
-        return stringRanges.some(r => index >= r.start && index < r.end);
-    }
+    let result = sql;
+    for (const param of sortedParams) {
+        // Ustaw placeholder na podstawie szablonu bazy
+        const placeholder = makePlaceholder(parameterPlaceholder, param.index + 1, param.name);
 
-    // Mapuj nazwane parametry na kolejne numery pozycyjne
-    const nameToIndex = new Map<string | number, number>();
-    let index = 1;
-    for (const param of params) {
-        if (param.paramType === "named" && !nameToIndex.has(param.name)) {
-            nameToIndex.set(param.name, index++);
+        // Znajdź dopasowanie na pozycji param.position
+        let match: string | null = null;
+        let matchLength = 0;
+
+        if (param.paramType === "named") {
+            const name = String(param.name);
+            const prefixes = [":", "@", "$", "{"];
+            for (const prefix of prefixes) {
+                const suffix = prefix === "{" ? "}" : "";
+                const pattern = prefix + name + suffix;
+                if (result.slice(param.position, param.position + pattern.length) === pattern) {
+                    match = pattern;
+                    matchLength = pattern.length;
+                    break;
+                }
+            }
+        } else if (param.paramType === "positional") {
+            const pattern = "$" + String(param.name);
+            if (result.slice(param.position, param.position + pattern.length) === pattern) {
+                match = pattern;
+                matchLength = pattern.length;
+            }
+        } else if (param.paramType === "question") {
+            if (result[param.position] === "?") {
+                match = "?";
+                matchLength = 1;
+            }
+        }
+
+        if (match) {
+            result = result.slice(0, param.position) + placeholder + result.slice(param.position + matchLength);
         }
     }
+    return result;
+}
 
-    // Zamiana od końca, by nie przesuwać indeksów
-    const sortedParams = params
-        .filter(p => p.paramType === "named")
-        .sort((a, b) => b.position - a.position);
+/**
+ * Zwraca tablicę wartości ułożoną dokładnie w kolejności wystąpień
+ * przekazanych parametrów (SqlParameterInfo[]).
+ *
+ * Mapa values powinna być keyed po:
+ * - index (numeracja od 0): values[0], values[1], ...
+ * - lub po unikatowych kluczach z dialogu: "id", "$1", "?", itp.
+ *
+ * Gdy brak wpisu w mapie — wstawia null.
+ */
+export function mapSqlParamsToValues(
+    values: SqlParametersValue | Record<string, any>,
+    params: SqlParameterInfo[]
+): (any | null)[] {
 
-    let newSql = sql;
-    for (const param of sortedParams) {
-        if (isInString(param.position)) continue;
-        const regex = new RegExp(
-            `([:@\\$])${param.name}\\b`,
-            "g"
-        );
-        newSql = newSql.replace(regex, makePlaceholder(parameterPlaceholder, nameToIndex.get(param.name)!));
-    }
-    return newSql;
+    const resolve = (p: SqlParameterInfo): any | null => {
+        // Najpierw spróbuj po indeksie (jeśli values keyed po index)
+        if (p.index in values) {
+            const v = values[p.index as any];
+            return (typeof v === "object" && v && "value" in v) ? v.value : v;
+        }
+
+        // Potem spróbuj po grupach (named, positional, question)
+        if (p.paramType === "named") {
+            const key = String(p.name);
+            if (key in values) {
+                const v = values[key];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+        }
+
+        if (p.paramType === "positional") {
+            const k1 = `$${p.name}`;
+            if (k1 in values) {
+                const v = values[k1];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+            const k2 = String(p.name);
+            if (k2 in values) {
+                const v = values[k2];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+            if (typeof p.name === "number" && p.name in values) {
+                const v = (values as any)[p.name];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+        }
+
+        if (p.paramType === "question") {
+            const kq = `?${p.index}`;
+            if (kq in values) {
+                const v = values[kq];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+            if ("?" in values) {
+                const v = values["?"];
+                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+            }
+        }
+
+        return null;
+    };
+
+    return params.map(resolve);
 }

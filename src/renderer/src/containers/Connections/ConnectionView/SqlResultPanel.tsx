@@ -25,8 +25,8 @@ import { InputDecorator } from "@renderer/components/inputs/decorators/InputDeco
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { AutoRefreshBar, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import SqlParametersDialog, { SqlParameterValue } from "@renderer/dialogs/SqlParametersDialog";
-import { extractSqlParameters, SqlParameterInfo } from "../../../../../../src/api/db/SqlParameters";
+import SqlParametersDialog from "@renderer/dialogs/SqlParametersDialog";
+import { extractSqlParameters, mapSqlParamsToValues, replaceNamedParamsWithPositional, SqlParameterInfo, SqlParametersValue, SqlParameterValue } from "../../../../../../src/api/db/SqlParameters";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -111,6 +111,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
     const [rows, setRows] = React.useState<object[] | null>(null);
     const [query, setQuery] = React.useState<string | null>(null);
+    const [oryginalQuery, setOryginalQuery] = React.useState<string | null>(null);
     const lastQuery = useRef<string | null>(null);
     const executingRef = useRef<boolean | null>(null);
     const [rowsFetched, setRowsFetched] = React.useState<number | null>(null);
@@ -143,10 +144,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         resolve: (v: Record<string, SqlParameterValue>) => void,
         reject: () => void
     } | null>(null);
-    const [sqlParameterValues, setSqlParameterValues] = useState<Record<string, SqlParameterValue>>({});
+    const [queryValues, setQueryValues] = useState<(any | null)[]>([]);
 
     // Funkcja otwierająca dialog i zwracająca Promise
-    const askForSqlParams = (params: SqlParameterInfo[]): Promise<Record<string, SqlParameterValue> | null> => {
+    const askForSqlParams = (params: SqlParameterInfo[]): Promise<SqlParametersValue | null> => {
         setSqlParameters(params);
         setSqlParametersDialogOpen(true);
         return new Promise((resolve) => {
@@ -200,7 +201,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             let cursor: IDatabaseSessionCursor | undefined;
             try {
                 const startTime = Date.now();
-                cursor = await session.open(query!, undefined, maxFetchSize ? Number(maxFetchSize) : undefined);
+                cursor = await session.open(query!, queryValues, maxFetchSize ? Number(maxFetchSize) : undefined);
                 if (session.info.driver.implements.includes("cancel")) {
                     cancelExecution.current = () => {
                         if (cursor) {
@@ -229,7 +230,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setColumns(queryToDataGridColumns(info.columns ?? []))
                 setRows(rows);
                 addQueryToHistory({
-                    query: query!,
+                    query: oryginalQuery!,
                     profileName: session.profile.sch_name,
                     executionTime: info.duration,
                     fetchTime: fetchTime,
@@ -241,7 +242,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setColumns([]);
                 setRows([]);
                 addQueryToHistory({
-                    query: query!,
+                    query: oryginalQuery!,
                     profileName: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
@@ -268,7 +269,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setExecuting(itemID!, true);
                 setRowsFetched(null);
                 setQueryDuration(null);
-                const result = await session.execute(query!);
+                const result = await session.execute(query!, queryValues);
                 if (result.rows) {
                     setRows(result.rows);
                     setColumns(queryToDataGridColumns(result.columns ?? []));
@@ -281,7 +282,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setQueryDuration(result.duration ?? null);
                 setUpdatedCount(result.updateCount ?? null);
                 addQueryToHistory({
-                    query: query!,
+                    query: oryginalQuery!,
                     profileName: session.profile.sch_name,
                     executionTime: result.duration,
                     rows: result.updateCount ?? undefined,
@@ -290,7 +291,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             } catch (error) {
                 addToast("error", "Error executing command", { reason: error, source: session.profile.sch_name });
                 addQueryToHistory({
-                    query: query!,
+                    query: oryginalQuery!,
                     profileName: session.profile.sch_name,
                     error: (typeof error === "object" && error !== null && "message" in error)
                         ? (error as { message: string }).message
@@ -353,6 +354,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             }
             const params = extractSqlParameters(message.query);
 
+            let query = message.query;
             // Jeśli są parametry – poczekaj na wypełnienie/ANULUJ
             if (params.length) {
                 const values = await askForSqlParams(params);
@@ -360,14 +362,16 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     // anulowano – nie ustawiaj query
                     return;
                 }
-                setSqlParameterValues(values);
+                query = replaceNamedParamsWithPositional(query, params, session.info.driver.supports.parameterPlaceholder);
+                setQueryValues(mapSqlParamsToValues(values, params));
             }
             else {
-                setSqlParameterValues({});
+                setQueryValues([]);
             }
 
             if (tabIsActiveRef.current) {
-                setQuery(message.query);
+                setQuery(query);
+                setOryginalQuery(message.query);
                 setResultLabel(itemID!, extractFirstLineComment(message.query));
                 setRefreshQuery(itemID!);
             }
@@ -480,7 +484,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     sqlParamsPromiseRef.current = null;
                 }}
                 parameters={sqlParameters}
-                onSubmit={(values: Record<string, SqlParameterValue>) => {
+                onSubmit={(values: SqlParametersValue) => {
                     setSqlParametersDialogOpen(false);
                     sqlParamsPromiseRef.current?.resolve(values);
                     sqlParamsPromiseRef.current = null;
