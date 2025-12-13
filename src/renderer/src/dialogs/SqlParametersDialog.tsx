@@ -38,7 +38,17 @@ function loadProfileParams(profileId?: string): SqlParametersValue | undefined {
 function saveProfileParams(profileId: string | undefined, values: SqlParametersValue) {
     if (!profileId) return;
     try {
-        localStorage.setItem(getProfileKey(profileId), JSON.stringify(values));
+        // załaduj wcześniej zapisane wartości
+        const raw = localStorage.getItem(getProfileKey(profileId));
+        let prev: SqlParametersValue = {};
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") prev = parsed;
+        }
+        
+        // połącz: zachowaj stare, nadpisz nowymi
+        const merged = { ...prev, ...values };
+        localStorage.setItem(getProfileKey(profileId), JSON.stringify(merged));
     } catch { /* ignore */ }
 }
 
@@ -227,11 +237,10 @@ export const SqlParametersDialog: React.FC<SqlParametersDialogProps> = ({
     const handleSubmit = () => {
         const out: SqlParametersValue = {};
         for (const r of rows) out[r.key] = { type: r.type, value: r.isNull ? null : r.value };
-
-        // zachowaj wcześniejsze zapisane wartości (także te, których nie ma w bieżącej liście)
-        const prev = loadProfileParams(profileId) ?? {};
-        saveProfileParams(profileId, { ...prev, ...out });
-
+        
+        // zapisz (funkcja sama dołącza wcześniejsze wartości)
+        saveProfileParams(profileId, out);
+        
         onSubmit(out);
     };
 

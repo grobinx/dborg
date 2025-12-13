@@ -95,6 +95,7 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
                                 height: "100%",
                                 overflow: "hidden",
                                 gap: 8,
+                                paddingBottom: 8,
                             }}
                         >
                             <InputDecorator indicator={false} disableBlink>
