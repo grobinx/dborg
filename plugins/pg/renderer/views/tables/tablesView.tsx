@@ -215,7 +215,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         content: {
                             id: cid("table-columns-tabs"),
                             type: "tabs",
-                            tabs: () => ([
+                            tabs: () => [
                                 columnsTab(session, () => selectedRow),
                                 indexesTab(session, () => selectedRow),
                                 constraintsTab(session, () => selectedRow),
@@ -236,7 +236,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                                 publicationsTab(session, () => selectedRow),
                                 fdwTab(session, () => selectedRow),
                                 queryPlansTab(session, () => selectedRow),
-                            ]),
+                            ],
                         }
                     },
                     // actions: [

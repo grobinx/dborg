@@ -113,6 +113,8 @@ interface DataGridProps<T extends object> {
 
     ref?: React.RefObject<DataGridActionContext<T> | null>;
 
+    getRowStyle?: (row: T, rowIndex: number) => React.CSSProperties;
+
     /**
      * Extra unique ID for the DataGrid to save column layout, eg for connection schema
      */
@@ -469,6 +471,7 @@ export const DataGrid = <T extends object>({
     active,
     ref,
     autoSaveId,
+    getRowStyle,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -707,6 +710,29 @@ export const DataGrid = <T extends object>({
             updateSelectedCell(displayData.length > 0 ? { row: displayData.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
         }
     }, [displayData.length]);
+
+    // Przywracanie zaznaczenia po odświeżeniu na podstawie uniqueField (bez pivot)
+    useEffect(() => {
+        if (!uniqueField) return;
+        if (pivot) return;
+        const hasUniqueColumn = columnsState.current.some(c => c.key === uniqueField);
+        if (!hasUniqueColumn) return;
+
+        const prevValue = prevUniqueValueRef.current;
+        if (prevValue === null || prevValue === undefined) return;
+
+        const idx = displayData.findIndex((row: any) => row?.[uniqueField] === prevValue);
+        if (idx >= 0) {
+            // Utrzymaj kolumnę lub ustaw na kolumnę uniqueField, jeśli istnieje
+            const uniqueColIdx = columnsState.current.findIndex(c => c.key === uniqueField);
+            const colIdx = selectedCellRef.current?.column ?? (uniqueColIdx >= 0 ? uniqueColIdx : 0);
+
+            // Uniknij zbędnych zmian
+            if (selectedCellRef.current?.row !== idx || selectedCellRef.current?.column !== colIdx) {
+                updateSelectedCell({ row: idx, column: colIdx });
+            }
+        }
+    }, [displayData, uniqueField, pivot, columnsState.current]);
 
     const summaryRow = React.useMemo<Record<string, any>>(() => {
         if (!columnsState.anySummarized) return {};
@@ -1448,6 +1474,7 @@ export const DataGrid = <T extends object>({
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
+                                    ...getRowStyle?.(row, absoluteRowIndex),
                                 }}
                             >
                                 {showRowNumberColumn && (displayData.length > 0) && (

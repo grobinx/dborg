@@ -1,8 +1,11 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
-import { Typography } from "@mui/material";
 import activityTab from "./activityTab";
+import sessionsTab from "./sessionsTab";
+import databaseSettingsTab from "./databaseSettingsTab";
+import databaseSizeTab from "./databaseSizeTab";
+import databaseExtensionsTab from "./databaseExtensionsTab";
 
 export function databaseView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
@@ -37,15 +40,12 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
                     id: cid("database-info-tabs"),
                     type: "tabs",
                     tabs: [
+                        sessionsTab(session, database),
                         activityTab(session, database),
+                        databaseSettingsTab(session),
+                        databaseSizeTab(session, database),
+                        databaseExtensionsTab(session, database),
                     ],
-                    toolBar: {
-                        id: cid("database-info-tabs-toolbar"),
-                        type: "rendered",
-                        render: () => {
-                            return <Typography variant="body1">{t("database-information", "Database Information")}</Typography>;
-                        }
-                    }
                 }),
             },
         }

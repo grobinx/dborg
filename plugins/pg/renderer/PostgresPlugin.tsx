@@ -13,6 +13,7 @@ import { Button } from "@renderer/components/buttons/Button";
 import { useToast } from "@renderer/contexts/ToastContext";
 import React from "react";
 import { databaseView } from "./views/database/databaseView";
+import { viewsView } from "./views/views/viewsView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -38,33 +39,7 @@ const PostgresPlugin: Plugin = {
             return [
                 databaseView(session),
                 tablesView(session),
-                {
-                    type: "connection",
-                    id: "views-" + session.info.uniqueId,
-                    icon: "DatabaseViews",
-                    label: t("database-views", "Views"),
-                    slot: {
-                        id: "views-test" + session.info.uniqueId,
-                        type: "integrated",
-                        side: {
-                            id: "views-side-" + session.info.uniqueId,
-                            type: "content",
-                            main: {
-                                id: "views-main-" + session.info.uniqueId,
-                                type: "rendered",
-                                render() {
-                                    return (
-                                        <div>
-                                            <h1>Views</h1>
-                                            <p>This is a PostgreSQL plugin for ORBADA.</p>
-                                            <p>{session.profile.sch_name}</p>
-                                        </div>
-                                    );
-                                },
-                            }
-                        }
-                    }
-                },
+                viewsView(session),
             ];
         });
     }

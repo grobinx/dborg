@@ -1,4 +1,5 @@
 import { Monaco } from "@monaco-editor/react";
+import { Theme } from "@mui/material";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
@@ -161,7 +162,7 @@ export interface IAutoRefreshContext {
 export interface AutoRefreshLifecycle {
     onHide?: "pause" | "stop" | "ignore";
     onShow?: "resume" | "start" | "ignore";
-    onMount?: "start";
+    onMount?: "start" | "stop";
     onUnmount?: "stop";
 }
 
@@ -181,6 +182,7 @@ export interface IAutoRefresh {
      * @default {
      *   onHide: "pause",
      *   onShow: "resume",
+     *  onMount: "stop",
      * }
      */
     lifecycle?: AutoRefreshLifecycle;
@@ -560,6 +562,14 @@ export interface IGridSlot extends ICustomSlot {
      * Statusy siatki (np. liczba wierszy, pozycja) do wyświetlenia w pasku stanu (opcjonalnie).
      */
     status?: DataGridStatusPart[];
+    /**
+     * Unikalne pole do identyfikacji wierszy (opcjonalnie).
+     */
+    uniqueFields?: string;
+    /**
+     * Funkcja zwracająca style dla danego wiersza.
+     */
+    getRowStyle?: (row: { [key: string]: any }, rowIndex: number, theme: Theme) => React.CSSProperties;
 }
 
 export interface IEditorContext {

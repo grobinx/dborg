@@ -158,6 +158,9 @@ const icons = (_palette: Palette): ThemeOptions => {
             Cut: (props) => <IconWrapper {...props} className="cut"><MuiIcons.ContentCutOutlined fontSize="inherit" /></IconWrapper>,
             Undo: (props) => <IconWrapper {...props} className="undo"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
             Redo: (props) => <IconWrapper {...props} className="redo"><MuiIcons.RedoOutlined fontSize="inherit" /></IconWrapper>,
+            Sessions: (props) => <IconWrapper {...props} className="sessions"><MuiIcons.CableOutlined fontSize="inherit" /></IconWrapper>,
+            Storage: (props) => <IconWrapper {...props} className="storage"><BsIcons.BoundingBox fontSize="inherit" /></IconWrapper>,
+            Extensions: (props) => <IconWrapper {...props} className="extensions"><MuiIcons.ExtensionOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

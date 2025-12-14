@@ -27,7 +27,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [actions, setActions] = React.useState<monaco.editor.IActionDescriptor[]>([]);
     const [readOnly, setReadOnly] = React.useState<boolean>(false);
     const [wordWrap, setWordWrap] = React.useState<boolean>(false);
-    const [lineNumbers, setLineNumbers] = React.useState<boolean>(false);
+    const [lineNumbers, setLineNumbers] = React.useState<boolean>(true);
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
@@ -60,7 +60,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         setActions(resolveEditorActionsFactory(slot.actions, refreshSlot) ?? []);
         setReadOnly(resolveBooleanFactory(slot.readOnly, refreshSlot) ?? false);
         setWordWrap(resolveBooleanFactory(slot.wordWrap, refreshSlot) ?? false);
-        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, refreshSlot) ?? false);
+        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, refreshSlot) ?? true);
         setStatusBar(resolveBooleanFactory(slot.statusBar, refreshSlot) ?? true);
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);

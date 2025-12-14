@@ -190,6 +190,9 @@ export interface ThemeIcons {
     Cut: IconWrapperFC;
     Undo: IconWrapperFC;
     Redo: IconWrapperFC;
+    Sessions: IconWrapperFC;
+    Storage: IconWrapperFC;
+    Extensions: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

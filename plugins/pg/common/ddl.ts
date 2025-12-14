@@ -1,6 +1,10 @@
 export function tableDdl(version: string): string {
     const major = parseInt(version.split(".")[0], 10);
 
+    // IF [NOT] EXISTS support: CREATE TABLE IF NOT EXISTS - PG 9.1+, DROP TABLE IF EXISTS - PG 8.2+
+    const dropIfExists = 'IF EXISTS ';
+    const createIfNotExists = major >= 9 ? 'IF NOT EXISTS ' : '';
+
     const identityFragment = major >= 10
         ? `WHEN att.attidentity IN ('a','d')
               THEN format(' GENERATED %s AS IDENTITY',
@@ -16,6 +20,25 @@ export function tableDdl(version: string): string {
         ? `(SELECT CASE WHEN c.relkind = 'p' THEN E'\\nPARTITION BY ' || pg_get_partkeydef(o.oid) ELSE '' END FROM pg_class c WHERE c.oid = o.oid)`
         : "''";
 
+    // Operational commands based on version
+    const operationalCommands = major >= 12
+        ? `E'-- Operational commands:\\n' ||
+           '-- REINDEX TABLE CONCURRENTLY ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- VACUUM (FULL, ANALYZE, VERBOSE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- VACUUM (ANALYZE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- ANALYZE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- CLUSTER ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- TRUNCATE TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E' RESTART IDENTITY CASCADE;\\n\\n' ||`
+        : major >= 9
+        ? `E'-- Operational commands:\\n' ||
+           '-- REINDEX TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- VACUUM (FULL, ANALYZE, VERBOSE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- VACUUM (ANALYZE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- ANALYZE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- CLUSTER ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
+           '-- TRUNCATE TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E' RESTART IDENTITY CASCADE;\\n\\n' ||`
+        : `''`;
+
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name, c.relkind
@@ -24,10 +47,11 @@ WITH obj AS (
   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
 )
 SELECT
-  '-- DROP TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || ';\n\n' ||
+  ${operationalCommands}
+  '-- DROP TABLE ${dropIfExists}' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n\\n' ||
   CASE
     WHEN o.relkind = 'f' THEN
-      'CREATE FOREIGN TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || ' (\n' ||
+      'CREATE FOREIGN TABLE ${createIfNotExists}' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || ' (\n' ||
       (
         SELECT string_agg(
           format(
@@ -85,7 +109,7 @@ SELECT
         WHERE ft.ftrelid = o.oid
       ) || ';'
     ELSE
-      'CREATE TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || ' (\n' ||
+      'CREATE TABLE ${createIfNotExists}' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || ' (\n' ||
       (
         SELECT string_agg(
           format(
@@ -180,9 +204,20 @@ WITH obj AS (
    WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
 )
 SELECT
-    pg_get_indexdef(i.indexrelid)||';' AS source
+    format(
+        E'-- DROP INDEX %s %I.%I;\\n-- REINDEX INDEX %s%I.%I;\\n%s',
+        CASE WHEN i.indisunique OR i.indisprimary THEN 'CONCURRENTLY' ELSE '' END,
+        n.nspname,
+        idx.relname,
+        CASE WHEN ${major} >= 12 THEN 'CONCURRENTLY ' ELSE '' END,
+        n.nspname,
+        idx.relname,
+        pg_get_indexdef(i.indexrelid)||';'
+    ) AS source
 FROM pg_index i
 JOIN obj o ON o.oid = i.indrelid
+JOIN pg_class idx ON idx.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = idx.relnamespace
 WHERE i.indrelid = o.oid;
 `;
 }
@@ -297,5 +332,177 @@ SELECT
 FROM obj o
 JOIN pg_trigger t ON t.tgrelid = o.oid AND NOT t.tgisinternal
 LEFT JOIN pg_description d ON d.objoid = t.oid AND d.classoid = 'pg_trigger'::regclass AND d.objsubid = 0;
+`;
+}
+
+export function tablePrivilegesDdl(_version: string): string {
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
+),
+acl AS (
+  SELECT
+    o.schema_name,
+    o.table_name,
+    unnest(c.relacl) AS aclitem
+  FROM obj o
+  JOIN pg_class c ON c.oid = o.oid
+),
+parsed AS (
+  SELECT
+    schema_name,
+    table_name,
+    (split_part(aclitem::text, '=', 1))::text AS grantee_raw,
+    split_part(split_part(aclitem::text, '=', 2), '/', 1) AS privs,
+    split_part(split_part(aclitem::text, '=', 2), '/', 2) AS grantor
+  FROM acl
+),
+grantees AS (
+  SELECT
+    schema_name,
+    table_name,
+    CASE
+      WHEN grantee_raw = '' THEN 'public'
+      ELSE grantee_raw
+    END AS grantee,
+    privs,
+    grantor
+  FROM parsed
+),
+expanded AS (
+  SELECT
+    schema_name,
+    table_name,
+    grantee,
+    grantor,
+    unnest(string_to_array(privs, '')) AS privchar
+  FROM grantees
+),
+mapped AS (
+  SELECT
+    schema_name,
+    table_name,
+    grantee,
+    grantor,
+    CASE privchar
+      WHEN 'a' THEN 'INSERT'
+      WHEN 'r' THEN 'SELECT'
+      WHEN 'w' THEN 'UPDATE'
+      WHEN 'd' THEN 'DELETE'
+      WHEN 'D' THEN 'TRUNCATE'
+      WHEN 'x' THEN 'REFERENCES'
+      WHEN 't' THEN 'TRIGGER'
+      WHEN 'X' THEN 'EXECUTE'      -- not for tables, safe ignore
+      WHEN 'U' THEN 'USAGE'        -- not for tables, safe ignore
+      WHEN 'C' THEN 'CREATE'       -- schema-level, safe ignore
+      WHEN 'c' THEN 'CONNECT'      -- db-level, safe ignore
+      WHEN 'T' THEN 'TEMPORARY'    -- db-level, safe ignore
+      ELSE null
+    END AS privilege
+  FROM expanded
+)
+SELECT
+  format(
+    E'-- REVOKE %s ON TABLE %I.%I FROM %I;\\nGRANT %s ON TABLE %I.%I TO %I;',
+    string_agg(privilege, ', ' ORDER BY privilege),
+    schema_name,
+    table_name,
+    grantee,
+    string_agg(privilege, ', ' ORDER BY privilege),
+    schema_name,
+    table_name,
+    grantee
+  ) AS source
+FROM mapped
+WHERE privilege IS NOT NULL
+GROUP BY schema_name, table_name, grantee
+ORDER BY grantee;
+`;
+}
+
+export function tableColumnPrivilegesDdl(_version: string): string {
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
+),
+acl AS (
+  SELECT
+    o.schema_name,
+    o.table_name,
+    a.attname,
+    unnest(a.attacl) AS aclitem
+  FROM obj o
+  JOIN pg_attribute a ON a.attrelid = o.oid
+  WHERE a.attnum > 0 AND NOT a.attisdropped AND a.attacl IS NOT NULL
+),
+parsed AS (
+  SELECT
+    schema_name,
+    table_name,
+    attname,
+    (split_part(aclitem::text, '=', 1))::text AS grantee_raw,
+    split_part(split_part(aclitem::text, '=', 2), '/', 1) AS privs,
+    split_part(split_part(aclitem::text, '=', 2), '/', 2) AS grantor
+  FROM acl
+),
+grantees AS (
+  SELECT
+    schema_name,
+    table_name,
+    attname,
+    CASE WHEN grantee_raw = '' THEN 'public' ELSE grantee_raw END AS grantee,
+    privs,
+    grantor
+  FROM parsed
+),
+expanded AS (
+  SELECT
+    schema_name,
+    table_name,
+    attname,
+    grantee,
+    grantor,
+    unnest(string_to_array(privs, '')) AS privchar
+  FROM grantees
+),
+mapped AS (
+  SELECT
+    schema_name,
+    table_name,
+    attname,
+    grantee,
+    grantor,
+    CASE privchar
+      WHEN 'r' THEN 'SELECT'
+      WHEN 'w' THEN 'UPDATE'
+      WHEN 'x' THEN 'REFERENCES'
+      ELSE null
+    END AS privilege
+  FROM expanded
+)
+SELECT
+  format(
+    E'-- REVOKE %s (%I) ON TABLE %I.%I FROM %I;\\nGRANT %s (%I) ON TABLE %I.%I TO %I;',
+    string_agg(privilege, ', ' ORDER BY privilege),
+    attname,
+    schema_name,
+    table_name,
+    grantee,
+    string_agg(privilege, ', ' ORDER BY privilege),
+    attname,
+    schema_name,
+    table_name,
+    grantee
+  ) AS source
+FROM mapped
+WHERE privilege IS NOT NULL
+GROUP BY schema_name, table_name, attname, grantee
+ORDER BY grantee, attname;
 `;
 }

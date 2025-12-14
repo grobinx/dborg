@@ -5,6 +5,7 @@ import { TableRecord } from "./tablesView";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { PLUGIN_ID } from "../../PostgresPlugin";
 import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl } from "../../../common/ddl";
+import { tablePrivilegesDdl, tableColumnPrivilegesDdl } from "../../../common/ddl";
 
 const ddlTab = (
     session: IDatabaseSession,
@@ -74,6 +75,14 @@ const ddlTab = (
                         const { rows: ownerRows } = await session.query(tableOwnerDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (ownerRows.length > 0) {
                             ddl += "\n\n" + ownerRows[0].source;
+                        }
+                        const { rows: privRows } = await session.query(tablePrivilegesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (privRows.length > 0) {
+                            ddl += "\n\n" + privRows.map(r => r.source).join("\n");
+                        }
+                        const { rows: colPrivRows } = await session.query(tableColumnPrivilegesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        if (colPrivRows.length > 0) {
+                            ddl += "\n\n" + colPrivRows.map(r => r.source).join("\n");
                         }
                         const { rows: commentRows } = await session.query(tableCommentDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (commentRows.length > 0) {

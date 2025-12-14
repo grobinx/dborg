@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Paper } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Paper, Box } from "@mui/material";
 import { arrayTo, Column, ExportFormat, exportFormats, exportToClipboard } from "@renderer/utils/arrayTo";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
@@ -306,55 +306,73 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
             <DialogTitle>{t("copy-data-as-format", "Copy Data as {{format}}", { format: exportFormats[format].label })}</DialogTitle>
             <form onSubmit={handleFormSubmit}>
                 <DialogContent>
-                    {(formatOptionsMap[format] ?? []).map((opt, index) => {
-                        if (opt.type === "checkbox") {
-                            return (
-                                <InputDecorator key={opt.key} indicator={false}>
-                                    <BooleanField
-                                        value={!!options[opt.key]}
-                                        onChange={value => handleOptionChange(opt.key, value)}
-                                        label={t(`copy-data-dialog.${opt.key}`, opt.label as string)}
-                                        autoFocus={index === 0}
-                                    />
-                                </InputDecorator>
-                            );
-                        }
-                        if (opt.type === "select") {
-                            return (
-                                <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
-                                    <SelectField
-                                        value={options[opt.key] ?? opt.default}
-                                        options={opt.options.map((v: string) => ({ label: v, value: v }))}
-                                        onChange={value => handleOptionChange(opt.key, value)}
-                                        autoFocus={index === 0}
-                                    />
-                                </InputDecorator>
-                            );
-                        }
-                        if (opt.type === "number") {
-                            return (
-                                <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
-                                    <NumberField
-                                        value={options[opt.key] ?? opt.default}
-                                        onChange={value => handleOptionChange(opt.key, value)}
-                                        autoFocus={index === 0}
-                                    />
-                                </InputDecorator>
-                            );
-                        }
-                        if (opt.type === "text") {
-                            return (
-                                <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
-                                    <TextField
-                                        value={options[opt.key] ?? opt.default}
-                                        onChange={value => handleOptionChange(opt.key, value)}
-                                        autoFocus={index === 0}
-                                    />
-                                </InputDecorator>
-                            );
-                        }
-                        return null;
-                    })}
+                    {(() => {
+                        const optsForFormat = formatOptionsMap[format] ?? [];
+                        const booleanOpts = optsForFormat.filter((o: any) => o.type === "checkbox");
+                        const firstBooleanIndex = optsForFormat.findIndex((o: any) => o.type === "checkbox");
+
+                        return optsForFormat.map((opt: any, index: number) => {
+                            // W miejscu pierwszego booleana pokaż grupę wszystkich booleanów
+                            if (index === firstBooleanIndex && booleanOpts.length > 0) {
+                                return (
+                                    <Box sx={{ display: 'flex', gap: 8 }}>
+                                        {booleanOpts.map((bopt: any, bindex: number) => (
+                                            <InputDecorator key={bopt.key} indicator={false}>
+                                                <BooleanField
+                                                    value={!!options[bopt.key]}
+                                                    onChange={(value) => handleOptionChange(bopt.key, value)}
+                                                    label={t(`copy-data-dialog.${bopt.key}`, bopt.label as string)}
+                                                    autoFocus={firstBooleanIndex === 0 && bindex === 0}
+                                                />
+                                            </InputDecorator>
+                                        ))}
+                                    </Box>
+                                );
+                            }
+
+                            // Pozostałe booleany pomijamy (zostały wyrenderowane w grupie)
+                            if (opt.type === "checkbox") {
+                                return null;
+                            }
+
+                            // Render standardowych opcji
+                            if (opt.type === "select") {
+                                return (
+                                    <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
+                                        <SelectField
+                                            value={options[opt.key] ?? opt.default}
+                                            options={opt.options.map((v: string) => ({ label: v, value: v }))}
+                                            onChange={(value) => handleOptionChange(opt.key, value)}
+                                            autoFocus={index === 0}
+                                        />
+                                    </InputDecorator>
+                                );
+                            }
+                            if (opt.type === "number") {
+                                return (
+                                    <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
+                                        <NumberField
+                                            value={options[opt.key] ?? opt.default}
+                                            onChange={(value) => handleOptionChange(opt.key, value)}
+                                            autoFocus={index === 0}
+                                        />
+                                    </InputDecorator>
+                                );
+                            }
+                            if (opt.type === "text") {
+                                return (
+                                    <InputDecorator label={t(`copy-data-dialog.${opt.key}`, opt.label as string)} key={opt.key} indicator={false}>
+                                        <TextField
+                                            value={options[opt.key] ?? opt.default}
+                                            onChange={(value) => handleOptionChange(opt.key, value)}
+                                            autoFocus={index === 0}
+                                        />
+                                    </InputDecorator>
+                                );
+                            }
+                            return null;
+                        });
+                    })()}
                     <FormControl fullWidth>
                         <FormLabel>{t("preview", "Preview")}</FormLabel>
                         <Paper sx={{ height: 170 }}>
