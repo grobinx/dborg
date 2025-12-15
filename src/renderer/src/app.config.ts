@@ -269,6 +269,14 @@ settingsRegistry.register((context) => {
                         label: t('null-value-representation', 'Null Value Representation'),
                         description: t('null-value-representation-description', 'String representation for null values in the data grid.'),
                     },
+                    {
+                        type: 'boolean',
+                        storageGroup: 'dborg',
+                        storageKey: 'data_grid.active_highlight',
+                        category: t('appearance', 'Appearance'),
+                        label: t('settings.highlight-active-cell', 'Highlight active row and column'),
+                        description: t('settings.highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
+                    },
                 ],
                 groups: [
                     {
@@ -276,14 +284,6 @@ settingsRegistry.register((context) => {
                         title: t('settings.data-grid', 'Data grid'),
                         description: t('settings.data-grid-description', 'Settings for the main data grid display.'),
                         settings: [
-                            {
-                                type: 'boolean',
-                                storageGroup: 'dborg',
-                                storageKey: 'data_grid.active_highlight',
-                                category: t('appearance', 'Appearance'),
-                                label: t('settings.highlight-active-cell', 'Highlight active row and column'),
-                                description: t('settings.highlight-active-cell-description', 'Highlight the active row and column in the data grid.'),
-                            },
                             {
                                 type: 'boolean',
                                 storageGroup: 'dborg',

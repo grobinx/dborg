@@ -1350,7 +1350,7 @@ export const DataGrid = <T extends object>({
                                 className={clsx(
                                     "DataGrid-headerCell",
                                     classes,
-                                    mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                    active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
                                 )}
                                 style={{
                                     width: col.width || 150,
@@ -1367,7 +1367,7 @@ export const DataGrid = <T extends object>({
                                     className={clsx(
                                         "DataGrid-headerCellContent",
                                         classes,
-                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                        active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                     )}
                                 >
                                     <StyledLabel>
@@ -1457,7 +1457,7 @@ export const DataGrid = <T extends object>({
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const row = displayData[absoluteRowIndex];
-                        const isActiveRow = mode === "data" && active_highlight && absoluteRowIndex === selectedCell?.row;
+                        const isActiveRow = active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
 
@@ -1502,7 +1502,7 @@ export const DataGrid = <T extends object>({
                                     const absoluteColIndex = startColumn + localColIndex;
                                     const col = columnsState.current[absoluteColIndex];
                                     const colWidth = col.width || 150;
-                                    const isActiveColumn = mode === "data" && active_highlight && absoluteColIndex === selectedCell?.column;
+                                    const isActiveColumn = active_highlight && absoluteColIndex === selectedCell?.column;
                                     const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
                                     let columnDataType = (col.summary && groupingColumns.columns.length
                                         ? summaryOperationToBaseTypeMap[col.summary]
@@ -1622,7 +1622,7 @@ export const DataGrid = <T extends object>({
                                         classes,
                                         `data-type-${styleDataType}`,
                                         styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                        mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                        active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                     )}
                                     style={{
                                         width: col.width || 150,
@@ -1641,7 +1641,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                                active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             <StyledLabel>
@@ -1668,7 +1668,7 @@ export const DataGrid = <T extends object>({
                                                 classes,
                                                 `data-type-${styleDataType}`,
                                                 styleDataType === 'number' ? 'align-end' : styleDataType === 'boolean' ? 'align-center' : 'align-start',
-                                                mode === "data" && active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
+                                                active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
                                             {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}

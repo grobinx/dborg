@@ -234,7 +234,8 @@ export const SqlParametersDialog: React.FC<SqlParametersDialogProps> = ({
         patchRow(key, { isNull: checked, value: checked ? null : parseByType(row.rawInput, row.type) });
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = (event?: React.FormEvent) => {
+        if (event) event.preventDefault(); // Zapobiega przeładowaniu strony
         const out: SqlParametersValue = {};
         for (const r of rows) out[r.key] = { type: r.type, value: r.isNull ? null : r.value };
         
@@ -252,116 +253,124 @@ export const SqlParametersDialog: React.FC<SqlParametersDialogProps> = ({
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>{t("sqlParametersDialog.title", "Parametry zapytania SQL")}</DialogTitle>
-            <DialogContent dividers>
-                <Box mb={1}>
-                    <Typography variant="body2" color="text.secondary">
-                        {t("sqlParametersDialog.note", "Parameters with the same name are merged. The set value will be applied to all their occurrences.")}
-                    </Typography>
-                </Box>
-                <Table size="small">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>{t("sqlParametersDialog.parameter", "Parametr")}</TableCell>
-                            <TableCell>{t("sqlParametersDialog.type", "Type")}</TableCell>
-                            <TableCell>{t("sqlParametersDialog.value", "Value")}</TableCell>
-                            <TableCell>{t("sqlParametersDialog.null", "NULL")}</TableCell>
-                            <TableCell align="right">{t("sqlParametersDialog.occurrences", "Occur.")}</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {rows.map(r => (
-                            <TableRow key={r.key}>
-                                <TableCell sx={{ whiteSpace: "nowrap", fontFamily: "monospace" }}>
-                                    {r.label}
-                                </TableCell>
-                                <TableCell width={160}>
-                                    <InputDecorator indicator={false}>
-                                        <SelectField
-                                            value={r.type}
-                                            onChange={value => onTypeChange(r.key, value as ColumnBaseType)}
-                                            options={columnBaseTypes.map(t => ({ label: t, value: t }))}
-                                        />
-                                    </InputDecorator>
-                                </TableCell>
-                                <TableCell width={420}>
-                                    {r.type === "boolean" ? (
+            <form onSubmit={handleSubmit}>
+                <DialogTitle>{t("sqlParametersDialog.title", "Parametry zapytania SQL")}</DialogTitle>
+                <DialogContent dividers>
+                    <Box mb={1}>
+                        <Typography variant="body2" color="text.secondary">
+                            {t("sqlParametersDialog.note", "Parameters with the same name are merged. The set value will be applied to all their occurrences.")}
+                        </Typography>
+                    </Box>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>{t("sqlParametersDialog.parameter", "Parametr")}</TableCell>
+                                <TableCell>{t("sqlParametersDialog.type", "Type")}</TableCell>
+                                <TableCell>{t("sqlParametersDialog.value", "Value")}</TableCell>
+                                <TableCell>{t("sqlParametersDialog.null", "NULL")}</TableCell>
+                                <TableCell align="right">{t("sqlParametersDialog.occurrences", "Occur.")}</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {rows.map((parameter, index) => (
+                                <TableRow key={parameter.key}>
+                                    <TableCell sx={{ whiteSpace: "nowrap", fontFamily: "monospace" }}>
+                                        {parameter.label}
+                                    </TableCell>
+                                    <TableCell width={160}>
                                         <InputDecorator indicator={false}>
                                             <SelectField
-                                                value={String(r.value ?? false)}
-                                                onChange={value => onValueChange(r.key, value)}
-                                                options={[
-                                                    { label: "true", value: "true" },
-                                                    { label: "false", value: "false" }
-                                                ]}
-                                                disabled={r.isNull}
+                                                value={parameter.type}
+                                                onChange={value => onTypeChange(parameter.key, value as ColumnBaseType)}
+                                                options={columnBaseTypes.map(t => ({ label: t, value: t }))}
                                             />
                                         </InputDecorator>
-                                    ) : r.type === "object" || r.type === "array" ? (
+                                    </TableCell>
+                                    <TableCell width={420}>
+                                        {parameter.type === "boolean" ? (
+                                            <InputDecorator indicator={false}>
+                                                <SelectField
+                                                    value={String(parameter.value ?? false)}
+                                                    onChange={value => onValueChange(parameter.key, value)}
+                                                    options={[
+                                                        { label: "true", value: "true" },
+                                                        { label: "false", value: "false" }
+                                                    ]}
+                                                    disabled={parameter.isNull}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        ) : parameter.type === "object" || parameter.type === "array" ? (
+                                            <InputDecorator indicator={false}>
+                                                <TextField
+                                                    disabled={parameter.isNull}
+                                                    value={parameter.rawInput}
+                                                    onChange={value => onValueChange(parameter.key, value)}
+                                                    placeholder={parameter.type === "array" ? "[1, 2, 3]" : '{"a": 1}'}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        ) : parameter.type === "number" ? (
+                                            <InputDecorator indicator={false}>
+                                                <NumberField
+                                                    disabled={parameter.isNull}
+                                                    value={Number.isNaN(Number(parameter.rawInput)) ? null : Number(parameter.rawInput)}
+                                                    onChange={value => onValueChange(parameter.key, value !== null ? String(value) : "")}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        ) : parameter.type === "datetime" ? (
+                                            <InputDecorator indicator={false}>
+                                                <TextField
+                                                    disabled={parameter.isNull}
+                                                    value={parameter.rawInput}
+                                                    onChange={value => onValueChange(parameter.key, value)}
+                                                    placeholder={t("sqlParametersDialog.datetime.placeholder", "eg. {{date}}", { date: new Date().toLocaleDateString() })}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        ) : parameter.type === "binary" ? (
+                                            <InputDecorator indicator={false}>
+                                                <TextField
+                                                    disabled={parameter.isNull}
+                                                    value={parameter.rawInput}
+                                                    onChange={value => onValueChange(parameter.key, value)}
+                                                    placeholder={t("sqlParametersDialog.binary.placeholder", "eg. base64-encoded data")}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        ) : (
+                                            <InputDecorator indicator={false}>
+                                                <TextField
+                                                    disabled={parameter.isNull}
+                                                    value={parameter.rawInput ?? ""}
+                                                    onChange={value => onValueChange(parameter.key, value)}
+                                                    placeholder={t("sqlParametersDialog.text.placeholder", "Enter text")}
+                                                    autoFocus={index === 0}
+                                                />
+                                            </InputDecorator>
+                                        )}
+                                    </TableCell>
+                                    <TableCell width={90}>
                                         <InputDecorator indicator={false}>
-                                            <TextField
-                                                disabled={r.isNull}
-                                                value={r.rawInput}
-                                                onChange={value => onValueChange(r.key, value)}
-                                                placeholder={r.type === "array" ? "[1, 2, 3]" : '{"a": 1}'}
+                                            <BooleanField
+                                                value={parameter.isNull}
+                                                onChange={value => onNullToggle(parameter.key, value ?? false)}
+                                                label="NULL"
                                             />
                                         </InputDecorator>
-                                    ) : r.type === "number" ? (
-                                        <InputDecorator indicator={false}>
-                                            <NumberField
-                                                disabled={r.isNull}
-                                                value={Number.isNaN(Number(r.rawInput)) ? null : Number(r.rawInput)}
-                                                onChange={value => onValueChange(r.key, value !== null ? String(value) : "")}
-                                            />
-                                        </InputDecorator>
-                                    ) : r.type === "datetime" ? (
-                                        <InputDecorator indicator={false}>
-                                            <TextField
-                                                disabled={r.isNull}
-                                                value={r.rawInput}
-                                                onChange={value => onValueChange(r.key, value)}
-                                                placeholder={t("sqlParametersDialog.datetime.placeholder", "eg. {{date}}", { date: new Date().toLocaleDateString() })}
-                                            />
-                                        </InputDecorator>
-                                    ) : r.type === "binary" ? (
-                                        <InputDecorator indicator={false}>
-                                            <TextField
-                                                disabled={r.isNull}
-                                                value={r.rawInput}
-                                                onChange={value => onValueChange(r.key, value)}
-                                                placeholder={t("sqlParametersDialog.binary.placeholder", "eg. base64-encoded data")}
-                                            />
-                                        </InputDecorator>
-                                    ) : (
-                                        <InputDecorator indicator={false}>
-                                            <TextField
-                                                disabled={r.isNull}
-                                                value={r.rawInput ?? ""}
-                                                onChange={value => onValueChange(r.key, value)}
-                                                placeholder={t("sqlParametersDialog.text.placeholder", "Enter text")}
-                                            />
-                                        </InputDecorator>
-                                    )}
-                                </TableCell>
-                                <TableCell width={90}>
-                                    <InputDecorator indicator={false}>
-                                        <BooleanField
-                                            value={r.isNull}
-                                            onChange={value => onNullToggle(r.key, value ?? false)}
-                                            label="NULL"
-                                        />
-                                    </InputDecorator>
-                                </TableCell>
-                                <TableCell align="right">{r.count}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Anuluj</Button>
-                <Button onClick={handleSubmit} color="success">Zastosuj</Button>
-            </DialogActions>
+                                    </TableCell>
+                                    <TableCell align="right">{parameter.count}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={onClose}>Anuluj</Button>
+                    <Button type="submit" color="success">Zastosuj</Button>
+                </DialogActions>
+            </form>
         </Dialog >
     );
 };

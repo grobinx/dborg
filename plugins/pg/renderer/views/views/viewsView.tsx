@@ -63,6 +63,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                     id: cid("views-grid"),
                     type: "grid",
                     mode: "defined",
+                    uniqueField: "view_name",
                     rows: async () => {
                         const { rows } = await session.query<ViewRecord>(
                             `
