@@ -221,7 +221,7 @@ const escapeCSV = (value: string, dataType: ColumnDataType, delimiter: string = 
 };
 
 const escapeTSV = (value: string, _dataType: ColumnDataType): string => {
-    return value.replace(/\t/g, '    ');;
+    return value.replace(/\t/g, '    ').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
 };
 
 /**
