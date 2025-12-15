@@ -43,7 +43,7 @@ const databaseSizeTab = (session: IDatabaseSession, _database: string | null): I
                             case 
                                 when c.relkind = 'r' then 'table'
                                 when c.relkind = 'm' then 'materialized view'
-                                else c.relkind
+                                else c.relkind::varchar
                             end AS relkind,
                             pg_total_relation_size(c.oid) AS total_size_bytes,
                             pg_size_pretty(pg_total_relation_size(c.oid)) AS total_size,
