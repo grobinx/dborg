@@ -182,7 +182,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     onChange={(status) => setDataGridStatus(status)}
                     pivot={pivot}
                     pivotColumns={pivotColumns}
-                    uniqueField={slot.uniqueFields}
+                    uniqueField={slot.uniqueField}
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
                 />
                 )}

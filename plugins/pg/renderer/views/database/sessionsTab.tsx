@@ -203,7 +203,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             { key: "query", label: t("query", "Query"), width: 400, dataType: "string" },
                         ] as ColumnDefinition[],
                         autoSaveId: `sessions-grid-${session.profile.sch_id}`,
-                        status: ["data-rows"],
+                        status: ["data-rows", "position"],
                         getRowStyle: (row: { [key: string]: any }, index, theme: Theme): React.CSSProperties => {
                             const sessionRow = row as SessionRecord;
                             if (sessionRow.is_current_session) {

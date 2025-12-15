@@ -565,7 +565,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Unikalne pole do identyfikacji wierszy (opcjonalnie).
      */
-    uniqueFields?: string;
+    uniqueField?: string;
     /**
      * Funkcja zwracająca style dla danego wiersza.
      */
