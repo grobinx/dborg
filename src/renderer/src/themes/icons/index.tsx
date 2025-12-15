@@ -83,6 +83,7 @@ export interface ThemeIcons {
     Warning: IconWrapperFC;
     Hint: IconWrapperFC;
     Info: IconWrapperFC;
+    Log: IconWrapperFC;
     Success: IconWrapperFC;
     Notifications: IconWrapperFC;
     NewConnection: IconWrapperFC;

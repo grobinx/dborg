@@ -847,18 +847,6 @@ export const DataGrid = <T extends object>({
         });
     }, [displayData.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
-    // Ustawienie selectedCell na pierwszy wiersz po odfiltrowaniu
-    // useEffect(() => {
-    //     console.debug("DataGrid set initial selected cell");
-    //     if (filteredDataState.length > 0) {
-    //         if (!selectedCellRef.current) {
-    //             updateSelectedCell({ row: 0, column: 0 });
-    //         }
-    //     } else if (selectedCellRef.current) {
-    //         updateSelectedCell(null);
-    //     }
-    // }, [filteredDataState.length, rowHeight, columnsState.current, updateSelectedCell]);
-
     const totalHeight = displayData.length * rowHeight;
     const { startRow, endRow } = calculateVisibleRows(displayData.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);

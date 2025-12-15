@@ -27,17 +27,20 @@ import { BaseList } from "../inputs/base/BaseList";
 import { FormattedText } from "../useful/FormattedText";
 import { handleListNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
+import ButtonGroup from "../buttons/ButtonGroup";
 
 interface ConsoleLogState {
     showTime: boolean;
     search: string;
     displayLogs: LogEntry[];
     selectedLogId: string | null;
+    levelFilter: LogLevel[];
     toggleShowTime: () => void;
     setShowTime: (show: boolean) => void;
     setSearch: (search: string) => void;
     setDisplayLogs: (logs: LogEntry[]) => void;
     setSelectedLogId: (id: string | null) => void;
+    setLevelFilter: (levels: LogLevel[]) => void;
 }
 
 export const useConsoleLogState = create<ConsoleLogState>((set, get) => ({
@@ -45,11 +48,13 @@ export const useConsoleLogState = create<ConsoleLogState>((set, get) => ({
     search: "",
     displayLogs: [],
     selectedLogId: null,
+    levelFilter: [],
     toggleShowTime: () => set({ showTime: !get().showTime }),
     setShowTime: (show: boolean) => set({ showTime: show }),
     setSearch: (search: string) => set({ search: search }),
     setDisplayLogs: (logs: LogEntry[]) => set({ displayLogs: logs }),
     setSelectedLogId: (id: string | null) => set({ selectedLogId: id }),
+    setLevelFilter: (levels: LogLevel[]) => set({ levelFilter: levels }),
 }));
 
 export interface ConsoleLogPanelProps extends TabPanelContentOwnProps {
@@ -78,6 +83,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     const [listItemSize, setListItemSize] = React.useState<number>(itemSize ?? ((fontSize + 8) * 1.2));
     const [searchDelay] = useSetting<number>("app", "search.delay");
     const [detailLogId, setDetailLogId] = React.useState<string | null>(null);
+    const levelFilter = useConsoleLogState(state => state.levelFilter);
 
     useEffect(() => {
         const newHeight = itemSize ?? fontSize * 1.5;
@@ -85,13 +91,16 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
     }, [fontSize, monospaceFontFamily, itemSize]);
 
     useEffect(() => {
-        if ((search ?? "").trim() === "") {
+        if ((search ?? "").trim() === "" && levelFilter.length === 0) {
             setDisplayLogs(logs);
             setSelectedLogId(logs.length > 0 ? logs[logs.length - 1].id : null);
         } else {
             const debounced = debounce(() => {
                 const parts = search.toLowerCase().split(' ').map(v => v.trim()).filter(v => v !== '');
                 const searchedLogs = logs.filter(entry => {
+                    if (levelFilter.length > 0 && !levelFilter.includes(entry.level)) {
+                        return false;
+                    }
                     const logDetails = formatLogDetails(entry)?.toLowerCase();
                     return parts.every(value =>
                         logDetails?.includes(value)
@@ -104,7 +113,7 @@ export const ConsoleLogPanel: React.FC<ConsoleLogPanelProps> = (props) => {
             return () => debounced.cancel();
         }
         return;
-    }, [logs, search, searchDelay]);
+    }, [logs, search, levelFilter, searchDelay]);
 
     React.useEffect(() => {
         const debounced = debounce(() => {
@@ -238,6 +247,8 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
     const displayLogs = useConsoleLogState(state => state.displayLogs);
     const selectedLogId = useConsoleLogState(state => state.selectedLogId);
     const setSelectedLogId = useConsoleLogState(state => state.setSelectedLogId);
+    const levelFilter = useConsoleLogState(state => state.levelFilter);
+    const setLevelFilter = useConsoleLogState(state => state.setLevelFilter);
 
     // Obsługa zmiany zaznaczenia
     const handleLogLevelChange = (value: LogLevel) => {
@@ -356,8 +367,55 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
                             </div>
                         );
                     }}
+                    tooltip={t("filter-log-levels", "Filter log levels")}
                 />
             </InputDecorator>
+            <ButtonGroup>
+                {loggedLevels?.some(level => level === 'error') && (
+                    <Tooltip title={t("consoleLogs-filter-errors", "Filter errors")}>
+                        <ToolButton
+                            size="small"
+                            toggle="error"
+                            onChange={value => setLevelFilter([...levelFilter.filter(level => level !== 'error'), value].filter(Boolean) as LogLevel[])}
+                        >
+                            <theme.icons.Error />
+                        </ToolButton>
+                    </Tooltip>
+                )}
+                {loggedLevels?.some(level => level === 'warn') && (
+                    <Tooltip title={t("consoleLogs-filter-warnings", "Filter warnings")}>
+                        <ToolButton
+                            size="small"
+                            toggle="warn"
+                            onChange={value => setLevelFilter([...levelFilter.filter(level => level !== 'warn'), value].filter(Boolean) as LogLevel[])}
+                        >
+                            <theme.icons.Warning />
+                        </ToolButton>
+                    </Tooltip>
+                )}
+                {loggedLevels?.some(level => level === 'log') && (
+                    <Tooltip title={t("consoleLogs-filter-log", "Filter log")}>
+                        <ToolButton
+                            size="small"
+                            toggle="log"
+                            onChange={value => setLevelFilter([...levelFilter.filter(level => level !== 'log'), value].filter(Boolean) as LogLevel[])}
+                        >
+                            <theme.icons.Log style={{ color: getLogLevelColor('log', theme.palette) }} />
+                        </ToolButton>
+                    </Tooltip>
+                )}
+                {loggedLevels?.some(level => level === 'info') && (
+                    <Tooltip title={t("consoleLogs-filter-info", "Filter info")}>
+                        <ToolButton
+                            size="small"
+                            toggle="info"
+                            onChange={value => setLevelFilter([...levelFilter.filter(level => level !== 'info'), value].filter(Boolean) as LogLevel[])}
+                        >
+                            <theme.icons.Info style={{ color: getLogLevelColor('info', theme.palette) }} />
+                        </ToolButton>
+                    </Tooltip>
+                )}
+            </ButtonGroup>
             <Tooltip title={t("consoleLogs-clear-all", "Clear console logs")}>
                 <ToolButton
                     size="small"

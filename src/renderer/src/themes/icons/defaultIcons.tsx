@@ -51,6 +51,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Warning: (props) => <IconWrapper {...props} className="warning"><MuiIcons.WarningAmberOutlined fontSize="inherit" /></IconWrapper>,
             Hint: (props) => <IconWrapper {...props} className="hint"><MuiIcons.LightbulbOutlined fontSize="inherit" /></IconWrapper>,
             Info: (props) => <IconWrapper {...props} className="info"><MuiIcons.InfoOutlined fontSize="inherit" /></IconWrapper>,
+            Log: (props) => <IconWrapper {...props} className="log"><MuiIcons.DescriptionOutlined fontSize="inherit" /></IconWrapper>,
             Success: (props) => <IconWrapper {...props} className="success"><MuiIcons.CheckCircleOutline fontSize="inherit" /></IconWrapper>,
             Notifications: (props) => <IconWrapper {...props} className="notifications"><MuiIcons.NotificationsOutlined fontSize="inherit" /></IconWrapper>,
             ConnectionList: (props) => <IconWrapper {...props} className="connection-list"><BookDatabase fontSize="inherit" /></IconWrapper>,
