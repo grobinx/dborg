@@ -438,6 +438,7 @@ export interface ITabSlot extends ICustomSlot {
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
+     * Nie zadziała jeśli w toolBar jest Action lub Actions, nie id akcji z obiektu. Czyli albo albo.
      */
     actionSlotId?: string;
     /**

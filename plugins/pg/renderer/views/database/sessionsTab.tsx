@@ -64,6 +64,20 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     let selectedSession: SessionRecord | null = null;
     let hasPgBackendMemoryContexts: boolean = false;
     let hasHeapBlksWritten: boolean | null = null;
+    let isSuperuser: boolean = false;
+
+    async function checkSuperuser() {
+        try {
+            const { rows } = await session.query<{ is_superuser: boolean }>(
+                `SELECT current_setting('is_superuser')::boolean AS is_superuser`
+            );
+            isSuperuser = rows[0]?.is_superuser ?? false;
+        } catch {
+            isSuperuser = false;
+        }
+    }
+
+    checkSuperuser();
 
     async function ensureCapabilities() {
         try {
@@ -153,12 +167,19 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         },
                         rows: async () => {
                             selectedSession = null;
+                            // Jeśli superuser, pobierz sesje ze wszystkich baz, inaczej tylko z bieżącej
+                            const whereClause = isSuperuser 
+                                ? '' 
+                                : `WHERE a.datname = $1`;
+                            const params = isSuperuser ? [] : [database];
+
                             const { rows } = await session.query<SessionRecord>(
                                 `
                                 SELECT 
                                     a.pid,
                                     a.usename,
                                     a.application_name,
+                                    a.datname,
                                     coalesce(case when a.client_hostname = '' then null else a.client_hostname end, a.client_addr::text)||':'||a.client_port as client_addr,
                                     a.client_port,
                                     a.backend_start,
@@ -176,10 +197,10 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                        AND bl.locktype = al.locktype) as blocking_pids,
                                     (a.pid = pg_backend_pid()) as is_current_session
                                 FROM pg_catalog.pg_stat_activity a
-                                WHERE a.datname = $1
+                                ${whereClause}
                                 ORDER BY state_duration desc nulls last, state_change desc
                                 `,
-                                [database]
+                                params
                             );
                             return rows;
                         },
@@ -187,6 +208,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             { key: "pid", label: t("pid", "PID"), width: 80, dataType: "number" },
                             { key: "usename", label: t("user", "User"), width: 120, dataType: "string" },
                             { key: "application_name", label: t("application", "Application"), width: 150, dataType: "string" },
+                            ...(isSuperuser ? [
+                                { key: "datname", label: t("database", "Database"), width: 150, dataType: "string" },
+                            ] : []),
                             { key: "client_addr", label: t("client-address", "Client Address"), width: 130, dataType: "string" },
                             { key: "backend_start", label: t("backend-start", "Backend Start"), width: 170, dataType: "datetime" },
                             { key: "state", label: t("state", "State"), width: 100, dataType: "string" },
@@ -235,6 +259,22 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             SELECT 
                                                 l.locktype,
                                                 c.relname as relation,
+                                                n.nspname as schema_name,
+                                                CASE c.relkind 
+                                                    WHEN 'r' THEN 'TABLE'
+                                                    WHEN 'p' THEN 'PARTITIONED TABLE'
+                                                    WHEN 'i' THEN 'INDEX'
+                                                    WHEN 'm' THEN 'MATERIALIZED VIEW'
+                                                    WHEN 'S' THEN 'SEQUENCE'
+                                                    WHEN 'v' THEN 'VIEW'
+                                                    WHEN 'c' THEN 'COMPOSITE TYPE'
+                                                    WHEN 't' THEN 'TOAST TABLE'
+                                                    WHEN 'f' THEN 'FOREIGN TABLE'
+                                                    ELSE c.relkind::text
+                                                END as object_type,
+                                                pg_catalog.pg_get_userbyid(c.relowner) as owner_name,
+                                                tbs.spcname as tablespace_name,
+                                                am.amname as access_method,
                                                 l.page,
                                                 l.tuple,
                                                 l.virtualxid,
@@ -248,6 +288,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                                 l.fastpath
                                             FROM pg_catalog.pg_locks l
                                             LEFT JOIN pg_catalog.pg_class c ON c.oid = l.relation
+                                            LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                                            LEFT JOIN pg_catalog.pg_tablespace tbs ON c.reltablespace = tbs.oid
+                                            LEFT JOIN pg_catalog.pg_am am ON c.relam = am.oid
                                             WHERE l.pid = $1
                                             ORDER BY l.granted, l.locktype
                                             `,
@@ -257,15 +300,20 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     },
                                     columns: [
                                         { key: "locktype", label: t("lock-type", "Lock Type"), width: 120, dataType: "string" },
-                                        { key: "relation", label: t("relation", "Relation"), width: 150, dataType: "string" },
-                                        { key: "mode", label: t("mode", "Mode"), width: 180, dataType: "string" },
+                                        { key: "relation", label: t("relation", "Relation"), width: 180, dataType: "string" },
+                                        { key: "schema_name", label: t("schema", "Schema"), width: 140, dataType: "string" },
+                                        { key: "object_type", label: t("type", "Type"), width: 160, dataType: "string" },
+                                        { key: "owner_name", label: t("owner", "Owner"), width: 120, dataType: "string" },
+                                        { key: "access_method", label: t("access-method", "Access Method"), width: 130, dataType: "string" },
+                                        { key: "tablespace_name", label: t("tablespace", "Tablespace"), width: 140, dataType: "string" },
+                                        { key: "mode", label: t("mode", "Mode"), width: 120, dataType: "string" },
                                         { key: "granted", label: t("granted", "Granted"), width: 80, dataType: "boolean" },
                                         { key: "virtualxid", label: t("virtual-xid", "Virtual XID"), width: 120, dataType: "string" },
                                         { key: "transactionid", label: t("transaction-id", "Transaction ID"), width: 120, dataType: "number" },
                                         { key: "fastpath", label: t("fastpath", "Fastpath"), width: 80, dataType: "boolean" },
                                     ] as ColumnDefinition[],
                                     autoSaveId: `locks-grid-${session.profile.sch_id}`,
-                                    status: ["data-rows"] as any, // Replace with correct DataGridStatusPart[] if available
+                                    status: ["data-rows"] as any,
                                 }),
                             },
                         },
@@ -319,7 +367,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                         { key: "state", label: t("state", "State"), width: 100, dataType: "string" },
                                     ] as ColumnDefinition[],
                                     autoSaveId: `transaction-grid-${session.profile.sch_id}`,
-                                    status: ["data-rows"] as any, // Replace with correct DataGridStatusPart[] if available
+                                    status: ["data-rows"] as any,
                                 }),
                             },
                         },
