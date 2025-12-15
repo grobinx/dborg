@@ -15,6 +15,8 @@ import { ToUpperCaseAction } from "./actions/ToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay from "../useful/LoadingOverlay";
+import { Copy } from "react-bootstrap-icons";
+import { CopyCodeAs } from "./actions/CopyCodeAs";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
@@ -143,6 +145,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [language, setLanguage] = useState<EditorLanguageId>(initialLanguage);
     const [insertSpaces, setInsertSpaces] = useState<boolean>(initialInsertSpaces);
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
+    const [dialog, setDialog] = useState<React.ReactNode>(null);
 
     React.useEffect(() => {
         setLanguage(initialLanguage);
@@ -220,6 +223,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         // Dodaj akcje
         editor.addAction(ToLowerCaseAction(t));
         editor.addAction(ToUpperCaseAction(t));
+        editor.addAction(CopyCodeAs((dialog) => setDialog(dialog)));
 
         // Ustaw początkowy język modelu na podstawie state
         const model = editor.getModel();
@@ -409,8 +413,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                         ],
                     }}
                 />
-            )
-            }
+            )}
+            {dialog}
         </Stack >
     );
 };

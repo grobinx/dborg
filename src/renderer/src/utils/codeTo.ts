@@ -726,17 +726,15 @@ export function codeTo(text: string, options: CodeToCodeOptions): string {
         result += `${config.stringDelimiter}${escaped}${config.stringDelimiter}`;
     } else {
         // Multiple lines concatenation
-        const escapedLines = lines.map(line => escapeStandardString(line, config));
+        const escapedLines = lines.map(line => escapeStandardString(line.replace(/\r\n?$/, ''), config)); // Trim to remove unwanted newlines
         
         const parts = escapedLines.map((line, i) => {
             const prefix = i === 0 ? '' : indent;
             const isLastLine = i === escapedLines.length - 1;
             
             if (config.lineBreakOutsideDelimiter && addLineBreaks && !isLastLine) {
-                // Line break outside: 'text' || CHR(10) ||
                 return `${prefix}${config.stringDelimiter}${line}${config.stringDelimiter} ${config.concatenation} ${lineBreak} ${config.concatenation}`;
             } else {
-                // Line break inside: "text\n"
                 const lineBreakStr = (addLineBreaks && !isLastLine) ? lineBreak : '';
                 return `${prefix}${config.stringDelimiter}${line}${lineBreakStr}${config.stringDelimiter}`;
             }
