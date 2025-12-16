@@ -15,6 +15,7 @@ import { ChartCheckpoints } from "./activityCharts/ChartCheckpoints";
 import { ChartBgwriterBuffers } from "./activityCharts/ChartBgwriterBuffers";
 import { ChartCheckpointTimes } from "./activityCharts/ChartCheckpointTimes";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { ProfileRecord } from "src/api/entities";
 
 export interface ActivityRecord {
     snapshot: number;
@@ -106,7 +107,7 @@ const activityTab = (
     maximizedCharts = chartList.map(c => c.key).filter(key => !minimizedCharts.includes(key));
 
     // Persisted state key per session/profile
-    const storageKey = `dbActivityCharts:${session.info.uniqueId}`;
+    const storageKey = `dbActivityCharts:${(session.getUserData("profile") as ProfileRecord).sch_id}`;
 
     const saveChartState = () => {
         try {
