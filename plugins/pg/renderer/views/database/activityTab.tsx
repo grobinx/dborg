@@ -2,7 +2,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, ICopyData, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Grid2 as Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid2 as Grid, Stack, Typography, useTheme } from "@mui/material";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { exportToClipboard } from "@renderer/utils/arrayTo";
 import { CustomTooltip } from "./actiityCharts/CustomTooltip";
@@ -19,10 +19,11 @@ import { ChartWaitEvents } from "./actiityCharts/ChartWaitEvents";
 import { ChartCheckpoints } from "./actiityCharts/ChartCheckpoints";
 import { ChartBgwriterBuffers } from "./actiityCharts/ChartBgwriterBuffers";
 import { ChartCheckpointTimes } from "./actiityCharts/ChartCheckpointTimes";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 export interface ActivityRecord {
     snapshot: number;
-    
+
     datid: number;
     datname: string;
     numbackends: number;
@@ -74,9 +75,10 @@ const activityTab = (
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let activityRows: ActivityRecord[] = [];
-    let snapshotSize = 50 + 1;
+    let snapshotSize = 30 + 1;
     let snapshotCounter = 0;
     let maxConnections = 0; // Dodaj zmienną dla max_connections
+    let minimizedCharts: string[] = ["bgwriter-times", "conflicts", "wait-events", "bgwriter-checkpoints"];
 
     const num = (v: any) => {
         const n = typeof v === "number" ? v : Number(v);
@@ -209,12 +211,37 @@ const activityTab = (
         return padded;
     };
 
-    // Wykresy
+    // Funkcja do przełączania minimalizacji wykresu
+    const toggleMinimized = (chartKey: string, refresh: (id: string) => void) => {
+        if (minimizedCharts.includes(chartKey)) {
+            minimizedCharts = minimizedCharts.filter(k => k !== chartKey);
+        } else {
+            minimizedCharts = [...minimizedCharts, chartKey];
+        }
+        refresh(cid("database-activity-charts"));
+    };
+
     const activityCharts = (): IRenderedSlot => ({
         id: cid("database-activity-charts"),
         type: "rendered",
-        render: ({ refresh: _ }) => {
+        render: ({ refresh }) => {
             const theme = useTheme();
+
+            // Lista wykresów do wyświetlenia
+            const chartList = [
+                { key: "numbackends", title: t("numbackends", "Active Connections"), shortTitle: t("numbackends-short", "Conns"), component: ChartNumBackends, props: { maxConnections } },
+                { key: "sessions", title: t("sessions", "Active Sessions"), shortTitle: t("sessions-short", "Sess"), component: ChartSessions },
+                { key: "transactions", title: t("transactions", "Transactions (commit/rollback)"), shortTitle: t("transactions-short", "Txns"), component: ChartTransactions },
+                { key: "blocks", title: t("blocks", "Blocks Read/Hit"), shortTitle: t("blocks-short", "Blocks"), component: ChartBlocks },
+                { key: "tuples-read", title: t("tuples-read", "Tuples (returned/fetched)"), shortTitle: t("tuples-read-short", "TuplesR"), component: ChartTuplesRead },
+                { key: "tuples-write", title: t("tuples-write", "Tuples (inserted/updated/deleted)"), shortTitle: t("tuples-write-short", "TuplesW"), component: ChartTuplesWrite },
+                { key: "conflicts", title: t("conflicts", "Conflicts / Deadlocks"), shortTitle: t("conflicts-short", "Conflicts"), component: ChartConflicts },
+                { key: "temp-files", title: t("temp-files", "Temp Files / Bytes"), shortTitle: t("temp-files-short", "TempFiles"), component: ChartTempFiles },
+                { key: "wait-events", title: t("wait-events", "Wait Events (All Types)"), shortTitle: t("wait-events-short", "WEvnts"), component: ChartWaitEvents },
+                { key: "bgwriter-checkpoints", title: t("bgwriter-checkpoints", "Checkpoints (timed/req)"), shortTitle: t("bgwriter-checkpoints-short", "ChkPnts"), component: ChartCheckpoints },
+                { key: "bgwriter-buffers", title: t("bgwriter-buffers", "BGWriter Buffers"), shortTitle: t("bgwriter-buffers-short", "BGWr Buffs"), component: ChartBgwriterBuffers },
+                { key: "bgwriter-times", title: t("bgwriter-times", "Checkpoint Times (ms)"), shortTitle: t("bgwriter-times-short", "ChkPntTms"), component: ChartCheckpointTimes },
+            ];
 
             const data = buildTimelineData(activityRows, (r: ActivityRecord, index: number) => {
                 const prev = index > 0 ? activityRows[index - 1] : null;
@@ -259,61 +286,58 @@ const activityTab = (
                 };
             }).slice(-snapshotSize + 1);
 
+            const bigCharst = chartList.filter(c => !minimizedCharts.includes(c.key));
+            const gridSide = bigCharst.length <= 4 ? 6 : bigCharst.length <= 8 ? 3 : 4;
+
             return (
-                <Grid
-                    container
-                    spacing={24}
-                    sx={{ padding: 8, width: "100%", height: "100%", overflowY: "auto" }}
-                >
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("numbackends", "Active Connections")}</Typography>
-                        <ChartNumBackends minimized={false} data={data} maxConnections={maxConnections} />
+                <Stack direction="column" sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
+                    <Grid container spacing={8} sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
+                        {/* Pozostałe wykresy */}
+                        {bigCharst.map(chart => {
+                            const ChartComponent = chart.component;
+                            return (
+                                <Grid key={chart.key} size={{ xs: 12, sm: 6, md: gridSide, lg: gridSide, xl: gridSide }}>
+                                    <Typography variant="body1" sx={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <ToolButton
+                                            size="small"
+                                            onClick={() => toggleMinimized(chart.key, refresh)}
+                                        >
+                                            <theme.icons.Pinned color="primary" />
+                                        </ToolButton>
+                                        {chart.title}
+                                    </Typography>
+                                    <ChartComponent minimized={false} data={data} {...(chart.props || {})} />
+                                </Grid>
+                            );
+                        })}
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("sessions", "Active Sessions")}</Typography>
-                        <ChartSessions minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("transactions", "Transactions (commit/rollback)")}</Typography>
-                        <ChartTransactions minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("blocks", "Blocks Read/Hit")}</Typography>
-                        <ChartBlocks minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("tuples-read", "Tuples (returned/fetched)")}</Typography>
-                        <ChartTuplesRead minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("tuples-write", "Tuples (inserted/updated/deleted)")}</Typography>
-                        <ChartTuplesWrite minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("conflicts", "Conflicts / Deadlocks")}</Typography>
-                        <ChartConflicts minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("temp-files", "Temp Files / Bytes")}</Typography>
-                        <ChartTempFiles minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("wait-events", "Wait Events (All Types)")}</Typography>
-                        <ChartWaitEvents minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("bgwriter-checkpoints", "Checkpoints (timed/req)")}</Typography>
-                        <ChartCheckpoints minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("bgwriter-buffers", "BGWriter Buffers")}</Typography>
-                        <ChartBgwriterBuffers minimized={false} data={data} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
-                        <Typography variant="body1">{t("bgwriter-times", "Checkpoint Times (ms)")}</Typography>
-                        <ChartCheckpointTimes minimized={false} data={data} />
-                    </Grid>
-                </Grid>
+
+                    {/* Zminimalizowane wykresy po prawej */}
+                    {minimizedCharts.length > 0 && (
+                        <Stack direction="row" sx={{ gap: 8, padding: 8, height: "15%" }}>
+                            {minimizedCharts.map(chartKey => {
+                                const chart = chartList.find(c => c.key === chartKey);
+                                if (!chart) return null;
+                                const ChartComponent = chart.component;
+                                return (
+                                    <Box key={chart.key} sx={{ width: `${100 / chartList.length}%`, height: "100%" }}>
+                                        <Typography variant="caption" sx={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <ToolButton
+                                                size="small"
+                                                onClick={() => toggleMinimized(chartKey, refresh)}
+                                                dense
+                                            >
+                                                <theme.icons.Pin color="error" />
+                                            </ToolButton>
+                                            {chart.shortTitle}
+                                        </Typography>
+                                        <ChartComponent minimized={true} data={data} {...(chart.props || {})} />
+                                    </Box>
+                                );
+                            })}
+                        </Stack>
+                    )}
+                </Stack>
             );
         }
     });
@@ -349,9 +373,9 @@ const activityTab = (
                     onTick: async (refresh) => {
                         try {
                             await fetchDatabaseActivityData(),
-                            await fetchBackendActivityData(),
-                            await fetchBgWriterData(),
-                            refresh(cid("database-activity-charts"));
+                                await fetchBackendActivityData(),
+                                await fetchBgWriterData(),
+                                refresh(cid("database-activity-charts"));
                         } catch (error) {
                             console.error("Error fetching activity data:", error);
                         }

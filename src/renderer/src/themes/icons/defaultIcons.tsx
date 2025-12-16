@@ -162,6 +162,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             Sessions: (props) => <IconWrapper {...props} className="sessions"><MuiIcons.CableOutlined fontSize="inherit" /></IconWrapper>,
             Storage: (props) => <IconWrapper {...props} className="storage"><BsIcons.BoundingBox fontSize="inherit" /></IconWrapper>,
             Extensions: (props) => <IconWrapper {...props} className="extensions"><MuiIcons.ExtensionOutlined fontSize="inherit" /></IconWrapper>,
+            Pin: (props) => <IconWrapper {...props} className="pin"><MuiIcons.PushPinOutlined fontSize="inherit" /></IconWrapper>,
+            Pinned: (props) => <IconWrapper {...props} className="pinned"><MuiIcons.PushPin fontSize="inherit" /></IconWrapper>,
         }
     }
 }
