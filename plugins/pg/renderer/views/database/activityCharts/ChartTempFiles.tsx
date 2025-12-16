@@ -24,8 +24,8 @@ export const ChartTempFiles = ({ minimized, data }: { minimized: boolean, data: 
                 </defs>
                 {!minimized && <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />}
                 {!minimized && <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />}
-                {!minimized && <YAxis yAxisId="left" stroke={theme.palette.info.main} style={{ fontSize: "0.75rem" }} tickFormatter={prettySize} label={{ value: t("temp-files", "Temp Files"), angle: -90, position: "insideLeft", fill: theme.palette.info.main, fontSize: 12 }} />}
-                {!minimized && <YAxis yAxisId="right" orientation="right" stroke={theme.palette.success.main} style={{ fontSize: "0.75rem" }} tickFormatter={prettySize} label={{ value: t("temp-bytes", "Temp Bytes"), angle: -90, position: "insideRight", fill: theme.palette.success.main, fontSize: 12 }} />}
+                {!minimized && <YAxis yAxisId="left" stroke={theme.palette.info.main} style={{ fontSize: "0.75rem" }} tickFormatter={prettySize} />}
+                {!minimized && <YAxis yAxisId="right" orientation="right" stroke={theme.palette.success.main} style={{ fontSize: "0.75rem" }} tickFormatter={prettySize} />}
                 {!minimized && <Tooltip content={<CustomTooltip />} />}
                 {!minimized && <Legend wrapperStyle={{ fontSize: "0.7rem", marginBottom: 10 }} iconSize={10} />}
                 <Area type="monotone" dataKey="temp_files" yAxisId={minimized ? undefined : "left"} stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorTempFiles)" name={t("temp-files", "Temp Files")} isAnimationActive={false} connectNulls dot={false} />
