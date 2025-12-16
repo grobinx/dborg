@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { CustomTooltip } from "./CustomTooltip";
 
-export const ChartNumBackends = ({ minimized, data, maxConnections }: { minimized: boolean, data: ActivityRecord[], maxConnections: number }) => {
+export const ChartNumBackends = ({ minimized, data, maxConnections = 0 }: { minimized: boolean, data: ActivityRecord[], maxConnections?: number }) => {
     const theme = useTheme();
     const { t } = useTranslation();
 
