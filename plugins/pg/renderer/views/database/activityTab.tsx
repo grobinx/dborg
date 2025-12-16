@@ -85,8 +85,11 @@ const activityTab = (
         return isFinite(n) ? n : 0;
     };
 
-    // Wersja serwera
-    let version = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
+    // Wersja serwera jako liczba (major * 10000 + minor * 100)
+    const verParts = (session.getVersion() ?? "0").split('.');
+    const majorVer = parseInt(verParts[0] || '0', 10);
+    const minorVer = parseInt(verParts[1] || '0', 0);
+    const versionNumber = majorVer * 10000 + minorVer * 100;
 
     // Pobierz max_connections
     async function fetchMaxConnections() {
@@ -102,102 +105,280 @@ const activityTab = (
         }
     }
 
-    // Pobierz dane z pg_stat_database
-    async function fetchDatabaseActivityData() {
-        if (!databaseName) {
-            return;
-        }
-
-        const { rows } = await session.query<ActivityRecord>(`
-            SELECT datid, datname, numbackends,
-                   xact_commit, xact_rollback, blks_read, blks_hit,
-                   tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted,
-                   conflicts, temp_files, temp_bytes, deadlocks, blk_read_time, blk_write_time,
-                   now() AS timestamp
-            FROM pg_stat_database
-            WHERE datname = $1
-        `, [databaseName]);
-        if (rows.length > 0) {
-            const stamped = rows.map(r => ({
-                ...r,
-                snapshot: ++snapshotCounter,
-                timestamp: Date.now()
-            }));
-            activityRows.push(...stamped);
-            if (activityRows.length > snapshotSize) {
-                activityRows = activityRows.slice(activityRows.length - snapshotSize);
-            }
-        }
-    }
-
-    // Pobierz dane z pg_stat_activity o backendach i wait events
-    async function fetchBackendActivityData() {
-        if (!databaseName) {
-            return;
-        }
-
-        const { rows } = await session.query<ActivityRecord>(`
-            SELECT
-                COUNT(*) FILTER (WHERE state = 'idle') as backends_idle,
-                COUNT(*) FILTER (WHERE state = 'idle in transaction') as backends_idle_in_transaction,
-                COUNT(*) FILTER (WHERE state = 'active') as backends_active,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IPC') as wait_ipc,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
-                COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Client') as wait_client
-            FROM pg_stat_activity
-            WHERE datname = $1
-        `, [databaseName]);
-
-        if (rows.length > 0) {
-            activityRows[activityRows.length - 1] = {
-                ...activityRows[activityRows.length - 1],
-                backends_idle: rows[0].backends_idle || 0,
-                backends_idle_in_transaction: rows[0].backends_idle_in_transaction || 0,
-                backends_active: rows[0].backends_active || 0,
-                wait_lock: rows[0].wait_lock || 0,
-                wait_lwlock: rows[0].wait_lwlock || 0,
-                wait_io: rows[0].wait_io || 0,
-                wait_ipc: rows[0].wait_ipc || 0,
-                wait_timeout: rows[0].wait_timeout || 0,
-                wait_bufferpin: rows[0].wait_bufferpin || 0,
-                wait_client: rows[0].wait_client || 0,
-            };
-        }
-    }
-
-    // Pobierz dane z pg_stat_bgwriter
-    async function fetchBgWriterData() {
+    // Pobierz dane dla PostgreSQL 17+
+    async function fetchActivityDataPG17() {
         if (!databaseName) return;
-        if (!activityRows.length) return; // brak snapshotu do uzupełnienia
 
-        const { rows } = await session.query<ActivityRecord>(`
-            SELECT checkpoints_timed, checkpoints_req,
-                   checkpoint_write_time, checkpoint_sync_time,
-                   buffers_checkpoint, buffers_clean, maxwritten_clean,
-                   buffers_backend, buffers_backend_fsync, buffers_alloc,
-                   stats_reset
-            FROM pg_stat_bgwriter
-        `);
-        if (!rows.length) return;
+        const query = `
+            WITH db_stats AS (
+                SELECT 
+                    datid, datname, numbackends,
+                    xact_commit, xact_rollback,
+                    blks_read, blks_hit,
+                    tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted,
+                    conflicts, temp_files, temp_bytes, deadlocks,
+                    blk_read_time, blk_write_time,
+                    checksum_failures, checksum_last_failure,
+                    session_time, active_time, idle_in_transaction_time,
+                    sessions, sessions_abandoned, sessions_fatal, sessions_killed,
+                    stats_reset
+                FROM pg_stat_database
+                WHERE datname = $1
+            ),
+            backend_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE state = 'idle') as backends_idle,
+                    COUNT(*) FILTER (WHERE state = 'idle in transaction') as backends_idle_in_transaction,
+                    COUNT(*) FILTER (WHERE state = 'active') as backends_active,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IPC') as wait_ipc,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Client') as wait_client
+                FROM pg_stat_activity
+                WHERE datname = $1
+            ),
+            bgwriter_stats AS (
+                SELECT 
+                    buffers_alloc
+                FROM pg_stat_bgwriter
+            ),
+            checkpointer_stats AS (
+                SELECT
+                    num_timed as checkpoints_timed,
+                    num_requested as checkpoints_req,
+                    write_time as checkpoint_write_time,
+                    sync_time as checkpoint_sync_time,
+                    buffers_written as buffers_checkpoint
+                FROM pg_stat_checkpointer
+            )
+            SELECT 
+                db.*, be.*, bg.*, ck.*,
+                EXTRACT(EPOCH FROM now()) * 1000 AS timestamp
+            FROM db_stats db
+            CROSS JOIN backend_stats be
+            CROSS JOIN bgwriter_stats bg
+            CROSS JOIN checkpointer_stats ck
+        `;
 
-        activityRows[activityRows.length - 1] = {
-            ...activityRows[activityRows.length - 1],
-            checkpoints_timed: rows[0].checkpoints_timed ?? 0,
-            checkpoints_req: rows[0].checkpoints_req ?? 0,
-            checkpoint_write_time: rows[0].checkpoint_write_time ?? 0,
-            checkpoint_sync_time: rows[0].checkpoint_sync_time ?? 0,
-            buffers_checkpoint: rows[0].buffers_checkpoint ?? 0,
-            buffers_clean: rows[0].buffers_clean ?? 0,
-            maxwritten_clean: rows[0].maxwritten_clean ?? 0,
-            buffers_backend: rows[0].buffers_backend ?? 0,
-            buffers_backend_fsync: rows[0].buffers_backend_fsync ?? 0,
-            buffers_alloc: rows[0].buffers_alloc ?? 0,
-            stats_reset: rows[0].stats_reset,
-        };
+        const { rows } = await session.query<ActivityRecord>(query, [databaseName]);
+        return rows;
+    }
+
+    // Pobierz dane dla PostgreSQL 14-16
+    async function fetchActivityDataPG14() {
+        if (!databaseName) return;
+
+        const query = `
+            WITH db_stats AS (
+                SELECT 
+                    datid, datname, numbackends,
+                    xact_commit, xact_rollback,
+                    blks_read, blks_hit,
+                    tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted,
+                    conflicts, temp_files, temp_bytes, deadlocks,
+                    blk_read_time, blk_write_time,
+                    checksum_failures, checksum_last_failure,
+                    session_time, active_time, idle_in_transaction_time,
+                    sessions, sessions_abandoned, sessions_fatal, sessions_killed,
+                    stats_reset
+                FROM pg_stat_database
+                WHERE datname = $1
+            ),
+            backend_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE state = 'idle') as backends_idle,
+                    COUNT(*) FILTER (WHERE state = 'idle in transaction') as backends_idle_in_transaction,
+                    COUNT(*) FILTER (WHERE state = 'active') as backends_active,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IPC') as wait_ipc,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Client') as wait_client
+                FROM pg_stat_activity
+                WHERE datname = $1
+            ),
+            bgwriter_stats AS (
+                SELECT 
+                    checkpoints_timed,
+                    checkpoints_req,
+                    checkpoint_write_time,
+                    checkpoint_sync_time,
+                    buffers_checkpoint,
+                    buffers_clean,
+                    maxwritten_clean,
+                    buffers_backend,
+                    buffers_backend_fsync,
+                    buffers_alloc
+                FROM pg_stat_bgwriter
+            )
+            SELECT 
+                db.*, be.*, bg.*,
+                EXTRACT(EPOCH FROM now()) * 1000 AS timestamp
+            FROM db_stats db
+            CROSS JOIN backend_stats be
+            CROSS JOIN bgwriter_stats bg
+        `;
+
+        const { rows } = await session.query<ActivityRecord>(query, [databaseName]);
+        return rows;
+    }
+
+    // Pobierz dane dla PostgreSQL 12-13
+    async function fetchActivityDataPG12() {
+        if (!databaseName) return;
+
+        const query = `
+            WITH db_stats AS (
+                SELECT 
+                    datid, datname, numbackends,
+                    xact_commit, xact_rollback,
+                    blks_read, blks_hit,
+                    tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted,
+                    conflicts, temp_files, temp_bytes, deadlocks,
+                    blk_read_time, blk_write_time,
+                    checksum_failures, checksum_last_failure,
+                    stats_reset
+                FROM pg_stat_database
+                WHERE datname = $1
+            ),
+            backend_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE state = 'idle') as backends_idle,
+                    COUNT(*) FILTER (WHERE state = 'idle in transaction') as backends_idle_in_transaction,
+                    COUNT(*) FILTER (WHERE state = 'active') as backends_active,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IPC') as wait_ipc,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Client') as wait_client
+                FROM pg_stat_activity
+                WHERE datname = $1
+            ),
+            bgwriter_stats AS (
+                SELECT 
+                    checkpoints_timed,
+                    checkpoints_req,
+                    checkpoint_write_time,
+                    checkpoint_sync_time,
+                    buffers_checkpoint,
+                    buffers_clean,
+                    maxwritten_clean,
+                    buffers_backend,
+                    buffers_backend_fsync,
+                    buffers_alloc
+                FROM pg_stat_bgwriter
+            )
+            SELECT 
+                db.*, be.*, bg.*,
+                EXTRACT(EPOCH FROM now()) * 1000 AS timestamp
+            FROM db_stats db
+            CROSS JOIN backend_stats be
+            CROSS JOIN bgwriter_stats bg
+        `;
+
+        const { rows } = await session.query<ActivityRecord>(query, [databaseName]);
+        return rows;
+    }
+
+    // Pobierz dane dla PostgreSQL 9.6-11
+    async function fetchActivityDataPG96() {
+        if (!databaseName) return;
+
+        const query = `
+            WITH db_stats AS (
+                SELECT 
+                    datid, datname, numbackends,
+                    xact_commit, xact_rollback,
+                    blks_read, blks_hit,
+                    tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted,
+                    conflicts, temp_files, temp_bytes, deadlocks,
+                    blk_read_time, blk_write_time,
+                    stats_reset
+                FROM pg_stat_database
+                WHERE datname = $1
+            ),
+            backend_stats AS (
+                SELECT
+                    COUNT(*) FILTER (WHERE state = 'idle') as backends_idle,
+                    COUNT(*) FILTER (WHERE state = 'idle in transaction') as backends_idle_in_transaction,
+                    COUNT(*) FILTER (WHERE state = 'active') as backends_active,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IPC') as wait_ipc,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Client') as wait_client
+                FROM pg_stat_activity
+                WHERE datname = $1
+            ),
+            bgwriter_stats AS (
+                SELECT 
+                    checkpoints_timed,
+                    checkpoints_req,
+                    checkpoint_write_time,
+                    checkpoint_sync_time,
+                    buffers_checkpoint,
+                    buffers_clean,
+                    maxwritten_clean,
+                    buffers_backend,
+                    buffers_backend_fsync,
+                    buffers_alloc
+                FROM pg_stat_bgwriter
+            )
+            SELECT 
+                db.*, be.*, bg.*,
+                EXTRACT(EPOCH FROM now()) * 1000 AS timestamp
+            FROM db_stats db
+            CROSS JOIN backend_stats be
+            CROSS JOIN bgwriter_stats bg
+        `;
+
+        const { rows } = await session.query<ActivityRecord>(query, [databaseName]);
+        return rows;
+    }
+
+    // Główna funkcja pobierająca dane - wybiera właściwą funkcję na podstawie wersji
+    async function fetchActivityData() {
+        if (!databaseName) return;
+
+        try {
+            let rows: ActivityRecord[] | undefined;
+
+            if (versionNumber >= 170000) {
+                rows = await fetchActivityDataPG17();
+            } else if (versionNumber >= 140000) {
+                rows = await fetchActivityDataPG14();
+            } else if (versionNumber >= 120000) {
+                rows = await fetchActivityDataPG12();
+            } else {
+                rows = await fetchActivityDataPG96();
+            }
+
+            if (rows && rows.length > 0) {
+                const stamped = rows.map(r => ({
+                    ...r,
+                    snapshot: ++snapshotCounter,
+                    timestamp: typeof r.timestamp === 'number' ? r.timestamp : Date.now()
+                }));
+                
+                activityRows.push(...stamped);
+                
+                if (activityRows.length > snapshotSize) {
+                    activityRows = activityRows.slice(activityRows.length - snapshotSize);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching activity data:", error);
+            throw error;
+        }
     }
 
     // Funkcja do budowy danych do wykresów
@@ -287,7 +468,7 @@ const activityTab = (
             }).slice(-snapshotSize + 1);
 
             const bigCharst = chartList.filter(c => !minimizedCharts.includes(c.key));
-            const gridSide = bigCharst.length <= 4 ? 6 : bigCharst.length <= 8 ? 3 : 4;
+            const gridSide = bigCharst.length <= 4 ? 6 : bigCharst.length <= 6 ? 4 : bigCharst.length <= 8 ? 3 : 4;
 
             return (
                 <Stack direction="column" sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
@@ -372,26 +553,15 @@ const activityTab = (
                 {
                     onTick: async (refresh) => {
                         try {
-                            await fetchDatabaseActivityData();
+                            await fetchActivityData();
                         } catch (error) {
                             console.error("Error fetching activity data:", error);
-                        }
-                        try {
-                            await fetchBackendActivityData();
-                        } catch (error) {
-                            console.error("Error fetching backend activity data:", error);
-                        }
-                        try {
-                            await fetchBgWriterData();
-                        } catch (error) {
-                            console.error("Error fetching bg writer data:", error);
                         }
                         refresh(cid("database-activity-charts"));
                     },
                     onClear(refresh) {
                         activityRows = [];
                         snapshotCounter = 0;
-                        // Pobierz max_connections przy pierwszym uruchomieniu
                         fetchMaxConnections().then(() => {
                             refresh(cid("database-activity-charts"));
                         });
