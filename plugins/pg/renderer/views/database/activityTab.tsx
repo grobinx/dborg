@@ -2,11 +2,27 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, ICopyData, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Grid2 as Grid, useTheme } from "@mui/material";
+import { Grid2 as Grid, Typography, useTheme } from "@mui/material";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { exportToClipboard } from "@renderer/utils/arrayTo";
+import { CustomTooltip } from "./actiityCharts/CustomTooltip";
+import { ChartNumBackends } from "./actiityCharts/ChartNumBackends";
+import { ChartSessions } from "./actiityCharts/ChartSessions";
+import prettySize from "@renderer/utils/prettySize";
+import { ChartTransactions } from "./actiityCharts/ChartTransactions";
+import { ChartBlocks } from "./actiityCharts/ChartBlocks";
+import { ChartTuplesRead } from "./actiityCharts/ChartTuplesRead";
+import { ChartTuplesWrite } from "./actiityCharts/ChartTuplesWrite";
+import { ChartConflicts } from "./actiityCharts/ChartConflicts";
+import { ChartTempFiles } from "./actiityCharts/ChartTempFiles";
+import { ChartWaitEvents } from "./actiityCharts/ChartWaitEvents";
+import { ChartCheckpoints } from "./actiityCharts/ChartCheckpoints";
+import { ChartBgwriterBuffers } from "./actiityCharts/ChartBgwriterBuffers";
+import { ChartCheckpointTimes } from "./actiityCharts/ChartCheckpointTimes";
 
-interface ActivityRecord {
+export interface ActivityRecord {
+    snapshot: number;
+    
     datid: number;
     datname: string;
     numbackends: number;
@@ -33,8 +49,20 @@ interface ActivityRecord {
     wait_timeout: number;
     wait_bufferpin: number;
     wait_client: number;
-    snapshot: number;
+    // bgwriter
+    checkpoints_timed?: number;
+    checkpoints_req?: number;
+    checkpoint_write_time?: number;
+    checkpoint_sync_time?: number;
+    buffers_checkpoint?: number;
+    buffers_clean?: number;
+    maxwritten_clean?: number;
+    buffers_backend?: number;
+    buffers_backend_fsync?: number;
+    buffers_alloc?: number;
+    stats_reset?: string;
     timestamp: number;
+
     [key: string]: any;
 }
 
@@ -139,6 +167,37 @@ const activityTab = (
         }
     }
 
+    // Pobierz dane z pg_stat_bgwriter
+    async function fetchBgWriterData() {
+        if (!databaseName) return;
+        if (!activityRows.length) return; // brak snapshotu do uzupełnienia
+
+        const { rows } = await session.query<ActivityRecord>(`
+            SELECT checkpoints_timed, checkpoints_req,
+                   checkpoint_write_time, checkpoint_sync_time,
+                   buffers_checkpoint, buffers_clean, maxwritten_clean,
+                   buffers_backend, buffers_backend_fsync, buffers_alloc,
+                   stats_reset
+            FROM pg_stat_bgwriter
+        `);
+        if (!rows.length) return;
+
+        activityRows[activityRows.length - 1] = {
+            ...activityRows[activityRows.length - 1],
+            checkpoints_timed: rows[0].checkpoints_timed ?? 0,
+            checkpoints_req: rows[0].checkpoints_req ?? 0,
+            checkpoint_write_time: rows[0].checkpoint_write_time ?? 0,
+            checkpoint_sync_time: rows[0].checkpoint_sync_time ?? 0,
+            buffers_checkpoint: rows[0].buffers_checkpoint ?? 0,
+            buffers_clean: rows[0].buffers_clean ?? 0,
+            maxwritten_clean: rows[0].maxwritten_clean ?? 0,
+            buffers_backend: rows[0].buffers_backend ?? 0,
+            buffers_backend_fsync: rows[0].buffers_backend_fsync ?? 0,
+            buffers_alloc: rows[0].buffers_alloc ?? 0,
+            stats_reset: rows[0].stats_reset,
+        };
+    }
+
     // Funkcja do budowy danych do wykresów
     const buildTimelineData = <T extends { snapshot: number }>(rows: T[], mapRow: (r: T, index: number) => any) => {
         const missingSnapshots = Math.max(0, snapshotSize - rows.length);
@@ -150,15 +209,6 @@ const activityTab = (
         return padded;
     };
 
-    // Dodaj funkcję formatowania liczb
-    const formatNumberShort = (value: number) => {
-        if (value == null) return "";
-        if (Math.abs(value) >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "G";
-        if (Math.abs(value) >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-        if (Math.abs(value) >= 1_000) return (value / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-        return value.toString();
-    };
-
     // Wykresy
     const activityCharts = (): IRenderedSlot => ({
         id: cid("database-activity-charts"),
@@ -166,7 +216,7 @@ const activityTab = (
         render: ({ refresh: _ }) => {
             const theme = useTheme();
 
-            const data = buildTimelineData(activityRows, (r: any, index: number) => {
+            const data = buildTimelineData(activityRows, (r: ActivityRecord, index: number) => {
                 const prev = index > 0 ? activityRows[index - 1] : null;
                 return {
                     snapshot: r.snapshot ?? -1,
@@ -196,31 +246,18 @@ const activityTab = (
                     wait_timeout: num(r.wait_timeout),
                     wait_bufferpin: num(r.wait_bufferpin),
                     wait_client: num(r.wait_client),
+                    checkpoints_timed: prev ? Math.max(0, num(r.checkpoints_timed) - num(prev.checkpoints_timed)) : 0,
+                    checkpoints_req: prev ? Math.max(0, num(r.checkpoints_req) - num(prev.checkpoints_req)) : 0,
+                    checkpoint_write_time: prev ? Math.max(0, num(r.checkpoint_write_time) - num(prev.checkpoint_write_time)) : 0,
+                    checkpoint_sync_time: prev ? Math.max(0, num(r.checkpoint_sync_time) - num(prev.checkpoint_sync_time)) : 0,
+                    buffers_checkpoint: prev ? Math.max(0, num(r.buffers_checkpoint) - num(prev.buffers_checkpoint)) : 0,
+                    buffers_clean: prev ? Math.max(0, num(r.buffers_clean) - num(prev.buffers_clean)) : 0,
+                    maxwritten_clean: prev ? Math.max(0, num(r.maxwritten_clean) - num(prev.maxwritten_clean)) : 0,
+                    buffers_backend: prev ? Math.max(0, num(r.buffers_backend) - num(prev.buffers_backend)) : 0,
+                    buffers_backend_fsync: prev ? Math.max(0, num(r.buffers_backend_fsync) - num(prev.buffers_backend_fsync)) : 0,
+                    buffers_alloc: prev ? Math.max(0, num(r.buffers_alloc) - num(prev.buffers_alloc)) : 0,
                 };
             }).slice(-snapshotSize + 1);
-
-            const CustomTooltip = ({ active, payload }: any) => {
-                if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    let timeStr = "-";
-                    if (data.snapshot !== -1) {
-                        const elapsed = Math.floor((Date.now() - data.timestamp) / 1000);
-                        timeStr = t("{{elapsed}}s ago", { elapsed });
-                    }
-                    return (
-                        <div style={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, padding: "8px", borderRadius: "4px", zIndex: 1400 }}>
-
-                            <p style={{ margin: "0 0 4px 0", color: theme.palette.text.primary }}>{timeStr}</p>
-                            {payload.map((entry: any, index: number) => (
-                                <p key={index} style={{ margin: "2px 0", color: entry.color }}>
-                                    {entry.name}: {entry.value}
-                                </p>
-                            ))}
-                        </div>
-                    );
-                }
-                return null;
-            };
 
             return (
                 <Grid
@@ -228,301 +265,53 @@ const activityTab = (
                     spacing={24}
                     sx={{ padding: 8, width: "100%", height: "100%", overflowY: "auto" }}
                 >
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("numbackends", "Active Connections")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorNumBackends" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis
-                                    stroke={theme.palette.text.secondary}
-                                    style={{ fontSize: "0.75rem" }}
-                                    domain={[0, maxConnections > 0 ? maxConnections : 'auto']}
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area
-                                    type="monotone"
-                                    dataKey="numbackends"
-                                    stroke={theme.palette.info.main}
-                                    fillOpacity={1}
-                                    fill="url(#colorNumBackends)"
-                                    name={t("numbackends", "Active Connections")}
-                                    isAnimationActive={false}
-                                    connectNulls
-                                />
-                                {maxConnections > 0 && (
-                                    <Area
-                                        type="monotone"
-                                        dataKey="max_connections"
-                                        stroke={theme.palette.error.main}
-                                        strokeDasharray="5 5"
-                                        fill="none"
-                                        strokeWidth={2}
-                                        name={t("max-connections", "Max Connections")}
-                                        isAnimationActive={false}
-                                        connectNulls
-                                        dot={false}
-                                    />
-                                )}
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("numbackends", "Active Connections")}</Typography>
+                        <ChartNumBackends minimized={false} data={data} maxConnections={maxConnections} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("sessions", "Active Sessions")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorIdle" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.main.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.main.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorIdleInTransaction" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="backends_active" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorActive)" name={t("backends-active", "Active")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="backends_idle" stroke={theme.palette.main.main} fillOpacity={1} fill="url(#colorIdle)" name={t("backends-idle", "Idle")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="backends_idle_in_transaction" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorIdleInTransaction)" name={t("backends-idle-in-transaction", "Idle in Transaction")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("sessions", "Active Sessions")}</Typography>
+                        <ChartSessions minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("transactions", "Transactions (commit/rollback)")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorCommit" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorRollback" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="xact_commit" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorCommit)" name={t("xact-commit", "Commit")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="xact_rollback" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorRollback)" name={t("xact-rollback", "Rollback")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("transactions", "Transactions (commit/rollback)")}</Typography>
+                        <ChartTransactions minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("blocks", "Blocks Read/Hit")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorBlksRead" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorBlksHit" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis
-                                    stroke={theme.palette.text.secondary}
-                                    style={{ fontSize: "0.75rem" }}
-                                    tickFormatter={formatNumberShort} // <-- DODAJ TO
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="blks_read" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorBlksRead)" name={t("blks-read", "Blocks Read")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="blks_hit" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorBlksHit)" name={t("blks-hit", "Blocks Hit")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("blocks", "Blocks Read/Hit")}</Typography>
+                        <ChartBlocks minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("tuples-read", "Tuples (returned/fetched)")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorReturned" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorFetched" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis
-                                    stroke={theme.palette.text.secondary}
-                                    style={{ fontSize: "0.75rem" }}
-                                    tickFormatter={formatNumberShort} // <-- DODAJ TO
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="tup_returned" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorReturned)" name={t("tup-returned", "Returned")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="tup_fetched" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorFetched)" name={t("tup-fetched", "Fetched")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("tuples-read", "Tuples (returned/fetched)")}</Typography>
+                        <ChartTuplesRead minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("tuples-write", "Tuples (inserted/updated/deleted)")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorInserted" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorUpdated" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.secondary.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.secondary.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorDeleted" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="tup_inserted" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorInserted)" name={t("tup-inserted", "Inserted")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="tup_updated" stroke={theme.palette.secondary.main} fillOpacity={1} fill="url(#colorUpdated)" name={t("tup-updated", "Updated")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="tup_deleted" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDeleted)" name={t("tup-deleted", "Deleted")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("tuples-write", "Tuples (inserted/updated/deleted)")}</Typography>
+                        <ChartTuplesWrite minimized={false} data={data} />
                     </Grid>
-                    {/* Trzeci rząd: metryki 9.6+ */}
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("conflicts", "Conflicts / Deadlocks")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorConflicts" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorDeadlocks" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="conflicts" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorConflicts)" name={t("conflicts", "Conflicts")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="deadlocks" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDeadlocks)" name={t("deadlocks", "Deadlocks")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("conflicts", "Conflicts / Deadlocks")}</Typography>
+                        <ChartConflicts minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("temp-files", "Temp Files / Bytes")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorTempFiles" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorTempBytes" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis
-                                    yAxisId="left"
-                                    stroke={theme.palette.info.main}
-                                    style={{ fontSize: "0.75rem" }}
-                                    tickFormatter={formatNumberShort}
-                                    label={{ value: t("temp-files", "Temp Files"), angle: -90, position: "insideLeft", fill: theme.palette.info.main, fontSize: 12 }}
-                                />
-                                <YAxis
-                                    yAxisId="right"
-                                    orientation="right"
-                                    stroke={theme.palette.success.main}
-                                    style={{ fontSize: "0.75rem" }}
-                                    tickFormatter={formatNumberShort}
-                                    label={{ value: t("temp-bytes", "Temp Bytes"), angle: -90, position: "insideRight", fill: theme.palette.success.main, fontSize: 12 }}
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="temp_files" yAxisId="left" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorTempFiles)" name={t("temp-files", "Temp Files")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="temp_bytes" yAxisId="right" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorTempBytes)" name={t("temp-bytes", "Temp Bytes")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("temp-files", "Temp Files / Bytes")}</Typography>
+                        <ChartTempFiles minimized={false} data={data} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 4 }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("wait-events", "Wait Events (All Types)")}</h4>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ bottom: 30, top: 5, left: 0, right: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorWaitLock" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitLWLock" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitIO" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.main.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.main.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitIPC" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitTimeout" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.secondary.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.secondary.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitBufferPin" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorWaitClient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={v => v === -1 ? "-" : String(v)} />
-                                <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend wrapperStyle={{ fontSize: "0.7rem" }} iconSize={10} />
-                                <Area type="monotone" dataKey="wait_lock" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorWaitLock)" name={t("wait-lock", "Lock")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_lwlock" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorWaitLWLock)" name={t("wait-lwlock", "LWLock")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_bufferpin" stroke={theme.palette.primary.main} fillOpacity={1} fill="url(#colorWaitBufferPin)" name={t("wait-bufferpin", "BufferPin")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_io" stroke={theme.palette.main.main} fillOpacity={1} fill="url(#colorWaitIO)" name={t("wait-io", "IO")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_ipc" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorWaitIPC)" name={t("wait-ipc", "IPC")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_client" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorWaitClient)" name={t("wait-client", "Client")} isAnimationActive={false} connectNulls />
-                                <Area type="monotone" dataKey="wait_timeout" stroke={theme.palette.secondary.main} fillOpacity={1} fill="url(#colorWaitTimeout)" name={t("wait-timeout", "Timeout")} isAnimationActive={false} connectNulls />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("wait-events", "Wait Events (All Types)")}</Typography>
+                        <ChartWaitEvents minimized={false} data={data} />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("bgwriter-checkpoints", "Checkpoints (timed/req)")}</Typography>
+                        <ChartCheckpoints minimized={false} data={data} />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("bgwriter-buffers", "BGWriter Buffers")}</Typography>
+                        <ChartBgwriterBuffers minimized={false} data={data} />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}>
+                        <Typography variant="body1">{t("bgwriter-times", "Checkpoint Times (ms)")}</Typography>
+                        <ChartCheckpointTimes minimized={false} data={data} />
                     </Grid>
                 </Grid>
             );
@@ -561,6 +350,7 @@ const activityTab = (
                         try {
                             await fetchDatabaseActivityData(),
                             await fetchBackendActivityData(),
+                            await fetchBgWriterData(),
                             refresh(cid("database-activity-charts"));
                         } catch (error) {
                             console.error("Error fetching activity data:", error);
