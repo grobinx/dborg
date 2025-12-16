@@ -79,6 +79,12 @@ async function handleResult<T>(arg: Promise<T> | HandleResultCallback<T>): Promi
 
 export { handleResult };
 
+// Krótka pauza, by oddać sterowanie pętli zdarzeń renderera
+const YIELD_MS = 0;
+function yieldToRenderer(ms = YIELD_MS) {
+    return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * Change invoke result to promise with catch handle
  * @param promise invoke result
@@ -87,17 +93,36 @@ export { handleResult };
  * invokeResult(ipcRenderer.invoke(EVENT_INTERNAL_QUERY, sql, values))
  */
 export async function invokeResult<T>(promise: Promise<unknown>): Promise<T> {
-    return await promise.then((handled) => {
+    return await promise.then(async (handled) => {
         if (isRejectResult(handled)) {
             throw handled.error
         }
         const result = handled as ResolveResult;
+
+        // Jeśli duże dane – daj „oddech” przed kosztownymi operacjami
+        const bigPayload =
+            !!result.compressed && typeof result.originalSize === 'number' && result.originalSize > 256 * 1024;
+
+        if (bigPayload) {
+            await yieldToRenderer(); // oddaj sterowanie zanim zaczniemy dekompresję
+        }
+
         if (result.compressed && result.originalSize != null) {
-            // Rozpakuj
             const buffer = Buffer.from(result.result as string, "base64");
+
+            if (buffer.byteLength > 256 * 1024) {
+                await yieldToRenderer(); // przed gunzip
+            }
+
             const json = gunzipSync(buffer).toString("utf8");
+
+            if (json.length > 1024 * 1024) {
+                await yieldToRenderer(); // przed JSON.parse
+            }
+
             return JSON.parse(json) as T;
         }
+
         return result.result as T;
     });
 }
