@@ -372,13 +372,21 @@ const activityTab = (
                 {
                     onTick: async (refresh) => {
                         try {
-                            await fetchDatabaseActivityData(),
-                                await fetchBackendActivityData(),
-                                await fetchBgWriterData(),
-                                refresh(cid("database-activity-charts"));
+                            await fetchDatabaseActivityData();
                         } catch (error) {
                             console.error("Error fetching activity data:", error);
                         }
+                        try {
+                            await fetchBackendActivityData();
+                        } catch (error) {
+                            console.error("Error fetching backend activity data:", error);
+                        }
+                        try {
+                            await fetchBgWriterData();
+                        } catch (error) {
+                            console.error("Error fetching bg writer data:", error);
+                        }
+                        refresh(cid("database-activity-charts"));
                     },
                     onClear(refresh) {
                         activityRows = [];
