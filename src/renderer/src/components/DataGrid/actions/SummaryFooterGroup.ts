@@ -13,16 +13,15 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
         label: t(id, "& Summary footer"),
         disabled: (context) => context.isPivoted(),
         actions: (context: DataGridActionContext<any>) => {
-            let actions: (Action<any> & { operation: SummaryOperation })[] = [];
+            let actions: (Action<any> & { operation: SummaryOperation | "none" })[] = [];
             const summaryFooterOperation = context.getSummaryOperation();
             const column = context.getColumn();
             const baseType = toBaseType(column?.dataType ?? "string");
 
-            const isOperationSupported = (operation: string): boolean => {
-                return baseType && typeToOperationMap[operation]?.includes(baseType);
+            const isOperationSupported = (action: Action<any> & { operation: SummaryOperation | "none" }): boolean => {
+                return baseType && typeToOperationMap[action.operation]?.includes(baseType);
             };
 
-            // Dodaj pozostałe akcje
             actions.push(
                 {
                     operation: "sum",
@@ -334,7 +333,15 @@ export const SummaryFooterGroup = (): ActionGroup<DataGridActionContext<any>> =>
                 }
             );
 
-            actions = actions.filter((action) => isOperationSupported(action.operation));
+            actions = actions.filter(isOperationSupported);
+            if (summaryFooterOperation) {
+                actions.unshift({
+                    operation: "none",
+                    id: "dataGrid.actions.summaryFooter.none",
+                    label: t("dataGrid.actions.summaryFooter.none", "None"),
+                    run: (context: DataGridActionContext<any>) => context.setSummaryOperation(undefined),
+                });
+            }
 
             return actions;
         },

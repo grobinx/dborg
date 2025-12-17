@@ -223,7 +223,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         ] as ColumnDefinition[],
                         autoSaveId: `sessions-grid-${session.profile.sch_id}`,
                         status: ["data-rows", "position", "selected-rows"],
-                        getRowStyle: (row: { [key: string]: any }, index, theme: Theme): React.CSSProperties => {
+                        getRowStyle: (row: { [key: string]: any }, _index, theme: Theme): React.CSSProperties => {
                             const sessionRow = row as SessionRecord;
                             if (sessionRow.is_current_session) {
                                 return { backgroundColor: alpha(resolveColor("primary.main", theme), 0.3) };

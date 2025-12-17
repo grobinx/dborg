@@ -21,6 +21,11 @@
       ]
     },
     "noUnusedLocals": false,
-    "lib": ["es2021", "dom"] // Dodano 'es2021', aby obsługiwać replaceAll
+    "noImplicitReturns": false,
+    "noEmitOnError": false,
+    "lib": [
+      "es2021",
+      "dom"
+    ] // Dodano 'es2021', aby obsługiwać replaceAll
   }
 }
