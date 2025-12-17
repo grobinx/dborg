@@ -28,7 +28,9 @@ export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ childre
         if (fn) {
             setTimeout(() =>
                 requestAnimationFrame(() => {
-                    fn();
+                    if (refreshers.current.get(id)) {
+                        fn();
+                    }
                 }), 0);
         }
     }, []);

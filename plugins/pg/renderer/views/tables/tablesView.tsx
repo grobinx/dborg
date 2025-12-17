@@ -79,9 +79,9 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             RefreshGridAction_ID,
                             SearchData_ID,
                             SelectSchemaAction_ID,
-                        ]
+                        ],
+                        actionSlotId: cid("tables-grid"),
                     },
-                    actionSlotId: cid("tables-grid"),
                 } as ITitleSlot,
                 main: {
                     id: cid("tables-grid"),

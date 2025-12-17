@@ -307,7 +307,7 @@ function createTabPanels(
                     key={tab.id}
                     itemID={tab.id}
                     label={label}
-                    buttons={resolvedToolBarSlot ? <ToolBarSlot slot={resolvedToolBarSlot} actionSlotId={tab.actionSlotId} /> : undefined}
+                    buttons={resolvedToolBarSlot ? <ToolBarSlot slot={resolvedToolBarSlot} /> : undefined}
                     content={content}
                 />
             );

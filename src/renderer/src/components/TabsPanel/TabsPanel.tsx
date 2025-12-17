@@ -288,7 +288,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                         }}
                         hidden={activeTab !== index}
                     >
-                        {tabsMap.get(tab.props.itemID!)?.content ?? null}
+                        {tabsMap.get(tab.props.itemID!)?.content}
                     </Box>
                 ))}
             </StyledTabsContent>

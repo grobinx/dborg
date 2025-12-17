@@ -27,35 +27,32 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
     const [title, setTitle] = React.useState<React.ReactNode>(null);
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, refreshSlot);
         setTitle(resolveReactNodeFactory(slot.title, refreshSlot));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {
-            setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} actionSlotId={slot.actionSlotId} handleRef={ref} />);
+            setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} ref={ref} />);
         } else {
             setActionBar(null);
         }
     }, [slot.title, slot.icon, slot.toolBar, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
 

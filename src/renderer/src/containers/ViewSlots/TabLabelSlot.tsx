@@ -23,17 +23,21 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const theme = useTheme();
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         if (active) {
@@ -47,13 +51,6 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
         setIcon(resolveIcon(theme, slot.icon));
         setLabel(resolveReactNodeFactory(slot.label, refreshSlot) ?? "");
     }, [slot.icon, slot.label, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     React.useEffect(() => {
         const handleTabPanelChangedMessage = (message: TabPanelChangedMessage) => {

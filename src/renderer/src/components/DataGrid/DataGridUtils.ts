@@ -172,7 +172,15 @@ export const calculateSummary = (
         const values = data.filter(row => !Array.isArray(row[col.key])).map((row) => row[col.key]);
 
         if (baseType === 'number') {
-            const numericValues = values.filter(Boolean).map((value) => Decimal(value));
+            let numericValues: Decimal[];
+            if (col.dataType === 'quantity') {
+                numericValues = values.filter(Boolean).map((value) => api.expandQuantityValue(api.parseQuantity(value))).filter(Boolean) as Decimal[];
+            } else if (col.dataType === 'size') {
+                numericValues = values.filter(Boolean).map((value) => api.expandSizeValue(api.parseSize(value))).filter(Boolean) as Decimal[];
+            }
+            else {
+                numericValues = values.filter(Boolean).map((value) => Decimal(value));
+            }
             switch (col.summary) {
                 case "sum":
                     summary[col.key] = numericValues.reduce((acc, val) => acc.add(val), Decimal(0));

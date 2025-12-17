@@ -23,7 +23,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { subscribe, unsubscribe } = useMessages();
@@ -32,11 +32,22 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const previousRefreshRef = React.useRef(refresh);
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            if (active) {
+                setRefresh(prev => prev + 1n);
+            } else {
+                setPendingRefresh(true);
+            }
+        });
+        return unregisterRefresh;
+    }, [slot.id, active]);
+
+    React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
         return () => {
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         if (active) {
@@ -64,19 +75,8 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     }, [active, slot.content, refresh]);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            if (active) {
-                setRefresh(prev => !prev);
-            } else {
-                setPendingRefresh(true);
-            }
-        });
-        return unregisterRefresh;
-    }, [slot.id, active]);
-
-    React.useEffect(() => {
         if (active && pendingRefresh) {
-            setRefresh(prev => !prev);
+            setRefresh(prev => prev + 1n);
             setPendingRefresh(false);
         }
     }, [active, pendingRefresh]);

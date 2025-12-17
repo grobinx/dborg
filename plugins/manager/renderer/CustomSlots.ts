@@ -436,12 +436,6 @@ export interface ITabSlot extends ICustomSlot {
      */
     toolBar?: ToolBarSlotKindFactory;
     /**
-     * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
-     * Działa jeśli w actions jest ciąg znaków z identyfikatorem akcji.
-     * Nie zadziała jeśli w toolBar jest Action lub Actions, nie id akcji z obiektu. Czyli albo albo.
-     */
-    actionSlotId?: string;
-    /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
     content: TabContentSlotKindFactory;
@@ -509,11 +503,6 @@ export interface ITitleSlot extends ICustomSlot {
      * Akcje dostępne przy tytule (opcjonalnie).
      */
     toolBar?: ToolBarSlotKindFactory;
-    /**
-     * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
-     * Działa jeśli w toolBar jest ciąg znaków z identyfikatorem akcji.
-     */
-    actionSlotId?: string;
 }
 
 /**
@@ -651,6 +640,11 @@ export interface IToolBarSlot extends ICustomSlot {
      * Narzędzia do wyświetlenia na pasku narzędzi.
      */
     tools: ToolFactory;
+    /**
+     * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
+     * Działa jeśli w tools jest ciąg znaków z identyfikatorem akcji.
+     */
+    actionSlotId?: string;
 }
 
 export type ToolBarSlotKind =

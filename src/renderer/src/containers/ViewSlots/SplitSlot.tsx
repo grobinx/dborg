@@ -26,11 +26,15 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         console.debug("SplitSlot updating content for slot:", slot.id);
@@ -43,13 +47,6 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
             node: createSplitPartContent(slot.second, refreshSlot, prev.ref)
         }));
     }, [slot.first, slot.second, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     console.debug("SplitSlot rendering slot:", slot.id);
 

@@ -2,6 +2,8 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
+import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 
 interface RelationSizeRecord {
     schema_name: string;
@@ -22,27 +24,42 @@ interface RelationSizeRecord {
     [key: string]: any;
 }
 
-const databaseSizeTab = (session: IDatabaseSession, _database: string | null): ITabSlot => {
+const databaseTableSizesTab = (session: IDatabaseSession, _database: string | null): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
+    let selectedSchemaName: string | null = null;
+    const setSelectedSchemaName = async () => {
+        try {
+            const { rows } = await session.query<{ schema_name: string }>('select current_schema() as schema_name');
+            selectedSchemaName = rows[0]?.schema_name ?? null;
+        } catch (e) {
+            selectedSchemaName = null;
+        }
+    };
+    setSelectedSchemaName();
+
     return {
-        id: cid("database-size-tab"),
+        id: cid("database-table-sizes-tab"),
         type: "tab",
         label: {
-            id: cid("database-size-tab-label"),
+            id: cid("database-table-sizes-tab-label"),
             type: "tablabel",
-            label: t("database-size", "Size & Objects"),
+            label: t("database-table-sizes", "Size & Objects"),
             icon: "Storage",
         },
         content: {
-            id: cid("database-size-tab-content"),
+            id: cid("database-table-sizes-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("database-size-grid"),
+                id: cid("database-table-sizes-grid"),
                 type: "grid",
                 mode: "defined",
+                onMount: (refresh: any) => {
+                    refresh(cid("database-table-sizes-tab-toolbar"));
+                },
                 rows: async () => {
+                    const params = [selectedSchemaName];
                     const { rows } = await session.query<RelationSizeRecord>(`
                         SELECT
                             n.nspname AS schema_name,
@@ -82,11 +99,15 @@ const databaseSizeTab = (session: IDatabaseSession, _database: string | null): I
                         LEFT JOIN pg_catalog.pg_stat_all_tables st ON st.schemaname = n.nspname AND st.relname = c.relname
                         LEFT JOIN pg_catalog.pg_description pd ON pd.objoid = c.oid AND pd.objsubid = 0
                         WHERE c.relkind IN ('r','m') -- tables, matviews
-                          AND n.nspname NOT IN ('pg_catalog','information_schema')
-                          AND c.relname NOT LIKE 'pg_%'
+                          AND ( n.nspname = $1
+                                OR (
+                                    n.nspname = any (current_schemas(false))
+                                    AND coalesce($1, current_schema()) = current_schema()
+                                    AND n.nspname <> 'public'
+                                )
+                              )
                         ORDER BY pg_total_relation_size(c.oid) DESC
-                        LIMIT 200
-                    `);
+                    `, params);
                     return rows;
                 },
                 columns: [
@@ -104,11 +125,28 @@ const databaseSizeTab = (session: IDatabaseSession, _database: string | null): I
                     { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), width: 160, dataType: "date" },
                     { key: "comment", label: t("comment", "Comment"), width: 240, dataType: "string" },
                 ] as ColumnDefinition[],
-                autoSaveId: `database-size-grid-${session.profile.sch_id}`,
+                actions: [
+                    SelectSchemaAction(),
+                ],
+                actionGroups: (refresh: any) => [
+                    SelectSchemaGroup(session, selectedSchemaName, (schemaName: string | null) => {
+                        selectedSchemaName = schemaName;
+                        refresh(cid("database-table-sizes-grid"));
+                    })
+                ],
+                autoSaveId: `database-table-sizes-grid-${session.profile.sch_id}`,
                 status: ["data-rows"],
             } as IGridSlot),
+        },
+        toolBar: {
+            id: cid("database-table-sizes-tab-toolbar"),
+            type: "toolbar",
+            tools: [
+                SelectSchemaAction_ID
+            ],
+            actionSlotId: cid("database-table-sizes-grid"),
         },
     };
 };
 
-export default databaseSizeTab;
+export default databaseTableSizesTab;

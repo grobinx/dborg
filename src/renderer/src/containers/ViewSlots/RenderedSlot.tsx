@@ -20,23 +20,20 @@ const StyledRenderedSlotBox = styled(Box)({
 
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const { slot, ref, className, tabsItemID, ...other } = props;
-    const [refresh, setRefresh] = React.useState(0);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
-    
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1);
-        });
-        return unregisterRefresh;
     }, [slot.id]);
-
+    
     return (
         <StyledRenderedSlotBox
             ref={ref}

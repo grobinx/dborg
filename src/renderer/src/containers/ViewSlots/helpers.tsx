@@ -19,6 +19,8 @@ import {
     isSelectField,
     isAutoRefresh,
     isCopyData,
+    resolveToolBarSlotKindFactory,
+    ToolBarSlotKindFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -39,6 +41,7 @@ import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolNumberField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
 import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
+import ToolBarSlot from "./ToolBarSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -90,6 +93,22 @@ export function createTabContent(
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "rendered") {
+            return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        }
+    }
+    return null;
+}
+
+export function createTabToolbar(
+    slot: ToolBarSlotKindFactory | undefined,
+    refreshSlot: (id: string) => void,
+    ref: React.Ref<HTMLDivElement>,
+): React.ReactNode {
+    const resolvedContent = resolveToolBarSlotKindFactory(slot, refreshSlot);
+    if (resolvedContent) {
+        if (resolvedContent.type === "toolbar") {
+            return <ToolBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         } else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }

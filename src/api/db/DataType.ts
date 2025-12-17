@@ -570,20 +570,222 @@ const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStri
     }
 };
 
+const sizeUnits: Record<string, number> = {
+    bytes: 1,
+    byte: 1,
+    b: 1,
+    kb: 1024,
+    mb: 1024 ** 2,
+    gb: 1024 ** 3,
+    tb: 1024 ** 4,
+    pb: 1024 ** 5,
+    eb: 1024 ** 6,
+    kibi: 1000,
+    mebi: 1000 ** 2,
+    gibi: 1000 ** 3,
+    tebi: 1000 ** 4,
+    pebi: 1000 ** 5,
+    ebi: 1000 ** 6,
+
+    kilobyte: 1024,
+    kilobytes: 1024,
+    kilobajt: 1024,
+    kilobajty: 1024,
+    megabyte: 1024 ** 2,
+    megabytes: 1024 ** 2,
+    gigabyte: 1024 ** 3,
+    gigabytes: 1024 ** 3,
+    terabyte: 1024 ** 4,
+    terabytes: 1024 ** 4,
+    petabyte: 1024 ** 5,
+    petabytes: 1024 ** 5,
+    exabyte: 1024 ** 6,
+    exabytes: 1024 ** 6,
+
+    kibibyte: 1000,
+    kibibytes: 1000,
+    mebibyte: 1000 ** 2,
+    mebibytes: 1000 ** 2,
+    gibibyte: 1000 ** 3,
+    gibibytes: 1000 ** 3,
+    tebibyte: 1000 ** 4,
+    pebibyte: 1000 ** 5,
+    exbibyte: 1000 ** 6,
+
+    k: 1024,
+    m: 1024 ** 2,
+    g: 1024 ** 3,
+    t: 1024 ** 4,
+    p: 1024 ** 5,
+    e: 1024 ** 6,
+
+    octet: 1,
+    bit: 1 / 8,
+    bits: 1 / 8,
+    kilobit: 1024 / 8,
+    kilobits: 1024 / 8,
+    megabit: 1024 ** 2 / 8,
+    megabits: 1024 ** 2 / 8,
+    gigabit: 1024 ** 3 / 8,
+    gigabits: 1024 ** 3 / 8,
+    terabit: 1024 ** 4 / 8,
+    terabits: 1024 ** 4 / 8,
+    petabit: 1024 ** 5 / 8,
+    petabits: 1024 ** 5 / 8,
+    exabit: 1024 ** 6 / 8,
+    exabits: 1024 ** 6 / 8,
+};
+
+const quantityUnits: Record<string, number> = {
+    // mass (base: gram)
+    g: 1,
+    gram: 1,
+    grams: 1,
+    kg: 1000,
+    kilogram: 1000,
+    kilograms: 1000,
+    lb: 453.59237,
+    lbs: 453.59237,
+    pound: 453.59237,
+    oz: 28.349523125,
+    ounce: 28.349523125,
+
+    // length (base: meter)
+    m: 1,
+    meter: 1,
+    meters: 1,
+    cm: 0.01,
+    centimetre: 0.01,
+    centimetres: 0.01,
+    mm: 0.001,
+    millimeter: 0.001,
+    millimeters: 0.001,
+    km: 1000,
+    kilometre: 1000,
+    kilometres: 1000,
+    in: 0.0254,
+    inch: 0.0254,
+    inches: 0.0254,
+    ft: 0.3048,
+    foot: 0.3048,
+    feet: 0.3048,
+    yd: 0.9144,
+    yard: 0.9144,
+    mile: 1609.344,
+    miles: 1609.344,
+
+    // time (base: second)
+    s: 1,
+    sec: 1,
+    second: 1,
+    seconds: 1,
+    ms: 0.001,
+    millisecond: 0.001,
+    us: 1e-6,
+    µs: 1e-6,
+    ns: 1e-9,
+    min: 60,
+    minute: 60,
+    h: 3600,
+    hr: 3600,
+    hour: 3600,
+    day: 86400,
+    week: 604800,
+
+    // volume (base: liter)
+    l: 1,
+    L: 1,
+    liter: 1,
+    litre: 1,
+    liters: 1,
+    litres: 1,
+    ml: 0.001,
+    milliliter: 0.001,
+    millilitre: 0.001,
+    gallon: 3.785411784,
+    pint: 0.473176473,
+    cup: 0.2365882365,
+
+    // common non-metric / misc
+    percent: 0.01,
+    "%": 0.01,
+
+    // currencies (no real conversion — placeholder 1; convert externally if needed)
+    usd: 1,
+    eur: 1,
+    gbp: 1,
+    pln: 1,
+    "$": 1,
+    "€": 1,
+    "£": 1,
+    "¥": 1,
+};
+
 // Parsuje wartość quantity/size na liczbę i jednostkę
-function parseQuantity(value: any): { number: number; unit: string } | null {
+export function parseSize(value: any): { number: number; unit: string } | null {
     if (typeof value !== 'string') return null;
-    // jednostka na końcu: "8192 bytes", "32 kB"
-    const endMatch = value.match(/^([\d.,]+)\s*([a-zA-Z$€£¥]+)$/);
+    // jednostka na końcu
+    const endMatch = value.match(/^([\d.,]+)\s*([^\d\s]+)$/);
     if (endMatch) {
         const num = parseFloat(endMatch[1].replace(/,/g, ''));
-        return Number.isFinite(num) ? { number: num, unit: endMatch[2] } : null;
+        if (!Number.isFinite(num)) return null;
+        const rawUnit = endMatch[2].toLowerCase();
+        // find matching key in sizeUnits (allow some fuzzy matches)
+        const key = Object.keys(sizeUnits).find(k => k === rawUnit || k === rawUnit.replace(/s$/, '') || rawUnit.startsWith(k) || k.startsWith(rawUnit)) ?? rawUnit;
+        return { number: num, unit: key };
     }
-    // jednostka na początku: "$100", "€50"
-    const startMatch = value.match(/^([a-zA-Z$€£¥]+)\s*([\d.,]+)$/);
+    // jednostka na początku
+    const startMatch = value.match(/^([^\d\s]+)\s*([\d.,]+)$/);
     if (startMatch) {
         const num = parseFloat(startMatch[2].replace(/,/g, ''));
-        return Number.isFinite(num) ? { number: num, unit: startMatch[1] } : null;
+        if (!Number.isFinite(num)) return null;
+        const rawUnit = startMatch[1].toLowerCase();
+        const key = Object.keys(sizeUnits).find(k => k === rawUnit || k === rawUnit.replace(/s$/, '') || rawUnit.startsWith(k) || k.startsWith(rawUnit)) ?? rawUnit;
+        return { number: num, unit: key };
+    }
+    return null;
+}
+
+// Parsuje wartość quantity/size na liczbę i jednostkę
+export function parseQuantity(value: any): { number: number; unit: string } | null {
+    if (typeof value !== 'string') return null;
+    // jednostka na końcu
+    const endMatch = value.match(/^([\d.,]+)\s*([^\d\s%€$£¥]+|[%€$£¥])$/);
+    if (endMatch) {
+        const num = parseFloat(endMatch[1].replace(/,/g, ''));
+        if (!Number.isFinite(num)) return null;
+        const rawUnit = endMatch[2].toLowerCase();
+        const key = Object.keys(quantityUnits).find(k => k === rawUnit || k === rawUnit.replace(/s$/, '') || rawUnit.startsWith(k) || k.startsWith(rawUnit)) ?? rawUnit;
+        return { number: num, unit: key };
+    }
+    // jednostka na początku
+    const startMatch = value.match(/^([^\d\s%€$£¥]+|[%€$£¥])\s*([\d.,]+)$/);
+    if (startMatch) {
+        const num = parseFloat(startMatch[2].replace(/,/g, ''));
+        if (!Number.isFinite(num)) return null;
+        const rawUnit = startMatch[1].toLowerCase();
+        const key = Object.keys(quantityUnits).find(k => k === rawUnit || k === rawUnit.replace(/s$/, '') || rawUnit.startsWith(k) || k.startsWith(rawUnit)) ?? rawUnit;
+        return { number: num, unit: key };
+    }
+    return null;
+}
+
+export function expandSizeValue(quantity: { number: number; unit: string } | null): Decimal | null {
+    if (!quantity) return null;
+    const { number, unit } = quantity;
+    const factor = sizeUnits[unit.toLowerCase()];
+    if (factor) {
+        return new Decimal(number).times(factor);
+    }
+    return null;
+}
+
+export function expandQuantityValue(quantity: { number: number; unit: string } | null): Decimal | null {
+    if (!quantity) return null;
+    const { number, unit } = quantity;
+    const factor = quantityUnits[unit.toLowerCase()];
+    if (factor) {
+        return new Decimal(number).times(factor);
     }
     return null;
 }
@@ -668,6 +870,25 @@ export const generateHash = (value: any): string => {
 
 export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDataType): number => {
     const baseType = toBaseType(dataType);
+
+    switch (dataType) {
+        case 'size': {
+            const num1 = expandSizeValue(parseSize(value1));
+            const num2 = expandSizeValue(parseSize(value2));
+            if (num1 && num2) {
+                return num1.lessThan(num2) ? -1 : num1.greaterThan(num2) ? 1 : 0;
+            }
+            return String(value1).localeCompare(String(value2));
+        }
+        case 'quantity': {
+            const num1 = expandQuantityValue(parseQuantity(value1));
+            const num2 = expandQuantityValue(parseQuantity(value2));
+            if (num1 && num2) {
+                return num1.lessThan(num2) ? -1 : num1.greaterThan(num2) ? 1 : 0;
+            }
+            return String(value1).localeCompare(String(value2));
+        }
+    }
 
     switch (baseType) {
         case 'string': {

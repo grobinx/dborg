@@ -42,15 +42,19 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         console.debug("ContentSlot updating content for slot:", slot.id);
@@ -71,13 +75,6 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             node: createContentComponent(slot.main, refreshSlot, prev.ref)
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     console.debug("ContentSlot rendering slot:", slot.id);
 

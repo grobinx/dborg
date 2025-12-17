@@ -36,11 +36,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     };
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => !prev);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         let mounted = true;
@@ -64,13 +68,6 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         setStatusBar(resolveBooleanFactory(slot.statusBar, refreshSlot) ?? true);
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
         editorInstanceRef.current = editor;

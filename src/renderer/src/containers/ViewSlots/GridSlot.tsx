@@ -37,17 +37,23 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
     const [loading, setLoading] = React.useState(false);
     const [message, setMessage] = React.useState<string | undefined>(undefined);
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
+        const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
+            unregisterRefSlot();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         const fetchRows = async () => {
@@ -94,17 +100,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
         console.debug("GridSlot updating content for slot:", slot.id, refresh);
     }, [slot.columns, slot.rows, refresh]);
 
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
-        return () => {
-            unregisterRefresh();
-            unregisterRefSlot();
-        };
-    }, [slot.id]);
-
     // Debounced click handler
     const rowClick = React.useMemo(
         () =>
@@ -129,7 +124,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             context.addAction(...actions);
         }
         context.addAction(RefreshGridAction(() => {
-            setRefresh(r => !r);
+            setRefresh(prev => prev + 1n);
         }));
     }
 

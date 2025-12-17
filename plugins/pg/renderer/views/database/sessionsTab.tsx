@@ -168,8 +168,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         rows: async () => {
                             selectedSession = null;
                             // Jeśli superuser, pobierz sesje ze wszystkich baz, inaczej tylko z bieżącej
-                            const whereClause = isSuperuser 
-                                ? '' 
+                            const whereClause = isSuperuser
+                                ? ''
                                 : `WHERE a.datname = $1`;
                             const params = isSuperuser ? [] : [database];
 
@@ -736,8 +736,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                     }
                 } as Action<any>
             ],
+            actionSlotId: cid("sessions-grid"),
         }),
-        actionSlotId: cid("sessions-grid"),
     };
 };
 

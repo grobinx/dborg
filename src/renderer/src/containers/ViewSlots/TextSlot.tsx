@@ -23,26 +23,23 @@ const StyledTextSlot = styled(Box, {
 const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "TextSlot", props });
     const [text, setText] = React.useState<React.ReactNode | null>(null);
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
+        const unregisterRefresh = registerRefresh(slot.id, () => {
+            setRefresh(prev => prev + 1n);
+        });
         slot?.onMount?.(refreshSlot);
         return () => {
+            unregisterRefresh();
             slot?.onUnmount?.(refreshSlot);
         };
-    }, [slot]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         setText(resolveReactNodeFactory(slot.text, refreshSlot) ?? "");
     }, [slot.text, refresh]);
-
-    React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
-        });
-        return unregisterRefresh;
-    }, [slot.id]);
 
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);
 
