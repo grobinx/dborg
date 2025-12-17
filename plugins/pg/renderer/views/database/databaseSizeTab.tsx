@@ -12,6 +12,13 @@ interface RelationSizeRecord {
     table_size: string;
     index_size: string;
     toast_size: string;
+    index_count?: number;
+    n_live_tup?: number;
+    avg_row_size_bytes?: number;
+    avg_row_size?: string;
+    last_analyze?: string | null;
+    last_vacuum?: string | null;
+    comment?: string | null;
     [key: string]: any;
 }
 
@@ -53,9 +60,27 @@ const databaseSizeTab = (session: IDatabaseSession, _database: string | null): I
                                 WHEN c.reltoastrelid <> 0 
                                     THEN pg_catalog.pg_size_pretty(pg_total_relation_size(c.reltoastrelid))
                                 ELSE pg_catalog.pg_size_pretty(0::bigint)
-                            END AS toast_size
+                            END AS toast_size,
+                            (SELECT count(*) FROM pg_catalog.pg_index i WHERE i.indrelid = c.oid AND i.indisvalid) AS index_count,
+                            COALESCE(st.n_live_tup, c.reltuples) AS n_live_tup,
+                            CASE WHEN COALESCE(st.n_live_tup, c.reltuples) > 0 
+                                THEN (pg_total_relation_size(c.oid)::numeric / GREATEST(COALESCE(st.n_live_tup, c.reltuples),1))
+                                ELSE NULL
+                            END AS avg_row_size_bytes,
+                            -- pg_size_pretty requires integer input; cast the computed numeric size to bigint
+                            pg_size_pretty(
+                                CASE WHEN COALESCE(st.n_live_tup, c.reltuples) > 0 
+                                    THEN ( (pg_total_relation_size(c.oid)::numeric / GREATEST(COALESCE(st.n_live_tup, c.reltuples),1))::bigint )
+                                    ELSE 0::bigint
+                                END
+                            ) AS avg_row_size,
+                            st.last_analyze,
+                            st.last_vacuum,
+                            pd.description AS comment
                         FROM pg_catalog.pg_class c
                         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                        LEFT JOIN pg_catalog.pg_stat_all_tables st ON st.schemaname = n.nspname AND st.relname = c.relname
+                        LEFT JOIN pg_catalog.pg_description pd ON pd.objoid = c.oid AND pd.objsubid = 0
                         WHERE c.relkind IN ('r','m') -- tables, matviews
                           AND n.nspname NOT IN ('pg_catalog','information_schema')
                           AND c.relname NOT LIKE 'pg_%'
@@ -72,6 +97,12 @@ const databaseSizeTab = (session: IDatabaseSession, _database: string | null): I
                     { key: "table_size", label: t("table-size", "Table Size"), width: 120, dataType: "size" },
                     { key: "index_size", label: t("index-size", "Index Size"), width: 120, dataType: "size" },
                     { key: "toast_size", label: t("toast-size", "TOAST Size"), width: 120, dataType: "size" },
+                    { key: "index_count", label: t("index-count", "Indexes"), width: 100, dataType: "number" },
+                    { key: "n_live_tup", label: t("rows-est", "Rows (est.)"), width: 120, dataType: "number" },
+                    { key: "avg_row_size", label: t("avg-row-size", "Avg Row Size"), width: 120, dataType: "size" },
+                    { key: "last_analyze", label: t("last-analyze", "Last Analyze"), width: 160, dataType: "date" },
+                    { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), width: 160, dataType: "date" },
+                    { key: "comment", label: t("comment", "Comment"), width: 240, dataType: "string" },
                 ] as ColumnDefinition[],
                 autoSaveId: `database-size-grid-${session.profile.sch_id}`,
                 status: ["data-rows"],
