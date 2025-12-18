@@ -1,10 +1,14 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot, ITextField } from "plugins/manager/renderer/CustomSlots";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
+import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
 import { TableRecord } from "./tablesView";
+import { Title } from "@mui/icons-material";
+import TitleChart from "../Components/TitleChart";
+import Tooltip from "../Components/Tooltip";
+import Legend from "../Components/Legend";
 
 // Struktura wiersza zwracanego przez zapytanie pg_statio_all_tables + wyliczone ratio
 interface IOStatsRecord {
@@ -151,14 +155,7 @@ const ioStatsTab = (
                 boxSizing: 'border-box',
                 overflow: 'hidden'
             }}>
-                <h4 style={{
-                    margin: '0 0 8px 0',
-                    color: theme.palette.text.primary,
-                    flexShrink: 0,
-                    fontSize: '0.9rem'
-                }}>
-                    {title}
-                </h4>
+                <TitleChart title={title} variant="body1" />
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                     <defs>
@@ -192,12 +189,9 @@ const ioStatsTab = (
                             backgroundColor: theme.palette.background.tooltip,
                             border: `1px solid ${theme.palette.divider}`
                         }}
-                        wrapperStyle={{ zIndex: 9999 }}
                         formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
-                        isAnimationActive={false}
-                        animationDuration={0}
                     />
-                    <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                    <Legend />
                     <Area
                         type="monotone"
                         dataKey={readKey}
@@ -282,13 +276,7 @@ const ioStatsTab = (
                             flexDirection: 'column',
                             minHeight: 0
                         }}>
-                            <h4 style={{
-                                margin: '0 0 8px 0',
-                                color: theme.palette.text.primary,
-                                flexShrink: 0
-                            }}>
-                                {t("cache-hit-ratio", "Cache Hit Ratio (%)")}
-                            </h4>
+                            <TitleChart title={t("cache-hit-ratio", "Cache Hit Ratio (%)")} variant="body1" />
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={hitRatioData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -324,13 +312,7 @@ const ioStatsTab = (
                             flexDirection: 'column',
                             minHeight: 0
                         }}>
-                            <h4 style={{
-                                margin: '0 0 8px 0',
-                                color: theme.palette.text.primary,
-                                flexShrink: 0
-                            }}>
-                                {t("blocks-read-vs-hit", "Blocks Read vs Hit")}
-                            </h4>
+                            <TitleChart title={t("blocks-read-vs-hit", "Blocks Read vs Hit")} variant="body1" />
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={readHitData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />

@@ -16,6 +16,7 @@ import { ChartBgwriterBuffers } from "./activityCharts/ChartBgwriterBuffers";
 import { ChartCheckpointTimes } from "./activityCharts/ChartCheckpointTimes";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { ProfileRecord } from "src/api/entities";
+import TitleChart from "../Components/TitleChart";
 
 export interface ActivityRecord {
     snapshot: number;
@@ -523,17 +524,14 @@ const activityTab = (
                             const ChartComponent = chart.component;
                             return (
                                 <Grid key={chart.key} size={{ xs: 12, sm: 6, md: gridSide, lg: gridSide, xl: gridSide }}>
-                                    <Box sx={{ display: "flex", width: "100%", gap: 8, paddingX: 8 }}>
+                                    <TitleChart title={chart.title} variant="body1">
                                         <ToolButton
                                             size="small"
                                             onClick={() => toggleMinimized(chart.key, refresh)}
                                         >
                                             <theme.icons.Pinned color="primary" />
                                         </ToolButton>
-                                        <Typography variant="body1" sx={{ flex: 1, textAlign: "center" }}>
-                                            {chart.title}
-                                        </Typography>
-                                    </Box>
+                                    </TitleChart>
                                     <ChartComponent minimized={false} data={data} {...(chart.props || {})} />
                                 </Grid>
                             );
@@ -547,7 +545,7 @@ const activityTab = (
                                 const ChartComponent = chart.component;
                                 return (
                                     <Box key={chart.key} sx={{ width: `${100 / chartList.length}%`, height: "100%" }}>
-                                        <Typography variant="caption" sx={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <TitleChart title={chart.shortTitle} variant="caption">
                                             <ToolButton
                                                 size="small"
                                                 onClick={() => toggleMinimized(chart.key, refresh)}
@@ -555,8 +553,7 @@ const activityTab = (
                                             >
                                                 <theme.icons.Pin color="error" />
                                             </ToolButton>
-                                            {chart.shortTitle}
-                                        </Typography>
+                                        </TitleChart>
                                         <ChartComponent minimized={true} data={data} {...(chart.props || {})} />
                                     </Box>
                                 );
