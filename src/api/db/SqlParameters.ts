@@ -163,50 +163,58 @@ export function mapSqlParamsToValues(
     params: SqlParameterInfo[]
 ): (any | null)[] {
 
+    const get = (k: string | number) => {
+        if (k in values) {
+            const v = (values as any)[k as any];
+            return (typeof v === "object" && v && "value" in v) ? (v as any).value : v;
+        }
+        return undefined;
+    };
+
     const resolve = (p: SqlParameterInfo): any | null => {
-        // Najpierw spróbuj po indeksie (jeśli values keyed po index)
-        if (p.index in values) {
-            const v = values[p.index as any];
-            return (typeof v === "object" && v && "value" in v) ? v.value : v;
-        }
-
-        // Potem spróbuj po grupach (named, positional, question)
-        if (p.paramType === "named") {
-            const key = String(p.name);
-            if (key in values) {
-                const v = values[key];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
-            }
-        }
-
         if (p.paramType === "positional") {
-            const k1 = `$${p.name}`;
-            if (k1 in values) {
-                const v = values[k1];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
-            }
-            const k2 = String(p.name);
-            if (k2 in values) {
-                const v = values[k2];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
-            }
-            if (typeof p.name === "number" && p.name in values) {
-                const v = (values as any)[p.name];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
-            }
+            // preferuj $n, potem n, na końcu index (0-based)
+            const vDollar = get(`$${p.name}`);
+            if (vDollar !== undefined) return vDollar;
+
+            const vNumStr = get(String(p.name));
+            if (vNumStr !== undefined) return vNumStr;
+
+            const vNum = typeof p.name === "number" ? get(p.name) : undefined;
+            if (vNum !== undefined) return vNum;
+
+            const vIdx = get(p.index);
+            if (vIdx !== undefined) return vIdx;
+
+            return null;
         }
 
-        if (p.paramType === "question") {
-            const kq = `?${p.index}`;
-            if (kq in values) {
-                const v = values[kq];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
+        if (p.paramType === "named") {
+            const name = String(p.name);
+
+            const vName = get(name);
+            if (vName !== undefined) return vName;
+
+            for (const k of [":" + name, "@" + name, "$" + name, "{" + name + "}"]) {
+                const v = get(k);
+                if (v !== undefined) return v;
             }
-            if ("?" in values) {
-                const v = values["?"];
-                return (typeof v === "object" && v && "value" in v) ? v.value : v;
-            }
+
+            const vIdx = get(p.index);
+            if (vIdx !== undefined) return vIdx;
+
+            return null;
         }
+
+        // question
+        const vQIdx = get(`?${p.index}`);
+        if (vQIdx !== undefined) return vQIdx;
+
+        const vQ = get("?");
+        if (vQ !== undefined) return vQ;
+
+        const vIdx = get(p.index);
+        if (vIdx !== undefined) return vIdx;
 
         return null;
     };
