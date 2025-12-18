@@ -24,6 +24,7 @@ interface StorageRecord {
     avg_row_size: string | null;
     snapshot: number;
     timestamp: number;
+    tablespace: string | null;
     [key: string]: any;
 }
 
@@ -372,10 +373,15 @@ select
   case 
     when s.n_live_tup > 0 then pg_size_pretty(round(pg_relation_size(c.oid)::numeric / s.n_live_tup)::bigint)
     else null
-  end as avg_row_size
+  end as avg_row_size,
+  -- tablespace: use relation tablespace if set, otherwise database default
+  COALESCE(ts.spcname,
+    (SELECT spcname FROM pg_tablespace WHERE oid = (SELECT dattablespace FROM pg_database WHERE datname = current_database()))
+  ) AS tablespace
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
 left join pg_stat_all_tables s on s.schemaname = n.nspname and s.relname = c.relname
+left join pg_tablespace ts on ts.oid = c.reltablespace
 where n.nspname = $1 and c.relname = $2;
             `,
                     [selectedRow()!.schema_name, selectedRow()!.table_name]
@@ -415,6 +421,7 @@ order by size_bytes desc;
             columns: [
                 { key: "relkind", label: t("relkind", "Kind"), dataType: "string", width: 80 },
                 { key: "relkind_text", label: t("relkind-text", "Type"), dataType: "string", width: 180 },
+                { key: "tablespace", label: t("tablespace", "Tablespace"), dataType: "string", width: 180 },
                 { key: "reloptions", label: t("reloptions", "Options"), dataType: "string", width: 300 },
                 { key: "heap_bytes", label: t("heap-bytes", "Heap (bytes)"), dataType: "number", width: 140 },
                 { key: "heap", label: t("heap", "Heap"), dataType: "size", width: 120 },

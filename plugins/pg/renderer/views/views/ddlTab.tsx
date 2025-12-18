@@ -1,32 +1,31 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { TableRecord } from "./tablesView";
 import { getSetting } from "@renderer/contexts/SettingsContext";
+import { ViewRecord } from "./viewsView";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl, tableRulesDdl, tableRuleCommentsDdl } from "../../../common/ddl";
-import { tablePrivilegesDdl, tableColumnPrivilegesDdl } from "../../../common/ddl";
+import { viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl, viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl } from "../../../common/ddl";
 
 const ddlTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => ViewRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
-        id: cid("table-ddl-tab"),
+        id: cid("view-ddl-tab"),
         type: "tab",
         label: {
-            id: cid("table-ddl-tab-label"),
+            id: cid("view-ddl-tab-label"),
             type: "tablabel",
             label: t("ddl", "DDL"),
         },
         content: {
-            id: cid("table-ddl-tab-content"),
+            id: cid("view-ddl-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("table-ddl-editor"),
+                id: cid("view-ddl-editor"),
                 type: "editor",
                 readOnly: true,
                 content: async (_refresh) => {
@@ -40,7 +39,7 @@ const ddlTab = (
                     const database = properties.database as string;
                     const password = properties.password as string;
                     const schema = row.schema_name;
-                    const table = row.table_name;
+                    const viewName = row.view_name;
 
                     const pgDumpPath = getSetting(PLUGIN_ID, "pg_dump.path") || "pg_dump";
                     const usePgDumpForDdl = getSetting(PLUGIN_ID, "pg_dump.use-for-ddl") ?? false;
@@ -49,7 +48,7 @@ const ddlTab = (
                         const encode = (v: string) => encodeURIComponent(v ?? "");
                         const uri = `postgresql://${encode(user)}:${encode(password)}@${host}:${port}/${encode(database)}`;
 
-                        const args = ["--schema-only", "--table", `${schema}.${table}`, uri];
+                        const args = ["--schema-only", "--table", `${schema}.${viewName}`, uri];
 
                         try {
                             const { stdout, stderr } = await window.electron.process.execFile(pgDumpPath, args);
@@ -65,54 +64,41 @@ const ddlTab = (
                                 { message: e.message || e.toString() }
                             );
                         }
-                    }
-                    else {
+                    } else {
                         let ddl = "";
-                        const { rows } = await session.query(tableDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows } = await session.query(viewDdl(session.getVersion()!), [schema, viewName]);
                         if (rows.length > 0) {
                             ddl += rows[0].source;
                         }
-                        const { rows: ownerRows } = await session.query(tableOwnerDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: ownerRows } = await session.query(viewOwnerDdl(session.getVersion()!), [schema, viewName]);
                         if (ownerRows.length > 0) {
                             ddl += "\n\n" + ownerRows[0].source;
                         }
-                        const { rows: privRows } = await session.query(tablePrivilegesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: privRows } = await session.query(viewPrivilegesDdl(session.getVersion()!), [schema, viewName]);
                         if (privRows.length > 0) {
-                            ddl += "\n\n" + privRows.map(r => r.source).join("\n");
+                            ddl += "\n\n" + privRows.map((r: any) => r.source).join("\n");
                         }
-                        const { rows: colPrivRows } = await session.query(tableColumnPrivilegesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (colPrivRows.length > 0) {
-                            ddl += "\n\n" + colPrivRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: commentRows } = await session.query(tableCommentDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: commentRows } = await session.query(viewCommentDdl(session.getVersion()!), [schema, viewName]);
                         if (commentRows.length > 0) {
                             ddl += "\n\n" + commentRows[0].source;
                         }
-                        const { rows: commentsRows } = await session.query(tableColumnCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (commentsRows.length > 0) {
-                            ddl += "\n\n" + commentsRows.map(r => r.source).join("\n");
+                        const { rows: colComments } = await session.query(viewColumnCommentsDdl(session.getVersion()!), [schema, viewName]);
+                        if (colComments.length > 0) {
+                            ddl += "\n\n" + colComments.map((r: any) => r.source).join("\n");
                         }
-                        const { rows: indexRows } = await session.query(tableIndexesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (indexRows.length > 0) {
-                            ddl += "\n\n" + indexRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: indexCommentRows } = await session.query(tableIndexCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
-                        if (indexCommentRows.length > 0) {
-                            ddl += "\n\n" + indexCommentRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: triggerRows } = await session.query(tableTriggersDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: triggerRows } = await session.query(viewTriggersDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (triggerRows.length > 0) {
                             ddl += "\n\n" + triggerRows.map(r => r.source).join("\n");
                         }
-                        const { rows: triggerCommentRows } = await session.query(tableTriggerCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: triggerCommentRows } = await session.query(viewTriggerCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (triggerCommentRows.length > 0) {
                             ddl += "\n\n" + triggerCommentRows.map(r => r.source).join("\n");
                         }
-                        const { rows: ruleRows } = await session.query(tableRulesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: ruleRows } = await session.query(viewRulesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (ruleRows.length > 0) {
                             ddl += "\n\n" + ruleRows.map(r => r.source).join("\n");
                         }
-                        const { rows: ruleCommentRows } = await session.query(tableRuleCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: ruleCommentRows } = await session.query(viewRuleCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
                         if (ruleCommentRows.length > 0) {
                             ddl += "\n\n" + ruleCommentRows.map(r => r.source).join("\n");
                         }

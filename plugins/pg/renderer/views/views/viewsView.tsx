@@ -12,6 +12,7 @@ import columnsTab from "./columnsTab";
 import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { SQL_EDITOR_EXECUTE_QUERY, SqlEditorExecuteQueryMessage } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 import { sendMessage } from "@renderer/contexts/MessageContext";
+import ddlTab from "./ddlTab";
 
 export interface ViewRecord {
     schema_name: string;
@@ -100,6 +101,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                             refresh(cid("views-title"));
                             refresh(cid("view-tab-label"));
                             refresh(cid("view-columns-tab-content"));
+                            refresh(cid("view-ddl-tab-content"));
                         }
                     },
                     actions: [
@@ -149,7 +151,8 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                             id: cid("view-columns-tabs"),
                             type: "tabs",
                             tabs: () => [
-                                columnsTab(session, () => (selectedRow))
+                                columnsTab(session, () => (selectedRow)),
+                                ddlTab(session, () => (selectedRow))
                             ],
                         },
                     },
