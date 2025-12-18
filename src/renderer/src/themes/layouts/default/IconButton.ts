@@ -13,6 +13,7 @@ export const IconButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonC
             content: {
                 ...(button.styleOverrides?.content as any),
                 padding: "0",
+                fontSize: "1.4em",
             },
         },
     };

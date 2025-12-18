@@ -17,12 +17,13 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
-    Tooltip,
-    Legend,
     BarChart,
     Bar
 } from "recharts";
 import { useTheme } from "@mui/material";
+import TitleChart from "../Components/TitleChart";
+import Tooltip from "../Components/Tooltip";
+import Legend from "../Components/Legend";
 
 interface ColumnStatsRow {
     attname: string;
@@ -146,16 +147,8 @@ const columnStatsTab = (
                         flexDirection: "column",
                         overflow: "hidden"
                     }}
-                >
-                    <h4
-                        style={{
-                            margin: 0,
-                            color: theme.palette.text.primary,
-                            fontSize: "0.9rem"
-                        }}
-                    >
-                        {t("column-stats-timeline", "Column Stats Timeline (Averages)")}
-                    </h4>
+                >'
+                    <TitleChart title={t("column-stats-timeline", "Column Stats Timeline (Averages)")} />
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                             data={timelineData}  // ← zmień na timelineData
@@ -175,13 +168,8 @@ const columnStatsTab = (
                                 stroke={theme.palette.text.secondary}
                                 style={{ fontSize: "0.7rem" }}
                             />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: theme.palette.background.tooltip,
-                                    border: `1px solid ${theme.palette.divider}`
-                                }}
-                            />
-                            <Legend wrapperStyle={{ fontSize: "0.7rem" }} />
+                            <Tooltip />
+                            <Legend />
                             <Line
                                 type="monotone"
                                 dataKey="avgNullFrac"
@@ -258,15 +246,7 @@ const columnStatsTab = (
                         overflow: "hidden"
                     }}
                 >
-                    <h4
-                        style={{
-                            margin: 0,
-                            color: theme.palette.text.primary,
-                            fontSize: "0.9rem"
-                        }}
-                    >
-                        {t("current-null-corr", "Current Null & |Correlation|")}
-                    </h4>
+                    <TitleChart title={t("current-null-corr", "Current Null & |Correlation|")} />
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={data}
@@ -289,13 +269,8 @@ const columnStatsTab = (
                                 stroke={theme.palette.text.secondary}
                                 style={{ fontSize: "0.7rem" }}
                             />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: theme.palette.background.tooltip,
-                                    border: `1px solid ${theme.palette.divider}`
-                                }}
-                            />
-                            <Legend wrapperStyle={{ fontSize: "0.7rem" }} />
+                            <Tooltip />
+                            <Legend />
                             <Bar
                                 dataKey="nullFrac"
                                 fill={theme.palette.info.main}

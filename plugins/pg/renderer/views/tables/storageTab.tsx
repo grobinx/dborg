@@ -2,9 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
 import { TableRecord } from "./tablesView";
+import TitleChart from "../Components/TitleChart";
+import Tooltip from "../Components/Tooltip";
 
 interface StorageRecord {
     relkind: string;
@@ -89,13 +91,7 @@ const storageTab = (
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
-                        <h4 style={{
-                            margin: '0 0 8px 0',
-                            color: theme.palette.text.primary,
-                            flexShrink: 0
-                        }}>
-                            {t("storage-distribution", "Storage Distribution")}
-                        </h4>
+                        <TitleChart title={t("storage-distribution", "Storage Distribution")} />
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -113,14 +109,7 @@ const storageTab = (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: theme.palette.background.tooltip,
-                                        border: `1px solid ${theme.palette.divider}`
-                                    }}
-                                    formatter={(value: any) => formatBytes(num(value))}
-                                />
-                                <Legend />
+                                <Tooltip formatter={(value: any) => formatBytes(num(value))} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -165,13 +154,13 @@ const storageTab = (
                         <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                             {/* Heap Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("heap", "Heap")}</h4>
+                                <TitleChart title={t("heap-size-over-time", "Heap")} />
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                         <defs>
                                             <linearGradient id="colorHeap" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8}/>
-                                                <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0}/>
+                                                <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -183,7 +172,6 @@ const storageTab = (
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                         <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
-                                        <Legend />
                                         <Area type="monotone" dataKey="heap" stroke={theme.palette.primary.main} fillOpacity={1} fill="url(#colorHeap)" name={t("heap", "Heap")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -191,13 +179,13 @@ const storageTab = (
 
                             {/* Toast Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("toast", "Toast")}</h4>
+                                <TitleChart title={t("toast-size-over-time", "Toast")} />
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                         <defs>
                                             <linearGradient id="colorToast" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
-                                                <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                                <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -209,7 +197,6 @@ const storageTab = (
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                         <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
-                                        <Legend />
                                         <Area type="monotone" dataKey="toast" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorToast)" name={t("toast", "Toast")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -220,13 +207,13 @@ const storageTab = (
                         <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                             {/* Indexes Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("indexes", "Indexes")}</h4>
+                                <TitleChart title={t("indexes-size-over-time", "Indexes")} />
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                         <defs>
                                             <linearGradient id="colorIndexes" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
-                                                <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                                <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -238,7 +225,6 @@ const storageTab = (
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                         <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
-                                        <Legend />
                                         <Area type="monotone" dataKey="indexes" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIndexes)" name={t("indexes", "Indexes")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -246,13 +232,13 @@ const storageTab = (
 
                             {/* Total Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                                <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("total", "Total")}</h4>
+                                <TitleChart title={t("total-size-over-time", "Total")} />
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={timelineData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                         <defs>
                                             <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
-                                                <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                                <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -264,7 +250,6 @@ const storageTab = (
                                             return value?.toString?.() ?? "";
                                         }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                         <Tooltip formatter={(val: any) => val == null ? 'N/A' : formatBytes(num(val))} />
-                                        <Legend />
                                         <Area type="monotone" dataKey="total" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorTotal)" name={t("total", "Total")} isAnimationActive={false} connectNulls />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -303,13 +288,7 @@ const storageTab = (
                         boxSizing: 'border-box',
                         overflow: 'hidden'
                     }}>
-                        <h4 style={{
-                            margin: '0 0 8px 0',
-                            color: theme.palette.text.primary,
-                            flexShrink: 0
-                        }}>
-                            {t("index-sizes", "Index Sizes")}
-                        </h4>
+                        <TitleChart title={t("index-sizes", "Index Sizes")} />
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={sortedIndexes} layout="vertical" margin={{ top: 5, right: 30, left: 50, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -331,14 +310,7 @@ const storageTab = (
                                     style={{ fontSize: '0.75rem' }}
                                     width={140}
                                 />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: theme.palette.background.tooltip,
-                                        border: `1px solid ${theme.palette.divider}`
-                                    }}
-                                    formatter={(value: any) => formatBytes(num(value))}
-                                    isAnimationActive={false}
-                                />
+                                <Tooltip formatter={(value: any) => formatBytes(num(value))} />
                                 <Bar
                                     dataKey="size_bytes"
                                     fill={theme.palette.success.main}

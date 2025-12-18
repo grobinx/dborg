@@ -2,9 +2,11 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@mui/material";
 import { TableRecord } from "./tablesView";
+import TitleChart from "../Components/TitleChart";
+import Tooltip from "../Components/Tooltip";
 
 interface StatRecord {
     n_live_tup: number;
@@ -80,13 +82,13 @@ const statisticsTab = (
                     <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                         {/* Insert Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("inserts", "Inserts")}</h4>
+                            <TitleChart title={t("inserts", "Inserts")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorIns" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -100,13 +102,13 @@ const statisticsTab = (
 
                         {/* Update Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("updates", "Updates")}</h4>
+                            <TitleChart title={t("updates", "Updates")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorUpd" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -123,13 +125,13 @@ const statisticsTab = (
                     <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                         {/* Delete Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("deletes", "Deletes")}</h4>
+                            <TitleChart title={t("deletes", "Deletes")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorDel" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -143,13 +145,13 @@ const statisticsTab = (
 
                         {/* HOT Update Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("hot-updates", "HOT Updates")}</h4>
+                            <TitleChart title={t("hot-updates", "HOT Updates")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorHot" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -187,20 +189,19 @@ const statisticsTab = (
                     <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                         {/* Sequential Scans Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("seq-scan", "Sequential Scans")}</h4>
+                            <TitleChart title={t("sequential-scans", "Sequential Scans")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorSeqScan" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="seq_scan" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorSeqScan)" name={t("seq-scan", "Seq Scan")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -208,20 +209,19 @@ const statisticsTab = (
 
                         {/* Index Scans Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("idx-scan", "Index Scans")}</h4>
+                            <TitleChart title={t("index-scans", "Index Scans")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorIdxScan" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="idx_scan" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorIdxScan)" name={t("idx-scan", "Idx Scan")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -232,20 +232,19 @@ const statisticsTab = (
                     <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
                         {/* Sequential Tuples Read Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("seq-tup-read", "Sequential Tuples Read")}</h4>
+                            <TitleChart title={t("seq-tup-read", "Sequential Tuples Read")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorSeqTupRead" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.warning.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.warning.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="seq_tup_read" stroke={theme.palette.warning.main} fillOpacity={1} fill="url(#colorSeqTupRead)" name={t("seq-tup-read", "Seq Tup Read")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -253,20 +252,19 @@ const statisticsTab = (
 
                         {/* Index Tuples Fetch Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("idx-tup-fetch", "Index Tuples Fetch")}</h4>
+                            <TitleChart title={t("idx-tup-fetch", "Index Tuples Fetch")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorIdxTupFetch" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.info.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="idx_tup_fetch" stroke={theme.palette.info.main} fillOpacity={1} fill="url(#colorIdxTupFetch)" name={t("idx-tup-fetch", "Idx Tup Fetch")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -307,20 +305,19 @@ const statisticsTab = (
                     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
                         {/* Live Tuples Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("live-tuples", "Live Tuples")}</h4>
+                            <TitleChart title={t("live-tuples", "Live Tuples")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorLive" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.success.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.success.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="live" stroke={theme.palette.success.main} fillOpacity={1} fill="url(#colorLive)" name={t("live", "Live")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -328,20 +325,19 @@ const statisticsTab = (
 
                         {/* Dead Tuples Chart */}
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                            <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("dead-tuples", "Dead Tuples")}</h4>
+                            <TitleChart title={t("dead-tuples", "Dead Tuples")} />
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="colorDead" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={theme.palette.error.main} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="snapshot" stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} tickFormatter={(v) => v === -1 ? "-" : String(v)} />
                                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: "0.75rem" }} domain={['dataMin - 5%', 'dataMax + 5%']} />
                                     <Tooltip />
-                                    <Legend />
                                     <Area type="monotone" dataKey="dead" stroke={theme.palette.error.main} fillOpacity={1} fill="url(#colorDead)" name={t("dead", "Dead")} isAnimationActive={false} connectNulls />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -350,7 +346,7 @@ const statisticsTab = (
 
                     {/* Pie Chart */}
                     <div style={{ flex: 0.6, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                        <h4 style={{ margin: 0, color: theme.palette.text.primary }}>{t("live-dead-ratio", "Live/Dead Ratio")}</h4>
+                        <TitleChart title={t("live-dead-ratio", "Live/Dead Ratio")} />
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                 <Pie

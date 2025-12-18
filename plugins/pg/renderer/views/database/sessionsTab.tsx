@@ -727,14 +727,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                     intervals: [2, 5, 10, 15, 30, 60],
                     defaultInterval: 5,
                 } as IAutoRefresh,
-                {
-                    id: cid("sessions-refresh-button"),
-                    icon: "Refresh",
-                    label: t("refresh", "Refresh"),
-                    run: async () => {
-                        refresh(cid("sessions-grid"));
-                    }
-                } as Action<any>
             ],
             actionSlotId: cid("sessions-grid"),
         }),
