@@ -1,7 +1,7 @@
 import { useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-export const CustomTooltip = ({ active, payload }: any) => {
+const SnapshotTooltip = ({ active, payload }: any) => {
     const theme = useTheme();
     const { t } = useTranslation();
 
@@ -13,7 +13,7 @@ export const CustomTooltip = ({ active, payload }: any) => {
             timeStr = t("{{elapsed}}s ago", { elapsed });
         }
         return (
-            <div style={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, padding: "8px", borderRadius: "4px", zIndex: 1400 }}>
+            <div style={{ backgroundColor: theme.palette.background.table.container, border: `1px solid ${theme.palette.divider}`, padding: "8px", borderRadius: "4px" }}>
                 <p style={{ margin: "0 0 4px 0", color: theme.palette.text.primary }}>{timeStr}</p>
                 {payload.map((entry: any, index: number) => (
                     <p key={index} style={{ margin: "2px 0", color: entry.color }}>
@@ -25,3 +25,5 @@ export const CustomTooltip = ({ active, payload }: any) => {
     }
     return null;
 };
+
+export default SnapshotTooltip;
