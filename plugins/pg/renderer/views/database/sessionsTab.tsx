@@ -129,6 +129,16 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
         ? `a.wait_event_type, a.wait_event,`
         : `null::text as wait_event_type, null::text as wait_event,`;
 
+    const blockingPidsFragment = versionNumber >= 90600
+        ? `
+            CASE 
+                WHEN array_length(pg_catalog.pg_blocking_pids(a.pid), 1) = 0 
+                    THEN NULL::int[] 
+                ELSE pg_catalog.pg_blocking_pids(a.pid) 
+            END AS blocking_pids,
+        `
+        : `NULL::int[] AS blocking_pids,`;
+
     return {
         id: cid("sessions-tab"),
         type: "tab",
@@ -188,13 +198,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     case when state in ('active') then to_char(now() - a.query_start, 'dd hh24:mi:ss') end as state_duration,
                                     regexp_replace(a.query, E'^\\\\s+|\\\\s+$', '', 'g') as query,
                                     ${waitEventFragment}
-                                    (SELECT array_agg(DISTINCT bl.pid) 
-                                     FROM pg_catalog.pg_locks bl 
-                                     JOIN pg_catalog.pg_locks al ON al.pid = a.pid
-                                     WHERE NOT bl.granted 
-                                       AND bl.pid != a.pid 
-                                       AND bl.relation = al.relation 
-                                       AND bl.locktype = al.locktype) as blocking_pids,
+                                    ${blockingPidsFragment}
                                     (a.pid = pg_backend_pid()) as is_current_session
                                 FROM pg_catalog.pg_stat_activity a
                                 ${whereClause}
@@ -704,7 +708,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                 autoSaveId: `sessions-split-${session.profile.sch_id}`,
             }),
         },
-        toolBar: (refresh) => ({
+        toolBar: () => ({
             id: cid("sessions-tab-toolbar"),
             type: "toolbar",
             tools: [
