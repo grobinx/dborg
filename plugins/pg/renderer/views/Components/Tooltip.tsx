@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Tooltip as RechartsTooltip, TooltipProps } from "recharts";
 import { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
@@ -7,7 +8,7 @@ const Tooltip = <TValue extends ValueType, TName extends NameType>(props: Extend
     return (
         <RechartsTooltip
             isAnimationActive={false}
-            wrapperStyle={{ zIndex: 1000 }}
+            wrapperStyle={{ zIndex: 1400, overflow: 'visible' }}
             {...(props as TooltipProps<TValue, TName>)}
         />
     );

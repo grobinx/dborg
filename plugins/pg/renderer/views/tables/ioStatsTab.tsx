@@ -158,65 +158,59 @@ const ioStatsTab = (
                 <TitleChart title={title} variant="body1" />
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                    <defs>
-                        <linearGradient id={`gradient-${readKey}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={readColor} stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor={readColor} stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id={`gradient-${hitKey}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={hitColor} stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor={hitColor} stopOpacity={0}/>
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                    <XAxis
-                        dataKey="snapshot"
-                        stroke={theme.palette.text.secondary}
-                        style={{ fontSize: '0.75rem' }}
-                        tickFormatter={(value) => value === -1 ? "-" : value.toString()}
-                    />
-                    <YAxis
-                        stroke={theme.palette.text.secondary}
-                        style={{ fontSize: '0.75rem' }}
-                        tickFormatter={(value) => {
-                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                            if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                            return value.toString();
-                        }}
-                    />
-                    <Tooltip
-                        contentStyle={{
-                            backgroundColor: theme.palette.background.tooltip,
-                            border: `1px solid ${theme.palette.divider}`
-                        }}
-                        formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'}
-                    />
-                    <Legend />
-                    <Area
-                        type="monotone"
-                        dataKey={readKey}
-                        stackId="1"
-                        stroke={readColor}
-                        fill={`url(#gradient-${readKey})`}
-                        fillOpacity={1}
-                        name={t("read", "Read")}
-                        isAnimationActive={false}
-                        animationDuration={0}
-                        connectNulls
-                    />
-                    <Area
-                        type="monotone"
-                        dataKey={hitKey}
-                        stackId="1"
-                        stroke={hitColor}
-                        fill={`url(#gradient-${hitKey})`}
-                        fillOpacity={1}
-                        name={t("hit", "Hit")}
-                        isAnimationActive={false}
-                        animationDuration={0}
-                        connectNulls
-                    />
-                </AreaChart>
+                        <defs>
+                            <linearGradient id={`gradient-${readKey}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={readColor} stopOpacity={0.8} />
+                                <stop offset="95%" stopColor={readColor} stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id={`gradient-${hitKey}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={hitColor} stopOpacity={0.8} />
+                                <stop offset="95%" stopColor={hitColor} stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                        <XAxis
+                            dataKey="snapshot"
+                            stroke={theme.palette.text.secondary}
+                            style={{ fontSize: '0.75rem' }}
+                            tickFormatter={(value) => value === -1 ? "-" : value.toString()}
+                        />
+                        <YAxis
+                            stroke={theme.palette.text.secondary}
+                            style={{ fontSize: '0.75rem' }}
+                            tickFormatter={(value) => {
+                                if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                                if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                                return value.toString();
+                            }}
+                        />
+                        <Tooltip formatter={(value: any) => value !== null ? num(value).toLocaleString() : 'N/A'} />
+                        <Legend />
+                        <Area
+                            type="monotone"
+                            dataKey={readKey}
+                            stackId="1"
+                            stroke={readColor}
+                            fill={`url(#gradient-${readKey})`}
+                            fillOpacity={1}
+                            name={t("read", "Read")}
+                            isAnimationActive={false}
+                            animationDuration={0}
+                            connectNulls
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey={hitKey}
+                            stackId="1"
+                            stroke={hitColor}
+                            fill={`url(#gradient-${hitKey})`}
+                            fillOpacity={1}
+                            name={t("hit", "Hit")}
+                            isAnimationActive={false}
+                            animationDuration={0}
+                            connectNulls
+                        />
+                    </AreaChart>
                 </ResponsiveContainer>
             </div>
         );
@@ -282,15 +276,7 @@ const ioStatsTab = (
                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                     <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
                                     <YAxis domain={[0, 100]} stroke={theme.palette.text.secondary} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: theme.palette.background.tooltip,
-                                            border: `1px solid ${theme.palette.divider}`
-                                        }}
-                                        wrapperStyle={{ zIndex: 9999 }}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                    />
+                                    <Tooltip />
                                     <Bar
                                         dataKey="ratio"
                                         fill={theme.palette.primary.main}
@@ -326,16 +312,7 @@ const ioStatsTab = (
                                             return value.toString();
                                         }}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: theme.palette.background.tooltip,
-                                            border: `1px solid ${theme.palette.divider}`
-                                        }}
-                                        wrapperStyle={{ zIndex: 9999 }}
-                                        formatter={(value: any) => num(value).toLocaleString()}
-                                        isAnimationActive={false}
-                                        animationDuration={0}
-                                    />
+                                    <Tooltip formatter={(value: any) => num(value).toLocaleString()} />
                                     <Legend />
                                     <Bar
                                         dataKey="read"
@@ -504,7 +481,7 @@ const ioStatsTab = (
                 }
 
                 const { rows } = await session.query<IOStatsRecord>(
-`select
+                    `select
     heap_blks_read,
     heap_blks_hit,
     round(100.0 * heap_blks_hit / nullif(heap_blks_hit + heap_blks_read, 0), 2) as heap_hit_ratio,
