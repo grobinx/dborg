@@ -512,8 +512,8 @@ const activityTab = (
 
             chartList.find(c => c.key === "numbackends")!.props = { maxConnections };
 
-            const maximizedCharstList = chartList.filter(c => maximizedCharts.includes(c.key));
-            const minimizedChartsList = chartList.filter(c => minimizedCharts.includes(c.key));
+            const maximizedCharstList = maximizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean);
+            const minimizedChartsList = minimizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean);
             const gridSide = maximizedCharstList.length <= 4 ? 6 : maximizedCharstList.length <= 6 ? 4 : maximizedCharstList.length <= 8 ? 3 : 4;
 
             return (
@@ -521,18 +521,18 @@ const activityTab = (
                     <Grid container spacing={8} sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
                         {/* Pozostałe wykresy */}
                         {maximizedCharstList.map(chart => {
-                            const ChartComponent = chart.component;
+                            const ChartComponent = chart!.component;
                             return (
-                                <Grid key={chart.key} size={{ xs: 12, sm: 6, md: gridSide, lg: gridSide, xl: gridSide }}>
-                                    <TitleChart title={chart.title} variant="body1">
+                                <Grid key={chart!.key} size={{ xs: 12, sm: 6, md: gridSide, lg: gridSide, xl: gridSide }}>
+                                    <TitleChart title={chart!.title} variant="body1">
                                         <ToolButton
                                             size="small"
-                                            onClick={() => toggleMinimized(chart.key, refresh)}
+                                            onClick={() => toggleMinimized(chart!.key, refresh)}
                                         >
                                             <theme.icons.Pinned color="primary" />
                                         </ToolButton>
                                     </TitleChart>
-                                    <ChartComponent minimized={false} data={data} {...(chart.props || {})} />
+                                    <ChartComponent minimized={false} data={data} {...(chart!.props || {})} />
                                 </Grid>
                             );
                         })}
@@ -542,19 +542,19 @@ const activityTab = (
                     {minimizedChartsList.length > 0 && (
                         <Stack direction="row" sx={{ gap: 8, padding: 8, height: "15%" }}>
                             {minimizedChartsList.map(chart => {
-                                const ChartComponent = chart.component;
+                                const ChartComponent = chart!.component;
                                 return (
-                                    <Box key={chart.key} sx={{ width: `${100 / chartList.length}%`, height: "100%" }}>
-                                        <TitleChart title={chart.shortTitle} variant="caption">
+                                    <Box key={chart!.key} sx={{ width: `${100 / chartList.length}%`, height: "100%" }}>
+                                        <TitleChart title={chart!.shortTitle} variant="caption">
                                             <ToolButton
                                                 size="small"
-                                                onClick={() => toggleMinimized(chart.key, refresh)}
+                                                onClick={() => toggleMinimized(chart!.key, refresh)}
                                                 dense
                                             >
                                                 <theme.icons.Pin color="error" />
                                             </ToolButton>
                                         </TitleChart>
-                                        <ChartComponent minimized={true} data={data} {...(chart.props || {})} />
+                                        <ChartComponent minimized={true} data={data} {...(chart!.props || {})} />
                                     </Box>
                                 );
                             })}
