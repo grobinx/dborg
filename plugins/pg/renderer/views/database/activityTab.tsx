@@ -17,6 +17,7 @@ import { ChartCheckpointTimes } from "./activityCharts/ChartCheckpointTimes";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { ProfileRecord } from "src/api/entities";
 import TitleChart from "../Components/TitleChart";
+import React from "react";
 
 export interface ActivityRecord {
     snapshot: number;
@@ -512,8 +513,8 @@ const activityTab = (
 
             chartList.find(c => c.key === "numbackends")!.props = { maxConnections };
 
-            const maximizedCharstList = maximizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean);
-            const minimizedChartsList = minimizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean);
+            const maximizedCharstList = React.useMemo(() => maximizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean), [maximizedCharts, chartList]);
+            const minimizedChartsList = React.useMemo(() => minimizedCharts.map(key => chartList.find(c => c.key === key)).filter(Boolean), [minimizedCharts, chartList]);
             const gridSide = maximizedCharstList.length <= 4 ? 6 : maximizedCharstList.length <= 6 ? 4 : maximizedCharstList.length <= 8 ? 3 : 4;
 
             return (
