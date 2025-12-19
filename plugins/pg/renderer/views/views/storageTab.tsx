@@ -4,7 +4,7 @@ import i18next from "i18next";
 import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
 import { PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, BarChart, Bar, AreaChart, Area } from 'recharts';
 import { useTheme } from "@mui/material";
-import { TableRecord } from "./tablesView";
+import { ViewRecord } from "./viewsView";
 import TitleChart from "../Components/TitleChart";
 import Tooltip from "../Components/Tooltip";
 import prettySize from "@renderer/utils/prettySize";
@@ -38,13 +38,13 @@ interface IndexSizeRecord {
 
 const storageTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => ViewRecord | null
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     let storageRows: StorageRecord[] = [];
     let indexSizes: IndexSizeRecord[] = [];
-    let lastSelectedTable: TableRecord | null = null;
+    let lastSelected: ViewRecord | null = null;
     let snapshotSize = 20 + 1;
     let snapshotCounter = 0;
 
@@ -55,7 +55,7 @@ const storageTab = (
 
     const pieChart = (): IRenderedSlot => {
         return {
-            id: cid("table-storage-pie-chart-slot"),
+            id: cid("view-storage-pie-chart-slot"),
             type: "rendered",
             render: () => {
                 const theme = useTheme();
@@ -136,7 +136,7 @@ const storageTab = (
 
     const timelineChart = (): IRenderedSlot => {
         return {
-            id: cid("table-storage-timeline-chart-slot"),
+            id: cid("view-storage-timeline-chart-slot"),
             type: "rendered",
             render: () => {
                 const theme = useTheme();
@@ -145,9 +145,7 @@ const storageTab = (
 
                 return (
                     <div style={{ padding: 8, height: "100%", width: "100%", display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
-                        {/* Top Row */}
                         <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
-                            {/* Heap Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                                 <TitleChart title={t("heap-size-over-time", "Heap")} />
                                 <ResponsiveContainer width="100%" height="100%">
@@ -172,7 +170,6 @@ const storageTab = (
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Toast Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                                 <TitleChart title={t("toast-size-over-time", "Toast")} />
                                 <ResponsiveContainer width="100%" height="100%">
@@ -198,9 +195,7 @@ const storageTab = (
                             </div>
                         </div>
 
-                        {/* Bottom Row */}
                         <div style={{ flex: 1, display: "flex", gap: 8, overflow: "hidden" }}>
-                            {/* Indexes Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                                 <TitleChart title={t("indexes-size-over-time", "Indexes")} />
                                 <ResponsiveContainer width="100%" height="100%">
@@ -225,7 +220,6 @@ const storageTab = (
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Total Chart */}
                             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                                 <TitleChart title={t("total-size-over-time", "Total")} />
                                 <ResponsiveContainer width="100%" height="100%">
@@ -258,7 +252,7 @@ const storageTab = (
 
     const indexesChart = (): IRenderedSlot => {
         return {
-            id: cid("table-storage-indexes-chart-slot"),
+            id: cid("view-storage-indexes-chart-slot"),
             type: "rendered",
             render: () => {
                 const theme = useTheme();
@@ -322,18 +316,18 @@ const storageTab = (
 
     const grid = (): IGridSlot => {
         return {
-            id: cid("table-storage-grid"),
+            id: cid("view-storage-grid"),
             type: "grid",
             mode: "defined",
             pivot: true,
             rows: async (refresh) => {
                 if (!selectedRow()) return [];
 
-                if (lastSelectedTable?.schema_name !== selectedRow()!.schema_name ||
-                    lastSelectedTable?.table_name !== selectedRow()!.table_name) {
+                if (lastSelected?.schema_name !== selectedRow()!.schema_name ||
+                    lastSelected?.view_name !== selectedRow()!.view_name) {
                     storageRows = [];
                     snapshotCounter = 0;
-                    lastSelectedTable = selectedRow();
+                    lastSelected = selectedRow();
                 }
 
                 const { rows } = await session.query<StorageRecord>(
@@ -368,7 +362,6 @@ select
     when s.n_live_tup > 0 then pg_size_pretty(round(pg_relation_size(c.oid)::numeric / s.n_live_tup)::bigint)
     else null
   end as avg_row_size,
-  -- tablespace: use relation tablespace if set, otherwise database default
   COALESCE(ts.spcname,
     (SELECT spcname FROM pg_tablespace WHERE oid = (SELECT dattablespace FROM pg_database WHERE datname = current_database()))
   ) AS tablespace
@@ -378,10 +371,9 @@ left join pg_stat_all_tables s on s.schemaname = n.nspname and s.relname = c.rel
 left join pg_tablespace ts on ts.oid = c.reltablespace
 where n.nspname = $1 and c.relname = $2;
             `,
-                    [selectedRow()!.schema_name, selectedRow()!.table_name]
+                    [selectedRow()!.schema_name, selectedRow()!.view_name]
                 );
 
-                // Fetch index sizes
                 const indexResult = await session.query<IndexSizeRecord>(
                     `
 select
@@ -392,7 +384,7 @@ from pg_stat_all_indexes i
 where i.schemaname = $1 and i.relname = $2
 order by size_bytes desc;
             `,
-                    [selectedRow()!.schema_name, selectedRow()!.table_name]
+                    [selectedRow()!.schema_name, selectedRow()!.view_name]
                 );
                 indexSizes = indexResult.rows;
 
@@ -407,9 +399,9 @@ order by size_bytes desc;
                         storageRows = storageRows.slice(storageRows.length - snapshotSize);
                     }
                 }
-                refresh(cid("table-storage-pie-chart-slot"));
-                refresh(cid("table-storage-timeline-chart-slot"));
-                refresh(cid("table-storage-indexes-chart-slot"));
+                refresh(cid("view-storage-pie-chart-slot"));
+                refresh(cid("view-storage-timeline-chart-slot"));
+                refresh(cid("view-storage-indexes-chart-slot"));
                 return rows;
             },
             columns: [
@@ -428,38 +420,38 @@ order by size_bytes desc;
                 { key: "avg_row_size_bytes", label: t("avg-row-size-bytes", "Avg Row (bytes)"), dataType: "number", width: 150 },
                 { key: "avg_row_size", label: t("avg-row-size", "Avg Row Size"), dataType: "size", width: 130 },
             ] as ColumnDefinition[],
-            autoSaveId: `table-storage-grid-${session.profile.sch_id}`,
+            autoSaveId: `view-storage-grid-${session.profile.sch_id}`,
         };
     };
 
     return {
-        id: cid("table-storage-tab"),
+        id: cid("view-storage-tab"),
         type: "tab",
         label: () => ({
-            id: cid("table-storage-tab-label"),
+            id: cid("view-storage-tab-label"),
             type: "tablabel",
             label: t("storage", "Storage"),
         }),
         content: () => ({
-            id: cid("table-storage-tab-content"),
+            id: cid("view-storage-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("table-storage-split"),
+                id: cid("view-storage-split"),
                 type: "split",
                 direction: "horizontal",
                 first: (): IContentSlot => ({
-                    id: cid("table-storage-grid-content-slot"),
+                    id: cid("view-storage-grid-content-slot"),
                     type: "content",
                     title: () => ({
-                        id: cid("table-storage-grid-title"),
+                        id: cid("view-storage-grid-title"),
                         type: "title",
                         title: t("storage-data", "Storage Data"),
                         toolBar: {
-                            id: cid("table-storage-grid-toolbar"),
+                            id: cid("view-storage-grid-toolbar"),
                             type: "toolbar",
                             tools: ([
                                 {
-                                    id: cid("table-storage-snapshot-size-field"),
+                                    id: cid("view-storage-snapshot-size-field"),
                                     type: "number",
                                     defaultValue: snapshotSize - 1,
                                     onChange(value: number | null) {
@@ -473,12 +465,12 @@ order by size_bytes desc;
                                 },
                                 {
                                     onTick(refresh) {
-                                        refresh(cid("table-storage-grid"));
+                                        refresh(cid("view-storage-grid"));
                                     },
                                     onClear(refresh) {
                                         storageRows = [];
                                         snapshotCounter = 0;
-                                        refresh(cid("table-storage-grid"));
+                                        refresh(cid("view-storage-grid"));
                                     },
                                     clearOn: "start",
                                     canPause: false,
@@ -489,50 +481,50 @@ order by size_bytes desc;
                     main: () => grid()
                 }),
                 second: (): ITabsSlot => ({
-                    id: cid("table-storage-charts-tabs"),
+                    id: cid("view-storage-charts-tabs"),
                     type: "tabs",
                     tabs: [
                         {
-                            id: cid("table-storage-pie-chart-tab"),
+                            id: cid("view-storage-pie-chart-tab"),
                             type: "tab",
                             label: () => ({
-                                id: cid("table-storage-pie-chart-tab-label"),
+                                id: cid("view-storage-pie-chart-tab-label"),
                                 type: "tablabel",
                                 label: t("distribution-chart", "Distribution"),
                             }),
                             content: () => pieChart(),
                         },
                         {
-                            id: cid("table-storage-timeline-chart-tab"),
+                            id: cid("view-storage-timeline-chart-tab"),
                             type: "tab",
                             label: () => ({
-                                id: cid("table-storage-timeline-chart-tab-label"),
+                                id: cid("view-storage-timeline-chart-tab-label"),
                                 type: "tablabel",
                                 label: t("timeline-chart", "Timeline"),
                             }),
                             content: () => ({
-                                id: cid("table-storage-timeline-chart-content"),
+                                id: cid("view-storage-timeline-chart-content"),
                                 type: "tabcontent",
                                 content: () => timelineChart(),
                             }),
                         },
                         {
-                            id: cid("table-storage-indexes-chart-tab"),
+                            id: cid("view-storage-indexes-chart-tab"),
                             type: "tab",
                             label: () => ({
-                                id: cid("table-storage-indexes-chart-tab-label"),
+                                id: cid("view-storage-indexes-chart-tab-label"),
                                 type: "tablabel",
                                 label: t("indexes-chart", "Indexes"),
                             }),
                             content: () => ({
-                                id: cid("table-storage-indexes-chart-content"),
+                                id: cid("view-storage-indexes-chart-content"),
                                 type: "tabcontent",
                                 content: () => indexesChart(),
                             }),
                         },
                     ],
                 }),
-                autoSaveId: `table-storage-split-${session.profile.sch_id}`,
+                autoSaveId: `view-storage-split-${session.profile.sch_id}`,
                 secondSize: 50,
             }),
         }),

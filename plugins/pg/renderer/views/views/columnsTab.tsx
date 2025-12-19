@@ -137,8 +137,6 @@ const columnsTab = (
                             // Relation kind info (to show it's a view)
                             { key: "relation_kind", label: t("relation-kind", "Relation Kind"), width: 160, dataType: "string" },
                             { key: "is_view", label: t("is-view", "Is View"), width: 80, dataType: "boolean" },
-
-                            // Type details
                             { key: "type_schema", label: t("type-schema", "Type Schema"), width: 120, dataType: "string" },
                             { key: "type_name", label: t("type-name", "Type Name"), width: 120, dataType: "string" },
                             { key: "base_type", label: t("base-type", "Base Type"), width: 120, dataType: "string" },
@@ -147,11 +145,12 @@ const columnsTab = (
                             { key: "char_max_length", label: t("char-max-length", "Char Max Length"), width: 120, dataType: "number" },
                             { key: "numeric_precision", label: t("numeric-precision", "Numeric Precision"), width: 120, dataType: "number" },
                             { key: "numeric_scale", label: t("numeric-scale", "Numeric Scale"), width: 120, dataType: "number" },
-
-                            // Collation
                             { key: "collation_schema", label: t("collation-schema", "Collation Schema"), width: 140, dataType: "string" },
                             { key: "collation_name", label: t("collation-name", "Collation Name"), width: 140, dataType: "string" },
                             { key: "is_custom_collation", label: t("is-custom-collation", "Is Custom Collation"), width: 160, dataType: "boolean" },
+                            { key: "ref_table_schemas", label: t("ref-table-schemas", "Ref Table Schemas"), width: 200, dataType: "string" },
+                            { key: "ref_table_names", label: t("ref-table-names", "Ref Table Names"), width: 200, dataType: "string" },
+                            { key: "ref_column_names", label: t("ref-column-names", "Ref Column Names"), width: 220, dataType: "string" },
                         ] as ColumnDefinition[],
                         pivotColumns: [
                             { key: "detail", label: t("details", "Details"), width: 220, dataType: "string" },
@@ -204,23 +203,36 @@ collation_info as (
   left join pg_namespace cn on cn.oid = coll.collnamespace
 )
 select
-  relkind,
-  case relkind when 'v' then 'view' when 'm' then 'materialized view' else relkind::text end as relation_kind,
-  (relkind in ('v','m')) as is_view,
+  ci.relkind,
+  case ci.relkind when 'v' then 'view' when 'm' then 'materialized view' else ci.relkind::text end as relation_kind,
+  (ci.relkind in ('v','m')) as is_view,
 
-  type_schema,
-  type_name,
-  base_type_name as base_type,
-  (typcategory = 'A') as is_array,
-  array_elem_type,
-  case when atttypmod > 0 and type_name in ('varchar','bpchar','char') then atttypmod - 4 else null end as char_max_length,
-  case when type_name in ('numeric','decimal') then ((atttypmod - 4) >> 16) & 65535 else null end as numeric_precision,
-  case when type_name in ('numeric','decimal') then (atttypmod - 4) & 65535 else null end as numeric_scale,
+  ci.type_schema,
+  ci.type_name,
+  ci.base_type_name as base_type,
+  (ci.typcategory = 'A') as is_array,
+  ci.array_elem_type,
+  case when ci.atttypmod > 0 and ci.type_name in ('varchar','bpchar','char') then ci.atttypmod - 4 else null end as char_max_length,
+  case when ci.type_name in ('numeric','decimal') then ((ci.atttypmod - 4) >> 16) & 65535 else null end as numeric_precision,
+  case when ci.type_name in ('numeric','decimal') then (ci.atttypmod - 4) & 65535 else null end as numeric_scale,
   
-  collation_schema,
-  collation_name,
-  (collation_name is not null) as is_custom_collation
-from collation_info;
+  ci.collation_schema,
+  ci.collation_name,
+  (ci.collation_name is not null) as is_custom_collation,
+
+  r.ref_table_schema  as ref_table_schemas,
+  r.ref_table_name    as ref_table_names,
+  r.ref_column_name   as ref_column_names
+from collation_info ci
+left join lateral (
+  select 
+    vcu.table_schema as ref_table_schema,
+    vcu.table_name   as ref_table_name,
+    vcu.column_name  as ref_column_name
+  from information_schema.view_column_usage vcu
+  where vcu.view_schema = $1 and vcu.view_name = $2 and vcu.column_name = $3
+  limit 1
+) r on true;
 `;
 };
 
