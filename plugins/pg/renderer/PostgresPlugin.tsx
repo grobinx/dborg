@@ -14,6 +14,7 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import React from "react";
 import { databaseView } from "./views/database/databaseView";
 import { viewsView } from "./views/views/viewsView";
+import { sequencesView } from "./views/sequences/sequencesView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -40,6 +41,7 @@ const PostgresPlugin: Plugin = {
                 databaseView(session),
                 tablesView(session),
                 viewsView(session),
+                sequencesView(session),
             ];
         });
     }
