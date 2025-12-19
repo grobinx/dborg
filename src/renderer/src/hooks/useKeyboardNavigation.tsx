@@ -196,11 +196,12 @@ export function useKeyboardNavigation<T, V = string, A = any>({
     );
 
     // Zapamiętaj ostatnio wybrany i istniejący indeks
-    React.useEffect(() => {
+    const selectedIndex = React.useMemo(() => {
         const selectedIndex = items.findIndex(item => getId(item) === selectedId);
         if (selectedIndex !== -1) {
             lastSelectedIndexRef.current = selectedIndex;
         }
+        return selectedIndex;
     }, [selectedId, items]);
 
     // Ustaw selectedId przy zmianie items
@@ -233,5 +234,6 @@ export function useKeyboardNavigation<T, V = string, A = any>({
         selectedId,
         setSelectedId,
         handleKeyDown,
+        selectedIndex,
     ] as const;
 }
