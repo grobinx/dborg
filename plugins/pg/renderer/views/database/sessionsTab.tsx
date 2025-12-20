@@ -57,7 +57,7 @@ interface TransactionRecord {
 const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
-    const minor = parseInt((session.getVersion() ?? "0").split(".")[1], 10);
+    const minor = parseInt((session.getVersion() ?? "0").split(".")[1], 0);
     const versionNumber = major * 10000 + minor * 100;
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
@@ -132,7 +132,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     const blockingPidsFragment = versionNumber >= 90600
         ? `
             CASE 
-                WHEN array_length(pg_catalog.pg_blocking_pids(a.pid), 1) = 0 
+                WHEN nullif(array_length(pg_catalog.pg_blocking_pids(a.pid), 1), 0) IS NULL
                     THEN NULL::int[] 
                 ELSE pg_catalog.pg_blocking_pids(a.pid) 
             END AS blocking_pids,
