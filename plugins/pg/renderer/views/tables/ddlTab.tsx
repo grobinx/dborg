@@ -4,8 +4,11 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import { tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl, tableRulesDdl, tableRuleCommentsDdl } from "../../../common/ddl";
-import { tablePrivilegesDdl, tableColumnPrivilegesDdl } from "../../../common/ddl";
+import { 
+    tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl, 
+    tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl, tableRulesDdl, 
+    tableRuleCommentsDdl, tablePrivilegesDdl, tableColumnPrivilegesDdl 
+} from "../../../common/ddls/table";
 
 const ddlTab = (
     session: IDatabaseSession,

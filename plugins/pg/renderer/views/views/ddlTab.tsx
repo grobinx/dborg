@@ -4,7 +4,10 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { ViewRecord } from "./viewsView";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import { viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl, viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl } from "../../../common/ddl";
+import { 
+    viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl, 
+    viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl 
+} from "../../../common/ddls/view";
 
 const ddlTab = (
     session: IDatabaseSession,
