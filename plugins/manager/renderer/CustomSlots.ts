@@ -439,6 +439,11 @@ export interface ITabSlot extends ICustomSlot {
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
     content: TabContentSlotKindFactory;
+    /**
+     * Funkcja zwracająca slot, który pozwala na przypięcie zakładki.
+     * @returns 
+     */
+    pin?: () => ITabSlot;
 }
 
 /**

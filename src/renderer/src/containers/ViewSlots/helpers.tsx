@@ -21,6 +21,8 @@ import {
     isCopyData,
     resolveToolBarSlotKindFactory,
     ToolBarSlotKindFactory,
+    ITabSlot,
+    resolveBooleanFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -42,6 +44,7 @@ import { ToolNumberField, ToolSelectedField, ToolTextField } from "./components/
 import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 import ToolBarSlot from "./ToolBarSlot";
+import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -72,11 +75,12 @@ export function createTabLabel(
     refreshSlot: (id: string) => void,
     ref: React.Ref<HTMLDivElement>,
     onClose?: () => void,
+    onPin?: () => void,
 ): React.ReactNode {
     const resolvedLabel = resolveTabLabelKindFactory(slot, refreshSlot);
     if (resolvedLabel) {
         if (resolvedLabel.type === "tablabel") {
-            return <TabLabelSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} onClose={onClose} />;
+            return <TabLabelSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} />;
         } else if (resolvedLabel.type === "rendered") {
             return <RenderedSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} />;
         }
@@ -98,6 +102,48 @@ export function createTabContent(
         }
     }
     return null;
+}
+
+export function createTabPanel(
+    slot: ITabSlot,
+    onClose: (() => void) | undefined,
+    onPin: (() => void) | undefined,
+    refreshSlot: (id: string) => void,
+    contentRef: React.Ref<HTMLDivElement>,
+    labelRef: React.Ref<HTMLDivElement>,
+    toolBarRef: React.Ref<HTMLDivElement>,
+): {
+    content: React.ReactNode,
+    label: React.ReactNode,
+    toolBar: React.ReactNode,
+    panel: React.ReactElement<React.ComponentProps<typeof TabPanel>>,
+} {
+    const content = createTabContent(slot.content, refreshSlot, contentRef);
+    const closeable = resolveBooleanFactory(slot.closable, refreshSlot);
+    const pin = slot.pin;
+    const label = createTabLabel(slot.label, refreshSlot, labelRef,
+        closeable ? onClose : undefined,
+        pin ? onPin : undefined
+    );
+    const toolBar = createTabToolbar(slot.toolBar, refreshSlot, toolBarRef);
+    let panel: React.ReactNode = null;
+    if (content && label) {
+        panel = (
+            <TabPanel
+                key={slot.id}
+                itemID={slot.id}
+                content={content}
+                label={label}
+                buttons={toolBar}
+            />
+        );
+    }
+    return {
+        content,
+        label,
+        toolBar,
+        panel : panel as React.ReactElement<React.ComponentProps<typeof TabPanel>>,
+    }
 }
 
 export function createTabToolbar(

@@ -66,12 +66,12 @@ type ScriptAlterMode = "data-type" | "default" | "not-null" | "rename" | "collat
 
 const columnsTab = (
     session: IDatabaseSession,
-    selectedTable: () => TableRecord | null
+    selectedTable: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     let selected: TableColumnRecord | null = null;
     let columnDetails: ColumnDetailRecord | null = null;
     let scriptMode: "add" | "alter" | "drop" | "comment" = "add";

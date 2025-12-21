@@ -11,26 +11,7 @@ import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { sendMessage } from "@renderer/contexts/MessageContext";
 import { SQL_EDITOR_EXECUTE_QUERY, SqlEditorExecuteQueryMessage } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
-import columnsTab from "./columnsTab";
-import indexesTab from "./indexesTab";
-import constraintsTab from "./constraintsTab";
-import ddlTab from "./ddlTab";
-import relationsTab from "./relationsTab";
-import triggersTab from "./triggersTab";
-import storageTab from "./storageTab";
-import statisticsTab from "./statisticsTab";
-import rlsPoliciesTab from "./rlsPoliciesTab";
-import aclTab from "./aclTab";
-import columnStatsTab from "./columnStatsTab";
-import partitionsTab from "./partitionsTab";
-import rulesTab from "./rulesTab";
-import sequencesTab from "./sequencesTab";
-import bloatTab from "./bloatTab";
-import ioStatsTab from "./ioStatsTab";
-import locksTab from "./locksTab";
-import publicationsTab from "./publicationsTab";
-import fdwTab from "./fdwTab";
-import queryPlansTab from "./queryPlansTab";
+import { tableView } from "./tableView";
 
 export interface TableRecord {
     schema_name: string;
@@ -200,51 +181,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                 } as ITextSlot
             },
             editors: [
-                {
-                    id: cid("table-editors-tab"),
-                    type: "tab",
-                    closable: false,
-                    label: {
-                        id: cid("table-tab-label"),
-                        type: "tablabel",
-                        label: () => selectedRow ? `${selectedRow.schema_name}.${selectedRow.table_name}` : t("not-selected", "Not selected"),
-                        icon: "DatabaseTables",
-                    },
-                    content: {
-                        id: cid("table-tab-content"),
-                        type: "tabcontent",
-                        content: {
-                            id: cid("table-columns-tabs"),
-                            type: "tabs",
-                            tabs: [
-                                columnsTab(session, () => selectedRow),
-                                indexesTab(session, () => selectedRow),
-                                constraintsTab(session, () => selectedRow),
-                                triggersTab(session, () => selectedRow),
-                                relationsTab(session, () => selectedRow),
-                                ddlTab(session, () => selectedRow),
-                                rlsPoliciesTab(session, () => selectedRow),
-                                aclTab(session, () => selectedRow),
-                                storageTab(session, () => selectedRow),
-                                statisticsTab(session, () => selectedRow),
-                                ioStatsTab(session, () => selectedRow),
-                                bloatTab(session, () => selectedRow),
-                                columnStatsTab(session, () => selectedRow),
-                                partitionsTab(session, () => selectedRow),
-                                rulesTab(session, () => selectedRow),
-                                sequencesTab(session, () => selectedRow),
-                                locksTab(session, () => selectedRow),
-                                publicationsTab(session, () => selectedRow),
-                                fdwTab(session, () => selectedRow),
-                                queryPlansTab(session, () => selectedRow),
-                            ],
-                        }
-                    },
-                    // actions: [
-                    //     ShowRelationDataAction_ID
-                    // ],
-                    // actionSlotId: "tables-grid-" + session.info.uniqueId
-                }
+                tableView(session, () => selectedRow, false)
             ]
         }
     };

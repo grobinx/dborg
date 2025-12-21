@@ -29,10 +29,10 @@ interface IOStatsRecord {
 
 const ioStatsTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     let ioStatsRows: IOStatsRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;
     let snapshotSize = 20 + 1;

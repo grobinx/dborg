@@ -3,7 +3,7 @@ import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resol
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
-import { createTabContent, createTabLabel, createTabToolbar } from "./helpers";
+import { createTabContent, createTabLabel, createTabPanel, createTabToolbar } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import ToolBarSlot from "./ToolBarSlot";
@@ -41,27 +41,27 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
             const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;
             setTabs(resolvedTabSlots.map((tab: ITabSlot) => {
                 const contentRef = React.createRef<HTMLDivElement>();
-                const content = createTabContent(tab.content, refreshSlot, contentRef);
-                const closeable = resolveBooleanFactory(tab.closable, refreshSlot);
                 const labelRef = React.createRef<HTMLDivElement>();
-                const label = createTabLabel(tab.label, refreshSlot, labelRef, closeable ? () => {
-                    setTabs(prevTabs => prevTabs.filter(t => t.props.itemID !== tab.id));
-                } : undefined);
                 const toolBarRef = React.createRef<HTMLDivElement>();
-                const toolBar = createTabToolbar(tab.toolBar, refreshSlot, toolBarRef);
-                if (content && label) {
+                const { panel } = createTabPanel(
+                    tab,
+                    tab.closable ? () => {
+                        setTabs(prevTabs => prevTabs.filter(t => t.props.itemID !== tab.id));
+                    } : undefined,
+                    () => {
+                        // const pinnedTab = tab.pin!();
+                        // setTabs(prevTabs => [...prevTabs, pinnedTab]);
+                    },
+                    refreshSlot,
+                    contentRef,
+                    labelRef,
+                    toolBarRef
+                );
+                if (panel) {
                     if (defaultTabId && tab.id === defaultTabId) {
                         queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
                     }
-                    return (
-                        <TabPanel
-                            key={tab.id}
-                            itemID={tab.id}
-                            content={content}
-                            label={label}
-                            buttons={toolBar}
-                        />
-                    );
+                    return panel;
                 }
                 return null;
             }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[]);

@@ -7,6 +7,8 @@ import { resolveIcon } from "@renderer/themes/icons";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
+import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
 
 interface TabLabelSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -16,10 +18,11 @@ interface TabLabelSlotOwnProps extends TabLabelSlotProps {
     ref?: React.Ref<HTMLDivElement>;
     tabsItemID?: string;
     onClose?: () => void;
+    onPin?: () => void;
 }
 
 const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
-    const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
+    const { slot, ref, tabsItemID, itemID, className, onClose, onPin, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const theme = useTheme();
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
@@ -73,15 +76,16 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
             {icon}
             {label}
             {onClose !== undefined && (
-                <ToolButton
-                    color="error"
+                <TabCloseButton
                     onClick={onClose}
-                    size="small"
-                    disabled={!active}
-                    dense
-                >
-                    <theme.icons.Close />
-                </ToolButton>
+                    active={active}
+                />
+            )}
+            {onPin !== undefined && (
+                <TabPinButton
+                    onClick={onPin}
+                    active={true}
+                />
             )}
         </TabPanelLabel>
     );

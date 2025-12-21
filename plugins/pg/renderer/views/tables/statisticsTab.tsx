@@ -35,10 +35,10 @@ interface StatRecord {
 
 const statisticsTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let statRows: StatRecord[] = [];
     let lastSelectedTable: TableRecord | null = null;

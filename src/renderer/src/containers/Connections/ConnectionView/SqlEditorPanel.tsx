@@ -35,6 +35,7 @@ import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
 import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
+import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -538,16 +539,10 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
             <div style={{ display: "flex", maxWidth: 300 }}>
                 <Ellipsis blured={false}>{label ?? fileLabel ?? "SQL Editor"}</Ellipsis>
             </div>
-            <ToolButton
-                component="div"
-                color="main"
+            <TabCloseButton
                 onClick={() => queueMessage(SQL_EDITOR_CLOSE, itemID)}
-                size="small"
-                disabled={!tabIsActive || tabsCount <= 1}
-                dense
-            >
-                <theme.icons.Close color={!tabIsActive || tabsCount <= 1 ? undefined : "error"} />
-            </ToolButton>
+                active={tabIsActive && tabsCount > 1}
+            />
         </TabPanelLabel>
     );
 };

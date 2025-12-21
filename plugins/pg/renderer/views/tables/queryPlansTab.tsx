@@ -7,10 +7,10 @@ import { count } from "console";
 
 const queryPlansTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     // Check PostgreSQL version (13+ uses total_exec_time, older uses total_time)
     const version = session.getVersion() || "";

@@ -17,7 +17,7 @@ import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../Vie
 import ContentSlot from "../ViewSlots/ContentSlot";
 import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
-import { createContentComponent, createTabContent, createTabLabel } from "../ViewSlots/helpers";
+import { createContentComponent, createTabContent, createTabLabel, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
 import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
@@ -55,6 +55,9 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [sideViewsMap, setSideViewsMap] = React.useState<Record<string, React.ReactNode>>({});
     const [editorTabsMap, setEditorTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
     const [resultTabsMap, setResultTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
+    const [editorPinnedTabsMap, setEditorPinnedTabsMap] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
+    const [resultPinnedTabsMap, setResultPinnedTabsMap] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
+    
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
@@ -77,6 +80,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                 queueMessage,
                                 editorsTabsId(session),
                                 setEditorTabsMap,
+                                setEditorPinnedTabsMap
                             )
                         }));
                     }
@@ -91,6 +95,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                 queueMessage,
                                 resultsTabsId(session),
                                 setResultTabsMap,
+                                setResultPinnedTabsMap
                             ),
                         }));
                     }
@@ -144,14 +149,20 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                                 <EditorsTabs
                                     session={session}
                                     editorContentManager={editorContentManager}
-                                    additionalTabs={editorTabsMap[selectedView?.id ?? ""] ?? undefined}
+                                    additionalTabs={[
+                                        ...editorPinnedTabsMap,
+                                        ...editorTabsMap[selectedView?.id ?? ""] ?? []
+                                    ]}
                                 />
                             </SplitPanel>
                             <Splitter />
                             <SplitPanel defaultSize={20}>
                                 <ResultsTabs
                                     session={session}
-                                    additionalTabs={resultTabsMap[selectedView?.id ?? ""] ?? undefined}
+                                    additionalTabs={[
+                                        ...resultPinnedTabsMap,
+                                        ...resultTabsMap[selectedView?.id ?? ""] ?? []
+                                    ]}
                                 />
                             </SplitPanel>
                         </SplitPanelGroup>
@@ -283,34 +294,54 @@ function createTabPanels(
     queueMessage: (...args: any[]) => void,
     tabsItemID: string,
     setTabsMap: React.Dispatch<React.SetStateAction<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>>,
+    setPinnedTabsMap: React.Dispatch<React.SetStateAction<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>,
 ) {
     if (!tabs) return [];
 
     return tabs.map((tab, index) => {
         const contentRef = React.createRef<HTMLDivElement>();
-        const content = createTabContent(tab.content, refreshSlot, contentRef);
         const labelRef = React.createRef<HTMLDivElement>();
-        const closeable = resolveBooleanFactory(tab.closable, refreshSlot);
-        const label = createTabLabel(tab.label, refreshSlot, labelRef, closeable ? () => {
-            setTabsMap(prevTabs => ({
-                ...prevTabs,
-                [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
-            }));
-        } : undefined);
-        if (content && label) {
+        const toolBarRef = React.createRef<HTMLDivElement>();
+        const { panel } = createTabPanel(
+            tab,
+            () => {
+                setTabsMap(prevTabs => ({
+                    ...prevTabs,
+                    [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
+                }));
+            },
+            () => {
+                const pinnedTab = tab.pin!();
+                if (pinnedTab) {
+                    const { panel } = createTabPanel(
+                        pinnedTab,
+                        () => {
+                            setTabsMap(prevTabs => ({
+                                ...prevTabs,
+                                [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== pinnedTab.id),
+                            }));
+                            setPinnedTabsMap(prevTabs => prevTabs.filter(t => t.props.itemID !== pinnedTab.id));
+                        },
+                        undefined,
+                        refreshSlot,
+                        contentRef,
+                        labelRef,
+                        toolBarRef
+                    );
+                    setPinnedTabsMap(prevTabs => ([...prevTabs, panel]));
+                    queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
+                }
+            },
+            refreshSlot,
+            contentRef,
+            labelRef,
+            toolBarRef
+        );
+        if (panel) {
             if (index === 0) {
                 queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
             }
-            const resolvedToolBarSlot = resolveToolBarSlotKindFactory(tab.toolBar, refreshSlot);
-            return (
-                <TabPanel
-                    key={tab.id}
-                    itemID={tab.id}
-                    label={label}
-                    buttons={resolvedToolBarSlot ? <ToolBarSlot slot={resolvedToolBarSlot} /> : undefined}
-                    content={content}
-                />
-            );
+            return panel;
         }
         return null;
     }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[];

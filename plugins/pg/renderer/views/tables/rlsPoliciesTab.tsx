@@ -6,10 +6,10 @@ import { TableRecord } from "./tablesView";
 
 const rlsPoliciesTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
 
     return {

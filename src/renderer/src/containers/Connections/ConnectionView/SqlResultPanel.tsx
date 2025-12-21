@@ -28,6 +28,7 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import SqlParametersDialog from "@renderer/dialogs/SqlParametersDialog";
 import { extractSqlParameters, mapSqlParamsToValues, replaceNamedParamsWithPositional, SqlParameterInfo, SqlParametersValue, SqlParameterValue } from "../../../../../../src/api/db/SqlParameters";
 import CodeToDialog from "@renderer/dialogs/CodeToDialog";
+import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -541,16 +542,10 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
                 <theme.icons.DatabaseTables /> // Wyświetl domyślną ikonę, gdy nie ma ładowania
             )}
             <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{resultLabel}</span>
-            <ToolButton
-                component="div"
-                color="main"
+            <TabCloseButton
                 onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
-                size="small"
-                disabled={!tabIsActive || /* (tabsLength ?? 0) <= 1 ||  */executing}
-                dense
-            >
-                <theme.icons.Close color={!tabIsActive ? undefined : "error"} />
-            </ToolButton>
+                active={tabIsActive}
+            />
         </TabPanelLabel>
     );
 };

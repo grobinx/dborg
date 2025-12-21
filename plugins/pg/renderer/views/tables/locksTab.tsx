@@ -6,10 +6,10 @@ import { TableRecord } from "./tablesView";
 
 const locksTab = (
     session: IDatabaseSession,
-    selectedRow: () => TableRecord | null
+    selectedRow: () => TableRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
         id: cid("table-locks-tab"),
