@@ -11,6 +11,7 @@ import {
     resolveStringAsyncFactory
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -22,7 +23,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 }) => {
     const theme = useTheme();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
     const [actions, setActions] = React.useState<monaco.editor.IActionDescriptor[]>([]);
     const [readOnly, setReadOnly] = React.useState<boolean>(false);
@@ -31,13 +32,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     const context: IEditorContext = {
     };
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -45,6 +48,21 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
 
     React.useEffect(() => {
         let mounted = true;
@@ -95,6 +113,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
     return (
         <MonacoEditor
+            rootRef={rootRef}
             defaultValue={content}
             language={slot.language}
             onMount={handleOnMount}

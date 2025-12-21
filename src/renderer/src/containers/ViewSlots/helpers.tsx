@@ -77,11 +77,12 @@ export function createTabLabel(
     ref: React.Ref<HTMLDivElement>,
     onClose?: () => void,
     onPin?: () => void,
+    pinned?: boolean,
 ): React.ReactNode {
     const resolvedLabel = resolveTabLabelKindFactory(slot, refreshSlot);
     if (resolvedLabel) {
         if (resolvedLabel.type === "tablabel") {
-            return <TabLabelSlot key={resolvedLabel.id} tabSlot={tabSlot} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} />;
+            return <TabLabelSlot key={resolvedLabel.id} tabSlot={tabSlot} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} pinned={pinned} />;
         } else if (resolvedLabel.type === "rendered") {
             return <RenderedSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} />;
         }
@@ -113,6 +114,7 @@ export function createTabPanel(
     contentRef: React.Ref<HTMLDivElement>,
     labelRef: React.Ref<HTMLDivElement>,
     toolBarRef: React.Ref<HTMLDivElement>,
+    pinned?: boolean,
 ): {
     content: React.ReactNode,
     label: React.ReactNode,
@@ -120,7 +122,7 @@ export function createTabPanel(
     panel: React.ReactElement<React.ComponentProps<typeof TabPanel>>,
 } {
     const content = createTabContent(slot.content, refreshSlot, contentRef);
-    const label = createTabLabel(slot, slot.label, refreshSlot, labelRef, onClose, onPin);
+    const label = createTabLabel(slot, slot.label, refreshSlot, labelRef, onClose, onPin, pinned);
     const toolBar = createTabToolbar(slot.toolBar, refreshSlot, toolBarRef);
     let panel: React.ReactNode = null;
     if (content && label) {

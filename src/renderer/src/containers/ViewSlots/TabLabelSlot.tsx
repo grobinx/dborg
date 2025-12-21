@@ -6,11 +6,10 @@ import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
 
-interface TabLabelSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
+interface TabLabelSlotProps {
 }
 
 interface TabLabelSlotOwnProps extends TabLabelSlotProps {
@@ -18,12 +17,14 @@ interface TabLabelSlotOwnProps extends TabLabelSlotProps {
     slot: ITabLabelSlot;
     ref?: React.Ref<HTMLDivElement>;
     tabsItemID?: string;
+    itemID?: string;
     onClose?: () => void;
     onPin?: () => void;
+    pinned?: boolean;
 }
 
 const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
-    const { tabSlot, slot, ref, tabsItemID, itemID, className, onClose, onPin, ...other } = useThemeProps({ name: "TabLabelSlot", props });
+    const { tabSlot, slot, ref, tabsItemID, itemID, onClose, onPin, pinned, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const theme = useTheme();
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
@@ -75,9 +76,12 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
         };
     }, [tabsItemID, itemID, active]);
 
+    console.log("label pinned", pinned);
+
     return (
-        <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
+        <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID} {...other}>
             {icon}
+            {pinned && (<theme.icons.Pinned color="primary" />)}
             {label}
             {closable && onClose !== undefined && (
                 <TabCloseButton

@@ -12,14 +12,13 @@ import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
-import { useContainers, useSessions, useSessionState } from "@renderer/contexts/ApplicationContext";
+import { useSessionState } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveBooleanFactory, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
-import { createContentComponent, createTabContent, createTabLabel, createTabPanel } from "../ViewSlots/helpers";
+import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
-import ToolBarSlot from "../ViewSlots/ToolBarSlot";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
@@ -324,7 +323,8 @@ function createTabPanels(
                         refreshSlot,
                         contentRef,
                         labelRef,
-                        toolBarRef
+                        toolBarRef,
+                        true
                     );
                     setPinnedTabsMap(prevTabs => ([...prevTabs, panel]));
                     queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);

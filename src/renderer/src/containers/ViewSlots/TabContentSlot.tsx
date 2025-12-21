@@ -33,14 +33,10 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            if (active) {
-                setRefresh(prev => prev + 1n);
-            } else {
-                setPendingRefresh(true);
-            }
+            setPendingRefresh(true);
         });
         return unregisterRefresh;
-    }, [slot.id, active]);
+    }, [slot.id]);
 
     React.useEffect(() => {
         slot?.onMount?.(refreshSlot);
@@ -49,6 +45,13 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         };
     }, [slot.id]);
 
+    React.useEffect(() => {
+        if (active && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [active, pendingRefresh]);
+    
     React.useEffect(() => {
         if (active) {
             slot?.onActivate?.(refreshSlot);

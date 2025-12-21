@@ -40,10 +40,10 @@ interface ColumnDetailRecord {
 
 const columnsTab = (
     session: IDatabaseSession,
-    selectedView: () => ViewRecord | null
+    selectedView: () => ViewRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let selected: ViewColumnRecord | null = null;
 

@@ -8,22 +8,10 @@ import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/Custo
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
-import columnsTab from "./columnsTab";
 import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { SQL_EDITOR_EXECUTE_QUERY, SqlEditorExecuteQueryMessage } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";
 import { sendMessage } from "@renderer/contexts/MessageContext";
-import ddlTab from "./ddlTab";
-import indexesTab from "./indexesTab";
-import constraintsTab from "./constraintsTab";
-import triggersTab from "./triggersTab";
-import rlsPoliciesTab from "./rlsPoliciesTab";
-import aclTab from "./aclTab";
-import rulesTab from "./rulesTab";
-import locksTab from "./locksTab";
-import queryPlansTab from "./queryPlansTab";
-import storageTab from "./storageTab";
-import functionsTab from "./functionsTab";
-import matRefreshTab from "./matRefreshTab";
+import { viewView } from "./viewView";
 
 export interface ViewRecord {
     schema_name: string;
@@ -110,19 +98,19 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                         refresh(cid("views-text"));
                         refresh(cid("views-title"));
                         refresh(cid("view-tab-label"));
-                        refresh(cid("view-columns-tab-content"));
-                        refresh(cid("view-ddl-tab-content"));
-                        refresh(cid("view-indexes-tab-content"));
-                        refresh(cid("view-constraints-tab-content"));
-                        refresh(cid("view-triggers-tab-content"));
-                        refresh(cid("view-rls-policies-tab-content"));
-                        refresh(cid("view-acl-tab-content"));
-                        refresh(cid("view-rules-tab-content"));
-                        refresh(cid("view-locks-tab-content"));
-                        refresh(cid("view-query-plans-tab-content"));
-                        refresh(cid("view-storage-tab-content"));
-                        refresh(cid("view-functions-tab-content"));
-                        refresh(cid("view-mat-refresh-tab-content"));
+                        refresh(cid("view-columns-grid"));
+                        refresh(cid("view-ddl-editor"));
+                        refresh(cid("view-indexes-grid"));
+                        refresh(cid("view-constraints-grid"));
+                        refresh(cid("view-triggers-grid"));
+                        refresh(cid("view-rls-policies-grid"));
+                        refresh(cid("view-acl-grid"));
+                        refresh(cid("view-rules-grid"));
+                        refresh(cid("view-locks-grid"));
+                        refresh(cid("view-query-plans-grid"));
+                        refresh(cid("view-storage-grid"));
+                        refresh(cid("view-functions-grid"));
+                        refresh(cid("view-mat-refresh-grid"));
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -154,40 +142,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                 } as ITextSlot,
             },
             editors: [
-                {
-                    id: cid("view-editors-tab"),
-                    type: "tab",
-                    closable: false,
-                    label: {
-                        id: cid("view-tab-label"),
-                        type: "tablabel",
-                        label: () => (selectedRow ? `${selectedRow.schema_name}.${selectedRow.view_name}` : t("not-selected", "Not selected")),
-                        icon: "DatabaseViews",
-                    },
-                    content: {
-                        id: cid("view-tab-content"),
-                        type: "tabcontent",
-                        content: {
-                            id: cid("view-columns-tabs"),
-                            type: "tabs",
-                            tabs: [
-                                columnsTab(session, () => (selectedRow)),
-                                indexesTab(session, () => (selectedRow)),
-                                constraintsTab(session, () => (selectedRow)),
-                                triggersTab(session, () => (selectedRow)),
-                                ddlTab(session, () => (selectedRow)),
-                                functionsTab(session, () => (selectedRow)),
-                                matRefreshTab(session, () => (selectedRow)),
-                                storageTab(session, () => (selectedRow)),
-                                rlsPoliciesTab(session, () => (selectedRow)),
-                                aclTab(session, () => (selectedRow)),
-                                rulesTab(session, () => (selectedRow)),
-                                locksTab(session, () => (selectedRow)),
-                                queryPlansTab(session, () => (selectedRow)),
-                            ],
-                        },
-                    },
-                },
+                viewView(session, () => selectedRow),
             ],
         },
     };

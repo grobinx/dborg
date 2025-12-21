@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography, styled, useThemeProps } from "@mui/material";
 import { ITextSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface TextSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -25,10 +26,12 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const [text, setText] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -38,6 +41,21 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     }, [slot.id]);
 
     React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
+
+    React.useEffect(() => {
         setText(resolveReactNodeFactory(slot.text, refreshSlot) ?? "");
     }, [slot.text, refresh]);
 
@@ -45,7 +63,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
 
     return (
         <StyledTextSlot
-            ref={ref}
+            ref={rootRef}
             maxLines={slot.maxLines}
             className={`TextSlot-root ${className ?? ""}`}
             {...other}

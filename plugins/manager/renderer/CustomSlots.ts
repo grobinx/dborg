@@ -303,6 +303,9 @@ export interface ISlot {
 
     onMount?: (refresh: RefreshSlotFunction) => void;
     onUnmount?: (refresh: RefreshSlotFunction) => void;
+
+    onShow?: (refresh: RefreshSlotFunction) => void;
+    onHide?: (refresh: RefreshSlotFunction) => void;
 }
 
 /**
@@ -328,7 +331,7 @@ export type SplitSlotPartKind =
  * Pozwala na podział widoku na dwie części (pionowo lub poziomo).
  * Każda część może być kolejnym splitem, zakładkami lub inną zawartością.
  */
-export interface ISplitSlot extends ICustomSlot {
+export interface ISplitSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     type: "split";
     /**
      * Kierunek podziału: "vertical" (góra/dół) lub "horizontal" (lewo/prawo).
@@ -383,7 +386,7 @@ export interface ITabsSlot extends ICustomSlot {
 /**
  * Struktura etykiety zakładki (label).
  */
-export interface ITabLabelSlot extends ICustomSlot {
+export interface ITabLabelSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     type: "tablabel";
     /**
      * Ikona zakładki (opcjonalnie).
@@ -398,7 +401,7 @@ export interface ITabLabelSlot extends ICustomSlot {
     onDeactivate?: () => void;
 }
 
-export interface ITabContentSlot extends ICustomSlot {
+export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     type: "tabcontent";
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
@@ -421,7 +424,7 @@ export type TabContentSlotKind =
  * Slot typu tab.
  * Reprezentuje pojedynczą zakładkę w TabsSlot.
  */
-export interface ITabSlot extends ICustomSlot {
+export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     type: "tab";
     /**
      * Czy zakładka jest zamykalna (opcjonalnie).

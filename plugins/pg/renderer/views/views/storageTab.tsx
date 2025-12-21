@@ -38,10 +38,10 @@ interface IndexSizeRecord {
 
 const storageTab = (
     session: IDatabaseSession,
-    selectedRow: () => ViewRecord | null
+    selectedRow: () => ViewRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     let storageRows: StorageRecord[] = [];
     let indexSizes: IndexSizeRecord[] = [];
     let lastSelected: ViewRecord | null = null;

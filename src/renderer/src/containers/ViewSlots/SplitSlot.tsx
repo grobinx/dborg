@@ -3,6 +3,8 @@ import { ISplitSlot } from "../../../../../plugins/manager/renderer/CustomSlots"
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import { createSplitPartContent } from "./helpers";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { ImperativePanelGroupHandle } from "react-resizable-panels";
 
 interface SplitSlotProps {
 }
@@ -22,12 +24,12 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
             ref: React.Ref<HTMLDivElement>,
             node: React.ReactNode
         }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const [refresh, setRefresh] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => !prev);
+            setRefresh(prev => prev + 1n);
         });
         slot?.onMount?.(refreshSlot);
         return () => {

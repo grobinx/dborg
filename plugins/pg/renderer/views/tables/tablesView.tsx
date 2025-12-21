@@ -118,26 +118,26 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         refresh(cid("tables-text"));
                         refresh(cid("tables-title"));
                         refresh(cid("table-tab-label"));
-                        refresh(cid("table-columns-tab-content"));
-                        refresh(cid("table-indexes-tab-content"));
-                        refresh(cid("table-constraints-tab-content"));
-                        refresh(cid("table-ddl-tab-content"));
-                        refresh(cid("table-relations-tab-content"));
-                        refresh(cid("table-triggers-tab-content"));
-                        refresh(cid("table-storage-tab-content"));
-                        refresh(cid("table-statistics-tab-content"));
-                        refresh(cid("table-rls-policies-tab-content"));
-                        refresh(cid("table-acl-tab-content"));
-                        refresh(cid("table-column-stats-tab-content"));
-                        refresh(cid("table-partitions-tab-content"));
-                        refresh(cid("table-rules-tab-content"));
-                        refresh(cid("table-sequences-tab-content"));
-                        refresh(cid("table-bloat-tab-content"));
-                        refresh(cid("table-io-stats-tab-content"));
-                        refresh(cid("table-locks-tab-content"));
-                        refresh(cid("table-publications-tab-content"));
-                        refresh(cid("table-fdw-tab-content"));
-                        refresh(cid("table-query-plans-tab-content"));
+                        refresh(cid("table-columns-grid"));
+                        refresh(cid("table-indexes-grid"));
+                        refresh(cid("table-constraints-grid"));
+                        refresh(cid("table-ddl-editor"));
+                        refresh(cid("table-relations-grid"));
+                        refresh(cid("table-triggers-grid"));
+                        refresh(cid("table-storage-grid"));
+                        refresh(cid("table-statistics-grid"));
+                        refresh(cid("table-rls-policies-grid"));
+                        refresh(cid("table-acl-grid"));
+                        refresh(cid("table-column-stats-grid"));
+                        refresh(cid("table-partitions-grid"));
+                        refresh(cid("table-rules-grid"));
+                        refresh(cid("table-sequences-grid"));
+                        refresh(cid("table-bloat-grid"));
+                        refresh(cid("table-io-stats-grid"));
+                        refresh(cid("table-locks-grid"));
+                        refresh(cid("table-publications-grid"));
+                        refresh(cid("table-fdw-grid"));
+                        refresh(cid("table-query-plans-grid"));
                     },
                     actions: [
                         SelectSchemaAction(),

@@ -22,10 +22,12 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const { slot, ref, className, tabsItemID, ...other } = props;
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -33,10 +35,25 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
     
     return (
         <StyledRenderedSlotBox
-            ref={ref}
+            ref={rootRef}
             //key={`${slot.id}-${refresh}`}
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}

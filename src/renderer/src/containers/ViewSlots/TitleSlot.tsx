@@ -5,6 +5,7 @@ import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -31,10 +32,12 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -42,6 +45,21 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
 
     React.useEffect(() => {
         const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, refreshSlot);
@@ -58,7 +76,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
 
     return (
         <StyledTitleSlot
-            ref={ref}
+            ref={rootRef}
             className={`TitleSlot-root ${className ?? ""}`}
             {...other}
         >

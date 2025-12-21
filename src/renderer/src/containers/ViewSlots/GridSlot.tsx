@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
 import debounce from "@renderer/utils/debounce";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -38,13 +39,15 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [loading, setLoading] = React.useState(false);
     const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
         slot?.onMount?.(refreshSlot);
@@ -54,6 +57,21 @@ const GridSlot: React.FC<GridSlotProps> = ({
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
 
     React.useEffect(() => {
         const fetchRows = async () => {
@@ -142,6 +160,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 height: "100%",
                 overflow: "hidden",
             }}
+            ref={rootRef}
         >
             <Box
                 key={slot.id}

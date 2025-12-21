@@ -12,6 +12,7 @@ import RenderedSlot from "./RenderedSlot";
 import { createContentComponent, createTextContent, createTitleContent } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface ContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -44,10 +45,12 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -55,6 +58,21 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
 
     React.useEffect(() => {
         console.debug("ContentSlot updating content for slot:", slot.id);
@@ -80,7 +98,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
 
     return (
         <StyledContentSlot
-            ref={ref}
+            ref={rootRef}
             className={`ContentSlot-root ${className ?? ""}`}
             {...other}
         >
@@ -98,6 +116,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                     height: "100%",
                 }}
                 className={"ContentSlot-main-root"}
+                ref={ref}
             >
                 {mainSlot.node}
             </Box>

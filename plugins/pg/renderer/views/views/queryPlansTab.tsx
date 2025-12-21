@@ -6,10 +6,10 @@ import { ViewRecord } from "./viewsView";
 
 const queryPlansTab = (
     session: IDatabaseSession,
-    selectedRow: () => ViewRecord | null
+    selectedRow: () => ViewRecord | null,
+    cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     const version = session.getVersion() || "";
     const majorVersion = parseInt(version.split(".")[0] || "0", 10);

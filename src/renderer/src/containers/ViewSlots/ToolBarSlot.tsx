@@ -6,6 +6,7 @@ import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import { createActionComponents } from "./helpers";
+import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 export interface ToolBarProps {
     slot: ToolBarSlotKind;
@@ -26,10 +27,12 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         actionContext: any | null
     } | null>(null);
     const [renderNode, setRenderNode] = React.useState<React.ReactNode>(null);
+    const [pendingRefresh, setPendingRefresh] = React.useState(false);
+    const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+            setPendingRefresh(true);
         });
         slot?.onMount?.(refreshSlot);
         return () => {
@@ -37,6 +40,21 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
+
+    React.useEffect(() => {
+        if (rootVisible && pendingRefresh) {
+            setRefresh(prev => prev + 1n);
+            setPendingRefresh(false);
+        }
+    }, [rootVisible, pendingRefresh]);
+
+    React.useEffect(() => {
+        if (rootVisible) {
+            slot?.onShow?.(refreshSlot);
+        } else {
+            slot?.onHide?.(refreshSlot);
+        }
+    }, [rootVisible]);
 
     React.useEffect(() => {
         if (slot.type === "rendered") {
@@ -79,7 +97,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     }
 
     return (
-        <TabPanelButtons>
+        <TabPanelButtons ref={rootRef}>
             {renderNode}
             {actionComponents?.actionComponents}
         </TabPanelButtons>

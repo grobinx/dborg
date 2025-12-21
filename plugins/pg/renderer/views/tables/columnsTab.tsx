@@ -99,10 +99,8 @@ const columnsTab = (
                     mode: "defined",
                     onRowSelect(row: TableColumnRecord, refresh) {
                         selected = row;
-                        if (selected) {
-                            refresh(cid("table-columns-info-panel-title"));
-                            refresh(cid("table-columns-info-panel-grid"));
-                        }
+                        refresh(cid("table-columns-info-panel-title"));
+                        refresh(cid("table-columns-info-panel-grid"));
                     },
                     rows: async () => {
                         selected = null;

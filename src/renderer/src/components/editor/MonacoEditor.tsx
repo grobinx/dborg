@@ -96,6 +96,7 @@ export const editorLanguageIds: EditorLanguageId[] = [
 loader.config({ monaco, "vs/nls": { availableLanguages: { "*": i18next.languages } } });
 
 interface MonacoEditorProps {
+    rootRef?: React.Ref<HTMLDivElement>;
     defaultValue?: string;
     editorKey?: string;
     onFocus?: () => void;
@@ -122,7 +123,7 @@ interface MonacoEditorProps {
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const {
-        onMount, editorKey, onFocus, onBlur, defaultValue, value,
+        onMount, editorKey, onFocus, onBlur, defaultValue, value, rootRef,
         readOnly, loading, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
         language: initialLanguage = defaultEditorLanguageId,
         encoding: initialEncoding = defaultEditorEncoding,
@@ -303,7 +304,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
             : (loading ? t("loading---", "Loading...") : undefined);
 
     return (
-        <Stack direction="column" sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
+        <Stack direction="column" sx={{ width: "100%", height: "100%", overflow: "hidden" }} ref={rootRef}>
             <Box sx={{ position: "relative", flex: 1, overflow: "hidden", height: "100%", width: "100%" }}>
                 <Editor
                     defaultValue={defaultValue}
