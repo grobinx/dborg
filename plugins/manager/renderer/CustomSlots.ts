@@ -440,10 +440,24 @@ export interface ITabSlot extends ICustomSlot {
      */
     content: TabContentSlotKindFactory;
     /**
+     * Czy zakładka jest przypinana (opcjonalnie).
+     */
+    pinnable?: BooleanFactory;
+    /**
      * Funkcja zwracająca slot, który pozwala na przypięcie zakładki.
      * @returns 
      */
     pin?: () => ITabSlot;
+    /**
+     * Funkcja wywoływana po zamknięciu zakładki.
+     * @param refresh 
+     */
+    onClose?: (refresh: RefreshSlotFunction) => void;
+    /**
+     * Funkcja wywoływana po przypięciu zakładki.
+     * @param refresh 
+     */
+    onPin?: (refresh: RefreshSlotFunction) => void;
 }
 
 /**

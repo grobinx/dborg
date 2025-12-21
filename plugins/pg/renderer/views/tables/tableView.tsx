@@ -43,7 +43,8 @@ export function tableView(session: IDatabaseSession, table: (() => TableRecord |
         id: cid("table-editors-tab"),
         type: "tab",
         closable: pinned ? true : false,
-        pin: !pinned ? () => tableView(session, getTable(table)!, true) : undefined,
+        pinnable: () => !pinned && getTable(table) !== null,
+        pin: () => tableView(session, getTable(table)!, true),
         label: {
             id: cid("table-tab-label"),
             type: "tablabel",

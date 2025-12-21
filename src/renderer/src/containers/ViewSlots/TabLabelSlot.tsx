@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -14,6 +14,7 @@ interface TabLabelSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot
 }
 
 interface TabLabelSlotOwnProps extends TabLabelSlotProps {
+    tabSlot: ITabSlot;
     slot: ITabLabelSlot;
     ref?: React.Ref<HTMLDivElement>;
     tabsItemID?: string;
@@ -22,7 +23,7 @@ interface TabLabelSlotOwnProps extends TabLabelSlotProps {
 }
 
 const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
-    const { slot, ref, tabsItemID, itemID, className, onClose, onPin, ...other } = useThemeProps({ name: "TabLabelSlot", props });
+    const { tabSlot, slot, ref, tabsItemID, itemID, className, onClose, onPin, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const theme = useTheme();
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
@@ -30,6 +31,9 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
+
+    const closable = resolveBooleanFactory(tabSlot.closable, refreshSlot);
+    const pinnable = resolveBooleanFactory(tabSlot.pinnable, refreshSlot);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
@@ -75,16 +79,16 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
         <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
             {icon}
             {label}
-            {onClose !== undefined && (
+            {closable && onClose !== undefined && (
                 <TabCloseButton
                     onClick={onClose}
                     active={active}
                 />
             )}
-            {onPin !== undefined && (
+            {pinnable && onPin !== undefined && (
                 <TabPinButton
                     onClick={onPin}
-                    active={true}
+                    active={active}
                 />
             )}
         </TabPanelLabel>

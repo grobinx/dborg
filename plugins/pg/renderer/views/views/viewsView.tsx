@@ -107,24 +107,22 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                     ] as ColumnDefinition[],
                     onRowSelect: (row: ViewRecord | undefined, refresh: RefreshSlotFunction) => {
                         selectedRow = row ?? null;
-                        if (selectedRow) {
-                            refresh(cid("views-text"));
-                            refresh(cid("views-title"));
-                            refresh(cid("view-tab-label"));
-                            refresh(cid("view-columns-tab-content"));
-                            refresh(cid("view-ddl-tab-content"));
-                            refresh(cid("view-indexes-tab-content"));
-                            refresh(cid("view-constraints-tab-content"));
-                            refresh(cid("view-triggers-tab-content"));
-                            refresh(cid("view-rls-policies-tab-content"));
-                            refresh(cid("view-acl-tab-content"));
-                            refresh(cid("view-rules-tab-content"));
-                            refresh(cid("view-locks-tab-content"));
-                            refresh(cid("view-query-plans-tab-content"));
-                            refresh(cid("view-storage-tab-content"));
-                            refresh(cid("view-functions-tab-content"));
-                            refresh(cid("view-mat-refresh-tab-content"));
-                        }
+                        refresh(cid("views-text"));
+                        refresh(cid("views-title"));
+                        refresh(cid("view-tab-label"));
+                        refresh(cid("view-columns-tab-content"));
+                        refresh(cid("view-ddl-tab-content"));
+                        refresh(cid("view-indexes-tab-content"));
+                        refresh(cid("view-constraints-tab-content"));
+                        refresh(cid("view-triggers-tab-content"));
+                        refresh(cid("view-rls-policies-tab-content"));
+                        refresh(cid("view-acl-tab-content"));
+                        refresh(cid("view-rules-tab-content"));
+                        refresh(cid("view-locks-tab-content"));
+                        refresh(cid("view-query-plans-tab-content"));
+                        refresh(cid("view-storage-tab-content"));
+                        refresh(cid("view-functions-tab-content"));
+                        refresh(cid("view-mat-refresh-tab-content"));
                     },
                     actions: [
                         SelectSchemaAction(),

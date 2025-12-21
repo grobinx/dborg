@@ -309,6 +309,7 @@ function createTabPanels(
                     ...prevTabs,
                     [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
                 }));
+                tab.onClose?.(refreshSlot);
             },
             () => {
                 const pinnedTab = tab.pin!();
@@ -316,11 +317,8 @@ function createTabPanels(
                     const { panel } = createTabPanel(
                         pinnedTab,
                         () => {
-                            setTabsMap(prevTabs => ({
-                                ...prevTabs,
-                                [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== pinnedTab.id),
-                            }));
                             setPinnedTabsMap(prevTabs => prevTabs.filter(t => t.props.itemID !== pinnedTab.id));
+                            pinnedTab.onClose?.(refreshSlot);
                         },
                         undefined,
                         refreshSlot,
@@ -330,6 +328,7 @@ function createTabPanels(
                     );
                     setPinnedTabsMap(prevTabs => ([...prevTabs, panel]));
                     queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
+                    pinnedTab.onPin?.(refreshSlot);
                 }
             },
             refreshSlot,

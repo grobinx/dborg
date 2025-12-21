@@ -45,9 +45,10 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 const toolBarRef = React.createRef<HTMLDivElement>();
                 const { panel } = createTabPanel(
                     tab,
-                    tab.closable ? () => {
+                    () => {
                         setTabs(prevTabs => prevTabs.filter(t => t.props.itemID !== tab.id));
-                    } : undefined,
+                        tab.onClose?.(refreshSlot);
+                    },
                     () => {
                         // const pinnedTab = tab.pin!();
                         // setTabs(prevTabs => [...prevTabs, pinnedTab]);
