@@ -715,17 +715,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                 {
                     onTick: async (refresh) => {
                         refresh(cid("sessions-grid"));
-                        if (selectedSession) {
-                            refresh(cid("locks-grid"));
-                            refresh(cid("transaction-grid"));
-                            if (versionNumber >= 90600) refresh(cid("blocking-tree-tab"));
-                            if (versionNumber >= 90600) refresh(cid("progress-vacuum-tab"));
-                            if (versionNumber >= 120000) refresh(cid("progress-create-index-tab"));
-                            if (versionNumber >= 130000) refresh(cid("progress-cluster-tab"));
-                            if (versionNumber >= 130000) refresh(cid("progress-analyze-tab"));
-                            if (versionNumber >= 140000) refresh(cid("progress-copy-tab"));
-                            if (versionNumber >= 130000 && hasPgBackendMemoryContexts) refresh(cid("memory-contexts-tab"));
-                        }
                     },
                     canPause: false,
                     intervals: [2, 5, 10, 15, 30, 60],
