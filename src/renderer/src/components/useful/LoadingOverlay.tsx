@@ -18,6 +18,8 @@ const spinnerColorsDark = [
     "#ef9a9a", // jasnoczerwony
 ];
 
+export type LoadingOverlayMode = "auto" | "small" | "full";
+
 // Dodaj funkcję pomocniczą do generowania losowych opóźnień
 const getRandomDelays = (count: number, min = -0.5, max = 0.0) =>
     Array.from({ length: count }, () =>
@@ -121,6 +123,7 @@ interface LoadingOverlayProps {
     labelPosition?: "below" | "side";
     timeDelaySec?: number;
     onCancelLoading?: () => void;
+    mode?: LoadingOverlayMode;
 }
 
 const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
@@ -131,6 +134,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     labelPosition = "below",
     timeDelaySec = 10,
     onCancelLoading,
+    mode = "auto",
 }) => {
     const theme = useTheme();
     const [show, setShow] = useState<0 | 1 | 2>(0); // 0 = off, 1 = small spinner, 2 = full overlay
@@ -153,17 +157,23 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     }, [theme.palette.mode]);
 
     useEffect(() => {
-        // Natychmiastowo po 1/10 delay pokaż mały spinner
-        const smallTimer = setTimeout(() => setShow(1), delay / 10);
-        
-        // Po delay pokaż pełny overlay
-        const fullTimer = setTimeout(() => setShow(2), delay);
-        
-        return () => {
-            clearTimeout(smallTimer);
-            clearTimeout(fullTimer);
-        };
-    }, [delay]);
+        if (mode === "small") {
+            setShow(1);
+        } else if (mode === "full") {
+            setShow(2);
+        } else {
+            // Natychmiastowo po 1/10 delay pokaż mały spinner
+            const smallTimer = setTimeout(() => setShow(1), delay / 10);
+            
+            // Po delay pokaż pełny overlay
+            const fullTimer = setTimeout(() => setShow(2), delay);
+            
+            return () => {
+                clearTimeout(smallTimer);
+                clearTimeout(fullTimer);
+            };
+        }
+    }, [delay, mode]);
 
     useEffect(() => {
         if (show !== 2 || !timeDelaySec) return;

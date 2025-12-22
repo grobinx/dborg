@@ -8,6 +8,7 @@ import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatus
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
+import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { ThemeIconName } from "@renderer/themes/icons";
 import { ExportFormat } from "@renderer/utils/arrayTo";
@@ -589,6 +590,11 @@ export interface IGridSlot extends ICustomSlot {
      * @returns 
      */
     onCancel?: (refresh: RefreshSlotFunction) => void;
+    /**
+     * Tryb nakładki ładowania (opcjonalnie).
+     * @default "small"
+     */
+    overlayMode?: LoadingOverlayMode;
 }
 
 export interface IEditorContext {
@@ -645,6 +651,18 @@ export interface IEditorSlot extends ICustomSlot {
     onFocus?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
     onBlur?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
     onContentChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    /**
+     * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
+     * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
+     * @param refresh 
+     * @returns 
+     */
+    onCancel?: (refresh: RefreshSlotFunction) => void;
+    /**
+     * Tryb nakładki ładowania (opcjonalnie).
+     * @default "small"
+     */
+    overlayMode?: LoadingOverlayMode;
 }
 
 /**

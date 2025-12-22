@@ -123,6 +123,8 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             lineNumbers={lineNumbers}
             statusBar={statusBar}
             miniMap={slot.miniMap}
+            overlayMode={slot.overlayMode ?? "small"}
+            onCancel={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
         />
     );
 };

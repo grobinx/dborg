@@ -14,7 +14,7 @@ import { ToLowerCaseAction } from "./actions/ToLowerCase";
 import { ToUpperCaseAction } from "./actions/ToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
-import LoadingOverlay from "../useful/LoadingOverlay";
+import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
 import { Copy } from "react-bootstrap-icons";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 
@@ -102,7 +102,6 @@ interface MonacoEditorProps {
     onFocus?: () => void;
     onBlur?: () => void;
     readOnly?: boolean;
-    loading?: string | boolean;
     wordWrap?: boolean;
     lineNumbers?: boolean;
     statusBar?: boolean;
@@ -119,18 +118,23 @@ interface MonacoEditorProps {
     onEolChange?: (eol: EditorEolMode) => void;
 
     onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => void;
+
+    loading?: string | boolean;
+    onCancel?: () => void;
+    overlayMode?: LoadingOverlayMode;
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const {
         onMount, editorKey, onFocus, onBlur, defaultValue, value, rootRef,
-        readOnly, loading, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
+        readOnly, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
         language: initialLanguage = defaultEditorLanguageId,
         encoding: initialEncoding = defaultEditorEncoding,
         eol: initialEol = defaultEditorEolMode,
         insertSpaces: initialInsertSpaces = true,
         tabSize: initialTabSize = 4,
         onLanguageChange, onEncodingChange, onEolChange,
+        loading, onCancel, overlayMode,
         ...other
     } = useThemeProps({ name: "MonacoEditor", props });
 
@@ -323,7 +327,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                     {...other}
                 />
                 {Boolean(loading) && (
-                    <LoadingOverlay label={loadingLabel} />
+                    <LoadingOverlay label={loadingLabel} onCancelLoading={onCancel} mode={overlayMode} />
                 )}
             </Box>
             {statusBar !== false && (

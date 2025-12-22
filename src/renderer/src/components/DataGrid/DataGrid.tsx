@@ -12,7 +12,7 @@ import { ActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import Tooltip from "../Tooltip";
-import LoadingOverlay from "../useful/LoadingOverlay";
+import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
 import * as actions from "./actions";
 import { createDataGridCommands } from "./DataGridCommands";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
@@ -108,6 +108,7 @@ interface DataGridProps<T extends object> {
      * Wywoływane, gdy ładowanie jest anulowane
      */
     onCancelLoading?: () => void;
+    overlayMode?: LoadingOverlayMode;
 
     active?: boolean;
 
@@ -468,6 +469,7 @@ export const DataGrid = <T extends object>({
     cellPaddingY = 1,
     loading,
     onCancelLoading,
+    overlayMode = "auto",
     active,
     ref,
     autoSaveId,
@@ -1277,6 +1279,7 @@ export const DataGrid = <T extends object>({
                 <LoadingOverlay
                     label={loading.trim() === "" ? t("loading---", "Loading...") : loading}
                     onCancelLoading={onCancelLoading}
+                    mode={overlayMode}
                 />
             )}
 
@@ -1430,7 +1433,7 @@ export const DataGrid = <T extends object>({
                 </StyledHeader>
                 {displayData.length === 0 && (
                     <StyledNoRowsInfo className={clsx("DataGrid-noRowsInfo", classes)}>
-                        {t("no-rows-to-display", "No rows to display")}
+                        {(overlayMode === "small" && loading) ? t("loading---", "Loading...") : t("no-rows-to-display", "No rows to display")}
                     </StyledNoRowsInfo>
                 )}
                 <StyledRowsContainer

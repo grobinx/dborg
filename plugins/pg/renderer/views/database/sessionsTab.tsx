@@ -730,6 +730,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                     canPause: false,
                     intervals: [2, 5, 10, 15, 30, 60],
                     defaultInterval: 5,
+                    canRefresh: true,
                 } as IAutoRefresh,
             ],
             actionSlotId: cid("sessions-grid"),
