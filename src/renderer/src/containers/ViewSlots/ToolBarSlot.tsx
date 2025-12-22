@@ -34,16 +34,16 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         const unregisterRefresh = registerRefresh(slot.id, () => {
             setPendingRefresh(true);
         });
-        let unregisterOnRegisterSlot: () => void = () => { };
+        let offRegisterSlot: () => void = () => { };
         if (slot.type === "toolbar") {
-            unregisterOnRegisterSlot = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
+            offRegisterSlot = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
                 setRefresh(prev => prev + 1n);
             });
         }
         slot?.onMount?.(refreshSlot);
         return () => {
             unregisterRefresh();
-            unregisterOnRegisterSlot();
+            offRegisterSlot();
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
