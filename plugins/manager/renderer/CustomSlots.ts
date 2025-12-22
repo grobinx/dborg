@@ -582,6 +582,13 @@ export interface IGridSlot extends ICustomSlot {
      * Funkcja zwracająca style dla danego wiersza.
      */
     getRowStyle?: (row: { [key: string]: any }, rowIndex: number, theme: Theme) => React.CSSProperties;
+    /**
+     * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
+     * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
+     * @param refresh 
+     * @returns 
+     */
+    onCancel?: (refresh: RefreshSlotFunction) => void;
 }
 
 export interface IEditorContext {

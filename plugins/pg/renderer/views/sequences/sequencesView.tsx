@@ -19,8 +19,6 @@ export interface SequenceRecord {
     cycle: boolean | null;
     cache_size: number | null;
     last_value: number | null;
-    owner_table: string | null;
-    owner_column: string | null;
     owner: string | null;
     comment: string | null;
     [key: string]: any;
@@ -31,6 +29,8 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
 
     let selectedSchemaName: string | null = null;
     let selectedRow: SequenceRecord | null = null;
+    const ver = session.getVersion() ?? "";
+    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
 
     const setSelectedSchemaName = async () => {
         const { rows } = await session.query<{ schema_name: string }>('select current_schema() as schema_name');
@@ -62,23 +62,28 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
                     content: {
                         id: cid("sequences-tab-content"),
                         type: "tabcontent",
-                        content: () => ({
-                            id: cid("sequences-splitter"),
+                        content: {
+                            id: cid("sequences-details-splitter"),
                             type: "split",
-                            direction: "vertical",
-                            first: () => ({
-                                id: cid("sequences-grid"),
-                                type: "grid",
-                                mode: "defined",
-                                uniqueField: "sequence_name",
-                                onMount: (refresh: any) => {
-                                    refresh(cid("sequences-toolbar"));
-                                },
-                                rows: async () => {
-                                    const ver = session.getVersion() ?? "";
-                                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
-
-                                    const sql10plus = `
+                            direction: "horizontal",
+                            autoSaveId: `sequences-details-splitter-${session.profile.sch_id}`,
+                            secondSize: 25,
+                            first: {
+                                id: cid("sequences-editor-splitter"),
+                                type: "split",
+                                direction: "vertical",
+                                autoSaveId: `sequences-editor-splitter-${session.profile.sch_id}`,
+                                secondSize: 25,
+                                first: {
+                                    id: cid("sequences-grid"),
+                                    type: "grid",
+                                    mode: "defined",
+                                    uniqueField: "sequence_name",
+                                    onMount: (refresh: any) => {
+                                        refresh(cid("sequences-toolbar"));
+                                    },
+                                    rows: async () => {
+                                        const sql10plus = `
 select
   s.schemaname as sequence_schema,
   s.sequencename as sequence_name,
@@ -90,23 +95,7 @@ select
   s.cycle,
   s.cache_size,
   s.last_value,
-  -- owner table/column (via pg_depend)
-   (
-     select format('%I.%I', tn.nspname, tc.relname)
-     from pg_depend d
-     join pg_class tc on tc.oid = d.refobjid
-     join pg_namespace tn on tn.oid = tc.relnamespace
-     where d.objid = c.oid and d.deptype in ('a','i')
-     limit 1
-   ) as owner_table,
-   (
-     select a.attname
-     from pg_depend d
-     join pg_attribute a on a.attrelid = d.refobjid and a.attnum = d.refobjsubid
-     where d.objid = c.oid and d.deptype in ('a','i')
-     limit 1
-   ) as owner_column,
-  -- sequence owner role and comment
+  -- owner table/column removed
   rol.rolname as owner,
   pd.description as comment
 from pg_sequences s
@@ -119,7 +108,7 @@ where (s.schemaname = $1 or (s.schemaname = any (current_schemas(false)) and coa
 order by sequence_schema, sequence_name;
 `;
 
-                                    const sqlLegacy = `
+                                        const sqlLegacy = `
 select
    n.nspname as sequence_schema,
    c.relname as sequence_name,
@@ -131,21 +120,7 @@ select
    null::boolean as cycle,
    null::bigint as cache_size,
    null::bigint as last_value,
-   (
-     select format('%I.%I', tn.nspname, tc.relname)
-     from pg_depend d
-     join pg_class tc on tc.oid = d.refobjid
-     join pg_namespace tn on tn.oid = tc.relnamespace
-     where d.objid = c.oid and d.deptype = 'a'
-     limit 1
-   ) as owner_table,
-   (
-     select a.attname
-     from pg_depend d
-     join pg_attribute a on a.attrelid = d.refobjid and a.attnum = d.refobjsubid
-     where d.objid = c.oid and d.deptype = 'a'
-     limit 1
-   ) as owner_column,
+   -- owner table/column removed
    rol.rolname as owner,
    pd.description as comment
 from pg_class c
@@ -157,81 +132,229 @@ where c.relkind = 'S'
 order by sequence_schema, sequence_name;
 `;
 
-                                    const sql = major >= 10 ? sql10plus : sqlLegacy;
+                                        const sql = major >= 10 ? sql10plus : sqlLegacy;
 
-                                    const { rows } = await session.query<SequenceRecord>(sql, [selectedSchemaName]);
+                                        const { rows } = await session.query<SequenceRecord>(sql, [selectedSchemaName]);
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
+                                        { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
+                                        ...(major >= 10 ? [
+                                            { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
+                                            { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
+                                            { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
+                                            { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
+                                            { key: "min_value", label: t("min-value", "Min"), dataType: "number", width: 110 },
+                                            { key: "max_value", label: t("max-value", "Max"), dataType: "number", width: 130 },
+                                            { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
+                                            { key: "cache_size", label: t("cache-size", "Cache"), dataType: "number", width: 100 },
+                                            { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
+                                        ] : []),
+                                        { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                                    ] as ColumnDefinition[],
+                                    onRowSelect: (row: SequenceRecord | undefined, refresh: RefreshSlotFunction) => {
+                                        selectedRow = row ?? null;
+                                        refresh(cid("sequences-editor"));
+                                        refresh(cid("sequences-details-grid"));
+                                    },
+                                    actions: [
+                                        SelectSchemaAction(),
+                                    ],
+                                    actionGroups: (refresh: RefreshSlotFunction) => [
+                                        SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
+                                            selectedSchemaName = schemaName;
+                                            refresh(cid("sequences-grid"));
+                                        }),
+                                    ],
+                                    autoSaveId: `sequences-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"]
+                                } as IGridSlot,
+                                second: {
+                                    id: cid("sequences-editor"),
+                                    type: "editor",
+                                    lineNumbers: false,
+                                    readOnly: true,
+                                    miniMap: false,
+                                    content: async () => {
+                                        if (selectedRow) {
+                                            let ddl = "";
+                                            const { rows } = await session.query(sequenceDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            if (rows.length > 0) {
+                                                ddl += rows[0].source;
+                                            }
+                                            const { rows: ownerRows } = await session.query(sequenceOwnerDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            if (ownerRows.length > 0) {
+                                                ddl += "\n\n" + ownerRows[0].source;
+                                            }
+                                            const { rows: privilegesRows } = await session.query(sequencePrivilegesDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            if (privilegesRows.length > 0) {
+                                                ddl += "\n\n" + privilegesRows[0].source;
+                                            }
+                                            const { rows: operationalRows } = await session.query(sequenceOperationalDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            if (operationalRows.length > 0) {
+                                                ddl += "\n\n" + operationalRows[0].source;
+                                            }
+                                            const { rows: commentRows } = await session.query(sequenceCommentDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            if (commentRows.length > 0) {
+                                                ddl += "\n\n" + commentRows[0].source;
+                                            }
+                                            return ddl;
+                                        } else {
+                                            return "-- No sequence selected";
+                                        }
+                                    },
+                                },
+                            },
+                            second: {
+                                id: cid("sequences-details-grid"),
+                                type: "grid",
+                                mode: "defined",
+                                pivot: true,
+                                rows: async () => {
+                                    if (!selectedRow) return [];
+
+                                    const ver = session.getVersion() ?? "";
+                                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
+
+                                    let sql: string;
+
+                                    if (major >= 10) {
+                                        sql = `
+            with seq as (
+                select c.oid, n.nspname as sequence_schema, c.relname as sequence_name,
+                       rol.rolname as owner,
+                       format_type(seq.seqtypid, null) as data_type,
+                       s.start_value, s.min_value, s.max_value, s.increment_by, s.cycle, s.cache_size, s.last_value,
+                       pd.description as comment,
+                       c.relacl
+                from pg_class c
+                join pg_namespace n on n.oid = c.relnamespace
+                left join pg_roles rol on rol.oid = c.relowner
+                left join pg_description pd on pd.objoid = c.oid and pd.classoid = 'pg_class'::regclass and pd.objsubid = 0
+                left join pg_sequences s on s.schemaname = n.nspname and s.sequencename = c.relname
+                left join pg_sequence seq on seq.seqrelid = c.oid
+                where c.relname = $1 and n.nspname = $2 and c.relkind = 'S'
+            ),
+            dep as (
+                select
+                    d.objid,
+                    cls.relname as owner_table,
+                    ns.nspname as owner_table_schema,
+                    att.attname as owner_column
+                from pg_depend d
+                join pg_class cls on cls.oid = d.refobjid
+                join pg_namespace ns on ns.oid = cls.relnamespace
+                left join pg_attribute att on att.attrelid = cls.oid and att.attnum = d.refobjsubid and att.attnum > 0
+                where d.classid = 'pg_class'::regclass
+                  and d.deptype = 'a'
+                  and cls.relkind in ('r','p','t')
+            ),
+            stat as (
+                select seqrelid, last_value
+                from pg_catalog.pg_stat_all_sequences
+                where sequencename = $1 and schemaname = $2
+            )
+            select
+                seq.*,
+                dep.owner_table,
+                dep.owner_table_schema,
+                dep.owner_column,
+                stat.last_value as stat_last_value,
+                array_to_string(seq.relacl, E'\n') as acl
+            from seq
+            left join dep on dep.objid = seq.oid
+            left join stat on stat.seqrelid = seq.oid
+            limit 1
+        `;
+                                    } else {
+                                        sql = `
+            with seq as (
+                select c.oid, n.nspname as sequence_schema, c.relname as sequence_name,
+                    rol.rolname as owner,
+                    seq_data.data_type,
+                    seq_data.start_value,
+                    seq_data.min_value,
+                    seq_data.max_value,
+                    seq_data.increment_by,
+                    seq_data.is_cycled as cycle,
+                    seq_data.cache_value as cache_size,
+                    seq_data.last_value,
+                    pd.description as comment,
+                    c.relacl
+                from pg_class c
+                join pg_namespace n on n.oid = c.relnamespace
+                left join pg_roles rol on rol.oid = c.relowner
+                left join pg_description pd on pd.objoid = c.oid and pd.classoid = 'pg_class'::regclass and pd.objsubid = 0
+                -- pobierz wartości sekwencji przez select * from schemat.sekwencja
+                left join lateral (
+                    select 
+                        null::text as data_type,
+                        s.* 
+                    from "${selectedRow?.sequence_schema}"."${selectedRow?.sequence_name}" s
+                ) as seq_data on true
+                where c.relname = $1 and n.nspname = $2 and c.relkind = 'S'
+            ),
+            dep as (
+                select
+                    d.objid,
+                    cls.relname as owner_table,
+                    ns.nspname as owner_table_schema,
+                    att.attname as owner_column
+                from pg_depend d
+                join pg_class cls on cls.oid = d.refobjid
+                join pg_namespace ns on ns.oid = cls.relnamespace
+                left join pg_attribute att on att.attrelid = cls.oid and att.attnum = d.refobjsubid and att.attnum > 0
+                where d.classid = 'pg_class'::regclass
+                  and d.deptype = 'a'
+                  and cls.relkind in ('r','p','t')
+            )
+            select
+                seq.*,
+                dep.owner_table,
+                dep.owner_table_schema,
+                dep.owner_column,
+                null::bigint as stat_last_value,
+                array_to_string(seq.relacl, E'\n') as acl
+            from seq
+            left join dep on dep.objid = seq.oid
+            limit 1
+        `;
+                                    }
+
+                                    const { rows } = await session.query(sql, [selectedRow.sequence_name, selectedRow.sequence_schema]);
+                                    if (!rows.length) return [];
+
+                                    // Zamiana na listę klucz-wartość do pivot grida
                                     return rows;
                                 },
                                 columns: [
-                                    { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
                                     { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
+                                    { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
                                     { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
                                     { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
-                                    { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
-                                    { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
-                                    { key: "min_value", label: t("min-value", "Min"), dataType: "number", width: 110 },
-                                    { key: "max_value", label: t("max-value", "Max"), dataType: "number", width: 130 },
+                                    { key: "start_value", label: t("start-value", "Start Value"), dataType: "number", width: 110 },
+                                    { key: "min_value", label: t("min-value", "Min Value"), dataType: "number", width: 110 },
+                                    { key: "max_value", label: t("max-value", "Max Value"), dataType: "number", width: 130 },
                                     { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
-                                    { key: "cache_size", label: t("cache-size", "Cache"), dataType: "number", width: 100 },
                                     { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
-                                    { key: "owner_table", label: t("owner-table", "Owner Table"), dataType: "string", width: 220 },
-                                    { key: "owner_column", label: t("owner-column", "Owner Column"), dataType: "string", width: 180 },
+                                    { key: "cache_size", label: t("cache-size", "Cache Size"), dataType: "number", width: 100 },
+                                    { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
                                     { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                                    { key: "relacl", label: t("relacl", "RelACL"), dataType: "string", width: 200 },
+                                    { key: "owner_table", label: t("owner-table", "Owner Table"), dataType: "string", width: 220 },
+                                    { key: "owner_table_schema", label: t("owner-table-schema", "Owner Table Schema"), dataType: "string", width: 150 },
+                                    { key: "owner_column", label: t("owner-column", "Owner Column"), dataType: "string", width: 180 },
+                                    { key: "stat_last_value", label: t("stat-last-value", "Stat Last Value"), dataType: "number", width: 130 },
+                                    { key: "acl", label: t("acl", "ACL"), dataType: "string", width: 200 },
                                 ] as ColumnDefinition[],
-                                onRowSelect: (row: SequenceRecord | undefined, refresh: RefreshSlotFunction) => {
-                                    selectedRow = row ?? null;
-                                    if (selectedRow) {
-                                        refresh(cid("sequences-editor"));
-                                    }
-                                },
-                                actions: [
-                                    SelectSchemaAction(),
-                                ],
-                                actionGroups: (refresh: RefreshSlotFunction) => [
-                                    SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
-                                        selectedSchemaName = schemaName;
-                                        refresh(cid("sequences-grid"));
-                                    }),
-                                ],
-                                autoSaveId: `sequences-grid-${session.profile.sch_id}`,
-                                status: ["data-rows"]
-                            } as IGridSlot),
-                            second: {
-                                id: cid("sequences-editor"),
-                                type: "editor",
-                                lineNumbers: false,
-                                readOnly: true,
-                                miniMap: false,
-                                content: async () => {
-                                    if (selectedRow) {
-                                        let ddl = "";
-                                        const { rows } = await session.query(sequenceDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                        if (rows.length > 0) {
-                                            ddl += rows[0].source;
-                                        }
-                                        const { rows: ownerRows } = await session.query(sequenceOwnerDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                        if (ownerRows.length > 0) {
-                                            ddl += "\n\n" + ownerRows[0].source;
-                                        }
-                                        const { rows: privilegesRows } = await session.query(sequencePrivilegesDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                        if (privilegesRows.length > 0) {
-                                            ddl += "\n\n" + privilegesRows[0].source;
-                                        }
-                                        const { rows: operationalRows } = await session.query(sequenceOperationalDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                        if (operationalRows.length > 0) {
-                                            ddl += "\n\n" + operationalRows[0].source;
-                                        }
-                                        const { rows: commentRows } = await session.query(sequenceCommentDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                        if (commentRows.length > 0) {
-                                            ddl += "\n\n" + commentRows[0].source;
-                                        }
-                                        return ddl;
-                                    } else {
-                                        return "-- No sequence selected";
-                                    }
-                                },
-                            }
-                        }),
+                                pivotColumns: [
+                                    { key: "property", label: t("property", "Property"), dataType: "string", width: 180 },
+                                    { key: "value", label: t("value", "Value"), dataType: "string", width: 400 },
+                                ] as ColumnDefinition[],
+                                autoSaveId: `sequences-details-grid-${session.profile.sch_id}`,
+                            },
+                        },
                     },
                     toolBar: {
                         id: cid("sequences-toolbar"),

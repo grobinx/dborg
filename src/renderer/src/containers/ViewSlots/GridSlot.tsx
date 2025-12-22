@@ -198,6 +198,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     pivotColumns={pivotColumns}
                     uniqueField={slot.uniqueField}
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
+                    onCancelLoading={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
                 />
                 )}
             </Box>
