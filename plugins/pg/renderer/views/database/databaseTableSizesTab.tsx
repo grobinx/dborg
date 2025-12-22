@@ -106,7 +106,6 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
                                     AND n.nspname <> 'public'
                                 )
                               )
-                        ORDER BY pg_total_relation_size(c.oid) DESC
                     `, params);
                     return rows;
                 },
@@ -114,7 +113,7 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
                     { key: "schema_name", label: t("schema", "Schema"), width: 140, dataType: "string" },
                     { key: "relname", label: t("relation", "Relation"), width: 240, dataType: "string" },
                     { key: "relkind", label: t("kind", "Kind"), width: 90, dataType: "string" },
-                    { key: "total_size", label: t("total-size", "Total Size"), width: 120, dataType: "size" },
+                    { key: "total_size", label: t("total-size", "Total Size"), width: 120, dataType: "size", sortDirection: "desc", sortOrder: 1 },
                     { key: "table_size", label: t("table-size", "Table Size"), width: 120, dataType: "size" },
                     { key: "index_size", label: t("index-size", "Index Size"), width: 120, dataType: "size" },
                     { key: "toast_size", label: t("toast-size", "TOAST Size"), width: 120, dataType: "size" },

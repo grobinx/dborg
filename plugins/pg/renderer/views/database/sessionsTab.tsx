@@ -202,7 +202,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     (a.pid = pg_backend_pid()) as is_current_session
                                 FROM pg_catalog.pg_stat_activity a
                                 ${whereClause}
-                                ORDER BY state_duration desc nulls last, state_change desc
+                                -- ORDER BY state_duration desc nulls last, state_change desc
                                 `,
                                 params
                             );
@@ -218,8 +218,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             { key: "client_addr", label: t("client-address", "Client Address"), width: 130, dataType: "string" },
                             { key: "backend_start", label: t("backend-start", "Backend Start"), width: 170, dataType: "datetime" },
                             { key: "state", label: t("state", "State"), width: 100, dataType: "string" },
-                            { key: "state_change", label: t("state-change", "State Change"), width: 170, dataType: "datetime" },
-                            { key: "state_duration", label: t("state-duration", "Duration"), width: 120, dataType: "string" },
+                            { key: "state_change", label: t("state-change", "State Change"), width: 170, dataType: "datetime", sortDirection: "desc", sortOrder: 2 },
+                            { key: "state_duration", label: t("state-duration", "Duration"), width: 120, dataType: "string", sortDirection: "desc", sortOrder: 1 },
                             { key: "wait_event_type", label: t("wait-event-type", "Wait Event Type"), width: 140, dataType: "string" },
                             { key: "wait_event", label: t("wait-event", "Wait Event"), width: 140, dataType: "string" },
                             { key: "blocking_pids", label: t("blocking-pids", "Blocking PIDs"), width: 150, dataType: ["number"] },

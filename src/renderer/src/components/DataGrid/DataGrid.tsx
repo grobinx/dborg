@@ -682,6 +682,14 @@ export const DataGrid = <T extends object>({
                 for (const col of sortedColumns) {
                     const va = (a as any)[col.key];
                     const vb = (b as any)[col.key];
+
+                    // Nulle zawsze na końcu
+                    const vaIsNull = va === null || va === undefined;
+                    const vbIsNull = vb === null || vb === undefined;
+                    if (vaIsNull && vbIsNull) continue;
+                    if (vaIsNull) return 1;
+                    if (vbIsNull) return -1;
+
                     if (va === vb) continue;
                     const cmp = compareValuesByType(
                         va, vb,
