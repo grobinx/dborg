@@ -468,7 +468,6 @@ const ioStatsTab = (
         return {
             id: cid("table-io-stats-grid"),
             type: "grid",
-            mode: "defined",
             pivot: true,
             rows: async (refresh) => {
                 if (!selectedRow()) return [];

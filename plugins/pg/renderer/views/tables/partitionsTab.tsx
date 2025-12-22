@@ -25,7 +25,6 @@ const partitionsTab = (
             content: () => ({
                 id: cid("table-partitions-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
 

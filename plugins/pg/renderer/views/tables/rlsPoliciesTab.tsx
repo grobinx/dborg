@@ -26,7 +26,6 @@ const rlsPoliciesTab = (
             content: () => ({
                 id: cid("table-rls-policies-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
                     const selectPermissive = major >= 15 ? "permissive," : "";

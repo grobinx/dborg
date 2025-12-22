@@ -25,7 +25,6 @@ const aclTab = (
             content: () => ({
                 id: cid("table-acl-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
 

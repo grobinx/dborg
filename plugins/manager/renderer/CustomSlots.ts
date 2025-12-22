@@ -536,7 +536,7 @@ export interface IGridSlot extends ICustomSlot {
     type: "grid";
     /**
      * Tryb działania siatki (np. dynamiczne lub zdefiniowane kolumny).
-     * Domyślnie "data".
+     * Domyślnie "defined".
      */
     mode?: DataGridMode;
     /**

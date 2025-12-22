@@ -324,7 +324,6 @@ const storageTab = (
         return {
             id: cid("table-storage-grid"),
             type: "grid",
-            mode: "defined",
             pivot: true,
             rows: async (refresh) => {
                 if (!selectedRow()) return [];

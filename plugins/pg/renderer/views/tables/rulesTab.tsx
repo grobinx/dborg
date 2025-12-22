@@ -25,7 +25,6 @@ const rulesTab = (
             content: () => ({
                 id: cid("table-rules-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
                     const { rows } = await session.query(

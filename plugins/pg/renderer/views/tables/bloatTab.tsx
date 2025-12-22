@@ -25,7 +25,6 @@ const bloatTab = (
             content: () => ({
                 id: cid("table-bloat-grid"),
                 type: "grid",
-                mode: "defined",
                 pivot: true,
                 rows: async () => {
                     if (!selectedRow()) return [];

@@ -25,7 +25,6 @@ const locksTab = (
             content: () => ({
                 id: cid("table-locks-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
                     const { rows } = await session.query(

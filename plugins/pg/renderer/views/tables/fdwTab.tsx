@@ -33,7 +33,6 @@ const fdwTab = (
         main: {
             id: cid(id),
             type: "grid",
-            mode: "defined",
             pivot: false,
             rows: async () => {
                 if (!selectedFdwRow) return [];
@@ -82,7 +81,6 @@ const fdwTab = (
                 first: () => ({
                     id: cid("table-fdw-grid"),
                     type: "grid",
-                    mode: "defined",
                     pivot: true,
                     rows: async (refresh) => {
                         //selectedFdwRow = null;

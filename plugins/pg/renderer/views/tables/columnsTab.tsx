@@ -96,7 +96,6 @@ const columnsTab = (
                 first: () => ({
                     id: cid("table-columns-grid"),
                     type: "grid",
-                    mode: "defined",
                     onRowSelect(row: TableColumnRecord, refresh) {
                         selected = row;
                         refresh(cid("table-columns-info-panel-title"));

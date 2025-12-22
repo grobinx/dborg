@@ -26,7 +26,6 @@ const indexesTab = (
             content: () => ({
                 id: cid("table-indexes-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) {
                         return [];

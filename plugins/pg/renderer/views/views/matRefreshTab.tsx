@@ -25,7 +25,6 @@ const matRefreshTab = (
             content: () => ({
                 id: cid("view-mat-refresh-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     const row = selectedRow();
                     if (!row) return [];

@@ -30,7 +30,6 @@ const databaseExtensionsTab = (session: IDatabaseSession, _database: string | nu
             content: () => ({
                 id: cid("database-extensions-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     const { rows } = await session.query<ExtensionRecord>(`
                         SELECT 

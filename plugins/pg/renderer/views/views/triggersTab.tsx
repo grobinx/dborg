@@ -25,7 +25,6 @@ const triggersTab = (
             content: () => ({
                 id: cid("view-triggers-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
                     const { rows } = await session.query(

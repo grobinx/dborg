@@ -392,7 +392,6 @@ const statisticsTab = (
     const grid = (): IGridSlot => ({
         id: cid("table-statistics-grid"),
         type: "grid",
-        mode: "defined",
         pivot: true,
         rows: async (refresh) => {
             if (!selectedRow()) return [];

@@ -65,7 +65,6 @@ const columnsTab = (
                 first: () => ({
                     id: cid("view-columns-grid"),
                     type: "grid",
-                    mode: "defined",
                     onRowSelect(row: ViewColumnRecord, refresh) {
                         selected = row;
                         refresh(cid("view-columns-info-panel-title"));

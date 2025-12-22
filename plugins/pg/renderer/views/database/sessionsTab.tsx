@@ -161,7 +161,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                     main: {
                         id: cid("sessions-grid"),
                         type: "grid",
-                        mode: "defined",
                         uniqueField: "pid",
                         onRowSelect: (row: SessionRecord | undefined, refresh: RefreshSlotFunction) => {
                             selectedSession = row ?? null;
@@ -255,7 +254,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 content: () => ({
                                     id: cid("locks-grid"),
                                     type: "grid",
-                                    mode: "defined",
                                     rows: async () => {
                                         if (!selectedSession) return [];
                                         const { rows } = await session.query<LockRecord>(
@@ -336,7 +334,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 content: () => ({
                                     id: cid("transaction-grid"),
                                     type: "grid",
-                                    mode: "defined",
                                     rows: async () => {
                                         if (!selectedSession) return [];
                                         const { rows } = await session.query<TransactionRecord>(

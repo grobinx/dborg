@@ -25,7 +25,6 @@ const sequencesTab = (
             content: () => ({
                 id: cid("table-sequences-grid"),
                 type: "grid",
-                mode: "defined",
                 pivot: true,
                 rows: async () => {
                     if (!selectedRow()) return [];

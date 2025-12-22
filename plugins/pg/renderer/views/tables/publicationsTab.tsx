@@ -25,7 +25,6 @@ const publicationsTab = (
             content: () => ({
                 id: cid("table-publications-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
 

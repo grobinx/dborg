@@ -77,7 +77,6 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
                                 first: {
                                     id: cid("sequences-grid"),
                                     type: "grid",
-                                    mode: "defined",
                                     uniqueField: "sequence_name",
                                     onMount: (refresh: any) => {
                                         refresh(cid("sequences-toolbar"));
@@ -209,7 +208,6 @@ order by sequence_schema, sequence_name;
                             second: {
                                 id: cid("sequences-details-grid"),
                                 type: "grid",
-                                mode: "defined",
                                 pivot: true,
                                 rows: async () => {
                                     if (!selectedRow) return [];

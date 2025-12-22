@@ -25,7 +25,6 @@ const constraintsTab = (
             content: () => ({
                 id: cid("table-constraints-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) {
                         return [];

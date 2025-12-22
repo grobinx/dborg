@@ -32,7 +32,6 @@ const queryPlansTab = (
             content: () => ({
                 id: cid("view-query-plans-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     const row = selectedRow();
                     if (!row) return [];

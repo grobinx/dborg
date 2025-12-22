@@ -43,7 +43,6 @@ const databaseSettingsTab = (session: IDatabaseSession): ITabSlot => {
             content: () => ({
                 id: cid("database-settings-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     // Kolumny zależne od wersji
                     const sourceCol = versionNumber >= 90100 ? "source," : "null::text as source,";

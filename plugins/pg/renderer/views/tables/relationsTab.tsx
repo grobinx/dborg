@@ -25,7 +25,6 @@ const relationsTab = (
             content: () => ({
                 id: cid("table-relations-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     if (!selectedRow()) return [];
 

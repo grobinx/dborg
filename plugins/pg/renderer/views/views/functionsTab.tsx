@@ -25,7 +25,6 @@ const functionsTab = (
             content: () => ({
                 id: cid("view-functions-grid"),
                 type: "grid",
-                mode: "defined",
                 rows: async () => {
                     const row = selectedRow();
                     if (!row) return [];

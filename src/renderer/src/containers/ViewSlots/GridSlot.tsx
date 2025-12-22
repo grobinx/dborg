@@ -192,7 +192,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     ref={dataGridRef}
                     onMount={dataGridMountHandler}
                     autoSaveId={slot.autoSaveId ?? slot.id}
-                    mode={slot.mode}
+                    mode={slot.mode ?? "defined"}
                     onChange={(status) => setDataGridStatus(status)}
                     pivot={pivot}
                     pivotColumns={pivotColumns}

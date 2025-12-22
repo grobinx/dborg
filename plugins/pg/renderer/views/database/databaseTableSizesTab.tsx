@@ -54,7 +54,6 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
             content: () => ({
                 id: cid("database-table-sizes-grid"),
                 type: "grid",
-                mode: "defined",
                 onMount: (refresh: any) => {
                     refresh(cid("database-table-sizes-tab-toolbar"));
                 },

@@ -293,7 +293,6 @@ const columnStatsTab = (
     const grid = (): IGridSlot => ({
         id: cid("table-column-stats-grid"),
         type: "grid",
-        mode: "defined",
         rows: async (refresh) => {
             if (!selectedRow()) return [];
 
