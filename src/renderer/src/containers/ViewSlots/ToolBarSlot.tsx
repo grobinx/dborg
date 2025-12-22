@@ -18,7 +18,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     ref,
 }) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const { getRefSlot } = useRefSlot();
+    const { getRefSlot, onRegisterRefSlot } = useRefSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [actionComponents, setActionComponents] = React.useState<{
         actionComponents: React.ReactNode[],
@@ -34,9 +34,16 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         const unregisterRefresh = registerRefresh(slot.id, () => {
             setPendingRefresh(true);
         });
+        let unregisterOnRegisterSlot: () => void = () => { };
+        if (slot.type === "toolbar") {
+            unregisterOnRegisterSlot = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
+                setRefresh(prev => prev + 1n);
+            });
+        }
         slot?.onMount?.(refreshSlot);
         return () => {
             unregisterRefresh();
+            unregisterOnRegisterSlot();
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
@@ -91,10 +98,6 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         }
         return;
     }, [handleKeyDown]);
-
-    if (!actionComponents && !renderNode) {
-        return null;
-    }
 
     return (
         <TabPanelButtons ref={rootRef}>

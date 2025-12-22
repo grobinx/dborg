@@ -76,8 +76,6 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
         };
     }, [tabsItemID, itemID, active]);
 
-    console.log("label pinned", pinned);
-
     return (
         <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID} {...other}>
             {icon}

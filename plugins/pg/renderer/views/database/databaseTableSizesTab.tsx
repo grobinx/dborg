@@ -54,9 +54,6 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
             content: () => ({
                 id: cid("database-table-sizes-grid"),
                 type: "grid",
-                onMount: (refresh: any) => {
-                    refresh(cid("database-table-sizes-tab-toolbar"));
-                },
                 rows: async () => {
                     const params = [selectedSchemaName];
                     const { rows } = await session.query<RelationSizeRecord>(`

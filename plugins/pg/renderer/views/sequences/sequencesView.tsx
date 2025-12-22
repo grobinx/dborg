@@ -78,9 +78,6 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
                                     id: cid("sequences-grid"),
                                     type: "grid",
                                     uniqueField: "sequence_name",
-                                    onMount: (refresh: any) => {
-                                        refresh(cid("sequences-toolbar"));
-                                    },
                                     rows: async () => {
                                         const sql10plus = `
 select
@@ -111,14 +108,6 @@ order by sequence_schema, sequence_name;
 select
    n.nspname as sequence_schema,
    c.relname as sequence_name,
-   null::text as data_type,
-   null::bigint as start_value,
-   null::bigint as min_value,
-   null::bigint as max_value,
-   null::bigint as increment_by,
-   null::boolean as cycle,
-   null::bigint as cache_size,
-   null::bigint as last_value,
    -- owner table/column removed
    rol.rolname as owner,
    pd.description as comment
@@ -139,8 +128,8 @@ order by sequence_schema, sequence_name;
                                     columns: [
                                         { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
                                         { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
+                                        { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
                                         ...(major >= 10 ? [
-                                            { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
                                             { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
                                             { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
                                             { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
@@ -212,9 +201,6 @@ order by sequence_schema, sequence_name;
                                 rows: async () => {
                                     if (!selectedRow) return [];
 
-                                    const ver = session.getVersion() ?? "";
-                                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
-
                                     let sql: string;
 
                                     if (major >= 10) {
@@ -225,7 +211,20 @@ order by sequence_schema, sequence_name;
                        format_type(seq.seqtypid, null) as data_type,
                        s.start_value, s.min_value, s.max_value, s.increment_by, s.cycle, s.cache_size, s.last_value,
                        pd.description as comment,
-                       c.relacl
+                       coalesce(
+                         (
+                           select json_agg(row_to_json(a))
+                           from (
+                             select
+                              pg_get_userbyid(grantor)  as grantor,
+                              pg_get_userbyid(grantee)  as grantee,
+                              privilege_type,
+                              is_grantable
+                            from aclexplode(c.relacl)
+                           ) a
+                         ),
+                         '[]'::json
+                       ) as acl
                 from pg_class c
                 join pg_namespace n on n.oid = c.relnamespace
                 left join pg_roles rol on rol.oid = c.relowner
@@ -247,22 +246,14 @@ order by sequence_schema, sequence_name;
                 where d.classid = 'pg_class'::regclass
                   and d.deptype = 'a'
                   and cls.relkind in ('r','p','t')
-            ),
-            stat as (
-                select seqrelid, last_value
-                from pg_catalog.pg_stat_all_sequences
-                where sequencename = $1 and schemaname = $2
             )
             select
                 seq.*,
                 dep.owner_table,
                 dep.owner_table_schema,
-                dep.owner_column,
-                stat.last_value as stat_last_value,
-                array_to_string(seq.relacl, E'\n') as acl
+                dep.owner_column
             from seq
             left join dep on dep.objid = seq.oid
-            left join stat on stat.seqrelid = seq.oid
             limit 1
         `;
                                     } else {
@@ -279,7 +270,20 @@ order by sequence_schema, sequence_name;
                     seq_data.cache_value as cache_size,
                     seq_data.last_value,
                     pd.description as comment,
-                    c.relacl
+                       coalesce(
+                         (
+                           select json_agg(row_to_json(a))
+                           from (
+                             select
+                              pg_get_userbyid(grantor)  as grantor,
+                              pg_get_userbyid(grantee)  as grantee,
+                              privilege_type,
+                              is_grantable
+                            from aclexplode(c.relacl)
+                           ) a
+                         ),
+                         '[]'::json
+                       ) as acl
                 from pg_class c
                 join pg_namespace n on n.oid = c.relnamespace
                 left join pg_roles rol on rol.oid = c.relowner
@@ -311,9 +315,7 @@ order by sequence_schema, sequence_name;
                 seq.*,
                 dep.owner_table,
                 dep.owner_table_schema,
-                dep.owner_column,
-                null::bigint as stat_last_value,
-                array_to_string(seq.relacl, E'\n') as acl
+                dep.owner_column
             from seq
             left join dep on dep.objid = seq.oid
             limit 1
@@ -339,12 +341,10 @@ order by sequence_schema, sequence_name;
                                     { key: "cache_size", label: t("cache-size", "Cache Size"), dataType: "number", width: 100 },
                                     { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
                                     { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
-                                    { key: "relacl", label: t("relacl", "RelACL"), dataType: "string", width: 200 },
                                     { key: "owner_table", label: t("owner-table", "Owner Table"), dataType: "string", width: 220 },
                                     { key: "owner_table_schema", label: t("owner-table-schema", "Owner Table Schema"), dataType: "string", width: 150 },
                                     { key: "owner_column", label: t("owner-column", "Owner Column"), dataType: "string", width: 180 },
-                                    { key: "stat_last_value", label: t("stat-last-value", "Stat Last Value"), dataType: "number", width: 130 },
-                                    { key: "acl", label: t("acl", "ACL"), dataType: "string", width: 200 },
+                                    { key: "acl", label: t("acl", "ACL"), dataType: "json", width: 200 },
                                 ] as ColumnDefinition[],
                                 pivotColumns: [
                                     { key: "property", label: t("property", "Property"), dataType: "string", width: 180 },
