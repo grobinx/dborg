@@ -260,9 +260,13 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             // Warning
                             if (sessionRow.wait_event_type === 'IO' ||
                                 sessionRow.wait_event_type === 'BufferPin' ||
-                                sessionRow.wait_event_type === 'Timeout' ||
                                 sessionRow.wait_event_type === 'IPC') {
                                 return { backgroundColor: alpha(resolveColor("warning.main", theme), 0.2) };
+                            }
+
+                            // Warning
+                            if (sessionRow.wait_event_type === 'Timeout') {
+                                return { backgroundColor: alpha(resolveColor("secondary.main", theme), 0.2) };
                             }
 
                             if (sessionRow.is_current_session) {
