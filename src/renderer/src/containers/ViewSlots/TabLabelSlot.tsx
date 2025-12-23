@@ -28,17 +28,22 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const theme = useTheme();
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
-    const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
+    const [refresh, setRefresh] = React.useState<bigint>(0n);
+    const [, reRender] = React.useState<bigint>(0n);
 
     const closable = resolveBooleanFactory(tabSlot.closable, refreshSlot);
     const pinnable = resolveBooleanFactory(tabSlot.pinnable, refreshSlot);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setRefresh(prev => prev + 1n);
+            }
         });
         slot?.onMount?.(refreshSlot);
         return () => {

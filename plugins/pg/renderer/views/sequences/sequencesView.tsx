@@ -156,7 +156,7 @@ order by sequence_schema, sequence_name;
                                         }),
                                     ],
                                     autoSaveId: `sequences-grid-${session.profile.sch_id}`,
-                                    status: ["data-rows"]
+                                    statuses: ["data-rows"]
                                 } as IGridSlot,
                                 second: {
                                     id: cid("sequences-editor"),

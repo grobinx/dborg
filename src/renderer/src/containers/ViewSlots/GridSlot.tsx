@@ -5,19 +5,25 @@ import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatu
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
     IGridSlot,
+    IGridStatusButton,
+    isGridStatusButton,
     resolveActionFactory,
     resolveActionGroupFactory,
     resolveBooleanFactory,
     resolveColumnDefinitionsFactory,
-    resolveRecordsFactory
+    resolveRecordsFactory,
+    resolveStringFactory,
+    StatusBarValueFunction
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
-import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
+import DataGridStatusBar, { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import debounce from "@renderer/utils/debounce";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { StatusBarButton } from "@renderer/app/StatusBar";
+import { resolveIcon } from "@renderer/themes/icons";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -42,12 +48,19 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
+    const [dataGridStatuses, setDataGridStatuses] = React.useState<DataGridStatusPart[] | undefined>(undefined);
+    const [dataGridStatusesFunctions, setDataGridStatusesFunctions] = React.useState<IGridStatusButton[] | undefined>(undefined);
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
+    const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setPendingRefresh(true);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setPendingRefresh(true);
+            }
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
         slot?.onMount?.(refreshSlot);
@@ -131,6 +144,25 @@ const GridSlot: React.FC<GridSlotProps> = ({
         return () => rowClick.cancel();
     }, [rowClick]);
 
+    React.useEffect(() => {
+        if (slot.statuses && slot.statuses.length > 0) {
+            const funcs: IGridStatusButton[] = [];
+            const parts: DataGridStatusPart[] = [];
+            slot.statuses.forEach(status => {
+                if (isGridStatusButton(status)) {
+                    funcs.push(status);
+                } else {
+                    parts.push(status);
+                }
+            });
+            setDataGridStatusesFunctions(funcs);
+            setDataGridStatuses(parts);
+        } else {
+            setDataGridStatusesFunctions(undefined);
+            setDataGridStatuses(undefined);
+        }
+    }, [slot.statuses, dataGridStatus]);
+
     function dataGridMountHandler(context: DataGridContext<any>): void {
         console.debug("GridSlot mounted for slot:", slot.id);
         const actionGroups = resolveActionGroupFactory(slot.actionGroups, refreshSlot) ?? [];
@@ -203,14 +235,32 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 />
                 )}
             </Box>
-            {slot.status && slot.status.length > 0 && (
+            {slot.statuses && slot.statuses.length > 0 && (
                 <DataGridStatusBar
                     ref={statusBarRef}
                     status={dataGridStatus}
-                    statuses={slot.status}
+                    statuses={dataGridStatuses}
+                    buttons={{
+                        last: dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ?
+                            dataGridStatusesFunctions.map((button, index) => {
+                                const toolTip = resolveStringFactory(button.tooltip, refreshSlot);
+                                const icon = resolveIcon(theme, button.icon);
+                                const label = resolveStringFactory(button.label, refreshSlot);
+                                return (
+                                    <StatusBarButton
+                                        key={index}
+                                        toolTip={toolTip}
+                                        onClick={button.onClick ? () => button.onClick?.(refreshSlot) : undefined}
+                                    >
+                                        {icon}
+                                        {label}
+                                    </StatusBarButton>
+                                );
+                            }) : undefined,
+                    }}
                 />)
             }
-        </Stack>
+        </Stack >
     );
 };
 

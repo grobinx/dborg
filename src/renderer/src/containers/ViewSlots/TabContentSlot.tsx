@@ -30,10 +30,15 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
     const wasActiveRef = React.useRef(false);
     const previousRefreshRef = React.useRef(refresh);
+    const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setPendingRefresh(true);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setPendingRefresh(true);
+            }
         });
         return unregisterRefresh;
     }, [slot.id]);

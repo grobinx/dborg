@@ -167,7 +167,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                         }),
                     ],
                     autoSaveId: `tables-grid-${session.profile.sch_id}`,
-                    status: ["data-rows"]
+                    statuses: ["data-rows"]
                 } as IGridSlot,
                 text: {
                     id: cid("tables-text"),

@@ -21,12 +21,17 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [toolBar, setToolBar] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
+    const [, reRender] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setRefresh(prev => prev + 1n);
+            }
         });
         slot?.onMount?.(refreshSlot);
         return () => {

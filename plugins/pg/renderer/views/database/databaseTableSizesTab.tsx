@@ -130,7 +130,7 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
                     })
                 ],
                 autoSaveId: `database-table-sizes-grid-${session.profile.sch_id}`,
-                status: ["data-rows"],
+                statuses: ["data-rows"],
             } as IGridSlot),
         },
         toolBar: {

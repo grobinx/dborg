@@ -26,10 +26,15 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
         }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setRefresh(prev => prev + 1n);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setRefresh(prev => prev + 1n);
+            }
         });
         slot?.onMount?.(refreshSlot);
         return () => {

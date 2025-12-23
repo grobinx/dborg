@@ -88,7 +88,7 @@ const databaseSettingsTab = (session: IDatabaseSession): ITabSlot => {
                     ] : []),
                 ] as ColumnDefinition[],
                 autoSaveId: `database-settings-grid-${session.profile.sch_id}`,
-                status: ["data-rows"],
+                statuses: ["data-rows"],
             } as IGridSlot),
         },
     };

@@ -24,10 +24,15 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
+    const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, () => {
-            setPendingRefresh(true);
+        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
+            if (redrawOnly) {
+                reRender(prev => prev + 1n);
+            } else {
+                setPendingRefresh(true);
+            }
         });
         slot?.onMount?.(refreshSlot);
         return () => {

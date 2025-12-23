@@ -528,6 +528,15 @@ export interface ITitleSlot extends ICustomSlot {
     toolBar?: ToolBarSlotKindFactory;
 }
 
+export type StatusBarValueFunction = () => string;
+
+export interface IGridStatusButton {
+    label: StringFactory;
+    icon?: IconFactory;
+    tooltip?: StringFactory;
+    onClick?: (refresh: RefreshSlotFunction) => void;
+}
+
 /**
  * Slot typu grid.
  * Pozwala na wyświetlenie siatki danych (np. wyników zapytania SQL).
@@ -574,7 +583,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Statusy siatki (np. liczba wierszy, pozycja) do wyświetlenia w pasku stanu (opcjonalnie).
      */
-    status?: DataGridStatusPart[];
+    statuses?: (DataGridStatusPart | IGridStatusButton)[];
     /**
      * Unikalne pole do identyfikacji wierszy (opcjonalnie).
      */
@@ -794,5 +803,13 @@ export function isCopyData(obj: any): obj is ICopyData {
         typeof obj === "object" &&
         obj !== null &&
         typeof obj.getData === "function"
+    );
+}
+
+export function isGridStatusButton(obj: any): obj is IGridStatusButton {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        "label" in obj
     );
 }

@@ -6,6 +6,7 @@ import { IAutoRefresh, IGridSlot, ITabSlot } from "plugins/manager/renderer/Cust
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { alpha, Theme } from "@mui/material";
 import { resolveColor } from "@renderer/utils/colors";
+import { red } from "@mui/material/colors";
 
 interface SessionRecord {
     pid: number;
@@ -62,6 +63,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let selectedSession: SessionRecord | null = null;
+    let sessions: SessionRecord[] = [];
     let hasPgBackendMemoryContexts: boolean = false;
     let hasHeapBlksWritten: boolean | null = null;
     let isSuperuser: boolean = false;
@@ -163,6 +165,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         type: "grid",
                         uniqueField: "pid",
                         onRowSelect: (row: SessionRecord | undefined, refresh: RefreshSlotFunction) => {
+                            const previousSelectedSession = selectedSession;
                             selectedSession = row ?? null;
                             refresh(cid("locks-grid"));
                             refresh(cid("transaction-grid"));
@@ -173,6 +176,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             if (versionNumber >= 130000) refresh(cid("progress-analyze-tab"));
                             if (versionNumber >= 140000) refresh(cid("progress-copy-tab"));
                             if (versionNumber >= 130000) refresh(cid("memory-contexts-tab"));
+                            if (selectedSession?.blocking_pids || previousSelectedSession?.blocking_pids) {
+                                refresh(cid("sessions-grid"), true);
+                            }
                         },
                         rows: async () => {
                             selectedSession = null;
@@ -205,6 +211,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 `,
                                 params
                             );
+                            sessions = rows;
                             return rows;
                         },
                         columns: [
@@ -225,9 +232,23 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             { key: "query", label: t("query", "Query"), width: 400, dataType: "string" },
                         ] as ColumnDefinition[],
                         autoSaveId: `sessions-grid-${session.profile.sch_id}`,
-                        status: ["data-rows", "position", "selected-rows"],
+                        statuses: [
+                            "data-rows", "position", "selected-rows",
+                            {
+                                label: () => {
+                                    const activeSessions = sessions.filter(s => s.state === 'active').length;
+                                    return `${t("active-sessions", "Actives")}: ${activeSessions}`;
+                                },
+                            }
+                        ],
                         getRowStyle: (row: { [key: string]: any }, _index, theme: Theme): React.CSSProperties => {
                             const sessionRow = row as SessionRecord;
+                            if (selectedSession?.blocking_pids?.includes(sessionRow.pid)) {
+                                return { boxShadow: `inset 0 0 0 2px ${resolveColor("error.main", theme)}`, };
+                            }
+                            if (sessionRow.blocking_pids) {
+                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.4) };
+                            }
                             // Krytyczne - error
                             if (sessionRow.wait_event_type === 'Lock' ||
                                 sessionRow.wait_event_type === 'LWLock' ||
@@ -244,12 +265,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 return { backgroundColor: alpha(resolveColor("warning.main", theme), 0.2) };
                             }
 
-                            if (selectedSession?.blocking_pids?.includes(sessionRow.pid)) {
-                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.4) };
-                            }
-                            if (sessionRow.blocking_pids) {
-                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.2) };
-                            }
                             if (sessionRow.is_current_session) {
                                 return { backgroundColor: alpha(resolveColor("primary.main", theme), 0.3) };
                             }
@@ -337,7 +352,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                         { key: "fastpath", label: t("fastpath", "Fastpath"), width: 80, dataType: "boolean" },
                                     ] as ColumnDefinition[],
                                     autoSaveId: `locks-grid-${session.profile.sch_id}`,
-                                    status: ["data-rows"] as any,
+                                    statuses: ["data-rows"] as any,
                                 }),
                             },
                         },
@@ -390,7 +405,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                         { key: "state", label: t("state", "State"), width: 100, dataType: "string" },
                                     ] as ColumnDefinition[],
                                     autoSaveId: `transaction-grid-${session.profile.sch_id}`,
-                                    status: ["data-rows"] as any,
+                                    statuses: ["data-rows"] as any,
                                 }),
                             },
                         },

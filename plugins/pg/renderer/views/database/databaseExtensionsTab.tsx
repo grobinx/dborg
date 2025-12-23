@@ -50,7 +50,7 @@ const databaseExtensionsTab = (session: IDatabaseSession, _database: string | nu
                     { key: "relocatable", label: t("relocatable", "Relocatable"), width: 110, dataType: "boolean" },
                 ] as ColumnDefinition[],
                 autoSaveId: `database-extensions-grid-${session.profile.sch_id}`,
-                status: ["data-rows"],
+                statuses: ["data-rows"],
             } as IGridSlot),
         },
     };
