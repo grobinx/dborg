@@ -1,7 +1,7 @@
 import React, { createContext, useRef, ReactNode, useCallback } from "react";
 
-export type RefreshSlotFunction = (id: string) => void;
-type RefreshFunction = () => void;
+export type RefreshSlotFunction = (id: string, redrawOnly?: boolean) => void;
+type RefreshFunction = (redrawOnly?: boolean) => void;
 type RegisterRefreshSlotFunction = (id: string, fn: RefreshFunction) => () => void;
 type RefreshSlotContextType = {
     registerRefresh: RegisterRefreshSlotFunction;
@@ -23,13 +23,13 @@ export const RefreshSlotProvider: React.FC<{ children: ReactNode }> = ({ childre
         };
     }, []);
 
-    const refreshSlot = useCallback((id: string) => {
+    const refreshSlot: RefreshSlotFunction = useCallback((id: string, redrawOnly?: boolean) => {
         const fn = refreshers.current.get(id);
         if (fn) {
             setTimeout(() =>
                 requestAnimationFrame(() => {
                     if (refreshers.current.get(id)) {
-                        fn();
+                        fn(redrawOnly);
                     }
                 }), 0);
         }

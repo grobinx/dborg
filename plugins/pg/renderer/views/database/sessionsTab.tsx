@@ -228,6 +228,28 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         status: ["data-rows", "position", "selected-rows"],
                         getRowStyle: (row: { [key: string]: any }, _index, theme: Theme): React.CSSProperties => {
                             const sessionRow = row as SessionRecord;
+                            // Krytyczne - error
+                            if (sessionRow.wait_event_type === 'Lock' ||
+                                sessionRow.wait_event_type === 'LWLock' ||
+                                sessionRow.wait_event_type === 'LWLockNamed' ||
+                                sessionRow.wait_event_type === 'LWLockTranche') {
+                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.2) };
+                            }
+
+                            // Warning
+                            if (sessionRow.wait_event_type === 'IO' ||
+                                sessionRow.wait_event_type === 'BufferPin' ||
+                                sessionRow.wait_event_type === 'Timeout' ||
+                                sessionRow.wait_event_type === 'IPC') {
+                                return { backgroundColor: alpha(resolveColor("warning.main", theme), 0.2) };
+                            }
+
+                            if (selectedSession?.blocking_pids?.includes(sessionRow.pid)) {
+                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.4) };
+                            }
+                            if (sessionRow.blocking_pids) {
+                                return { backgroundColor: alpha(resolveColor("error.main", theme), 0.2) };
+                            }
                             if (sessionRow.is_current_session) {
                                 return { backgroundColor: alpha(resolveColor("primary.main", theme), 0.3) };
                             }
