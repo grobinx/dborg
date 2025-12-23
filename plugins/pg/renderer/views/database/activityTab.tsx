@@ -1,7 +1,7 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IAutoRefresh, ICopyData, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { Box, Grid2 as Grid, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Grid2 as Grid, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { ChartNumBackends } from "./activityCharts/ChartNumBackends";
 import { ChartSessions } from "./activityCharts/ChartSessions";
 import { ChartTransactions } from "./activityCharts/ChartTransactions";
@@ -518,22 +518,24 @@ const activityTab = (
             const gridSide = maximizedCharstList.length <= 4 ? 6 : maximizedCharstList.length <= 6 ? 4 : maximizedCharstList.length <= 8 ? 3 : 4;
 
             return (
-                <Stack direction="column" sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
+                <Stack direction="column" sx={{ width: "100%", height: "100%", overflow: "hidden" }}>
                     <Grid container spacing={8} sx={{ padding: 8, width: "100%", height: "100%", overflow: "hidden" }}>
                         {/* Pozostałe wykresy */}
                         {maximizedCharstList.map(chart => {
                             const ChartComponent = chart!.component;
                             return (
                                 <Grid key={chart!.key} size={{ xs: 12, sm: 6, md: gridSide, lg: gridSide, xl: gridSide }}>
-                                    <TitleChart title={chart!.title} variant="body1">
-                                        <ToolButton
-                                            size="small"
-                                            onClick={() => toggleMinimized(chart!.key, refresh)}
-                                        >
-                                            <theme.icons.Pinned color="primary" />
-                                        </ToolButton>
-                                    </TitleChart>
-                                    <ChartComponent minimized={false} data={data} {...(chart!.props || {})} />
+                                    <Paper sx={{ width: "100%", height: "100%", padding: 4, }}>
+                                        <TitleChart title={chart!.title} variant="body1">
+                                            <ToolButton
+                                                size="small"
+                                                onClick={() => toggleMinimized(chart!.key, refresh)}
+                                            >
+                                                <theme.icons.Pinned color="primary" />
+                                            </ToolButton>
+                                        </TitleChart>
+                                        <ChartComponent minimized={false} data={data} {...(chart!.props || {})} />
+                                    </Paper>
                                 </Grid>
                             );
                         })}
@@ -545,7 +547,7 @@ const activityTab = (
                             {minimizedChartsList.map(chart => {
                                 const ChartComponent = chart!.component;
                                 return (
-                                    <Box key={chart!.key} sx={{ width: `${100 / chartList.length}%`, height: "100%" }}>
+                                    <Paper key={chart!.key} sx={{ width: `${100 / chartList.length}%`, height: "100%", padding: 4, }}>
                                         <TitleChart title={chart!.shortTitle} variant="caption">
                                             <ToolButton
                                                 size="small"
@@ -556,7 +558,7 @@ const activityTab = (
                                             </ToolButton>
                                         </TitleChart>
                                         <ChartComponent minimized={true} data={data} {...(chart!.props || {})} />
-                                    </Box>
+                                    </Paper>
                                 );
                             })}
                         </Stack>

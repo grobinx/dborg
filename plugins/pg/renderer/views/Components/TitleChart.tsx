@@ -11,7 +11,7 @@ interface TitleChartProps {
 
 const TitleChart: React.FC<TitleChartProps> = ({ title, children, variant = "body1" }) => {
     return (
-        <Box sx={{ display: "flex", width: "100%", gap: 8, paddingX: 8 }}>
+        <Box sx={{ display: "flex", width: "100%", gap: 8/*, paddingX: 8*/ }}>
             {children}
             <Typography variant={variant} sx={{ flex: 1, textAlign: "center" }}>
                 {title}
