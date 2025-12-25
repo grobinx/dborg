@@ -62,8 +62,12 @@ interface ColumnFilterState {
 export function useColumnFilterState() {
     const [filters, setFilters] = useState<ColumnFilterState>({});
     const [activeFilters, setActiveFilters] = useState<ColumnFilterState>({});
+    const [temporaryFilter, setTemporaryFilterState] = useState<{ key: string; filter: ColumnFilter } | null>(null);
 
     const setFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]): void => {
+        // setting a main filter disables any temporary filter
+        if (temporaryFilter) setTemporaryFilterState(null);
+        
         setFilters((prev) => {
             const existingFilter = prev[key];
             const isDifferent =
@@ -73,7 +77,7 @@ export function useColumnFilterState() {
                 JSON.stringify(existingFilter.values) !== JSON.stringify(values);
 
             if (!isDifferent) {
-                return prev; // Jeśli filtr się nie różni, zwróć poprzedni stan
+                return prev;
             }
 
             return {
@@ -113,11 +117,17 @@ export function useColumnFilterState() {
     }
 
     const filterData = <T extends object>(data: T[], columns: ColumnDefinition[]): T[] => {
-        if (Object.keys(filters).length === 0) {
+        // Use temporary filter if active, otherwise use main filters
+        const effectiveFilters: ColumnFilterState = temporaryFilter && temporaryFilter.filter.active
+            ? { [temporaryFilter.key]: temporaryFilter.filter }
+            : filters;
+
+        if (Object.keys(effectiveFilters).length === 0) {
             return data;
         }
+
         return data.filter((row) => {
-            return Object.entries(filters).every(([key, filter]) => {
+            return Object.entries(effectiveFilters).every(([key, filter]) => {
                 if (!filter.active) return true;
 
                 const column = columns.find(col => col.key === key);
@@ -179,11 +189,17 @@ export function useColumnFilterState() {
 
     useEffect(() => {
         const newActiveFilters: ColumnFilterState = {};
-        Object.entries(filters).forEach(([key, filter]) => {
-            if (filter.active) {
-                newActiveFilters[key] = filter;
-            }
-        });
+        
+        if (temporaryFilter && temporaryFilter.filter.active) {
+            newActiveFilters[temporaryFilter.key] = temporaryFilter.filter;
+        } else {
+            Object.entries(filters).forEach(([key, filter]) => {
+                if (filter.active) {
+                    newActiveFilters[key] = filter;
+                }
+            });
+        }
+        
         setActiveFilters(prev => {
             const prevKeys = Object.keys(prev);
             const newKeys = Object.keys(newActiveFilters);
@@ -193,7 +209,26 @@ export function useColumnFilterState() {
             }
             return newActiveFilters;
         });
-    }, [filters]);
+    }, [filters, temporaryFilter]);
+
+    const setTemporaryFilter = (key: string, operator: ColumnsFilterOperator, not: boolean, values: string[]) => {
+        setTemporaryFilterState({ key, filter: { operator, not, values, active: true } });
+    };
+
+    const clearTemporaryFilter = () => setTemporaryFilterState(null);
+
+    const getTemporaryFilter = (key?: string) => {
+        if (!temporaryFilter) return null;
+        if (key && temporaryFilter.key !== key) return null;
+        return temporaryFilter.filter;
+    };
+
+    const getEffectiveFilter = (key: string) => {
+        if (temporaryFilter?.key === key && temporaryFilter.filter.active) {
+            return temporaryFilter.filter;
+        }
+        return filters[key] ?? null;
+    };
 
     return {
         filters,
@@ -204,6 +239,11 @@ export function useColumnFilterState() {
         clearFilter,
         clearFilters,
         filterActive,
+        temporaryFilter,
+        setTemporaryFilter,
+        clearTemporaryFilter,
+        getTemporaryFilter,
+        getEffectiveFilter,
     };
 }
 

@@ -13,24 +13,17 @@ export const FilterColumnValue = (): Action<DataGridActionContext<any>> => {
         label: t(id, "Set/Reset Filter to Column Value"),
         keybindings: ["Alt+Shift+F"],
         run: (context) => {
-            const filter = context.getFilter();
             const value = context.getValue();
             if (!value) {
                 return;
             }
-            const newFilter: ColumnFilter = {
-                operator: "equals",
-                values: [String(value)],
-                not: false,
-                active: true,
-            };
-            if (filter && deepEqual(filter, newFilter)) {
-                context.filterActive(false);
+
+            const isFilter = context.isTemporaryFilter();
+            if (isFilter) {
+                context.clearTemporaryFilter();
+                return;
             }
-            else {
-                context.setFilter(newFilter.operator, newFilter.not, newFilter.values);
-                context.filterActive(true);
-            }
+            context.setTemporaryFilter("equals", false, [String(value)]);
         },
     };
 }

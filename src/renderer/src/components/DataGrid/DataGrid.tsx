@@ -710,6 +710,7 @@ export const DataGrid = <T extends object>({
         columnsState.stateChanged,
         groupingColumns.columns,
         filterColumns.activeFilters,
+        filterColumns.temporaryFilter,
         mode
     ]);
 
@@ -1045,6 +1046,21 @@ export const DataGrid = <T extends object>({
             const columnKey = columnsState.current[selectedCell.column]?.key;
             return filterColumns.filterActive(columnKey, set);
         },
+        setTemporaryFilter: (operator, not, values) => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            filterColumns.setTemporaryFilter(columnKey, operator, not, values);
+        },
+        clearTemporaryFilter: () => {
+            if (!selectedCell) return;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            filterColumns.clearTemporaryFilter();
+        },
+        isTemporaryFilter: () => {
+            if (!selectedCell) return false;
+            const columnKey = columnsState.current[selectedCell.column]?.key;
+            return filterColumns.getTemporaryFilter(columnKey) !== null;
+        },
         toggleHideColumn: () => {
             if (!selectedCell) return;
             const columnKey = columnsState.current[selectedCell.column]?.key;
@@ -1343,6 +1359,10 @@ export const DataGrid = <T extends object>({
                     {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
                         const absoluteColIndex = startColumn + localColIndex;
                         const col = columnsState.current[absoluteColIndex];
+                        const filter = filterColumns.temporaryFilter !== null ?
+                            filterColumns.getTemporaryFilter(col.key) :
+                            filterColumns.getFilter(col.key, true);
+                        const isTemporaryFilter = filterColumns.getTemporaryFilter(col.key) !== null;
                         return (
                             <StyledHeaderCell
                                 key={localColIndex}
@@ -1373,12 +1393,15 @@ export const DataGrid = <T extends object>({
                                         {col.label}
                                     </StyledLabel>
                                     <StyledGrow />
-                                    {(filterColumns.getFilter(col.key, true) !== null) && (
+                                    {(filter !== null) && (
                                         <Tooltip
-                                            title={t("filter-description", 'Filter {{column}} {{filter}}', {
-                                                column: col.label,
-                                                filter: filterToString(filterColumns.getFilter(col.key, true)!)
-                                            })}
+                                            title={
+                                                (isTemporaryFilter ? t("temporary-filter", "Is temporary filter\n") : "") +
+                                                t("filter-description", 'Filter {{column}} {{filter}}', {
+                                                    column: col.label,
+                                                    filter: filterToString(filter!)
+                                                })
+                                            }
                                         >
                                             <StyledIconContainer
                                                 onClick={(event) => {
@@ -1386,7 +1409,7 @@ export const DataGrid = <T extends object>({
                                                     event.stopPropagation();
                                                 }}
                                             >
-                                                <theme.icons.Filter />
+                                                <theme.icons.Filter color={isTemporaryFilter ? "warning" : undefined} />
                                             </StyledIconContainer>
                                         </Tooltip>
                                     )}

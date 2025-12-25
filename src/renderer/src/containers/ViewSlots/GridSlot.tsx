@@ -164,7 +164,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }, [slot.statuses, dataGridStatus]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
-        console.debug("GridSlot mounted for slot:", slot.id);
         const actionGroups = resolveActionGroupFactory(slot.actionGroups, refreshSlot) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
@@ -240,24 +239,23 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     ref={statusBarRef}
                     status={dataGridStatus}
                     statuses={dataGridStatuses}
-                    buttons={{
-                        last: dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ?
-                            dataGridStatusesFunctions.map((button, index) => {
-                                const toolTip = resolveStringFactory(button.tooltip, refreshSlot);
-                                const icon = resolveIcon(theme, button.icon);
-                                const label = resolveStringFactory(button.label, refreshSlot);
-                                return (
-                                    <StatusBarButton
-                                        key={index}
-                                        toolTip={toolTip}
-                                        onClick={button.onClick ? () => button.onClick?.(refreshSlot) : undefined}
-                                    >
-                                        {icon}
-                                        {label}
-                                    </StatusBarButton>
-                                );
-                            }) : undefined,
-                    }}
+                    buttons={dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ? {
+                        last: dataGridStatusesFunctions.map((button, index) => {
+                            const toolTip = resolveStringFactory(button.tooltip, refreshSlot);
+                            const icon = resolveIcon(theme, button.icon);
+                            const label = resolveStringFactory(button.label, refreshSlot);
+                            return (
+                                <StatusBarButton
+                                    key={index}
+                                    toolTip={toolTip}
+                                    onClick={button.onClick ? () => button.onClick?.(refreshSlot) : undefined}
+                                >
+                                    {icon}
+                                    {label}
+                                </StatusBarButton>
+                            );
+                        }),
+                    } : undefined}
                 />)
             }
         </Stack >

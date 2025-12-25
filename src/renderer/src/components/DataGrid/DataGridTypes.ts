@@ -243,6 +243,9 @@ export interface DataGridActionContext<T extends object> {
     clearFilter: () => void;
     clearFilters: () => void;
     filterActive: (set?: boolean) => boolean | undefined;
+    setTemporaryFilter: (operator: ColumnsFilterOperator, not: boolean, values: string[]) => void;
+    clearTemporaryFilter: () => void;
+    isTemporaryFilter: () => boolean;
     toggleHideColumn: () => void;
     isColumnHidden: () => boolean;
     toggleShowHiddenColumns: () => void;
