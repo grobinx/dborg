@@ -1405,7 +1405,9 @@ export const DataGrid = <T extends object>({
                                         >
                                             <StyledIconContainer
                                                 onClick={(event) => {
-                                                    filterColumns.filterActive(col.key, false)
+                                                    isTemporaryFilter ?
+                                                        filterColumns.clearTemporaryFilter() :
+                                                        filterColumns.filterActive(col.key, false);
                                                     event.stopPropagation();
                                                 }}
                                             >
