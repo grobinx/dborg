@@ -46,8 +46,8 @@ export function normalizeKeybinding(keybinding: string): string {
         windows: 'Meta',
         os: 'Meta',
         '⌘': 'Meta',
-        space: ' ',
-        ' ': ' ',
+        space: 'Space',
+        ' ': 'Space',
     };
 
     const normalizedParts = parts.map((part) => keyMap[part.toLowerCase()] || part);
@@ -83,7 +83,7 @@ export function splitKeybinding(keybinding: string): string[] {
 function keysEqual(a: string, b: string) {
     return (
         a.toLowerCase() === b.toLowerCase() ||
-        (a === ' ' && b.toLowerCase() === 'space') ||
+        (a === 'Space' && b.toLowerCase() === 'space') ||
         (a.toLowerCase() === 'space' && b === ' ')
     );
 }
@@ -124,7 +124,7 @@ export function keyboardEventToKeybinding(event: KeyboardEvent): string {
     if (event.altKey) modifiers.push('Alt');
     if (event.metaKey) modifiers.push('Meta');
 
-    // Zamień spację na 'Space' dla czytelności
+    // Spacja z event.key to ' ', normalizuj na 'Space'
     const mainKey = event.key === ' ' ? 'Space' : event.key;
 
     return [...modifiers, mainKey].join('+');
