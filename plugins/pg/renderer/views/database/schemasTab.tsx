@@ -70,8 +70,8 @@ left join pg_class c on c.relnamespace = n.oid and c.relkind in ('r', 'i', 't', 
 left join (
     select
         n.nspname as schema_name,
-        count(*) filter (where c.relkind = 'r') as tables_count,
-        count(*) filter (where c.relkind = 'v') as views_count,
+        count(*) filter (where c.relkind in ('r', 'p', 'f')) as tables_count,
+        count(*) filter (where c.relkind in ('v', 'm')) as views_count,
         count(*) filter (where c.relkind = 'S') as sequences_count
     from pg_namespace n
     left join pg_class c on c.relnamespace = n.oid
