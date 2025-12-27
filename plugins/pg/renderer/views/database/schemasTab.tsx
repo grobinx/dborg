@@ -49,6 +49,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     let selectedRow: SchemaRecord | null = null;
     let allRows: SchemaRecord[] = [];
     const loadingStatsRow: SchemaRecord[] = [];
+    let loadingStats: boolean = false;
 
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
@@ -212,10 +213,11 @@ order by
                             keybindings: ["Space"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 1,
-                            disabled: () => selectedRow === null,
+                            disabled: () => selectedRow === null || loadingStats,
                             run: async () => {
                                 if (selectedRow) {
                                     const row = selectedRow;
+                                    loadingStats = true;
                                     loadingStatsRow.push(row);
                                     refresh(cid("schemas-grid"), true);
                                     try {
@@ -227,6 +229,7 @@ order by
                                             loadingStatsRow.splice(index, 1);
                                         }
                                         refresh(cid("schemas-grid"), true);
+                                        loadingStats = false;
                                     }
                                 }
                             },
@@ -237,22 +240,29 @@ order by
                             keybindings: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 2,
+                            disabled: () => loadingStats,
                             run: async () => {
-                                for (const row of allRows) {
-                                    loadingStatsRow.push(row);
-                                    refresh(cid("schemas-grid"), true);
-                                    try {
-                                        const stats = await getSchemaStats(row.schema_name);
-                                        Object.assign(row, stats);
-                                    } finally {
-                                        const index = loadingStatsRow.indexOf(row);
-                                        if (index !== -1) {
-                                            loadingStatsRow.splice(index, 1);
-                                        }
+                                loadingStats = true;
+                                try {
+                                    for (const row of allRows) {
+                                        loadingStatsRow.push(row);
                                         refresh(cid("schemas-grid"), true);
+                                        try {
+                                            const stats = await getSchemaStats(row.schema_name);
+                                            Object.assign(row, stats);
+                                        } finally {
+                                            const index = loadingStatsRow.indexOf(row);
+                                            if (index !== -1) {
+                                                loadingStatsRow.splice(index, 1);
+                                            }
+                                            refresh(cid("schemas-grid"), true);
+                                        }
                                     }
                                 }
-                            },
+                                finally {
+                                    loadingStats = false;
+                                }
+                            }
                         }
                     ],
                     autoSaveId: `schemas-grid-${session.profile.sch_id}`,
