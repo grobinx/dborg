@@ -9,6 +9,7 @@ import TabPanelContent, { TabPanelContentProps } from "../TabsPanel/TabPanelCont
 import { DataGrid } from "../DataGrid/DataGrid";
 import Tooltip from "../Tooltip";
 import { ToolButton } from "../buttons/ToolButton";
+import { collapseWhitespaceExceptQuotes } from "../editor/editorUtils";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
@@ -19,7 +20,7 @@ export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
         { key: "qh_profile_name", label: t("profile", "Profile"), dataType: "string", width: 200 },
         {
             key: "qh_query", label: t("query", "Query"), dataType: "string", width: 300, formatter: (value) => {
-                return String(value).replace(/\s+/g, " ").trim();
+                return collapseWhitespaceExceptQuotes(value);
             }
         },
         { key: "qh_execution_time", label: t("execution-time", "Execution Time"), dataType: "duration", width: 130 },

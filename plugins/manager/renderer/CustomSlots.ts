@@ -575,7 +575,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Callback po zaznaczeniu wiersza (opcjonalnie).
      */
-    onRowSelect?: (row: any | undefined, refresh: RefreshSlotFunction) => void;
+    onRowSelect?: (row: any, refresh: RefreshSlotFunction) => void;
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */

@@ -8,6 +8,7 @@ import SparkMD5 from "spark-md5";
 import { QueryHistoryDeduplicateMode } from "@renderer/app.config";
 import { uuidv7 } from "uuidv7";
 import { QueryHistoryRecord } from "../../../api/entities";
+import { collapseWhitespaceExceptQuotes } from "@renderer/components/editor/editorUtils";
 
 export interface QueryEntry {
     query: string;
@@ -44,63 +45,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     // Oblicz hash zapytania dla deduplikacji (uwzględniając schemat)
     const hashQuery = useCallback((query: string, profileName: string): string => {
-        return SparkMD5.hash(compressQuery(query) + '::' + profileName);
-    }, []);
-
-    // Kompresja zapytania (usunięcie zbędnych spacji/nowych linii, zachowując stringi)
-    const compressQuery = useCallback((query: string): string => {
-        let result = '';
-        let inString: string | null = null; // Typ aktualnego stringa: ', ", ` lub null
-        let escaped = false;
-
-        for (let i = 0; i < query.length; i++) {
-            const char = query[i];
-
-            // Obsługa escape sequences
-            if (escaped) {
-                result += char;
-                escaped = false;
-                continue;
-            }
-
-            if (char === '\\' && inString) {
-                result += char;
-                escaped = true;
-                continue;
-            }
-
-            // Wejście/wyjście ze stringa
-            if ((char === '"' || char === "'" || char === '`') && !inString) {
-                inString = char;
-                result += char;
-                continue;
-            }
-
-            if (char === inString) {
-                inString = null;
-                result += char;
-                continue;
-            }
-
-            // Jeśli w stringu, zachowaj wszystko
-            if (inString) {
-                result += char;
-                continue;
-            }
-
-            // Poza stringiem: kompresuj białe znaki
-            if (/\s/.test(char)) {
-                // Zamień wielokrotne spacje/nowe linie na pojedynczą spację
-                if (result.length > 0 && !/\s$/.test(result)) {
-                    result += ' ';
-                }
-                continue;
-            }
-
-            result += char;
-        }
-
-        return result.trim();
+        return SparkMD5.hash(collapseWhitespaceExceptQuotes(query) + '::' + profileName);
     }, []);
 
     // Wczytaj historię z pliku (z rozpakkowaniem)
@@ -177,7 +122,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
             qh_created: DateTime.now().toSQL(),
             qh_updated: DateTime.now().toSQL(),
             qh_profile_name: entry.profileName,
-            qh_query: compressQueryText ? compressQuery(entry.query) : entry.query,
+            qh_query: compressQueryText ? collapseWhitespaceExceptQuotes(entry.query) : entry.query,
             qh_hash: hashQuery(entry.query, entry.profileName),
             qh_start_time: DateTime.fromMillis(entry.startTime ?? Date.now()).toISO()!,
             qh_execution_time: entry.executionTime ?? null,
@@ -252,7 +197,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             return updatedHistory;
         });
-    }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow, compressQuery, compressQueryText]);
+    }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow, compressQueryText]);
 
     const clearQueryHistory = useCallback(() => {
         setQueryHistory([]);

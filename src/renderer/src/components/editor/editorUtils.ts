@@ -39,13 +39,13 @@ export function changeCaseExceptQuotes(input: string, toUpper: boolean): string 
             continue;
         }
 
-        if ((char === '"' || char === "'") && prevChar !== "\\") {
+        if ((char === '`' || char === '"' || char === "'") && prevChar !== "\\") {
             if (insideQuotes && char === quoteChar) {
-                // Zamykamy cudzysłów/apostrof
+                // Zamykamy cudzysłów/apostrof/backtick
                 insideQuotes = false;
                 quoteChar = "";
             } else if (!insideQuotes) {
-                // Otwieramy cudzysłów/apostrof
+                // Otwieramy cudzysłów/apostrof/backtick
                 insideQuotes = true;
                 quoteChar = char;
             }
@@ -297,3 +297,84 @@ export const getNextNeighbor = (model: monaco.editor.ITextModel, position: monac
     const match = textAfterWord.match(/^(\w+)?\.\s*(\w+)/); // Szuka wzorca ".słowo"
     return match ? match[2] : null;
 };
+
+
+/**
+ * Usuwa nadmiarowe białe znaki poza ciągami znaków, pozostawiając pojedynczą spację.
+ * Wewnątrz '', "" i `` nie modyfikuje treści.
+ * Opcjonalnie zachowuje nowe linie (domyślnie: true).
+ */
+export function collapseWhitespaceExceptQuotes(
+    input: string,
+    options: { preserveNewlines?: boolean } = { preserveNewlines: true }
+): string {
+    const preserveNewlines = options.preserveNewlines !== false;
+    let result = "";
+    let insideQuotes = false;
+    let quoteChar = "";
+    let lastWasWhitespace = false;
+
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i];
+        const prevChar = i > 0 ? input[i - 1] : undefined;
+        const nextChar = i < input.length - 1 ? input[i + 1] : undefined;
+
+        // Obsługa ciągów znaków: ', ", `
+        if (char === "'" || char === '"' || char === "`") {
+            const escaped = prevChar === "\\";
+            if (!escaped) {
+                if (insideQuotes && char === quoteChar) {
+                    insideQuotes = false;
+                    quoteChar = "";
+                } else if (!insideQuotes) {
+                    insideQuotes = true;
+                    quoteChar = char;
+                }
+            }
+            result += char;
+            lastWasWhitespace = false;
+            continue;
+        }
+
+        if (insideQuotes) {
+            result += char;
+            continue;
+        }
+
+        // Poza ciągami: normalizuj białe znaki
+        const isCRLF = char === "\r" && nextChar === "\n";
+        const isNewline = char === "\n" || char === "\r";
+        const isSpaceLike = char === " " || char === "\t" || char === "\v" || char === "\f";
+
+        if (preserveNewlines && (isNewline || isCRLF)) {
+            // Usuń spację tuż przed nową linią
+            if (result.endsWith(" ")) {
+                result = result.slice(0, -1);
+            }
+            // Dodaj jedną nową linię (zachowaj CRLF jeśli występuje)
+            if (isCRLF) {
+                result += "\r\n";
+                i++; // pomiń '\n'
+            } else {
+                if (!result.endsWith("\n") && !result.endsWith("\r")) {
+                    result += char;
+                }
+            }
+            lastWasWhitespace = true;
+            continue;
+        }
+
+        if (isSpaceLike || (!preserveNewlines && isNewline)) {
+            if (!lastWasWhitespace) {
+                result += " ";
+                lastWasWhitespace = true;
+            }
+            continue;
+        }
+
+        result += char;
+        lastWasWhitespace = false;
+    }
+
+    return result;
+}
