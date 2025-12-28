@@ -3,7 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
-import { versionToNumber } from "src/api/version";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const publicationsTab = (
     session: IDatabaseSession,
