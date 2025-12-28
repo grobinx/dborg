@@ -1,7 +1,5 @@
-export function sequenceDdl(version: string): string {
-    const major = parseInt(String(version).split(".")[0], 10) || 0;
-
-    if (major >= 10) {
+export function sequenceDdl(version: number): string {
+    if (version >= 100000) {
         // PostgreSQL 10+ : use pg_sequence
         return `
 WITH obj AS (
@@ -55,7 +53,7 @@ WHERE sequence_schema = $1 AND sequence_name = $2;
 `;
 }
 
-export function sequenceOwnerDdl(_version: string): string {
+export function sequenceOwnerDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name, r.rolname AS owner
@@ -75,7 +73,7 @@ FROM obj o;
 `;
 }
 
-export function sequencePrivilegesDdl(_version: string): string {
+export function sequencePrivilegesDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
@@ -154,7 +152,7 @@ ORDER BY grantee;
 `;
 }
 
-export function sequenceCommentDdl(_version: string): string {
+export function sequenceCommentDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
@@ -174,9 +172,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 `;
 }
 
-export function sequenceOperationalDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function sequenceOperationalDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name

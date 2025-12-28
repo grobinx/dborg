@@ -7,6 +7,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { sequenceCommentDdl, sequenceDdl, sequenceOperationalDdl, sequenceOwnerDdl, sequencePrivilegesDdl } from "../../../common/ddls/sequence";
+import { versionToNumber } from "../../../../../src/api/version";
 
 export interface SequenceRecord {
     sequence_schema: string;
@@ -60,8 +61,7 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
     let selectedSchemaName: string | null = null;
     let selectedRow: SequenceRecord | null = null;
     let selectedRowDetails: SequenceDetailsRecord | null = null;
-    const ver = session.getVersion() ?? "";
-    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     const setSelectedSchemaName = async () => {
         const { rows } = await session.query<{ schema_name: string }>('select current_schema() as schema_name');
@@ -151,7 +151,7 @@ where c.relkind = 'S'
 order by sequence_schema, sequence_name;
 `;
 
-                                        const sql = major >= 10 ? sql10plus : sqlLegacy;
+                                        const sql = versionNumber >= 100000 ? sql10plus : sqlLegacy;
 
                                         const { rows } = await session.query<SequenceRecord>(sql, [selectedSchemaName]);
                                         return rows;
@@ -160,7 +160,7 @@ order by sequence_schema, sequence_name;
                                         { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
                                         { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
                                         { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
-                                        ...(major >= 10 ? [
+                                        ...(versionNumber >= 100000 ? [
                                             { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
                                             { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
                                             { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
@@ -200,23 +200,23 @@ order by sequence_schema, sequence_name;
                                     content: async () => {
                                         if (selectedRow) {
                                             let ddl = "";
-                                            const { rows } = await session.query(sequenceDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            const { rows } = await session.query(sequenceDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
                                             if (rows.length > 0) {
                                                 ddl += rows[0].source;
                                             }
-                                            const { rows: ownerRows } = await session.query(sequenceOwnerDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            const { rows: ownerRows } = await session.query(sequenceOwnerDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
                                             if (ownerRows.length > 0) {
                                                 ddl += "\n\n" + ownerRows[0].source;
                                             }
-                                            const { rows: privilegesRows } = await session.query(sequencePrivilegesDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            const { rows: privilegesRows } = await session.query(sequencePrivilegesDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
                                             if (privilegesRows.length > 0) {
                                                 ddl += "\n\n" + privilegesRows[0].source;
                                             }
-                                            const { rows: operationalRows } = await session.query(sequenceOperationalDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            const { rows: operationalRows } = await session.query(sequenceOperationalDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
                                             if (operationalRows.length > 0) {
                                                 ddl += "\n\n" + operationalRows[0].source;
                                             }
-                                            const { rows: commentRows } = await session.query(sequenceCommentDdl(session.getVersion()!), [selectedRow.sequence_schema, selectedRow.sequence_name]);
+                                            const { rows: commentRows } = await session.query(sequenceCommentDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
                                             if (commentRows.length > 0) {
                                                 ddl += "\n\n" + commentRows[0].source;
                                             }
@@ -241,7 +241,7 @@ order by sequence_schema, sequence_name;
 
                                         let sql: string;
 
-                                        if (major >= 10) {
+                                        if (versionNumber >= 100000) {
                                             sql = `
             with seq as (
                 select c.oid, n.nspname as sequence_schema, c.relname as sequence_name,

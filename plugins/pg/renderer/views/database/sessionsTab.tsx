@@ -3,11 +3,10 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import i18next from "i18next";
 import { IAutoRefresh, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
-import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { alpha, Theme } from "@mui/material";
 import { resolveColor } from "@renderer/utils/colors";
-import { red } from "@mui/material/colors";
 import { collapseWhitespaceExceptQuotes } from "@renderer/components/editor/editorUtils";
+import { versionToNumber } from "../../../../../src/api/version";
 
 interface SessionRecord {
     pid: number;
@@ -58,9 +57,7 @@ interface TransactionRecord {
 
 const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
-    const minor = parseInt((session.getVersion() ?? "0").split(".")[1], 0);
-    const versionNumber = major * 10000 + minor * 100;
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let selectedSession: SessionRecord | null = null;

@@ -3,7 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
-import { count } from "console";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const queryPlansTab = (
     session: IDatabaseSession,
@@ -13,9 +13,8 @@ const queryPlansTab = (
     const t = i18next.t.bind(i18next);
 
     // Check PostgreSQL version (13+ uses total_exec_time, older uses total_time)
-    const version = session.getVersion() || "";
-    const majorVersion = parseInt(version.split('.')[0]);
-    const useExecTime = majorVersion >= 13;
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+    const useExecTime = versionNumber >= 130000;
 
     let extensionInstalled: boolean | null = null;
     let extensionSchema: string | null = null;

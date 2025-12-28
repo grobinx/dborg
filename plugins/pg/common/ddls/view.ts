@@ -1,5 +1,4 @@
-export function viewDdl(version: string): string {
-  const major = parseInt(version.split(".")[0], 10);
+export function viewDdl(_version: number): string {
 
   return `
 WITH obj AS (
@@ -20,7 +19,7 @@ FROM obj o;
 `;
 }
 
-export function viewOwnerDdl(_version: string): string {
+export function viewOwnerDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name, r.rolname AS owner
@@ -40,7 +39,7 @@ FROM obj o;
 `;
 }
 
-export function viewPrivilegesDdl(_version: string): string {
+export function viewPrivilegesDdl(_version: number): string {
   // same logic as table privileges but applied to views
   return `
 WITH obj AS (
@@ -129,7 +128,7 @@ ORDER BY grantee;
 `;
 }
 
-export function viewCommentDdl(_version: string): string {
+export function viewCommentDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
@@ -149,7 +148,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 `;
 }
 
-export function viewColumnCommentsDdl(_version: string): string {
+export function viewColumnCommentsDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
@@ -171,9 +170,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 `;
 }
 
-export function viewTriggersDdl(version: string): string {
-  const major = parseInt(version.split(".")[0], 10);
-
+export function viewTriggersDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
@@ -189,7 +186,7 @@ WHERE t.tgrelid = o.oid AND NOT t.tgisinternal;
 `;
 }
 
-export function viewTriggerCommentsDdl(_version: string): string {
+export function viewTriggerCommentsDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
@@ -211,7 +208,7 @@ LEFT JOIN pg_description d ON d.objoid = t.oid AND d.classoid = 'pg_trigger'::re
 `;
 }
 
-export function viewRulesDdl(_version: string): string {
+export function viewRulesDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
@@ -227,7 +224,7 @@ WHERE r.ev_class = o.oid AND r.rulename <> '_RETURN';
 `;
 }
 
-export function viewRuleCommentsDdl(_version: string): string {
+export function viewRuleCommentsDdl(_version: number): string {
   return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name

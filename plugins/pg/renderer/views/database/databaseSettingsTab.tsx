@@ -2,6 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { versionToNumber } from "../../../../../src/api/version";
 
 interface SettingRecord {
     name: string;
@@ -24,9 +25,7 @@ const databaseSettingsTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
     
-    const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
-    const minor = parseInt((session.getVersion() ?? "0").split(".")[1], 10);
-    const versionNumber = major * 10000 + minor * 100;
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     return {
         id: cid("database-settings-tab"),

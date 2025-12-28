@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { versionToNumber } from "src/api/version";
 
 const publicationsTab = (
     session: IDatabaseSession,
@@ -10,6 +11,7 @@ const publicationsTab = (
     cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     return {
         id: cid("table-publications-tab"),
@@ -28,10 +30,7 @@ const publicationsTab = (
                 rows: async () => {
                     if (!selectedRow()) return [];
 
-                    const ver = session.getVersion() ?? "";
-                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
-
-                    if (major < 10) {
+                    if (versionNumber < 100000) {
                         return t("logical-replication-available-from-postgresql-10", "Logical replication available from PostgreSQL 10+");
                     }
 

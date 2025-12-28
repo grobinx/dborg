@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const rlsPoliciesTab = (
     session: IDatabaseSession,
@@ -10,7 +11,7 @@ const rlsPoliciesTab = (
     cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     return {
         id: cid("table-rls-policies-tab"),
@@ -28,7 +29,7 @@ const rlsPoliciesTab = (
                 type: "grid",
                 rows: async () => {
                     if (!selectedRow()) return [];
-                    const selectPermissive = major >= 15 ? "permissive," : "";
+                    const selectPermissive = versionNumber >= 150000 ? "permissive," : "";
                     const { rows } = await session.query(
                         `
 select
@@ -48,7 +49,7 @@ order by policyname;
                 },
                 columns: [
                     { key: "policyname", label: t("policy-name", "Policy Name"), dataType: "string", width: 220 },
-                    ...(major >= 15 ? [
+                    ...(versionNumber >= 150000 ? [
                         { key: "permissive", label: t("permissive", "Permissive"), dataType: "boolean", width: 110 }
                     ] : []),
                     { key: "command", label: t("command", "Command"), dataType: "string", width: 120 },

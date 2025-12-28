@@ -18,6 +18,7 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { ProfileRecord } from "src/api/entities";
 import TitleChart from "../Components/TitleChart";
 import React from "react";
+import { versionToNumber } from "../../../../../src/api/version";
 
 export interface ActivityRecord {
     snapshot: number;
@@ -84,11 +85,7 @@ const activityTab = (
         return isFinite(n) ? n : 0;
     };
 
-    // Wersja serwera jako liczba (major * 10000 + minor * 100)
-    const verParts = (session.getVersion() ?? "0").split('.');
-    const majorVer = parseInt(verParts[0] || '0', 10);
-    const minorVer = parseInt(verParts[1] || '0', 0);
-    const versionNumber = majorVer * 10000 + minorVer * 100;
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     // Lista wykresów do wyświetlenia
     const chartList = [
@@ -620,11 +617,6 @@ const activityTab = (
                     intervals: [5, 10, 15, 30, 60, 120],
                     defaultInterval: 10,
                 } as IAutoRefresh,
-                {
-                    getData: () => {
-                        return activityRows;
-                    }
-                } as ICopyData
             ]
         }
     };

@@ -4,6 +4,8 @@ import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { icons } from "@renderer/themes/ThemeWrapper";
+import { versionToNumber } from "../../../../../src/api/version";
+import { schemaCommentDdl, schemaCreateDdl, schemaPrivilegesDdl } from "../../../common/ddls/schema";
 
 export interface SchemaRecord {
     schema_name: string;
@@ -50,6 +52,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     let allRows: SchemaRecord[] = [];
     const loadingStatsRow: SchemaRecord[] = [];
     let loadingStats: boolean = false;
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
@@ -280,10 +283,7 @@ order by
 
                             // CREATE SCHEMA
                             const { rows: createRows } = await session.query<{ source: string }>(
-                                `select 'CREATE SCHEMA ' || quote_ident(nspname) || 
-                                                 ' AUTHORIZATION ' || quote_ident(pg_get_userbyid(nspowner)) || ';' as source
-                                                from pg_namespace
-                                                where nspname = $1;`,
+                                schemaCreateDdl(versionNumber),
                                 [selectedRow.schema_name]
                             );
                             if (createRows.length > 0) {
@@ -292,11 +292,7 @@ order by
 
                             // COMMENT
                             const { rows: commentRows } = await session.query<{ source: string }>(
-                                `select 'COMMENT ON SCHEMA ' || quote_ident(nspname) || ' IS ' || 
-                                                 quote_literal(description) || ';' as source
-                                                from pg_namespace n
-                                                join pg_description d on d.objoid = n.oid and d.classoid = 'pg_namespace'::regclass
-                                                where n.nspname = $1;`,
+                                schemaCommentDdl(versionNumber),
                                 [selectedRow.schema_name]
                             );
                             if (commentRows.length > 0) {
@@ -305,16 +301,7 @@ order by
 
                             // PRIVILEGES
                             const { rows: privRows } = await session.query<{ source: string }>(
-                                `select 'GRANT ' || privilege_type || ' ON SCHEMA ' || quote_ident($1) ||
-     ' TO ' || case 
-         when grantee = 0 then 'PUBLIC'
-         else quote_ident(pg_get_userbyid(grantee))
-     end ||
-     case when is_grantable then ' WITH GRANT OPTION' else '' end || ';' as source
-    from pg_namespace n
-    cross join aclexplode(n.nspacl)
-    where n.nspname = $1
-     and grantee != n.nspowner;`,
+                                schemaPrivilegesDdl(versionNumber),
                                 [selectedRow.schema_name]
                             );
                             if (privRows.length > 0) {

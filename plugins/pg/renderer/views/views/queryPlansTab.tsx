@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ViewRecord } from "./viewsView";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const queryPlansTab = (
     session: IDatabaseSession,
@@ -11,9 +12,8 @@ const queryPlansTab = (
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
 
-    const version = session.getVersion() || "";
-    const majorVersion = parseInt(version.split(".")[0] || "0", 10);
-    const useExecTime = majorVersion >= 13;
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+    const useExecTime = versionNumber >= 130000;
 
     let extensionInstalled: boolean | null = null;
     let extensionSchema: string | null = null;

@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const sequencesTab = (
     session: IDatabaseSession,
@@ -10,6 +11,7 @@ const sequencesTab = (
     cid: (id: string) => string,
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     return {
         id: cid("table-sequences-tab"),
@@ -28,9 +30,6 @@ const sequencesTab = (
                 pivot: true,
                 rows: async () => {
                     if (!selectedRow()) return [];
-
-                    const ver = session.getVersion() ?? "";
-                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
 
                     const sql10plus = `
 with obj as (
@@ -154,7 +153,7 @@ from seqs
 order by column_name, sequence_schema, sequence_name;
 `;
 
-                    const sql = major >= 10 ? sql10plus : sqlLegacy;
+                    const sql = versionNumber >= 100000 ? sql10plus : sqlLegacy;
                     const { rows } = await session.query(sql, [selectedRow()!.schema_name, selectedRow()!.table_name]);
                     return rows;
                 },

@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const partitionsTab = (
     session: IDatabaseSession,
@@ -10,6 +11,7 @@ const partitionsTab = (
     cid: (id: string) => string,
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     return {
         id: cid("table-partitions-tab"),
@@ -27,9 +29,6 @@ const partitionsTab = (
                 type: "grid",
                 rows: async () => {
                     if (!selectedRow()) return [];
-
-                    const ver = session.getVersion() ?? "";
-                    const major = parseInt(String(ver).match(/\d+/)?.[0] ?? "0", 10);
 
                     const sqlPg10Plus = `
 with obj as (
@@ -159,7 +158,7 @@ from (
 order by ord, related_schema nulls first, related_table nulls first;
 `;
 
-                    const { rows } = await session.query(major >= 10 ? sqlPg10Plus : sqlLegacy, [
+                    const { rows } = await session.query(versionNumber >= 100000 ? sqlPg10Plus : sqlLegacy, [
                         selectedRow()!.schema_name,
                         selectedRow()!.table_name,
                     ]);

@@ -1,27 +1,26 @@
-export function tableDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
+export function tableDdl(version: number): string {
 
     // IF [NOT] EXISTS support: CREATE TABLE IF NOT EXISTS - PG 9.1+, DROP TABLE IF EXISTS - PG 8.2+
     const dropIfExists = 'IF EXISTS ';
-    const createIfNotExists = major >= 9 ? 'IF NOT EXISTS ' : '';
+    const createIfNotExists = version >= 90000 ? 'IF NOT EXISTS ' : '';
 
-    const identityFragment = major >= 10
+    const identityFragment = version >= 100000
         ? `WHEN att.attidentity IN ('a','d')
               THEN format(' GENERATED %s AS IDENTITY',
                           CASE att.attidentity WHEN 'a' THEN 'ALWAYS' ELSE 'BY DEFAULT' END)`
         : "";
 
-    const generatedFragment = major >= 12
+    const generatedFragment = version >= 120000
         ? `WHEN att.attgenerated = 's'
               THEN format(' GENERATED ALWAYS AS (%s) STORED', pg_get_expr(ad.adbin, ad.adrelid))`
         : "";
 
-    const partitionFragment = major >= 10
+    const partitionFragment = version >= 100000
         ? `(SELECT CASE WHEN c.relkind = 'p' THEN E'\\nPARTITION BY ' || pg_get_partkeydef(o.oid) ELSE '' END FROM pg_class c WHERE c.oid = o.oid)`
         : "''";
 
     // Operational commands based on version
-    const operationalCommands = major >= 12
+    const operationalCommands = version >= 120000
         ? `E'-- Operational commands:\\n' ||
            '-- REINDEX TABLE CONCURRENTLY ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- VACUUM (FULL, ANALYZE, VERBOSE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
@@ -29,15 +28,15 @@ export function tableDdl(version: string): string {
            '-- ANALYZE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- CLUSTER ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- TRUNCATE TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E' RESTART IDENTITY CASCADE;\\n\\n' ||`
-        : major >= 9
-        ? `E'-- Operational commands:\\n' ||
+        : version >= 90000
+            ? `E'-- Operational commands:\\n' ||
            '-- REINDEX TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- VACUUM (FULL, ANALYZE, VERBOSE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- VACUUM (ANALYZE) ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- ANALYZE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- CLUSTER ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E';\\n' ||
            '-- TRUNCATE TABLE ' || quote_ident(o.schema_name) || '.' || quote_ident(o.table_name) || E' RESTART IDENTITY CASCADE;\\n\\n' ||`
-        : `''`;
+            : `''`;
 
     return `
 WITH obj AS (
@@ -171,9 +170,7 @@ FROM obj o;
 `;
 }
 
-export function tableOwnerDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableOwnerDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name, r.rolname AS owner
@@ -193,9 +190,7 @@ FROM obj o;
 `;
 }
 
-export function tableIndexesDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableIndexesDdl(version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -209,7 +204,7 @@ SELECT
         CASE WHEN i.indisunique OR i.indisprimary THEN 'CONCURRENTLY' ELSE '' END,
         n.nspname,
         idx.relname,
-        CASE WHEN ${major} >= 12 THEN 'CONCURRENTLY ' ELSE '' END,
+        ${version >= 120000 ? "'CONCURRENTLY '" : "''"},
         n.nspname,
         idx.relname,
         pg_get_indexdef(i.indexrelid)||';'
@@ -222,9 +217,7 @@ WHERE i.indrelid = o.oid;
 `;
 }
 
-export function tableCommentDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableCommentDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -244,9 +237,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 `;
 }
 
-export function tableColumnCommentsDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableColumnCommentsDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -268,9 +259,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 `;
 }
 
-export function tableTriggersDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableTriggersDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -286,9 +275,7 @@ WHERE t.tgrelid = o.oid AND NOT t.tgisinternal;
 `;
 }
 
-export function tableIndexCommentsDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableIndexCommentsDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -311,9 +298,7 @@ LEFT JOIN pg_description d ON d.objoid = idx.oid AND d.classoid = 'pg_class'::re
 `;
 }
 
-export function tableTriggerCommentsDdl(version: string): string {
-    const major = parseInt(version.split(".")[0], 10);
-
+export function tableTriggerCommentsDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -335,8 +320,8 @@ LEFT JOIN pg_description d ON d.objoid = t.oid AND d.classoid = 'pg_trigger'::re
 `;
 }
 
-export function tableRulesDdl(_version: string): string {
-  return `
+export function tableRulesDdl(_version: number): string {
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
     FROM pg_class c
@@ -352,8 +337,8 @@ ORDER BY r.rulename;
 `;
 }
 
-export function tableRuleCommentsDdl(_version: string): string {
-  return `
+export function tableRuleCommentsDdl(_version: number): string {
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
     FROM pg_class c
@@ -375,7 +360,7 @@ ORDER BY r.rulename;
 `;
 }
 
-export function tablePrivilegesDdl(_version: string): string {
+export function tablePrivilegesDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
@@ -463,7 +448,7 @@ ORDER BY grantee;
 `;
 }
 
-export function tableColumnPrivilegesDdl(_version: string): string {
+export function tableColumnPrivilegesDdl(_version: number): string {
     return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name

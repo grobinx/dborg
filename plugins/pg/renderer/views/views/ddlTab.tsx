@@ -8,6 +8,7 @@ import {
     viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl, 
     viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl 
 } from "../../../common/ddls/view";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const ddlTab = (
     session: IDatabaseSession,
@@ -15,6 +16,7 @@ const ddlTab = (
     cid: (id: string) => string,
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
 
     return {
         id: cid("view-ddl-tab"),
@@ -69,39 +71,39 @@ const ddlTab = (
                         }
                     } else {
                         let ddl = "";
-                        const { rows } = await session.query(viewDdl(session.getVersion()!), [schema, viewName]);
+                        const { rows } = await session.query(viewDdl(versionNumber), [schema, viewName]);
                         if (rows.length > 0) {
                             ddl += rows[0].source;
                         }
-                        const { rows: ownerRows } = await session.query(viewOwnerDdl(session.getVersion()!), [schema, viewName]);
+                        const { rows: ownerRows } = await session.query(viewOwnerDdl(versionNumber), [schema, viewName]);
                         if (ownerRows.length > 0) {
                             ddl += "\n\n" + ownerRows[0].source;
                         }
-                        const { rows: privRows } = await session.query(viewPrivilegesDdl(session.getVersion()!), [schema, viewName]);
+                        const { rows: privRows } = await session.query(viewPrivilegesDdl(versionNumber), [schema, viewName]);
                         if (privRows.length > 0) {
                             ddl += "\n\n" + privRows.map((r: any) => r.source).join("\n");
                         }
-                        const { rows: commentRows } = await session.query(viewCommentDdl(session.getVersion()!), [schema, viewName]);
+                        const { rows: commentRows } = await session.query(viewCommentDdl(versionNumber), [schema, viewName]);
                         if (commentRows.length > 0) {
                             ddl += "\n\n" + commentRows[0].source;
                         }
-                        const { rows: colComments } = await session.query(viewColumnCommentsDdl(session.getVersion()!), [schema, viewName]);
+                        const { rows: colComments } = await session.query(viewColumnCommentsDdl(versionNumber), [schema, viewName]);
                         if (colComments.length > 0) {
                             ddl += "\n\n" + colComments.map((r: any) => r.source).join("\n");
                         }
-                        const { rows: triggerRows } = await session.query(viewTriggersDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: triggerRows } = await session.query(viewTriggersDdl(versionNumber), [row.schema_name, row.table_name]);
                         if (triggerRows.length > 0) {
                             ddl += "\n\n" + triggerRows.map(r => r.source).join("\n");
                         }
-                        const { rows: triggerCommentRows } = await session.query(viewTriggerCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: triggerCommentRows } = await session.query(viewTriggerCommentsDdl(versionNumber), [row.schema_name, row.table_name]);
                         if (triggerCommentRows.length > 0) {
                             ddl += "\n\n" + triggerCommentRows.map(r => r.source).join("\n");
                         }
-                        const { rows: ruleRows } = await session.query(viewRulesDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: ruleRows } = await session.query(viewRulesDdl(versionNumber), [row.schema_name, row.table_name]);
                         if (ruleRows.length > 0) {
                             ddl += "\n\n" + ruleRows.map(r => r.source).join("\n");
                         }
-                        const { rows: ruleCommentRows } = await session.query(viewRuleCommentsDdl(session.getVersion()!), [row.schema_name, row.table_name]);
+                        const { rows: ruleCommentRows } = await session.query(viewRuleCommentsDdl(versionNumber), [row.schema_name, row.table_name]);
                         if (ruleCommentRows.length > 0) {
                             ddl += "\n\n" + ruleCommentRows.map(r => r.source).join("\n");
                         }

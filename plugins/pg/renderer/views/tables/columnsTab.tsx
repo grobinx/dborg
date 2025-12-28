@@ -5,6 +5,7 @@ import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { Action, Actions } from "@renderer/components/CommandPalette/ActionManager";
+import { versionToNumber } from "../../../../../src/api/version";
 
 export interface TableColumnRecord {
     no: number;
@@ -70,7 +71,7 @@ const columnsTab = (
     cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const major = parseInt((session.getVersion() ?? "0").split(".")[0], 10);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let selected: TableColumnRecord | null = null;
     let columnDetails: ColumnDetailRecord | null = null;
@@ -182,7 +183,7 @@ const columnsTab = (
                             rows: async () => {
                                 if (!selected || !selectedTable()) return [];
 
-                                const { rows } = await session.query<ColumnDetailRecord>(columnDetailQuery(session.getVersion()), [
+                                const { rows } = await session.query<ColumnDetailRecord>(columnDetailQuery(versionNumber), [
                                     selectedTable()!.schema_name,
                                     selectedTable()!.table_name,
                                     selected!.name,
@@ -209,7 +210,7 @@ const columnsTab = (
                                 { key: "collation_schema", label: t("collation-schema", "Collation Schema"), width: 120, dataType: "string" },
                                 { key: "collation_name", label: t("collation-name", "Collation Name"), width: 120, dataType: "string" },
                                 { key: "is_custom_collation", label: t("is-custom-collation", "Is Custom Collation"), width: 120, dataType: "boolean" },
-                                ...(major >= 10 ? [
+                                ...(versionNumber >= 100000 ? [
                                     { key: "identity_generation", label: t("identity-generation", "Identity Generation"), width: 120, dataType: "string" },
                                     { key: "identity_start", label: t("identity-start", "Identity Start"), width: 120, dataType: "string" },
                                     { key: "identity_increment", label: t("identity-increment", "Identity Increment"), width: 120, dataType: "string" },
@@ -217,18 +218,18 @@ const columnsTab = (
                                     { key: "identity_minimum", label: t("identity-minimum", "Identity Minimum"), width: 120, dataType: "string" },
                                     { key: "identity_cycle", label: t("identity-cycle", "Identity Cycle"), width: 120, dataType: "boolean" },
                                 ] : []),
-                                ...(major >= 12 ? [
+                                ...(versionNumber >= 120000 ? [
                                     { key: "generated_expr", label: t("generated-expr", "Generated Expression"), width: 200, dataType: "string" },
                                 ] : []),
                                 { key: "storage", label: t("storage", "Storage"), width: 100, dataType: "string" },
-                                ...(major >= 14 ? [
+                                ...(versionNumber >= 140000 ? [
                                     { key: "compression", label: t("compression", "Compression"), width: 100, dataType: "string" },
                                 ] : []),
                                 { key: "statistics_target", label: t("statistics-target", "Statistics Target"), width: 120, dataType: "number" },
                                 { key: "pk_constraint_name", label: t("pk-constraint-name", "PK Constraint Name"), width: 160, dataType: "string" },
                                 { key: "pk_position", label: t("pk-position", "PK Position"), width: 80, dataType: "number" },
                                 { key: "is_inherited", label: t("is-inherited", "Is Inherited"), width: 100, dataType: "boolean" },
-                                ...(major >= 10 ? [
+                                ...(versionNumber >= 100000 ? [
                                     { key: "is_partition_key", label: t("is-partition-key", "Is Partition Key"), width: 120, dataType: "boolean" },
                                 ] : []),
                             ] as ColumnDefinition[],
@@ -373,7 +374,7 @@ const columnsTab = (
                                                 },
                                                 selected: () => scriptAlterMode === "statistics",
                                             },
-                                            ...(major >= 10 ? {
+                                            ...(versionNumber >= 100000 ? {
                                                 cmIdentity: {
                                                     id: cid("table-columns-column-editor-alter-identity"),
                                                     icon: "Sequence",
@@ -387,7 +388,7 @@ const columnsTab = (
                                                     selected: () => scriptAlterMode === "identity",
                                                 }
                                             } : {}),
-                                            ...(major >= 14 ? {
+                                            ...(versionNumber >= 140000 ? {
                                                 cmCompression: {
                                                     id: cid("table-columns-column-editor-alter-compression"),
                                                     icon: "Compress",
@@ -418,15 +419,14 @@ const columnsTab = (
                                 if (!selected) {
                                     return "-- " + t("no-column-selected", "No column selected.");
                                 }
-                                const version = session.getVersion();
                                 if (scriptMode === "add" && columnDetails) {
-                                    return columnAddDdl(version, selectedTable()!, selected, columnDetails);
+                                    return columnAddDdl(versionNumber, selectedTable()!, selected, columnDetails);
                                 } else if (scriptMode === "drop" && columnDetails) {
-                                    return columnDropDdl(version, selectedTable()!, selected);
+                                    return columnDropDdl(versionNumber, selectedTable()!, selected);
                                 } else if (scriptMode === "comment" && columnDetails) {
-                                    return columnCommentDdl(version, selectedTable()!, selected, scriptNegationMode);
+                                    return columnCommentDdl(versionNumber, selectedTable()!, selected, scriptNegationMode);
                                 } else if (scriptMode === "alter" && columnDetails) {
-                                    return columnAlterDdl(version, selectedTable()!, selected, columnDetails, scriptAlterMode, scriptNegationMode);
+                                    return columnAlterDdl(versionNumber, selectedTable()!, selected, columnDetails, scriptAlterMode, scriptNegationMode);
                                 }
 
                                 return "";
@@ -440,9 +440,7 @@ const columnsTab = (
     };
 };
 
-const columnAddDdl = (version: string | undefined, table: TableRecord, column: TableColumnRecord, details: ColumnDetailRecord): string => {
-    const major = parseInt((version ?? "0").split(".")[0], 10);
-
+const columnAddDdl = (version: number, table: TableRecord, column: TableColumnRecord, details: ColumnDetailRecord): string => {
     let ddl = `ALTER TABLE ${table.schema_name}.${table.table_name} ADD COLUMN ${column.name} ${column.display_type}`;
 
     if (column.not_null) {
@@ -451,7 +449,7 @@ const columnAddDdl = (version: string | undefined, table: TableRecord, column: T
     if (column.default_value) {
         ddl += ` DEFAULT ${column.default_value}`;
     }
-    if (major >= 10 && details.identity_generation) {
+    if (version >= 100000 && details.identity_generation) {
         ddl += ` GENERATED ${details.identity_generation} AS IDENTITY`;
     }
     if (details.generated_expr) {
@@ -460,26 +458,25 @@ const columnAddDdl = (version: string | undefined, table: TableRecord, column: T
     return ddl + ";";
 };
 
-const columnDropDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord): string => {
+const columnDropDdl = (_version: number, table: TableRecord, column: TableColumnRecord): string => {
     let ddl = `ALTER TABLE ${table.schema_name}.${table.table_name} DROP COLUMN ${column.name}`;
     return ddl + ";";
 };
 
-const columnCommentDdl = (_version: string | undefined, table: TableRecord, column: TableColumnRecord, negation: boolean): string => {
+const columnCommentDdl = (_version: number, table: TableRecord, column: TableColumnRecord, negation: boolean): string => {
     let ddl = `COMMENT ON COLUMN ${table.schema_name}.${table.table_name}.${column.name} IS `;
     ddl += negation ? "NULL" : `'${column.description?.replace(/'/g, "''") ?? ''}'`;
     return ddl + ";";
 };
 
 const columnAlterDdl = (
-    version: string | undefined,
+    version: number,
     table: TableRecord,
     column: TableColumnRecord,
     details: ColumnDetailRecord,
     mode: ScriptAlterMode,
     negation: boolean
 ): string => {
-    const major = parseInt((version ?? "0").split(".")[0], 10);
     const qname = `${table.schema_name}.${table.table_name}`;
     const col = column.name;
     const base = `ALTER TABLE ${qname} ALTER COLUMN ${col} `;
@@ -570,7 +567,7 @@ const columnAlterDdl = (
         }
 
         case "identity": {
-            if (major < 10) return `-- Identity columns are not supported before PostgreSQL 10`;
+            if (version < 100000) return `-- Identity columns are not supported before PostgreSQL 10`;
             // Jeśli negacja → usuń tożsamość, inaczej ustaw/utwórz zgodnie z details.identity_generation
             if (negation) {
                 return `${base}DROP IDENTITY;`;
@@ -584,7 +581,7 @@ const columnAlterDdl = (
         }
 
         case "compression": {
-            if (major < 14) return `-- Column compression is not supported before PostgreSQL 14`;
+            if (version < 140000) return `-- Column compression is not supported before PostgreSQL 14`;
             // Mapowanie wartości z details.compression (PG zwraca zwykle 'p' lub 'l')
             const current =
                 details.compression === 'l' || details.compression?.toLowerCase() === 'lz4'
@@ -606,15 +603,13 @@ const columnAlterDdl = (
     }
 };
 
-const columnDetailQuery = (version: string | undefined) => {
-    const major = parseInt((version ?? "0").split(".")[0], 10);
-
+const columnDetailQuery = (version: number) => {
     // PG 10+: att.attidentity, pg_sequence
-    const hasIdentity = major >= 10;
+    const hasIdentity = version >= 100000;
     // PG 12+: att.attgenerated
-    const hasGenerated = major >= 12;
+    const hasGenerated = version >= 120000;
     // PG 14+: att.attcompression
-    const hasCompression = major >= 14;
+    const hasCompression = version >= 140000;
 
     const identitySelect = hasIdentity
         ? `att.attidentity,`
@@ -646,7 +641,7 @@ const columnDetailQuery = (version: string | undefined) => {
     null::text as identity_minimum,
     null::boolean as identity_cycle`;
 
-    const partitionInfoSelect = major >= 10
+    const partitionInfoSelect = version >= 100000
         ? `exists(select 1 from pg_partitioned_table pt where pt.partrelid = pk.attrelid and pk.attnum = any(pt.partattrs)) as is_partition_key`
         : `false as is_partition_key`;
 
