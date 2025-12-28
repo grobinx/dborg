@@ -4,9 +4,9 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { ViewRecord } from "./viewsView";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import { 
-    viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl, 
-    viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl 
+import {
+    viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl,
+    viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl
 } from "../../../common/ddls/view";
 import { versionToNumber } from "../../../../../src/api/version";
 
@@ -70,44 +70,17 @@ const ddlTab = (
                             );
                         }
                     } else {
-                        let ddl = "";
-                        const { rows } = await session.query(viewDdl(versionNumber), [schema, viewName]);
-                        if (rows.length > 0) {
-                            ddl += rows[0].source;
-                        }
-                        const { rows: ownerRows } = await session.query(viewOwnerDdl(versionNumber), [schema, viewName]);
-                        if (ownerRows.length > 0) {
-                            ddl += "\n\n" + ownerRows[0].source;
-                        }
-                        const { rows: privRows } = await session.query(viewPrivilegesDdl(versionNumber), [schema, viewName]);
-                        if (privRows.length > 0) {
-                            ddl += "\n\n" + privRows.map((r: any) => r.source).join("\n");
-                        }
-                        const { rows: commentRows } = await session.query(viewCommentDdl(versionNumber), [schema, viewName]);
-                        if (commentRows.length > 0) {
-                            ddl += "\n\n" + commentRows[0].source;
-                        }
-                        const { rows: colComments } = await session.query(viewColumnCommentsDdl(versionNumber), [schema, viewName]);
-                        if (colComments.length > 0) {
-                            ddl += "\n\n" + colComments.map((r: any) => r.source).join("\n");
-                        }
-                        const { rows: triggerRows } = await session.query(viewTriggersDdl(versionNumber), [row.schema_name, row.table_name]);
-                        if (triggerRows.length > 0) {
-                            ddl += "\n\n" + triggerRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: triggerCommentRows } = await session.query(viewTriggerCommentsDdl(versionNumber), [row.schema_name, row.table_name]);
-                        if (triggerCommentRows.length > 0) {
-                            ddl += "\n\n" + triggerCommentRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: ruleRows } = await session.query(viewRulesDdl(versionNumber), [row.schema_name, row.table_name]);
-                        if (ruleRows.length > 0) {
-                            ddl += "\n\n" + ruleRows.map(r => r.source).join("\n");
-                        }
-                        const { rows: ruleCommentRows } = await session.query(viewRuleCommentsDdl(versionNumber), [row.schema_name, row.table_name]);
-                        if (ruleCommentRows.length > 0) {
-                            ddl += "\n\n" + ruleCommentRows.map(r => r.source).join("\n");
-                        }
-                        return ddl;
+                        return [
+                            await session.query<{ source: string }>(viewDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewOwnerDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewPrivilegesDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewCommentDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewColumnCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewTriggersDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewTriggerCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewRulesDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(viewRuleCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
                     }
                 },
             } as IEditorSlot),

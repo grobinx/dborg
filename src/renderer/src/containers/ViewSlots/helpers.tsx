@@ -23,6 +23,7 @@ import {
     ToolBarSlotKindFactory,
     ITabSlot,
     resolveBooleanFactory,
+    isSearchField,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -40,7 +41,7 @@ import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import EditorSlot from "./EditorSlot";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
-import { ToolNumberField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
+import { ToolNumberField, ToolSearchField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
 import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 import ToolBarSlot from "./ToolBarSlot";
@@ -277,7 +278,15 @@ export function createActionComponents(
                     );
                 }
 
-                if (isTextField(action)) {
+                if (isSearchField(action)) {
+                    return (
+                        <ToolSearchField
+                            key={index}
+                            action={action}
+                            refreshSlot={refreshSlot}
+                        />
+                    );
+                } else if (isTextField(action)) {
                     return (
                         <ToolTextField
                             key={index}

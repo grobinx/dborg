@@ -71,7 +71,7 @@ export interface ISelectOption {
     description?: string,
 }
 
-export type IFieldType = "text" | "number" | "select";
+export type IFieldType = "search" | "text" | "number" | "select";
 
 export interface IField {
     type: IFieldType;
@@ -118,6 +118,22 @@ export interface ITextField extends IField {
     maxLength?: number;
 }
 
+export interface ISearchField extends IField {
+    type: "search";
+    /**
+     * Domyśla wartość pola tekstowego.
+     */
+    defaultValue?: string,
+    /**
+     * Funkcja wywoływana po zmianie wartości pola tekstowego.
+     * Wywołanie jest z opóźnieniem
+     */
+    onChange: (value: string) => void,
+
+    minLength?: number;
+    maxLength?: number;
+}
+
 export interface INumberField extends IField {
     type: "number";
     /**
@@ -144,7 +160,8 @@ export interface ISelectField extends IField {
 export type FieldTypeKind =
     ITextField
     | INumberField
-    | ISelectField;
+    | ISelectField
+    | ISearchField;
 
 export interface IAutoRefreshContext {
     state: AutoRefreshState;
@@ -604,6 +621,10 @@ export interface IGridSlot extends ICustomSlot {
      * @default "small"
      */
     overlayMode?: LoadingOverlayMode;
+    /**
+     * Tekst wyszukiwania w siatce (opcjonalnie).
+     */
+    searchText?: StringFactory;
 }
 
 export interface IEditorContext {
@@ -790,6 +811,9 @@ export function isNumberField(a: any): a is INumberField {
 }
 export function isSelectField(a: any): a is ISelectField {
     return isIField(a) && a.type === "select";
+}
+export function isSearchField(a: any): a is ISearchField {
+    return isIField(a) && a.type === "search";
 }
 export function isAutoRefresh(obj: any): obj is IAutoRefresh {
     return (

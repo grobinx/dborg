@@ -120,6 +120,11 @@ interface DataGridProps<T extends object> {
      * Extra unique ID for the DataGrid to save column layout, eg for connection schema
      */
     autoSaveId?: string;
+
+    /**
+     * Tekst do wyszukania w tabeli
+     */
+    searchText?: string;
 }
 
 const StyledTable = styled('div', {
@@ -474,6 +479,7 @@ export const DataGrid = <T extends object>({
     ref,
     autoSaveId,
     getRowStyle,
+    searchText: outerSearchText,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -645,6 +651,10 @@ export const DataGrid = <T extends object>({
         }
     }, [columns]);
 
+    React.useEffect(() => {
+        searchState.setSearchText(outerSearchText ?? null);
+    }, [outerSearchText]);
+
     const displayData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet: T[] = [...(data || [])];
@@ -706,7 +716,7 @@ export const DataGrid = <T extends object>({
         return resultSet;
     }, [
         data,
-        searchState.current,
+        searchState.current, searchState.current?.text,
         columnsState.stateChanged,
         groupingColumns.columns,
         filterColumns.activeFilters,

@@ -1,9 +1,11 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ISearchField, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
+import React from "react";
+import { SearchData_ID } from "@renderer/components/DataGrid/actions";
 
 interface RelationSizeRecord {
     schema_name: string;
@@ -136,8 +138,9 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
         toolBar: {
             id: cid("database-table-sizes-tab-toolbar"),
             type: "toolbar",
-            tools: [
-                SelectSchemaAction_ID
+            tools: () => [
+                SelectSchemaAction_ID,
+                SearchData_ID,
             ],
             actionSlotId: cid("database-table-sizes-grid"),
         },

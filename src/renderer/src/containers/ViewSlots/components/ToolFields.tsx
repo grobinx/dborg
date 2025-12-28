@@ -3,10 +3,11 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { 
-    INumberField, ISelectField, ITextField, 
+    INumberField, ISearchField, ISelectField, ITextField, 
     resolveBooleanFactory, resolveSelectOptionsFactory 
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
+import { SearchField } from "@renderer/components/inputs/SearchField";
 
 export const ToolSelectedField: React.FC<{ action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
     const {
@@ -44,6 +45,32 @@ export const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: str
     return (
         <InputDecorator indicator={false} disableBlink>
             <TextField
+                placeholder={action.placeholder}
+                value={value}
+                onChange={setValue}
+                onChanged={action.onChange}
+                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                size="small"
+                width={action.width}
+                minLength={action.minLength}
+                maxLength={action.maxLength}
+                tooltip={action.tooltip}
+            />
+        </InputDecorator>
+    );
+};
+
+export const ToolSearchField: React.FC<{ action: ISearchField, refreshSlot: (id: string) => void }> = (props) => {
+    const {
+        action,
+        refreshSlot,
+    } = props;
+
+    const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
+
+    return (
+        <InputDecorator indicator={false} disableBlink>
+            <SearchField
                 placeholder={action.placeholder}
                 value={value}
                 onChange={setValue}

@@ -60,6 +60,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const theme = useTheme();
     const { t } = useTranslation();
     const [searchDelay] = useSetting<number>("app", "search.delay");
+    const openRef = useRef(open);
 
     // ========== REFS ==========
     const containerRef = useRef<HTMLDivElement>(null);
@@ -151,6 +152,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     // ========== EFFECTS ==========
 
     useEffect(() => {
+        openRef.current = open;
+    }, [open])
+
+    useEffect(() => {
         if (!open || !manager || !prefix) return;
 
         // Znajdź grupę po nowym prefixie
@@ -201,7 +206,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     // Effect 1: Open/Close
     useEffect(() => {
-        if (!open) {
+        if (!open && openRef.current) {
             handleClose();
             return;
         }

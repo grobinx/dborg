@@ -198,32 +198,14 @@ order by sequence_schema, sequence_name;
                                     readOnly: true,
                                     miniMap: false,
                                     content: async () => {
-                                        if (selectedRow) {
-                                            let ddl = "";
-                                            const { rows } = await session.query(sequenceDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                            if (rows.length > 0) {
-                                                ddl += rows[0].source;
-                                            }
-                                            const { rows: ownerRows } = await session.query(sequenceOwnerDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                            if (ownerRows.length > 0) {
-                                                ddl += "\n\n" + ownerRows[0].source;
-                                            }
-                                            const { rows: privilegesRows } = await session.query(sequencePrivilegesDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                            if (privilegesRows.length > 0) {
-                                                ddl += "\n\n" + privilegesRows[0].source;
-                                            }
-                                            const { rows: operationalRows } = await session.query(sequenceOperationalDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                            if (operationalRows.length > 0) {
-                                                ddl += "\n\n" + operationalRows[0].source;
-                                            }
-                                            const { rows: commentRows } = await session.query(sequenceCommentDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]);
-                                            if (commentRows.length > 0) {
-                                                ddl += "\n\n" + commentRows[0].source;
-                                            }
-                                            return ddl;
-                                        } else {
-                                            return "-- No sequence selected";
-                                        }
+                                        if (!selectedRow) return "-- No sequence selected";
+                                        return [
+                                            await session.query<{ source: string }>(sequenceDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                                            await session.query<{ source: string }>(sequenceOwnerDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                                            await session.query<{ source: string }>(sequencePrivilegesDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                                            await session.query<{ source: string }>(sequenceOperationalDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                                            await session.query<{ source: string }>(sequenceCommentDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
                                     },
                                 },
                             },

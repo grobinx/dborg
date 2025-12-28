@@ -231,6 +231,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
                     onCancelLoading={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
                     overlayMode={slot.overlayMode ?? "small"}
+                    searchText={resolveStringFactory(slot.searchText, refreshSlot)}
                 />
                 )}
             </Box>

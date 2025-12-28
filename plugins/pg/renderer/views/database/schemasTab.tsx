@@ -181,10 +181,7 @@ select
 from pg_namespace n
 left join pg_description d on d.objoid = n.oid and d.classoid = 'pg_namespace'::regclass
 where n.nspname not like 'pg_toast%'
-  and n.nspname not like 'pg_temp%'
-order by 
-    is_system,
-    schema_name;
+  and n.nspname not like 'pg_temp%';
 `;
 
                         const { rows } = await session.query<SchemaRecord>(sql);
@@ -192,7 +189,7 @@ order by
                         return rows;
                     },
                     columns: [
-                        { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220 },
+                        { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 1 },
                         { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
                         { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, formatter: loadingStatsText },
                         { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
@@ -278,40 +275,12 @@ order by
                     readOnly: true,
                     miniMap: false,
                     content: async () => {
-                        if (selectedRow) {
-                            let ddl = "";
-
-                            // CREATE SCHEMA
-                            const { rows: createRows } = await session.query<{ source: string }>(
-                                schemaCreateDdl(versionNumber),
-                                [selectedRow.schema_name]
-                            );
-                            if (createRows.length > 0) {
-                                ddl += createRows[0].source;
-                            }
-
-                            // COMMENT
-                            const { rows: commentRows } = await session.query<{ source: string }>(
-                                schemaCommentDdl(versionNumber),
-                                [selectedRow.schema_name]
-                            );
-                            if (commentRows.length > 0) {
-                                ddl += "\n\n" + commentRows[0].source;
-                            }
-
-                            // PRIVILEGES
-                            const { rows: privRows } = await session.query<{ source: string }>(
-                                schemaPrivilegesDdl(versionNumber),
-                                [selectedRow.schema_name]
-                            );
-                            if (privRows.length > 0) {
-                                ddl += "\n\n" + privRows.map(r => r.source).join("\n");
-                            }
-
-                            return ddl || "-- No DDL found";
-                        } else {
-                            return "-- No schema selected";
-                        }
+                        if (!selectedRow) return "-- No schema selected";
+                        return [
+                            await session.query<{ source: string }>(schemaCreateDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(schemaCommentDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                            await session.query<{ source: string }>(schemaPrivilegesDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
+                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
                     },
                 },
             },
