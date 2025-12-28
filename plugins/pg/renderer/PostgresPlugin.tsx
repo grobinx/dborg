@@ -15,6 +15,7 @@ import React from "react";
 import { databaseView } from "./views/database/databaseView";
 import { viewsView } from "./views/views/viewsView";
 import { sequencesView } from "./views/sequences/sequencesView";
+import { toolsView } from "./views/tools/toolsView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -39,6 +40,7 @@ const PostgresPlugin: Plugin = {
 
             return [
                 databaseView(session),
+                toolsView(session),
                 tablesView(session),
                 viewsView(session),
                 sequencesView(session),

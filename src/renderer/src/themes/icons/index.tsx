@@ -196,6 +196,7 @@ export interface ThemeIcons {
     Extensions: IconWrapperFC;
     Pin: IconWrapperFC;
     Pinned: IconWrapperFC;
+    Tools: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

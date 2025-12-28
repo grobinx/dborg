@@ -24,7 +24,7 @@ interface RelationSizeRecord {
     [key: string]: any;
 }
 
-const databaseTableSizesTab = (session: IDatabaseSession, _database: string | null): ITabSlot => {
+const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
@@ -144,4 +144,4 @@ const databaseTableSizesTab = (session: IDatabaseSession, _database: string | nu
     };
 };
 
-export default databaseTableSizesTab;
+export default tableSizesTab;

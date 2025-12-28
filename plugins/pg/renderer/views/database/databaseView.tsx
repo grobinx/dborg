@@ -4,7 +4,6 @@ import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import activityTab from "./activityTab";
 import sessionsTab from "./sessionsTab";
 import databaseSettingsTab from "./databaseSettingsTab";
-import databaseTableSizesTab from "./databaseTableSizesTab";
 import databaseExtensionsTab from "./databaseExtensionsTab";
 import { schemasTab } from "./schemasTab";
 
@@ -44,7 +43,6 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
                         sessionsTab(session, database),
                         activityTab(session, database),
                         schemasTab(session),
-                        databaseTableSizesTab(session, database),
                         databaseSettingsTab(session),
                         databaseExtensionsTab(session, database),
                     ],

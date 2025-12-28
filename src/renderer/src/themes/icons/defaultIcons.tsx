@@ -164,6 +164,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Extensions: (props) => <IconWrapper {...props} className="extensions"><MuiIcons.ExtensionOutlined fontSize="inherit" /></IconWrapper>,
             Pin: (props) => <IconWrapper {...props} className="pin"><MuiIcons.PushPinOutlined fontSize="inherit" /></IconWrapper>,
             Pinned: (props) => <IconWrapper {...props} className="pinned"><MuiIcons.PushPin fontSize="inherit" /></IconWrapper>,
+            Tools: (props) => <IconWrapper {...props} className="tools"><MuiIcons.HandymanOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }
