@@ -26,7 +26,9 @@ export type CustomSlotType =
     | "editor"
     | "text"
     | "rendered"
-    | "toolbar";
+    | "toolbar"
+    | "progressbar"
+    ;
 
 export type RefreshSlotCallback = (slotId: string) => void;
 
@@ -727,6 +729,39 @@ export interface IToolBarSlot extends ICustomSlot {
 export type ToolBarSlotKind =
     IToolBarSlot
     | IRenderedSlot;
+
+export type ProgressBarDisplay = "auto" | BooleanFactory;
+
+/** 
+ * Slot typu progressbar.
+ * Pozwala na wyświetlenie paska postępu z wartością i etykietą.
+ */
+export interface IProgressBarSlot extends ICustomSlot {
+    type: "progressbar";
+    /**
+     * Czy pasek postępu ma być widoczny.
+     * "auto" - widoczny gdy wartość postępu jest zdefiniowana.
+     * @default "auto"
+     */
+    display?: ProgressBarDisplay;
+    /**
+     * Pokaż procent wartości postępu.
+     * @default false.
+     */
+    showPercent?: BooleanFactory;
+    /**
+     * Wartość postępu (0-100).
+     */
+    value?: NumberFactory;
+    /**
+     * Wartość bufora postępu (0-100) (opcjonalnie).
+     */
+    bufferValue?: NumberFactory;
+    /**
+     * Tekst wyświetlany na pasku postępu (opcjonalnie).
+     */
+    label?: StringFactory;
+}
 
 export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
