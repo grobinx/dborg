@@ -434,7 +434,7 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progressBar?: ProgressBarSlotFactory;
+    progress?: ProgressBarSlotFactory;
 }
 
 export type TabLabelSlotKind =
@@ -533,7 +533,7 @@ export interface IContentSlot extends ICustomSlot {
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progressBar?: ProgressBarSlotFactory;
+    progress?: ProgressBarSlotFactory;
 }
 
 /**
@@ -639,7 +639,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progressBar?: ProgressBarSlotFactory;
+    progress?: ProgressBarSlotFactory;
 }
 
 export interface IEditorContext {
@@ -711,7 +711,7 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progressBar?: ProgressBarSlotFactory;
+    progress?: ProgressBarSlotFactory;
 }
 
 /**

@@ -94,10 +94,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         setWordWrap(resolveBooleanFactory(slot.wordWrap, refreshSlot) ?? false);
         setLineNumbers(resolveBooleanFactory(slot.lineNumbers, refreshSlot) ?? true);
         setStatusBar(resolveBooleanFactory(slot.statusBar, refreshSlot) ?? true);
-        if (slot.progressBar) {
+        if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progressBar!, refreshSlot, prev.ref)
+                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref)
             }));
         }
         return () => { mounted = false; };

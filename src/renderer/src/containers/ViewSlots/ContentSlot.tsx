@@ -97,10 +97,10 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 node: createTextContent(slot.text!, refreshSlot, prev.ref)
             }));
         }
-        if (slot.progressBar) {
+        if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progressBar!, refreshSlot, prev.ref)
+                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref)
             }));
         }
         setMainSlot(prev => ({

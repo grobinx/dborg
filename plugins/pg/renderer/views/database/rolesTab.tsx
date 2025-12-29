@@ -265,12 +265,11 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                     ],
                     autoSaveId: `roles-grid-${session.profile.sch_id}`,
                     statuses: ["data-rows"],
-                    progressBar: () => ({
+                    progress: () => ({
                         id: cid("schemas-stats-progress"),
                         type: "progress",
                         display: () => loadingStats,
                         value: () => loadingProgress,
-                        color: "success"
                     }),
                 } as IGridSlot),
                 second: {

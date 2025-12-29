@@ -274,12 +274,11 @@ where n.nspname not like 'pg_toast%'
                     ],
                     autoSaveId: `schemas-grid-${session.profile.sch_id}`,
                     statuses: ["data-rows"],
-                    progressBar: () => ({
+                    progress: () => ({
                         id: cid("schemas-stats-progress"),
                         type: "progress",
                         display: () => loadingStats,
                         value: () => loadingProgress,
-                        color: "success"
                     }),
                 } as IGridSlot),
                 second: {
