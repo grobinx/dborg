@@ -122,6 +122,8 @@ interface MonacoEditorProps {
     loading?: string | boolean;
     onCancel?: () => void;
     overlayMode?: LoadingOverlayMode;
+
+    topChildren?: React.ReactNode;
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
@@ -135,6 +137,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         tabSize: initialTabSize = 4,
         onLanguageChange, onEncodingChange, onEolChange,
         loading, onCancel, overlayMode,
+        topChildren,
         ...other
     } = useThemeProps({ name: "MonacoEditor", props });
 
@@ -309,6 +312,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
     return (
         <Stack direction="column" sx={{ width: "100%", height: "100%", overflow: "hidden" }} ref={rootRef}>
+            {topChildren}
             <Box sx={{ position: "relative", flex: 1, overflow: "hidden", height: "100%", width: "100%" }}>
                 <Editor
                     defaultValue={defaultValue}

@@ -4,7 +4,7 @@ import { ITabContentSlot } from "../../../../../plugins/manager/renderer/CustomS
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
-import { createContentComponent } from "./helpers";
+import { createContentComponent, createProgressBarContent } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
 interface TabContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
@@ -20,6 +20,10 @@ interface TabContentSlotOwnProps extends TabContentSlotProps {
 const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const [content, setContent] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode,
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [progressBar, setProgressBar] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -73,7 +77,11 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             console.debug("TabContentSlot updating content for slot:", slot.id, refresh);
             setContent(prev => ({
                 ...prev,
-                node: createContentComponent(slot.content!, refreshSlot, prev.ref)
+                node: createContentComponent(slot.content!, refreshSlot, prev.ref),
+            }));
+            setProgressBar(prev => ({
+                ...prev,
+                node: slot.progressBar ? createProgressBarContent(slot.progressBar, refreshSlot, prev.ref) : null,
             }));
             previousRefreshRef.current = refresh;
         }
@@ -107,6 +115,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
     return (
         <TabPanelContent ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
+            {progressBar.node}
             {content.node}
         </TabPanelContent>
     );

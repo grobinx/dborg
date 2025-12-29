@@ -9,7 +9,7 @@ import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import GridSlot from "./GridSlot";
 import RenderedSlot from "./RenderedSlot";
-import { createContentComponent, createTextContent, createTitleContent } from "./helpers";
+import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -40,6 +40,10 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [mainSlot, setMainSlot] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [progressBar, setProgressBar] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -93,6 +97,12 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 node: createTextContent(slot.text!, refreshSlot, prev.ref)
             }));
         }
+        if (slot.progressBar) {
+            setProgressBar(prev => ({
+                ...prev,
+                node: createProgressBarContent(slot.progressBar!, refreshSlot, prev.ref)
+            }));
+        }
         setMainSlot(prev => ({
             ...prev,
             node: createContentComponent(slot.main, refreshSlot, prev.ref)
@@ -107,6 +117,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             className={`ContentSlot-root ${className ?? ""}`}
             {...other}
         >
+            {progressBar.node}
             {(titleSlot.node != null) && (
                 <AppBar position="static" sx={{ flexDirection: "row", zIndex: 10 }}>
                     {titleSlot.node}

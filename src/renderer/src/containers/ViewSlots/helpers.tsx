@@ -24,6 +24,8 @@ import {
     ITabSlot,
     resolveBooleanFactory,
     isSearchField,
+    ProgressBarSlotFactory,
+    resolveProgressBarFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -46,6 +48,7 @@ import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 import ToolBarSlot from "./ToolBarSlot";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
+import ProgressBarSlot from "./ProgressBarSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -176,6 +179,7 @@ export function createTitleContent(
     }
     return null;
 }
+
 export function createTextContent(
     slot: TextSlotKindFactory,
     refreshSlot: (id: string) => void,
@@ -211,6 +215,20 @@ export function createSplitPartContent(
             return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         } else if (resolvedPart.type === "editor") {
             return <EditorSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        }
+    }
+    return null;
+}
+
+export function createProgressBarContent(
+    slot: ProgressBarSlotFactory,
+    refreshSlot: (id: string) => void,
+    ref: React.Ref<HTMLDivElement>,
+): React.ReactNode {
+    const resolvedContent = resolveProgressBarFactory(slot, refreshSlot);
+    if (resolvedContent) {
+        if (resolvedContent.type === "progress") {
+            return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;

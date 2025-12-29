@@ -12,6 +12,7 @@ import {
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { createProgressBarContent } from "./helpers";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -35,6 +36,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
 
     const context: IEditorContext = {
     };
@@ -89,6 +94,12 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         setWordWrap(resolveBooleanFactory(slot.wordWrap, refreshSlot) ?? false);
         setLineNumbers(resolveBooleanFactory(slot.lineNumbers, refreshSlot) ?? true);
         setStatusBar(resolveBooleanFactory(slot.statusBar, refreshSlot) ?? true);
+        if (slot.progressBar) {
+            setProgressBar(prev => ({
+                ...prev,
+                node: createProgressBarContent(slot.progressBar!, refreshSlot, prev.ref)
+            }));
+        }
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
@@ -130,6 +141,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             miniMap={slot.miniMap}
             overlayMode={slot.overlayMode ?? "small"}
             onCancel={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
+            topChildren={progressBar.node}
         />
     );
 };

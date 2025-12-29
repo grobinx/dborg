@@ -52,6 +52,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     let allRows: SchemaRecord[] = [];
     const loadingStatsRow: SchemaRecord[] = [];
     let loadingStats: boolean = false;
+    let loadingProgress: number | null = null;
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -220,6 +221,7 @@ where n.nspname not like 'pg_toast%'
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
                                     refresh(cid("schemas-grid"), true);
+                                    refresh(cid("schemas-stats-progress"));
                                     try {
                                         const stats = await getSchemaStats(row.schema_name);
                                         Object.assign(row, stats);
@@ -228,8 +230,9 @@ where n.nspname not like 'pg_toast%'
                                         if (index !== -1) {
                                             loadingStatsRow.splice(index, 1);
                                         }
-                                        refresh(cid("schemas-grid"), true);
                                         loadingStats = false;
+                                        refresh(cid("schemas-grid"), true);
+                                        refresh(cid("schemas-stats-progress"));
                                     }
                                 }
                             },
@@ -244,9 +247,11 @@ where n.nspname not like 'pg_toast%'
                             run: async () => {
                                 loadingStats = true;
                                 try {
-                                    for (const row of allRows) {
+                                    for (const [index, row] of allRows.entries()) {
+                                        loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
                                         refresh(cid("schemas-grid"), true);
+                                        refresh(cid("schemas-stats-progress"));
                                         try {
                                             const stats = await getSchemaStats(row.schema_name);
                                             Object.assign(row, stats);
@@ -257,16 +262,25 @@ where n.nspname not like 'pg_toast%'
                                             }
                                             refresh(cid("schemas-grid"), true);
                                         }
-                                    }
+                                    };
                                 }
                                 finally {
                                     loadingStats = false;
+                                    loadingProgress = null;
+                                    refresh(cid("schemas-stats-progress"));
                                 }
                             }
                         }
                     ],
                     autoSaveId: `schemas-grid-${session.profile.sch_id}`,
-                    statuses: ["data-rows"]
+                    statuses: ["data-rows"],
+                    progressBar: () => ({
+                        id: cid("schemas-stats-progress"),
+                        type: "progress",
+                        display: () => loadingStats,
+                        value: () => loadingProgress,
+                        color: "success"
+                    }),
                 } as IGridSlot),
                 second: {
                     id: cid("schemas-editor"),

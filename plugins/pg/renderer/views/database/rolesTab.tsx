@@ -8,6 +8,7 @@ import { resolveColor } from "@renderer/utils/colors";
 import { useTheme } from "@mui/material";
 import { versionToNumber } from "../../../../../src/api/version";
 import { roleConfigDdl, roleCreateDdl, roleGrantsDdl, roleMembershipDdl } from "../../../common/ddls/role";
+import Span from "@renderer/components/useful/Span";
 
 export interface RoleRecord {
     role_name: string;
@@ -44,12 +45,12 @@ export interface RoleStatsRecord {
 
 export function rolesTab(session: IDatabaseSession): ITabSlot {
     const t = i18next.t.bind(i18next);
-    const theme = useTheme();
 
     let selectedRow: RoleRecord | null = null;
     let allRows: RoleRecord[] = [];
     const loadingStatsRow: RoleRecord[] = [];
     let loadingStats = false;
+    let loadingProgress: number | null = null;
     const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
 
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -121,9 +122,9 @@ group by oc.tables_count, oc.views_count, fc.functions_count, oc.sequences_count
 
     const booleanFormatter = (value: any) => {
         return value ? (
-            <span style={{ color: resolveColor("success.main", theme) }}>{t("yes", "Yes")}</span>
+            <Span color="success">{t("yes", "Yes")}</Span>
         ) : (
-            <span style={{ color: resolveColor("error.main", theme) }}>{t("no", "No")}</span>
+            <Span color="error">{t("no", "No")}</Span>
         );
     }
 
@@ -215,14 +216,16 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
                                     refresh(cid("roles-grid"), true);
+                                    refresh(cid("schemas-stats-progress"));
                                     try {
                                         const stats = await getRoleStats(row.role_name);
                                         Object.assign(row, stats);
                                     } finally {
                                         const index = loadingStatsRow.indexOf(row);
                                         if (index !== -1) loadingStatsRow.splice(index, 1);
-                                        refresh(cid("roles-grid"), true);
                                         loadingStats = false;
+                                        refresh(cid("roles-grid"), true);
+                                        refresh(cid("schemas-stats-progress"));
                                     }
                                 }
                             },
@@ -237,9 +240,11 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                             run: async () => {
                                 loadingStats = true;
                                 try {
-                                    for (const row of allRows) {
+                                    for (const [index, row] of allRows.entries()) {
+                                        loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
                                         refresh(cid("roles-grid"), true);
+                                        refresh(cid("schemas-stats-progress"));
                                         try {
                                             const stats = await getRoleStats(row.role_name);
                                             Object.assign(row, stats);
@@ -247,16 +252,26 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                             const index = loadingStatsRow.indexOf(row);
                                             if (index !== -1) loadingStatsRow.splice(index, 1);
                                             refresh(cid("roles-grid"), true);
+                                            refresh(cid("schemas-stats-progress"));
                                         }
                                     }
                                 } finally {
                                     loadingStats = false;
+                                    loadingProgress = null;
+                                    refresh(cid("schemas-stats-progress"));
                                 }
                             }
                         }
                     ],
                     autoSaveId: `roles-grid-${session.profile.sch_id}`,
-                    statuses: ["data-rows"]
+                    statuses: ["data-rows"],
+                    progressBar: () => ({
+                        id: cid("schemas-stats-progress"),
+                        type: "progress",
+                        display: () => loadingStats,
+                        value: () => loadingProgress,
+                        color: "success"
+                    }),
                 } as IGridSlot),
                 second: {
                     id: cid("roles-editor"),

@@ -11,6 +11,7 @@ import { Option } from "@renderer/components/inputs/DescribedList";
 import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { ThemeIconName } from "@renderer/themes/icons";
+import { ThemeColor } from "@renderer/types/colors";
 import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
 
@@ -27,13 +28,13 @@ export type CustomSlotType =
     | "text"
     | "rendered"
     | "toolbar"
-    | "progressbar"
+    | "progress"
     ;
 
 export type RefreshSlotCallback = (slotId: string) => void;
 
 export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolean);
-export type NumberFactory = number | ((refresh: RefreshSlotFunction) => number);
+export type NumberFactory = number | null | ((refresh: RefreshSlotFunction) => number | null);
 export type NumberArrayFactory = number[] | ((refresh: RefreshSlotFunction) => number[]);
 export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
@@ -46,7 +47,6 @@ export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunctio
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
 export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
-
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
 export type TabLabelSlotKindFactory = TabLabelSlotKind | ((refresh: RefreshSlotFunction) => TabLabelSlotKind);
@@ -56,6 +56,7 @@ export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunctio
 export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
 export type ToolBarSlotKindFactory = ToolBarSlotKind | ((refresh: RefreshSlotFunction) => ToolBarSlotKind);
+export type ProgressBarSlotFactory = IProgressBarSlot | ((refresh: RefreshSlotFunction) => IProgressBarSlot);
 
 export type ToolKind<T = any> =
     | string
@@ -430,6 +431,10 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
 
     onActivate?: (refresh: RefreshSlotFunction) => void;
     onDeactivate?: (refresh: RefreshSlotFunction) => void;
+    /**
+     * Pasek postępu (slot lub funkcja zwracająca slot).
+     */
+    progressBar?: ProgressBarSlotFactory;
 }
 
 export type TabLabelSlotKind =
@@ -525,6 +530,10 @@ export interface IContentSlot extends ICustomSlot {
      * Tekst (slot lub funkcja zwracająca slot).
      */
     text?: TextSlotKindFactory;
+    /**
+     * Pasek postępu (slot lub funkcja zwracająca slot).
+     */
+    progressBar?: ProgressBarSlotFactory;
 }
 
 /**
@@ -627,6 +636,10 @@ export interface IGridSlot extends ICustomSlot {
      * Tekst wyszukiwania w siatce (opcjonalnie).
      */
     searchText?: StringFactory;
+    /**
+     * Pasek postępu (slot lub funkcja zwracająca slot).
+     */
+    progressBar?: ProgressBarSlotFactory;
 }
 
 export interface IEditorContext {
@@ -695,6 +708,10 @@ export interface IEditorSlot extends ICustomSlot {
      * @default "small"
      */
     overlayMode?: LoadingOverlayMode;
+    /**
+     * Pasek postępu (slot lub funkcja zwracająca slot).
+     */
+    progressBar?: ProgressBarSlotFactory;
 }
 
 /**
@@ -737,7 +754,7 @@ export type ProgressBarDisplay = "auto" | BooleanFactory;
  * Pozwala na wyświetlenie paska postępu z wartością i etykietą.
  */
 export interface IProgressBarSlot extends ICustomSlot {
-    type: "progressbar";
+    type: "progress";
     /**
      * Czy pasek postępu ma być widoczny.
      * "auto" - widoczny gdy wartość postępu jest zdefiniowana.
@@ -761,6 +778,11 @@ export interface IProgressBarSlot extends ICustomSlot {
      * Tekst wyświetlany na pasku postępu (opcjonalnie).
      */
     label?: StringFactory;
+    /**
+     * Kolor paska postępu (opcjonalnie).
+     * @default primary
+     */
+    color?: ThemeColor;
 }
 
 export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
@@ -823,10 +845,13 @@ export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | unde
 export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, refresh: RefreshSlotFunction): ToolBarSlotKind | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
-export function resolveNumberFactory(factory: NumberFactory | undefined, refresh: RefreshSlotFunction): number | undefined {
+export function resolveNumberFactory(factory: NumberFactory | undefined, refresh: RefreshSlotFunction): number | null | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, refresh: RefreshSlotFunction): number[] | undefined {
+    return typeof factory === "function" ? factory(refresh) : factory;
+}
+export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, refresh: RefreshSlotFunction): IProgressBarSlot | undefined {
     return typeof factory === "function" ? factory(refresh) : factory;
 }
 

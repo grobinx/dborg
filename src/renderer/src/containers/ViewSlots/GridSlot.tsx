@@ -13,7 +13,6 @@ import {
     resolveColumnDefinitionsFactory,
     resolveRecordsFactory,
     resolveStringFactory,
-    StatusBarValueFunction
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -24,6 +23,7 @@ import debounce from "@renderer/utils/debounce";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { resolveIcon } from "@renderer/themes/icons";
+import { createProgressBarContent } from "./helpers";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -53,6 +53,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
@@ -127,6 +131,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 setLoading(false);
             }
         };
+        setProgressBar(prev => ({
+            ...prev,
+            node: slot.progressBar ? createProgressBarContent(slot.progressBar, refreshSlot, prev.ref) : null,
+        }));
         fetchRows();
         console.debug("GridSlot updating content for slot:", slot.id, refresh);
     }, [slot.columns, slot.rows, refresh]);
@@ -193,6 +201,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             }}
             ref={rootRef}
         >
+            {progressBar.node}
             <Box
                 key={slot.id}
                 sx={{
