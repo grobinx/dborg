@@ -4,6 +4,8 @@ import i18next from "i18next";
 import { IAutoRefresh, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { Box, Paper, Stack, Typography, useTheme, Button, Alert } from "@mui/material";
 import { versionToNumber } from "../../../../../src/api/version";
+import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 
 interface FlowSnapshot {
     ts: number;
@@ -46,6 +48,8 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
     let snapshots: FlowSnapshot[] = [];
     const maxSnapshots = 10;
     let snapshotCounter = 0;
+    let loadingStats: boolean = false;
+    let thresholds: Record<string, number> = {}; // kalibrowane progi (maksima zaobserwowane w czasie pracy)
 
     const num = (v: any) => {
         const n = typeof v === "number" ? v : Number(v);
@@ -81,7 +85,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
         return { cacheHitRatio, commitsPerSecond, avgTxSize };
     };
 
-    async function fetchSnapshot() {
+    async function fetchSnapshot(refresh: RefreshSlotFunction) {
         if (!databaseName) return;
         const backendWaitCond = versionNumber >= 140000
             ? `COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type ilike 'LWLock%') as wait_lwlock,`
@@ -114,32 +118,63 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             SELECT db.*, be.*, bg.*, extract(epoch from now())*1000 as ts
             FROM db CROSS JOIN be CROSS JOIN bg
         `;
-        const { rows } = await session.query<FlowSnapshot>(query, [databaseName]);
-        if (!rows || !rows.length) return;
-        const r = rows[0];
-        snapshots.push({
-            ts: num(r.ts),
-            numbackends: num(r.backends_active ?? 0),
-            blks_read: num(r.blks_read),
-            blks_hit: num(r.blks_hit),
-            tup_inserted: num(r.tup_inserted),
-            tup_updated: num(r.tup_updated),
-            tup_deleted: num(r.tup_deleted),
-            xact_commit: num(r.xact_commit),
-            xact_rollback: num(r.xact_rollback),
-            temp_files: num(r.temp_files),
-            temp_bytes: num(r.temp_bytes),
-            buffers_checkpoint: num(r.buffers_checkpoint),
-            buffers_backend: num(r.buffers_backend),
-            buffers_alloc: num(r.buffers_alloc),
-            wait_lock: num(r.wait_lock ?? 0),
-            wait_lwlock: num(r.wait_lwlock ?? 0),
-            wait_io: num(r.wait_io ?? 0),
-            wait_bufferpin: num(r.wait_bufferpin ?? 0),
-            wait_timeout: num(r.wait_timeout ?? 0),
-        });
-        snapshotCounter++;
-        if (snapshots.length > maxSnapshots) snapshots = snapshots.slice(-maxSnapshots);
+        loadingStats = true;
+        refresh(cid("dataflow-render"), "only");
+        try {
+            const { rows } = await session.query<FlowSnapshot>(query, [databaseName]);
+            if (!rows || !rows.length) return;
+            const r = rows[0];
+            snapshots.push({
+                ts: num(r.ts),
+                numbackends: num(r.backends_active ?? 0),
+                blks_read: num(r.blks_read),
+                blks_hit: num(r.blks_hit),
+                tup_inserted: num(r.tup_inserted),
+                tup_updated: num(r.tup_updated),
+                tup_deleted: num(r.tup_deleted),
+                xact_commit: num(r.xact_commit),
+                xact_rollback: num(r.xact_rollback),
+                temp_files: num(r.temp_files),
+                temp_bytes: num(r.temp_bytes),
+                buffers_checkpoint: num(r.buffers_checkpoint),
+                buffers_backend: num(r.buffers_backend),
+                buffers_alloc: num(r.buffers_alloc),
+                wait_lock: num(r.wait_lock ?? 0),
+                wait_lwlock: num(r.wait_lwlock ?? 0),
+                wait_io: num(r.wait_io ?? 0),
+                wait_bufferpin: num(r.wait_bufferpin ?? 0),
+                wait_timeout: num(r.wait_timeout ?? 0),
+            });
+            snapshotCounter++;
+            if (snapshots.length > maxSnapshots) snapshots = snapshots.slice(-maxSnapshots);
+
+            // kalibracja progów na podstawie najnowszej delty (nie tylko z okna snapshotów)
+            if (snapshots.length >= 2) {
+                const prev = snapshots[snapshots.length - 2];
+                const cur = snapshots[snapshots.length - 1];
+                const delta = (k: string) => Math.max(0, (cur as any)[k] - (prev as any)[k]);
+
+                const reads = delta("blks_read");
+                const writes = delta("buffers_checkpoint") + delta("buffers_backend");
+                const tempFiles = delta("temp_files");
+                const dml = delta("tup_inserted") + delta("tup_updated") + delta("tup_deleted");
+                const tx = delta("xact_commit") + delta("xact_rollback");
+                const bgwriter = delta("buffers_checkpoint");
+                const sessionsVal = cur.numbackends;
+
+                thresholds.sessions = Math.max(thresholds.sessions ?? 0, sessionsVal);
+                thresholds.reads = Math.max(thresholds.reads ?? 0, reads);
+                thresholds.writes = Math.max(thresholds.writes ?? 0, writes);
+                thresholds.temp = Math.max(thresholds.temp ?? 0, tempFiles);
+                thresholds.dml = Math.max(thresholds.dml ?? 0, dml);
+                thresholds.tx = Math.max(thresholds.tx ?? 0, tx);
+                thresholds.bgwriter = Math.max(thresholds.bgwriter ?? 0, bgwriter);
+            }
+        }
+        finally {
+            loadingStats = false;
+            refresh(cid("dataflow-render"), "only");
+        }
     }
 
     const getNodeColor = (value: number, threshold: number, theme: any, isAlert?: boolean): string => {
@@ -212,12 +247,25 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
         return { nodes, links, totals, anomalies };
     };
 
+    // Maksima historyczne per metryka (dla dynamicznych progów kolorowania)
+    const computeThresholds = () => {
+        const res: Record<string, number> = { ...thresholds };
+        Object.keys(res).forEach(k => { res[k] = Math.max(1, res[k]); });
+        return res;
+    };
+
     const renderFlow = (): IRenderedSlot => ({
         id: cid("dataflow-render"),
         type: "rendered",
         render: ({ refresh }) => {
             const theme = useTheme();
             const { nodes, links, totals, anomalies } = computeFlow();
+            const thresholds = computeThresholds();
+
+            const nodeLabel = nodes.reduce<Record<string, string>>((acc, n) => {
+                acc[n.id] = n.label.split("\n")[0];
+                return acc;
+            }, {});
 
             const maxLink = Math.max(1, ...links.map(l => l.value));
             const colCount = 5;
@@ -228,10 +276,9 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
 
             return (
                 <Stack sx={{ width: "100%", height: "100%", padding: 8, gap: 8, overflow: "auto" }}>
-                    <Stack direction="row" sx={{ gap: 8 }}>
+                    <Stack direction="row" sx={{ gap: 8, height: "80%" }}>
                         <Paper sx={{ flex: 2, padding: 8 }}>
-                            {/* Node visualization */}
-                            <Box sx={{ display: "flex", gap: 8, alignItems: "center", height: 160, mb: 8 }}>
+                            <Box sx={{ display: "flex", gap: 8, alignItems: "center", mb: 8 }}>
                                 {cols.map((colNodes, i) => (
                                     <Box key={i} sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
                                         {colNodes.map((n: any) => {
@@ -240,7 +287,8 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                                                 (anomalies.tempSpike && n.id === "temp") ||
                                                 (anomalies.rollbackSpike && n.id === "tx");
 
-                                            const nodeColor = getNodeColor(n.value, 1000, theme, isAlert);
+                                            const threshold = thresholds[n.id] ?? 1;
+                                            const nodeColor = getNodeColor(n.value, threshold, theme, isAlert);
                                             return (
                                                 <Paper
                                                     key={n.id}
@@ -269,9 +317,11 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                                 <Typography variant="subtitle2" sx={{ mb: 8 }}>{t("data-flows", "Data Flows")}</Typography>
                                 {links.map((l, idx) => {
                                     const barColor = getBarColor(l.value, maxLink, theme);
+                                    const from = nodeLabel[l.source] ?? l.source;
+                                    const to = nodeLabel[l.target] ?? l.target;
                                     return (
                                         <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 8, mb: 8 }}>
-                                            <Typography variant="caption" sx={{ width: 160 }}>{`${l.source} → ${l.target}`}</Typography>
+                                            <Typography variant="caption" sx={{ width: 200 }}>{`${from} → ${to}`}</Typography>
                                             <Box sx={{ height: 12, bgcolor: "divider", flex: 1, position: "relative", borderRadius: 1 }}>
                                                 <Box
                                                     sx={{
@@ -293,8 +343,9 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                             </Box>
                         </Paper>
 
-                        <Paper sx={{ width: 300, padding: 8 }}>
-                            <Typography variant="subtitle2">{t("totals", "Totals (delta)")}</Typography>
+                        <Paper sx={{ width: "25%", padding: 8, position: "relative" }}>
+                            {loadingStats && (<LoadingOverlay mode={"small"} />)}
+                            <Typography variant="subtitle2">{t("totals-delta", "Totals (delta)")}</Typography>
                             <Box sx={{ mt: 8 }}>
                                 <Typography variant="body2">{t("reads", "Reads")}: {totals.reads ?? 0}</Typography>
                                 <Typography variant="body2">{t("writes", "Writes")}: {totals.writes ?? 0}</Typography>
@@ -325,7 +376,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                                 </Box>
 
                                 <Box sx={{ mt: 12, pt: 8, borderTop: `1px solid ${theme.palette.divider}` }}>
-                                    <Typography variant="caption">{t("wait-events", "Wait events (current)")}</Typography>
+                                    <Typography variant="subtitle2">{t("wait-events-current", "Wait events (current)")}</Typography>
                                     <Typography variant="body2">Lock: {totals.waits?.lock}</Typography>
                                     <Typography variant="body2">LWLock: {totals.waits?.lwlock}</Typography>
                                     <Typography variant="body2">IO: {totals.waits?.io}</Typography>
@@ -336,35 +387,37 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                     </Stack>
 
                     {/* Anomaly Alerts */}
-                    {hasAnomalies && (
-                        <Box sx={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            {anomalies.highWaitEvents && (
-                                <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
-                                    {t("high-wait-events", "High wait events detected")} ({totals.waits.lock + totals.waits.lwlock + totals.waits.io})
-                                </Alert>
-                            )}
-                            {anomalies.lowCacheHitRatio && (
-                                <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
-                                    {t("low-cache-hit", "Low cache hit ratio")}: {totals.cacheHitRatio?.toFixed(1)}%
-                                </Alert>
-                            )}
-                            {anomalies.tempSpike && (
-                                <Alert severity="error" sx={{ flex: 1, minWidth: 250 }}>
-                                    {t("temp-spike", "Temp memory spike detected")}: {(totals.tempFiles || 0)} files
-                                </Alert>
-                            )}
-                            {anomalies.rollbackSpike && (
-                                <Alert severity="error" sx={{ flex: 1, minWidth: 250 }}>
-                                    {t("rollback-spike", "High rollback rate detected")}: {totals.rollbacks}
-                                </Alert>
-                            )}
-                            {anomalies.unusualReadWriteRatio && (
-                                <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
-                                    {t("unusual-io", "Unusual read/write ratio")}
-                                </Alert>
-                            )}
-                        </Box>
-                    )}
+                    <Paper sx={{ width: "100%", height: "100%", padding: 8 }}>
+                        {hasAnomalies && (
+                            <Box sx={{ display: "flex", gap: 8, flexWrap: "wrap", flexDirection: "column" }}>
+                                {anomalies.highWaitEvents && (
+                                    <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
+                                        {t("high-wait-events", "High wait events detected")} ({totals.waits.lock + totals.waits.lwlock + totals.waits.io})
+                                    </Alert>
+                                )}
+                                {anomalies.lowCacheHitRatio && (
+                                    <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
+                                        {t("low-cache-hit", "Low cache hit ratio")}: {totals.cacheHitRatio?.toFixed(1)}%
+                                    </Alert>
+                                )}
+                                {anomalies.tempSpike && (
+                                    <Alert severity="error" sx={{ flex: 1, minWidth: 250 }}>
+                                        {t("temp-spike", "Temp memory spike detected")}: {(totals.tempFiles || 0)} files
+                                    </Alert>
+                                )}
+                                {anomalies.rollbackSpike && (
+                                    <Alert severity="error" sx={{ flex: 1, minWidth: 250 }}>
+                                        {t("rollback-spike", "High rollback rate detected")}: {totals.rollbacks}
+                                    </Alert>
+                                )}
+                                {anomalies.unusualReadWriteRatio && (
+                                    <Alert severity="warning" sx={{ flex: 1, minWidth: 250 }}>
+                                        {t("unusual-io", "Unusual read/write ratio")}
+                                    </Alert>
+                                )}
+                            </Box>
+                        )}
+                    </Paper>
                 </Stack>
             );
         }
@@ -380,19 +433,20 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             icon: "Flow",
         },
         content: () => renderSlotContent(),
-        toolBar: {
+        toolBar: (refresh) => ({
             id: cid("dataflow-toolbar"),
             type: "toolbar",
             tools: [
                 {
                     onTick: async (refresh: (id: string) => void) => {
                         try {
-                            await fetchSnapshot();
+                            await fetchSnapshot(refresh);
                         } catch (e) { /* ignore */ }
                         refresh(cid("dataflow-render"));
                     },
                     onClear: (refresh: (id: string) => void) => {
                         snapshots = [];
+                        thresholds = {}; // reset kalibracji przy czyszczeniu
                         refresh(cid("dataflow-render"));
                     },
                     intervals: [5, 10, 15, 30, 60],
@@ -402,7 +456,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                 } as IAutoRefresh
             ],
             actionSlotId: cid("dataflow-render"),
-        }
+        })
     };
 
     function renderSlotContent() {
