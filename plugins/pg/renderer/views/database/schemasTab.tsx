@@ -220,7 +220,7 @@ where n.nspname not like 'pg_toast%'
                                     const row = selectedRow;
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
-                                    refresh(cid("schemas-grid"), true);
+                                    refresh(cid("schemas-grid"), "only");
                                     refresh(cid("schemas-stats-progress"));
                                     try {
                                         const stats = await getSchemaStats(row.schema_name);
@@ -231,7 +231,7 @@ where n.nspname not like 'pg_toast%'
                                             loadingStatsRow.splice(index, 1);
                                         }
                                         loadingStats = false;
-                                        refresh(cid("schemas-grid"), true);
+                                        refresh(cid("schemas-grid"), "compute");
                                         refresh(cid("schemas-stats-progress"));
                                     }
                                 }
@@ -250,7 +250,7 @@ where n.nspname not like 'pg_toast%'
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
-                                        refresh(cid("schemas-grid"), true);
+                                        refresh(cid("schemas-grid"), "only");
                                         refresh(cid("schemas-stats-progress"));
                                         try {
                                             const stats = await getSchemaStats(row.schema_name);
@@ -260,13 +260,14 @@ where n.nspname not like 'pg_toast%'
                                             if (index !== -1) {
                                                 loadingStatsRow.splice(index, 1);
                                             }
-                                            refresh(cid("schemas-grid"), true);
+                                            refresh(cid("schemas-grid"), "only");
                                         }
                                     };
                                 }
                                 finally {
                                     loadingStats = false;
                                     loadingProgress = null;
+                                    refresh(cid("schemas-grid"), "compute");
                                     refresh(cid("schemas-stats-progress"));
                                 }
                             }
@@ -274,12 +275,12 @@ where n.nspname not like 'pg_toast%'
                     ],
                     autoSaveId: `schemas-grid-${session.profile.sch_id}`,
                     statuses: ["data-rows"],
-                    progress: () => ({
+                    progress: {
                         id: cid("schemas-stats-progress"),
                         type: "progress",
                         display: () => loadingStats,
                         value: () => loadingProgress,
-                    }),
+                    },
                 } as IGridSlot),
                 second: {
                     id: cid("schemas-editor"),

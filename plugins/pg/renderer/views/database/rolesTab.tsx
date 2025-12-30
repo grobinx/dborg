@@ -215,8 +215,8 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     const row = selectedRow;
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
-                                    refresh(cid("roles-grid"), true);
-                                    refresh(cid("schemas-stats-progress"));
+                                    refresh(cid("roles-grid"), "only");
+                                    refresh(cid("roles-stats-progress"));
                                     try {
                                         const stats = await getRoleStats(row.role_name);
                                         Object.assign(row, stats);
@@ -224,8 +224,8 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                         const index = loadingStatsRow.indexOf(row);
                                         if (index !== -1) loadingStatsRow.splice(index, 1);
                                         loadingStats = false;
-                                        refresh(cid("roles-grid"), true);
-                                        refresh(cid("schemas-stats-progress"));
+                                        refresh(cid("roles-grid"), "compute");
+                                        refresh(cid("roles-stats-progress"));
                                     }
                                 }
                             },
@@ -243,34 +243,35 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
-                                        refresh(cid("roles-grid"), true);
-                                        refresh(cid("schemas-stats-progress"));
+                                        refresh(cid("roles-grid"), "only");
+                                        refresh(cid("roles-stats-progress"));
                                         try {
                                             const stats = await getRoleStats(row.role_name);
                                             Object.assign(row, stats);
                                         } finally {
                                             const index = loadingStatsRow.indexOf(row);
                                             if (index !== -1) loadingStatsRow.splice(index, 1);
-                                            refresh(cid("roles-grid"), true);
-                                            refresh(cid("schemas-stats-progress"));
+                                            refresh(cid("roles-grid"), "only");
+                                            refresh(cid("roles-stats-progress"));
                                         }
                                     }
                                 } finally {
                                     loadingStats = false;
                                     loadingProgress = null;
-                                    refresh(cid("schemas-stats-progress"));
+                                    refresh(cid("roles-grid"), "compute");
+                                    refresh(cid("roles-stats-progress"));
                                 }
                             }
                         }
                     ],
                     autoSaveId: `roles-grid-${session.profile.sch_id}`,
                     statuses: ["data-rows"],
-                    progress: () => ({
-                        id: cid("schemas-stats-progress"),
+                    progress: {
+                        id: cid("roles-stats-progress"),
                         type: "progress",
                         display: () => loadingStats,
                         value: () => loadingProgress,
-                    }),
+                    },
                 } as IGridSlot),
                 second: {
                     id: cid("roles-editor"),

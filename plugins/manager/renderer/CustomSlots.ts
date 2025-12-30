@@ -31,8 +31,6 @@ export type CustomSlotType =
     | "progress"
     ;
 
-export type RefreshSlotCallback = (slotId: string) => void;
-
 export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolean);
 export type NumberFactory = number | null | ((refresh: RefreshSlotFunction) => number | null);
 export type NumberArrayFactory = number[] | ((refresh: RefreshSlotFunction) => number[]);

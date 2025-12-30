@@ -175,7 +175,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             if (versionNumber >= 140000) refresh(cid("progress-copy-tab"));
                             if (versionNumber >= 130000) refresh(cid("memory-contexts-tab"));
                             if (selectedSession?.blocking_pids || previousSelectedSession?.blocking_pids) {
-                                refresh(cid("sessions-grid"), true);
+                                refresh(cid("sessions-grid"), "only");
                             }
                         },
                         rows: async () => {

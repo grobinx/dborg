@@ -29,8 +29,8 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
-            if (redrawOnly) {
+        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+            if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
                 setRefresh(prev => prev + 1n);

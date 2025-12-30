@@ -26,8 +26,8 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const { queueMessage } = useMessages();
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
-            if (redrawOnly) {
+        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+            if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
                 setRefresh(prev => prev + 1n);

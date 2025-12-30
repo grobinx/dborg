@@ -53,15 +53,18 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const statusBarRef = React.useRef<HTMLDivElement>(null);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const [rebuildDisplayData, setRebuildDisplayData] = React.useState<bigint>(0n);
     const [progressBar, setProgressBar] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redrawOnly) => {
-            if (redrawOnly) {
+        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+            if (redraw === "only") {
                 reRender(prev => prev + 1n);
+            } else if (redraw === "compute") {
+                setRebuildDisplayData(prev => prev + 1n);
             } else {
                 setPendingRefresh(true);
             }
@@ -241,6 +244,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     onCancelLoading={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
                     overlayMode={slot.overlayMode ?? "small"}
                     searchText={resolveStringFactory(slot.searchText, refreshSlot)}
+                    rebuildDisplayData={rebuildDisplayData}
                 />
                 )}
             </Box>

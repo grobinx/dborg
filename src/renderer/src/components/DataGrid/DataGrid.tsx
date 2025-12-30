@@ -17,7 +17,7 @@ import * as actions from "./actions";
 import { createDataGridCommands } from "./DataGridCommands";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
-import { ColumnFilter, filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
+import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import { useColumnsGroup } from "./useColumnsGroup";
 import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";
@@ -125,6 +125,12 @@ interface DataGridProps<T extends object> {
      * Tekst do wyszukania w tabeli
      */
     searchText?: string;
+
+    /**
+     * Wartość pomocnicza do wymuszenia przebudowy displayData.
+     * Zwiększ/zmień aby wymusić recompute.
+     */
+    rebuildDisplayData?: bigint;
 }
 
 const StyledTable = styled('div', {
@@ -480,6 +486,7 @@ export const DataGrid = <T extends object>({
     autoSaveId,
     getRowStyle,
     searchText: outerSearchText,
+    rebuildDisplayData,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -721,7 +728,8 @@ export const DataGrid = <T extends object>({
         groupingColumns.columns,
         filterColumns.activeFilters,
         filterColumns.temporaryFilter,
-        mode
+        mode,
+        rebuildDisplayData
     ]);
 
     useEffect(() => {
