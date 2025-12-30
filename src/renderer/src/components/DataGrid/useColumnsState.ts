@@ -108,8 +108,8 @@ function restoreColumnsLayout(
                     ...orig,
                     width: savedCol.width ?? orig.width,
                     hidden: savedCol.hidden ?? orig.hidden,
-                    sortDirection: savedCol.sortDirection ?? orig.sortDirection,
-                    sortOrder: savedCol.sortOrder ?? orig.sortOrder,
+                    sortDirection: savedCol.sortDirection,// ?? orig.sortDirection,
+                    sortOrder: savedCol.sortOrder,// ?? orig.sortOrder,
                     label: savedCol.label ?? orig.label,
                     summary: savedCol.summary ?? orig.summary,
                 }
