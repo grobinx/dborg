@@ -397,7 +397,8 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                     },
                     intervals: [5, 10, 15, 30, 60],
                     defaultInterval: 10,
-                    canPause: true,
+                    canPause: false,
+                    clearOn: "start"
                 } as IAutoRefresh
             ],
             actionSlotId: cid("dataflow-render"),
