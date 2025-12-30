@@ -81,7 +81,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             }));
             setProgressBar(prev => ({
                 ...prev,
-                node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref) : null,
+                node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref, true) : null,
             }));
             previousRefreshRef.current = refresh;
         }
@@ -114,7 +114,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     }, [tabsItemID, itemID, active]);
 
     return (
-        <TabPanelContent ref={ref} tabsItemID={tabsItemID} itemID={itemID}>
+        <TabPanelContent ref={ref} tabsItemID={tabsItemID} itemID={itemID} sx={{ position: "relative" }}>
             {progressBar.node}
             {content.node}
         </TabPanelContent>

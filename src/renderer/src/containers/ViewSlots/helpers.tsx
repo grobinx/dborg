@@ -224,11 +224,12 @@ export function createProgressBarContent(
     slot: ProgressBarSlotFactory,
     refreshSlot: (id: string) => void,
     ref: React.Ref<HTMLDivElement>,
+    absolute?: boolean,
 ): React.ReactNode {
     const resolvedContent = resolveProgressBarFactory(slot, refreshSlot);
     if (resolvedContent) {
         if (resolvedContent.type === "progress") {
-            return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} absolute={absolute} />;
         }
     }
     return null;

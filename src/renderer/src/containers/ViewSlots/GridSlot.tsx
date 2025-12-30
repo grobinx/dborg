@@ -136,7 +136,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         };
         setProgressBar(prev => ({
             ...prev,
-            node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref) : null,
+            node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref, true) : null,
         }));
         fetchRows();
         console.debug("GridSlot updating content for slot:", slot.id, refresh);
@@ -201,6 +201,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 width: "100%",
                 height: "100%",
                 overflow: "hidden",
+                position: "relative",
             }}
             ref={rootRef}
         >

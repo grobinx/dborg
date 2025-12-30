@@ -13,6 +13,7 @@ interface ProgressBarSlotProps extends Omit<React.ComponentProps<typeof Box>, "s
 interface ProgressBarSlotOwnProps extends ProgressBarSlotProps {
     slot: IProgressBarSlot;
     ref?: React.Ref<HTMLDivElement>;
+    absolute?: boolean;
 }
 
 const StyledProgressBarSlot = styled(Box)(({ theme }) => ({
@@ -31,7 +32,7 @@ const ProgressContainer = styled(Box)({
 });
 
 const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
-    const { slot, ref, className, ...other } = useThemeProps({ name: "ProgressBarSlot", props });
+    const { slot, ref, className, absolute: absoluteInit, ...other } = useThemeProps({ name: "ProgressBarSlot", props });
     const theme = useTheme();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [display, setDisplay] = React.useState<boolean>(false);
@@ -101,11 +102,13 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const variant = value === null || value === undefined ? "indeterminate" : "determinate";
     const progressValue = value ?? 0;
     const progressBufferValue = bufferValue ?? undefined;
+    const absolute = absoluteInit && !label && !showPercent;
 
     return (
         <StyledProgressBarSlot
             ref={rootRef}
             className={`ProgressBarSlot-root ${className ?? ""}`}
+            sx={{ position: absolute ? "absolute" : "relative", top: absolute ? 0 : undefined, zIndex: absolute ? 1000 : undefined }}
             {...other}
         >
             {display && (

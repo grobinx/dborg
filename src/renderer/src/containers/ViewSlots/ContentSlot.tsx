@@ -100,7 +100,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref)
+                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref, true)
             }));
         }
         setMainSlot(prev => ({
@@ -115,6 +115,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         <StyledContentSlot
             ref={rootRef}
             className={`ContentSlot-root ${className ?? ""}`}
+            sx={{ position: "relative", }}
             {...other}
         >
             {progressBar.node}
