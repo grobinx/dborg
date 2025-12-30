@@ -7,6 +7,7 @@ import databaseSettingsTab from "./databaseSettingsTab";
 import databaseExtensionsTab from "./databaseExtensionsTab";
 import { schemasTab } from "./schemasTab";
 import { rolesTab } from "./rolesTab";
+import dataFlowTab from "./dataFlowTab";
 
 export function databaseView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
@@ -43,6 +44,7 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
                     tabs: [
                         sessionsTab(session, database),
                         activityTab(session, database),
+                        dataFlowTab(session, database),
                         schemasTab(session),
                         rolesTab(session),
                         databaseSettingsTab(session),
