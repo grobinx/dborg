@@ -85,6 +85,10 @@ export interface ColumnDefinition {
      */
     sortOrder?: number;
     /**
+     * Czy kolumna jest sortowalna.
+     */
+    sortable?: boolean;
+    /**
      * Czy kolumna jest ukryta.
      * Jeśli jest ukryta, nie będzie wyświetlana w tabeli.
      */

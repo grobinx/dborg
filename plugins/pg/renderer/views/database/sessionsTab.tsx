@@ -210,6 +210,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 params
                             );
                             sessions = rows;
+                            //rows.splice(2, 0, { } as any);
                             return rows;
                         },
                         columns: [
@@ -227,9 +228,11 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             { key: "wait_event_type", label: t("wait-event-type", "Wait Event Type"), width: 140, dataType: "string" },
                             { key: "wait_event", label: t("wait-event", "Wait Event"), width: 140, dataType: "string" },
                             { key: "blocking_pids", label: t("blocking-pids", "Blocking PIDs"), width: 150, dataType: ["number"] },
-                            { key: "query", label: t("query", "Query"), width: 400, dataType: "string", formatter: (value) => {
-                                return collapseWhitespaceExceptQuotes(value);
-                            } },
+                            {
+                                key: "query", label: t("query", "Query"), width: 400, dataType: "string", formatter: (value) => {
+                                    return collapseWhitespaceExceptQuotes(value);
+                                }
+                            },
                         ] as ColumnDefinition[],
                         autoSaveId: `sessions-grid-${session.profile.sch_id}`,
                         statuses: [

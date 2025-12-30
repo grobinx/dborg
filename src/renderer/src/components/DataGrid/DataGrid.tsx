@@ -1396,7 +1396,9 @@ export const DataGrid = <T extends object>({
                                 onClick={() => {
                                     if (!resizingColumn) {
                                         updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
-                                        dataGridActionContext.sortData(absoluteColIndex);
+                                        if ((col.sortable ?? true) && !pivot) {
+                                            dataGridActionContext.sortData(absoluteColIndex);
+                                        }
                                     }
                                 }}
                             >
@@ -1502,6 +1504,7 @@ export const DataGrid = <T extends object>({
                         const isActiveRow = active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
+                        const hasKeys = Object.keys(row).length > 0;
 
                         return (
                             <StyledRow
@@ -1540,86 +1543,99 @@ export const DataGrid = <T extends object>({
                                         {absoluteRowIndex + 1}
                                     </StyledCell>
                                 )}
-                                {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
-                                    const absoluteColIndex = startColumn + localColIndex;
-                                    const col = columnsState.current[absoluteColIndex];
-                                    const colWidth = col.width || 150;
-                                    const isActiveColumn = active_highlight && absoluteColIndex === selectedCell?.column;
-                                    const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
-                                    let columnDataType = (col.summary && groupingColumns.columns.length
-                                        ? summaryOperationToBaseTypeMap[col.summary]
-                                        : undefined) ?? col.dataType ?? 'string';
+                                {hasKeys ?
+                                    Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
+                                        const absoluteColIndex = startColumn + localColIndex;
+                                        const col = columnsState.current[absoluteColIndex];
+                                        const colWidth = col.width || 150;
+                                        const isActiveColumn = active_highlight && absoluteColIndex === selectedCell?.column;
+                                        const isCellActive = absoluteRowIndex === selectedCell?.row && absoluteColIndex === selectedCell?.column;
+                                        let columnDataType = (col.summary && groupingColumns.columns.length
+                                            ? summaryOperationToBaseTypeMap[col.summary]
+                                            : undefined) ?? col.dataType ?? 'string';
 
-                                    if (pivot && absoluteColIndex > 0) {
-                                        columnDataType = pivotMap?.[row["key"]] ?? 'string';
-                                    }
-
-                                    const cellValue = row[col.key];
-                                    let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
-                                    if (cellValue === undefined || cellValue === null) {
-                                        baseDataType = "null";
-                                    }
-                                    else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
-                                        baseDataType = "null";
-                                    }
-
-                                    const alignClass = baseDataType === 'number' ? 'align-end' : (baseDataType === 'boolean' || baseDataType === 'datetime') ? 'align-center' : 'align-start';
-
-                                    let formattedValue: React.ReactNode;
-                                    try {
-                                        formattedValue = columnDataFormatter(
-                                            cellValue,
-                                            columnDataType,
-                                            col.formatter,
-                                            null_value,
-                                            row,
-                                            col.key,
-                                            { maxLength: displayMaxLengh }
-                                        );
-                                        const searchText = searchState.current.text?.trim();
-                                        if (typeof formattedValue === "string" && searchText) {
-                                            formattedValue =
-                                                highlightText(
-                                                    formattedValue,
-                                                    searchText,
-                                                    true,
-                                                    searchState.current.caseSensitive,
-                                                    theme.palette.primary.main
-                                                );
+                                        if (pivot && absoluteColIndex > 0) {
+                                            columnDataType = pivotMap?.[row["key"]] ?? 'string';
                                         }
-                                    } catch {
-                                        formattedValue = "{error}";
-                                        baseDataType = "error";
-                                    }
 
-                                    const cell = (
+                                        const cellValue = row[col.key];
+                                        let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
+                                        if (cellValue === undefined || cellValue === null) {
+                                            baseDataType = "null";
+                                        }
+                                        else if (!groupingColumns.isInGroup(col.key) && (!col.summary) && groupingColumns.columns.length && Array.isArray(cellValue)) {
+                                            baseDataType = "null";
+                                        }
+
+                                        const alignClass = baseDataType === 'number' ? 'align-end' : (baseDataType === 'boolean' || baseDataType === 'datetime') ? 'align-center' : 'align-start';
+
+                                        let formattedValue: React.ReactNode;
+                                        try {
+                                            formattedValue = columnDataFormatter(
+                                                cellValue,
+                                                columnDataType,
+                                                col.formatter,
+                                                null_value,
+                                                row,
+                                                col.key,
+                                                { maxLength: displayMaxLengh }
+                                            );
+                                            const searchText = searchState.current.text?.trim();
+                                            if (typeof formattedValue === "string" && searchText) {
+                                                formattedValue =
+                                                    highlightText(
+                                                        formattedValue,
+                                                        searchText,
+                                                        true,
+                                                        searchState.current.caseSensitive,
+                                                        theme.palette.primary.main
+                                                    );
+                                            }
+                                        } catch {
+                                            formattedValue = "{error}";
+                                            baseDataType = "error";
+                                        }
+
+                                        const cell = (
+                                            <StyledCell
+                                                key={localColIndex}
+                                                data-r={absoluteRowIndex} // potrzebne do delegacji
+                                                data-c={absoluteColIndex} // potrzebne do delegacji
+                                                className={clsx(
+                                                    "DataGrid-cell",
+                                                    classes,
+                                                    isCellActive && "active-cell",
+                                                    isCellActive && isFocused && "focused",
+                                                    `data-type-${baseDataType}`,
+                                                    alignClass,
+                                                    isActiveColumn && 'active-column',
+                                                    isActiveRow && 'active-row',
+                                                )}
+                                                style={{
+                                                    width: colWidth,
+                                                    left: columnLeft,
+                                                }}
+                                            >
+                                                {formattedValue}
+                                            </StyledCell>
+                                        );
+
+                                        columnLeft += colWidth;
+
+                                        return cell;
+                                    }) : (
                                         <StyledCell
-                                            key={localColIndex}
-                                            data-r={absoluteRowIndex} // potrzebne do delegacji
-                                            data-c={absoluteColIndex} // potrzebne do delegacji
-                                            className={clsx(
-                                                "DataGrid-cell",
-                                                classes,
-                                                isCellActive && "active-cell",
-                                                isCellActive && isFocused && "focused",
-                                                `data-type-${baseDataType}`,
-                                                alignClass,
-                                                isActiveColumn && 'active-column',
-                                                isActiveRow && 'active-row',
-                                            )}
+                                            key="no-data-cell"
+                                            className={clsx("DataGrid-cell")}
                                             style={{
-                                                width: colWidth,
-                                                left: columnLeft,
+                                                width: columnsState.totalWidth - (showRowNumberColumn ? rowNumberColumnWidth : 0),
+                                                left: columnsState.columnLeft(0),
                                             }}
                                         >
-                                            {formattedValue}
+                                            <hr />
                                         </StyledCell>
-                                    );
-
-                                    columnLeft += colWidth;
-
-                                    return cell;
-                                })}
+                                    )
+                                }
                             </StyledRow>
                         );
                     })}
