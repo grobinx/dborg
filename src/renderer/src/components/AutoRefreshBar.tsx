@@ -260,7 +260,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                             className="auto-refresh-start-button"
                             onClick={() => {
                                 handleStateChange("running");
-                                onStop?.();
+                                onStart?.();
                             }}
                             size="small"
                         >
@@ -273,7 +273,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                             className="auto-refresh-stop-button"
                             onClick={() => {
                                 handleStateChange("stopped");
-                                onStart?.();
+                                onStop?.();
                             }}
                             size="small"
                         >

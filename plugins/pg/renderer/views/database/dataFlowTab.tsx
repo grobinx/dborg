@@ -50,6 +50,8 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
     let snapshotCounter = 0;
     let loadingStats: boolean = false;
     let thresholds: Record<string, number> = {}; // kalibrowane progi (maksima zaobserwowane w czasie pracy)
+    let intervalSec = 10;
+    let safetyFactor = 3;
 
     const num = (v: any) => {
         const n = typeof v === "number" ? v : Number(v);
@@ -423,6 +425,61 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
         }
     });
 
+    async function initThresholds() {
+        if (!databaseName) return;
+        try {
+            // pobierz max_connections z pg_settings
+            let maxConnections = 0;
+            try {
+                const { rows: confRows } = await session.query<any>("SELECT setting FROM pg_settings WHERE name = 'max_connections'");
+                if (confRows?.[0]) maxConnections = Number(confRows[0].setting) || 0;
+            } catch (e) { maxConnections = 0; }
+
+            const qDb = `
+                SELECT datname, numbackends,
+                       blks_read, blks_hit,
+                       xact_commit, xact_rollback,
+                       tup_inserted, tup_updated, tup_deleted,
+                       extract(epoch from now() - stats_reset) as uptime_sec
+                FROM pg_stat_database
+                WHERE datname = $1
+            `;
+
+            const { rows: dbRows } = await session.query<any>(qDb, [databaseName]);
+
+            // pobierz statystyki bgwriter do obliczenia writes
+            let buffers_checkpoint = 0;
+            let buffers_backend = 0;
+            try {
+                const { rows: bgRows } = await session.query<any>("SELECT buffers_checkpoint, buffers_backend FROM pg_stat_bgwriter");
+                if (bgRows?.[0]) {
+                    buffers_checkpoint = Number(bgRows[0].buffers_checkpoint || 0);
+                    buffers_backend = Number(bgRows[0].buffers_backend || 0);
+                }
+            } catch (e) { buffers_checkpoint = buffers_backend = 0; }
+
+            if (!dbRows?.length) return;
+            const r = dbRows[0];
+            const uptime = Math.max(1, Number(r.uptime_sec || 1));
+
+            const avg_reads_per_sec = Number(r.blks_read || 0) / uptime;
+            const avg_writes_per_sec = (buffers_checkpoint + buffers_backend) / uptime;
+            const avg_dml_per_sec = (Number(r.tup_inserted || 0) + Number(r.tup_updated || 0) + Number(r.tup_deleted || 0)) / uptime;
+            const avg_tx_per_sec = (Number(r.xact_commit || 0) + Number(r.xact_rollback || 0)) / uptime;
+
+            const active_sessions_guess = Math.max(0, maxConnections || Number(r.numbackends || 0));
+
+            thresholds.sessions = maxConnections;
+            thresholds.reads = Math.round(avg_reads_per_sec * intervalSec * safetyFactor);
+            thresholds.writes = Math.round(avg_writes_per_sec * intervalSec * safetyFactor);
+            thresholds.dml = Math.round(avg_dml_per_sec * intervalSec * safetyFactor);
+            thresholds.tx = Math.round(avg_tx_per_sec * intervalSec * safetyFactor);
+            thresholds.bgwriter = Math.round((buffers_checkpoint / uptime) * intervalSec * safetyFactor);
+        } catch (e) {
+            // ignore init failures
+        }
+    }
+
     return {
         id: cid("database-dataflow-tab"),
         type: "tab",
@@ -438,19 +495,20 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             type: "toolbar",
             tools: [
                 {
-                    onTick: async (refresh: (id: string) => void) => {
+                    onTick: async (refresh) => {
                         try {
                             await fetchSnapshot(refresh);
                         } catch (e) { /* ignore */ }
                         refresh(cid("dataflow-render"));
                     },
-                    onClear: (refresh: (id: string) => void) => {
+                    onClear: (refresh, context) => {
                         snapshots = [];
-                        thresholds = {}; // reset kalibracji przy czyszczeniu
+                        intervalSec = context.interval ?? intervalSec;
+                        initThresholds();
                         refresh(cid("dataflow-render"));
                     },
                     intervals: [5, 10, 15, 30, 60],
-                    defaultInterval: 10,
+                    defaultInterval: intervalSec,
                     canPause: false,
                     clearOn: "start"
                 } as IAutoRefresh
