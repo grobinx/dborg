@@ -183,6 +183,9 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                 thresholds.tx = Math.max(thresholds.tx ?? 0, tx);
                 thresholds.bgwriter = Math.max(thresholds.bgwriter ?? 0, bgwriter);
             }
+        } catch (error) {
+            console.error("Error fetching stats data:", error);
+            throw error;
         }
         finally {
             loadingStats = false;
@@ -485,16 +488,15 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             const avg_dml_per_sec = (Number(r.tup_inserted || 0) + Number(r.tup_updated || 0) + Number(r.tup_deleted || 0)) / uptime;
             const avg_tx_per_sec = (Number(r.xact_commit || 0) + Number(r.xact_rollback || 0)) / uptime;
 
-            const active_sessions_guess = Math.max(0, maxConnections || Number(r.numbackends || 0));
-
             thresholds.sessions = maxConnections;
             thresholds.reads = Math.round(avg_reads_per_sec * intervalSec * safetyFactor);
             thresholds.writes = Math.round(avg_writes_per_sec * intervalSec * safetyFactor);
             thresholds.dml = Math.round(avg_dml_per_sec * intervalSec * safetyFactor);
             thresholds.tx = Math.round(avg_tx_per_sec * intervalSec * safetyFactor);
             thresholds.bgwriter = Math.round((buffers_checkpoint / uptime) * intervalSec * safetyFactor);
-        } catch (e) {
-            // ignore init failures
+        } catch (error) {
+            console.error("Error fetching thresholds data:", error);
+            throw error;
         }
     }
 
