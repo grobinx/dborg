@@ -239,12 +239,16 @@ where n.nspname not like 'pg_toast%'
                         },
                         {
                             id: "schema-refresh-all",
-                            label: t("refresh-schemas", "Refresh All Schema Stats"),
+                            label: () => loadingStats ? t("cancel-refresh-schemas", "Cancel Refresh All Schema Stats") : t("refresh-schemas", "Refresh All Schema Stats"),
                             keybindings: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 2,
-                            disabled: () => loadingStats,
+                            //disabled: () => loadingStats,
                             run: async () => {
+                                if (loadingStats) {
+                                    loadingStats = false;
+                                    return;
+                                }
                                 loadingStats = true;
                                 try {
                                     for (const [index, row] of allRows.entries()) {
@@ -261,6 +265,9 @@ where n.nspname not like 'pg_toast%'
                                                 loadingStatsRow.splice(index, 1);
                                             }
                                             refresh(cid("schemas-grid"), "only");
+                                        }
+                                        if (!loadingStats) {
+                                            break;
                                         }
                                     };
                                 }

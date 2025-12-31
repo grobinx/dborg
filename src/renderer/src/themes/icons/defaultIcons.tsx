@@ -1,4 +1,4 @@
-import { CircularProgress, Palette, ThemeOptions } from "@mui/material";
+import { Palette, ThemeOptions } from "@mui/material";
 import { IconWrapper } from ".";
 import * as MuiIcons from "@mui/icons-material";
 import * as BsIcons from "react-bootstrap-icons";
@@ -9,7 +9,6 @@ import { Connected } from "./svg/Connected";
 import { Disconnected } from "./svg/Disconnected";
 import { GroupList } from "./svg/GroupList";
 import { Testcafe } from "./svg/Testcafe";
-import { Sql } from "./svg/Sql";
 import { DatabaseView } from "./svg/DatabaseView";
 import { AdjustWidth } from "./svg/AdjustWidth";
 import { Reset } from "./svg/Reset";
@@ -35,7 +34,6 @@ import { SpecialChar } from "./svg/SpecialChar";
 import { SpaceOff } from "./svg/SpaceOff";
 import { UpperLetter } from "./svg/UpperLetter";
 import { LowerLetter } from "./svg/LowerLetter";
-import { CircleGauge } from "./svg/CircleGuage";
 import { Rotate } from "@renderer/components/useful/Rotate";
 import { Resume } from "./svg/Resume";
 
@@ -166,6 +164,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Pinned: (props) => <IconWrapper {...props} className="pinned"><MuiIcons.PushPin fontSize="inherit" /></IconWrapper>,
             Tools: (props) => <IconWrapper {...props} className="tools"><MuiIcons.HandymanOutlined fontSize="inherit" /></IconWrapper>,
             Users: (props) => <IconWrapper {...props} className="users"><MuiIcons.PeopleAltOutlined fontSize="inherit" /></IconWrapper>,
+            Flow: (props) => <IconWrapper {...props} className="flow"><MuiIcons.AccountTreeOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

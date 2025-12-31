@@ -89,9 +89,20 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
 
     async function fetchSnapshot(refresh: RefreshSlotFunction) {
         if (!databaseName) return;
-        const backendWaitCond = versionNumber >= 140000
-            ? `COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type ilike 'LWLock%') as wait_lwlock,`
-            : `COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type ilike 'LWLock%') as wait_lwlock,`;
+
+        // PostgreSQL 17+ przeniosło buffers_* z pg_stat_bgwriter do pg_stat_io
+        const bufferStatsQuery = versionNumber >= 170000 
+            ? `
+                SELECT 
+                    COALESCE(SUM(writes) FILTER (WHERE context = 'normal'), 0) as buffers_alloc,
+                    COALESCE(SUM(writes) FILTER (WHERE context = 'normal' AND object = 'relation'), 0) as buffers_checkpoint,
+                    COALESCE(SUM(writes) FILTER (WHERE backend_type != 'checkpointer'), 0) as buffers_backend
+                FROM pg_stat_io
+            `
+            : `
+                SELECT buffers_alloc, buffers_checkpoint, buffers_backend
+                FROM pg_stat_bgwriter
+            `;
 
         const query = `
             WITH db AS (
@@ -106,7 +117,8 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             be AS (
                 SELECT
                     COUNT(*) FILTER (WHERE state = 'active') as backends_active,
-                    ${backendWaitCond}
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Lock') as wait_lock,
+                    COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'LWLock') as wait_lwlock,
                     COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'IO') as wait_io,
                     COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'BufferPin') as wait_bufferpin,
                     COUNT(*) FILTER (WHERE state != 'idle' AND wait_event_type = 'Timeout') as wait_timeout
@@ -114,8 +126,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
                 WHERE datname = $1
             ),
             bg AS (
-                SELECT buffers_alloc, buffers_checkpoint, buffers_backend
-                FROM pg_stat_bgwriter
+                ${bufferStatsQuery}
             )
             SELECT db.*, be.*, bg.*, extract(epoch from now())*1000 as ts
             FROM db CROSS JOIN be CROSS JOIN bg
@@ -259,7 +270,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
     const renderFlow = (): IRenderedSlot => ({
         id: cid("dataflow-render"),
         type: "rendered",
-        render: ({ refresh }) => {
+        render: ({ refresh: _refresh }) => {
             const theme = useTheme();
             const { nodes, links, totals, anomalies } = computeFlow();
             const thresholds = computeThresholds();
@@ -447,11 +458,18 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
 
             const { rows: dbRows } = await session.query<any>(qDb, [databaseName]);
 
-            // pobierz statystyki bgwriter do obliczenia writes
+            // pobierz statystyki bgwriter/io do obliczenia writes
             let buffers_checkpoint = 0;
             let buffers_backend = 0;
             try {
-                const { rows: bgRows } = await session.query<any>("SELECT buffers_checkpoint, buffers_backend FROM pg_stat_bgwriter");
+                const bgQuery = versionNumber >= 170000
+                    ? `SELECT 
+                    COALESCE(SUM(writes) FILTER (WHERE context = 'normal' AND object = 'relation'), 0) as buffers_checkpoint,
+                    COALESCE(SUM(writes) FILTER (WHERE backend_type != 'checkpointer'), 0) as buffers_backend
+                   FROM pg_stat_io`
+                    : `SELECT buffers_checkpoint, buffers_backend FROM pg_stat_bgwriter`;
+                
+                const { rows: bgRows } = await session.query<any>(bgQuery);
                 if (bgRows?.[0]) {
                     buffers_checkpoint = Number(bgRows[0].buffers_checkpoint || 0);
                     buffers_backend = Number(bgRows[0].buffers_backend || 0);
@@ -490,7 +508,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             icon: "Flow",
         },
         content: () => renderSlotContent(),
-        toolBar: (refresh) => ({
+        toolBar: () => ({
             id: cid("dataflow-toolbar"),
             type: "toolbar",
             tools: [

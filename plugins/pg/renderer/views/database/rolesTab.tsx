@@ -232,12 +232,16 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         },
                         {
                             id: "role-refresh-all",
-                            label: t("refresh-roles", "Refresh All Role Stats"),
+                            label: () => loadingStats ? t("cancel-refresh-roles", "Cancel Refresh All Role Stats") : t("refresh-roles", "Refresh All Role Stats"),
                             keybindings: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 2,
-                            disabled: () => loadingStats,
+                            //disabled: () => loadingStats,
                             run: async () => {
+                                if (loadingStats) {
+                                    loadingStats = false;
+                                    return;
+                                }
                                 loadingStats = true;
                                 try {
                                     for (const [index, row] of allRows.entries()) {
@@ -253,6 +257,9 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                             if (index !== -1) loadingStatsRow.splice(index, 1);
                                             refresh(cid("roles-grid"), "only");
                                             refresh(cid("roles-stats-progress"));
+                                        }
+                                        if (!loadingStats) {
+                                            break;
                                         }
                                     }
                                 } finally {
