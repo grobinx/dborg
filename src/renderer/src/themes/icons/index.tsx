@@ -199,6 +199,7 @@ export interface ThemeIcons {
     Tools: IconWrapperFC;
     Users: IconWrapperFC;
     Flow: IconWrapperFC;
+    UserRemove: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

@@ -26,6 +26,7 @@ import {
     isSearchField,
     ProgressBarSlotFactory,
     resolveProgressBarFactory,
+    isTextSlot,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -343,6 +344,13 @@ export function createActionComponents(
                             key={index}
                             action={action}
                             refreshSlot={refreshSlot}
+                        />
+                    );
+                } else if (isTextSlot(action)) {
+                    return (
+                        <TextSlot
+                            key={action.id}
+                            slot={action}
                         />
                     );
                 }

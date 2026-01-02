@@ -165,6 +165,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Tools: (props) => <IconWrapper {...props} className="tools"><MuiIcons.HandymanOutlined fontSize="inherit" /></IconWrapper>,
             Users: (props) => <IconWrapper {...props} className="users"><MuiIcons.PeopleAltOutlined fontSize="inherit" /></IconWrapper>,
             Flow: (props) => <IconWrapper {...props} className="flow"><MuiIcons.AccountTreeOutlined fontSize="inherit" /></IconWrapper>,
+            UserRemove: (props) => <IconWrapper {...props} className="user-remove"><MuiIcons.PersonRemoveOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

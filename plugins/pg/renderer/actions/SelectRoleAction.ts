@@ -2,19 +2,19 @@ import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import i18next, { TFunction } from "i18next";
 
-export const SelectSchemaAction_ID = "dataGrid.pg.actions.selectSchema";
+export const SelectRoleAction_ID = "dataGrid.pg.actions.selectRole";
 
-export const SelectSchemaAction = (): Action<DataGridActionContext<any>> => {
+export const SelectRoleAction = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
-        id: SelectSchemaAction_ID,
+        id: SelectRoleAction_ID,
         keybindings: ["Ctrl+M"],
-        label: t(SelectSchemaAction_ID, "Select schema"),
-        icon: "SelectDatabaseSchema",
+        label: t(SelectRoleAction_ID, "Select role"),
+        icon: "Users",
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 999,
         run: (context) => {
-            context.openCommandPalette("SCHEMA:", "");
+            context.openCommandPalette("ROLE:", "");
         },
     };
 }

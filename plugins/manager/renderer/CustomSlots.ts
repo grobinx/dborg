@@ -64,6 +64,7 @@ export type ToolKind<T = any> =
     | FieldTypeKind
     | IAutoRefresh
     | ICopyData
+    | ITextSlot
     ;
 
 export interface ISelectOption {
@@ -308,7 +309,7 @@ export interface ICopyData<T = any> {
      * @default true
      */
     showNotification?: boolean;
-} 
+}
 
 export interface ISlot {
     /**
@@ -885,6 +886,15 @@ export function isCopyData(obj: any): obj is ICopyData {
         typeof obj === "object" &&
         obj !== null &&
         typeof obj.getData === "function"
+    );
+}
+export function isTextSlot(obj: any): obj is ITextSlot {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        "text" in obj &&
+        "type" in obj &&
+        obj.type === "text"
     );
 }
 

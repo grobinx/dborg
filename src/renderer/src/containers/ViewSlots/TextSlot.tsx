@@ -16,8 +16,8 @@ interface TextSlotOwnProps extends TextSlotProps {
 const StyledTextSlot = styled(Box, {
     shouldForwardProp: (prop) => prop !== "maxLines"
 })<{ maxLines?: number }>(({ maxLines }) => ({
-    maxHeight: `calc(${maxLines ?? 3} * 1.4em)`,
-    overflow: "auto",
+    maxHeight: maxLines && maxLines > 1 ? `calc(${maxLines} * 1.4em)` : undefined,
+    overflow: maxLines && maxLines > 1 ? "auto" : "hidden",
     padding: 4,
 }));
 

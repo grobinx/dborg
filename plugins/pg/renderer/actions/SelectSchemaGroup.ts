@@ -22,8 +22,8 @@ export const SelectSchemaGroup = (
 
     return {
         id: id,
-        prefix: "#",
-        label: t(id, "# Select schema"),
+        prefix: "SCHEMA:",
+        label: t(id, "SCHEMA: Select schema"),
         mode: "actions",
         actions: async () => {
             const actions: Action<any>[] = [];
