@@ -2,6 +2,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import tableSizesTab from "./tableSizesTab";
+import roleCleanupTab from "./roleCleanupTab";
 
 export function toolsView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
@@ -28,6 +29,7 @@ export function toolsView(session: IDatabaseSession): ConnectionView {
                     type: "tabs",
                     tabs: [
                         tableSizesTab(session),
+                        roleCleanupTab(session),
                     ],
                 }),
             },

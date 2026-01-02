@@ -47,7 +47,7 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
         label: {
             id: cid("database-table-sizes-tab-label"),
             type: "tablabel",
-            label: t("database-table-sizes", "Size & Objects"),
+            label: t("database-table-sizes", "Relation Sizes"),
             icon: "Storage",
         },
         content: {
