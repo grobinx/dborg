@@ -9,7 +9,7 @@ export const MoveColumnFromEnd = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Alt+ArrowLeft"],
+        keySequence: ["Alt+ArrowLeft"],
         label: t(id, "Move column from end to current position"),
         run: (context) => {
             const position = context.getPosition();

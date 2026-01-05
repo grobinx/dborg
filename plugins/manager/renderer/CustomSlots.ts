@@ -485,6 +485,18 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      * @param refresh 
      */
     onPin?: (refresh: RefreshSlotFunction) => void;
+    /**
+     * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
+     */
+    actionGroups?: ActionGroupFactory;
+    /**
+     * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
+     */
+    actions?: ActionFactory;
+    /**
+     * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
+     */
+    keySequence?: string[];
 }
 
 /**
@@ -533,6 +545,18 @@ export interface IContentSlot extends ICustomSlot {
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
     progress?: ProgressBarSlotFactory;
+    /**
+     * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
+     */
+    actionGroups?: ActionGroupFactory;
+    /**
+     * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
+     */
+    actions?: ActionFactory;
+    /**
+     * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
+     */
+    keySequence?: string[];
 }
 
 /**

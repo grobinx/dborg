@@ -8,7 +8,7 @@ export const ResetColumnsLayout = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Alt+Shift+R"],
+        keySequence: ["Alt+Shift+R"],
         label: t(id, "Reset columns layout"),
         run: (context) => {
             context.resetColumnsLayout();

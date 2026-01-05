@@ -47,7 +47,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             id: 'cmAdd',
             label: t('add-item', 'Add Item'),
             icon: theme.icons.Add,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: () => {
                 if (canAdd(newValue)) {
                     addItem();
@@ -59,7 +59,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             id: 'cmEdit',
             label: t('edit-item', 'Edit Item'),
             icon: theme.icons.EditableEditor,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: (_, index) => {
                 if ((selected !== null || index !== undefined) && editIndex === null) {
                     startEdit(index ?? selected);
@@ -71,7 +71,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             id: 'cmRemove',
             label: t('remove-item', 'Remove Item'),
             icon: theme.icons.Delete,
-            keybindings: ['Delete'],
+            keySequence: ['Delete'],
             run: (_, index) => {
                 if (selected !== null || index !== undefined) {
                     removeItem(index ?? selected);
@@ -83,7 +83,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             id: 'cmSave',
             label: t('save-edit', 'Save Edit'),
             icon: theme.icons.Check,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: () => {
                 saveEdit();
             },
@@ -93,7 +93,7 @@ export const ListField: React.FC<ListFieldProps> = ({
             id: 'cmCancel',
             label: t('cancel-edit', 'Cancel Edit'),
             icon: theme.icons.Close,
-            keybindings: ['Escape'],
+            keySequence: ['Escape'],
             run: () => {
                 cancelEdit();
             },

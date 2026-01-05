@@ -8,7 +8,7 @@ export const GotoColumn = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Ctrl+E"],
+        keySequence: ["Ctrl+E"],
         label: t(id, "Go to column"),
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 4,

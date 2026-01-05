@@ -8,7 +8,7 @@ export const GeneralReset = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Shift+Escape"],
+        keySequence: ["Shift+Escape"],
         label: t(id, "Reset all, filter, sort, grouping, summary"),
         icon: "Reset",
         run: (context) => {

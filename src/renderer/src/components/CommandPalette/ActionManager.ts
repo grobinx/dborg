@@ -156,7 +156,7 @@ export interface Action<T> {
      * Tablica skrótów klawiszowych przypisanych do akcji.
      * Jest to sekwencja klawiszowych.
      */
-    keybindings?: string[];
+    keySequence?: string[];
 
     /**
      * Grupa menu kontekstowego, w której akcja powinna się pojawić.
@@ -283,7 +283,7 @@ export class ActionManager<T> {
      */
     registerAction(...actions: Action<T>[]): void {
         for (const action of actions) {
-            const normalizedKeybindings = action.keybindings?.map(normalizeKeybinding); // Normalizacja keybindings
+            const normalizedKeybindings = action.keySequence?.map(normalizeKeybinding); // Normalizacja keybindings
             const normalizedAction = { ...action, keybindings: normalizedKeybindings };
 
             if (this.actions.has(action.id)) {
@@ -359,7 +359,7 @@ export class ActionManager<T> {
 
         // Sprawdź, czy istnieje akcja pasująca do bieżącej sekwencji
         const action = Array.from(this.actions.values()).find(a =>
-            a.keybindings && this.isSequenceMatch(a.keybindings, this.currentSequence)
+            a.keySequence && this.isSequenceMatch(a.keySequence, this.currentSequence)
         );
 
         if (action) {
@@ -381,9 +381,9 @@ export class ActionManager<T> {
 
         // Jeśli nie znaleziono pasującej akcji, sprawdź, czy sekwencja poprawnie się zaczyna
         const isValidSequence = Array.from(this.actions.values()).some(a =>
-            a.keybindings &&
+            a.keySequence &&
             this.currentSequence.every((key, index) =>
-                a.keybindings![index] !== undefined && key.toLowerCase() === a.keybindings![index].toLowerCase()
+                a.keySequence![index] !== undefined && key.toLowerCase() === a.keySequence![index].toLowerCase()
             )
         );
 

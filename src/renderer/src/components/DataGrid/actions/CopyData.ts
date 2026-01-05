@@ -8,7 +8,7 @@ export const CopyData = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Ctrl+Shift+C"],
+        keySequence: ["Ctrl+Shift+C"],
         label: t(id, "Copy data"),
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 5,

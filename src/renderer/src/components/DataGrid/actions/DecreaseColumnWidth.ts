@@ -9,7 +9,7 @@ export const DecreaseColumnWidth = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Alt+Shift+ArrowLeft"],
+        keySequence: ["Alt+Shift+ArrowLeft"],
         label: t(id, "Decrease column width"),
         run: (context) => {
             const width = context.getColumnWidth();

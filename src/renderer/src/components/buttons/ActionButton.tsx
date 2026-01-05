@@ -30,7 +30,7 @@ export function prepareAction<T,>(context: T, action: Action<T> | undefined, sho
         return null;
     }
 
-    const shortcuts = action?.keybindings;
+    const shortcuts = action?.keySequence;
     const label = typeof action?.label === "function" ? action.label(context, ...args) : action?.label;
 
     return {

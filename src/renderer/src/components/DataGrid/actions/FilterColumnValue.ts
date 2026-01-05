@@ -11,7 +11,7 @@ export const FilterColumnValue = (): Action<DataGridActionContext<any>> => {
     return {
         id: id,
         label: t(id, "Set/Reset Filter to Column Value"),
-        keybindings: ["Alt+Shift+F"],
+        keySequence: ["Alt+Shift+F"],
         run: (context) => {
             const value = context.getValue();
             if (!value) {

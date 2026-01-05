@@ -11,7 +11,7 @@ export const Pivot = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Alt+Shift+P"],
+        keySequence: ["Alt+Shift+P"],
         label: t(id, "Pivot data"),
         disabled: (context) => !context.canPivot(),
         run: (context) => {

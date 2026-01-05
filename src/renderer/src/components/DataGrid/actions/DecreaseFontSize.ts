@@ -9,7 +9,7 @@ export const DecreaseFontSize = (): Action<DataGridActionContext<any>> => {
     return {
         id: id,
         label: t(id, "Decrease font size"),
-        keybindings: ["Alt+Shift+ArrowUp"],
+        keySequence: ["Alt+Shift+ArrowUp"],
         run: (context) => {
             const newHeight = Math.max(context.getFontSize() - 2, 10);
             context.setFontSize(newHeight);

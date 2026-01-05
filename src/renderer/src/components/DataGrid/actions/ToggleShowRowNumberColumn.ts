@@ -10,7 +10,7 @@ export const ToggleShowRowNumberColumn = (contextMenu: boolean): Action<DataGrid
     return {
         id: id,
         label: t(id, "Show/Hide row number column"),
-        keybindings: ["Ctrl+K", "R", "N"],
+        keySequence: ["Ctrl+K", "R", "N"],
         contextMenuGroupId: contextMenu ? "layout" : undefined,
         contextMenuOrder: contextMenu ? 2 : undefined,
         run: (context) => {

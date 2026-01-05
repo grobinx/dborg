@@ -183,7 +183,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             id: "refresh-query",
             label: t("refresh-query", "Refresh query"),
             icon: <theme.icons.Refresh />,
-            keybindings: ["F5"],
+            keySequence: ["F5"],
             run: (_context) => {
                 setRefreshQuery(itemID!);
             },

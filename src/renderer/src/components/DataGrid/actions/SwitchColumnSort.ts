@@ -9,7 +9,7 @@ export const SwitchColumnSort = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Ctrl+K", "Ctrl+O"],
+        keySequence: ["Ctrl+K", "Ctrl+O"],
         label: t(id, "Switch column sort order"),
         run: (context) => {
             const position = context.getPosition();

@@ -267,7 +267,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         actions.current.registerAction({
             id: refreshActionId,
             label: t("refresh-profile-list", "Refresh profile list"),
-            keybindings: ["F5"],
+            keySequence: ["F5"],
             icon: "Refresh",
             run: () => {
                 reloadProfiles();
@@ -276,7 +276,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
             id: groupActionId,
             label: t("group-profile-list", "Group profile list"),
             tooltip: t("group-profile-list-tooltip", "Group profile list by group name"),
-            keybindings: ["Ctrl+K", "Ctrl+G"],
+            keySequence: ["Ctrl+K", "Ctrl+G"],
             icon: "GroupList",
             run: () => {
                 setGroupList(prev => !prev);
@@ -285,7 +285,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
             id: sortActionId,
             label: t("sort-profile-list", "Sort profile list"),
             tooltip: t("sort-profile-list-tooltip", "Sort profile list by last used"),
-            keybindings: ["Ctrl+K", "Ctrl+O"],
+            keySequence: ["Ctrl+K", "Ctrl+O"],
             icon: "Sort",
             run: () => {
                 setSortList(prev => !prev);
@@ -293,7 +293,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         }, {
             id: connectActionId,
             label: t("connect-to-database", "Connect to database"),
-            keybindings: ["Enter"],
+            keySequence: ["Enter"],
             icon: "Connected",
             run: (context, profileId) => {
                 context.connect(profileId);
@@ -301,7 +301,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         }, {
             id: deleteActionId,
             label: t("delete-profile", "Delete profile"),
-            keybindings: ["F8"],
+            keySequence: ["F8"],
             icon: "Delete",
             run: (context, profileId) => {
                 context.delete(profileId);
@@ -309,7 +309,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         }, {
             id: testActionId,
             label: t("test-connection", "Test connection"),
-            keybindings: ["Ctrl+T"],
+            keySequence: ["Ctrl+T"],
             icon: "ConnectionTest",
             run: (context, profileId) => {
                 context.test(profileId);
@@ -317,7 +317,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         }, {
             id: editActionId,
             label: t("edit-profile", "Edit profile"),
-            keybindings: ["Ctrl+E"],
+            keySequence: ["Ctrl+E"],
             icon: "EditConnectionSchema",
             run: (context, profileId) => {
                 context.edit(profileId);
@@ -325,7 +325,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         }, {
             id: cloneActionId,
             label: t("clone-profile", "Clone profile"),
-            keybindings: ["Ctrl+Shift+C"],
+            keySequence: ["Ctrl+Shift+C"],
             icon: "CloneConnectionSchema",
             run: (context, profileId) => {
                 context.clone(profileId);
@@ -337,7 +337,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
                     t("disconnect-multiple", "Disconnect all connections to database")
                     : t("disconnect", "Disconnect from database")
             },
-            keybindings: ["Ctrl+D"],
+            keySequence: ["Ctrl+D"],
             icon: "Disconnected",
             run: (context, profileId) => {
                 context.disconnect(profileId);

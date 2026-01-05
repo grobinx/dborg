@@ -8,7 +8,7 @@ export const SelectSchemaAction = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
         id: SelectSchemaAction_ID,
-        keybindings: ["Ctrl+M"],
+        keySequence: ["Ctrl+M"],
         label: t(SelectSchemaAction_ID, "Select schema"),
         icon: "SelectDatabaseSchema",
         contextMenuGroupId: "commandPalette",

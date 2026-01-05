@@ -542,7 +542,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         {resolveIcon(theme, typeof action.icon === "function" ? action.icon(context) : action.icon)}
                                     </ListItemIcon>
                                     <ListItemText>{label}</ListItemText>
-                                    {action.keybindings && <Shortcut keybindings={action.keybindings} sx={{ ml: 8 }} />}
+                                    {action.keySequence && <Shortcut keybindings={action.keySequence} sx={{ ml: 8 }} />}
                                 </MenuItem>
                             </Tooltip>
                         )
@@ -638,7 +638,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                 secondary: { variant: 'description' },
                                             }}
                                         />
-                                        {action.keybindings && <Shortcut keybindings={action.keybindings} />}
+                                        {action.keySequence && <Shortcut keybindings={action.keySequence} />}
                                     </ListItemButton>
                                 </ListItem>
                             )

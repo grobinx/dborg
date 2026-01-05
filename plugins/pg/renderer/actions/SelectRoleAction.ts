@@ -8,7 +8,7 @@ export const SelectRoleAction = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
         id: SelectRoleAction_ID,
-        keybindings: ["Ctrl+M"],
+        keySequence: ["Ctrl+M"],
         label: t(SelectRoleAction_ID, "Select role"),
         icon: "Users",
         contextMenuGroupId: "commandPalette",

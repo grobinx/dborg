@@ -8,7 +8,7 @@ export const IncreaseColumnWidth = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Alt+Shift+ArrowRight"],
+        keySequence: ["Alt+Shift+ArrowRight"],
         label: t(id, "Increase column width"),
         run: (context) => {
             const width = context.getColumnWidth();

@@ -10,7 +10,7 @@ const RefreshGridAction = (
     const t = i18next.t.bind(i18next);
     return {
         id: RefreshGridAction_ID,
-        keybindings: ["F5"],
+        keySequence: ["F5"],
         label: t(RefreshGridAction_ID, "Refresh list"),
         icon: "Refresh",
         contextMenuGroupId: "objectGrid",

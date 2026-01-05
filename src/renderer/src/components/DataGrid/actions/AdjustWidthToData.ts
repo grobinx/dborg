@@ -10,7 +10,7 @@ export const AdjustWidthToData = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     return {
         id: AdjustWidthToData_ID,
-        keybindings: ["Ctrl+I"],
+        keySequence: ["Ctrl+I"],
         label: t(AdjustWidthToData_ID, "Adjust columns width to data"),
         icon: "AdjustWidth",
         contextMenuGroupId: "layout",

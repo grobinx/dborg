@@ -8,7 +8,7 @@ export const SearchReset = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Escape"],
+        keySequence: ["Escape"],
         label: t(id, "Reset search"),
         icon: "ResetSearch",
         run: (context) => {

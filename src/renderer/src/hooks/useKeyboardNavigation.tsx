@@ -175,8 +175,8 @@ export function useKeyboardNavigation<T, V = string, A = any>({
                 }
                 else if (isActions<A>(actions)) {
                     for (const action of Object.values(actions)) {
-                        if (action.keybindings) {
-                            const normalized = normalizeKeybinding(action.keybindings[0]);
+                        if (action.keySequence) {
+                            const normalized = normalizeKeybinding(action.keySequence[0]);
                             if (isKeybindingMatch(normalized, event)) {
                                 action.run(actionContext?.() ?? {} as A, items[currentIndex]);
                                 return;

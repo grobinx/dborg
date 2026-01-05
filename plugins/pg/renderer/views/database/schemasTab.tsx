@@ -211,7 +211,7 @@ where n.nspname not like 'pg_toast%'
                         {
                             id: "schema-stats-refresh",
                             label: t("refresh-schema-stats", "Refresh Schema Stats"),
-                            keybindings: ["Space"],
+                            keySequence: ["Space"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 1,
                             disabled: () => selectedRow === null || loadingStats,
@@ -240,7 +240,7 @@ where n.nspname not like 'pg_toast%'
                         {
                             id: "schema-refresh-all",
                             label: () => loadingStats ? t("cancel-refresh-schemas", "Cancel Refresh All Schema Stats") : t("refresh-schemas", "Refresh All Schema Stats"),
-                            keybindings: ["Alt+Shift+Enter"],
+                            keySequence: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 2,
                             //disabled: () => loadingStats,

@@ -9,7 +9,7 @@ export const CopyValueToClipboard = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["Ctrl+C"],
+        keySequence: ["Ctrl+C"],
         label: t(id, "Copy value to clipboard"),
         icon: "Clipboard",
         contextMenuGroupId: "clipboard",

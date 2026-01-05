@@ -206,7 +206,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         {
                             id: "role-stats-refresh",
                             label: t("refresh-role-stats", "Refresh Role Stats"),
-                            keybindings: ["Space"],
+                            keySequence: ["Space"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 1,
                             disabled: () => selectedRow === null || loadingStats,
@@ -233,7 +233,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         {
                             id: "role-refresh-all",
                             label: () => loadingStats ? t("cancel-refresh-roles", "Cancel Refresh All Role Stats") : t("refresh-roles", "Refresh All Role Stats"),
-                            keybindings: ["Alt+Shift+Enter"],
+                            keySequence: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 2,
                             //disabled: () => loadingStats,

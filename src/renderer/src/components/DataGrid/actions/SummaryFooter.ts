@@ -9,7 +9,7 @@ export const SummaryFooter = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: SummaryFooter_ID,
-        keybindings: ["Ctrl+K", "Ctrl+S"],
+        keySequence: ["Ctrl+K", "Ctrl+S"],
         label: t(SummaryFooter_ID, "Summary footer"),
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 5,

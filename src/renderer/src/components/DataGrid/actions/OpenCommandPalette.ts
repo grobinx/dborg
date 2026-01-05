@@ -8,7 +8,7 @@ export const OpenCommandPalette = (): Action<DataGridActionContext<any>> => {
 
     return {
         id: id,
-        keybindings: ["F1"],
+        keySequence: ["F1"],
         label: t("open-command-palette", "Open command palette"),
         contextMenuGroupId: "commandPalette",
         contextMenuOrder: 1,

@@ -196,7 +196,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             id: 'cmAdd',
             label: t('add-item', 'Add Item'),
             icon: theme.icons.Add,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: () => {
                 if (canAdd()) {
                     addItem();
@@ -208,7 +208,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             id: 'cmEdit',
             label: t('edit-item', 'Edit Item'),
             icon: theme.icons.EditableEditor,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: (_, key) => {
                 if ((selected !== null || key !== undefined) && editKey === null) {
                     startEdit(key ?? selected);
@@ -220,7 +220,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             id: 'cmRemove',
             label: t('remove-item', 'Remove Item'),
             icon: theme.icons.Delete,
-            keybindings: ['Delete'],
+            keySequence: ['Delete'],
             run: (_, key) => {
                 if (selected !== null || key !== undefined) {
                     removeItem(key ?? selected);
@@ -232,7 +232,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             id: 'cmSave',
             label: t('save-edit', 'Save Edit'),
             icon: theme.icons.Check,
-            keybindings: ['Enter'],
+            keySequence: ['Enter'],
             run: () => {
                 saveEdit();
             },
@@ -242,7 +242,7 @@ export const PropertyField: React.FC<PropertyFieldProps> = ({
             id: 'cmCancel',
             label: t('cancel-edit', 'Cancel Edit'),
             icon: theme.icons.Close,
-            keybindings: ['Escape'],
+            keySequence: ['Escape'],
             run: () => {
                 cancelEdit();
             },
