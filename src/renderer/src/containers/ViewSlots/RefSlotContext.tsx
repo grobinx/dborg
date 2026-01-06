@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useRef } from "react";
 
-type RefType = "monaco.editor" | "datagrid" | "html";
+type RefType = "monaco.editor" | "datagrid" | "html" | "tabcontent" | "content";
 
 interface RegisteredRef {
     type: RefType;

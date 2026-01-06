@@ -14,7 +14,7 @@ export interface ActionShows {
 }
 
 export interface ActionProps<T> {
-    actionManager?: ActionManager<T>; // Menedżer akcji
+    actionManager?: ActionManager<T> | (() => ActionManager<T>); // Menedżer akcji
     /**
      * Identyfikator akcji lub opis akcji do powiązania z przyciskiem.
      * Jeśli podano menedżer akcji, można użyć identyfikatora akcji
@@ -57,7 +57,7 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
     const resolvedAction =
         typeof action === "string" ?
             actionManager ?
-                actionManager.getAction(action)
+                (typeof actionManager === "function" ? actionManager()?.getAction(action) : actionManager.getAction(action))
                 : undefined
             : action;
 
@@ -65,6 +65,7 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
     const context = actionContext?.() ?? {} as T;
 
     if (resolvedAction) {
+        console.log('resolvedAction.id', resolvedAction.id);
         pa = prepareAction(context, resolvedAction, { label: true, icon: true, shortcut: true, tooltip: true, ...actionShows }, actionArgs);
     }
 

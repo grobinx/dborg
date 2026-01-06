@@ -1,15 +1,15 @@
-import { Monaco } from "@monaco-editor/react";
 import { Theme } from "@mui/material";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
-import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
 import { ThemeIconName } from "@renderer/themes/icons";
 import { ThemeColor } from "@renderer/types/colors";
 import { ExportFormat } from "@renderer/utils/arrayTo";
@@ -434,6 +434,18 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
     progress?: ProgressBarSlotFactory;
+    /**
+     * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
+     */
+    actionGroups?: ActionGroupFactory<TabContentSlotContext>;
+    /**
+     * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
+     */
+    actions?: ActionFactory<TabContentSlotContext>;
+    /**
+     * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
+     */
+    keySequence?: string[];
 }
 
 export type TabLabelSlotKind =
@@ -485,18 +497,6 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      * @param refresh 
      */
     onPin?: (refresh: RefreshSlotFunction) => void;
-    /**
-     * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
-     */
-    actionGroups?: ActionGroupFactory;
-    /**
-     * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
-     */
-    actions?: ActionFactory;
-    /**
-     * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
-     */
-    keySequence?: string[];
 }
 
 /**
@@ -618,11 +618,11 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
-    actions?: ActionFactory;
+    actions?: ActionFactory<DataGridActionContext<any>>;
     /**
      * Grupy akcji dostępne w gridzie (opcjonalnie).
      */
-    actionGroups?: ActionGroupFactory;
+    actionGroups?: ActionGroupFactory<DataGridActionContext<any>>;
     /**
      * Callback po zaznaczeniu wiersza (opcjonalnie).
      */

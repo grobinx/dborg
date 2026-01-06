@@ -22,9 +22,9 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [actionComponents, setActionComponents] = React.useState<{
         actionComponents: React.ReactNode[],
-        actionManager: ActionManager<any> | null,
+        actionManager: (() => ActionManager<any>) | null,
         commandManager: CommandManager<any> | null,
-        actionContext: any | null
+        actionContext: (() => any) | null
     } | null>(null);
     const [renderNode, setRenderNode] = React.useState<React.ReactNode>(null);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
@@ -34,16 +34,21 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         const unregisterRefresh = registerRefresh(slot.id, () => {
             setPendingRefresh(true);
         });
-        let offRegisterSlot: () => void = () => { };
+        let offDataGrid: () => void = () => { };
+        let offTabContent: () => void = () => { };
         if (slot.type === "toolbar") {
-            offRegisterSlot = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
+            offDataGrid = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
+                setRefresh(prev => prev + 1n);
+            });
+            offTabContent = onRegisterRefSlot(slot.id, slot.actionSlotId, "tabcontent", () => {
                 setRefresh(prev => prev + 1n);
             });
         }
         slot?.onMount?.(refreshSlot);
         return () => {
             unregisterRefresh();
-            offRegisterSlot();
+            offDataGrid();
+            offTabContent();
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
@@ -68,7 +73,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
             setRenderNode(<slot.render refresh={refreshSlot} />);
             return;
         }
-        setActionComponents(createActionComponents(slot.tools, slot.actionSlotId, getRefSlot, refreshSlot, {}));
+        setActionComponents(createActionComponents(slot.tools, slot.actionSlotId, getRefSlot, refreshSlot));
     }, [slot.id, refresh]);
 
     // Handler onKeyDown
@@ -78,7 +83,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
                 event.preventDefault();
                 return;
             }
-            if (actionComponents?.actionManager && actionComponents.actionManager.executeActionByKeybinding(event, actionComponents.actionContext)) {
+            if (actionComponents?.actionManager && actionComponents.actionManager()?.executeActionByKeybinding(event, actionComponents.actionContext)) {
                 event.preventDefault();
                 return;
             }

@@ -3,7 +3,7 @@ import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resol
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
-import { createTabContent, createTabLabel, createTabPanel, createTabToolbar } from "./helpers";
+import { createTabPanel } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import ToolBarSlot from "./ToolBarSlot";
@@ -24,7 +24,6 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
-
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
             if (redraw === "only") {
@@ -57,6 +56,8 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                     () => {
                         // const pinnedTab = tab.pin!();
                         // setTabs(prevTabs => [...prevTabs, pinnedTab]);
+                        // TODO: implement pinning
+                        tab.onPin?.(refreshSlot);
                     },
                     refreshSlot,
                     contentRef,

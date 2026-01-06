@@ -42,6 +42,17 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         content: {
             id: cid("role-cleanup-tab-content"),
             type: "tabcontent",
+            actions: [
+                SelectRoleAction(),
+            ],
+            actionGroups: (refresh: any) => [
+                SelectRoleGroup(session, () => selectedRole, (roleName: string | null) => {
+                    selectedRole = roleName;
+                    refresh(cid("role-cleanup-selected-role-label"));
+                    refresh(cid("role-owned-grid"));
+                    refresh(cid("role-privs-grid"));
+                })
+            ],
             content: () => ({
                 id: cid("role-cleanup-split"),
                 type: "split",
@@ -78,17 +89,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                         { key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
                                     ] as ColumnDefinition[],
-                                    actions: [
-                                        SelectRoleAction(),
-                                    ],
-                                    actionGroups: (refresh: any) => [
-                                        SelectRoleGroup(session, selectedRole, (roleName: string | null) => {
-                                            selectedRole = roleName;
-                                            refresh(cid("role-cleanup-selected-role-label"));
-                                            refresh(cid("role-owned-grid"));
-                                            refresh(cid("role-privs-grid"));
-                                        })
-                                    ],
                                     autoSaveId: `role-cleanup-owned-grid-${session.profile.sch_id}`,
                                     statuses: ["data-rows"],
                                 } as IGridSlot
@@ -161,7 +161,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     maxLines: 1,
                 } as ITextSlot
             ],
-            actionSlotId: cid("role-owned-grid"),
+            actionSlotId: cid("role-cleanup-tab-content"),
         },
     };
 };

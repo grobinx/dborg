@@ -34,7 +34,7 @@ import ContentSlot from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
-import TabContentSlot from "./TabContentSlot";
+import TabContentSlot, { TabContentSlotContext } from "./TabContentSlot";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import SplitSlot from "./SplitSlot";
@@ -145,7 +145,7 @@ export function createTabPanel(
         content,
         label,
         toolBar,
-        panel : panel as React.ReactElement<React.ComponentProps<typeof TabPanel>>,
+        panel: panel as React.ReactElement<React.ComponentProps<typeof TabPanel>>,
     }
 }
 
@@ -241,21 +241,26 @@ export function createActionComponents(
     actionSlotId: string | undefined,
     getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
     refreshSlot: (id: string) => void,
-    context: any,
 ) {
     let actionComponents: React.ReactNode[] = [];
-    let actionManager: ActionManager<any> | null = null;
+    let actionManager: (() => ActionManager<any>) | null = null;
     let commandManager: CommandManager<any> | null = null;
-    let actionContext: any | null = null;
+    let actionContext: any = null;
 
     const resolvedActions = resolveActionsFactory(actions, refreshSlot);
     if (resolvedActions) {
-        let dataGridRef: React.RefObject<DataGridActionContext<any>> | undefined = undefined;
         if (actionSlotId) {
-            dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
+            const dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
             if (dataGridRef) {
-                actionManager = dataGridRef.current?.actionManager() ?? null;
+                actionManager = () => (dataGridRef.current?.actionManager()!);
                 actionContext = dataGridRef.current;
+            }
+            else {
+                const tabContentRef = getRefSlot<TabContentSlotContext>(actionSlotId, "tabcontent");
+                if (tabContentRef) {
+                    actionManager = () => (tabContentRef.current?.actionManager()!);
+                    actionContext = tabContentRef.current;
+                }
             }
         }
 
@@ -263,35 +268,39 @@ export function createActionComponents(
             if (typeof action === "object") {
                 if (isActions(action)) {
                     if (!actionManager) {
-                        actionManager = new ActionManager<typeof context>();
+                        const actionManagerRef = new ActionManager<any>();
+                        actionManager = () => actionManagerRef!;
                     }
                     return (
                         <ButtonGroup key={index}>
                             {Object.values(action).map((groupAction) => {
-                                actionManager!.registerAction(groupAction);
-                                return (
-                                    <ToolButton
-                                        key={groupAction.id}
-                                        action={groupAction}
-                                        actionContext={() => context}
-                                        actionManager={actionManager!}
-                                        size="small"
-                                    />
-                                );
+                                if (actionManager) {
+                                    actionManager().registerAction(groupAction);
+                                    return (
+                                        <ToolButton
+                                            key={groupAction.id}
+                                            action={groupAction}
+                                            actionContext={actionContext}
+                                            actionManager={actionManager!}
+                                            size="small"
+                                        />
+                                    );
+                                }
                             })}
                         </ButtonGroup>
                     );
                 }
                 if (isAction(action)) {
                     if (!actionManager) {
-                        actionManager = new ActionManager<typeof context>();
+                        const actionManagerRef = new ActionManager<any>();
+                        actionManager = () => actionManagerRef!;
                     }
-                    actionManager.registerAction(action);
+                    actionManager().registerAction(action);
                     return (
                         <ToolButton
                             key={action.id}
                             action={action}
-                            actionContext={() => context}
+                            actionContext={actionContext}
                             actionManager={actionManager}
                             size="small"
                         />
@@ -358,18 +367,18 @@ export function createActionComponents(
 
             if (isCommandDescriptor(action)) {
                 if (!commandManager) {
-                    commandManager = new CommandManager<typeof context>();
+                    commandManager = new CommandManager();
                 }
                 commandManager.registerCommand(action);
                 return null;
             }
 
-            if (typeof action === "string" && dataGridRef?.current) {
+            if (typeof action === "string" && actionContext && actionManager) {
                 return <ToolButton
                     key={action}
                     action={action}
-                    actionContext={() => dataGridRef?.current}
-                    actionManager={dataGridRef.current.actionManager() ?? undefined}
+                    actionContext={() => actionContext}
+                    actionManager={actionManager}
                     size="small"
                 />;
             }

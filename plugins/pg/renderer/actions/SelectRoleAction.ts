@@ -1,10 +1,10 @@
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
-import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import i18next, { TFunction } from "i18next";
+import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
+import i18next from "i18next";
 
-export const SelectRoleAction_ID = "dataGrid.pg.actions.selectRole";
+export const SelectRoleAction_ID = "actions.pg.selectRole";
 
-export const SelectRoleAction = (): Action<DataGridActionContext<any>> => {
+export const SelectRoleAction = (): Action<TabContentSlotContext> => {
     const t = i18next.t.bind(i18next);
     return {
         id: SelectRoleAction_ID,

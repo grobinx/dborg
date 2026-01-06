@@ -1,6 +1,6 @@
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
-import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
+import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 
@@ -11,9 +11,9 @@ const sql =
 
 export const SelectRoleGroup = (
     session: IDatabaseSession,
-    selectedRoleName: string | null,
+    selectedRoleName: () => string | null,
     onSelectRole: (roleName: string) => void
-): ActionGroup<DataGridActionContext<any>> => {
+): ActionGroup<TabContentSlotContext> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.pg.groups.selectRole";
 
@@ -41,15 +41,10 @@ export const SelectRoleGroup = (
                 actions.push({
                     id: `dataGrid.pg.role.${roleName}`,
                     label: roleName,
-                    run: (context: DataGridActionContext<any>) => {
-                        const currentRoleName = (context.getUserData('role_name') ?? selectedRoleName);
-                        if (currentRoleName !== roleName) {
-                            context.setUserData('role_name', roleName);
-                            onSelectRole(roleName);
-                            context.actionManager()?.executeAction(RefreshGridAction_ID, context);
-                        }
+                    run: (_context: TabContentSlotContext) => {
+                        onSelectRole(roleName);
                     },
-                    selected: context => (context.getUserData('role_name') ?? selectedRoleName) === roleName,
+                    selected: () => selectedRoleName() === roleName,
                 });
             });
 
