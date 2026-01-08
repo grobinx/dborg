@@ -167,6 +167,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             selectedSession = row ?? null;
                             refresh(cid("locks-grid"));
                             refresh(cid("transaction-grid"));
+                            refresh(cid("blocking-tree-grid"));
                             if (versionNumber >= 90600) refresh(cid("blocking-tree-tab"));
                             if (versionNumber >= 90600) refresh(cid("progress-vacuum-tab"));
                             if (versionNumber >= 120000) refresh(cid("progress-create-index-tab"));
