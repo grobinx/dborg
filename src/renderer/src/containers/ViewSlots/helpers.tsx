@@ -30,7 +30,7 @@ import {
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
-import ContentSlot from "./ContentSlot";
+import ContentSlot, { ContentSlotContext } from "./ContentSlot";
 import RenderedSlot from "./RenderedSlot";
 import TabLabelSlot from "./TabLabelSlot";
 import TabsSlot from "./TabsSlot";
@@ -104,9 +104,10 @@ export function createTabContent(
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "rendered") {
+        } 
+        else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        }
+        } 
     }
     return null;
 }
@@ -260,6 +261,13 @@ export function createActionComponents(
                 if (tabContentRef) {
                     actionManager = () => (tabContentRef.current?.actionManager()!);
                     actionContext = tabContentRef.current;
+                }
+                else {
+                    const contentRef = getRefSlot<ContentSlotContext>(actionSlotId, "content");
+                    if (contentRef) {
+                        actionManager = () => (contentRef.current?.actionManager()!);
+                        actionContext = contentRef.current;
+                    }
                 }
             }
         }

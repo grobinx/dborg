@@ -9,6 +9,8 @@ import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import { useRefSlot } from "./RefSlotContext";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { isKeyBinding } from "@renderer/hooks/useKeyboardNavigation";
+import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 
 export interface TabContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -157,6 +159,12 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         if (actionManager.current?.executeActionByKeybinding(event, context)) {
             event.preventDefault();
             return;
+        }
+        if (isKeybindingMatch(slot.keybinding ?? "Ctrl+Shift+P", event)) {
+            event.preventDefault();
+            setCommandPalettePrefix(">");
+            setCommandPaletteQuery("");
+            setOpenCommandPalette(true);
         }
     };
 

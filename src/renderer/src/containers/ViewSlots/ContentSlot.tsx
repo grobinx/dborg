@@ -1,18 +1,19 @@
 import React from "react";
-import { AppBar, Box, useTheme } from "@mui/material";
+import { AppBar, Box } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
-import {
-    IContentSlot
-} from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IContentSlot, resolveActionFactory, resolveActionGroupFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
-import TitleSlot from "./TitleSlot";
-import TextSlot from "./TextSlot";
-import GridSlot from "./GridSlot";
-import RenderedSlot from "./RenderedSlot";
 import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
-import { useMessages } from "@renderer/contexts/MessageContext";
-import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { useRefSlot } from "./RefSlotContext";
+import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
+import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
+
+export interface ContentSlotContext {
+    openCommandPalette: (prefix: string, query: string) => void;
+    actionManager: () => ActionManager<ContentSlotContext> | null;
+}
 
 interface ContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -52,6 +53,14 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const { registerRefSlot } = useRefSlot();
+    const [openCommandPalette, setOpenCommandPalette] = React.useState<boolean>(false);
+    const [commandPalettePrefix, setCommandPalettePrefix] = React.useState<string>("");
+    const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
+    const slotRef = React.useRef<ContentSlotContext>(null);
+    const actionManager = React.useRef<ActionManager<ContentSlotContext>>(null);
+
+    React.useImperativeHandle(slotRef, () => slotContext);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -61,9 +70,11 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
+        const unregisterRefSlot = registerRefSlot(slot.id, "content", slotRef);
         slot?.onMount?.(refreshSlot);
         return () => {
             unregisterRefresh();
+            unregisterRefSlot();
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot.id]);
@@ -84,7 +95,14 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        console.debug("ContentSlot updating content for slot:", slot.id);
+        if ((slot.actionGroups || slot.actions) && !actionManager.current) {
+            actionManager.current = new ActionManager<ContentSlotContext>();
+            const actions = resolveActionFactory(slot.actions, refreshSlot);
+            actionManager.current.registerAction(...(actions ?? []));
+            const groups = resolveActionGroupFactory(slot.actionGroups, refreshSlot);
+            actionManager.current.registerActionGroup(...(groups ?? []));
+        }
+
         if (slot.title) {
             setTitleSlot(prev => ({
                 ...prev,
@@ -109,15 +127,50 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
 
-    console.debug("ContentSlot rendering slot:", slot.id);
+    const slotContext: ContentSlotContext = {
+        openCommandPalette: (prefix: string, query: string) => {
+            Promise.resolve().then(() => {
+                setCommandPalettePrefix(prefix);
+                setCommandPaletteQuery(query);
+                setOpenCommandPalette(true);
+            });
+        },
+        actionManager: () => actionManager.current,
+    }
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        const context: ContentSlotContext = slotContext;
+        if (actionManager.current?.executeActionByKeybinding(event, context)) {
+            event.preventDefault();
+            return;
+        }
+        if (isKeybindingMatch(slot.keybinding ?? "Ctrl+Shift+P", event)) {
+            event.preventDefault();
+            setCommandPalettePrefix(">");
+            setCommandPaletteQuery("");
+            setOpenCommandPalette(true);
+        }
+    };
 
     return (
         <StyledContentSlot
             ref={rootRef}
             className={`ContentSlot-root ${className ?? ""}`}
             sx={{ position: "relative", }}
+            onKeyDown={handleKeyDown}
             {...other}
         >
+            {(actionManager.current !== null) && (
+                <CommandPalette
+                    manager={actionManager.current!}
+                    open={openCommandPalette}
+                    onClose={() => setOpenCommandPalette(false)}
+                    getContext={() => slotContext}
+                    parentRef={ref as React.RefObject<HTMLElement | null>}
+                    prefix={commandPalettePrefix}
+                    searchText={commandPaletteQuery}
+                />
+            )}
             {progressBar.node}
             {(titleSlot.node != null) && (
                 <AppBar position="static" sx={{ flexDirection: "row", zIndex: 10 }}>

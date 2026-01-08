@@ -62,9 +62,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
 
     let selectedSession: SessionRecord | null = null;
     let sessions: SessionRecord[] = [];
-    let hasPgBackendMemoryContexts: boolean = false;
+    let hasPgBackendMemoryContexts: boolean | null = null;
     let hasHeapBlksWritten: boolean | null = null;
-    let isSuperuser: boolean = false;
+    let isSuperuser: boolean | null = null;
 
     async function checkSuperuser() {
         try {
@@ -76,8 +76,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
             isSuperuser = false;
         }
     }
-
-    checkSuperuser();
 
     async function ensureCapabilities() {
         try {
@@ -98,10 +96,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
             hasPgBackendMemoryContexts = false;
         }
     };
-
-    if (versionNumber >= 130000) {
-        ensureCapabilities();
-    }
 
     async function ensureProgressClusterColumns() {
         if (hasHeapBlksWritten !== null) return;
@@ -142,6 +136,19 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     return {
         id: cid("sessions-tab"),
         type: "tab",
+        onMount: (refresh) => {
+            checkSuperuser().then(() => {
+                refresh(cid("sessions-grid"));
+                if (versionNumber >= 130000) {
+                    ensureCapabilities().then(() => {
+                        refresh(cid("memory-contexts-grid"));
+                    });
+                    ensureProgressClusterColumns().then(() => {
+                        refresh(cid("progress-cluster-grid"));
+                    });
+                }
+            });
+        },
         label: {
             id: cid("sessions-tab-label"),
             type: "tablabel",
@@ -168,18 +175,20 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             refresh(cid("locks-grid"));
                             refresh(cid("transaction-grid"));
                             refresh(cid("blocking-tree-grid"));
-                            if (versionNumber >= 90600) refresh(cid("blocking-tree-tab"));
-                            if (versionNumber >= 90600) refresh(cid("progress-vacuum-tab"));
-                            if (versionNumber >= 120000) refresh(cid("progress-create-index-tab"));
-                            if (versionNumber >= 130000) refresh(cid("progress-cluster-tab"));
-                            if (versionNumber >= 130000) refresh(cid("progress-analyze-tab"));
-                            if (versionNumber >= 140000) refresh(cid("progress-copy-tab"));
-                            if (versionNumber >= 130000) refresh(cid("memory-contexts-tab"));
+                            if (versionNumber >= 90600) refresh(cid("blocking-tree-grid"));
+                            if (versionNumber >= 90600) refresh(cid("progress-vacuum-grid"));
+                            if (versionNumber >= 120000) refresh(cid("progress-create-index-grid"));
+                            if (versionNumber >= 130000) refresh(cid("progress-cluster-grid"));
+                            if (versionNumber >= 130000) refresh(cid("progress-analyze-grid"));
+                            if (versionNumber >= 140000) refresh(cid("progress-copy-grid"));
+                            if (versionNumber >= 130000) refresh(cid("memory-contexts-grid"));
                             if (selectedSession?.blocking_pids || previousSelectedSession?.blocking_pids) {
                                 refresh(cid("sessions-grid"), "only");
                             }
                         },
                         rows: async () => {
+                            if (isSuperuser === null) return [];
+
                             selectedSession = null;
                             // Jeśli superuser, pobierz sesje ze wszystkich baz, inaczej tylko z bieżącej
                             const whereClause = isSuperuser
@@ -578,7 +587,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     mode: "defined" as const,
                                     rows: async () => {
                                         if (!selectedSession) return [];
-                                        await ensureProgressClusterColumns();
+
                                         const heapBlksWrittenSel = hasHeapBlksWritten
                                             ? "p.heap_blks_written"
                                             : "NULL::bigint AS heap_blks_written";
@@ -703,7 +712,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         }] : []),
 
                         // Backend Memory Contexts (PG 13+)
-                        ...(hasPgBackendMemoryContexts ? [{
+                        ...(versionNumber >= 130000 ? [{
                             id: cid("memory-contexts-tab"),
                             type: "tab" as const,
                             label: { id: cid("memory-contexts-tab-label"), type: "tablabel" as const, label: t("memory-contexts", "Memory Contexts") },
@@ -716,6 +725,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     mode: "defined" as const,
                                     rows: async () => {
                                         if (!selectedSession) return [];
+                                        if (!hasPgBackendMemoryContexts) return t("memory-contexts-not-available", "The pg_backend_memory_contexts function is not available on this server.");
+
                                         const { rows } = await session.query<any>(
                                             `
                                             SELECT 

@@ -8,6 +8,7 @@ import { ColumnDefinition, DataGridActionContext } from "@renderer/components/Da
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
+import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
 import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
 import { ThemeIconName } from "@renderer/themes/icons";
@@ -445,7 +446,7 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
-    keySequence?: string[];
+    keybinding?: string;
 }
 
 export type TabLabelSlotKind =
@@ -548,15 +549,15 @@ export interface IContentSlot extends ICustomSlot {
     /**
      * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
      */
-    actionGroups?: ActionGroupFactory;
+    actionGroups?: ActionGroupFactory<ContentSlotContext>;
     /**
      * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
      */
-    actions?: ActionFactory;
+    actions?: ActionFactory<ContentSlotContext>;
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
-    keySequence?: string[];
+    keybinding?: string;
 }
 
 /**

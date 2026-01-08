@@ -36,11 +36,15 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         });
         let offDataGrid: () => void = () => { };
         let offTabContent: () => void = () => { };
+        let offContent: () => void = () => { };
         if (slot.type === "toolbar") {
             offDataGrid = onRegisterRefSlot(slot.id, slot.actionSlotId, "datagrid", () => {
                 setRefresh(prev => prev + 1n);
             });
             offTabContent = onRegisterRefSlot(slot.id, slot.actionSlotId, "tabcontent", () => {
+                setRefresh(prev => prev + 1n);
+            });
+            offContent = onRegisterRefSlot(slot.id, slot.actionSlotId, "content", () => {
                 setRefresh(prev => prev + 1n);
             });
         }
@@ -49,6 +53,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
             unregisterRefresh();
             offDataGrid();
             offTabContent();
+            offContent();
             slot?.onUnmount?.(refreshSlot);
         };
     }, [slot]);
