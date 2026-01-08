@@ -28,11 +28,17 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             selectedRole = null;
         }
     };
-    setSelectedRoleName();
 
     return {
         id: cid("role-cleanup-tab"),
         type: "tab",
+        onMount: (refresh) => {
+            setSelectedRoleName().then(() => {
+                refresh(cid("role-cleanup-selected-role-label"));
+                refresh(cid("role-owned-grid"));
+                refresh(cid("role-privs-grid"));
+            });
+        },
         label: {
             id: cid("role-cleanup-tab-label"),
             type: "tablabel",

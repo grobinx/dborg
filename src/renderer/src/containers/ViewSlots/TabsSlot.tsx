@@ -40,6 +40,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     }, [slot.id]);
 
     React.useEffect(() => {
+        const tabs: ITabSlot[] = [];
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
         if (resolvedTabSlots) {
             const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;
@@ -65,6 +66,8 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                     toolBarRef
                 );
                 if (panel) {
+                    tab.onMount?.(refreshSlot);
+                    tabs.push(tab);
                     if (defaultTabId && tab.id === defaultTabId) {
                         queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
                     }
@@ -81,6 +84,11 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         } else {
             setToolBar(null);
         }
+        return () => {
+            tabs.forEach(tab => {
+                tab.onUnmount?.(refreshSlot);
+            });
+        };
     }, [slot.tabs, slot.toolBar, refresh]);
 
     return (

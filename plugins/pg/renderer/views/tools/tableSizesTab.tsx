@@ -38,11 +38,15 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
             selectedSchemaName = null;
         }
     };
-    setSelectedSchemaName();
 
     return {
         id: cid("database-table-sizes-tab"),
         type: "tab",
+        onMount: (refresh) => {
+            setSelectedSchemaName().then(() => {
+                refresh(cid("database-table-sizes-grid"));
+            });
+        },
         label: {
             id: cid("database-table-sizes-tab-label"),
             type: "tablabel",
@@ -56,6 +60,8 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                 id: cid("database-table-sizes-grid"),
                 type: "grid",
                 rows: async () => {
+                    if (!selectedSchemaName) return [];
+
                     const params = [selectedSchemaName];
                     const { rows } = await session.query<RelationSizeRecord>(`
                         SELECT
