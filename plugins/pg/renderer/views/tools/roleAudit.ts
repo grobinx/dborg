@@ -356,14 +356,16 @@ export async function listPrivileges(
 }
 
 export interface CleanupChoice {
-    action: "drop" | "reassign" | "ignore";
+    action: "drop" | "drop_restrict" | "reassign" | "move" | "ignore";
+    newOwner?: string;   // docelowy owner dla reassign/move (gdy brak, użyj opts.newOwner)
+    newSchema?: string;  // docelowy schemat dla move
 }
 export interface PrivilegeChoice {
-    action: "revoke" | "keep";
+    action: "revoke" | "revoke_grant_option" | "keep";
 }
 export interface BuildSqlOptions {
     roleName: string;
-    newOwner?: string;
+    newOwner?: string; // domyślny owner, jeśli per-obiekt nie podano
     ownedChoices: Record<string, CleanupChoice>; // key = identity
     privilegeChoices: Record<string, PrivilegeChoice>; // key = identity|privilege_type|grantee|grantor
     dropSchemasCascade?: boolean;
@@ -395,80 +397,104 @@ export function buildCleanupSql(
     const lines: string[] = [];
     lines.push("BEGIN;");
 
-    // Per‑obiekt: DROP lub ALTER ... OWNER TO
     for (const o of owned) {
         const choice = opts.ownedChoices[o.identity]?.action ?? "ignore";
+        const objOwner = opts.ownedChoices[o.identity]?.newOwner ?? opts.newOwner;
+        const targetSchema = opts.ownedChoices[o.identity]?.newSchema;
+
         if (choice === "ignore") continue;
 
-        if (choice === "drop") {
+        const cascade = choice === "drop" ? " CASCADE" : "";
+
+        if (choice === "drop" || choice === "drop_restrict") {
             switch (o.objtype) {
-                case "table": lines.push(`DROP TABLE ${o.identity} CASCADE;`); break;
-                case "view": lines.push(`DROP VIEW ${o.identity} CASCADE;`); break;
-                case "matview": lines.push(`DROP MATERIALIZED VIEW ${o.identity} CASCADE;`); break;
-                case "sequence": lines.push(`DROP SEQUENCE ${o.identity} CASCADE;`); break;
-                case "function": lines.push(`DROP FUNCTION ${o.identity} CASCADE;`); break;
-                case "type": lines.push(`DROP TYPE ${o.identity} CASCADE;`); break;
-                case "domain": lines.push(`DROP DOMAIN ${o.identity} CASCADE;`); break;
-                case "extension": lines.push(`DROP EXTENSION ${o.identity} CASCADE;`); break;
-                case "schema": {
-                    const cascade = opts.dropSchemasCascade ? " CASCADE" : "";
-                    lines.push(`DROP SCHEMA ${o.identity}${cascade};`);
-                    break;
-                }
-                case "server": lines.push(`DROP SERVER ${o.identity} CASCADE;`); break;
-                case "fdw": lines.push(`DROP FOREIGN DATA WRAPPER ${o.identity} CASCADE;`); break;
+                case "table": lines.push(`DROP TABLE ${o.identity}${cascade};`); break;
+                case "view": lines.push(`DROP VIEW ${o.identity}${cascade};`); break;
+                case "matview": lines.push(`DROP MATERIALIZED VIEW ${o.identity}${cascade};`); break;
+                case "sequence": lines.push(`DROP SEQUENCE ${o.identity}${cascade};`); break;
+                case "function": lines.push(`DROP FUNCTION ${o.identity}${cascade};`); break;
+                case "type": lines.push(`DROP TYPE ${o.identity}${cascade};`); break;
+                case "domain": lines.push(`DROP DOMAIN ${o.identity}${cascade};`); break;
+                case "extension": lines.push(`DROP EXTENSION ${o.identity}${cascade};`); break;
+                case "schema": lines.push(`DROP SCHEMA ${o.identity}${cascade || (opts.dropSchemasCascade ? " CASCADE" : "")};`); break;
+                case "server": lines.push(`DROP SERVER ${o.identity}${cascade};`); break;
+                case "fdw": lines.push(`DROP FOREIGN DATA WRAPPER ${o.identity}${cascade};`); break;
                 case "publication": lines.push(`DROP PUBLICATION ${o.identity};`); break;
-                case "language": lines.push(`DROP LANGUAGE ${o.identity} CASCADE;`); break;
-                case "database": lines.push(`-- Uwaga: rozważ ręcznie DROP/ALTER DATABASE ${o.identity}`); break;
-                case "user_mapping":
-                    lines.push(`DROP USER MAPPING FOR ${opts.roleName} SERVER ${o.name.split(" ON ")[1]};`);
-                    break;
+                case "language": lines.push(`DROP LANGUAGE ${o.identity}${cascade};`); break;
+                case "database": lines.push(`-- Ręcznie: DROP/ALTER DATABASE ${o.identity}`); break;
+                case "user_mapping": lines.push(`DROP USER MAPPING FOR ${opts.roleName} SERVER ${o.name.split(" ON ")[1]};`); break;
             }
-        } else if (choice === "reassign") {
-            const target = opts.newOwner;
-            if (!target) throw new Error("Brak newOwner dla reassign");
+            continue;
+        }
+
+        if (choice === "reassign") {
+            if (!objOwner) throw new Error("Brak newOwner dla reassign");
             switch (o.objtype) {
-                case "table": lines.push(`ALTER TABLE ${o.identity} OWNER TO ${target};`); break;
-                case "view": lines.push(`ALTER VIEW ${o.identity} OWNER TO ${target};`); break;
-                case "matview": lines.push(`ALTER MATERIALIZED VIEW ${o.identity} OWNER TO ${target};`); break;
-                case "sequence": lines.push(`ALTER SEQUENCE ${o.identity} OWNER TO ${target};`); break;
-                case "function": lines.push(`ALTER FUNCTION ${o.identity} OWNER TO ${target};`); break;
-                case "type": lines.push(`ALTER TYPE ${o.identity} OWNER TO ${target};`); break;
-                case "domain": lines.push(`ALTER DOMAIN ${o.identity} OWNER TO ${target};`); break;
-                case "extension": lines.push(`ALTER EXTENSION ${o.identity} OWNER TO ${target};`); break;
-                case "schema": lines.push(`ALTER SCHEMA ${o.identity} OWNER TO ${target};`); break;
-                case "server": lines.push(`ALTER SERVER ${o.identity} OWNER TO ${target};`); break;
-                case "fdw": lines.push(`ALTER FOREIGN DATA WRAPPER ${o.identity} OWNER TO ${target};`); break;
-                case "publication": lines.push(`ALTER PUBLICATION ${o.identity} OWNER TO ${target};`); break;
-                case "language": lines.push(`ALTER LANGUAGE ${o.identity} OWNER TO ${target};`); break;
-                case "database": lines.push(`ALTER DATABASE ${o.identity} OWNER TO ${target};`); break;
-                case "user_mapping":
-                    // zwykle usuwamy wraz z DROP ROLE
-                    break;
+                case "table": lines.push(`ALTER TABLE ${o.identity} OWNER TO ${objOwner};`); break;
+                case "view": lines.push(`ALTER VIEW ${o.identity} OWNER TO ${objOwner};`); break;
+                case "matview": lines.push(`ALTER MATERIALIZED VIEW ${o.identity} OWNER TO ${objOwner};`); break;
+                case "sequence": lines.push(`ALTER SEQUENCE ${o.identity} OWNER TO ${objOwner};`); break;
+                case "function": lines.push(`ALTER FUNCTION ${o.identity} OWNER TO ${objOwner};`); break;
+                case "type": lines.push(`ALTER TYPE ${o.identity} OWNER TO ${objOwner};`); break;
+                case "domain": lines.push(`ALTER DOMAIN ${o.identity} OWNER TO ${objOwner};`); break;
+                case "extension": lines.push(`ALTER EXTENSION ${o.identity} OWNER TO ${objOwner};`); break;
+                case "schema": lines.push(`ALTER SCHEMA ${o.identity} OWNER TO ${objOwner};`); break;
+                case "server": lines.push(`ALTER SERVER ${o.identity} OWNER TO ${objOwner};`); break;
+                case "fdw": lines.push(`ALTER FOREIGN DATA WRAPPER ${o.identity} OWNER TO ${objOwner};`); break;
+                case "publication": lines.push(`ALTER PUBLICATION ${o.identity} OWNER TO ${objOwner};`); break;
+                case "language": lines.push(`ALTER LANGUAGE ${o.identity} OWNER TO ${objOwner};`); break;
+                case "database": lines.push(`ALTER DATABASE ${o.identity} OWNER TO ${objOwner};`); break;
+                case "user_mapping": /* zwykle drop wraz z rolą */ break;
             }
+            continue;
+        }
+
+        if (choice === "move") {
+            if (!targetSchema) throw new Error("Brak newSchema dla move");
+            const alterSchemaStmt = (kind: string) => `ALTER ${kind} ${o.identity} SET SCHEMA ${targetSchema};`;
+            switch (o.objtype) {
+                case "table": lines.push(alterSchemaStmt("TABLE")); break;
+                case "view": lines.push(alterSchemaStmt("VIEW")); break;
+                case "matview": lines.push(alterSchemaStmt("MATERIALIZED VIEW")); break;
+                case "sequence": lines.push(alterSchemaStmt("SEQUENCE")); break;
+                case "function": lines.push(alterSchemaStmt("FUNCTION")); break;
+                case "type": lines.push(alterSchemaStmt("TYPE")); break;
+                case "domain": lines.push(alterSchemaStmt("DOMAIN")); break;
+                // poniższe nie wspierają SET SCHEMA: extension, schema, server, fdw, publication, language, database, user_mapping
+                default: lines.push(`-- MOVE nieobsługiwane dla ${o.objtype} ${o.identity}`); break;
+            }
+            if (objOwner) {
+                const alterOwnerStmt = (kind: string) => `ALTER ${kind} ${o.identity} OWNER TO ${objOwner};`;
+                switch (o.objtype) {
+                    case "table": lines.push(alterOwnerStmt("TABLE")); break;
+                    case "view": lines.push(alterOwnerStmt("VIEW")); break;
+                    case "matview": lines.push(alterOwnerStmt("MATERIALIZED VIEW")); break;
+                    case "sequence": lines.push(alterOwnerStmt("SEQUENCE")); break;
+                    case "function": lines.push(alterOwnerStmt("FUNCTION")); break;
+                    case "type": lines.push(alterOwnerStmt("TYPE")); break;
+                    case "domain": lines.push(alterOwnerStmt("DOMAIN")); break;
+                }
+            }
+            continue;
         }
     }
 
-    // Uprawnienia: REVOKE
     for (const p of privs) {
         const key = `${p.identity}|${p.privilege_type}|${p.grantee_name}|${p.grantor_name}`;
         const choice = opts.privilegeChoices[key]?.action ?? "keep";
-        if (choice !== "revoke") continue;
+        if (choice === "keep") continue;
 
         const kw = objKeywordForRevoke(p.objtype);
-        if (p.is_grantee) {
+        if (choice === "revoke") {
             lines.push(`REVOKE ${p.privilege_type} ON ${kw} ${p.identity} FROM ${opts.roleName};`);
-        } else {
-            lines.push(`REVOKE GRANT OPTION FOR ${p.privilege_type} ON ${kw} ${p.identity} FROM ${p.grantee_name};`);
+        } else if (choice === "revoke_grant_option") {
+            lines.push(`REVOKE GRANT OPTION FOR ${p.privilege_type} ON ${kw} ${p.identity} FROM ${opts.roleName};`);
         }
     }
 
-    // Bezpieczne czyszczenie w bieżącej bazie
     lines.push(`DROP OWNED BY ${opts.roleName};`);
-    // Usunięcie roli (po przejściu przez wszystkie bazy)
     lines.push(`-- Uruchom w każdej bazie. Gdy brak zależności w całym klastrze:`);
     lines.push(`DROP ROLE ${opts.roleName};`);
     lines.push("COMMIT;");
-
     return lines.join("\n");
 }

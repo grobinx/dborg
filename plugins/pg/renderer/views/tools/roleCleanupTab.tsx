@@ -8,6 +8,7 @@ import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObject, Privile
 import { versionToNumber } from "../../../../../src/api/version";
 import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -57,9 +58,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     refresh(cid("role-cleanup-selected-role-label"));
                     refresh(cid("role-owned-grid"));
                     refresh(cid("role-privs-grid"));
+                    refresh(cid("role-cleanup-editor"));
                 })
             ],
-            content: () => ({
+            content: (refresh) => ({
                 id: cid("role-cleanup-split"),
                 type: "split",
                 direction: "vertical",
@@ -94,10 +96,34 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         { key: "name", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
                                         { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                         { key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
+                                        {
+                                            key: "drop", label: t("drop-command", "Drop Command"), width: 36, dataType: "object",
+                                            formatter: (value, row) => {
+                                                return <ToolButton action="drop-owned-objects-action" size="small" dense width="0.8em" height="0.8em" />
+                                            }
+                                        },
                                     ] as ColumnDefinition[],
+                                    actions: [
+                                        {
+                                            id: "drop-owned-objects-action",
+                                            label: t("drop-object", "Drop Object"),
+                                            icon: "Delete",
+                                            run: (context) => {
+
+                                            }
+                                        }
+                                    ],
                                     autoSaveId: `role-cleanup-owned-grid-${session.profile.sch_id}`,
                                     statuses: ["data-rows"],
                                 } as IGridSlot
+                            },
+                            toolBar: {
+                                id: cid("role-owners-tab-toolbar"),
+                                type: "toolbar",
+                                tools: [
+                                    "drop-owned-objects-action",
+                                ],
+                                actionSlotId: cid("role-owned-grid"),
                             }
                         },
                         {
