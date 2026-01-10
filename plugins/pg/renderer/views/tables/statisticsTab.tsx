@@ -393,7 +393,7 @@ const statisticsTab = (
         id: cid("table-statistics-grid"),
         type: "grid",
         pivot: true,
-        rows: async (refresh) => {
+        rows: async (slotContext) => {
             if (!selectedRow()) return [];
 
             if (lastSelectedTable?.schema_name !== selectedRow()!.schema_name ||
@@ -440,9 +440,9 @@ const statisticsTab = (
                 }
             }
 
-            refresh(cid("table-statistics-dml-timeline-chart"));
-            refresh(cid("table-statistics-scans-chart"));
-            refresh(cid("table-statistics-live-dead-timeline-chart"));
+            slotContext.refresh(cid("table-statistics-dml-timeline-chart"));
+            slotContext.refresh(cid("table-statistics-scans-chart"));
+            slotContext.refresh(cid("table-statistics-live-dead-timeline-chart"));
             return rows;
         },
         columns: [
@@ -509,13 +509,13 @@ const statisticsTab = (
                                     tooltip: t("statistics-snapshot-size-tooltip", "Number of snapshots to keep for timeline (10-200)"),
                                 },
                                 {
-                                    onTick(refresh) {
-                                        refresh(cid("table-statistics-grid"));
+                                    onTick(slotContext) {
+                                        slotContext.refresh(cid("table-statistics-grid"));
                                     },
-                                    onClear(refresh) {
+                                    onClear(slotContext) {
                                         statRows = [];
                                         snapshotCounter = 0;
-                                        refresh(cid("table-statistics-grid"));
+                                        slotContext.refresh(cid("table-statistics-grid"));
                                     },
                                     clearOn: "start",
                                     canPause: false,

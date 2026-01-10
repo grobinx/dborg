@@ -32,30 +32,35 @@ export type CustomSlotType =
     | "progress"
     ;
 
-export type BooleanFactory = boolean | ((refresh: RefreshSlotFunction) => boolean);
-export type NumberFactory = number | null | ((refresh: RefreshSlotFunction) => number | null);
-export type NumberArrayFactory = number[] | ((refresh: RefreshSlotFunction) => number[]);
-export type ReactNodeFactory = React.ReactNode | ((refresh: RefreshSlotFunction) => React.ReactNode);
+export interface SlotFactoryContext {
+    theme: Theme;
+    refresh: RefreshSlotFunction;
+}
+
+export type BooleanFactory = boolean | ((slotContext: SlotFactoryContext) => boolean);
+export type NumberFactory = number | null | ((slotContext: SlotFactoryContext) => number | null);
+export type NumberArrayFactory = number[] | ((slotContext: SlotFactoryContext) => number[]);
+export type ReactNodeFactory = React.ReactNode | ((slotContext: SlotFactoryContext) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
-export type StringFactory = string | ((refresh: RefreshSlotFunction) => string);
-export type StringAsyncFactory = Promise<string> | ((refresh: RefreshSlotFunction) => Promise<string>);
-export type SelectOptionsFactory = Option[] | ((refresh: RefreshSlotFunction) => Option[]);
-export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((refresh: RefreshSlotFunction) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
-export type ColumnDefinitionsFactory = ColumnDefinition[] | ((refresh: RefreshSlotFunction) => ColumnDefinition[]);
-export type ActionFactory<T = any> = Action<T>[] | ((refresh: RefreshSlotFunction) => Action<T>[]);
-export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((refresh: RefreshSlotFunction) => ActionGroup<T>[]);
-export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((refresh: RefreshSlotFunction) => monaco.editor.IActionDescriptor[]);
-export type ToolFactory<T = any> = ToolKind<T>[] | ((refresh: RefreshSlotFunction) => ToolKind<T>[]);
-export type SplitSlotPartKindFactory = SplitSlotPartKind | ((refresh: RefreshSlotFunction) => SplitSlotPartKind);
-export type TabSlotsFactory = ITabSlot[] | ((refresh: RefreshSlotFunction) => ITabSlot[]);
-export type TabLabelSlotKindFactory = TabLabelSlotKind | ((refresh: RefreshSlotFunction) => TabLabelSlotKind);
-export type TabContentSlotKindFactory = TabContentSlotKind | ((refresh: RefreshSlotFunction) => TabContentSlotKind);
-export type ContentSlotKindFactory = ContentSlotKind | ((refresh: RefreshSlotFunction) => ContentSlotKind);
-export type TitleSlotKindFactory = TitleSlotKind | ((refresh: RefreshSlotFunction) => TitleSlotKind);
-export type TextSlotKindFactory = TextSlotKind | ((refresh: RefreshSlotFunction) => TextSlotKind);
-export type ContentSlotFactory = IContentSlot | ((refresh: RefreshSlotFunction) => IContentSlot);
-export type ToolBarSlotKindFactory = ToolBarSlotKind | ((refresh: RefreshSlotFunction) => ToolBarSlotKind);
-export type ProgressBarSlotFactory = IProgressBarSlot | ((refresh: RefreshSlotFunction) => IProgressBarSlot);
+export type StringFactory = string | ((slotContext: SlotFactoryContext) => string);
+export type StringAsyncFactory = Promise<string> | ((slotContext: SlotFactoryContext) => Promise<string>);
+export type SelectOptionsFactory = Option[] | ((slotContext: SlotFactoryContext) => Option[]);
+export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((slotContext: SlotFactoryContext) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
+export type ColumnDefinitionsFactory = ColumnDefinition[] | ((slotContext: SlotFactoryContext) => ColumnDefinition[]);
+export type ActionFactory<T = any> = Action<T>[] | ((slotContext: SlotFactoryContext) => Action<T>[]);
+export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((slotContext: SlotFactoryContext) => ActionGroup<T>[]);
+export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((slotContext: SlotFactoryContext) => monaco.editor.IActionDescriptor[]);
+export type ToolFactory<T = any> = ToolKind<T>[] | ((slotContext: SlotFactoryContext) => ToolKind<T>[]);
+export type SplitSlotPartKindFactory = SplitSlotPartKind | ((slotContext: SlotFactoryContext) => SplitSlotPartKind);
+export type TabSlotsFactory = ITabSlot[] | ((slotContext: SlotFactoryContext) => ITabSlot[]);
+export type TabLabelSlotKindFactory = TabLabelSlotKind | ((slotContext: SlotFactoryContext) => TabLabelSlotKind);
+export type TabContentSlotKindFactory = TabContentSlotKind | ((slotContext: SlotFactoryContext) => TabContentSlotKind);
+export type ContentSlotKindFactory = ContentSlotKind | ((slotContext: SlotFactoryContext) => ContentSlotKind);
+export type TitleSlotKindFactory = TitleSlotKind | ((slotContext: SlotFactoryContext) => TitleSlotKind);
+export type TextSlotKindFactory = TextSlotKind | ((slotContext: SlotFactoryContext) => TextSlotKind);
+export type ContentSlotFactory = IContentSlot | ((slotContext: SlotFactoryContext) => IContentSlot);
+export type ToolBarSlotKindFactory = ToolBarSlotKind | ((slotContext: SlotFactoryContext) => ToolBarSlotKind);
+export type ProgressBarSlotFactory = IProgressBarSlot | ((slotContext: SlotFactoryContext) => IProgressBarSlot);
 
 export type ToolKind<T = any> =
     | string
@@ -214,62 +219,62 @@ export interface IAutoRefresh {
     clearOn?: "stop" | "start";
     /**
      * Funkcja wywoływana co określony interwał czasu.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onTick(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onTick(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy montowaniu komponentu.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onMount?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onMount?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy odmontowaniu komponentu.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onUnmount?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onUnmount?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy starcie automatycznego odświeżania.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onStart?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onStart?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy zatrzymaniu automatycznego odświeżania.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onStop?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onStop?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy wstrzymaniu automatycznego odświeżania.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onPause?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onPause?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy wznowieniu automatycznego odświeżania.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onResume?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onResume?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy pokazaniu panelu auto refresh.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onShow?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onShow?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy ukryciu panelu auto refresh.
-     * @param refresh 
+     * @param slotContext 
      * @param context 
      */
-    onHide?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onHide?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana po naciśnięciu przycisku "Clear".
      */
-    onClear?(refresh: RefreshSlotFunction, context: IAutoRefreshContext): void;
+    onClear?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
     /**
      * Czy przycisk "Clear" ma być dostępny.
      * @default false
@@ -301,10 +306,10 @@ export interface ICopyData<T = any> {
     /**
      * Funkcja zwracająca dane do skopiowania.
      * 
-     * @param refresh 
+     * @param slotContext 
      * @returns 
      */
-    getData: (refresh: RefreshSlotFunction) => T;
+    getData: (slotContext: SlotFactoryContext) => T;
     /**
      * Czy pokazać powiadomienie o skopiowaniu danych.
      * @default true
@@ -322,11 +327,11 @@ export interface ISlot {
      */
     type: string;
 
-    onMount?: (refresh: RefreshSlotFunction) => void;
-    onUnmount?: (refresh: RefreshSlotFunction) => void;
+    onMount?: (slotContext: SlotFactoryContext) => void;
+    onUnmount?: (slotContext: SlotFactoryContext) => void;
 
-    onShow?: (refresh: RefreshSlotFunction) => void;
-    onHide?: (refresh: RefreshSlotFunction) => void;
+    onShow?: (slotContext: SlotFactoryContext) => void;
+    onHide?: (slotContext: SlotFactoryContext) => void;
 }
 
 /**
@@ -418,7 +423,7 @@ export interface ITabLabelSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      */
     label: ReactNodeFactory;
 
-    onActivate?: (refresh: RefreshSlotFunction) => void;
+    onActivate?: (slotContext: SlotFactoryContext) => void;
     onDeactivate?: () => void;
 }
 
@@ -429,8 +434,8 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
      */
     content: ContentSlotKindFactory;
 
-    onActivate?: (refresh: RefreshSlotFunction) => void;
-    onDeactivate?: (refresh: RefreshSlotFunction) => void;
+    onActivate?: (slotContext: SlotFactoryContext) => void;
+    onDeactivate?: (slotContext: SlotFactoryContext) => void;
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
@@ -490,14 +495,14 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     pin?: () => ITabSlot;
     /**
      * Funkcja wywoływana po zamknięciu zakładki.
-     * @param refresh 
+     * @param slotContext
      */
-    onClose?: (refresh: RefreshSlotFunction) => void;
+    onClose?: (slotContext: SlotFactoryContext) => void;
     /**
      * Funkcja wywoływana po przypięciu zakładki.
-     * @param refresh 
+     * @param slotContext 
      */
-    onPin?: (refresh: RefreshSlotFunction) => void;
+    onPin?: (slotContext: SlotFactoryContext) => void;
 }
 
 /**
@@ -509,7 +514,7 @@ export interface IRenderedSlot extends ICustomSlot {
     /**
      * Zawartość slotu (funkcja renderująca).
      */
-    render: React.FC<{ refresh: RefreshSlotFunction }>;
+    render: React.FC<{ slotContext: SlotFactoryContext }>;
 }
 
 export type ContentSlotKind =
@@ -586,7 +591,7 @@ export interface IGridStatusButton {
     label: StringFactory;
     icon?: IconFactory;
     tooltip?: StringFactory;
-    onClick?: (refresh: RefreshSlotFunction) => void;
+    onClick?: (slotContext: SlotFactoryContext) => void;
 }
 
 /**
@@ -627,7 +632,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Callback po zaznaczeniu wiersza (opcjonalnie).
      */
-    onRowSelect?: (row: any, refresh: RefreshSlotFunction) => void;
+    onRowSelect?: (row: any, slotContext: SlotFactoryContext) => void;
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */
@@ -647,10 +652,10 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
-     * @param refresh 
+     * @param slotContext 
      * @returns 
      */
-    onCancel?: (refresh: RefreshSlotFunction) => void;
+    onCancel?: (slotContext: SlotFactoryContext) => void;
     /**
      * Tryb nakładki ładowania (opcjonalnie).
      * @default "small"
@@ -664,6 +669,10 @@ export interface IGridSlot extends ICustomSlot {
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
     progress?: ProgressBarSlotFactory;
+    /**
+     * CommandPalette, grupy akcji dostępne jako dodatkowe w siatce (opcjonalnie).
+     */
+    canSelectRows?: BooleanFactory;
 }
 
 export interface IEditorContext {
@@ -714,19 +723,19 @@ export interface IEditorSlot extends ICustomSlot {
      */
     miniMap?: boolean;
 
-    onMounted?: (refresh: RefreshSlotFunction) => void;
-    onPositionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
-    onSelectionChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
-    onFocus?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
-    onBlur?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
-    onContentChanged?: (refresh: RefreshSlotFunction, context: IEditorContext) => void;
+    onMounted?: (slotContext: SlotFactoryContext) => void;
+    onPositionChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
+    onSelectionChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
+    onFocus?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
+    onBlur?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
+    onContentChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
     /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
-     * @param refresh 
+     * @param slotContext
      * @returns 
      */
-    onCancel?: (refresh: RefreshSlotFunction) => void;
+    onCancel?: (slotContext: SlotFactoryContext) => void;
     /**
      * Tryb nakładki ładowania (opcjonalnie).
      * @default "small"
@@ -809,74 +818,74 @@ export interface IProgressBarSlot extends ICustomSlot {
     color?: ThemeColor;
 }
 
-export function resolveStringFactory(factory: StringFactory | undefined, refresh: RefreshSlotFunction): string | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveStringFactory(factory: StringFactory | undefined, context: SlotFactoryContext): string | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<string | undefined> | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, context: SlotFactoryContext): Promise<string | undefined> | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, refresh: RefreshSlotFunction): React.ReactNode {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, context: SlotFactoryContext): React.ReactNode {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveBooleanFactory(factory: BooleanFactory | undefined, refresh: RefreshSlotFunction): boolean | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveBooleanFactory(factory: BooleanFactory | undefined, context: SlotFactoryContext): boolean | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionsFactory(factory: ToolFactory | undefined, refresh: RefreshSlotFunction): ToolKind[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotFactoryContext): ToolKind[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, refresh: RefreshSlotFunction): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, context: SlotFactoryContext): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, refresh: RefreshSlotFunction): ColumnDefinition[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, context: SlotFactoryContext): ColumnDefinition[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, refresh: RefreshSlotFunction): Action<T>[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, context: SlotFactoryContext): Action<T>[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, refresh: RefreshSlotFunction): ActionGroup<T>[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotFactoryContext): ActionGroup<T>[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, refresh: RefreshSlotFunction): monaco.editor.IActionDescriptor[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, context: SlotFactoryContext): monaco.editor.IActionDescriptor[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, refresh: RefreshSlotFunction): SplitSlotPartKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotFactoryContext): SplitSlotPartKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, refresh: RefreshSlotFunction): ITabSlot[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotFactoryContext): ITabSlot[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, refresh: RefreshSlotFunction): TabLabelSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, context: SlotFactoryContext): TabLabelSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): TabContentSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, context: SlotFactoryContext): TabContentSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, refresh: RefreshSlotFunction): ContentSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, context: SlotFactoryContext): ContentSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, refresh: RefreshSlotFunction): TitleSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, context: SlotFactoryContext): TitleSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, refresh: RefreshSlotFunction): TextSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, context: SlotFactoryContext): TextSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, refresh: RefreshSlotFunction): IContentSlot | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, context: SlotFactoryContext): IContentSlot | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, refresh: RefreshSlotFunction): Option[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, context: SlotFactoryContext): Option[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, refresh: RefreshSlotFunction): ToolBarSlotKind | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, context: SlotFactoryContext): ToolBarSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveNumberFactory(factory: NumberFactory | undefined, refresh: RefreshSlotFunction): number | null | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveNumberFactory(factory: NumberFactory | undefined, context: SlotFactoryContext): number | null | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, refresh: RefreshSlotFunction): number[] | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, context: SlotFactoryContext): number[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, refresh: RefreshSlotFunction): IProgressBarSlot | undefined {
-    return typeof factory === "function" ? factory(refresh) : factory;
+export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotFactoryContext): IProgressBarSlot | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
 
 export function isIField(obj: any): obj is FieldTypeKind {

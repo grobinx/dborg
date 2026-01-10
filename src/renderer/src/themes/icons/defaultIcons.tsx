@@ -36,6 +36,7 @@ import { UpperLetter } from "./svg/UpperLetter";
 import { LowerLetter } from "./svg/LowerLetter";
 import { Rotate } from "@renderer/components/useful/Rotate";
 import { Resume } from "./svg/Resume";
+import { ReassignUser } from "./svg/ReassignUser";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -166,6 +167,10 @@ const icons = (_palette: Palette): ThemeOptions => {
             Users: (props) => <IconWrapper {...props} className="users"><MuiIcons.PeopleAltOutlined fontSize="inherit" /></IconWrapper>,
             Flow: (props) => <IconWrapper {...props} className="flow"><MuiIcons.AccountTreeOutlined fontSize="inherit" /></IconWrapper>,
             UserRemove: (props) => <IconWrapper {...props} className="user-remove"><MuiIcons.PersonRemoveOutlined fontSize="inherit" /></IconWrapper>,
+            DropCascade: (props) => <IconWrapper {...props} className="drop-cascade"><MuiIcons.DeleteSweepOutlined fontSize="inherit" /></IconWrapper>,
+            DropRestrict: (props) => <IconWrapper {...props} className="drop-restrict"><MuiIcons.DeleteOutline fontSize="inherit" /></IconWrapper>,
+            MoveObject: (props) => <IconWrapper {...props} className="move-object"><BsIcons.ArrowsMove fontSize="inherit" /></IconWrapper>,
+            ReassignUser: (props) => <IconWrapper {...props} className="reassign-user"><ReassignUser fontSize="inherit" /></IconWrapper>,
         }
     }
 }

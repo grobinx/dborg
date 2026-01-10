@@ -42,9 +42,9 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
     return {
         id: cid("database-table-sizes-tab"),
         type: "tab",
-        onMount: (refresh) => {
+        onMount: (slotContext) => {
             setSelectedSchemaName().then(() => {
-                refresh(cid("database-table-sizes-grid"));
+                slotContext.refresh(cid("database-table-sizes-grid"));
             });
         },
         label: {

@@ -172,20 +172,20 @@ order by sequence_schema, sequence_name;
                                         ] : []),
                                         { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
                                     ] as ColumnDefinition[],
-                                    onRowSelect: (row: SequenceRecord | undefined, refresh: RefreshSlotFunction) => {
+                                    onRowSelect: (row: SequenceRecord | undefined, slotContext) => {
                                         if (selectedRow?.sequence_name !== row?.sequence_name || selectedRow?.sequence_schema !== row?.sequence_schema) {
                                             selectedRow = row ?? null;
-                                            refresh(cid("sequences-editor"));
-                                            refresh(cid("sequences-details-grid"));
+                                            slotContext.refresh(cid("sequences-editor"));
+                                            slotContext.refresh(cid("sequences-details-grid"));
                                         }
                                     },
                                     actions: [
                                         SelectSchemaAction(),
                                     ],
-                                    actionGroups: (refresh: RefreshSlotFunction) => [
+                                    actionGroups: (slotContext) => [
                                         SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
                                             selectedSchemaName = schemaName;
-                                            refresh(cid("sequences-grid"));
+                                            slotContext.refresh(cid("sequences-grid"));
                                         }),
                                     ],
                                     autoSaveId: `sequences-grid-${session.profile.sch_id}`,
@@ -218,7 +218,7 @@ order by sequence_schema, sequence_name;
                                     id: cid("sequences-details-grid"),
                                     type: "grid",
                                     pivot: true,
-                                    rows: async (refresh) => {
+                                    rows: async (slotContext) => {
                                         if (!selectedRow) return [];
 
                                         let sql: string;
@@ -347,7 +347,7 @@ order by sequence_schema, sequence_name;
                                         if (!rows.length) return [];
 
                                         selectedRowDetails = rows[0];
-                                        refresh(cid("sequences-details-acl-grid"));
+                                        slotContext.refresh(cid("sequences-details-acl-grid"));
 
                                         // Zamiana na listę klucz-wartość do pivot grida
                                         return rows;

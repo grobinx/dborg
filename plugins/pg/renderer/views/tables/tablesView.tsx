@@ -112,31 +112,31 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             width: 80,
                         },
                     ] as ColumnDefinition[],
-                    onRowSelect: (row: TableRecord | undefined, refresh: RefreshSlotFunction) => {
+                    onRowSelect: (row: TableRecord | undefined, slotContext) => {
                         selectedRow = row ? row : null;
-                        refresh(cid("tables-text"));
-                        refresh(cid("tables-title"));
-                        refresh(cid("table-tab-label"));
-                        refresh(cid("table-columns-grid"));
-                        refresh(cid("table-indexes-grid"));
-                        refresh(cid("table-constraints-grid"));
-                        refresh(cid("table-ddl-editor"));
-                        refresh(cid("table-relations-grid"));
-                        refresh(cid("table-triggers-grid"));
-                        refresh(cid("table-storage-grid"));
-                        refresh(cid("table-statistics-grid"));
-                        refresh(cid("table-rls-policies-grid"));
-                        refresh(cid("table-acl-grid"));
-                        refresh(cid("table-column-stats-grid"));
-                        refresh(cid("table-partitions-grid"));
-                        refresh(cid("table-rules-grid"));
-                        refresh(cid("table-sequences-grid"));
-                        refresh(cid("table-bloat-grid"));
-                        refresh(cid("table-io-stats-grid"));
-                        refresh(cid("table-locks-grid"));
-                        refresh(cid("table-publications-grid"));
-                        refresh(cid("table-fdw-grid"));
-                        refresh(cid("table-query-plans-grid"));
+                        slotContext.refresh(cid("tables-text"));
+                        slotContext.refresh(cid("tables-title"));
+                        slotContext.refresh(cid("table-tab-label"));
+                        slotContext.refresh(cid("table-columns-grid"));
+                        slotContext.refresh(cid("table-indexes-grid"));
+                        slotContext.refresh(cid("table-constraints-grid"));
+                        slotContext.refresh(cid("table-ddl-editor"));
+                        slotContext.refresh(cid("table-relations-grid"));
+                        slotContext.refresh(cid("table-triggers-grid"));
+                        slotContext.refresh(cid("table-storage-grid"));
+                        slotContext.refresh(cid("table-statistics-grid"));
+                        slotContext.refresh(cid("table-rls-policies-grid"));
+                        slotContext.refresh(cid("table-acl-grid"));
+                        slotContext.refresh(cid("table-column-stats-grid"));
+                        slotContext.refresh(cid("table-partitions-grid"));
+                        slotContext.refresh(cid("table-rules-grid"));
+                        slotContext.refresh(cid("table-sequences-grid"));
+                        slotContext.refresh(cid("table-bloat-grid"));
+                        slotContext.refresh(cid("table-io-stats-grid"));
+                        slotContext.refresh(cid("table-locks-grid"));
+                        slotContext.refresh(cid("table-publications-grid"));
+                        slotContext.refresh(cid("table-fdw-grid"));
+                        slotContext.refresh(cid("table-query-plans-grid"));
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -159,11 +159,11 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             }
                         })
                     ],
-                    actionGroups: (refresh: RefreshSlotFunction) => [
+                    actionGroups: (slotContext) => [
                         SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
                             selectedSchemaName = schemaName;
-                            refresh(cid("tables-grid"));
-                            refresh(cid("tables-title"));
+                            slotContext.refresh(cid("tables-grid"));
+                            slotContext.refresh(cid("tables-title"));
                         }),
                     ],
                     autoSaveId: `tables-grid-${session.profile.sch_id}`,

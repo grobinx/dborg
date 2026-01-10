@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -35,6 +35,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -44,10 +45,10 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -60,15 +61,15 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, refreshSlot);
-        setTitle(resolveReactNodeFactory(slot.title, refreshSlot));
+        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, slotContext);
+        setTitle(resolveReactNodeFactory(slot.title, slotContext));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {
             setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} ref={ref} />);

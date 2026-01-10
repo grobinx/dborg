@@ -8,7 +8,8 @@ import {
     IEditorSlot,
     resolveBooleanFactory,
     resolveEditorActionsFactory,
-    resolveStringAsyncFactory
+    resolveStringAsyncFactory,
+    SlotFactoryContext
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -40,8 +41,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
-    const context: IEditorContext = {
+    const editorContext: IEditorContext = {
     };
 
     React.useEffect(() => {
@@ -52,10 +54,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -68,9 +70,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
@@ -79,7 +81,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         const fetchContent = async () => {
             setLoading(true);
             try {
-                const result = await resolveStringAsyncFactory(slot.content, refreshSlot);
+                const result = await resolveStringAsyncFactory(slot.content, slotContext);
                 if (mounted && typeof result === "string") {
                     setContent(result);
                     editorInstanceRef.current?.setValue(result);
@@ -89,15 +91,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             }
         };
         fetchContent();
-        setActions(resolveEditorActionsFactory(slot.actions, refreshSlot) ?? []);
-        setReadOnly(resolveBooleanFactory(slot.readOnly, refreshSlot) ?? false);
-        setWordWrap(resolveBooleanFactory(slot.wordWrap, refreshSlot) ?? false);
-        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, refreshSlot) ?? true);
-        setStatusBar(resolveBooleanFactory(slot.statusBar, refreshSlot) ?? true);
+        setActions(resolveEditorActionsFactory(slot.actions, slotContext) ?? []);
+        setReadOnly(resolveBooleanFactory(slot.readOnly, slotContext) ?? false);
+        setWordWrap(resolveBooleanFactory(slot.wordWrap, slotContext) ?? false);
+        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, slotContext) ?? true);
+        setStatusBar(resolveBooleanFactory(slot.statusBar, slotContext) ?? true);
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref)
+                node: createProgressBarContent(slot.progress!, slotContext, prev.ref)
             }));
         }
         return () => { mounted = false; };
@@ -109,21 +111,21 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             editor.addAction(action);
         });
 
-        slot?.onMounted?.(refreshSlot);
+        slot?.onMounted?.(slotContext);
         editor.onDidChangeCursorPosition(() => {
-            slot?.onPositionChanged?.(refreshSlot, context);
+            slot?.onPositionChanged?.(slotContext, editorContext);
         });
         editor.onDidChangeCursorSelection(() => {
-            slot?.onSelectionChanged?.(refreshSlot, context);
+            slot?.onSelectionChanged?.(slotContext, editorContext);
         });
         editor.onDidFocusEditorText(() => {
-            slot?.onFocus?.(refreshSlot, context);
+            slot?.onFocus?.(slotContext, editorContext);
         });
         editor.onDidBlurEditorText(() => {
-            slot?.onBlur?.(refreshSlot, context);
+            slot?.onBlur?.(slotContext, editorContext);
         });
         editor.onDidChangeModelContent(() => {
-            slot?.onContentChanged?.(refreshSlot, context);
+            slot?.onContentChanged?.(slotContext, editorContext);
         });
     }
 
@@ -140,7 +142,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             statusBar={statusBar}
             miniMap={slot.miniMap}
             overlayMode={slot.overlayMode ?? "small"}
-            onCancel={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
+            onCancel={slot.onCancel ? () => slot.onCancel!(slotContext) : undefined}
             topChildren={progressBar.node}
         />
     );

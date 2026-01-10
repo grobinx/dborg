@@ -13,6 +13,7 @@ import {
     resolveColumnDefinitionsFactory,
     resolveRecordsFactory,
     resolveStringFactory,
+    SlotFactoryContext,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -38,6 +39,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
@@ -46,7 +48,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
+    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, slotContext) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const [dataGridStatuses, setDataGridStatuses] = React.useState<DataGridStatusPart[] | undefined>(undefined);
     const [dataGridStatusesFunctions, setDataGridStatusesFunctions] = React.useState<IGridStatusButton[] | undefined>(undefined);
@@ -70,11 +72,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
             }
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -87,9 +89,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
@@ -98,13 +100,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
             setLoading(true);
             try {
                 console.debug("GridSlot fetching rows for slot:", slot.id);
-                const result = await resolveRecordsFactory(slot.rows, refreshSlot);
+                const result = await resolveRecordsFactory(slot.rows, slotContext);
                 if (Array.isArray(result)) {
                     setMessage(undefined);
                     setRows(result ?? []);
-                    setColumns(resolveColumnDefinitionsFactory(slot.columns, refreshSlot) ?? []);
-                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, refreshSlot));
-                    setPivot(resolveBooleanFactory(slot.pivot, refreshSlot) ?? false);
+                    setColumns(resolveColumnDefinitionsFactory(slot.columns, slotContext) ?? []);
+                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, slotContext));
+                    setPivot(resolveBooleanFactory(slot.pivot, slotContext) ?? false);
                     console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
                     setMessage(undefined);
@@ -136,7 +138,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         };
         setProgressBar(prev => ({
             ...prev,
-            node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref, true) : null,
+            node: slot.progress ? createProgressBarContent(slot.progress, slotContext, prev.ref, true) : null,
         }));
         fetchRows();
         console.debug("GridSlot updating content for slot:", slot.id, refresh);
@@ -146,9 +148,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const rowClick = React.useMemo(
         () =>
             debounce((row: Record<string, any> | undefined) => {
-                slot.onRowSelect?.(row, refreshSlot);
+                slot.onRowSelect?.(row, slotContext);
             }, 250),
-        [slot.id, refreshSlot]
+        [slot.id, slotContext]
     );
 
     React.useEffect(() => {
@@ -175,11 +177,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }, [slot.statuses, dataGridStatus]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
-        const actionGroups = resolveActionGroupFactory(slot.actionGroups, refreshSlot) ?? [];
+        const actionGroups = resolveActionGroupFactory(slot.actionGroups, slotContext) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
         }
-        const actions = resolveActionFactory(slot.actions, refreshSlot) ?? [];
+        const actions = resolveActionFactory(slot.actions, slotContext) ?? [];
         if (actions.length) {
             context.addAction(...actions);
         }
@@ -242,10 +244,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     pivotColumns={pivotColumns}
                     uniqueField={slot.uniqueField}
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
-                    onCancelLoading={slot.onCancel ? () => slot.onCancel!(refreshSlot) : undefined}
+                    onCancelLoading={slot.onCancel ? () => slot.onCancel!(slotContext) : undefined}
                     overlayMode={slot.overlayMode ?? "small"}
-                    searchText={resolveStringFactory(slot.searchText, refreshSlot)}
+                    searchText={resolveStringFactory(slot.searchText, slotContext)}
                     rebuildDisplayData={rebuildDisplayData}
+                    columnRowNumber={resolveBooleanFactory(slot.canSelectRows, slotContext)}
                 />
                 )}
             </Box>
@@ -256,14 +259,14 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     statuses={dataGridStatuses}
                     buttons={dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ? {
                         last: dataGridStatusesFunctions.map((button, index) => {
-                            const toolTip = resolveStringFactory(button.tooltip, refreshSlot);
+                            const toolTip = resolveStringFactory(button.tooltip, slotContext);
                             const icon = resolveIcon(theme, button.icon);
-                            const label = resolveStringFactory(button.label, refreshSlot);
+                            const label = resolveStringFactory(button.label, slotContext);
                             return (
                                 <StatusBarButton
                                     key={index}
                                     toolTip={toolTip}
-                                    onClick={button.onClick ? () => button.onClick?.(refreshSlot) : undefined}
+                                    onClick={button.onClick ? () => button.onClick?.(slotContext) : undefined}
                                 >
                                     {icon}
                                     {label}

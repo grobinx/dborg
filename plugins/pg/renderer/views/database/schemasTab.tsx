@@ -144,7 +144,7 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
                 direction: "vertical",
                 autoSaveId: `schemas-editor-splitter-${session.profile.sch_id}`,
                 secondSize: 25,
-                first: (refresh) => ({
+                first: (slotContext) => ({
                     id: cid("schemas-grid"),
                     type: "grid",
                     uniqueField: "schema_name",
@@ -201,10 +201,10 @@ where n.nspname not like 'pg_toast%'
                         { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100, formatter: loadingStatsText },
                         { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
                     ] as ColumnDefinition[],
-                    onRowSelect: (row: SchemaRecord | undefined, refresh: RefreshSlotFunction) => {
+                    onRowSelect: (row: SchemaRecord | undefined) => {
                         if (selectedRow?.schema_name !== row?.schema_name) {
                             selectedRow = row ?? null;
-                            refresh(cid("schemas-editor"));
+                            slotContext.refresh(cid("schemas-editor"));
                         }
                     },
                     actions: [
@@ -220,8 +220,8 @@ where n.nspname not like 'pg_toast%'
                                     const row = selectedRow;
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
-                                    refresh(cid("schemas-grid"), "only");
-                                    refresh(cid("schemas-stats-progress"));
+                                    slotContext.refresh(cid("schemas-grid"), "only");
+                                    slotContext.refresh(cid("schemas-stats-progress"));
                                     try {
                                         const stats = await getSchemaStats(row.schema_name);
                                         Object.assign(row, stats);
@@ -231,8 +231,8 @@ where n.nspname not like 'pg_toast%'
                                             loadingStatsRow.splice(index, 1);
                                         }
                                         loadingStats = false;
-                                        refresh(cid("schemas-grid"), "compute");
-                                        refresh(cid("schemas-stats-progress"));
+                                        slotContext.refresh(cid("schemas-grid"), "compute");
+                                        slotContext.refresh(cid("schemas-stats-progress"));
                                     }
                                 }
                             },
@@ -254,8 +254,8 @@ where n.nspname not like 'pg_toast%'
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
-                                        refresh(cid("schemas-grid"), "only");
-                                        refresh(cid("schemas-stats-progress"));
+                                        slotContext.refresh(cid("schemas-grid"), "only");
+                                        slotContext.refresh(cid("schemas-stats-progress"));
                                         try {
                                             const stats = await getSchemaStats(row.schema_name);
                                             Object.assign(row, stats);
@@ -264,7 +264,7 @@ where n.nspname not like 'pg_toast%'
                                             if (index !== -1) {
                                                 loadingStatsRow.splice(index, 1);
                                             }
-                                            refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-grid"), "only");
                                         }
                                         if (!loadingStats) {
                                             break;
@@ -274,8 +274,8 @@ where n.nspname not like 'pg_toast%'
                                 finally {
                                     loadingStats = false;
                                     loadingProgress = null;
-                                    refresh(cid("schemas-grid"), "compute");
-                                    refresh(cid("schemas-stats-progress"));
+                                    slotContext.refresh(cid("schemas-grid"), "compute");
+                                    slotContext.refresh(cid("schemas-stats-progress"));
                                 }
                             }
                         }

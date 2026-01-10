@@ -90,17 +90,17 @@ const columnsTab = (
         content: {
             id: cid("table-columns-tab-content"),
             type: "tabcontent",
-            content: () => ({
+            content: (slotContext) => ({
                 id: cid("table-columns-split"),
                 type: "split",
                 direction: "horizontal",
                 first: () => ({
                     id: cid("table-columns-grid"),
                     type: "grid",
-                    onRowSelect(row: TableColumnRecord, refresh) {
+                    onRowSelect(row: TableColumnRecord) {
                         selected = row;
-                        refresh(cid("table-columns-info-panel-title"));
-                        refresh(cid("table-columns-info-panel-grid"));
+                        slotContext.refresh(cid("table-columns-info-panel-title"));
+                        slotContext.refresh(cid("table-columns-info-panel-grid"));
                     },
                     rows: async () => {
                         selected = null;
@@ -191,7 +191,7 @@ const columnsTab = (
 
                                 columnDetails = rows.length > 0 ? rows[0] : null;
                                 if (columnDetails) {
-                                    refresh(cid("table-columns-column-editor"));
+                                    slotContext.refresh(cid("table-columns-column-editor"));
                                 }
 
                                 scriptNegationMode = false;
@@ -258,8 +258,8 @@ const columnsTab = (
                                             run: () => {
                                                 scriptNegationMode = scriptMode === "add" ? !scriptNegationMode : false;
                                                 scriptMode = "add";
-                                                refresh(cid("table-columns-column-editor"));
-                                                refresh(cid("table-columns-column-editor-toolbar"));
+                                                slotContext.refresh(cid("table-columns-column-editor"));
+                                                slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                             },
                                             selected: () => scriptMode === "add",
                                         },
@@ -270,8 +270,8 @@ const columnsTab = (
                                             run: () => {
                                                 scriptNegationMode = scriptMode === "alter" ? !scriptNegationMode : false;
                                                 scriptMode = "alter";
-                                                refresh(cid("table-columns-column-editor"));
-                                                refresh(cid("table-columns-column-editor-toolbar"));
+                                                slotContext.refresh(cid("table-columns-column-editor"));
+                                                slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                             },
                                             selected: () => scriptMode === "alter",
                                         },
@@ -282,8 +282,8 @@ const columnsTab = (
                                             run: () => {
                                                 scriptNegationMode = scriptMode === "drop" ? !scriptNegationMode : false;
                                                 scriptMode = "drop";
-                                                refresh(cid("table-columns-column-editor"));
-                                                refresh(cid("table-columns-column-editor-toolbar"));
+                                                slotContext.refresh(cid("table-columns-column-editor"));
+                                                slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                             },
                                             selected: () => scriptMode === "drop",
                                         },
@@ -294,8 +294,8 @@ const columnsTab = (
                                             run: () => {
                                                 scriptNegationMode = scriptMode === "comment" ? !scriptNegationMode : false;
                                                 scriptMode = "comment";
-                                                refresh(cid("table-columns-column-editor"));
-                                                refresh(cid("table-columns-column-editor-toolbar"));
+                                                slotContext.refresh(cid("table-columns-column-editor"));
+                                                slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                             },
                                             selected: () => scriptMode === "comment",
                                         },
@@ -309,8 +309,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "data-type" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "data-type";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "data-type",
                                             },
@@ -321,8 +321,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "default" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "default";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "default",
                                             },
@@ -333,8 +333,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "not-null" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "not-null";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "not-null",
                                             },
@@ -345,8 +345,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "rename" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "rename";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "rename",
                                             },
@@ -357,8 +357,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "collation" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "collation";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "collation",
                                             },
@@ -369,8 +369,8 @@ const columnsTab = (
                                                 run: () => {
                                                     scriptNegationMode = scriptAlterMode === "statistics" ? !scriptNegationMode : false;
                                                     scriptAlterMode = "statistics";
-                                                    refresh(cid("table-columns-column-editor"));
-                                                    refresh(cid("table-columns-column-editor-toolbar"));
+                                                    slotContext.refresh(cid("table-columns-column-editor"));
+                                                    slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                 },
                                                 selected: () => scriptAlterMode === "statistics",
                                             },
@@ -382,8 +382,8 @@ const columnsTab = (
                                                     run: () => {
                                                         scriptNegationMode = scriptAlterMode === "identity" ? !scriptNegationMode : false;
                                                         scriptAlterMode = "identity";
-                                                        refresh(cid("table-columns-column-editor"));
-                                                        refresh(cid("table-columns-column-editor-toolbar"));
+                                                        slotContext.refresh(cid("table-columns-column-editor"));
+                                                        slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                     },
                                                     selected: () => scriptAlterMode === "identity",
                                                 }
@@ -396,8 +396,8 @@ const columnsTab = (
                                                     run: () => {
                                                         scriptNegationMode = scriptAlterMode === "compression" ? !scriptNegationMode : false;
                                                         scriptAlterMode = "compression";
-                                                        refresh(cid("table-columns-column-editor"));
-                                                        refresh(cid("table-columns-column-editor-toolbar"));
+                                                        slotContext.refresh(cid("table-columns-column-editor"));
+                                                        slotContext.refresh(cid("table-columns-column-editor-toolbar"));
                                                     },
                                                     selected: () => scriptAlterMode === "compression",
                                                 }

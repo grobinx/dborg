@@ -3,16 +3,17 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { 
+    SlotFactoryContext,
     INumberField, ISearchField, ISelectField, ITextField, 
     resolveBooleanFactory, resolveSelectOptionsFactory 
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 
-export const ToolSelectedField: React.FC<{ action: ISelectField, refreshSlot: (id: string) => void }> = (props) => {
+export const ToolSelectedField: React.FC<{ action: ISelectField, slotContext: SlotFactoryContext }> = (props) => {
     const {
         action,
-        refreshSlot,
+        slotContext,
     } = props;
 
     const [value, setValue] = React.useState<any | undefined>(action.defaultValue);
@@ -24,20 +25,20 @@ export const ToolSelectedField: React.FC<{ action: ISelectField, refreshSlot: (i
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                disabled={resolveBooleanFactory(action.disabled, slotContext)}
                 size="small"
                 width={action.width}
-                options={resolveSelectOptionsFactory(action.options, refreshSlot) || []}
+                options={resolveSelectOptionsFactory(action.options, slotContext) || []}
                 tooltip={action.tooltip}
             />
         </InputDecorator>
     );
 };
 
-export const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: string) => void }> = (props) => {
+export const ToolTextField: React.FC<{ action: ITextField, slotContext: SlotFactoryContext }> = (props) => {
     const {
         action,
-        refreshSlot,
+        slotContext,
     } = props;
 
     const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
@@ -49,7 +50,7 @@ export const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: str
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                disabled={resolveBooleanFactory(action.disabled, slotContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -60,10 +61,10 @@ export const ToolTextField: React.FC<{ action: ITextField, refreshSlot: (id: str
     );
 };
 
-export const ToolSearchField: React.FC<{ action: ISearchField, refreshSlot: (id: string) => void }> = (props) => {
+export const ToolSearchField: React.FC<{ action: ISearchField, slotContext: SlotFactoryContext }> = (props) => {
     const {
         action,
-        refreshSlot,
+        slotContext,
     } = props;
 
     const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
@@ -75,7 +76,7 @@ export const ToolSearchField: React.FC<{ action: ISearchField, refreshSlot: (id:
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                disabled={resolveBooleanFactory(action.disabled, slotContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -86,10 +87,10 @@ export const ToolSearchField: React.FC<{ action: ISearchField, refreshSlot: (id:
     );
 };
 
-export const ToolNumberField: React.FC<{ action: INumberField, refreshSlot: (id: string) => void }> = (props) => {
+export const ToolNumberField: React.FC<{ action: INumberField, slotContext: SlotFactoryContext }> = (props) => {
     const {
         action,
-        refreshSlot,
+        slotContext,
     } = props;
 
     const [value, setValue] = React.useState<number | null>(action.defaultValue ?? action.min ?? null);
@@ -101,7 +102,7 @@ export const ToolNumberField: React.FC<{ action: INumberField, refreshSlot: (id:
                 value={value}
                 onChange={value => setValue(value ?? null)}
                 onChanged={value => action.onChange(value ?? action.defaultValue ?? action.min ?? null)}
-                disabled={resolveBooleanFactory(action.disabled, refreshSlot)}
+                disabled={resolveBooleanFactory(action.disabled, slotContext)}
                 size="small"
                 width={action.width}
                 min={action.min}

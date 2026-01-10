@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Typography, styled, useThemeProps } from "@mui/material";
-import { ITextSlot, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { Box, Typography, styled, useTheme, useThemeProps } from "@mui/material";
+import { ITextSlot, resolveReactNodeFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
@@ -22,6 +22,7 @@ const StyledTextSlot = styled(Box, {
 }));
 
 const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
+    const theme = useTheme();
     const { slot, ref, className, ...other } = useThemeProps({ name: "TextSlot", props });
     const [text, setText] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
@@ -29,6 +30,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -38,10 +40,10 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
                 setRefresh(prev => prev + 1n);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -54,14 +56,14 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
-        setText(resolveReactNodeFactory(slot.text, refreshSlot) ?? "");
+        setText(resolveReactNodeFactory(slot.text, slotContext) ?? "");
     }, [slot.text, refresh]);
 
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);

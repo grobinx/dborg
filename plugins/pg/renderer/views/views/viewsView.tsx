@@ -92,24 +92,24 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                         { label: "Owner Name", key: "owner_name", dataType: "string", width: 120 },
                         { label: "View Type", key: "view_type", dataType: "string", width: 100 },
                     ] as ColumnDefinition[],
-                    onRowSelect: (row: ViewRecord | undefined, refresh: RefreshSlotFunction) => {
+                    onRowSelect: (row: ViewRecord | undefined, slotContext) => {
                         selectedRow = row ?? null;
-                        refresh(cid("views-text"));
-                        refresh(cid("views-title"));
-                        refresh(cid("view-tab-label"));
-                        refresh(cid("view-columns-grid"));
-                        refresh(cid("view-ddl-editor"));
-                        refresh(cid("view-indexes-grid"));
-                        refresh(cid("view-constraints-grid"));
-                        refresh(cid("view-triggers-grid"));
-                        refresh(cid("view-rls-policies-grid"));
-                        refresh(cid("view-acl-grid"));
-                        refresh(cid("view-rules-grid"));
-                        refresh(cid("view-locks-grid"));
-                        refresh(cid("view-query-plans-grid"));
-                        refresh(cid("view-storage-grid"));
-                        refresh(cid("view-functions-grid"));
-                        refresh(cid("view-mat-refresh-grid"));
+                        slotContext.refresh(cid("views-text"));
+                        slotContext.refresh(cid("views-title"));
+                        slotContext.refresh(cid("view-tab-label"));
+                        slotContext.refresh(cid("view-columns-grid"));
+                        slotContext.refresh(cid("view-ddl-editor"));
+                        slotContext.refresh(cid("view-indexes-grid"));
+                        slotContext.refresh(cid("view-constraints-grid"));
+                        slotContext.refresh(cid("view-triggers-grid"));
+                        slotContext.refresh(cid("view-rls-policies-grid"));
+                        slotContext.refresh(cid("view-acl-grid"));
+                        slotContext.refresh(cid("view-rules-grid"));
+                        slotContext.refresh(cid("view-locks-grid"));
+                        slotContext.refresh(cid("view-query-plans-grid"));
+                        slotContext.refresh(cid("view-storage-grid"));
+                        slotContext.refresh(cid("view-functions-grid"));
+                        slotContext.refresh(cid("view-mat-refresh-grid"));
                     },
                     actions: [
                         SelectSchemaAction(),
@@ -124,11 +124,11 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                             }
                         })
                     ],
-                    actionGroups: (refresh: RefreshSlotFunction) => [
+                    actionGroups: (slotContext) => [
                         SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
                             selectedSchemaName = schemaName;
-                            refresh(cid("views-grid"));
-                            refresh(cid("views-title"));
+                            slotContext.refresh(cid("views-grid"));
+                            slotContext.refresh(cid("views-title"));
                         })
                     ],
                     autoSaveId: `views-grid-${session.profile.sch_id}`,

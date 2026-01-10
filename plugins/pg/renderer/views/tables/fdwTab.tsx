@@ -82,19 +82,19 @@ const fdwTab = (
                     id: cid("table-fdw-grid"),
                     type: "grid",
                     pivot: true,
-                    rows: async (refresh) => {
+                    rows: async (slotContext) => {
                         //selectedFdwRow = null;
 
                         if (!selectedRow()) {
-                            refresh(cid("table-fdw-table-options-grid"));
-                            refresh(cid("table-fdw-server-options-grid"));
+                            slotContext.refresh(cid("table-fdw-table-options-grid"));
+                            slotContext.refresh(cid("table-fdw-server-options-grid"));
                             return [];
                         }
 
                         if (selectedRow()!.table_type !== "foreign") {
                             selectedFdwRow = null;
-                            refresh(cid("table-fdw-table-options-grid"));
-                            refresh(cid("table-fdw-server-options-grid"));
+                            slotContext.refresh(cid("table-fdw-table-options-grid"));
+                            slotContext.refresh(cid("table-fdw-server-options-grid"));
                             return t("table-not-foreign", "Table is not a foreign table");
                         }
 
@@ -123,8 +123,8 @@ where n.nspname = $1 and c.relname = $2 and c.relkind = 'f';
                             selectedFdwRow = null;
                         }
 
-                        refresh(cid("table-fdw-table-options-grid"));
-                        refresh(cid("table-fdw-server-options-grid"));
+                        slotContext.refresh(cid("table-fdw-table-options-grid"));
+                        slotContext.refresh(cid("table-fdw-server-options-grid"));
 
                         return rows;
                     },

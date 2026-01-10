@@ -323,23 +323,25 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     // Effect 8: Context menu
     useEffect(() => {
-        const handleContextMenu = (event: MouseEvent) => {
-            if (open) {
-                event.preventDefault();
-                return;
-            }
+        if (!parentRef?.current) return;
 
-            if (parentRef?.current && parentRef.current.contains(event.target as Node)) {
-                event.preventDefault();
-                setContextMenu({
-                    mouseX: event.clientX - 2,
-                    mouseY: event.clientY - 4,
-                });
-            }
+        const handleContextMenu = (event: MouseEvent) => {
+            if (open) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            setContextMenu({
+                mouseX: event.clientX - 2,
+                mouseY: event.clientY - 4,
+            });
         };
 
-        document.addEventListener('contextmenu', handleContextMenu);
-        return () => document.removeEventListener('contextmenu', handleContextMenu);
+        // Dodaj listener bezpośrednio do parentRef, nie do document
+        parentRef.current.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            parentRef.current?.removeEventListener('contextmenu', handleContextMenu);
+        };
     }, [open, parentRef]);
 
     // Effect 9: Fetch context menu actions

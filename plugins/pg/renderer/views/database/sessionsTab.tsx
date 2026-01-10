@@ -136,15 +136,15 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     return {
         id: cid("sessions-tab"),
         type: "tab",
-        onMount: (refresh) => {
+        onMount: (slotContext) => {
             checkSuperuser().then(() => {
-                refresh(cid("sessions-grid"));
+                slotContext.refresh(cid("sessions-grid"));
                 if (versionNumber >= 130000) {
                     ensureCapabilities().then(() => {
-                        refresh(cid("memory-contexts-grid"));
+                        slotContext.refresh(cid("memory-contexts-grid"));
                     });
                     ensureProgressClusterColumns().then(() => {
-                        refresh(cid("progress-cluster-grid"));
+                        slotContext.refresh(cid("progress-cluster-grid"));
                     });
                 }
             });
@@ -169,21 +169,21 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         id: cid("sessions-grid"),
                         type: "grid",
                         uniqueField: "pid",
-                        onRowSelect: (row: SessionRecord | undefined, refresh: RefreshSlotFunction) => {
+                        onRowSelect: (row: SessionRecord | undefined, slotContext) => {
                             const previousSelectedSession = selectedSession;
                             selectedSession = row ?? null;
-                            refresh(cid("locks-grid"));
-                            refresh(cid("transaction-grid"));
-                            refresh(cid("blocking-tree-grid"));
-                            if (versionNumber >= 90600) refresh(cid("blocking-tree-grid"));
-                            if (versionNumber >= 90600) refresh(cid("progress-vacuum-grid"));
-                            if (versionNumber >= 120000) refresh(cid("progress-create-index-grid"));
-                            if (versionNumber >= 130000) refresh(cid("progress-cluster-grid"));
-                            if (versionNumber >= 130000) refresh(cid("progress-analyze-grid"));
-                            if (versionNumber >= 140000) refresh(cid("progress-copy-grid"));
-                            if (versionNumber >= 130000) refresh(cid("memory-contexts-grid"));
+                            slotContext.refresh(cid("locks-grid"));
+                            slotContext.refresh(cid("transaction-grid"));
+                            slotContext.refresh(cid("blocking-tree-grid"));
+                            if (versionNumber >= 90600) slotContext.refresh(cid("blocking-tree-grid"));
+                            if (versionNumber >= 90600) slotContext.refresh(cid("progress-vacuum-grid"));
+                            if (versionNumber >= 120000) slotContext.refresh(cid("progress-create-index-grid"));
+                            if (versionNumber >= 130000) slotContext.refresh(cid("progress-cluster-grid"));
+                            if (versionNumber >= 130000) slotContext.refresh(cid("progress-analyze-grid"));
+                            if (versionNumber >= 140000) slotContext.refresh(cid("progress-copy-grid"));
+                            if (versionNumber >= 130000) slotContext.refresh(cid("memory-contexts-grid"));
                             if (selectedSession?.blocking_pids || previousSelectedSession?.blocking_pids) {
-                                refresh(cid("sessions-grid"), "only");
+                                slotContext.refresh(cid("sessions-grid"), "only");
                             }
                         },
                         rows: async () => {
@@ -766,8 +766,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
             type: "toolbar",
             tools: [
                 {
-                    onTick: async (refresh) => {
-                        refresh(cid("sessions-grid"));
+                    onTick: async (slotContext) => {
+                        slotContext.refresh(cid("sessions-grid"));
                     },
                     canPause: false,
                     intervals: [2, 5, 10, 15, 30, 60],

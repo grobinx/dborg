@@ -27,6 +27,7 @@ import {
     ProgressBarSlotFactory,
     resolveProgressBarFactory,
     isTextSlot,
+    SlotFactoryContext,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -53,10 +54,10 @@ import ProgressBarSlot from "./ProgressBarSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref?: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveContentSlotKindFactory(slot, refreshSlot);
+    const resolvedContent = resolveContentSlotKindFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "grid") {
             return <GridSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -78,13 +79,13 @@ export function createContentComponent(
 export function createTabLabel(
     tabSlot: ITabSlot,
     slot: TabLabelSlotKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
     onClose?: () => void,
     onPin?: () => void,
     pinned?: boolean,
 ): React.ReactNode {
-    const resolvedLabel = resolveTabLabelKindFactory(slot, refreshSlot);
+    const resolvedLabel = resolveTabLabelKindFactory(slot, slotContext);
     if (resolvedLabel) {
         if (resolvedLabel.type === "tablabel") {
             return <TabLabelSlot key={resolvedLabel.id} tabSlot={tabSlot} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} pinned={pinned} />;
@@ -97,10 +98,10 @@ export function createTabLabel(
 
 export function createTabContent(
     slot: TabContentSlotKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTabContentSlotKindFactory(slot, refreshSlot);
+    const resolvedContent = resolveTabContentSlotKindFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -116,7 +117,7 @@ export function createTabPanel(
     slot: ITabSlot,
     onClose: (() => void) | undefined,
     onPin: (() => void) | undefined,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     contentRef: React.Ref<HTMLDivElement>,
     labelRef: React.Ref<HTMLDivElement>,
     toolBarRef: React.Ref<HTMLDivElement>,
@@ -127,9 +128,9 @@ export function createTabPanel(
     toolBar: React.ReactNode,
     panel: React.ReactElement<React.ComponentProps<typeof TabPanel>>,
 } {
-    const content = createTabContent(slot.content, refreshSlot, contentRef);
-    const label = createTabLabel(slot, slot.label, refreshSlot, labelRef, onClose, onPin, pinned);
-    const toolBar = createTabToolbar(slot.toolBar, refreshSlot, toolBarRef);
+    const content = createTabContent(slot.content, slotContext, contentRef);
+    const label = createTabLabel(slot, slot.label, slotContext, labelRef, onClose, onPin, pinned);
+    const toolBar = createTabToolbar(slot.toolBar, slotContext, toolBarRef);
     let panel: React.ReactNode = null;
     if (content && label) {
         panel = (
@@ -152,10 +153,10 @@ export function createTabPanel(
 
 export function createTabToolbar(
     slot: ToolBarSlotKindFactory | undefined,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveToolBarSlotKindFactory(slot, refreshSlot);
+    const resolvedContent = resolveToolBarSlotKindFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "toolbar") {
             return <ToolBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -168,10 +169,10 @@ export function createTabToolbar(
 
 export function createTitleContent(
     slot: TitleSlotKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTitleSlotKindFactory(slot, refreshSlot);
+    const resolvedContent = resolveTitleSlotKindFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "title") {
             return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -184,10 +185,10 @@ export function createTitleContent(
 
 export function createTextContent(
     slot: TextSlotKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTextSlotKindFactory(slot, refreshSlot);
+    const resolvedContent = resolveTextSlotKindFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "text") {
             return <TextSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -200,10 +201,10 @@ export function createTextContent(
 
 export function createSplitPartContent(
     part: SplitSlotPartKindFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref?: React.Ref<HTMLDivElement>,
 ): React.ReactNode | null {
-    const resolvedPart = resolveSplitSlotPartKindFactory(part, refreshSlot);
+    const resolvedPart = resolveSplitSlotPartKindFactory(part, slotContext);
     if (resolvedPart) {
         if (resolvedPart.type === "content") {
             return <ContentSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
@@ -224,11 +225,11 @@ export function createSplitPartContent(
 
 export function createProgressBarContent(
     slot: ProgressBarSlotFactory,
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
     ref: React.Ref<HTMLDivElement>,
     absolute?: boolean,
 ): React.ReactNode {
-    const resolvedContent = resolveProgressBarFactory(slot, refreshSlot);
+    const resolvedContent = resolveProgressBarFactory(slot, slotContext);
     if (resolvedContent) {
         if (resolvedContent.type === "progress") {
             return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} absolute={absolute} />;
@@ -241,14 +242,14 @@ export function createActionComponents(
     actions: ToolFactory | undefined,
     actionSlotId: string | undefined,
     getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
-    refreshSlot: (id: string) => void,
+    slotContext: SlotFactoryContext,
 ) {
     let actionComponents: React.ReactNode[] = [];
     let actionManager: (() => ActionManager<any>) | null = null;
     let commandManager: CommandManager<any> | null = null;
     let actionContext: any = null;
 
-    const resolvedActions = resolveActionsFactory(actions, refreshSlot);
+    const resolvedActions = resolveActionsFactory(actions, slotContext);
     if (resolvedActions) {
         if (actionSlotId) {
             const dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
@@ -320,7 +321,7 @@ export function createActionComponents(
                         <ToolSearchField
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isTextField(action)) {
@@ -328,7 +329,7 @@ export function createActionComponents(
                         <ToolTextField
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isNumberField(action)) {
@@ -336,7 +337,7 @@ export function createActionComponents(
                         <ToolNumberField
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isSelectField(action)) {
@@ -344,7 +345,7 @@ export function createActionComponents(
                         <ToolSelectedField
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isAutoRefresh(action)) {
@@ -352,7 +353,7 @@ export function createActionComponents(
                         <ToolAutoRefreshBar
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isCopyData(action)) {
@@ -360,7 +361,7 @@ export function createActionComponents(
                         <ToolCopyDataButton
                             key={index}
                             action={action}
-                            refreshSlot={refreshSlot}
+                            slotContext={slotContext}
                         />
                     );
                 } else if (isTextSlot(action)) {

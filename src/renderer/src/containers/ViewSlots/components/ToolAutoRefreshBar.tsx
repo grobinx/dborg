@@ -1,10 +1,10 @@
 import React from "react";
-import { AutoRefreshLifecycle, IAutoRefresh, IAutoRefreshContext } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import { AutoRefreshLifecycle, SlotFactoryContext, IAutoRefresh, IAutoRefreshContext } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
-export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (id: string) => void }> = (props) => {
-    const { action, refreshSlot } = props;
+export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, slotContext: SlotFactoryContext }> = (props) => {
+    const { action, slotContext } = props;
     const lifecycle: AutoRefreshLifecycle = {
         onHide: "pause",
         onShow: "resume",
@@ -28,7 +28,7 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (
         stop: () => setState("stopped"),
         pause: () => setState("paused"),
         resume: () => setState("running"),
-        clear: () => action.onClear?.(refreshSlot, context),
+        clear: () => action.onClear?.(slotContext, context),
         setState,
         setInterval,
         setExecuting,
@@ -37,9 +37,9 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (
     React.useEffect(() => {
         if (lifecycle.onMount === "start") setState("running");
         else setState("stopped");
-        action.onMount?.(refreshSlot, context);
+        action.onMount?.(slotContext, context);
         return () => {
-            action.onUnmount?.(refreshSlot, context);
+            action.onUnmount?.(slotContext, context);
         };
     }, []);
 
@@ -48,8 +48,8 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (
         if (state === "stopped" || prevState.current === "stopped") {
             pausedByHide.current = false;
             wasRunningBeforeHide.current = false;
-            if (isBarVisible) action.onShow?.(refreshSlot, context);
-            else action.onHide?.(refreshSlot, context);
+            if (isBarVisible) action.onShow?.(slotContext, context);
+            else action.onHide?.(slotContext, context);
             return;
         }
 
@@ -59,37 +59,37 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (
             if (lifecycle.onHide === "stop") {
                 pausedByHide.current = false;
                 setState("stopped");
-                action.onHide?.(refreshSlot, context);
+                action.onHide?.(slotContext, context);
             } else if (lifecycle.onHide === "pause") {
                 if (state === "running") {
                     pausedByHide.current = true; // mark pause due to hide
                     setState("paused");
                 }
-                action.onHide?.(refreshSlot, context);
+                action.onHide?.(slotContext, context);
             } else {
-                action.onHide?.(refreshSlot, context);
+                action.onHide?.(slotContext, context);
             }
         } else {
             // Becoming visible
             if (pausedByHide.current && lifecycle.onShow === "resume") {
                 pausedByHide.current = false;
                 setState("running");
-                action.onResume?.(refreshSlot, context);
+                action.onResume?.(slotContext, context);
             } else if (wasRunningBeforeHide.current && lifecycle.onShow === "start") {
                 setState("running");
-                action.onStart?.(refreshSlot, context);
+                action.onStart?.(slotContext, context);
             } else {
-                action.onShow?.(refreshSlot, context);
+                action.onShow?.(slotContext, context);
             }
         }
     }, [isBarVisible, state]);
 
     React.useEffect(() => {
         if (state === "running" && action.clearOn === "start" && prevState.current === "stopped") {
-            action.onClear?.(refreshSlot, context);
+            action.onClear?.(slotContext, context);
         }
         if (state === "stopped" && action.clearOn === "stop" && prevState.current === "running") {
-            action.onClear?.(refreshSlot, context);
+            action.onClear?.(slotContext, context);
         }
         prevState.current = state;
     }, [state]);
@@ -102,12 +102,12 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, refreshSlot: (
             intervals={action.intervals}
             onStateChange={setState}
             onIntervalChange={setInterval}
-            onStart={action.onStart ? () => action.onStart?.(refreshSlot, context) : undefined}
-            onPause={action.onPause ? () => action.onPause?.(refreshSlot, context) : undefined}
-            onResume={action.onResume ? () => action.onResume?.(refreshSlot, context) : undefined}
-            onClear={action.onClear ? () => action.onClear?.(refreshSlot, context) : undefined}
-            onStop={action.onStop ? () => action.onStop?.(refreshSlot, context) : undefined}
-            onTick={action.onTick ? () => action.onTick?.(refreshSlot, context) : undefined}
+            onStart={action.onStart ? () => action.onStart?.(slotContext, context) : undefined}
+            onPause={action.onPause ? () => action.onPause?.(slotContext, context) : undefined}
+            onResume={action.onResume ? () => action.onResume?.(slotContext, context) : undefined}
+            onClear={action.onClear ? () => action.onClear?.(slotContext, context) : undefined}
+            onStop={action.onStop ? () => action.onStop?.(slotContext, context) : undefined}
+            onTick={action.onTick ? () => action.onTick?.(slotContext, context) : undefined}
             executing={context.executing}
             canClear={action.canClear}
             canPause={action.canPause}

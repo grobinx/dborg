@@ -1,7 +1,7 @@
 /**
  * Kolejność klawiszy modyfikujących.
  */
-const MODIFIERS_ORDER = ['Ctrl', 'Shift', 'Alt', 'Meta'];
+const MODIFIERS_ORDER = ['Ctrl', 'Alt', 'Shift', 'Meta'];
 
 export interface KeyboardEvent {
     key: string;
@@ -35,10 +35,10 @@ export function normalizeKeybinding(keybinding: string): string {
     const keyMap: Record<string, string> = {
         control: 'Ctrl',
         ctrl: 'Ctrl',
-        shift: 'Shift',
-        sh: 'Shift',
         alt: 'Alt',
         option: 'Alt',
+        shift: 'Shift',
+        sh: 'Shift',
         meta: 'Meta',
         command: 'Meta',
         cmd: 'Meta',
@@ -120,12 +120,12 @@ export function keyboardEventToKeybinding(event: KeyboardEvent): string {
     const modifiers: string[] = [];
 
     if (event.ctrlKey) modifiers.push('Ctrl');
-    if (event.shiftKey) modifiers.push('Shift');
     if (event.altKey) modifiers.push('Alt');
+    if (event.shiftKey) modifiers.push('Shift');
     if (event.metaKey) modifiers.push('Meta');
 
     // Spacja z event.key to ' ', normalizuj na 'Space'
     const mainKey = event.key === ' ' ? 'Space' : event.key;
 
-    return [...modifiers, mainKey].join('+');
+    return normalizeKeybinding([...modifiers, mainKey].join('+'));
 }

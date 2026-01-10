@@ -273,7 +273,7 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
     const renderFlow = (): IRenderedSlot => ({
         id: cid("dataflow-render"),
         type: "rendered",
-        render: ({ refresh: _refresh }) => {
+        render: () => {
             const theme = useTheme();
             const { nodes, links, totals, anomalies } = computeFlow();
             const thresholds = computeThresholds();
@@ -515,17 +515,17 @@ const dataFlowTab = (session: IDatabaseSession, databaseName: string | null): IT
             type: "toolbar",
             tools: [
                 {
-                    onTick: async (refresh) => {
+                    onTick: async (slotContext) => {
                         try {
-                            await fetchSnapshot(refresh);
+                            await fetchSnapshot(slotContext.refresh);
                         } catch (e) { /* ignore */ }
-                        refresh(cid("dataflow-render"));
+                        slotContext.refresh(cid("dataflow-render"));
                     },
-                    onClear: (refresh, context) => {
+                    onClear: (slotContext, context) => {
                         snapshots = [];
                         intervalSec = context.interval ?? intervalSec;
                         initThresholds();
-                        refresh(cid("dataflow-render"));
+                        slotContext.refresh(cid("dataflow-render"));
                     },
                     intervals: [5, 10, 15, 30, 60],
                     defaultInterval: intervalSec,

@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, styled } from "@mui/material";
-import { IRenderedSlot } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { Box, styled, useTheme } from "@mui/material";
+import { IRenderedSlot, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
@@ -19,12 +19,14 @@ const StyledRenderedSlotBox = styled(Box)({
 });
 
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
+    const theme = useTheme();
     const { slot, ref, className, tabsItemID, ...other } = props;
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -34,10 +36,10 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -50,9 +52,9 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
     
@@ -63,7 +65,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}
         >
-            <slot.render refresh={refreshSlot} />
+            <slot.render slotContext={slotContext} />
         </StyledRenderedSlotBox>
     );
 };

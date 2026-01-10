@@ -293,7 +293,7 @@ const columnStatsTab = (
     const grid = (): IGridSlot => ({
         id: cid("table-column-stats-grid"),
         type: "grid",
-        rows: async (refresh) => {
+        rows: async (slotContext) => {
             if (!selectedRow()) return [];
 
             // Reset przy zmianie tabeli
@@ -339,8 +339,8 @@ order by attname;
                 aggregateSnapshots();
             }
 
-            refresh(cid("table-column-stats-timeline-chart"));
-            refresh(cid("table-column-stats-current-dist-chart"));
+            slotContext.refresh(cid("table-column-stats-timeline-chart"));
+            slotContext.refresh(cid("table-column-stats-current-dist-chart"));
             return rows;
         },
         columns: [
@@ -401,14 +401,14 @@ order by attname;
                                 {
                                     defaultInterval: 10,
                                     intervals: [2, 5, 10, 30, 60],
-                                    onTick(refresh, _ctx) {
-                                        refresh(cid("table-column-stats-grid"));
+                                    onTick(slotContext, _ctx) {
+                                        slotContext.refresh(cid("table-column-stats-grid"));
                                     },
-                                    onClear(refresh, _ctx) {
+                                    onClear(slotContext, _ctx) {
                                         snapshots = [];
                                         aggregated = [];
                                         snapshotCounter = 0;
-                                        refresh(cid("table-column-stats-grid"));
+                                        slotContext.refresh(cid("table-column-stats-grid"));
                                     },
                                     clearOn: "start",
                                     canPause: false,

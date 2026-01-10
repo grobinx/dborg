@@ -1,4 +1,4 @@
-import { ToolBarSlotKind } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { SlotFactoryContext, ToolBarSlotKind } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useRefSlot } from "./RefSlotContext";
@@ -7,6 +7,7 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import { createActionComponents } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { useTheme } from "@mui/material";
 
 export interface ToolBarProps {
     slot: ToolBarSlotKind;
@@ -17,6 +18,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     slot,
     ref,
 }) => {
+    const theme = useTheme();
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { getRefSlot, onRegisterRefSlot } = useRefSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
@@ -29,6 +31,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     const [renderNode, setRenderNode] = React.useState<React.ReactNode>(null);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, () => {
@@ -48,13 +51,13 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
                 setRefresh(prev => prev + 1n);
             });
         }
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
             offDataGrid();
             offTabContent();
             offContent();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot]);
 
@@ -67,18 +70,18 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
         if (slot.type === "rendered") {
-            setRenderNode(<slot.render refresh={refreshSlot} />);
+            setRenderNode(<slot.render slotContext={slotContext} />);
             return;
         }
-        setActionComponents(createActionComponents(slot.tools, slot.actionSlotId, getRefSlot, refreshSlot));
+        setActionComponents(createActionComponents(slot.tools, slot.actionSlotId, getRefSlot, slotContext));
     }, [slot.id, refresh]);
 
     // Handler onKeyDown

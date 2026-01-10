@@ -356,7 +356,7 @@ export async function listPrivileges(
 }
 
 export interface CleanupChoice {
-    action: "drop" | "drop_restrict" | "reassign" | "move" | "ignore";
+    action: "drop_cascade" | "drop_restrict" | "reassign" | "move" | "ignore";
     newOwner?: string;   // docelowy owner dla reassign/move (gdy brak, użyj opts.newOwner)
     newSchema?: string;  // docelowy schemat dla move
 }
@@ -404,23 +404,23 @@ export function buildCleanupSql(
 
         if (choice === "ignore") continue;
 
-        const cascade = choice === "drop" ? " CASCADE" : "";
+        const cascade = choice === "drop_cascade" ? " CASCADE" : "";
 
-        if (choice === "drop" || choice === "drop_restrict") {
+        if (choice === "drop_cascade" || choice === "drop_restrict") {
             switch (o.objtype) {
-                case "table": lines.push(`DROP TABLE ${o.identity}${cascade};`); break;
-                case "view": lines.push(`DROP VIEW ${o.identity}${cascade};`); break;
-                case "matview": lines.push(`DROP MATERIALIZED VIEW ${o.identity}${cascade};`); break;
-                case "sequence": lines.push(`DROP SEQUENCE ${o.identity}${cascade};`); break;
-                case "function": lines.push(`DROP FUNCTION ${o.identity}${cascade};`); break;
-                case "type": lines.push(`DROP TYPE ${o.identity}${cascade};`); break;
-                case "domain": lines.push(`DROP DOMAIN ${o.identity}${cascade};`); break;
-                case "extension": lines.push(`DROP EXTENSION ${o.identity}${cascade};`); break;
-                case "schema": lines.push(`DROP SCHEMA ${o.identity}${cascade || (opts.dropSchemasCascade ? " CASCADE" : "")};`); break;
-                case "server": lines.push(`DROP SERVER ${o.identity}${cascade};`); break;
-                case "fdw": lines.push(`DROP FOREIGN DATA WRAPPER ${o.identity}${cascade};`); break;
-                case "publication": lines.push(`DROP PUBLICATION ${o.identity};`); break;
-                case "language": lines.push(`DROP LANGUAGE ${o.identity}${cascade};`); break;
+                case "table": lines.push(`DROP TABLE IF EXISTS ${o.identity}${cascade};`); break;
+                case "view": lines.push(`DROP VIEW IF EXISTS ${o.identity}${cascade};`); break;
+                case "matview": lines.push(`DROP MATERIALIZED VIEW IF EXISTS ${o.identity}${cascade};`); break;
+                case "sequence": lines.push(`DROP SEQUENCE IF EXISTS ${o.identity}${cascade};`); break;
+                case "function": lines.push(`DROP FUNCTION IF EXISTS ${o.identity}${cascade};`); break;
+                case "type": lines.push(`DROP TYPE IF EXISTS ${o.identity}${cascade};`); break;
+                case "domain": lines.push(`DROP DOMAIN IF EXISTS ${o.identity}${cascade};`); break;
+                case "extension": lines.push(`DROP EXTENSION IF EXISTS ${o.identity}${cascade};`); break;
+                case "schema": lines.push(`DROP SCHEMA IF EXISTS ${o.identity}${cascade || (opts.dropSchemasCascade ? " CASCADE" : "")};`); break;
+                case "server": lines.push(`DROP SERVER IF EXISTS ${o.identity}${cascade};`); break;
+                case "fdw": lines.push(`DROP FOREIGN DATA WRAPPER IF EXISTS ${o.identity}${cascade};`); break;
+                case "publication": lines.push(`DROP PUBLICATION IF EXISTS ${o.identity};`); break;
+                case "language": lines.push(`DROP LANGUAGE IF EXISTS ${o.identity}${cascade};`); break;
                 case "database": lines.push(`-- Ręcznie: DROP/ALTER DATABASE ${o.identity}`); break;
                 case "user_mapping": lines.push(`DROP USER MAPPING FOR ${opts.roleName} SERVER ${o.name.split(" ON ")[1]};`); break;
             }

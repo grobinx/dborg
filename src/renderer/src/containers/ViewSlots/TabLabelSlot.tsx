@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -33,9 +33,10 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [, reRender] = React.useState<bigint>(0n);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
-    const closable = resolveBooleanFactory(tabSlot.closable, refreshSlot);
-    const pinnable = resolveBooleanFactory(tabSlot.pinnable, refreshSlot);
+    const closable = resolveBooleanFactory(tabSlot.closable, slotContext);
+    const pinnable = resolveBooleanFactory(tabSlot.pinnable, slotContext);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -45,16 +46,16 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
                 setRefresh(prev => prev + 1n);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
     React.useEffect(() => {
         if (active) {
-            slot?.onActivate?.(refreshSlot);
+            slot?.onActivate?.(slotContext);
         } else {
             slot?.onDeactivate?.();
         }
@@ -62,7 +63,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         setIcon(resolveIcon(theme, slot.icon));
-        setLabel(resolveReactNodeFactory(slot.label, refreshSlot) ?? "");
+        setLabel(resolveReactNodeFactory(slot.label, slotContext) ?? "");
     }, [slot.icon, slot.label, refresh]);
 
     React.useEffect(() => {

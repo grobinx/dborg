@@ -147,7 +147,7 @@ group by oc.tables_count, oc.views_count, fc.functions_count, oc.sequences_count
                 direction: "vertical",
                 autoSaveId: `roles-editor-splitter-${session.profile.sch_id}`,
                 secondSize: 25,
-                first: (refresh) => ({
+                first: (slotContext) => ({
                     id: cid("roles-grid"),
                     type: "grid",
                     uniqueField: "role_name",
@@ -196,10 +196,10 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100, formatter: loadingStatsText },
                         { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
                     ] as ColumnDefinition[],
-                    onRowSelect: (row: RoleRecord | undefined, refresh: RefreshSlotFunction) => {
+                    onRowSelect: (row: RoleRecord | undefined, slotContext) => {
                         if (selectedRow?.role_name !== row?.role_name) {
                             selectedRow = row ?? null;
-                            refresh(cid("roles-editor"));
+                            slotContext.refresh(cid("roles-editor"));
                         }
                     },
                     actions: [
@@ -215,8 +215,8 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     const row = selectedRow;
                                     loadingStats = true;
                                     loadingStatsRow.push(row);
-                                    refresh(cid("roles-grid"), "only");
-                                    refresh(cid("roles-stats-progress"));
+                                    slotContext.refresh(cid("roles-grid"), "only");
+                                    slotContext.refresh(cid("roles-stats-progress"));
                                     try {
                                         const stats = await getRoleStats(row.role_name);
                                         Object.assign(row, stats);
@@ -224,8 +224,8 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                         const index = loadingStatsRow.indexOf(row);
                                         if (index !== -1) loadingStatsRow.splice(index, 1);
                                         loadingStats = false;
-                                        refresh(cid("roles-grid"), "compute");
-                                        refresh(cid("roles-stats-progress"));
+                                        slotContext.refresh(cid("roles-grid"), "compute");
+                                        slotContext.refresh(cid("roles-stats-progress"));
                                     }
                                 }
                             },
@@ -247,16 +247,16 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
                                         loadingStatsRow.push(row);
-                                        refresh(cid("roles-grid"), "only");
-                                        refresh(cid("roles-stats-progress"));
+                                        slotContext.refresh(cid("roles-grid"), "only");
+                                        slotContext.refresh(cid("roles-stats-progress"));
                                         try {
                                             const stats = await getRoleStats(row.role_name);
                                             Object.assign(row, stats);
                                         } finally {
                                             const index = loadingStatsRow.indexOf(row);
                                             if (index !== -1) loadingStatsRow.splice(index, 1);
-                                            refresh(cid("roles-grid"), "only");
-                                            refresh(cid("roles-stats-progress"));
+                                            slotContext.refresh(cid("roles-grid"), "only");
+                                            slotContext.refresh(cid("roles-stats-progress"));
                                         }
                                         if (!loadingStats) {
                                             break;
@@ -265,8 +265,8 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                 } finally {
                                     loadingStats = false;
                                     loadingProgress = null;
-                                    refresh(cid("roles-grid"), "compute");
-                                    refresh(cid("roles-stats-progress"));
+                                    slotContext.refresh(cid("roles-grid"), "compute");
+                                    slotContext.refresh(cid("roles-stats-progress"));
                                 }
                             }
                         }

@@ -469,7 +469,7 @@ const ioStatsTab = (
             id: cid("table-io-stats-grid"),
             type: "grid",
             pivot: true,
-            rows: async (refresh) => {
+            rows: async (slotContext) => {
                 if (!selectedRow()) return [];
 
                 if (lastSelectedTable?.schema_name !== selectedRow()!.schema_name ||
@@ -505,9 +505,9 @@ where
                         ioStatsRows = ioStatsRows.slice(ioStatsRows.length - snapshotSize);
                     }
                 }
-                refresh(cid("table-io-stats-chart-slot"));
-                refresh(cid("table-io-stats-timeline-chart-slot"));
-                refresh(cid("table-io-stats-incremental-chart-slot"));
+                slotContext.refresh(cid("table-io-stats-chart-slot"));
+                slotContext.refresh(cid("table-io-stats-timeline-chart-slot"));
+                slotContext.refresh(cid("table-io-stats-incremental-chart-slot"));
                 return rows;
             },
             columns: [
@@ -572,13 +572,13 @@ where
                                     tooltip: t("io-stats-timeline-snapshot-size-tooltip", "Number of snapshots to keep for timeline charts (10-200)"),
                                 },
                                 {
-                                    onTick(refresh) {
-                                        refresh(cid("table-io-stats-grid"));
+                                    onTick(slotContext) {
+                                        slotContext.refresh(cid("table-io-stats-grid"));
                                     },
-                                    onClear(refresh) {
+                                    onClear(slotContext) {
                                         ioStatsRows = [];
                                         snapshotCounter = 0;
-                                        refresh(cid("table-io-stats-grid"));
+                                        slotContext.refresh(cid("table-io-stats-grid"));
                                     },
                                     clearOn: "start",
                                     canPause: false,

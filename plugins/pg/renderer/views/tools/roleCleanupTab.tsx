@@ -1,14 +1,15 @@
-import React from "react";
 import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot } from "../../../../manager/renderer/CustomSlots";
+import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotFactoryContext } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { SearchData_ID } from "@renderer/components/DataGrid/actions";
-import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObject, PrivilegeRecord } from "./roleAudit";
+import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObject, PrivilegeRecord, CleanupChoice, PrivilegeChoice } from "./roleAudit";
 import { versionToNumber } from "../../../../../src/api/version";
 import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { icons } from "@renderer/themes/ThemeWrapper";
+import debounce, { Debounced } from "@renderer/utils/debounce";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { Stack } from "@mui/material";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -30,14 +31,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         }
     };
 
+    const editorRefresh = debounce((slotContext: SlotFactoryContext) => {
+        slotContext.refresh(cid("role-cleanup-editor"));
+    }, 1000);
+
     return {
         id: cid("role-cleanup-tab"),
         type: "tab",
-        onMount: (refresh) => {
+        onMount: (slotContext) => {
             setSelectedRoleName().then(() => {
-                refresh(cid("role-cleanup-selected-role-label"));
-                refresh(cid("role-owned-grid"));
-                refresh(cid("role-privs-grid"));
+                slotContext.refresh(cid("role-cleanup-selected-role-label"));
+                slotContext.refresh(cid("role-owned-grid"));
+                slotContext.refresh(cid("role-privs-grid"));
             });
         },
         label: {
@@ -58,10 +63,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     refresh(cid("role-cleanup-selected-role-label"));
                     refresh(cid("role-owned-grid"));
                     refresh(cid("role-privs-grid"));
-                    refresh(cid("role-cleanup-editor"));
+                    editorRefresh(refresh);
                 })
             ],
-            content: (refresh) => ({
+            content: (slotContext) => ({
                 id: cid("role-cleanup-split"),
                 type: "split",
                 direction: "vertical",
@@ -85,6 +90,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 content: {
                                     id: cid("role-owned-grid"),
                                     type: "grid",
+                                    autoSaveId: `role-cleanup-owned-grid-${session.profile.sch_id}`,
+                                    statuses: ["data-rows"],
+                                    canSelectRows: true,
                                     rows: async () => {
                                         if (!selectedRole) return [];
                                         ownedCache = await listOwnedObjects(session, selectedRole, versionNumber);
@@ -97,31 +105,84 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                         { key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
                                         {
-                                            key: "drop", label: t("drop-command", "Drop Command"), width: 36, dataType: "object",
-                                            formatter: (value, row) => {
-                                                return <ToolButton action="drop-owned-objects-action" size="small" dense width="0.8em" height="0.8em" />
+                                            key: "choice", label: t("action", "Action"), width: 36, dataType: "object",
+                                            formatter: (value: CleanupChoice | undefined, row) => {
+                                                if (value?.action === "drop_restrict") {
+                                                    return <Stack direction="row" gap={4}>
+                                                        {icons!.DropRestrict({ color: "warning" })}
+                                                        {t("drop", "Drop")}
+                                                    </Stack>;
+                                                }
+                                                else if (value?.action === "drop_cascade") {
+                                                    return <Stack direction="row" gap={4}>
+                                                        {icons!.DropCascade({ color: "error" })}
+                                                        {t("drop-cascade", "Drop Cascade")}
+                                                    </Stack>;
+                                                }
+                                                return <span>{t("no-action", "No Action")}</span>;
                                             }
                                         },
                                     ] as ColumnDefinition[],
                                     actions: [
                                         {
-                                            id: "drop-owned-objects-action",
-                                            label: t("drop-object", "Drop Object"),
-                                            icon: "Delete",
+                                            id: "drop-restrict-owned-objects-action",
+                                            label: t("drop-object-restrict", "Drop Object Restrict"),
+                                            icon: icons?.DropRestrict({ color: "warning" }),
+                                            keySequence: ["Ctrl+D"],
                                             run: (context) => {
+                                                const position = context.getPosition();
+                                                if (!position) return;
 
+                                                const selectedRows = context.getSelectedRows();
+
+                                                (selectedRows.length ? selectedRows : [position.row]).forEach(rowIdx => {
+                                                    const row = context.getData(rowIdx);
+                                                    if (row?.choice?.action === "drop_restrict") {
+                                                        row.choice = null;
+                                                    }
+                                                    else {
+                                                        row.choice = { action: "drop_restrict" };
+                                                    }
+                                                });
+                                                selectedRows.length = 0;
+                                                slotContext.refresh(cid("role-owned-grid"), "only");
+                                                editorRefresh(slotContext);
                                             }
-                                        }
+                                        },
+                                        {
+                                            id: "drop-cascade-owned-objects-action",
+                                            label: t("drop-cascade-object", "Drop Object Cascade"),
+                                            icon: icons?.DropCascade({ color: "error" }),
+                                            keySequence: ["Ctrl+Shift+D"],
+                                            run: (context) => {
+                                                const position = context.getPosition();
+                                                if (!position) return;
+
+                                                const selectedRows = context.getSelectedRows();
+
+                                                (selectedRows.length ? selectedRows : [position.row]).forEach(rowIdx => {
+                                                    const row = context.getData(rowIdx);
+                                                    if (row?.choice?.action === "drop_cascade") {
+                                                        row.choice = null;
+                                                    }
+                                                    else {
+                                                        row.choice = { action: "drop_cascade" };
+                                                    }
+                                                });
+                                                selectedRows.length = 0;
+                                                slotContext.refresh(cid("role-owned-grid"), "only");
+                                                editorRefresh(slotContext);
+                                            }
+                                        },
                                     ],
-                                    autoSaveId: `role-cleanup-owned-grid-${session.profile.sch_id}`,
-                                    statuses: ["data-rows"],
                                 } as IGridSlot
                             },
                             toolBar: {
                                 id: cid("role-owners-tab-toolbar"),
                                 type: "toolbar",
                                 tools: [
-                                    "drop-owned-objects-action",
+                                    "drop-restrict-owned-objects-action",
+                                    "drop-cascade-owned-objects-action",
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
                             }
@@ -172,8 +233,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                         const sql = buildCleanupSql(ownedCache, privsCache, {
                             roleName: selectedRole,
                             newOwner: targetOwner ?? "",
-                            ownedChoices: {},
-                            privilegeChoices: {},
+                            ownedChoices: ownedCache.reduce((acc: Record<string, CleanupChoice>, obj: Record<string, any>) => {
+                                if (obj?.choice && obj?.identity) {
+                                    acc[obj.identity] = obj.choice as CleanupChoice;
+                                }
+                                return acc;
+                            }, {}),
+                            privilegeChoices: privsCache.reduce((acc: Record<string, PrivilegeChoice>, priv: Record<string, any>) => {
+                                if (priv?.choice && priv?.identity) {
+                                    acc[priv.identity] = priv.choice as PrivilegeChoice;
+                                }
+                                return acc;
+                            }, {}),
                         });
 
                         return sql;

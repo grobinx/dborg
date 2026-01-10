@@ -462,7 +462,7 @@ const activityTab = (
     const activityCharts = (): IRenderedSlot => ({
         id: cid("database-activity-charts"),
         type: "rendered",
-        render: ({ refresh }) => {
+        render: ({ slotContext }) => {
             const theme = useTheme();
 
             const data = buildTimelineData(activityRows, (r: ActivityRecord, index: number) => {
@@ -526,7 +526,7 @@ const activityTab = (
                                         <TitleChart title={chart!.title} variant="body1">
                                             <ToolButton
                                                 size="small"
-                                                onClick={() => toggleMinimized(chart!.key, refresh)}
+                                                onClick={() => toggleMinimized(chart!.key, slotContext.refresh)}
                                             >
                                                 <theme.icons.Pinned color="primary" />
                                             </ToolButton>
@@ -548,7 +548,7 @@ const activityTab = (
                                         <TitleChart title={chart!.shortTitle} variant="caption">
                                             <ToolButton
                                                 size="small"
-                                                onClick={() => toggleMinimized(chart!.key, refresh)}
+                                                onClick={() => toggleMinimized(chart!.key, slotContext.refresh)}
                                                 dense
                                             >
                                                 <theme.icons.Pin color="error" />
@@ -593,19 +593,19 @@ const activityTab = (
                     tooltip: t("statistics-snapshot-size-tooltip", "Number of snapshots to keep for timeline (10-200)"),
                 },
                 {
-                    onTick: async (refresh) => {
+                    onTick: async (slotContext) => {
                         try {
                             await fetchActivityData();
                         } catch (error) {
                             console.error("Error fetching activity data:", error);
                         }
-                        refresh(cid("database-activity-charts"));
+                        slotContext.refresh(cid("database-activity-charts"));
                     },
-                    onClear(refresh) {
+                    onClear(slotContext) {
                         activityRows = [];
                         snapshotCounter = 0;
                         fetchMaxConnections().then(() => {
-                            refresh(cid("database-activity-charts"));
+                            slotContext.refresh(cid("database-activity-charts"));
                         });
                     },
                     clearOn: "start",

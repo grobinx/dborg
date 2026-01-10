@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, useThemeProps } from "@mui/material";
-import { ITabContentSlot, resolveActionFactory, resolveActionGroupFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { Box, useTheme, useThemeProps } from "@mui/material";
+import { ITabContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
@@ -28,6 +28,7 @@ interface TabContentSlotOwnProps extends TabContentSlotProps {
 }
 
 const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
+    const theme = useTheme();
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const [content, setContent] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
@@ -51,6 +52,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const tabSlotRef = React.useRef<TabContentSlotContext>(null);
     const actionManager = React.useRef<ActionManager<TabContentSlotContext>>(null);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
     React.useImperativeHandle(tabSlotRef, () => tabSlotContext);
 
@@ -70,9 +72,9 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     }, [slot.id]);
 
     React.useEffect(() => {
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -85,9 +87,9 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (active) {
-            slot?.onActivate?.(refreshSlot);
+            slot?.onActivate?.(slotContext);
         } else {
-            slot?.onDeactivate?.(refreshSlot);
+            slot?.onDeactivate?.(slotContext);
         }
     }, [active]);
 
@@ -97,9 +99,9 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
         if ((slot.actionGroups || slot.actions) && (!actionManager.current || refreshChanged)) {
             actionManager.current = new ActionManager<TabContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, refreshSlot);
+            const actions = resolveActionFactory(slot.actions, slotContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, refreshSlot);
+            const groups = resolveActionGroupFactory(slot.actionGroups, slotContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 
@@ -107,11 +109,11 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             console.debug("TabContentSlot updating content for slot:", slot.id, refresh);
             setContent(prev => ({
                 ...prev,
-                node: createContentComponent(slot.content!, refreshSlot, prev.ref),
+                node: createContentComponent(slot.content!, slotContext, prev.ref),
             }));
             setProgressBar(prev => ({
                 ...prev,
-                node: slot.progress ? createProgressBarContent(slot.progress, refreshSlot, prev.ref, true) : null,
+                node: slot.progress ? createProgressBarContent(slot.progress, slotContext, prev.ref, true) : null,
             }));
             previousRefreshRef.current = refresh;
         }

@@ -1,7 +1,7 @@
 import React from "react";
 import { AppBar, Box } from "@mui/material";
-import { styled, useThemeProps } from "@mui/material/styles";
-import { IContentSlot, resolveActionFactory, resolveActionGroupFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { styled, useTheme, useThemeProps } from "@mui/material/styles";
+import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -31,6 +31,7 @@ const StyledContentSlot = styled(Box)(() => ({
 }));
 
 const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
+    const theme = useTheme();
     const { slot, ref, className, ...other } = useThemeProps({ name: "ContentSlot", props });
     const [titleSlot, setTitleSlot] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
@@ -59,8 +60,9 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const slotRef = React.useRef<ContentSlotContext>(null);
     const actionManager = React.useRef<ActionManager<ContentSlotContext>>(null);
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
 
-    React.useImperativeHandle(slotRef, () => slotContext);
+    React.useImperativeHandle(slotRef, () => contentSlotContext);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -71,11 +73,11 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             }
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "content", slotRef);
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
@@ -88,46 +90,46 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(refreshSlot);
+            slot?.onShow?.(slotContext);
         } else {
-            slot?.onHide?.(refreshSlot);
+            slot?.onHide?.(slotContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
         if ((slot.actionGroups || slot.actions) && !actionManager.current) {
             actionManager.current = new ActionManager<ContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, refreshSlot);
+            const actions = resolveActionFactory(slot.actions, slotContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, refreshSlot);
+            const groups = resolveActionGroupFactory(slot.actionGroups, slotContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 
         if (slot.title) {
             setTitleSlot(prev => ({
                 ...prev,
-                node: createTitleContent(slot.title!, refreshSlot, prev.ref)
+                node: createTitleContent(slot.title!, slotContext, prev.ref)
             }));
         }
         if (slot.text) {
             setTextSlot(prev => ({
                 ...prev,
-                node: createTextContent(slot.text!, refreshSlot, prev.ref)
+                node: createTextContent(slot.text!, slotContext, prev.ref)
             }));
         }
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progress!, refreshSlot, prev.ref, true)
+                node: createProgressBarContent(slot.progress!, slotContext, prev.ref, true)
             }));
         }
         setMainSlot(prev => ({
             ...prev,
-            node: createContentComponent(slot.main, refreshSlot, prev.ref)
+            node: createContentComponent(slot.main, slotContext, prev.ref)
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
 
-    const slotContext: ContentSlotContext = {
+    const contentSlotContext: ContentSlotContext = {
         openCommandPalette: (prefix: string, query: string) => {
             Promise.resolve().then(() => {
                 setCommandPalettePrefix(prefix);
@@ -139,7 +141,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        const context: ContentSlotContext = slotContext;
+        const context: ContentSlotContext = contentSlotContext;
         if (actionManager.current?.executeActionByKeybinding(event, context)) {
             event.preventDefault();
             return;
@@ -165,7 +167,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                     manager={actionManager.current!}
                     open={openCommandPalette}
                     onClose={() => setOpenCommandPalette(false)}
-                    getContext={() => slotContext}
+                    getContext={() => contentSlotContext}
                     parentRef={ref as React.RefObject<HTMLElement | null>}
                     prefix={commandPalettePrefix}
                     searchText={commandPaletteQuery}

@@ -1,5 +1,5 @@
 import React from "react";
-import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useRefreshSlot } from "./RefreshSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
@@ -7,6 +7,7 @@ import { createTabPanel } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import ToolBarSlot from "./ToolBarSlot";
+import { useTheme } from "@mui/material";
 
 interface TabsSlotProps {
 }
@@ -17,6 +18,7 @@ interface TabsSlotOwnProps extends TabsSlotProps {
 }
 
 const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
+    const theme = useTheme();
     const { slot, ref } = props;
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [toolBar, setToolBar] = React.useState<React.ReactNode>(null);
@@ -24,6 +26,8 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot } = useRefreshSlot();
     const { queueMessage } = useMessages();
+    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
             if (redraw === "only") {
@@ -32,18 +36,18 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 setRefresh(prev => prev + 1n);
             }
         });
-        slot?.onMount?.(refreshSlot);
+        slot?.onMount?.(slotContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(refreshSlot);
+            slot?.onUnmount?.(slotContext);
         };
     }, [slot.id]);
 
     React.useEffect(() => {
         const tabs: ITabSlot[] = [];
-        const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, refreshSlot);
+        const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, slotContext);
         if (resolvedTabSlots) {
-            const defaultTabId = resolveStringFactory(slot.defaultTabId, refreshSlot) || resolvedTabSlots[0]?.id || null;
+            const defaultTabId = resolveStringFactory(slot.defaultTabId, slotContext) || resolvedTabSlots[0]?.id || null;
             setTabs(resolvedTabSlots.map((tab: ITabSlot) => {
                 const contentRef = React.createRef<HTMLDivElement>();
                 const labelRef = React.createRef<HTMLDivElement>();
@@ -52,21 +56,21 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                     tab,
                     () => {
                         setTabs(prevTabs => prevTabs.filter(t => t.props.itemID !== tab.id));
-                        tab.onClose?.(refreshSlot);
+                        tab.onClose?.(slotContext);
                     },
                     () => {
                         // const pinnedTab = tab.pin!();
                         // setTabs(prevTabs => [...prevTabs, pinnedTab]);
                         // TODO: implement pinning
-                        tab.onPin?.(refreshSlot);
+                        tab.onPin?.(slotContext);
                     },
-                    refreshSlot,
+                    slotContext,
                     contentRef,
                     labelRef,
                     toolBarRef
                 );
                 if (panel) {
-                    tab.onMount?.(refreshSlot);
+                    tab.onMount?.(slotContext);
                     tabs.push(tab);
                     if (defaultTabId && tab.id === defaultTabId) {
                         queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
@@ -78,7 +82,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         } else {
             setTabs([]);
         }
-        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, refreshSlot);
+        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, slotContext);
         if (resolvedToolBarSlot) {
             setToolBar(<ToolBarSlot slot={resolvedToolBarSlot} />);
         } else {
@@ -86,7 +90,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         }
         return () => {
             tabs.forEach(tab => {
-                tab.onUnmount?.(refreshSlot);
+                tab.onUnmount?.(slotContext);
             });
         };
     }, [slot.tabs, slot.toolBar, refresh]);

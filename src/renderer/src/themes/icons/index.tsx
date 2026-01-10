@@ -200,6 +200,10 @@ export interface ThemeIcons {
     Users: IconWrapperFC;
     Flow: IconWrapperFC;
     UserRemove: IconWrapperFC;
+    DropCascade: IconWrapperFC;
+    DropRestrict: IconWrapperFC;
+    MoveObject: IconWrapperFC;
+    ReassignUser: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

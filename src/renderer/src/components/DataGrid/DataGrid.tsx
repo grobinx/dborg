@@ -662,6 +662,7 @@ export const DataGrid = <T extends object>({
         searchState.setSearchText(outerSearchText ?? null);
     }, [outerSearchText]);
 
+    const displayDataRef = useRef<T[]>([]);
     const displayData = React.useMemo<T[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet: T[] = [...(data || [])];
@@ -720,6 +721,7 @@ export const DataGrid = <T extends object>({
             });
         }
 
+        displayDataRef.current = resultSet;
         return resultSet;
     }, [
         data,
@@ -917,51 +919,51 @@ export const DataGrid = <T extends object>({
         },
         isFocused: () => isFocused,
         getValue: () => {
-            if (selectedCell) {
-                const column = columnsState.current[selectedCell.column];
-                return displayData[selectedCell.row][column.key];
+            if (selectedCellRef.current) {
+                const column = columnsState.current[selectedCellRef.current.column];
+                return displayDataRef.current[selectedCellRef.current.row][column.key];
             }
             return null;
         },
-        getPosition: () => selectedCell,
+        getPosition: () => selectedCellRef.current,
         setPosition: ({ row, column }) => {
             updateSelectedCell({ row, column });
         },
         getFontSize: () => fontSize,
         setFontSize: (height) => {
             setFontSize(height); // Funkcja do zmiany fontSize
-            if (containerRef.current && selectedCell) {
-                const { row, column } = selectedCell;
+            if (containerRef.current && selectedCellRef.current) {
+                const { row, column } = selectedCellRef.current;
                 scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth);
             }
         },
-        getColumnWidth: () => columnsState.current[selectedCell?.column ?? 0]?.width || null,
-        setColumnWidth: (newWidth) => selectedCell ? columnsState.updateColumn(selectedCell.column, { width: newWidth }) : null,
+        getColumnWidth: () => columnsState.current[selectedCellRef.current?.column ?? 0]?.width || null,
+        setColumnWidth: (newWidth) => selectedCellRef.current ? columnsState.updateColumn(selectedCellRef.current.column, { width: newWidth }) : null,
         getVisibleRows: () => ({ start: startRow, end: endRow }),
         getVisibleColumns: () => ({ start: startColumn, end: endColumn }),
         getTotalSize: () => ({ height: totalHeight, width: columnsState.totalWidth }),
         getColumnCount: () => columnsState.current.length,
         getRowCount: (originalData?: boolean) => !!originalData ? initialData.length : displayData.length,
-        getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCell ? columnsState.current[selectedCell.column] : null),
+        getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCellRef.current ? columnsState.current[selectedCellRef.current.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
         getData: (row) => {
             if (row === undefined) {
-                if (selectedCell) {
-                    return displayData[selectedCell.row] || null;
+                if (selectedCellRef.current) {
+                    return displayDataRef.current[selectedCellRef.current.row] || null;
                 }
                 return null;
             }
-            return displayData[row] || null;
+            return displayDataRef.current[row] || null;
         },
         getRows() {
-            return displayData;
+            return displayDataRef.current;
         },
         getSelectedRows() {
             return selectedRows;
         },
         getField: () => {
-            if (selectedCell) {
-                return columnsState.current[selectedCell.column].key as keyof T;
+            if (selectedCellRef.current) {
+                return columnsState.current[selectedCellRef.current.column].key as keyof T;
             }
             return null;
         },
@@ -993,13 +995,13 @@ export const DataGrid = <T extends object>({
         sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex),
         resetSorting: () => columnsState.resetSorting(),
         getSummaryOperation: () => {
-            if (!selectedCell) return;
-            const column = columnsState.current[selectedCell?.column];
+            if (!selectedCellRef.current) return;
+            const column = columnsState.current[selectedCellRef.current.column];
             return column?.summary;
         },
         setSummaryOperation: (operation) => {
-            if (!selectedCell) return;
-            const column = columnsState.current[selectedCell?.column];
+            if (!selectedCellRef.current) return;
+            const column = columnsState.current[selectedCellRef.current.column];
             if (column) {
                 if (column.summary === operation) {
                     columnsState.setSummary(column.key);
@@ -1029,64 +1031,64 @@ export const DataGrid = <T extends object>({
             return userData[key];
         },
         toggleGroupColumn() {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column ?? 0]?.key;
             groupingColumns.toggleColumn(columnKey);
         },
         isGroupedColumn: () => {
-            if (!selectedCell) return false;
-            const columnKey = columnsState.current[selectedCell.column ?? 0]?.key;
+            if (!selectedCellRef.current) return false;
+            const columnKey = columnsState.current[selectedCellRef.current.column ?? 0]?.key;
             return groupingColumns.isInGroup(columnKey);
         },
         clearGrouping: () => {
             groupingColumns.clearColumns();
         },
         setFilter: (operator, not, values) => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             filterColumns.setFilter(columnKey, operator, not, values);
         },
         getFilter: () => {
-            if (!selectedCell) return null;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return null;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             return filterColumns.getFilter(columnKey);
         },
         clearFilter: () => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             filterColumns.clearFilter(columnKey);
         },
         clearFilters: () => {
             filterColumns.clearFilters();
         },
         filterActive: (set) => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             return filterColumns.filterActive(columnKey, set);
         },
         setTemporaryFilter: (operator, not, values) => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             filterColumns.setTemporaryFilter(columnKey, operator, not, values);
         },
         clearTemporaryFilter: () => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            //const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             filterColumns.clearTemporaryFilter();
         },
         isTemporaryFilter: () => {
-            if (!selectedCell) return false;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return false;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             return filterColumns.getTemporaryFilter(columnKey) !== null;
         },
         toggleHideColumn: () => {
-            if (!selectedCell) return;
-            const columnKey = columnsState.current[selectedCell.column]?.key;
+            if (!selectedCellRef.current) return;
+            const columnKey = columnsState.current[selectedCellRef.current.column]?.key;
             columnsState.toggleHidden(columnKey);
         },
         isColumnHidden: () => {
-            if (!selectedCell) return false;
-            return columnsState.current[selectedCell.column]?.hidden || false;
+            if (!selectedCellRef.current) return false;
+            return columnsState.current[selectedCellRef.current.column]?.hidden || false;
         },
         toggleShowHiddenColumns: () => {
             columnsState.toggleShowHiddenColumns();

@@ -65,10 +65,10 @@ const columnsTab = (
                 first: () => ({
                     id: cid("view-columns-grid"),
                     type: "grid",
-                    onRowSelect(row: ViewColumnRecord, refresh) {
+                    onRowSelect(row: ViewColumnRecord, slotContext) {
                         selected = row;
-                        refresh(cid("view-columns-info-panel-title"));
-                        refresh(cid("view-columns-info-panel-grid"));
+                        slotContext.refresh(cid("view-columns-info-panel-title"));
+                        slotContext.refresh(cid("view-columns-info-panel-grid"));
                     },
                     rows: async () => {
                         selected = null;
