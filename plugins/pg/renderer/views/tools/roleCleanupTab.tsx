@@ -109,13 +109,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             formatter: (value: CleanupChoice | undefined, row) => {
                                                 if (value?.action === "drop_restrict") {
                                                     return <Stack direction="row" gap={4}>
-                                                        {icons!.DropRestrict({ color: "warning" })}
+                                                        <slotContext.theme.icons.DropRestrict color="warning" />
                                                         {t("drop", "Drop")}
                                                     </Stack>;
                                                 }
                                                 else if (value?.action === "drop_cascade") {
                                                     return <Stack direction="row" gap={4}>
-                                                        {icons!.DropCascade({ color: "error" })}
+                                                        <slotContext.theme.icons.DropCascade color="error" />
                                                         {t("drop-cascade", "Drop Cascade")}
                                                     </Stack>;
                                                 }
@@ -127,7 +127,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         {
                                             id: "drop-restrict-owned-objects-action",
                                             label: t("drop-object-restrict", "Drop Object Restrict"),
-                                            icon: icons?.DropRestrict({ color: "warning" }),
+                                            icon: <slotContext.theme.icons.DropRestrict color="warning" />,
                                             keySequence: ["Ctrl+D"],
                                             run: (context) => {
                                                 const position = context.getPosition();
@@ -152,7 +152,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         {
                                             id: "drop-cascade-owned-objects-action",
                                             label: t("drop-cascade-object", "Drop Object Cascade"),
-                                            icon: icons?.DropCascade({ color: "error" }),
+                                            icon: <slotContext.theme.icons.DropCascade color="error" />,
                                             keySequence: ["Ctrl+Shift+D"],
                                             run: (context) => {
                                                 const position = context.getPosition();

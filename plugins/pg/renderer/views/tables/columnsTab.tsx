@@ -176,7 +176,7 @@ const columnsTab = (
                             type: "title",
                             title: () => selected ? selected.name : t("column-details", "Column Details"),
                         }),
-                        main: (refresh) => ({
+                        main: () => ({
                             id: cid("table-columns-info-panel-grid"),
                             type: "grid",
                             pivot: true,
@@ -243,7 +243,7 @@ const columnsTab = (
                     second: () => ({
                         id: cid("table-columns-column-content-editor"),
                         type: "content",
-                        title: (refresh) => ({
+                        title: () => ({
                             id: cid("table-columns-column-editor-title"),
                             type: "title",
                             toolBar: {
