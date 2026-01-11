@@ -5,10 +5,13 @@ import { TextField } from "@renderer/components/inputs/TextField";
 import { 
     SlotFactoryContext,
     INumberField, ISearchField, ISelectField, ITextField, 
-    resolveBooleanFactory, resolveSelectOptionsFactory 
+    resolveBooleanFactory, resolveSelectOptionsFactory, 
+    IBooleanField,
+    resolveStringFactory
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { SearchField } from "@renderer/components/inputs/SearchField";
+import { BooleanField } from "@renderer/components/inputs/BooleanField";
 
 export const ToolSelectedField: React.FC<{ action: ISelectField, slotContext: SlotFactoryContext }> = (props) => {
     const {
@@ -114,3 +117,25 @@ export const ToolNumberField: React.FC<{ action: INumberField, slotContext: Slot
     );
 };
 
+export const ToolBooleanField: React.FC<{ action: IBooleanField, slotContext: SlotFactoryContext }> = (props) => {
+    const {
+        action,
+        slotContext,
+    } = props;
+    const [value, setValue] = React.useState<boolean | null>(action.defaultValue ?? false);
+
+    return (
+        <InputDecorator indicator={false} disableBlink>
+            <BooleanField
+                value={value}
+                onChange={setValue}
+                onChanged={action.onChange}
+                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                size="small"
+                width={action.width}
+                label={action.label}
+                tooltip={action.tooltip}
+            />
+        </InputDecorator>
+    );
+}

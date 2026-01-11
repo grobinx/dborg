@@ -28,6 +28,7 @@ import {
     resolveProgressBarFactory,
     isTextSlot,
     SlotFactoryContext,
+    isBooleanField,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -45,7 +46,7 @@ import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import EditorSlot from "./EditorSlot";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
-import { ToolNumberField, ToolSearchField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
+import { ToolBooleanField, ToolNumberField, ToolSearchField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
 import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 import ToolBarSlot from "./ToolBarSlot";
@@ -343,6 +344,14 @@ export function createActionComponents(
                 } else if (isSelectField(action)) {
                     return (
                         <ToolSelectedField
+                            key={index}
+                            action={action}
+                            slotContext={slotContext}
+                        />
+                    );
+                } else if (isBooleanField(action)) {
+                    return (
+                        <ToolBooleanField
                             key={index}
                             action={action}
                             slotContext={slotContext}

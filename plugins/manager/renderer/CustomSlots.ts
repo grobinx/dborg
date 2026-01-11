@@ -79,7 +79,7 @@ export interface ISelectOption {
     description?: string,
 }
 
-export type IFieldType = "search" | "text" | "number" | "select";
+export type IFieldType = "search" | "text" | "number" | "select" | "boolean";
 
 export interface IField {
     type: IFieldType;
@@ -165,11 +165,30 @@ export interface ISelectField extends IField {
     options: SelectOptionsFactory;
 }
 
+export interface IBooleanField extends IField {
+    type: "boolean";
+    /**
+     * Domyśla wartość pola boolean.
+     * @default false
+     */
+    defaultValue?: boolean;
+    /**
+     * Etykieta pola boolean.
+     */
+    label?: string;
+    /**
+     * Funkcja wywoływana po zmianie wartości pola boolean.
+     */
+    onChange: (value: boolean) => void;
+}
+
 export type FieldTypeKind =
     ITextField
     | INumberField
     | ISelectField
-    | ISearchField;
+    | ISearchField
+    | IBooleanField
+    ;
 
 export interface IAutoRefreshContext {
     state: AutoRefreshState;
@@ -907,6 +926,9 @@ export function isSelectField(a: any): a is ISelectField {
 }
 export function isSearchField(a: any): a is ISearchField {
     return isIField(a) && a.type === "search";
+}
+export function isBooleanField(a: any): a is IBooleanField {
+    return isIField(a) && a.type === "boolean";
 }
 export function isAutoRefresh(obj: any): obj is IAutoRefresh {
     return (
