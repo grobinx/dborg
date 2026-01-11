@@ -30,6 +30,7 @@ export type CustomSlotType =
     | "rendered"
     | "toolbar"
     | "progress"
+    | "dialog"
     ;
 
 export interface SlotFactoryContext {
@@ -61,6 +62,8 @@ export type TextSlotKindFactory = TextSlotKind | ((slotContext: SlotFactoryConte
 export type ContentSlotFactory = IContentSlot | ((slotContext: SlotFactoryContext) => IContentSlot);
 export type ToolBarSlotKindFactory = ToolBarSlotKind | ((slotContext: SlotFactoryContext) => ToolBarSlotKind);
 export type ProgressBarSlotFactory = IProgressBarSlot | ((slotContext: SlotFactoryContext) => IProgressBarSlot);
+export type DialogsSlotFactory = IDialogSlot[] | ((slotContext: SlotFactoryContext) => IDialogSlot[]);
+export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((slotContext: SlotFactoryContext) => DialogLayoutItemKind[]);
 
 export type ToolKind<T = any> =
     | string
@@ -751,7 +754,7 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
-     * @param slotContext
+     * @param slotContext: SlotFactoryContext
      * @returns 
      */
     onCancel?: (slotContext: SlotFactoryContext) => void;
@@ -837,6 +840,194 @@ export interface IProgressBarSlot extends ICustomSlot {
     color?: ThemeColor;
 }
 
+export type DialogFieldType = "text" | "number" | "boolean" | "select";
+
+export interface IDialogField {
+    /**
+     * Typ pola.
+     */
+    type: DialogFieldType;
+    /**
+     * Klucz pola (identyfikator wartości w wyniku).
+     */
+    key: string;
+    /**
+     * Etykieta pola.
+     */
+    label: StringFactory;
+    /**
+     * Wartość domyślna pola.
+     */
+    defaultValue?: any;
+    /**
+     * Czy pole jest wymagane.
+     * @default false
+     */
+    required?: BooleanFactory;
+    /**
+     * Czy pole jest zablokowane.
+     * @default false
+     */
+    disabled?: BooleanFactory;
+    /**
+     * Podpowiedź wyświetlana po najechaniu na pole.
+     */
+    tooltip?: StringFactory;
+    /**
+     * Tekst pomocniczy wyświetlany pod polem.
+     */
+    helperText?: StringFactory;
+    /**
+     * Szerokość pola (np. "100%", 200).
+     */
+    width?: string | number;
+}
+
+export interface IDialogTextField extends IDialogField {
+    type: "text";
+    /**
+     * Wartość domyślna pola tekstowego.
+     */
+    defaultValue?: string;
+    /**
+     * Minimalna długość tekstu.
+     */
+    minLength?: number;
+    /**
+     * Maksymalna długość tekstu.
+     */
+    maxLength?: number;
+}
+
+export interface IDialogNumberField extends IDialogField {
+    type: "number";
+    /**
+     * Wartość domyślna pola numerycznego.
+     */
+    defaultValue?: number;
+    /**
+     * Minimalna wartość.
+     */
+    min?: number;
+    /**
+     * Maksymalna wartość.
+     */
+    max?: number;
+    /**
+     * Krok wartości.
+     */
+    step?: number;
+}
+
+export interface IDialogBooleanField extends IDialogField {
+    type: "boolean";
+    /**
+     * Wartość domyślna pola boolean.
+     */
+    defaultValue?: boolean;
+}
+
+export interface IDialogSelectField extends IDialogField {
+    type: "select";
+    /**
+     * Wartość domyślna pola select.
+     */
+    defaultValue?: string | string[];
+    /**
+     * Opcje do wyboru.
+     */
+    options: SelectOptionsFactory;
+    /**
+     * Czy pole ma być wielokrotnego wyboru.
+     * @default false
+     */
+    multiple?: boolean;
+}
+
+export type DialogFieldKind =
+    | IDialogTextField
+    | IDialogNumberField
+    | IDialogBooleanField
+    | IDialogSelectField;
+
+export type DialogLayoutItemKind =
+    | DialogFieldKind
+    | IDialogRow
+    | IDialogColumn;
+
+export interface IDialogColumn {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "column";
+    /**
+     * Etykieta kolumny (opcjonalnie).
+     */
+    label?: StringFactory;
+    /**
+     * Zawartość kolumny (pola, wiersze lub kolumny).
+     */
+    items: DialogLayoutItemsKindFactory;
+    /**
+     * Szerokość kolumny (1-12, jak w Grid System).
+     * @default undefined równa dystrybucja
+     */
+    width?: number;
+}
+
+export interface IDialogRow {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "row";
+    /**
+     * Etykieta wiersza (opcjonalnie).
+     */
+    label?: StringFactory;
+    /**
+     * Zawartość wiersza (pola, wiersze lub kolumny).
+     */
+    items: DialogLayoutItemsKindFactory;
+}
+
+export interface IDialogSlot extends ICustomSlot {
+    type: "dialog";
+    /**
+     * Tytuł dialogu.
+     */
+    title: StringFactory;
+    /**
+     * Układ pól dialogu.
+     */
+    items: DialogLayoutItemsKindFactory;
+    /**
+     * Tekst przycisku potwierdzającego.
+     * @default "OK"
+     */
+    confirmLabel?: StringFactory;
+    /**
+     * Tekst przycisku anulującego.
+     * @default "Cancel"
+     */
+    cancelLabel?: StringFactory;
+    /**
+     * Funkcja walidacji wywoływana przed zamknięciem dialogu.
+     * Jeśli zwróci string, zostanie wyświetlony jako błąd.
+     * @param values Wartości pól dialogu.
+     * @returns Komunikat błędu lub undefined jeśli walidacja przeszła.
+     */
+    onValidate?: (values: Record<string, any>) => string | undefined;
+    /**
+     * Funkcja wywoływana po potwierdzeniu dialogu.
+     * @param values Wartości pól dialogu.
+     */
+    onConfirm: (values: Record<string, any>) => void | Promise<void>;
+    /**
+     * Funkcja wywoływana po anulowaniu dialogu.
+     */
+    onCancel?: () => void;
+}
+
 export function resolveStringFactory(factory: StringFactory | undefined, context: SlotFactoryContext): string | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
@@ -906,6 +1097,12 @@ export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefine
 export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotFactoryContext): IProgressBarSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
+export function resolveDialogsSlotFactory(factory: DialogsSlotFactory | undefined, context: SlotFactoryContext): IDialogSlot[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveDialogLayoutItemsKindFactory(factory: DialogLayoutItemsKindFactory | undefined, context: SlotFactoryContext): DialogLayoutItemKind[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
 
 export function isIField(obj: any): obj is FieldTypeKind {
     return (
@@ -960,4 +1157,27 @@ export function isGridStatusButton(obj: any): obj is IGridStatusButton {
         obj !== null &&
         "label" in obj
     );
+}
+export function isDialogTextField(field: any): field is IDialogTextField {
+    return field?.type === "text";
+}
+
+export function isDialogNumberField(field: any): field is IDialogNumberField {
+    return field?.type === "number";
+}
+
+export function isDialogBooleanField(field: any): field is IDialogBooleanField {
+    return field?.type === "boolean";
+}
+
+export function isDialogSelectField(field: any): field is IDialogSelectField {
+    return field?.type === "select";
+}
+
+export function isDialogRow(item: any): item is IDialogRow {
+    return item?.type === "row";
+}
+
+export function isDialogColumn(item: any): item is IDialogColumn {
+    return item?.type === "column";
 }
