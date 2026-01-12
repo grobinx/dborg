@@ -130,10 +130,10 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                 actions: [
                     SelectSchemaAction(),
                 ],
-                actionGroups: (refresh: any) => [
+                actionGroups: (slotContext) => [
                     SelectSchemaGroup(session, selectedSchemaName, (schemaName: string | null) => {
                         selectedSchemaName = schemaName;
-                        refresh(cid("database-table-sizes-grid"));
+                        slotContext.refresh(cid("database-table-sizes-grid"));
                     })
                 ],
                 autoSaveId: `database-table-sizes-grid-${session.profile.sch_id}`,

@@ -57,13 +57,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             actions: [
                 SelectRoleAction(),
             ],
-            actionGroups: (refresh: any) => [
+            actionGroups: (slotContext) => [
                 SelectRoleGroup(session, () => selectedRole, (roleName: string | null) => {
                     selectedRole = roleName;
-                    refresh(cid("role-cleanup-selected-role-label"));
-                    refresh(cid("role-owned-grid"));
-                    refresh(cid("role-privs-grid"));
-                    editorRefresh(refresh);
+                    slotContext.refresh(cid("role-cleanup-selected-role-label"));
+                    slotContext.refresh(cid("role-owned-grid"));
+                    slotContext.refresh(cid("role-privs-grid"));
+                    editorRefresh(slotContext);
                 })
             ],
             content: (slotContext) => ({
@@ -106,7 +106,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         { key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
                                         {
                                             key: "choice", label: t("action", "Action"), width: 36, dataType: "object",
-                                            formatter: (value: CleanupChoice | undefined, row) => {
+                                            formatter: (value: CleanupChoice | undefined, _row) => {
                                                 if (value?.action === "drop_restrict") {
                                                     return <Stack direction="row" gap={4}>
                                                         <slotContext.theme.icons.DropRestrict color="warning" />
