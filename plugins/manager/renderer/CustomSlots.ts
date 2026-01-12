@@ -925,6 +925,11 @@ export interface IDialogBooleanField extends IDialogField {
      * Wartość domyślna pola boolean.
      */
     defaultValue?: boolean;
+    /**
+     * Czy pole może być w stanie nieokreślonym (trójstanowe).
+     * @default false
+     */
+    indeterminate?: boolean;
 }
 
 export interface IDialogSelectField extends IDialogField {
@@ -972,7 +977,7 @@ export interface IDialogColumn {
      * Szerokość kolumny (1-12, jak w Grid System).
      * @default undefined równa dystrybucja
      */
-    width?: number;
+    width?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 }
 
 export interface IDialogRow {
