@@ -129,6 +129,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             label: t("drop-object-restrict", "Drop Object Restrict"),
                                             icon: <slotContext.theme.icons.DropRestrict color="warning" />,
                                             keySequence: ["Ctrl+D"],
+                                            contextMenuGroupId: "cleanup-actions",
+                                            contextMenuOrder: 1,
                                             run: (context) => {
                                                 const position = context.getPosition();
                                                 if (!position) return;
@@ -154,6 +156,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             label: t("drop-cascade-object", "Drop Object Cascade"),
                                             icon: <slotContext.theme.icons.DropCascade color="error" />,
                                             keySequence: ["Ctrl+Shift+D"],
+                                            contextMenuGroupId: "cleanup-actions",
+                                            contextMenuOrder: 2,
                                             run: (context) => {
                                                 const position = context.getPosition();
                                                 if (!position) return;
