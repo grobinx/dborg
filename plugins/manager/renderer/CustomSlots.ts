@@ -995,6 +995,8 @@ export interface IDialogRow {
     items: DialogLayoutItemsKindFactory;
 }
 
+export type DialogSize = "small" | "medium" | "large" | "full";
+
 export interface IDialogSlot extends ICustomSlot {
     type: "dialog";
     /**
@@ -1031,6 +1033,11 @@ export interface IDialogSlot extends ICustomSlot {
      * Funkcja wywoływana po anulowaniu dialogu.
      */
     onCancel?: () => void;
+    /**
+     * Rozmiar dialogu.
+     * @default "medium"
+     */
+    size?: DialogSize;
 }
 
 export function resolveStringFactory(factory: StringFactory | undefined, context: SlotFactoryContext): string | undefined {
