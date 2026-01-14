@@ -3,7 +3,7 @@ import { NumberField } from "@renderer/components/inputs/NumberField";
 import { SelectField } from "@renderer/components/inputs/SelectField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { 
-    SlotFactoryContext,
+    SlotRuntimeContext,
     INumberField, ISearchField, ISelectField, ITextField, 
     resolveBooleanFactory, resolveSelectOptionsFactory, 
     IBooleanField,
@@ -13,10 +13,10 @@ import React from "react";
 import { SearchField } from "@renderer/components/inputs/SearchField";
 import { BooleanField } from "@renderer/components/inputs/BooleanField";
 
-export const ToolSelectedField: React.FC<{ action: ISelectField, slotContext: SlotFactoryContext }> = (props) => {
+export const ToolSelectedField: React.FC<{ action: ISelectField, runtimeContext: SlotRuntimeContext }> = (props) => {
     const {
         action,
-        slotContext,
+        runtimeContext,
     } = props;
 
     const [value, setValue] = React.useState<any | undefined>(action.defaultValue);
@@ -28,20 +28,20 @@ export const ToolSelectedField: React.FC<{ action: ISelectField, slotContext: Sl
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
-                options={resolveSelectOptionsFactory(action.options, slotContext) || []}
+                options={resolveSelectOptionsFactory(action.options, runtimeContext) || []}
                 tooltip={action.tooltip}
             />
         </InputDecorator>
     );
 };
 
-export const ToolTextField: React.FC<{ action: ITextField, slotContext: SlotFactoryContext }> = (props) => {
+export const ToolTextField: React.FC<{ action: ITextField, runtimeContext: SlotRuntimeContext }> = (props) => {
     const {
         action,
-        slotContext,
+        runtimeContext,
     } = props;
 
     const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
@@ -53,7 +53,7 @@ export const ToolTextField: React.FC<{ action: ITextField, slotContext: SlotFact
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -64,10 +64,10 @@ export const ToolTextField: React.FC<{ action: ITextField, slotContext: SlotFact
     );
 };
 
-export const ToolSearchField: React.FC<{ action: ISearchField, slotContext: SlotFactoryContext }> = (props) => {
+export const ToolSearchField: React.FC<{ action: ISearchField, runtimeContext: SlotRuntimeContext }> = (props) => {
     const {
         action,
-        slotContext,
+        runtimeContext,
     } = props;
 
     const [value, setValue] = React.useState<string>(action.defaultValue ?? "");
@@ -79,7 +79,7 @@ export const ToolSearchField: React.FC<{ action: ISearchField, slotContext: Slot
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -90,10 +90,10 @@ export const ToolSearchField: React.FC<{ action: ISearchField, slotContext: Slot
     );
 };
 
-export const ToolNumberField: React.FC<{ action: INumberField, slotContext: SlotFactoryContext }> = (props) => {
+export const ToolNumberField: React.FC<{ action: INumberField, runtimeContext: SlotRuntimeContext }> = (props) => {
     const {
         action,
-        slotContext,
+        runtimeContext,
     } = props;
 
     const [value, setValue] = React.useState<number | null>(action.defaultValue ?? action.min ?? null);
@@ -105,7 +105,7 @@ export const ToolNumberField: React.FC<{ action: INumberField, slotContext: Slot
                 value={value}
                 onChange={value => setValue(value ?? null)}
                 onChanged={value => action.onChange(value ?? action.defaultValue ?? action.min ?? null)}
-                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 min={action.min}
@@ -117,10 +117,10 @@ export const ToolNumberField: React.FC<{ action: INumberField, slotContext: Slot
     );
 };
 
-export const ToolBooleanField: React.FC<{ action: IBooleanField, slotContext: SlotFactoryContext }> = (props) => {
+export const ToolBooleanField: React.FC<{ action: IBooleanField, runtimeContext: SlotRuntimeContext }> = (props) => {
     const {
         action,
-        slotContext,
+        runtimeContext,
     } = props;
     const [value, setValue] = React.useState<boolean | null>(action.defaultValue ?? false);
 
@@ -130,7 +130,7 @@ export const ToolBooleanField: React.FC<{ action: IBooleanField, slotContext: Sl
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, slotContext)}
+                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 label={action.label}

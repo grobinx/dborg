@@ -1,6 +1,6 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import i18next from "i18next";
 import { IAutoRefresh, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { alpha, Theme } from "@mui/material";

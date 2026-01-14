@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotFactoryContext } from "../../../../manager/renderer/CustomSlots";
+import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObject, PrivilegeRecord, CleanupChoice, PrivilegeChoice } from "./roleAudit";
 import { versionToNumber } from "../../../../../src/api/version";
@@ -8,8 +8,9 @@ import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleA
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import debounce, { Debounced } from "@renderer/utils/debounce";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { Stack } from "@mui/material";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -31,8 +32,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         }
     };
 
-    const editorRefresh = debounce((slotContext: SlotFactoryContext) => {
-        slotContext.refresh(cid("role-cleanup-editor"));
+    const editorRefresh = debounce((runtimeContext: SlotRuntimeContext) => {
+        runtimeContext.refresh(cid("role-cleanup-editor"));
     }, 1000);
 
     return {
@@ -255,8 +256,31 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     },
                 } as IEditorSlot,
             }),
+            dialogs: [
+                {
+                    id: cid("role-cleanup-select-new-owner-dialog"),
+                    type: "dialog",
+                    title: t("reassing-owner", "Reassign Owner"),
+                    items: [
+                        {
+                            key: "new-owner",
+                            type: "select",
+                            label: t("new-owner", "New Owner"),
+                            options: [
+                                { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: "" },
+                                { label: t("role-current-owner", "Current Role"), value: "__current_role__" },
+                            ]
+                        }
+                    ],
+                    onConfirm: (values) => {
+                        // handle confirm logic, e.g. set targetOwner
+                        console.log("reassign:", values);
+                        //targetOwner = values["new-owner"];
+                    }
+                }
+            ],
         },
-        toolBar: {
+        toolBar: (slotContext) => ({
             id: cid("role-cleanup-title-toolbar"),
             type: "toolbar",
             tools: [
@@ -266,10 +290,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     type: "text",
                     text: () => t("role-role", "Role: {{role}}", { role: selectedRole || t("none", "None") }),
                     maxLines: 1,
-                } as ITextSlot
+                } as ITextSlot,
+                {
+                    id: cid("role-cleanup-reassign-owner-action"),
+                    icon: "Add",
+                    label: t("reassign-owner", "Reassign Owner"),
+                    run: () => {
+                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"));
+                    }
+                } as Action<any>,
             ],
             actionSlotId: cid("role-cleanup-tab-content"),
-        },
+        }),
     };
 };
 

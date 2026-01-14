@@ -462,7 +462,7 @@ const activityTab = (
     const activityCharts = (): IRenderedSlot => ({
         id: cid("database-activity-charts"),
         type: "rendered",
-        render: ({ slotContext }) => {
+        render: ({ runtimeContext }) => {
             const theme = useTheme();
 
             const data = buildTimelineData(activityRows, (r: ActivityRecord, index: number) => {
@@ -526,7 +526,7 @@ const activityTab = (
                                         <TitleChart title={chart!.title} variant="body1">
                                             <ToolButton
                                                 size="small"
-                                                onClick={() => toggleMinimized(chart!.key, slotContext.refresh)}
+                                                onClick={() => toggleMinimized(chart!.key, runtimeContext.refresh)}
                                             >
                                                 <theme.icons.Pinned color="primary" />
                                             </ToolButton>
@@ -548,7 +548,7 @@ const activityTab = (
                                         <TitleChart title={chart!.shortTitle} variant="caption">
                                             <ToolButton
                                                 size="small"
-                                                onClick={() => toggleMinimized(chart!.key, slotContext.refresh)}
+                                                onClick={() => toggleMinimized(chart!.key, runtimeContext.refresh)}
                                                 dense
                                             >
                                                 <theme.icons.Pin color="error" />

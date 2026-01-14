@@ -1,8 +1,8 @@
 import React from "react";
 import { AppBar, Box } from "@mui/material";
 import { styled, useTheme, useThemeProps } from "@mui/material/styles";
-import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
@@ -50,7 +50,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
@@ -60,7 +60,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const slotRef = React.useRef<ContentSlotContext>(null);
     const actionManager = React.useRef<ActionManager<ContentSlotContext>>(null);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useImperativeHandle(slotRef, () => contentSlotContext);
 
@@ -73,11 +73,11 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             }
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "content", slotRef);
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -90,42 +90,42 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
         if ((slot.actionGroups || slot.actions) && !actionManager.current) {
             actionManager.current = new ActionManager<ContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, slotContext);
+            const actions = resolveActionFactory(slot.actions, runtimeContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, slotContext);
+            const groups = resolveActionGroupFactory(slot.actionGroups, runtimeContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 
         if (slot.title) {
             setTitleSlot(prev => ({
                 ...prev,
-                node: createTitleContent(slot.title!, slotContext, prev.ref)
+                node: createTitleContent(slot.title!, runtimeContext, prev.ref)
             }));
         }
         if (slot.text) {
             setTextSlot(prev => ({
                 ...prev,
-                node: createTextContent(slot.text!, slotContext, prev.ref)
+                node: createTextContent(slot.text!, runtimeContext, prev.ref)
             }));
         }
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progress!, slotContext, prev.ref, true)
+                node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref, true)
             }));
         }
         setMainSlot(prev => ({
             ...prev,
-            node: createContentComponent(slot.main, slotContext, prev.ref)
+            node: createContentComponent(slot.main, runtimeContext, prev.ref)
         }));
     }, [slot.title, slot.main, slot.text, refresh]);
 

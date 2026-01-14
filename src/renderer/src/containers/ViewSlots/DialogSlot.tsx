@@ -5,7 +5,7 @@ import { Button } from "@renderer/components/buttons/Button";
 import {
     IDialogSlot,
     DialogLayoutItemKind,
-    SlotFactoryContext,
+    SlotRuntimeContext,
     resolveDialogLayoutItemsKindFactory,
     resolveStringFactory,
     isDialogRow,
@@ -15,7 +15,7 @@ import {
     isDialogBooleanField,
     isDialogSelectField,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { useViewSlot } from "./ViewSlotContext";
 import { DialogLayoutItem } from "./dialog/DialogLayoutItem";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { useTranslation } from "react-i18next";
@@ -23,12 +23,13 @@ import { useTranslation } from "react-i18next";
 interface DialogSlotProps {
     slot: IDialogSlot;
     open?: boolean;
+	params?: Record<string, any>;
     onClose?: () => void;
 }
 
 const applyDefaults = (
     items: DialogLayoutItemKind[] | undefined,
-    slotContext: SlotFactoryContext,
+    runtimeContext: SlotRuntimeContext,
     target: Record<string, any>,
 ): Record<string, any> => {
     if (!items || items.length === 0) {
@@ -41,8 +42,8 @@ const applyDefaults = (
                 target[item.key] = item.defaultValue;
             }
         } else if (isDialogRow(item) || isDialogColumn(item)) {
-            const nested = resolveDialogLayoutItemsKindFactory(item.items, slotContext) ?? [];
-            applyDefaults(nested, slotContext, target);
+            const nested = resolveDialogLayoutItemsKindFactory(item.items, runtimeContext) ?? [];
+            applyDefaults(nested, runtimeContext, target);
         }
     });
     return target;
@@ -52,42 +53,43 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     const {
         slot,
         open = true,
+		params,
         onClose,
     } = props;
 
     const theme = useTheme();
     const { t } = useTranslation();
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const [items, setItems] = React.useState<DialogLayoutItemKind[]>(resolveDialogLayoutItemsKindFactory(slot.items, slotContext) ?? []);
+    const [items, setItems] = React.useState<DialogLayoutItemKind[]>(resolveDialogLayoutItemsKindFactory(slot.items, runtimeContext) ?? []);
     const [error, setError] = React.useState<string | null>(null);
     const [submitting, setSubmitting] = React.useState(false);
-    const structureRef = React.useRef<Record<string, any>>(applyDefaults(items, slotContext, {}));
+    const [structure, setStructure] = React.useState<Record<string, any>>(params ?? applyDefaults(items, runtimeContext, {}));
     const [, forceRender] = React.useState<bigint>(0n);
     const [dialogRef, dialogVisible] = useVisibleState<HTMLDivElement>();
 
     React.useEffect(() => {
-        const unregister = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
             if (redraw === "only") {
                 forceRender(prev => prev + 1n);
             } else {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
-            unregister();
-            slot?.onUnmount?.(slotContext);
+            unregisterRefresh();
+            slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id, slotContext, registerRefresh]);
+    }, [slot.id, runtimeContext, registerRefresh]);
 
     React.useEffect(() => {
-        const resolved = resolveDialogLayoutItemsKindFactory(slot.items, slotContext) ?? [];
+        const resolved = resolveDialogLayoutItemsKindFactory(slot.items, runtimeContext) ?? [];
         setItems(resolved);
-    }, [slot.id, slot.items, refresh, slotContext]);
+    }, [slot.id, slot.items, refresh, runtimeContext]);
 
     React.useEffect(() => {
         if (dialogVisible && pendingRefresh) {
@@ -98,15 +100,14 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
 
     React.useEffect(() => {
         if (dialogVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [dialogVisible]);
 
     const handleConfirm = async () => {
-        const values = { ...structureRef.current };
-        const validationError = slot.onValidate?.(values);
+        const validationError = slot.onValidate?.(structure);
         if (validationError) {
             setError(validationError);
             return;
@@ -114,7 +115,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         setError(null);
         setSubmitting(true);
         try {
-            await slot.onConfirm(values);
+            await slot.onConfirm(structure);
             onClose?.();
         } catch (err: any) {
             setError(err?.message ?? String(err));
@@ -128,10 +129,10 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         onClose?.();
     };
 
-    const title = resolveStringFactory(slot.title, slotContext);
-    const confirmLabel = resolveStringFactory(slot.confirmLabel, slotContext) ?? t("ok", "OK");
-    const cancelLabel = resolveStringFactory(slot.cancelLabel, slotContext) ?? t("cancel", "Cancel");
-    const size = slot.size ?? "medium";
+    const title = resolveStringFactory(slot.title, runtimeContext);
+    const confirmLabel = resolveStringFactory(slot.confirmLabel, runtimeContext) ?? t("ok", "OK");
+    const cancelLabel = resolveStringFactory(slot.cancelLabel, runtimeContext) ?? t("cancel", "Cancel");
+    const size = slot.size ?? "small";
     const maxWidth: "xs" | "sm" | "md" | "lg" | "xl" =
         size === "small" ? "sm" :
             size === "large" ? "lg" :
@@ -150,7 +151,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         >
             <DialogTitle>{title}</DialogTitle>
             <DialogContent dividers>
-                <Stack spacing={2} sx={{ mt: 1 }}>
+                <Stack gap={8}>
                     {error && (
                         <Alert severity="error">{error}</Alert>
                     )}
@@ -158,8 +159,9 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
                         <DialogLayoutItem
                             key={index}
                             item={item}
-                            slotContext={slotContext}
-                            structure={structureRef.current}
+                            runtimeContext={runtimeContext}
+                            structure={structure}
+							onChange={setStructure}
                         />
                     ))}
                 </Stack>

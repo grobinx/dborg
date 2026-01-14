@@ -9,9 +9,9 @@ import {
     resolveBooleanFactory,
     resolveEditorActionsFactory,
     resolveStringAsyncFactory,
-    SlotFactoryContext
+    SlotRuntimeContext
 } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { createProgressBarContent } from "./helpers";
 
@@ -24,7 +24,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     slot
 }) => {
     const theme = useTheme();
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
     const [actions, setActions] = React.useState<monaco.editor.IActionDescriptor[]>([]);
@@ -41,7 +41,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     const editorContext: IEditorContext = {
     };
@@ -54,10 +54,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -70,9 +70,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
 
@@ -81,7 +81,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         const fetchContent = async () => {
             setLoading(true);
             try {
-                const result = await resolveStringAsyncFactory(slot.content, slotContext);
+                const result = await resolveStringAsyncFactory(slot.content, runtimeContext);
                 if (mounted && typeof result === "string") {
                     setContent(result);
                     editorInstanceRef.current?.setValue(result);
@@ -91,15 +91,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             }
         };
         fetchContent();
-        setActions(resolveEditorActionsFactory(slot.actions, slotContext) ?? []);
-        setReadOnly(resolveBooleanFactory(slot.readOnly, slotContext) ?? false);
-        setWordWrap(resolveBooleanFactory(slot.wordWrap, slotContext) ?? false);
-        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, slotContext) ?? true);
-        setStatusBar(resolveBooleanFactory(slot.statusBar, slotContext) ?? true);
+        setActions(resolveEditorActionsFactory(slot.actions, runtimeContext) ?? []);
+        setReadOnly(resolveBooleanFactory(slot.readOnly, runtimeContext) ?? false);
+        setWordWrap(resolveBooleanFactory(slot.wordWrap, runtimeContext) ?? false);
+        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, runtimeContext) ?? true);
+        setStatusBar(resolveBooleanFactory(slot.statusBar, runtimeContext) ?? true);
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
-                node: createProgressBarContent(slot.progress!, slotContext, prev.ref)
+                node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref)
             }));
         }
         return () => { mounted = false; };
@@ -111,21 +111,21 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             editor.addAction(action);
         });
 
-        slot?.onMounted?.(slotContext);
+        slot?.onMounted?.(runtimeContext);
         editor.onDidChangeCursorPosition(() => {
-            slot?.onPositionChanged?.(slotContext, editorContext);
+            slot?.onPositionChanged?.(runtimeContext, editorContext);
         });
         editor.onDidChangeCursorSelection(() => {
-            slot?.onSelectionChanged?.(slotContext, editorContext);
+            slot?.onSelectionChanged?.(runtimeContext, editorContext);
         });
         editor.onDidFocusEditorText(() => {
-            slot?.onFocus?.(slotContext, editorContext);
+            slot?.onFocus?.(runtimeContext, editorContext);
         });
         editor.onDidBlurEditorText(() => {
-            slot?.onBlur?.(slotContext, editorContext);
+            slot?.onBlur?.(runtimeContext, editorContext);
         });
         editor.onDidChangeModelContent(() => {
-            slot?.onContentChanged?.(slotContext, editorContext);
+            slot?.onContentChanged?.(runtimeContext, editorContext);
         });
     }
 
@@ -142,7 +142,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             statusBar={statusBar}
             miniMap={slot.miniMap}
             overlayMode={slot.overlayMode ?? "small"}
-            onCancel={slot.onCancel ? () => slot.onCancel!(slotContext) : undefined}
+            onCancel={slot.onCancel ? () => slot.onCancel!(runtimeContext) : undefined}
             topChildren={progressBar.node}
         />
     );

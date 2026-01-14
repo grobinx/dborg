@@ -6,7 +6,7 @@ import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { ShowRelationDataAction } from "../../actions/ShowRelationData";
 import { SQL_EDITOR_EXECUTE_QUERY, SqlEditorExecuteQueryMessage } from "@renderer/containers/Connections/ConnectionView/SqlEditorPanel";

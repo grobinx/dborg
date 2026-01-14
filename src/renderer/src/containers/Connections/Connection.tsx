@@ -13,7 +13,7 @@ import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel"
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
-import { RefreshSlotFunction, RefreshSlotProvider, useRefreshSlot } from "../ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction, ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
 import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
@@ -43,7 +43,7 @@ interface ConnectionsOwnProps extends ConnectionProps {
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = props;
     const { selectedView } = useSessionState(session.info.uniqueId);
-    const { refreshSlot } = useRefreshSlot();
+    const { refreshSlot } = useViewSlot();
     const { queueMessage } = useMessages();
     const [orientation] = useSetting("dborg", "general.layout.orientation");
 
@@ -174,11 +174,11 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
 
 export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
     return (
-        <RefreshSlotProvider>
+        <ViewSlotProvider>
             <RefSlotProvider>
                 <ConnectionContentInner {...props} />
             </RefSlotProvider>
-        </RefreshSlotProvider>
+        </ViewSlotProvider>
     );
 };
 

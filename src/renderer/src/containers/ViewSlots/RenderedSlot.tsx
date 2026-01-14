@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, styled, useTheme } from "@mui/material";
-import { IRenderedSlot, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { IRenderedSlot, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
 interface RenderedSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
@@ -22,12 +22,11 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, className, tabsItemID, ...other } = props;
     const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
-
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
             if (redraw === "only") {
@@ -36,10 +35,10 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -52,9 +51,9 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
     
@@ -65,7 +64,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}
         >
-            <slot.render slotContext={slotContext} />
+            <slot.render runtimeContext={runtimeContext} />
         </StyledRenderedSlotBox>
     );
 };

@@ -13,9 +13,9 @@ import {
     resolveColumnDefinitionsFactory,
     resolveRecordsFactory,
     resolveStringFactory,
-    SlotFactoryContext,
+    SlotRuntimeContext,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { useViewSlot } from "./ViewSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useRefSlot } from "./RefSlotContext";
@@ -36,10 +36,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
 }) => {
     const theme = useTheme();
     const addToast = useToast();
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
@@ -48,7 +48,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, slotContext) ?? false);
+    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, runtimeContext) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const [dataGridStatuses, setDataGridStatuses] = React.useState<DataGridStatusPart[] | undefined>(undefined);
     const [dataGridStatusesFunctions, setDataGridStatusesFunctions] = React.useState<IGridStatusButton[] | undefined>(undefined);
@@ -72,11 +72,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
             }
         });
         const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -89,9 +89,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
 
@@ -100,13 +100,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
             setLoading(true);
             try {
                 console.debug("GridSlot fetching rows for slot:", slot.id);
-                const result = await resolveRecordsFactory(slot.rows, slotContext);
+                const result = await resolveRecordsFactory(slot.rows, runtimeContext);
                 if (Array.isArray(result)) {
                     setMessage(undefined);
                     setRows(result ?? []);
-                    setColumns(resolveColumnDefinitionsFactory(slot.columns, slotContext) ?? []);
-                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, slotContext));
-                    setPivot(resolveBooleanFactory(slot.pivot, slotContext) ?? false);
+                    setColumns(resolveColumnDefinitionsFactory(slot.columns, runtimeContext) ?? []);
+                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, runtimeContext));
+                    setPivot(resolveBooleanFactory(slot.pivot, runtimeContext) ?? false);
                     console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
                     setMessage(undefined);
@@ -138,7 +138,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         };
         setProgressBar(prev => ({
             ...prev,
-            node: slot.progress ? createProgressBarContent(slot.progress, slotContext, prev.ref, true) : null,
+            node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
         }));
         fetchRows();
         console.debug("GridSlot updating content for slot:", slot.id, refresh);
@@ -148,9 +148,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const rowClick = React.useMemo(
         () =>
             debounce((row: Record<string, any> | undefined) => {
-                slot.onRowSelect?.(row, slotContext);
+                slot.onRowSelect?.(row, runtimeContext);
             }, 250),
-        [slot.id, slotContext]
+        [slot.id, runtimeContext]
     );
 
     React.useEffect(() => {
@@ -177,11 +177,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }, [slot.statuses, dataGridStatus]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
-        const actionGroups = resolveActionGroupFactory(slot.actionGroups, slotContext) ?? [];
+        const actionGroups = resolveActionGroupFactory(slot.actionGroups, runtimeContext) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
         }
-        const actions = resolveActionFactory(slot.actions, slotContext) ?? [];
+        const actions = resolveActionFactory(slot.actions, runtimeContext) ?? [];
         if (actions.length) {
             context.addAction(...actions);
         }
@@ -244,11 +244,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     pivotColumns={pivotColumns}
                     uniqueField={slot.uniqueField}
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
-                    onCancelLoading={slot.onCancel ? () => slot.onCancel!(slotContext) : undefined}
+                    onCancelLoading={slot.onCancel ? () => slot.onCancel!(runtimeContext) : undefined}
                     overlayMode={slot.overlayMode ?? "small"}
-                    searchText={resolveStringFactory(slot.searchText, slotContext)}
+                    searchText={resolveStringFactory(slot.searchText, runtimeContext)}
                     rebuildDisplayData={rebuildDisplayData}
-                    columnRowNumber={resolveBooleanFactory(slot.canSelectRows, slotContext)}
+                    columnRowNumber={resolveBooleanFactory(slot.canSelectRows, runtimeContext)}
                 />
                 )}
             </Box>
@@ -259,14 +259,14 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     statuses={dataGridStatuses}
                     buttons={dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ? {
                         last: dataGridStatusesFunctions.map((button, index) => {
-                            const toolTip = resolveStringFactory(button.tooltip, slotContext);
+                            const toolTip = resolveStringFactory(button.tooltip, runtimeContext);
                             const icon = resolveIcon(theme, button.icon);
-                            const label = resolveStringFactory(button.label, slotContext);
+                            const label = resolveStringFactory(button.label, runtimeContext);
                             return (
                                 <StatusBarButton
                                     key={index}
                                     toolTip={toolTip}
-                                    onClick={button.onClick ? () => button.onClick?.(slotContext) : undefined}
+                                    onClick={button.onClick ? () => button.onClick?.(runtimeContext) : undefined}
                                 >
                                     {icon}
                                     {label}

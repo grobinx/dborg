@@ -2,7 +2,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
 import { schemaCommentDdl, schemaCreateDdl, schemaPrivilegesDdl } from "../../../common/ddls/schema";

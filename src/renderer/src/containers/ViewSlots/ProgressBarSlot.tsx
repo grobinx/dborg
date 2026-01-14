@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, LinearProgress, Typography, useTheme } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { IProgressBarSlot, resolveBooleanFactory, resolveNumberFactory, resolveStringFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { IProgressBarSlot, resolveBooleanFactory, resolveNumberFactory, resolveStringFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ThemeColor } from "@renderer/types/colors";
 import { resolveColor } from "@renderer/utils/colors";
@@ -42,10 +42,10 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const [label, setLabel] = React.useState<string | undefined>(undefined);
     const [color, setColor] = React.useState<string | undefined>(undefined);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -55,10 +55,10 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -71,17 +71,17 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedValue = resolveNumberFactory(slot.value, slotContext);
-        const resolvedBufferValue = resolveNumberFactory(slot.bufferValue, slotContext);
-        const resolvedLabel = resolveStringFactory(slot.label, slotContext);
-        const resolvedShowPercent = resolveBooleanFactory(slot.showPercent, slotContext) ?? false;
+        const resolvedValue = resolveNumberFactory(slot.value, runtimeContext);
+        const resolvedBufferValue = resolveNumberFactory(slot.bufferValue, runtimeContext);
+        const resolvedLabel = resolveStringFactory(slot.label, runtimeContext);
+        const resolvedShowPercent = resolveBooleanFactory(slot.showPercent, runtimeContext) ?? false;
         const resolvedColor = slot.color ? slot.color : "primary";
 
         setColor(resolvedColor);
@@ -95,7 +95,7 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
         if (displayFactory === "auto") {
             setDisplay(resolvedValue !== null && resolvedValue !== undefined);
         } else {
-            const resolvedDisplay = resolveBooleanFactory(displayFactory, slotContext) ?? false;
+            const resolvedDisplay = resolveBooleanFactory(displayFactory, runtimeContext) ?? false;
             setDisplay(resolvedDisplay);
         }
     }, [slot.id, refresh]);

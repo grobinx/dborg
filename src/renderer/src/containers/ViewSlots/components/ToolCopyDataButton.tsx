@@ -1,14 +1,14 @@
 import React from "react";
-import { ICopyData, SlotFactoryContext } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import { ICopyData, SlotRuntimeContext } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { CopyDataButton } from "@renderer/components/CopyDataButton";
-import { RefreshSlotFunction } from "../RefreshSlotContext";
+import { RefreshSlotFunction } from "../ViewSlotContext";
 
-export const ToolCopyDataButton: React.FC<{ action: ICopyData, slotContext: SlotFactoryContext }> = (props) => {
-    const { action, slotContext } = props;
+export const ToolCopyDataButton: React.FC<{ action: ICopyData, runtimeContext: SlotRuntimeContext }> = (props) => {
+    const { action, runtimeContext } = props;
 
     return (
         <CopyDataButton
-            getData={() => action.getData(slotContext)}
+            getData={() => action.getData(runtimeContext)}
             formats={action.formats}
         />
     );

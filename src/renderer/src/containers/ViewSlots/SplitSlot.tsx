@@ -1,6 +1,6 @@
 import React from "react";
-import { ISplitSlot, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { ISplitSlot, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import { createSplitPartContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -27,9 +27,9 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
             node: React.ReactNode
         }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [, reRender] = React.useState<bigint>(0n);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -39,10 +39,10 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
                 setRefresh(prev => prev + 1n);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -50,11 +50,11 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
         console.debug("SplitSlot updating content for slot:", slot.id);
         setFirst(prev => ({
             ...prev,
-            node: createSplitPartContent(slot.first, slotContext, prev.ref)
+            node: createSplitPartContent(slot.first, runtimeContext, prev.ref)
         }));
         setSecond(prev => ({
             ...prev,
-            node: createSplitPartContent(slot.second, slotContext, prev.ref)
+            node: createSplitPartContent(slot.second, runtimeContext, prev.ref)
         }));
     }, [slot.first, slot.second, refresh]);
 

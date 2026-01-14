@@ -4,7 +4,7 @@ import { SelectField } from "@renderer/components/inputs/SelectField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { BooleanField } from "@renderer/components/inputs/BooleanField";
 import {
-    SlotFactoryContext,
+    SlotRuntimeContext,
     IDialogTextField,
     IDialogNumberField,
     IDialogSelectField,
@@ -17,26 +17,28 @@ import React from "react";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         field,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, slotContext);
-    const tooltip = resolveStringFactory(field.tooltip, slotContext);
-    const helperText = resolveStringFactory(field.helperText, slotContext);
-    const disabled = resolveBooleanFactory(field.disabled, slotContext);
-    const required = resolveBooleanFactory(field.required, slotContext);
+    const label = resolveStringFactory(field.label, runtimeContext);
+    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
+    const helperText = resolveStringFactory(field.helperText, runtimeContext);
+    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
+    const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
             <TextField
-                value={structure[field.key] ?? field.defaultValue ?? ""}
-                onChange={(value) => structure[field.key] = value}
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -50,26 +52,28 @@ export const DialogTextField: React.FC<{
 
 export const DialogNumberField: React.FC<{
     field: IDialogNumberField;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         field,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, slotContext);
-    const tooltip = resolveStringFactory(field.tooltip, slotContext);
-    const helperText = resolveStringFactory(field.helperText, slotContext);
-    const disabled = resolveBooleanFactory(field.disabled, slotContext);
-    const required = resolveBooleanFactory(field.required, slotContext);
+    const label = resolveStringFactory(field.label, runtimeContext);
+    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
+    const helperText = resolveStringFactory(field.helperText, runtimeContext);
+    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
+    const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
             <NumberField
-                value={structure[field.key] ?? field.defaultValue ?? field.min ?? null}
-                onChange={(value) => structure[field.key] = value}
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -84,27 +88,29 @@ export const DialogNumberField: React.FC<{
 
 export const DialogSelectField: React.FC<{
     field: IDialogSelectField;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         field,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, slotContext);
-    const tooltip = resolveStringFactory(field.tooltip, slotContext);
-    const helperText = resolveStringFactory(field.helperText, slotContext);
-    const disabled = resolveBooleanFactory(field.disabled, slotContext);
-    const required = resolveBooleanFactory(field.required, slotContext);
-    const options = resolveSelectOptionsFactory(field.options, slotContext) || [];
+    const label = resolveStringFactory(field.label, runtimeContext);
+    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
+    const helperText = resolveStringFactory(field.helperText, runtimeContext);
+    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
+    const required = resolveBooleanFactory(field.required, runtimeContext);
+    const options = resolveSelectOptionsFactory(field.options, runtimeContext) || [];
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
             <SelectField
-                value={structure[field.key] ?? field.defaultValue}
-                onChange={(value) => structure[field.key] = value}
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -117,26 +123,28 @@ export const DialogSelectField: React.FC<{
 
 export const DialogBooleanField: React.FC<{
     field: IDialogBooleanField;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         field,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, slotContext);
-    const tooltip = resolveStringFactory(field.tooltip, slotContext);
-    const helperText = resolveStringFactory(field.helperText, slotContext);
-    const disabled = resolveBooleanFactory(field.disabled, slotContext);
-    const required = resolveBooleanFactory(field.required, slotContext);
+    const label = resolveStringFactory(field.label, runtimeContext);
+    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
+    const helperText = resolveStringFactory(field.helperText, runtimeContext);
+    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
+    const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
         <InputDecorator indicator={false} disableBlink description={helperText}>
             <BooleanField
-                value={structure[field.key] ?? field.defaultValue ?? false}
-                onChange={(value) => structure[field.key] = value}
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
                 disabled={disabled}
                 required={required}
                 width={field.width}

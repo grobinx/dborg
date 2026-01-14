@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    SlotFactoryContext,
+    SlotRuntimeContext,
     DialogLayoutItemKind,
     isDialogTextField,
     isDialogNumberField,
@@ -15,37 +15,39 @@ import { DialogColumn } from "./DialogLayout";
 
 export const DialogLayoutItem: React.FC<{
     item: DialogLayoutItemKind;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         item,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
     if (isDialogTextField(item)) {
-        return <DialogTextField field={item} slotContext={slotContext} structure={structure} />;
+        return <DialogTextField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     if (isDialogNumberField(item)) {
-        return <DialogNumberField field={item} slotContext={slotContext} structure={structure} />;
+        return <DialogNumberField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     if (isDialogBooleanField(item)) {
-        return <DialogBooleanField field={item} slotContext={slotContext} structure={structure} />;
+        return <DialogBooleanField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     if (isDialogSelectField(item)) {
-        return <DialogSelectField field={item} slotContext={slotContext} structure={structure} />;
+        return <DialogSelectField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     if (isDialogRow(item)) {
-        return <DialogRow row={item} slotContext={slotContext} structure={structure} />;
+        return <DialogRow row={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     if (isDialogColumn(item)) {
-        return <DialogColumn column={item} slotContext={slotContext} structure={structure} />;
+        return <DialogColumn column={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
     }
 
     return null;

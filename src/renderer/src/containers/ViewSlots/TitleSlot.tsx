@@ -2,8 +2,8 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
@@ -30,12 +30,12 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [title, setTitle] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -45,10 +45,10 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                 setPendingRefresh(true);
             }
         });
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -61,15 +61,15 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (rootVisible) {
-            slot?.onShow?.(slotContext);
+            slot?.onShow?.(runtimeContext);
         } else {
-            slot?.onHide?.(slotContext);
+            slot?.onHide?.(runtimeContext);
         }
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, slotContext);
-        setTitle(resolveReactNodeFactory(slot.title, slotContext));
+        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, runtimeContext);
+        setTitle(resolveReactNodeFactory(slot.title, runtimeContext));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {
             setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} ref={ref} />);

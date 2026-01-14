@@ -4,7 +4,7 @@ import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { IGridSlot } from "plugins/manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { sequenceCommentDdl, sequenceDdl, sequenceOperationalDdl, sequenceOwnerDdl, sequencePrivilegesDdl } from "../../../common/ddls/sequence";
 import { versionToNumber } from "../../../../../src/api/version";

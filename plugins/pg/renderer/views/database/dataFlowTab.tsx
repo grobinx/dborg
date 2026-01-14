@@ -5,7 +5,7 @@ import { IAutoRefresh, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/
 import { Box, Paper, Stack, Typography, useTheme, Button, Alert } from "@mui/material";
 import { versionToNumber } from "../../../../../src/api/version";
 import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 
 interface FlowSnapshot {
     ts: number;

@@ -9,7 +9,7 @@ import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
 import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/RefreshSlotContext";
+import { DialogSlotFunction, RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
 import { ThemeIconName } from "@renderer/themes/icons";
 import { ThemeColor } from "@renderer/types/colors";
@@ -33,37 +33,38 @@ export type CustomSlotType =
     | "dialog"
     ;
 
-export interface SlotFactoryContext {
+export interface SlotRuntimeContext {
     theme: Theme;
     refresh: RefreshSlotFunction;
+    openDialog: DialogSlotFunction;
 }
 
-export type BooleanFactory = boolean | ((slotContext: SlotFactoryContext) => boolean);
-export type NumberFactory = number | null | ((slotContext: SlotFactoryContext) => number | null);
-export type NumberArrayFactory = number[] | ((slotContext: SlotFactoryContext) => number[]);
-export type ReactNodeFactory = React.ReactNode | ((slotContext: SlotFactoryContext) => React.ReactNode);
+export type BooleanFactory = boolean | ((runtimeContext: SlotRuntimeContext) => boolean);
+export type NumberFactory = number | null | ((runtimeContext: SlotRuntimeContext) => number | null);
+export type NumberArrayFactory = number[] | ((runtimeContext: SlotRuntimeContext) => number[]);
+export type ReactNodeFactory = React.ReactNode | ((runtimeContext: SlotRuntimeContext) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
-export type StringFactory = string | ((slotContext: SlotFactoryContext) => string);
-export type StringAsyncFactory = Promise<string> | ((slotContext: SlotFactoryContext) => Promise<string>);
-export type SelectOptionsFactory = Option[] | ((slotContext: SlotFactoryContext) => Option[]);
-export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((slotContext: SlotFactoryContext) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
-export type ColumnDefinitionsFactory = ColumnDefinition[] | ((slotContext: SlotFactoryContext) => ColumnDefinition[]);
-export type ActionFactory<T = any> = Action<T>[] | ((slotContext: SlotFactoryContext) => Action<T>[]);
-export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((slotContext: SlotFactoryContext) => ActionGroup<T>[]);
-export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((slotContext: SlotFactoryContext) => monaco.editor.IActionDescriptor[]);
-export type ToolFactory<T = any> = ToolKind<T>[] | ((slotContext: SlotFactoryContext) => ToolKind<T>[]);
-export type SplitSlotPartKindFactory = SplitSlotPartKind | ((slotContext: SlotFactoryContext) => SplitSlotPartKind);
-export type TabSlotsFactory = ITabSlot[] | ((slotContext: SlotFactoryContext) => ITabSlot[]);
-export type TabLabelSlotKindFactory = TabLabelSlotKind | ((slotContext: SlotFactoryContext) => TabLabelSlotKind);
-export type TabContentSlotKindFactory = TabContentSlotKind | ((slotContext: SlotFactoryContext) => TabContentSlotKind);
-export type ContentSlotKindFactory = ContentSlotKind | ((slotContext: SlotFactoryContext) => ContentSlotKind);
-export type TitleSlotKindFactory = TitleSlotKind | ((slotContext: SlotFactoryContext) => TitleSlotKind);
-export type TextSlotKindFactory = TextSlotKind | ((slotContext: SlotFactoryContext) => TextSlotKind);
-export type ContentSlotFactory = IContentSlot | ((slotContext: SlotFactoryContext) => IContentSlot);
-export type ToolBarSlotKindFactory = ToolBarSlotKind | ((slotContext: SlotFactoryContext) => ToolBarSlotKind);
-export type ProgressBarSlotFactory = IProgressBarSlot | ((slotContext: SlotFactoryContext) => IProgressBarSlot);
-export type DialogsSlotFactory = IDialogSlot[] | ((slotContext: SlotFactoryContext) => IDialogSlot[]);
-export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((slotContext: SlotFactoryContext) => DialogLayoutItemKind[]);
+export type StringFactory = string | ((runtimeContext: SlotRuntimeContext) => string);
+export type StringAsyncFactory = Promise<string> | ((runtimeContext: SlotRuntimeContext) => Promise<string>);
+export type SelectOptionsFactory = Option[] | ((runtimeContext: SlotRuntimeContext) => Option[]);
+export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: SlotRuntimeContext) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
+export type ColumnDefinitionsFactory = ColumnDefinition[] | ((runtimeContext: SlotRuntimeContext) => ColumnDefinition[]);
+export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
+export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
+export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((runtimeContext: SlotRuntimeContext) => monaco.editor.IActionDescriptor[]);
+export type ToolFactory<T = any> = ToolKind<T>[] | ((runtimeContext: SlotRuntimeContext) => ToolKind<T>[]);
+export type SplitSlotPartKindFactory = SplitSlotPartKind | ((runtimeContext: SlotRuntimeContext) => SplitSlotPartKind);
+export type TabSlotsFactory = ITabSlot[] | ((runtimeContext: SlotRuntimeContext) => ITabSlot[]);
+export type TabLabelSlotKindFactory = TabLabelSlotKind | ((runtimeContext: SlotRuntimeContext) => TabLabelSlotKind);
+export type TabContentSlotKindFactory = TabContentSlotKind | ((runtimeContext: SlotRuntimeContext) => TabContentSlotKind);
+export type ContentSlotKindFactory = ContentSlotKind | ((runtimeContext: SlotRuntimeContext) => ContentSlotKind);
+export type TitleSlotKindFactory = TitleSlotKind | ((runtimeContext: SlotRuntimeContext) => TitleSlotKind);
+export type TextSlotKindFactory = TextSlotKind | ((runtimeContext: SlotRuntimeContext) => TextSlotKind);
+export type ContentSlotFactory = IContentSlot | ((runtimeContext: SlotRuntimeContext) => IContentSlot);
+export type ToolBarSlotKindFactory = ToolBarSlotKind | ((runtimeContext: SlotRuntimeContext) => ToolBarSlotKind);
+export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRuntimeContext) => IProgressBarSlot);
+export type DialogsSlotFactory = IDialogSlot[] | ((runtimeContext: SlotRuntimeContext) => IDialogSlot[]);
+export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((runtimeContext: SlotRuntimeContext) => DialogLayoutItemKind[]);
 
 export type ToolKind<T = any> =
     | string
@@ -244,59 +245,59 @@ export interface IAutoRefresh {
      * @param slotContext 
      * @param context 
      */
-    onTick(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onTick(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy montowaniu komponentu.
      * @param slotContext 
      * @param context 
      */
-    onMount?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onMount?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy odmontowaniu komponentu.
      * @param slotContext 
      * @param context 
      */
-    onUnmount?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onUnmount?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy starcie automatycznego odświeżania.
      * @param slotContext 
      * @param context 
      */
-    onStart?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onStart?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy zatrzymaniu automatycznego odświeżania.
      * @param slotContext 
      * @param context 
      */
-    onStop?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onStop?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy wstrzymaniu automatycznego odświeżania.
      * @param slotContext 
      * @param context 
      */
-    onPause?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onPause?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy wznowieniu automatycznego odświeżania.
      * @param slotContext 
      * @param context 
      */
-    onResume?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onResume?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy pokazaniu panelu auto refresh.
      * @param slotContext 
      * @param context 
      */
-    onShow?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onShow?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana przy ukryciu panelu auto refresh.
      * @param slotContext 
      * @param context 
      */
-    onHide?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onHide?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Funkcja wywoływana po naciśnięciu przycisku "Clear".
      */
-    onClear?(slotContext: SlotFactoryContext, context: IAutoRefreshContext): void;
+    onClear?(runtimeContext: SlotRuntimeContext, context: IAutoRefreshContext): void;
     /**
      * Czy przycisk "Clear" ma być dostępny.
      * @default false
@@ -331,7 +332,7 @@ export interface ICopyData<T = any> {
      * @param slotContext 
      * @returns 
      */
-    getData: (slotContext: SlotFactoryContext) => T;
+    getData: (runtimeContext: SlotRuntimeContext) => T;
     /**
      * Czy pokazać powiadomienie o skopiowaniu danych.
      * @default true
@@ -349,11 +350,11 @@ export interface ISlot {
      */
     type: string;
 
-    onMount?: (slotContext: SlotFactoryContext) => void;
-    onUnmount?: (slotContext: SlotFactoryContext) => void;
+    onMount?: (runtimeContext: SlotRuntimeContext) => void;
+    onUnmount?: (runtimeContext: SlotRuntimeContext) => void;
 
-    onShow?: (slotContext: SlotFactoryContext) => void;
-    onHide?: (slotContext: SlotFactoryContext) => void;
+    onShow?: (runtimeContext: SlotRuntimeContext) => void;
+    onHide?: (runtimeContext: SlotRuntimeContext) => void;
 }
 
 /**
@@ -445,7 +446,7 @@ export interface ITabLabelSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      */
     label: ReactNodeFactory;
 
-    onActivate?: (slotContext: SlotFactoryContext) => void;
+    onActivate?: (runtimeContext: SlotRuntimeContext) => void;
     onDeactivate?: () => void;
 }
 
@@ -456,8 +457,8 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
      */
     content: ContentSlotKindFactory;
 
-    onActivate?: (slotContext: SlotFactoryContext) => void;
-    onDeactivate?: (slotContext: SlotFactoryContext) => void;
+    onActivate?: (runtimeContext: SlotRuntimeContext) => void;
+    onDeactivate?: (runtimeContext: SlotRuntimeContext) => void;
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
@@ -474,6 +475,10 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
     keybinding?: string;
+    /**
+     * Dialogs dostępne w zawartości zakładki (opcjonalnie).
+     */
+    dialogs?: DialogsSlotFactory;
 }
 
 export type TabLabelSlotKind =
@@ -519,12 +524,12 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      * Funkcja wywoływana po zamknięciu zakładki.
      * @param slotContext
      */
-    onClose?: (slotContext: SlotFactoryContext) => void;
+    onClose?: (runtimeContext: SlotRuntimeContext) => void;
     /**
      * Funkcja wywoływana po przypięciu zakładki.
      * @param slotContext 
      */
-    onPin?: (slotContext: SlotFactoryContext) => void;
+    onPin?: (runtimeContext: SlotRuntimeContext) => void;
 }
 
 /**
@@ -536,7 +541,7 @@ export interface IRenderedSlot extends ICustomSlot {
     /**
      * Zawartość slotu (funkcja renderująca).
      */
-    render: React.FC<{ slotContext: SlotFactoryContext }>;
+    render: React.FC<{ runtimeContext: SlotRuntimeContext }>;
 }
 
 export type ContentSlotKind =
@@ -613,7 +618,7 @@ export interface IGridStatusButton {
     label: StringFactory;
     icon?: IconFactory;
     tooltip?: StringFactory;
-    onClick?: (slotContext: SlotFactoryContext) => void;
+    onClick?: (runtimeContext: SlotRuntimeContext) => void;
 }
 
 /**
@@ -654,7 +659,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Callback po zaznaczeniu wiersza (opcjonalnie).
      */
-    onRowSelect?: (row: any, slotContext: SlotFactoryContext) => void;
+    onRowSelect?: (row: any, runtimeContext: SlotRuntimeContext) => void;
     /**
      * Identyfikator do przechowywania układu siatki (opcjonalnie).
      */
@@ -677,7 +682,7 @@ export interface IGridSlot extends ICustomSlot {
      * @param slotContext 
      * @returns 
      */
-    onCancel?: (slotContext: SlotFactoryContext) => void;
+    onCancel?: (runtimeContext: SlotRuntimeContext) => void;
     /**
      * Tryb nakładki ładowania (opcjonalnie).
      * @default "small"
@@ -745,19 +750,19 @@ export interface IEditorSlot extends ICustomSlot {
      */
     miniMap?: boolean;
 
-    onMounted?: (slotContext: SlotFactoryContext) => void;
-    onPositionChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
-    onSelectionChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
-    onFocus?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
-    onBlur?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
-    onContentChanged?: (slotContext: SlotFactoryContext, context: IEditorContext) => void;
+    onMounted?: (runtimeContext: SlotRuntimeContext) => void;
+    onPositionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
+    onSelectionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
+    onFocus?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
+    onBlur?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
+    onContentChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
     /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
-     * @param slotContext: SlotFactoryContext
+     * @param runtimeContext: SlotFactoryContext
      * @returns 
      */
-    onCancel?: (slotContext: SlotFactoryContext) => void;
+    onCancel?: (runtimeContext: SlotRuntimeContext) => void;
     /**
      * Tryb nakładki ładowania (opcjonalnie).
      * @default "small"
@@ -1035,84 +1040,84 @@ export interface IDialogSlot extends ICustomSlot {
     onCancel?: () => void;
     /**
      * Rozmiar dialogu.
-     * @default "medium"
+     * @default "small"
      */
     size?: DialogSize;
 }
 
-export function resolveStringFactory(factory: StringFactory | undefined, context: SlotFactoryContext): string | undefined {
+export function resolveStringFactory(factory: StringFactory | undefined, context: SlotRuntimeContext): string | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, context: SlotFactoryContext): Promise<string | undefined> | undefined {
+export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, context: SlotRuntimeContext): Promise<string | undefined> | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, context: SlotFactoryContext): React.ReactNode {
+export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, context: SlotRuntimeContext): React.ReactNode {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveBooleanFactory(factory: BooleanFactory | undefined, context: SlotFactoryContext): boolean | undefined {
+export function resolveBooleanFactory(factory: BooleanFactory | undefined, context: SlotRuntimeContext): boolean | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotFactoryContext): ToolKind[] | undefined {
+export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotRuntimeContext): ToolKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, context: SlotFactoryContext): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
+export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, context: SlotRuntimeContext): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, context: SlotFactoryContext): ColumnDefinition[] | undefined {
+export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, context: SlotRuntimeContext): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, context: SlotFactoryContext): Action<T>[] | undefined {
+export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotFactoryContext): ActionGroup<T>[] | undefined {
+export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotRuntimeContext): ActionGroup<T>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, context: SlotFactoryContext): monaco.editor.IActionDescriptor[] | undefined {
+export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, context: SlotRuntimeContext): monaco.editor.IActionDescriptor[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotFactoryContext): SplitSlotPartKind | undefined {
+export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotRuntimeContext): SplitSlotPartKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotFactoryContext): ITabSlot[] | undefined {
+export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotRuntimeContext): ITabSlot[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, context: SlotFactoryContext): TabLabelSlotKind | undefined {
+export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, context: SlotRuntimeContext): TabLabelSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, context: SlotFactoryContext): TabContentSlotKind | undefined {
+export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, context: SlotRuntimeContext): TabContentSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, context: SlotFactoryContext): ContentSlotKind | undefined {
+export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, context: SlotRuntimeContext): ContentSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, context: SlotFactoryContext): TitleSlotKind | undefined {
+export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, context: SlotRuntimeContext): TitleSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, context: SlotFactoryContext): TextSlotKind | undefined {
+export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, context: SlotRuntimeContext): TextSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, context: SlotFactoryContext): IContentSlot | undefined {
+export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, context: SlotRuntimeContext): IContentSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, context: SlotFactoryContext): Option[] | undefined {
+export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, context: SlotRuntimeContext): Option[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, context: SlotFactoryContext): ToolBarSlotKind | undefined {
+export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, context: SlotRuntimeContext): ToolBarSlotKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveNumberFactory(factory: NumberFactory | undefined, context: SlotFactoryContext): number | null | undefined {
+export function resolveNumberFactory(factory: NumberFactory | undefined, context: SlotRuntimeContext): number | null | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, context: SlotFactoryContext): number[] | undefined {
+export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, context: SlotRuntimeContext): number[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotFactoryContext): IProgressBarSlot | undefined {
+export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotRuntimeContext): IProgressBarSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveDialogsSlotFactory(factory: DialogsSlotFactory | undefined, context: SlotFactoryContext): IDialogSlot[] | undefined {
+export function resolveDialogsSlotFactory(factory: DialogsSlotFactory | undefined, context: SlotRuntimeContext): IDialogSlot[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveDialogLayoutItemsKindFactory(factory: DialogLayoutItemsKindFactory | undefined, context: SlotFactoryContext): DialogLayoutItemKind[] | undefined {
+export function resolveDialogLayoutItemsKindFactory(factory: DialogLayoutItemsKindFactory | undefined, context: SlotRuntimeContext): DialogLayoutItemKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

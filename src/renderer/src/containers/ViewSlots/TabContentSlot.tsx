@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotFactoryContext } from "../../../../../plugins/manager/renderer/CustomSlots";
-import { useRefreshSlot } from "./RefreshSlotContext";
+import { IDialogSlot, ITabContentSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useViewSlot } from "./ViewSlotContext";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { createContentComponent, createProgressBarContent } from "./helpers";
@@ -11,6 +11,7 @@ import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
 import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { isKeyBinding } from "@renderer/hooks/useKeyboardNavigation";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
+import DialogSlot from "./DialogSlot";
 
 export interface TabContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -38,9 +39,14 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [dialogs, setDialogs] = React.useState<Record<string, {
+        opened: boolean;
+        params?: Record<string, any>;
+        dialog: IDialogSlot;
+    }>>({});
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const { registerRefresh, refreshSlot } = useRefreshSlot();
+    const { registerRefresh, refreshSlot, registerDialog, openDialog } = useViewSlot();
     const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
     const wasActiveRef = React.useRef(false);
@@ -52,7 +58,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const tabSlotRef = React.useRef<TabContentSlotContext>(null);
     const actionManager = React.useRef<ActionManager<TabContentSlotContext>>(null);
-    const slotContext: SlotFactoryContext = React.useMemo(() => ({ theme, refresh: refreshSlot }), [theme, refreshSlot]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useImperativeHandle(tabSlotRef, () => tabSlotContext);
 
@@ -72,9 +78,9 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     }, [slot.id]);
 
     React.useEffect(() => {
-        slot?.onMount?.(slotContext);
+        slot?.onMount?.(runtimeContext);
         return () => {
-            slot?.onUnmount?.(slotContext);
+            slot?.onUnmount?.(runtimeContext);
         };
     }, [slot.id]);
 
@@ -87,21 +93,22 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         if (active) {
-            slot?.onActivate?.(slotContext);
+            slot?.onActivate?.(runtimeContext);
         } else {
-            slot?.onDeactivate?.(slotContext);
+            slot?.onDeactivate?.(runtimeContext);
         }
     }, [active]);
 
     React.useEffect(() => {
         const isFirstActivation = active && !wasActiveRef.current;
         const refreshChanged = refresh !== previousRefreshRef.current;
+        let unregisterDialogs: (() => void) | null = null;
 
         if ((slot.actionGroups || slot.actions) && (!actionManager.current || refreshChanged)) {
             actionManager.current = new ActionManager<TabContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, slotContext);
+            const actions = resolveActionFactory(slot.actions, runtimeContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, slotContext);
+            const groups = resolveActionGroupFactory(slot.actionGroups, runtimeContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 
@@ -109,18 +116,47 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             console.debug("TabContentSlot updating content for slot:", slot.id, refresh);
             setContent(prev => ({
                 ...prev,
-                node: createContentComponent(slot.content!, slotContext, prev.ref),
+                node: createContentComponent(slot.content!, runtimeContext, prev.ref),
             }));
             setProgressBar(prev => ({
                 ...prev,
-                node: slot.progress ? createProgressBarContent(slot.progress, slotContext, prev.ref, true) : null,
+                node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
             }));
+            const resolvedDialogs = resolveDialogsSlotFactory(slot.dialogs, runtimeContext);
+            if (resolvedDialogs && Object.keys(resolvedDialogs).length > 0) {
+                const dialogs = resolvedDialogs.reduce((acc, dialog) => ({
+                    ...acc,
+                    [dialog.id]: {
+                        opened: false,
+                        dialog: dialog,
+                    }
+                }), {} as Record<string, {
+                    opened: boolean;
+                    dialog: IDialogSlot;
+                }>);
+                setDialogs(dialogs);
+                unregisterDialogs = registerDialog(Object.keys(dialogs), (id: string, params?: Record<string, any>) => {
+                    setDialogs(prev => ({
+                        ...prev,
+                        [id]: {
+                            opened: true,
+                            dialog: prev[id].dialog,
+                            params,
+                        }
+                    }));
+                });
+            }
             previousRefreshRef.current = refresh;
         }
         if (active) {
             wasActiveRef.current = true;
         }
-    }, [active, slot.content, refresh]);
+        return () => {
+            if (unregisterDialogs) {
+                unregisterDialogs();
+            }
+        };
+    }, [active, slot.content, slot.dialogs, refresh]);
 
     React.useEffect(() => {
         if (active && pendingRefresh) {
@@ -191,6 +227,25 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             )}
             {progressBar.node}
             {content.node}
+            {Object.values(dialogs).map(({ opened, dialog, params }) => (
+                opened ? (
+                    <DialogSlot
+                        key={dialog.id}
+                        slot={dialog}
+                        open={true}
+                        onClose={() => {
+                            setDialogs(prev => ({
+                                ...prev,
+                                [dialog.id]: {
+                                    ...prev[dialog.id],
+                                    opened: false,
+                                }
+                            }));
+                        }}
+                        params={params}
+                    />
+                ) : null
+            ))}
         </TabPanelContent>
     );
 };

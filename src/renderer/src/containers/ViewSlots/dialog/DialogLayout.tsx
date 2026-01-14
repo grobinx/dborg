@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    SlotFactoryContext,
+    SlotRuntimeContext,
     IDialogRow,
     IDialogColumn,
     DialogLayoutItemKind,
@@ -11,17 +11,19 @@ import { DialogLayoutItem } from "./DialogLayoutItem";
 
 export const DialogRow: React.FC<{
     row: IDialogRow;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         row,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(row.label, slotContext);
-    const items = resolveDialogLayoutItemsKindFactory(row.items, slotContext) || [];
+    const label = resolveStringFactory(row.label, runtimeContext);
+    const items = resolveDialogLayoutItemsKindFactory(row.items, runtimeContext) || [];
 
     return (
         <div style={{ display: "flex", gap: "8px", width: "100%", flexWrap: "wrap" }}>
@@ -34,8 +36,9 @@ export const DialogRow: React.FC<{
                 <DialogLayoutItem
                     key={index}
                     item={item}
-                    slotContext={slotContext}
+                    runtimeContext={runtimeContext}
                     structure={structure}
+                    onChange={onChange}
                 />
             ))}
         </div>
@@ -44,17 +47,19 @@ export const DialogRow: React.FC<{
 
 export const DialogColumn: React.FC<{
     column: IDialogColumn;
-    slotContext: SlotFactoryContext;
+    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
 }> = (props) => {
     const {
         column,
-        slotContext,
+        runtimeContext,
         structure,
+        onChange,
     } = props;
 
-    const label = resolveStringFactory(column.label, slotContext);
-    const items = resolveDialogLayoutItemsKindFactory(column.items, slotContext) || [];
+    const label = resolveStringFactory(column.label, runtimeContext);
+    const items = resolveDialogLayoutItemsKindFactory(column.items, runtimeContext) || [];
 
     const columnWidth = column.width ? `${(column.width / 12) * 100}%` : "auto";
 
@@ -69,8 +74,9 @@ export const DialogColumn: React.FC<{
                 <DialogLayoutItem
                     key={index}
                     item={item}
-                    slotContext={slotContext}
+                    runtimeContext={runtimeContext}
                     structure={structure}
+                    onChange={onChange}
                 />
             ))}
         </div>
