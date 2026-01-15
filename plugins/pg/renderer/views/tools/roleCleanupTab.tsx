@@ -6,9 +6,7 @@ import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObject, Privile
 import { versionToNumber } from "../../../../../src/api/version";
 import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
-import { icons } from "@renderer/themes/ThemeWrapper";
-import debounce, { Debounced } from "@renderer/utils/debounce";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
+import debounce from "@renderer/utils/debounce";
 import { Stack } from "@mui/material";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
@@ -18,6 +16,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let targetOwner: string | null = null;
+    let lastReassignOwner: Record<string, any> = { "new-owner": null };
 
     let ownedCache: OwnedObject[] = [];
     let privsCache: PrivilegeRecord[] = [];
@@ -29,6 +28,31 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             selectedRole = rows[0]?.role_name ?? null;
         } catch (e) {
             selectedRole = null;
+        }
+    };
+    let roleNameList: string[] = [];
+    const loadRoleNameList = async () => {
+        try {
+            const { rows } = await session.query<{ rolname: string }>(
+                `select rolname
+                 from pg_roles
+                 order by rolname`);
+            roleNameList = rows.map(r => r.rolname);
+        } catch (e) {
+            roleNameList = [];
+        }
+    };
+    let schemanameList: string[] = [];
+    const loadSchemaNameList = async () => {
+        try {
+            const { rows } = await session.query<{ nspname: string }>(
+                `select nspname
+                 from pg_namespace
+                 where nspname not like 'pg_%' and nspname <> 'information_schema'
+                 order by nspname`);
+            schemanameList = rows.map(r => r.nspname);
+        } catch (e) {
+            schemanameList = [];
         }
     };
 
@@ -45,6 +69,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                 slotContext.refresh(cid("role-owned-grid"));
                 slotContext.refresh(cid("role-privs-grid"));
             });
+            loadRoleNameList();
+            loadSchemaNameList();
         },
         label: {
             id: cid("role-cleanup-tab-label"),
@@ -106,7 +132,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                         { key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
                                         {
-                                            key: "choice", label: t("action", "Action"), width: 36, dataType: "object",
+                                            key: "choice", label: t("action", "Action"), width: 150, dataType: "object",
                                             formatter: (value: CleanupChoice | undefined, _row) => {
                                                 if (value?.action === "drop_restrict") {
                                                     return <Stack direction="row" gap={4}>
@@ -127,7 +153,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                     actions: [
                                         {
                                             id: "drop-restrict-owned-objects-action",
-                                            label: t("drop-object-restrict", "Drop Object Restrict"),
+                                            label: t("drop-object", "Drop Object"),
                                             icon: <slotContext.theme.icons.DropRestrict color="warning" />,
                                             keySequence: ["Ctrl+D"],
                                             contextMenuGroupId: "cleanup-actions",
@@ -154,7 +180,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         },
                                         {
                                             id: "drop-cascade-owned-objects-action",
-                                            label: t("drop-cascade-object", "Drop Object Cascade"),
+                                            label: t("drop-object-cascade", "Drop Object Cascade"),
                                             icon: <slotContext.theme.icons.DropCascade color="error" />,
                                             keySequence: ["Ctrl+Shift+D"],
                                             contextMenuGroupId: "cleanup-actions",
@@ -261,14 +287,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     id: cid("role-cleanup-select-new-owner-dialog"),
                     type: "dialog",
                     title: t("reassing-owner", "Reassign Owner"),
-                    items: [
+                    items: () => [
                         {
                             key: "new-owner",
                             type: "select",
                             label: t("new-owner", "New Owner"),
                             options: [
-                                { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: "" },
-                                { label: t("role-current-owner", "Current Role"), value: "__current_role__" },
+                                { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: null },
+                                ...roleNameList.map(rn => ({ label: rn, value: rn })),
                             ]
                         }
                     ],
@@ -291,8 +317,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     icon: "Add",
                     label: t("reassign-owner", "Reassign Owner"),
                     run: () => {
-                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog")).then((result) => {
-                            console.log("result:", result);
+                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"), lastReassignOwner).then((result) => {
+                            if (result) {
+                                lastReassignOwner = result;
+                            }
                         });
                     }
                 } as Action<any>,

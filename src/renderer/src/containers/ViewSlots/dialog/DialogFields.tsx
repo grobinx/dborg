@@ -116,6 +116,7 @@ export const DialogSelectField: React.FC<{
                 width={field.width}
                 options={options}
                 tooltip={tooltip}
+                searchable={true}
             />
         </InputDecorator>
     );

@@ -36,6 +36,11 @@ export type CustomSlotType =
 export interface SlotRuntimeContext {
     theme: Theme;
     refresh: RefreshSlotFunction;
+    /**
+     * Function to open a dialog by its ID.
+     * @param id The ID of the dialog to open.
+     * @return A promise that resolves to the dialog result or null if the dialog was cancelled.
+     */
     openDialog: DialogSlotFunction;
 }
 
