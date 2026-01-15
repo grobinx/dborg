@@ -5,9 +5,9 @@ export type RefreshSlotFunction = (id: string, redraw?: RedrawMode) => void;
 type RefreshFunction = (redraw?: RedrawMode) => void;
 type RegisterRefreshSlotFunction = (id: string, fn: RefreshFunction) => () => void;
 
-export type DialogSlotFunction = (id: string, params?: Record<string, any>) => void;
+export type DialogSlotFunction = (id: string, params?: Record<string, any>) => Promise<Record<string, any> | null>;
 type RegisterDialogFunction = (ids: string | string[], fn: DialogSlotFunction) => () => void;
-type OpenDialogFunction = (id: string, params?: Record<string, any>) => void;
+type OpenDialogFunction = (id: string, params?: Record<string, any>) => Promise<Record<string, any> | null>;
 
 type ViewSlotContextType = {
     registerRefresh: RegisterRefreshSlotFunction;
@@ -20,7 +20,7 @@ export const ViewSlotContext = createContext<ViewSlotContextType>({
     registerRefresh: () => () => { },
     refreshSlot: (_id: string) => { },
     registerDialog: () => () => { },
-    openDialog: (_id: string, _params?: Record<string, any>) => { },
+    openDialog: (_id: string, _params?: Record<string, any>) => { return Promise.resolve(null); },
 });
 
 export const ViewSlotProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -55,15 +55,24 @@ export const ViewSlotProvider: React.FC<{ children: ReactNode }> = ({ children }
     }, []);
 
     const openDialog: OpenDialogFunction = useCallback((id: string, params?: Record<string, any>) => {
-        const fn = dialogs.current.get(id);
-        if (fn) {
+        return new Promise<Record<string, any> | null>((resolve) => {
+            const fn = dialogs.current.get(id);
+            if (!fn) {
+                resolve(null);
+                return;
+            }
+            
             setTimeout(() =>
-                requestAnimationFrame(() => {
-                    if (dialogs.current.get(id)) {
-                        fn(id, params);
+                requestAnimationFrame(async () => {
+                    const dialogFn = dialogs.current.get(id);
+                    if (dialogFn) {
+                        const result = await dialogFn(id, params);
+                        resolve(result);
+                    } else {
+                        resolve(null);
                     }
                 }), 0);
-        }
+        });
     }, []);
 
     return (

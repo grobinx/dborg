@@ -272,11 +272,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                             ]
                         }
                     ],
-                    onConfirm: (values) => {
-                        // handle confirm logic, e.g. set targetOwner
-                        console.log("reassign:", values);
-                        //targetOwner = values["new-owner"];
-                    }
                 }
             ],
         },
@@ -296,7 +291,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     icon: "Add",
                     label: t("reassign-owner", "Reassign Owner"),
                     run: () => {
-                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"));
+                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog")).then((result) => {
+                            console.log("result:", result);
+                        });
                     }
                 } as Action<any>,
             ],

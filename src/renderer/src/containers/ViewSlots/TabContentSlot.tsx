@@ -43,6 +43,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         opened: boolean;
         params?: Record<string, any>;
         dialog: IDialogSlot;
+        resolver: ((value: Record<string, any> | null) => void) | null;
     }>>({});
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
@@ -129,21 +130,26 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
                     [dialog.id]: {
                         opened: false,
                         dialog: dialog,
+                        resolver: null as ((value: Record<string, any> | null) => void) | null,
                     }
                 }), {} as Record<string, {
                     opened: boolean;
                     dialog: IDialogSlot;
+                    resolver: ((value: Record<string, any> | null) => void) | null;
                 }>);
                 setDialogs(dialogs);
                 unregisterDialogs = registerDialog(Object.keys(dialogs), (id: string, params?: Record<string, any>) => {
-                    setDialogs(prev => ({
-                        ...prev,
-                        [id]: {
-                            opened: true,
-                            dialog: prev[id].dialog,
-                            params,
-                        }
-                    }));
+                    return new Promise<Record<string, any> | null>((resolve) => {
+                        setDialogs(prev => ({
+                            ...prev,
+                            [id]: {
+                                opened: true,
+                                dialog: prev[id].dialog,
+                                params,
+                                resolver: resolve,
+                            }
+                        }));
+                    });
                 });
             }
             previousRefreshRef.current = refresh;
@@ -227,20 +233,22 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             )}
             {progressBar.node}
             {content.node}
-            {Object.values(dialogs).map(({ opened, dialog, params }) => (
+            {Object.values(dialogs).map(({ opened, dialog, params, resolver }) => (
                 opened ? (
                     <DialogSlot
                         key={dialog.id}
                         slot={dialog}
                         open={true}
-                        onClose={() => {
+                        onClose={(result) => {
                             setDialogs(prev => ({
                                 ...prev,
                                 [dialog.id]: {
                                     ...prev[dialog.id],
                                     opened: false,
+                                    resolver: null,
                                 }
                             }));
+                            resolver?.(result);
                         }}
                         params={params}
                     />

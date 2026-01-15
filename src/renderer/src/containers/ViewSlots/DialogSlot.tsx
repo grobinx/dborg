@@ -24,7 +24,7 @@ interface DialogSlotProps {
     slot: IDialogSlot;
     open?: boolean;
 	params?: Record<string, any>;
-    onClose?: () => void;
+    onClose?: (structure: Record<string, any> | null) => void;
 }
 
 const applyDefaults = (
@@ -115,8 +115,8 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         setError(null);
         setSubmitting(true);
         try {
-            await slot.onConfirm(structure);
-            onClose?.();
+            await slot.onConfirm?.(structure);
+            onClose?.(structure);
         } catch (err: any) {
             setError(err?.message ?? String(err));
         } finally {
@@ -126,7 +126,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
 
     const handleCancel = () => {
         slot.onCancel?.();
-        onClose?.();
+        onClose?.(null);
     };
 
     const title = resolveStringFactory(slot.title, runtimeContext);

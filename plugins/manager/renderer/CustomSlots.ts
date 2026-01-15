@@ -1033,7 +1033,7 @@ export interface IDialogSlot extends ICustomSlot {
      * Funkcja wywoływana po potwierdzeniu dialogu.
      * @param values Wartości pól dialogu.
      */
-    onConfirm: (values: Record<string, any>) => void | Promise<void>;
+    onConfirm?: (values: Record<string, any>) => void | Promise<void>;
     /**
      * Funkcja wywoływana po anulowaniu dialogu.
      */
