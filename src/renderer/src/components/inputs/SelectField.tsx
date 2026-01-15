@@ -65,6 +65,7 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
         maxItems,
         searchable = false,
         searchPlaceholder = 'Search...',
+        autoFocus,
         ...other
     } = props;
 
@@ -123,6 +124,14 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
     }, [onChange, multiple, value, maxItems]);
 
     React.useEffect(() => {
+        if (autoFocus && !open) {
+            if (inputRef.current) {
+                inputRef.current?.focus();
+            }
+        }
+    }, []);
+
+    React.useEffect(() => {
         if (decorator && maxItems && multiple) {
             Promise.resolve().then(() => {
                 decorator.setRestrictions([`${(value ?? []).length}/${maxItems}`]);
@@ -141,13 +150,14 @@ export const SelectField = <T,>(props: SelectFieldProps<T>) => {
 
     const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLElement>) => {
         if (!open) {
-            if ([' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+            if ([' ', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
                 e.preventDefault();
                 handleToggle();
             }
         } else {
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
                 if (searchable && searchText) {
                     setSearchText('');
                 } else {

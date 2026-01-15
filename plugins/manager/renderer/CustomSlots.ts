@@ -892,6 +892,11 @@ export interface IDialogField {
      * Szerokość pola (np. "100%", 200).
      */
     width?: string | number;
+    /**
+     * Czy pole ma być automatycznie fokusowane po otwarciu dialogu.
+     * @default false
+     */
+    autoFocus?: boolean;
 }
 
 export interface IDialogTextField extends IDialogField {

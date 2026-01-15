@@ -492,9 +492,8 @@ export function buildCleanupSql(
         }
     }
 
-    lines.push(`DROP OWNED BY ${opts.roleName};`);
-    lines.push(`-- Uruchom w każdej bazie. Gdy brak zależności w całym klastrze:`);
-    lines.push(`DROP ROLE ${opts.roleName};`);
+    lines.push(`-- DROP OWNED BY ${opts.roleName};`);
+    lines.push(`-- DROP ROLE ${opts.roleName};`);
     lines.push("COMMIT;");
     return lines.join("\n");
 }

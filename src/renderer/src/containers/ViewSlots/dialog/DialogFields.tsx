@@ -45,6 +45,7 @@ export const DialogTextField: React.FC<{
                 minLength={field.minLength}
                 maxLength={field.maxLength}
                 tooltip={tooltip}
+                autoFocus={field.autoFocus}
             />
         </InputDecorator>
     );
@@ -81,6 +82,7 @@ export const DialogNumberField: React.FC<{
                 max={field.max}
                 step={field.step}
                 tooltip={tooltip}
+                autoFocus={field.autoFocus}
             />
         </InputDecorator>
     );
@@ -117,6 +119,7 @@ export const DialogSelectField: React.FC<{
                 options={options}
                 tooltip={tooltip}
                 searchable={true}
+                autoFocus={field.autoFocus}
             />
         </InputDecorator>
     );
@@ -152,6 +155,7 @@ export const DialogBooleanField: React.FC<{
                 label={label}
                 tooltip={tooltip}
                 indeterminate={field.indeterminate}
+                autoFocus={field.autoFocus}
             />
         </InputDecorator>
     );

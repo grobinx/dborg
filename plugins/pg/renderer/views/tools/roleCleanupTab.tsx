@@ -26,6 +26,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         try {
             const { rows } = await session.query<{ role_name: string }>('select current_user as role_name');
             selectedRole = rows[0]?.role_name ?? null;
+            lastReassignOwner["new-owner"] = selectedRole;
         } catch (e) {
             selectedRole = null;
         }
@@ -145,6 +146,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         <slotContext.theme.icons.DropCascade color="error" />
                                                         {t("drop-cascade", "Drop Cascade")}
                                                     </Stack>;
+                                                } else if (value?.action === "reassign") {
+                                                    return <Stack direction="row" gap={4}>
+                                                        <slotContext.theme.icons.ReassignUser color="secondary" />
+                                                        {t("reassign-to", "Reassign to {{owner}}", { owner: value.newOwner ?? targetOwner })}
+                                                    </Stack>;
                                                 }
                                                 return <span>{t("no-action", "No Action")}</span>;
                                             }
@@ -205,6 +211,48 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 editorRefresh(slotContext);
                                             }
                                         },
+                                        {
+                                            id: "reassign-owner-action",
+                                            label: t("reassign-owner", "Reassign Owner"),
+                                            icon: <slotContext.theme.icons.ReassignUser color="secondary" />,
+                                            keySequence: ["Ctrl+R"],
+                                            contextMenuGroupId: "cleanup-actions",
+                                            contextMenuOrder: 3,
+                                            run: (context) => {
+                                                const position = context.getPosition();
+                                                if (!position) return;
+
+                                                let selectedRows = context.getSelectedRows();
+                                                selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                if (selectedRows.length === 1) {
+                                                    const row = context.getData(selectedRows[0]);
+                                                    if (row?.choice?.action === "reassign") {
+                                                        row.choice = null;
+                                                        selectedRows.length = 0;
+                                                        slotContext.refresh(cid("role-owned-grid"), "only");
+                                                        editorRefresh(slotContext);
+                                                        return;
+                                                    }
+                                                }
+
+                                                slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"), lastReassignOwner).then((result) => {
+                                                    if (result) {
+                                                        lastReassignOwner = result;
+
+                                                        selectedRows.forEach(rowIdx => {
+                                                            const row = context.getData(rowIdx);
+                                                            row.choice = {
+                                                                action: "reassign",
+                                                                newOwner: result["new-owner"],
+                                                            };
+                                                        });
+                                                        selectedRows.length = 0;
+                                                        slotContext.refresh(cid("role-owned-grid"), "only");
+                                                        editorRefresh(slotContext);
+                                                    }
+                                                });
+                                            }
+                                        }
                                     ],
                                 } as IGridSlot
                             },
@@ -214,6 +262,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 tools: [
                                     "drop-restrict-owned-objects-action",
                                     "drop-cascade-owned-objects-action",
+                                    "reassign-owner-action",
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
                             }
@@ -295,13 +344,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                             options: [
                                 { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: null },
                                 ...roleNameList.map(rn => ({ label: rn, value: rn })),
-                            ]
+                            ],
+                            autoFocus: true,
                         }
                     ],
                 }
             ],
         },
-        toolBar: (slotContext) => ({
+        toolBar: {
             id: cid("role-cleanup-title-toolbar"),
             type: "toolbar",
             tools: [
@@ -312,21 +362,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     text: () => t("role-role", "Role: {{role}}", { role: selectedRole || t("none", "None") }),
                     maxLines: 1,
                 } as ITextSlot,
-                {
-                    id: cid("role-cleanup-reassign-owner-action"),
-                    icon: "Add",
-                    label: t("reassign-owner", "Reassign Owner"),
-                    run: () => {
-                        slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"), lastReassignOwner).then((result) => {
-                            if (result) {
-                                lastReassignOwner = result;
-                            }
-                        });
-                    }
-                } as Action<any>,
             ],
             actionSlotId: cid("role-cleanup-tab-content"),
-        }),
+        },
     };
 };
 
