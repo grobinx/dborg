@@ -11,9 +11,11 @@ import {
     IDialogBooleanField,
     resolveBooleanFactory,
     resolveSelectOptionsFactory,
-    resolveStringFactory
+    resolveStringFactory,
+    IDialogEditorField
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
+import MonacoEditor from "@renderer/components/editor/MonacoEditor";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
@@ -158,5 +160,31 @@ export const DialogBooleanField: React.FC<{
                 autoFocus={field.autoFocus}
             />
         </InputDecorator>
+    );
+};
+
+export const DialogEditorField: React.FC<{
+    field: IDialogEditorField;
+    runtimeContext: SlotRuntimeContext;
+    structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
+}> = (props) => {
+    const {
+        field,
+        runtimeContext,
+        structure,
+        onChange,
+    } = props;
+
+    const label = resolveStringFactory(field.label, runtimeContext);
+    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
+    const helperText = resolveStringFactory(field.helperText, runtimeContext);
+    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
+    const required = resolveBooleanFactory(field.required, runtimeContext);
+
+    return (
+        <MonacoEditor
+        
+        />
     );
 };

@@ -851,7 +851,7 @@ export interface IProgressBarSlot extends ICustomSlot {
     color?: ThemeColor;
 }
 
-export type DialogFieldType = "text" | "number" | "boolean" | "select";
+export type DialogFieldType = "text" | "number" | "boolean" | "select" | "editor";
 
 export interface IDialogField {
     /**
@@ -913,6 +913,24 @@ export interface IDialogTextField extends IDialogField {
      * Maksymalna długość tekstu.
      */
     maxLength?: number;
+}
+
+export interface IDialogEditorField extends IDialogField {
+    type: "editor";
+    /**
+     * Wartość domyślna pola edytora.
+     */
+    defaultValue?: string;
+    /**
+     * Język składni edytora (np. "sql", "json").
+     * @default "sql"
+     */
+    language?: EditorLanguageId;
+    /**
+     * Czy edytor ma być tylko do odczytu (opcjonalnie).
+     * @default false
+     */
+    readOnly?: boolean;
 }
 
 export interface IDialogNumberField extends IDialogField {
