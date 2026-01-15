@@ -8,7 +8,7 @@ import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleA
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
 import debounce from "@renderer/utils/debounce";
 import { Stack } from "@mui/material";
-import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import Tooltip from "@renderer/components/Tooltip";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -56,6 +56,17 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             schemanameList = [];
         }
     };
+    let isSuperuser: boolean | null = null;
+    const superuserCheck = async () => {
+        try {
+            const { rows } = await session.query<{ is_superuser: boolean }>(
+                `SELECT usesuper as is_superuser FROM pg_user WHERE usename = current_user`
+            );
+            isSuperuser = rows[0]?.is_superuser ?? false;
+        } catch (e) {
+            isSuperuser = false;
+        }
+    };
 
     const editorRefresh = debounce((runtimeContext: SlotRuntimeContext) => {
         runtimeContext.refresh(cid("role-cleanup-editor"));
@@ -65,18 +76,34 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         id: cid("role-cleanup-tab"),
         type: "tab",
         onMount: (slotContext) => {
-            setSelectedRoleName().then(() => {
+            (async () => {
+                await setSelectedRoleName();
+                await superuserCheck();
                 slotContext.refresh(cid("role-cleanup-selected-role-label"));
                 slotContext.refresh(cid("role-owned-grid"));
                 slotContext.refresh(cid("role-privs-grid"));
-            });
+                slotContext.refresh(cid("role-cleanup-tab-label"));
+            })();
             loadRoleNameList();
             loadSchemaNameList();
         },
         label: {
             id: cid("role-cleanup-tab-label"),
             type: "tablabel",
-            label: t("role-cleanup", "Role Cleanup"),
+            label: (slotContext) => {
+                return (
+                    <Stack direction="row" gap={4}>
+                        {t("role-cleanup", "Role Cleanup")}
+                        {isSuperuser === false && (
+                            <Tooltip title={t("role-non-superuser-warning", "You are not connected as a superuser. Results may be incomplete.")}>
+                                <div style={{ display: "flex", alignItems: "center" }}>
+                                    <slotContext.theme.icons.Info color="warning" />
+                                </div>
+                            </Tooltip>
+                        )}
+                    </Stack>
+                );
+            },
             icon: "UserRemove"
         },
         content: {
@@ -122,8 +149,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                     statuses: ["data-rows"],
                                     canSelectRows: true,
                                     rows: async () => {
-                                        if (!selectedRole) return [];
-                                        ownedCache = await listOwnedObjects(session, selectedRole, versionNumber);
+                                        if (!selectedRole || isSuperuser === null) return [];
+                                        ownedCache = await listOwnedObjects(session, selectedRole, versionNumber, isSuperuser);
+                                        editorRefresh(slotContext);
                                         return ownedCache;
                                     },
                                     columns: [

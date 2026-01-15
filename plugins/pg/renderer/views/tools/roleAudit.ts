@@ -45,17 +45,19 @@ export interface PrivilegeRecord {
 }
 
 export async function listOwnedObjects(
-  session: IDatabaseSession,
-  roleName: string,
-  versionNumber: number
+    session: IDatabaseSession,
+    roleName: string,
+    versionNumber: number,
+    isSuperuser: boolean
 ): Promise<OwnedObject[]> {
-  // Funkcyjne identity args: dostępne od PG 8.4+
-  const funcIdentityArgs = "pg_get_function_identity_arguments(p.oid)";
 
-  const segments: string[] = [];
+    // Funkcyjne identity args: dostępne od PG 8.4+
+    const funcIdentityArgs = "pg_get_function_identity_arguments(p.oid)";
 
-  // relacje: table/view/matview/sequence (PG 9.6+)
-  segments.push(`
+    const segments: string[] = [];
+
+    // relacje: table/view/matview/sequence (PG 9.6+)
+    segments.push(`
     SELECT
       CASE c.relkind
         WHEN 'r' THEN 'table'
@@ -153,7 +155,7 @@ export async function listOwnedObjects(
 
     // publikacje (PG 10+)
     if (versionNumber >= 100000) {
-    segments.push(`
+        segments.push(`
       SELECT
         'publication' AS objtype,
         NULL::text AS schema,
@@ -167,7 +169,7 @@ export async function listOwnedObjects(
 
     // języki (PG 16+: kolumna lanowner)
     if (versionNumber >= 160000) {
-      segments.push(`
+        segments.push(`
         SELECT
           'language' AS objtype,
           NULL::text AS schema,
@@ -192,18 +194,20 @@ export async function listOwnedObjects(
     WHERE d.datname = current_database()
   `);
 
-    // user mappings
-    segments.push(`
-    SELECT
-      'user_mapping' AS objtype,
-      NULL::text AS schema,
-      format('%s ON %s', pg_get_userbyid(um.umuser), s.srvname) AS name,
-      format('%I ON %I', pg_get_userbyid(um.umuser), s.srvname) AS identity,
-      pg_get_userbyid(um.umuser) AS owner
-    FROM pg_user_mapping um
-    JOIN pg_foreign_server s ON s.oid = um.umserver
-    JOIN r ON r.oid = um.umuser
-  `);
+    // user mappings - tylko dla superusera
+    if (isSuperuser) {
+        segments.push(`
+        SELECT
+          'user_mapping' AS objtype,
+          NULL::text AS schema,
+          format('%s ON %s', pg_get_userbyid(um.umuser), s.srvname) AS name,
+          format('%I ON %I', pg_get_userbyid(um.umuser), s.srvname) AS identity,
+          pg_get_userbyid(um.umuser) AS owner
+        FROM pg_user_mapping um
+        JOIN pg_foreign_server s ON s.oid = um.umserver
+        JOIN r ON r.oid = um.umuser
+      `);
+    }
 
     const sql = `
     WITH r AS (SELECT oid, rolname FROM pg_roles WHERE rolname = $1)
@@ -214,14 +218,14 @@ export async function listOwnedObjects(
 }
 
 export async function listPrivileges(
-  session: IDatabaseSession,
-  roleName: string,
-  versionNumber: number
+    session: IDatabaseSession,
+    roleName: string,
+    versionNumber: number
 ): Promise<PrivilegeRecord[]> {
-  const segments: string[] = [];
+    const segments: string[] = [];
 
-  // schematy
-  segments.push(`
+    // schematy
+    segments.push(`
     SELECT 'schema'::text AS objtype, NULL::text AS schema, n.nspname AS name,
            format('%I', n.nspname) AS identity,
            a.privilege_type, a.is_grantable,
@@ -235,8 +239,8 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // relacje
-  segments.push(`
+    // relacje
+    segments.push(`
     SELECT CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'matview' WHEN 'S' THEN 'sequence' ELSE 'table' END AS objtype,
            n.nspname AS schema, c.relname AS name,
            format('%I.%I', n.nspname, c.relname) AS identity,
@@ -252,8 +256,8 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // funkcje
-  segments.push(`
+    // funkcje
+    segments.push(`
     SELECT 'function' AS objtype, n.nspname AS schema, p.proname AS name,
            format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
            a.privilege_type, a.is_grantable,
@@ -268,8 +272,8 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // typy/domeny
-  segments.push(`
+    // typy/domeny
+    segments.push(`
     SELECT CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END AS objtype,
            n.nspname AS schema, t.typname AS name,
            format('%I.%I', n.nspname, t.typname) AS identity,
@@ -285,8 +289,8 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // FDW
-  segments.push(`
+    // FDW
+    segments.push(`
     SELECT 'fdw' AS objtype, NULL::text AS schema, w.fdwname AS name,
            w.fdwname AS identity,
            a.privilege_type, a.is_grantable,
@@ -300,8 +304,8 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // serwery obce
-  segments.push(`
+    // serwery obce
+    segments.push(`
     SELECT 'server' AS objtype, NULL::text AS schema, s.srvname AS name,
            s.srvname AS identity,
            a.privilege_type, a.is_grantable,
@@ -315,9 +319,9 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  // języki (PG 16+)
-  if (versionNumber >= 160000) {
-    segments.push(`
+    // języki (PG 16+)
+    if (versionNumber >= 160000) {
+        segments.push(`
       SELECT 'language' AS objtype, NULL::text AS schema, l.lanname AS name,
              l.lanname AS identity,
              a.privilege_type, a.is_grantable,
@@ -330,10 +334,10 @@ export async function listPrivileges(
       WHERE l.lanacl IS NOT NULL 
         AND a.grantee = r.oid
     `);
-  }
+    }
 
-  // bieżąca baza
-  segments.push(`
+    // bieżąca baza
+    segments.push(`
     SELECT 'database' AS objtype, NULL::text AS schema, d.datname AS name,
            d.datname AS identity,
            a.privilege_type, a.is_grantable,
@@ -347,12 +351,12 @@ export async function listPrivileges(
       AND a.grantee = r.oid
   `);
 
-  const sql = `
+    const sql = `
     WITH r AS (SELECT oid, rolname FROM pg_roles WHERE rolname = $1)
     ${segments.join("\nUNION ALL\n")}
   `;
-  const { rows } = await session.query<PrivilegeRecord>(sql, [roleName]);
-  return rows;
+    const { rows } = await session.query<PrivilegeRecord>(sql, [roleName]);
+    return rows;
 }
 
 export interface CleanupChoice {
