@@ -70,6 +70,7 @@ export type ToolBarSlotKindFactory = ToolBarSlotKind | ((runtimeContext: SlotRun
 export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRuntimeContext) => IProgressBarSlot);
 export type DialogsSlotFactory = IDialogSlot[] | ((runtimeContext: SlotRuntimeContext) => IDialogSlot[]);
 export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((runtimeContext: SlotRuntimeContext) => DialogLayoutItemKind[]);
+export type DialogTabsTabsFactory = IDialogTab[] | ((runtimeContext: SlotRuntimeContext) => IDialogTab[]);
 
 export type ToolKind<T = any> =
     | string
@@ -968,7 +969,8 @@ export type DialogFieldKind =
 export type DialogLayoutItemKind =
     | DialogFieldKind
     | IDialogRow
-    | IDialogColumn;
+    | IDialogColumn
+    | IDialogTabs;
 
 export interface IDialogColumn {
     /**
@@ -1003,6 +1005,36 @@ export interface IDialogRow {
      * Zawartość wiersza (pola, wiersze lub kolumny).
      */
     items: DialogLayoutItemsKindFactory;
+}
+
+export interface IDialogTab {
+    /**
+     * Identyfikator zakładki.
+     */
+    id: string;
+    /**
+     * Etykieta zakładki.
+     */
+    label: StringFactory;
+    /**
+     * Zawartość zakładki (pola, wiersze, kolumny).
+     */
+    items: DialogLayoutItemsKindFactory;
+}
+
+export interface IDialogTabs {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "tabs";
+    /**
+     * Zakładki dialogu.
+     */
+    tabs: DialogTabsTabsFactory;
+    /**
+     * ID domyślnie aktywnej zakładki (opcjonalnie).
+     */
+    defaultTabId?: StringFactory;
 }
 
 export type DialogSize = "small" | "medium" | "large" | "full";
@@ -1202,4 +1234,22 @@ export function isDialogRow(item: any): item is IDialogRow {
 
 export function isDialogColumn(item: any): item is IDialogColumn {
     return item?.type === "column";
+}
+
+export function isDialogTabs(item: any): item is IDialogTabs {
+    return item?.type === "tabs";
+}
+
+export function isDialogTab(item: any): item is IDialogTab {
+    return (
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        "label" in item &&
+        "items" in item
+    );
+}
+
+export function resolveDialogTabsFactory(factory: DialogTabsTabsFactory | undefined, context: SlotRuntimeContext): IDialogTab[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
 }
