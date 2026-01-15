@@ -161,7 +161,10 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
                             item={item}
                             runtimeContext={runtimeContext}
                             structure={structure}
-							onChange={setStructure}
+							onChange={(structure) => {
+                                slot.onChange?.(structure);
+                                setStructure(structure);
+                            }}
                         />
                     ))}
                 </Stack>
