@@ -104,7 +104,7 @@ interface MonacoEditorProps {
     readOnly?: boolean;
     wordWrap?: boolean;
     lineNumbers?: boolean;
-    statusBar?: boolean;
+    statusBar?: boolean | "simple";
     miniMap?: boolean;
     language?: EditorLanguageId;
     encoding?: EditorEncoding;
@@ -112,6 +112,8 @@ interface MonacoEditorProps {
     insertSpaces?: boolean;
     tabSize?: number;
     value?: string;
+    width?: string | number;
+    height?: string | number;
 
     onLanguageChange?: (languageId: EditorLanguageId) => void;
     onEncodingChange?: (encoding: EditorEncoding) => void;
@@ -134,7 +136,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         encoding: initialEncoding = defaultEditorEncoding,
         eol: initialEol = defaultEditorEolMode,
         insertSpaces: initialInsertSpaces = true,
-        tabSize: initialTabSize = 4,
+        tabSize: initialTabSize = 4, width, height,
         onLanguageChange, onEncodingChange, onEolChange,
         loading, onCancel, overlayMode,
         topChildren,
@@ -305,13 +307,21 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         }
     }, [eol, editorInstance]);
 
+    // Dopasuj szerokość kolumny numerów linii do liczby wierszy
+    React.useEffect(() => {
+        if (editorInstance) {
+            const digits = Math.max(3, Math.ceil(Math.log10((lineCount || 1) + 1))) + 1;
+            editorInstance.updateOptions({ lineNumbersMinChars: digits });
+        }
+    }, [lineCount, editorInstance]);
+
     const loadingLabel =
         typeof loading === "string"
             ? (loading.trim() === "" ? t("loading---", "Loading...") : loading)
             : (loading ? t("loading---", "Loading...") : undefined);
 
     return (
-        <Stack direction="column" sx={{ width: "100%", height: "100%", overflow: "hidden" }} ref={rootRef}>
+        <Stack direction="column" sx={{ width: width ?? "100%", height: height ?? "100%", maxWidth: width, overflow: "hidden" }} ref={rootRef}>
             {topChildren}
             <Box sx={{ position: "relative", flex: 1, overflow: "hidden", height: "100%", width: "100%" }}>
                 <Editor
@@ -355,20 +365,31 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     }
                                 }}
                             >
-                                {t("editor.statusBar.cursorPosition", "Ln {{line}}, Col {{column}}", {
-                                    line: cursorPosition.line,
-                                    column: cursorPosition.column,
-                                })}
+                                {statusBar !== "simple" ?
+                                    t("editor.statusBar.cursorPosition", "Ln {{line}}, Col {{column}}", {
+                                        line: cursorPosition.line,
+                                        column: cursorPosition.column,
+                                    }) :
+                                    t("editor.statusBar.cursorPosition-short", "{{line}}:{{column}}", {
+                                        line: cursorPosition.line,
+                                        column: cursorPosition.column,
+                                    })
+                                }
                             </StatusBarButton>,
-                            <StatusBarButton
-                                key="line-length"
-                            >
-                                {t("editor.statusBar.lineLength", "Len {{length}}", {
-                                    length: lineLength,
-                                })}
-                            </StatusBarButton>,
+                            statusBar !== "simple" && (
+                                <StatusBarButton
+                                    key="line-length"
+                                >
+                                    {t("editor.statusBar.lineLength", "Len {{length}}", {
+                                        length: lineLength,
+                                    })}
+                                </StatusBarButton>
+                            ),
                             <StatusBarButton key="line-count">
-                                {t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount })}
+                                {statusBar !== "simple" ?
+                                    t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount }) :
+                                    t("editor.statusBar.lineCount-short", "{{lineCount}} l", { lineCount })
+                                }
                             </StatusBarButton>,
                         ],
                         last: [
@@ -389,7 +410,9 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     }}
                                 >
                                     {t("editor.statusBar.indentation", "{{type}}: {{size}}", {
-                                        type: insertSpaces ? t("editor.statusBar.spaces", "Spaces") : t("editor.statusBar.tabs", "Tabs"),
+                                        type: statusBar !== "simple" ?
+                                            (insertSpaces ? t("editor.statusBar.spaces", "Spaces") : t("editor.statusBar.tabs", "Tabs")) :
+                                            (insertSpaces ? t("editor.statusBar.spaces-short", "Sp") : t("editor.statusBar.tabs-short", "Tbs")),
                                         size: tabSize,
                                     })}
                                 </StatusBarButton>,

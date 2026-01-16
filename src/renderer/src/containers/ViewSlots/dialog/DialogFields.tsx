@@ -16,6 +16,7 @@ import {
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import MonacoEditor from "@renderer/components/editor/MonacoEditor";
+import { EditorField } from "@renderer/components/inputs/EditorField";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
@@ -183,8 +184,16 @@ export const DialogEditorField: React.FC<{
     const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
-        <MonacoEditor
-        
-        />
+        <InputDecorator indicator={false} disableBlink description={helperText} label={label}>
+            <EditorField
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                disabled={disabled}
+                required={required}
+                width={field.width}
+                height={field.height}
+                readOnly={field.readOnly}
+            />
+        </InputDecorator>
     );
 };

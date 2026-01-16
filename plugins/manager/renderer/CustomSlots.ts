@@ -931,6 +931,10 @@ export interface IDialogEditorField extends IDialogField {
      * @default false
      */
     readOnly?: boolean;
+    /**
+     * Wysokość edytora (np. "300px", 400).
+     */
+    height?: string | number;
 }
 
 export interface IDialogNumberField extends IDialogField {

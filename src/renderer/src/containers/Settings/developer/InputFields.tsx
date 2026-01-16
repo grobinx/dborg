@@ -25,6 +25,7 @@ import { isOption, Option } from "@renderer/components/inputs/DescribedList";
 import { ListField } from "@renderer/components/inputs/ListField";
 import { PropertyField } from "@renderer/components/inputs/PropertyField";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
+import { EditorField } from "@renderer/components/inputs/EditorField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -714,6 +715,27 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                     placeholder="Add tag..."
                                     maxTags={5}
                                     storeId="settings-dev-tags"
+                                />
+                            </InputDecorator>
+                        ), [size])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="editorFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        EditorField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <EditorField
+                                    key={size}
+                                    size={size}
+                                    color="primary"
+                                    height={200}
                                 />
                             </InputDecorator>
                         ), [size])}
