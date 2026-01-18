@@ -5,7 +5,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
-import { schemaCommentDdl, schemaCreateDdl, schemaPrivilegesDdl } from "../../../common/ddls/schema";
+import { schemaCommentDdl, schemaBodyDdl, schemaPrivilegesDdl, schemaDdl } from "../../../common/ddls/schema";
 
 export interface SchemaRecord {
     schema_name: string;
@@ -297,11 +297,7 @@ where n.nspname not like 'pg_toast%'
                     miniMap: false,
                     content: async () => {
                         if (!selectedRow) return "-- No schema selected";
-                        return [
-                            await session.query<{ source: string }>(schemaCreateDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(schemaCommentDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(schemaPrivilegesDdl(versionNumber), [selectedRow.schema_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+                        return schemaDdl(session, selectedRow.schema_name);
                     },
                 },
             },

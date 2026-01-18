@@ -1,6 +1,24 @@
-export function viewDdl(_version: number): string {
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { versionToNumber } from "../../../../src/api/version";
 
-  return `
+export async function viewDdl(session: IDatabaseSession, schemaName: string, viewName: string) {
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+
+    return [
+        await session.query<{ source: string }>(viewBodyDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewOwnerDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewPrivilegesDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewCommentDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewColumnCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewTriggersDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewTriggerCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewRulesDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewRuleCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+    ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+}
+
+export function viewBodyDdl(_version: number): string {
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name, c.relkind
     FROM pg_class c
@@ -20,7 +38,7 @@ FROM obj o;
 }
 
 export function viewOwnerDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name, r.rolname AS owner
     FROM pg_class c
@@ -40,8 +58,8 @@ FROM obj o;
 }
 
 export function viewPrivilegesDdl(_version: number): string {
-  // same logic as table privileges but applied to views
-  return `
+    // same logic as table privileges but applied to views
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -129,7 +147,7 @@ ORDER BY grantee;
 }
 
 export function viewCommentDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -149,7 +167,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 }
 
 export function viewColumnCommentsDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -171,7 +189,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 }
 
 export function viewTriggersDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -187,7 +205,7 @@ WHERE t.tgrelid = o.oid AND NOT t.tgisinternal;
 }
 
 export function viewTriggerCommentsDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -209,7 +227,7 @@ LEFT JOIN pg_description d ON d.objoid = t.oid AND d.classoid = 'pg_trigger'::re
 }
 
 export function viewRulesDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c
@@ -225,7 +243,7 @@ WHERE r.ev_class = o.oid AND r.rulename <> '_RETURN';
 }
 
 export function viewRuleCommentsDdl(_version: number): string {
-  return `
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
     FROM pg_class c

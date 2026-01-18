@@ -1,5 +1,19 @@
-export function roleCreateDdl(_version: number): string {
-    return `
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { versionToNumber } from "../../../../src/api/version";
+
+export async function roleDdl(session: IDatabaseSession, roleName: string) {
+  const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+
+  return [
+    await session.query<{ source: string }>(roleBodyDdl(versionNumber), [roleName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(roleMembershipDdl(versionNumber), [roleName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(roleConfigDdl(versionNumber), [roleName]).then(res => res.rows.map(row => row.source).join("\n")),
+    //await session.query<{ source: string }>(roleGrantsDdl(versionNumber), [roleName]).then(res => res.rows.map(row => row.source).join("\n")),
+  ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+}
+
+export function roleBodyDdl(_version: number): string {
+  return `
 SELECT
   '-- DROP ROLE IF EXISTS ' || quote_ident(rolname) || ';' || E'\\n' ||
   'CREATE ROLE ' || quote_ident(rolname) ||
@@ -19,7 +33,7 @@ WHERE rolname = $1;
 }
 
 export function roleCommentDdl(_version: number): string {
-    return `
+  return `
 SELECT
   '-- COMMENT ON ROLE ' || quote_ident(r.rolname) || ' IS NULL;' || E'\\n' ||
   'COMMENT ON ROLE ' || quote_ident(r.rolname) || ' IS ' || quote_literal(sd.description) || ';' AS source
@@ -30,7 +44,7 @@ WHERE r.rolname = $1;
 }
 
 export function roleMembershipDdl(_version: number): string {
-    return `
+  return `
 SELECT
   '-- REVOKE ' || quote_ident(g.rolname) || ' FROM ' || quote_ident(m.rolname) || ';' || E'\\n' ||
   'GRANT ' || quote_ident(g.rolname) || ' TO ' || quote_ident(m.rolname) ||
@@ -44,7 +58,7 @@ ORDER BY m.rolname;
 }
 
 export function roleConfigDdl(_version: number): string {
-    return `
+  return `
 SELECT
   '-- ALTER ROLE ' || quote_ident(r.rolname) || ' RESET ' || split_part(unnest(r.rolconfig), '=', 1) || ';' || E'\\n' ||
   'ALTER ROLE ' || quote_ident(r.rolname) || ' SET ' || unnest(r.rolconfig) || ';' AS source
@@ -55,7 +69,7 @@ WHERE r.rolname = $1
 }
 
 export function roleGrantsDdl(_version: number): string {
-    return `
+  return `
 -- Database privileges
 SELECT
   '-- REVOKE ' || privilege_type || ' ON DATABASE ' || quote_ident(d.datname) || ' FROM ' || quote_ident($1) || ';' || E'\\n' ||

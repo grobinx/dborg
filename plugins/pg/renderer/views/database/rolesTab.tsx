@@ -7,7 +7,7 @@ import { icons } from "@renderer/themes/ThemeWrapper";
 import { resolveColor } from "@renderer/utils/colors";
 import { useTheme } from "@mui/material";
 import { versionToNumber } from "../../../../../src/api/version";
-import { roleConfigDdl, roleCreateDdl, roleGrantsDdl, roleMembershipDdl } from "../../../common/ddls/role";
+import { roleConfigDdl, roleBodyDdl, roleGrantsDdl, roleMembershipDdl, roleDdl } from "../../../common/ddls/role";
 import Span from "@renderer/components/useful/Span";
 
 export interface RoleRecord {
@@ -288,12 +288,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                     miniMap: false,
                     content: async () => {
                         if (!selectedRow) return "-- No role selected";
-                        return [
-                            await session.query<{ source: string }>(roleCreateDdl(versionNumber), [selectedRow.role_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(roleMembershipDdl(versionNumber), [selectedRow.role_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(roleConfigDdl(versionNumber), [selectedRow.role_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            //await session.query<{ source: string }>(roleGrantsDdl(versionNumber), [selectedRow.role_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+                        return roleDdl(session, selectedRow.role_name);
                     },
                 },
             },

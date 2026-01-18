@@ -1,7 +1,22 @@
-export function sequenceDdl(version: number): string {
-    if (version >= 100000) {
-        // PostgreSQL 10+ : use pg_sequence
-        return `
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { versionToNumber } from "../../../../src/api/version";
+
+export async function sequenceDdl(session: IDatabaseSession, schemaName: string, sequenceName: string) {
+  const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+
+  return [
+    await session.query<{ source: string }>(sequenceBodyDdl(versionNumber), [schemaName, sequenceName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(sequenceOwnerDdl(versionNumber), [schemaName, sequenceName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(sequencePrivilegesDdl(versionNumber), [schemaName, sequenceName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(sequenceOperationalDdl(versionNumber), [schemaName, sequenceName]).then(res => res.rows.map(row => row.source).join("\n")),
+    await session.query<{ source: string }>(sequenceCommentDdl(versionNumber), [schemaName, sequenceName]).then(res => res.rows.map(row => row.source).join("\n")),
+  ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+}
+
+export function sequenceBodyDdl(version: number): string {
+  if (version >= 100000) {
+    // PostgreSQL 10+ : use pg_sequence
+    return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
     FROM pg_class c
@@ -35,10 +50,10 @@ SELECT
   (CASE WHEN si.seqcycle THEN ' CYCLE' ELSE ' NO CYCLE' END) || ';' AS source
 FROM seq_info si;
 `;
-    }
+  }
 
-    // Pre-10 : fall back to information_schema.sequences (less detailed than pg_sequence)
-    return `
+  // Pre-10 : fall back to information_schema.sequences (less detailed than pg_sequence)
+  return `
 SELECT
   '-- DROP SEQUENCE IF EXISTS ' || quote_ident(sequence_schema) || '.' || quote_ident(sequence_name) || E';\\n' ||
   'CREATE SEQUENCE ' || quote_ident(sequence_schema) || '.' || quote_ident(sequence_name) ||
@@ -54,7 +69,7 @@ WHERE sequence_schema = $1 AND sequence_name = $2;
 }
 
 export function sequenceOwnerDdl(_version: number): string {
-    return `
+  return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name, r.rolname AS owner
     FROM pg_class c
@@ -74,7 +89,7 @@ FROM obj o;
 }
 
 export function sequencePrivilegesDdl(_version: number): string {
-    return `
+  return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
     FROM pg_class c
@@ -153,7 +168,7 @@ ORDER BY grantee;
 }
 
 export function sequenceCommentDdl(_version: number): string {
-    return `
+  return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
     FROM pg_class c
@@ -173,7 +188,7 @@ LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regc
 }
 
 export function sequenceOperationalDdl(_version: number): string {
-    return `
+  return `
 WITH obj AS (
   SELECT c.oid, n.nspname AS schema_name, c.relname AS sequence_name
     FROM pg_class c

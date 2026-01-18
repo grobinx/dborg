@@ -22,12 +22,13 @@ export type ObjType =
     | "function" | "type" | "domain" | "extension"
     | "server" | "fdw" | "publication" | "language" | "database" | "user_mapping";
 
-export interface OwnedObject {
+export interface OwnedObjectRecord {
     objtype: ObjType;
     schema: string | null;
     name: string;
     identity: string; // w pełni kwalifikowana nazwa (dla funkcji z sygnaturą)
     owner: string;
+    action?: Object;
     [key: string]: any;
 }
 
@@ -49,10 +50,7 @@ export async function listOwnedObjects(
     roleName: string,
     versionNumber: number,
     isSuperuser: boolean
-): Promise<OwnedObject[]> {
-
-    // Funkcyjne identity args: dostępne od PG 8.4+
-    const funcIdentityArgs = "pg_get_function_identity_arguments(p.oid)";
+): Promise<OwnedObjectRecord[]> {
 
     const segments: string[] = [];
 
@@ -81,8 +79,8 @@ export async function listOwnedObjects(
     SELECT
       'function' AS objtype,
       n.nspname AS schema,
-      p.proname AS name,
-      format('%I.%I(%s)', n.nspname, p.proname, ${funcIdentityArgs}) AS identity,
+      format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS name,
+      format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
       pg_get_userbyid(p.proowner) AS owner
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -213,7 +211,7 @@ export async function listOwnedObjects(
     WITH r AS (SELECT oid, rolname FROM pg_roles WHERE rolname = $1)
     ${segments.join("\nUNION ALL\n")}
   `;
-    const { rows } = await session.query<OwnedObject>(sql, [roleName]);
+    const { rows } = await session.query<OwnedObjectRecord>(sql, [roleName]);
     return rows;
 }
 
@@ -258,12 +256,13 @@ export async function listPrivileges(
 
     // funkcje
     segments.push(`
-    SELECT 'function' AS objtype, n.nspname AS schema, p.proname AS name,
-           format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
-           a.privilege_type, a.is_grantable,
-           pg_get_userbyid(a.grantee) AS grantee_name,
-           pg_get_userbyid(a.grantor) AS grantor_name,
-           true AS is_grantee
+    SELECT 'function' AS objtype, n.nspname AS schema, 
+        format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS name,
+        format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
+        a.privilege_type, a.is_grantable,
+        pg_get_userbyid(a.grantee) AS grantee_name,
+        pg_get_userbyid(a.grantor) AS grantor_name,
+        true AS is_grantee
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     JOIN r ON TRUE
@@ -394,7 +393,7 @@ function objKeywordForRevoke(objtype: ObjType): string {
 }
 
 export function buildCleanupSql(
-    owned: OwnedObject[],
+    owned: OwnedObjectRecord[],
     privs: PrivilegeRecord[],
     opts: BuildSqlOptions
 ): string {
