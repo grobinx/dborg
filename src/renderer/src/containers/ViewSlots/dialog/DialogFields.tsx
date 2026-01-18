@@ -193,6 +193,10 @@ export const DialogEditorField: React.FC<{
                 width={field.width}
                 height={field.height}
                 readOnly={field.readOnly}
+                language={field.language}
+                autoFocus={field.autoFocus}
+                tooltip={tooltip}
+                statusBar={true}
             />
         </InputDecorator>
     );

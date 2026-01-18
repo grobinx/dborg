@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
 import { RefreshSlotFunction, ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
@@ -41,11 +41,14 @@ interface ConnectionsOwnProps extends ConnectionProps {
 }
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
+    const theme = useTheme();
     const { session, children, tabsItemID, ...other } = props;
     const { selectedView } = useSessionState(session.info.uniqueId);
-    const { refreshSlot } = useViewSlot();
+    const { refreshSlot, openDialog } = useViewSlot();
     const { queueMessage } = useMessages();
     const [orientation] = useSetting("dborg", "general.layout.orientation");
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
@@ -56,7 +59,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const [resultTabsMap, setResultTabsMap] = React.useState<Record<string, React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>>({});
     const [editorPinnedTabsMap, setEditorPinnedTabsMap] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [resultPinnedTabsMap, setResultPinnedTabsMap] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
-    
+
     const [rootViewsMap, setRootViewsMap] = React.useState<Record<string, React.ReactNode>>({});
 
     useEffect(() => {
@@ -64,17 +67,17 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
                 if (slot.type === "integrated" && !sideViewsMap[selectedView.id]) {
-                    const side = resolveContentSlotFactory(slot.side, refreshSlot);
+                    const side = resolveContentSlotFactory(slot.side, runtimeContext);
                     if (side) {
                         setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot key={side.id} slot={side} /> }));
                     }
                     if (slot.editors && slot.editors.length > 0) {
-                        const tabs = resolveTabSlotsFactory(slot.editors, refreshSlot);
+                        const tabs = resolveTabSlotsFactory(slot.editors, runtimeContext);
                         setEditorTabsMap(prev => ({
                             ...prev,
                             [selectedView.id]: createTabPanels(
                                 tabs,
-                                refreshSlot,
+                                runtimeContext,
                                 selectedView.id,
                                 queueMessage,
                                 editorsTabsId(session),
@@ -84,12 +87,12 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         }));
                     }
                     if (slot.results && slot.results.length > 0) {
-                        const tabs = resolveTabSlotsFactory(slot.results, refreshSlot);
+                        const tabs = resolveTabSlotsFactory(slot.results, runtimeContext);
                         setResultTabsMap(prev => ({
                             ...prev,
                             [selectedView.id]: createTabPanels(
                                 tabs,
-                                refreshSlot,
+                                runtimeContext,
                                 selectedView.id,
                                 queueMessage,
                                 resultsTabsId(session),
@@ -99,9 +102,9 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         }));
                     }
                 } else if (slot.type === "root" && !rootViewsMap[selectedView.id]) {
-                    const rootSlot = resolveContentSlotKindFactory(slot.slot, refreshSlot);
+                    const rootSlot = resolveContentSlotKindFactory(slot.slot, runtimeContext);
                     if (rootSlot) {
-                        setRootViewsMap(prev => ({ ...prev, [selectedView.id]: createContentComponent(rootSlot, refreshSlot) }));
+                        setRootViewsMap(prev => ({ ...prev, [selectedView.id]: createContentComponent(rootSlot, runtimeContext) }));
                     }
                 }
             } else if (selectedView.type === "rendered" && selectedView.render !== null && !sideViewsMap[selectedView.id]) {
@@ -288,7 +291,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
 
 function createTabPanels(
     tabs: ITabSlot[] | undefined,
-    refreshSlot: RefreshSlotFunction,
+    runtimeContext: SlotRuntimeContext,
     selectedViewId: string,
     queueMessage: (...args: any[]) => void,
     tabsItemID: string,
@@ -308,7 +311,7 @@ function createTabPanels(
                     ...prevTabs,
                     [selectedViewId]: prevTabs[selectedViewId].filter(t => t.props.itemID !== tab.id),
                 }));
-                tab.onClose?.(refreshSlot);
+                tab.onClose?.(runtimeContext);
             },
             () => {
                 const pinnedTab = tab.pin!();
@@ -317,10 +320,10 @@ function createTabPanels(
                         pinnedTab,
                         () => {
                             setPinnedTabsMap(prevTabs => prevTabs.filter(t => t.props.itemID !== pinnedTab.id));
-                            pinnedTab.onClose?.(refreshSlot);
+                            pinnedTab.onClose?.(runtimeContext);
                         },
                         undefined,
-                        refreshSlot,
+                        runtimeContext,
                         contentRef,
                         labelRef,
                         toolBarRef,
@@ -328,10 +331,10 @@ function createTabPanels(
                     );
                     setPinnedTabsMap(prevTabs => ([...prevTabs, panel]));
                     queueMessage(Messages.SWITCH_PANEL_TAB, tabsItemID, tab.id);
-                    pinnedTab.onPin?.(refreshSlot);
+                    pinnedTab.onPin?.(runtimeContext);
                 }
             },
-            refreshSlot,
+            runtimeContext,
             contentRef,
             labelRef,
             toolBarRef

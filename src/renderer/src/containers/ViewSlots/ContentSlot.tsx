@@ -1,7 +1,7 @@
 import React from "react";
 import { AppBar, Box } from "@mui/material";
 import { styled, useTheme, useThemeProps } from "@mui/material/styles";
-import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IContentSlot, IDialogSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -9,6 +9,7 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { useRefSlot } from "./RefSlotContext";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
+import DialogSlot from "./DialogSlot";
 
 export interface ContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -49,8 +50,14 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [dialogs, setDialogs] = React.useState<Record<string, {
+        opened: boolean;
+        params?: Record<string, any>;
+        dialog: IDialogSlot;
+        resolver: ((value: Record<string, any> | null) => void) | null;
+    }>>({});
     const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh, refreshSlot, registerDialog, openDialog } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
@@ -97,6 +104,8 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
+        let unregisterDialogs: (() => void) | null = null;
+
         if ((slot.actionGroups || slot.actions) && !actionManager.current) {
             actionManager.current = new ActionManager<ContentSlotContext>();
             const actions = resolveActionFactory(slot.actions, runtimeContext);
@@ -127,7 +136,41 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             ...prev,
             node: createContentComponent(slot.main, runtimeContext, prev.ref)
         }));
-    }, [slot.title, slot.main, slot.text, refresh]);
+        const resolvedDialogs = resolveDialogsSlotFactory(slot.dialogs, runtimeContext);
+        if (resolvedDialogs && Object.keys(resolvedDialogs).length > 0) {
+            const dialogs = resolvedDialogs.reduce((acc, dialog) => ({
+                ...acc,
+                [dialog.id]: {
+                    opened: false,
+                    dialog: dialog,
+                    resolver: null as ((value: Record<string, any> | null) => void) | null,
+                }
+            }), {} as Record<string, {
+                opened: boolean;
+                dialog: IDialogSlot;
+                resolver: ((value: Record<string, any> | null) => void) | null;
+            }>);
+            setDialogs(dialogs);
+            unregisterDialogs = registerDialog(Object.keys(dialogs), (id: string, params?: Record<string, any>) => {
+                return new Promise<Record<string, any> | null>((resolve) => {
+                    setDialogs(prev => ({
+                        ...prev,
+                        [id]: {
+                            opened: true,
+                            dialog: prev[id].dialog,
+                            params,
+                            resolver: resolve,
+                        }
+                    }));
+                });
+            });
+        }
+        return () => {
+            if (unregisterDialogs) {
+                unregisterDialogs();
+            }
+        };
+    }, [slot.title, slot.main, slot.text, slot.dialogs, refresh]);
 
     const contentSlotContext: ContentSlotContext = {
         openCommandPalette: (prefix: string, query: string) => {
@@ -193,6 +236,27 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 {mainSlot.node}
             </Box>
             {(textSlot.node != null) && textSlot.node}
+            {Object.values(dialogs).map(({ opened, dialog, params, resolver }) => (
+                opened ? (
+                    <DialogSlot
+                        key={dialog.id}
+                        slot={dialog}
+                        open={true}
+                        onClose={(result) => {
+                            setDialogs(prev => ({
+                                ...prev,
+                                [dialog.id]: {
+                                    ...prev[dialog.id],
+                                    opened: false,
+                                    resolver: null,
+                                }
+                            }));
+                            resolver?.(result);
+                        }}
+                        params={params}
+                    />
+                ) : null
+            ))}
         </StyledContentSlot>
     );
 };
