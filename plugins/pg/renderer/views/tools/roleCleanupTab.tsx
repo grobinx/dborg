@@ -179,6 +179,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         <slotContext.theme.icons.ReassignUser color="secondary" />
                                                         {t("reassign-to", "Reassign to {{owner}}", { owner: value.newOwner ?? targetOwner })}
                                                     </Stack>;
+                                                } else if (value?.action === "move") {
+                                                    return <Stack direction="row" gap={4}>
+                                                        <slotContext.theme.icons.MoveObject color="success" />
+                                                        {t("move-to", "Move to {{schema}} / {{owner}}", {
+                                                            schema: value.newSchema ?? t("current-schema", "Current Schema"),
+                                                            owner: value.newOwner ?? targetOwner,
+                                                        })}
+                                                    </Stack>;
                                                 }
                                                 return <span>{t("no-action", "No Action")}</span>;
                                             }
@@ -263,7 +271,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     }
                                                 }
 
-                                                slotContext.openDialog(cid("role-cleanup-select-new-owner-dialog"), lastReassignOwner).then((result) => {
+                                                slotContext.openDialog(cid("role-cleanup-reassign-owner-dialog"), lastReassignOwner).then((result) => {
                                                     if (result) {
                                                         lastReassignOwner = result;
 
@@ -272,6 +280,52 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             row.choice = {
                                                                 action: "reassign",
                                                                 newOwner: result["new-owner"],
+                                                            };
+                                                        });
+                                                        selectedRows.length = 0;
+                                                        slotContext.refresh(cid("role-owned-grid"), "only");
+                                                        editorRefresh(slotContext);
+                                                    }
+                                                });
+                                            }
+                                        },
+                                        {
+                                            id: "move-object-action",
+                                            label: t("move-object", "Move Object"),
+                                            icon: <slotContext.theme.icons.MoveObject color="success" />,
+                                            keySequence: ["Ctrl+M"],
+                                            contextMenuGroupId: "cleanup-actions",
+                                            contextMenuOrder: 4,
+                                            run: (context) => {
+                                                const position = context.getPosition();
+                                                if (!position) return;
+
+                                                let selectedRows = context.getSelectedRows();
+                                                selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                if (selectedRows.length === 1) {
+                                                    const row = context.getData(selectedRows[0]);
+                                                    if (row?.choice?.action === "move") {
+                                                        row.choice = null;
+                                                        selectedRows.length = 0;
+                                                        slotContext.refresh(cid("role-owned-grid"), "only");
+                                                        editorRefresh(slotContext);
+                                                        return;
+                                                    }
+                                                }
+
+                                                slotContext.openDialog(cid("role-cleanup-move-object-dialog"), {
+                                                    "new-schema": null,
+                                                    "new-owner": selectedRole,
+                                                }).then((result) => {
+                                                    if (result) {
+                                                        const newSchema = result["new-schema"];
+                                                        const newOwner = result["new-owner"];
+                                                        (selectedRows.length ? selectedRows : [position.row]).forEach(rowIdx => {
+                                                            const row = context.getData(rowIdx);
+                                                            row.choice = {
+                                                                action: "move",
+                                                                newSchema,
+                                                                newOwner: newOwner ?? targetOwner,
                                                             };
                                                         });
                                                         selectedRows.length = 0;
@@ -291,6 +345,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                     "drop-restrict-owned-objects-action",
                                     "drop-cascade-owned-objects-action",
                                     "reassign-owner-action",
+                                    "move-object-action",
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
                             }
@@ -361,10 +416,39 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             }),
             dialogs: [
                 {
-                    id: cid("role-cleanup-select-new-owner-dialog"),
+                    id: cid("role-cleanup-reassign-owner-dialog"),
                     type: "dialog",
                     title: t("reassing-owner", "Reassign Owner"),
                     items: () => [
+                        {
+                            key: "new-owner",
+                            type: "select",
+                            label: t("new-owner", "New Owner"),
+                            required: true,
+                            options: [
+                                { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: null },
+                                ...roleNameList.map(rn => ({ label: rn, value: rn })),
+                            ],
+                            autoFocus: true,
+                        }
+                    ],
+                },
+                {
+                    id: cid("role-cleanup-move-object-dialog"),
+                    type: "dialog",
+                    title: t("move-object", "Move Object"),
+                    items: () => [
+                        {
+                            key: "new-schema",
+                            type: "select",
+                            label: t("new-schema", "New Schema"),
+                            required: true,
+                            options: [
+                                { label: t("schema-select-new-schema-placeholder", "Select new schema..."), value: null },
+                                ...schemanameList.map(sn => ({ label: sn, value: sn })),
+                            ],
+                            autoFocus: true,
+                        },
                         {
                             key: "new-owner",
                             type: "select",
@@ -373,9 +457,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 { label: t("role-select-new-owner-placeholder", "Select new owner..."), value: null },
                                 ...roleNameList.map(rn => ({ label: rn, value: rn })),
                             ],
-                            autoFocus: true,
                         }
                     ],
+                    onValidate(values) {
+                        if (!values["new-schema"]) {
+                            return t("schema-required-error", "Schema is required.");
+                        }
+                    },
                 }
             ],
         },

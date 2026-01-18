@@ -8,7 +8,7 @@ export const SelectRoleAction = (): Action<TabContentSlotContext> => {
     const t = i18next.t.bind(i18next);
     return {
         id: SelectRoleAction_ID,
-        keySequence: ["Ctrl+M"],
+        keySequence: ["Ctrl+U"],
         label: t(SelectRoleAction_ID, "Select role"),
         icon: "Users",
         contextMenuGroupId: "commandPalette",

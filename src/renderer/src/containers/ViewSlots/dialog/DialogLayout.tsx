@@ -3,7 +3,6 @@ import {
     SlotRuntimeContext,
     IDialogRow,
     IDialogColumn,
-    DialogLayoutItemKind,
     resolveStringFactory,
     resolveDialogLayoutItemsKindFactory,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
@@ -14,12 +13,16 @@ export const DialogRow: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         row,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(row.label, runtimeContext);
@@ -39,6 +42,8 @@ export const DialogRow: React.FC<{
                     runtimeContext={runtimeContext}
                     structure={structure}
                     onChange={onChange}
+                    invalidFields={invalidFields}
+                    onValidityChange={onValidityChange}
                 />
             ))}
         </div>
@@ -50,12 +55,16 @@ export const DialogColumn: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         column,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(column.label, runtimeContext);
@@ -77,6 +86,8 @@ export const DialogColumn: React.FC<{
                     runtimeContext={runtimeContext}
                     structure={structure}
                     onChange={onChange}
+                    invalidFields={invalidFields}
+                    onValidityChange={onValidityChange}
                 />
             ))}
         </div>

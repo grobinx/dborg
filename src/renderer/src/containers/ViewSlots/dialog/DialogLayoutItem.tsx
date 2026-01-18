@@ -18,36 +18,82 @@ export const DialogLayoutItem: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         item,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     if (isDialogTextField(item)) {
-        return <DialogTextField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogTextField
+            field={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     if (isDialogNumberField(item)) {
-        return <DialogNumberField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogNumberField
+            field={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     if (isDialogBooleanField(item)) {
-        return <DialogBooleanField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogBooleanField
+            field={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     if (isDialogSelectField(item)) {
-        return <DialogSelectField field={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogSelectField
+            field={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     if (isDialogRow(item)) {
-        return <DialogRow row={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogRow
+            row={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     if (isDialogColumn(item)) {
-        return <DialogColumn column={item} runtimeContext={runtimeContext} structure={structure} onChange={onChange} />;
+        return <DialogColumn 
+            column={item} 
+            runtimeContext={runtimeContext} 
+            structure={structure} 
+            onChange={onChange} 
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
     }
 
     return null;
