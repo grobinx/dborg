@@ -204,6 +204,8 @@ export interface ThemeIcons {
     DropRestrict: IconWrapperFC;
     MoveObject: IconWrapperFC;
     ReassignUser: IconWrapperFC;
+    RevokePrivileges: IconWrapperFC;
+    RevokeAdminOption: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

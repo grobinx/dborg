@@ -478,14 +478,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 formatter: (value: PrivilegeChoice | undefined, _row) => {
                                                     if (value?.action === "revoke") {
                                                         return <Stack direction="row" gap={4}>
-                                                            <slotContext.theme.icons.DropRestrict color="warning" />
-                                                            {t("drop", "Drop")}
+                                                            <slotContext.theme.icons.RevokePrivileges color="warning" />
+                                                            {t("revoke", "Revoke")}
                                                         </Stack>;
                                                     }
                                                     else if (value?.action === "revoke_grant_option") {
                                                         return <Stack direction="row" gap={4}>
-                                                            <slotContext.theme.icons.DropCascade color="error" />
-                                                            {t("drop-cascade", "Drop Cascade")}
+                                                            <slotContext.theme.icons.RevokeAdminOption color="error" />
+                                                            {t("revoke-admin-option", "Revoke Admin Option")}
                                                         </Stack>;
                                                     }
                                                     return <span>{t("no-action", "No Action")}</span>;
@@ -499,7 +499,81 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             selectedPrivilege = row;
                                             slotContext.refresh(cid("role-privs-ddl"));
                                         },
-                                        actions: [],
+                                        actions: [
+                                            {
+                                                id: "revoke-privilege-action",
+                                                label: t("revoke-privilege", "Revoke Privilege"),
+                                                icon: <slotContext.theme.icons.RevokePrivileges color="warning" />,
+                                                keySequence: ["Ctrl+R"],
+                                                contextMenuGroupId: "privilege-actions",
+                                                contextMenuOrder: 1,
+                                                run: (context) => {
+                                                    const position = context.getPosition();
+                                                    if (!position) return;
+                                                    let selectedRows = context.getSelectedRows();
+                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                    selectedRows.forEach(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        if (row?.choice?.action === "revoke") {
+                                                            row.choice = null;
+                                                        }
+                                                        else {
+                                                            row.choice = { action: "revoke" };
+                                                        }
+                                                    });
+                                                    selectedRows.length = 0;
+                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    editorRefresh(slotContext);
+                                                }
+                                            },
+                                            {
+                                                id: "revoke-admin-option-action",
+                                                label: t("revoke-admin-option", "Revoke Admin Option"),
+                                                icon: <slotContext.theme.icons.RevokeAdminOption color="error" />,
+                                                keySequence: ["Ctrl+Shift+R"],
+                                                contextMenuGroupId: "privilege-actions",
+                                                contextMenuOrder: 2,
+                                                run: (context) => {
+                                                    const position = context.getPosition();
+                                                    if (!position) return;
+                                                    let selectedRows = context.getSelectedRows();
+                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                    selectedRows.forEach(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        if (row?.choice?.action === "revoke_grant_option") {
+                                                            row.choice = null;
+                                                        }
+                                                        else if (row.is_grantable) {
+                                                            row.choice = { action: "revoke_grant_option" };
+                                                        }
+                                                    });
+                                                    selectedRows.length = 0;
+                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    editorRefresh(slotContext);
+                                                }
+                                            },
+                                            {
+                                                id: "clear-privilege-action",
+                                                label: t("clear-action", "Clear Action"),
+                                                icon: <slotContext.theme.icons.Clear />,
+                                                keySequence: ["Ctrl+Q"],
+                                                contextMenuGroupId: "privilege-actions",
+                                                contextMenuOrder: 3,
+                                                run: (context) => {
+                                                    const position = context.getPosition();
+                                                    if (!position) return;
+                                                    let selectedRows = context.getSelectedRows();
+                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                    selectedRows.forEach(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        row.choice = null;
+                                                    });
+                                                    selectedRows.length = 0;
+                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    editorRefresh(slotContext);
+                                                }
+                                            }
+                                        ],
                                         autoSaveId: `role-cleanup-privs-grid-${session.profile.sch_id}`,
                                         statuses: ["data-rows"],
                                     } as IGridSlot,
@@ -522,6 +596,16 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         },
                                     }
                                 },
+                            },
+                            toolBar: {
+                                id: cid("role-owners-tab-toolbar"),
+                                type: "toolbar",
+                                tools: [
+                                    "revoke-privilege-action",
+                                    "revoke-admin-option-action",
+                                    "clear-privilege-action",
+                                ],
+                                actionSlotId: cid("role-privs-grid"),
                             }
                         }
                     ],
@@ -543,7 +627,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                             }, {}),
                             privilegeChoices: privsCache.reduce((acc: Record<string, PrivilegeChoice>, priv: Record<string, any>) => {
                                 if (priv?.choice && priv?.identity) {
-                                    acc[priv.identity] = priv.choice as PrivilegeChoice;
+                                    acc[`${priv.identity}|${priv.privilege_type}|${priv.grantee_name}|${priv.grantor_name}`] = priv.choice as PrivilegeChoice;
                                 }
                                 return acc;
                             }, {}),

@@ -171,6 +171,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             DropRestrict: (props) => <IconWrapper {...props} className="drop-restrict"><MuiIcons.DeleteOutline fontSize="inherit" /></IconWrapper>,
             MoveObject: (props) => <IconWrapper {...props} className="move-object"><BsIcons.ArrowsMove fontSize="inherit" /></IconWrapper>,
             ReassignUser: (props) => <IconWrapper {...props} className="reassign-user"><ReassignUser fontSize="inherit" /></IconWrapper>,
+            RevokePrivileges: (props) => <IconWrapper {...props} className="revoke-privileges"><MuiIcons.LockOutlined fontSize="inherit" /></IconWrapper>,
+            RevokeAdminOption: (props) => <IconWrapper {...props} className="revoke-admin-option"><MuiIcons.GroupRemoveOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

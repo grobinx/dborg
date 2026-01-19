@@ -28,7 +28,7 @@ export interface OwnedObjectRecord {
     name: string;
     identity: string; // w pełni kwalifikowana nazwa (dla funkcji z sygnaturą)
     owner: string;
-    action?: Object;
+    choice?: CleanupChoice;
     [key: string]: any;
 }
 
@@ -42,6 +42,7 @@ export interface PrivilegeRecord {
     grantee_name: string;
     grantor_name: string;
     is_grantee: boolean; // czy analizowana rola jest biorcą
+    choice?: PrivilegeChoice;
     [key: string]: any;
 }
 
