@@ -87,7 +87,7 @@ export async function listOwnedObjects(
     JOIN r ON r.oid = p.proowner
   `);
 
-    // typy i domeny (bez podwójnego joinu)
+    // typy i domeny (wyklucz typy zależne od tabel/widoków)
     segments.push(`
     SELECT
       CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END AS objtype,
@@ -98,7 +98,9 @@ export async function listOwnedObjects(
     FROM pg_type t
     JOIN pg_namespace n ON n.oid = t.typnamespace
     JOIN r ON r.oid = t.typowner
-    WHERE t.typtype IN ('b','d','e','r') AND t.typname !~ '^_'
+    LEFT JOIN pg_class c ON c.reltype = t.oid and c.relkind <> 'c'
+    WHERE c.oid IS NULL
+      AND t.typname !~ '^_'
   `);
 
     // schematy (pomijamy systemowe)
@@ -400,7 +402,33 @@ export function buildCleanupSql(
     const lines: string[] = [];
     lines.push("BEGIN;");
 
-    for (const o of owned) {
+    // Drop w kolejności zależności: najpierw obiekty najbardziej zależne
+    const dropPriority: Record<ObjType, number> = {
+        view: 10,
+        matview: 12,
+        function: 15,      // funkcje SQL mogą zależeć od widoków/tabel
+        table: 20,
+        sequence: 25,      // tabele mogą trzymać dependencje do sequence (DEFAULT nextval)
+        type: 40,
+        domain: 40,
+        schema: 60,
+        extension: 70,
+        fdw: 80,
+        server: 85,
+        publication: 90,
+        language: 95,
+        database: 100,
+        user_mapping: 110,
+    };
+
+    const ownedSorted = [...owned].sort((a, b) => {
+        const pa = dropPriority[a.objtype] ?? 999;
+        const pb = dropPriority[b.objtype] ?? 999;
+        if (pa !== pb) return pa - pb;
+        return a.identity.localeCompare(b.identity);
+    });
+
+    for (const o of ownedSorted) {
         const choice = opts.ownedChoices[o.identity]?.action ?? "ignore";
         const objOwner = opts.ownedChoices[o.identity]?.newOwner ?? opts.newOwner;
         const targetSchema = opts.ownedChoices[o.identity]?.newSchema;
