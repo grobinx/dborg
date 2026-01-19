@@ -528,3 +528,31 @@ export function buildCleanupSql(
     lines.push("COMMIT;");
     return lines.join("\n");
 }
+
+export function isValidCleanupAction(objtype: ObjType, action: CleanupChoice["action"]): boolean {
+    switch (action) {
+        case "drop_cascade":
+        case "drop_restrict":
+            // Wszystkie typy można droppować
+            return true;
+
+        case "reassign":
+            // Nie można reassignować user_mapping
+            return objtype !== "user_mapping";
+
+        case "move":
+            // Tylko obiekty w schemacie można przenosić
+            return ["table", "view", "matview", "sequence", "function", "type", "domain"].includes(objtype);
+
+        case "ignore":
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+export function getValidActionsForObjectType(objtype: ObjType): CleanupChoice["action"][] {
+    const allActions: CleanupChoice["action"][] = ["drop_cascade", "drop_restrict", "reassign", "move", "ignore"];
+    return allActions.filter(action => isValidCleanupAction(objtype, action));
+}

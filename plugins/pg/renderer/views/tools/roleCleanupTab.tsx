@@ -2,7 +2,7 @@ import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice } from "./roleAudit";
+import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice, isValidCleanupAction } from "./roleAudit";
 import { versionToNumber } from "../../../../../src/api/version";
 import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
@@ -234,7 +234,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         if (row?.choice?.action === "drop_restrict") {
                                                             row.choice = null;
                                                         }
-                                                        else {
+                                                        else if (isValidCleanupAction(row.objtype, "drop_restrict")) {
                                                             row.choice = { action: "drop_restrict" };
                                                         }
                                                     });
@@ -262,7 +262,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         if (row?.choice?.action === "drop_cascade") {
                                                             row.choice = null;
                                                         }
-                                                        else {
+                                                        else if (isValidCleanupAction(row.objtype, "drop_cascade")) {
                                                             row.choice = { action: "drop_cascade" };
                                                         }
                                                     });
@@ -295,16 +295,25 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     }
 
+                                                    if (selectedRows.every(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        return !isValidCleanupAction(row.objtype, "reassign");
+                                                    })) {
+                                                        return;
+                                                    }
+
                                                     slotContext.openDialog(cid("role-cleanup-reassign-owner-dialog"), lastReassignOwner).then((result) => {
                                                         if (result) {
                                                             lastReassignOwner = result;
 
                                                             selectedRows.forEach(rowIdx => {
                                                                 const row = context.getData(rowIdx);
-                                                                row.choice = {
-                                                                    action: "reassign",
-                                                                    newOwner: result["new-owner"],
-                                                                };
+                                                                if (isValidCleanupAction(row.objtype, "reassign")) {
+                                                                    row.choice = {
+                                                                        action: "reassign",
+                                                                        newOwner: result["new-owner"],
+                                                                    };
+                                                                }
                                                             });
                                                             selectedRows.length = 0;
                                                             slotContext.refresh(cid("role-owned-grid"), "only");
@@ -337,22 +346,52 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     }
 
+                                                    if (selectedRows.every(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        return !isValidCleanupAction(row.objtype, "move");
+                                                    })) {
+                                                        return;
+                                                    }
+
                                                     slotContext.openDialog(cid("role-cleanup-move-object-dialog"), lastMoveObject).then((result) => {
                                                         if (result) {
                                                             lastMoveObject = result;
                                                             selectedRows.forEach(rowIdx => {
                                                                 const row = context.getData(rowIdx);
-                                                                row.choice = {
-                                                                    action: "move",
-                                                                    newSchema: result["new-schema"],
-                                                                    newOwner: result["new-owner"],
-                                                                };
+                                                                if (isValidCleanupAction(row.objtype, "move")) {
+                                                                    row.choice = {
+                                                                        action: "move",
+                                                                        newSchema: result["new-schema"],
+                                                                        newOwner: result["new-owner"],
+                                                                    };
+                                                                }
                                                             });
                                                             selectedRows.length = 0;
                                                             slotContext.refresh(cid("role-owned-grid"), "only");
                                                             editorRefresh(slotContext);
                                                         }
                                                     });
+                                                }
+                                            },
+                                            {
+                                                id: "clear-object-action",
+                                                label: t("clear-action", "Clear Action"),
+                                                icon: <slotContext.theme.icons.Clear />,
+                                                keySequence: ["Ctrl+Q"],
+                                                contextMenuGroupId: "cleanup-actions",
+                                                contextMenuOrder: 5,
+                                                run: (context) => {
+                                                    const position = context.getPosition();
+                                                    if (!position) return;
+                                                    let selectedRows = context.getSelectedRows();
+                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+                                                    selectedRows.forEach(rowIdx => {
+                                                        const row = context.getData(rowIdx);
+                                                        row.choice = null;
+                                                    });
+                                                    selectedRows.length = 0;
+                                                    slotContext.refresh(cid("role-owned-grid"), "only");
+                                                    editorRefresh(slotContext);
                                                 }
                                             }
                                         ],
@@ -396,6 +435,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                     "drop-cascade-owned-objects-action",
                                     "reassign-owner-action",
                                     "move-object-action",
+                                    "clear-object-action",
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
                             }
