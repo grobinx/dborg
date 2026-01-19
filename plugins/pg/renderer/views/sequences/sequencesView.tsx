@@ -6,7 +6,7 @@ import { IGridSlot } from "plugins/manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
-import { sequenceCommentDdl, sequenceDdl, sequenceOperationalDdl, sequenceOwnerDdl, sequencePrivilegesDdl } from "../../../common/ddls/sequence";
+import { sequenceCommentDdl, sequenceBodyDdl, sequenceOperationalDdl, sequenceOwnerDdl, sequencePrivilegesDdl, sequenceDdl } from "../../../common/ddls/sequence";
 import { versionToNumber } from "../../../../../src/api/version";
 
 export interface SequenceRecord {
@@ -199,13 +199,7 @@ order by sequence_schema, sequence_name;
                                     miniMap: false,
                                     content: async () => {
                                         if (!selectedRow) return "-- No sequence selected";
-                                        return [
-                                            await session.query<{ source: string }>(sequenceDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                                            await session.query<{ source: string }>(sequenceOwnerDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                                            await session.query<{ source: string }>(sequencePrivilegesDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                                            await session.query<{ source: string }>(sequenceOperationalDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                                            await session.query<{ source: string }>(sequenceCommentDdl(versionNumber), [selectedRow.sequence_schema, selectedRow.sequence_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+                                        return sequenceDdl(session, selectedRow.sequence_schema, selectedRow.sequence_name);
                                     },
                                 },
                             },

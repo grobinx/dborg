@@ -176,6 +176,7 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
         autoCollapse,
         color = "main",
         onValidate,
+        onValidityChange,
         onFocus,
         onBlur,
         onClick,
@@ -277,6 +278,10 @@ export const BaseInputField = <T,>(props: BaseInputFieldProps<T>) => {
             decorator.setType(type ?? inputProps?.type ?? 'text');
         }
     }, [decorator, type, inputProps?.type]);
+
+    React.useEffect(() => {
+        onValidityChange?.(!invalid);
+    }, [invalid, onValidityChange]);
 
     const handleFocus = React.useCallback((e: React.FocusEvent<HTMLElement>) => {
         onFocus?.(e);

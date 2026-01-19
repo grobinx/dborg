@@ -4,10 +4,7 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { ViewRecord } from "./viewsView";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import {
-    viewColumnCommentsDdl, viewCommentDdl, viewDdl, viewOwnerDdl, viewPrivilegesDdl,
-    viewRuleCommentsDdl, viewRulesDdl, viewTriggerCommentsDdl, viewTriggersDdl
-} from "../../../common/ddls/view";
+import { viewDdl } from "../../../common/ddls/view";
 import { versionToNumber } from "../../../../../src/api/version";
 
 const ddlTab = (
@@ -70,17 +67,7 @@ const ddlTab = (
                             );
                         }
                     } else {
-                        return [
-                            await session.query<{ source: string }>(viewDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewOwnerDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewPrivilegesDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewCommentDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewColumnCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewTriggersDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewTriggerCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewRulesDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(viewRuleCommentsDdl(versionNumber), [row.schema_name, row.view_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+                        return viewDdl(session, row.schema_name, row.view_name);
                     }
                 },
             } as IEditorSlot),

@@ -15,7 +15,6 @@ import { ToUpperCaseAction } from "./actions/ToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
-import { Copy } from "react-bootstrap-icons";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 
 // Konfiguracja MonacoEnvironment dla web workerów
@@ -156,6 +155,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [insertSpaces, setInsertSpaces] = useState<boolean>(initialInsertSpaces);
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
     const [dialog, setDialog] = useState<React.ReactNode>(null);
+    const [changeTabSize, setChangeTabSize] = useState<boolean>(false);
 
     React.useEffect(() => {
         setLanguage(initialLanguage);
@@ -350,7 +350,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                         first: [
                             <StatusBarButton
                                 key="read-only"
-                                toolTip={isReadOnly ? t("editor.statusBar.readOnly", "Read only") : t("editor.statusBar.editable", "Editable")}
+                                toolTip={isReadOnly ? t("editor.statusBar.readOnlyTooltip", "Read only") : t("editor.statusBar.editableTooltip", "Editable")}
                             >
                                 {isReadOnly
                                     ? <theme.icons.ReadOnlyEditor />
@@ -364,6 +364,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                         editorInstance.trigger(null, "editor.action.gotoLine", null);
                                     }
                                 }}
+                                toolTip={t("editor.statusBar.gotoLineTooltip", "Position. Go to Line")}
                             >
                                 {statusBar !== "simple" ?
                                     t("editor.statusBar.cursorPosition", "Ln {{line}}, Col {{column}}", {
@@ -379,13 +380,17 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                             statusBar !== "simple" && (
                                 <StatusBarButton
                                     key="line-length"
+                                    toolTip={t("editor.statusBar.lineLengthTooltip", "Current line length")}
                                 >
                                     {t("editor.statusBar.lineLength", "Len {{length}}", {
                                         length: lineLength,
                                     })}
                                 </StatusBarButton>
                             ),
-                            <StatusBarButton key="line-count">
+                            <StatusBarButton
+                                key="line-count"
+                                toolTip={t("editor.statusBar.lineCountTooltip", "Total number of lines")}
+                            >
                                 {statusBar !== "simple" ?
                                     t("editor.statusBar.lineCount", "{{lineCount}} lines", { lineCount }) :
                                     t("editor.statusBar.lineCount-short", "{{lineCount}} l", { lineCount })
@@ -397,17 +402,37 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                 options={editorLanguageIds}
                                 optionSelected={language}
                                 onOptionSelect={handleLanguageChange}
+                                toolTip={t("editor.statusBar.languageTooltip", "Select language")}
                             >
                                 {t("editor.statusBar.language", "{{language}}", { language: language })}
                             </StatusBarButton>,
                             ...(!isReadOnly ? [
                                 <StatusBarButton
                                     key="indentation"
-                                    onClick={() => {
-                                        if (editorInstance) {
-                                            editorInstance.trigger(null, 'editor.action.showCommands', null);
+                                    options={
+                                        !changeTabSize ? [
+                                            { label: t("editor.statusBar.indentWithSpaces", "Indent with Spaces"), value: "iws" },
+                                            { label: t("editor.statusBar.indentWithTabs", "Indent with Tabs"), value: "iwt" },
+                                            { label: t("editor.statusBar.changeTabSize", "Change Tab Size"), value: "cts" },
+                                        ] : [1, 2, 3, 4, 5, 6, 7, 8]
+                                    }
+                                    optionSelected={!changeTabSize ? (insertSpaces ? "iws" : "iwt") : tabSize}
+                                    onOptionSelect={(value) => {
+                                        if (value === 'iws') {
+                                            editorInstance?.updateOptions({ insertSpaces: true });
+                                            setInsertSpaces(true);
+                                        } else if (value === 'iwt') {
+                                            editorInstance?.updateOptions({ insertSpaces: false });
+                                            setInsertSpaces(false);
+                                        } else if (value === 'cts') {
+                                            setChangeTabSize(true);
+                                            return false;
+                                        } else if (typeof value === 'number') {
+                                            setTabSize(value);
                                         }
                                     }}
+                                    toolTip={t("editor.statusBar.indentationTooltip", "Change indentation settings")}
+                                    onOptionsClose={() => setTimeout(() => setChangeTabSize(false), 100)}
                                 >
                                     {t("editor.statusBar.indentation", "{{type}}: {{size}}", {
                                         type: statusBar !== "simple" ?
@@ -421,6 +446,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                     options={editorEncodings}
                                     optionSelected={encoding}
                                     onOptionSelect={handleEncodingChange}
+                                    toolTip={t("editor.statusBar.encodingTooltip", "Select encoding")}
                                 >
                                     {t("editor.statusBar.encoding", "{{encoding}}", { encoding })}
                                 </StatusBarButton>,
@@ -438,6 +464,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
                                             onEolChange?.(value); // powiadom warstwę I/O
                                         }
                                     }}
+                                    toolTip={t("editor.statusBar.eolModeTooltip", "Select end of line mode")}
                                 >
                                     {t("editor.statusBar.eolMode", "{{eolMode}}", { eolMode: eol })}
                                 </StatusBarButton>,

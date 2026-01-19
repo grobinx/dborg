@@ -1,4 +1,17 @@
-export function schemaCreateDdl(_version: number): string {
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { versionToNumber } from "../../../../src/api/version";
+
+export async function schemaDdl(session: IDatabaseSession, schemaName: string) {
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+
+    return [
+        await session.query<{ source: string }>(schemaBodyDdl(versionNumber), [schemaName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(schemaCommentDdl(versionNumber), [schemaName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(schemaPrivilegesDdl(versionNumber), [schemaName]).then(res => res.rows.map(row => row.source).join("\n")),
+    ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+}
+
+export function schemaBodyDdl(_version: number): string {
     return `
 SELECT
   '-- DROP SCHEMA IF EXISTS ' || quote_ident(nspname) || ' CASCADE;' || E'\\n' ||

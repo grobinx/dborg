@@ -15,7 +15,6 @@ import {
     IDialogEditorField
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
-import MonacoEditor from "@renderer/components/editor/MonacoEditor";
 import { EditorField } from "@renderer/components/inputs/EditorField";
 
 export const DialogTextField: React.FC<{
@@ -23,12 +22,16 @@ export const DialogTextField: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         field,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(field.label, runtimeContext);
@@ -38,7 +41,7 @@ export const DialogTextField: React.FC<{
     const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
+        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <TextField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}
@@ -49,6 +52,18 @@ export const DialogTextField: React.FC<{
                 maxLength={field.maxLength}
                 tooltip={tooltip}
                 autoFocus={field.autoFocus}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
             />
         </InputDecorator>
     );
@@ -59,12 +74,16 @@ export const DialogNumberField: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         field,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(field.label, runtimeContext);
@@ -74,7 +93,7 @@ export const DialogNumberField: React.FC<{
     const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
+        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <NumberField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}
@@ -86,6 +105,18 @@ export const DialogNumberField: React.FC<{
                 step={field.step}
                 tooltip={tooltip}
                 autoFocus={field.autoFocus}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
             />
         </InputDecorator>
     );
@@ -96,12 +127,16 @@ export const DialogSelectField: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         field,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(field.label, runtimeContext);
@@ -112,7 +147,7 @@ export const DialogSelectField: React.FC<{
     const options = resolveSelectOptionsFactory(field.options, runtimeContext) || [];
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText}>
+        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <SelectField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}
@@ -123,6 +158,18 @@ export const DialogSelectField: React.FC<{
                 tooltip={tooltip}
                 searchable={true}
                 autoFocus={field.autoFocus}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
             />
         </InputDecorator>
     );
@@ -133,12 +180,16 @@ export const DialogBooleanField: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         field,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(field.label, runtimeContext);
@@ -148,7 +199,7 @@ export const DialogBooleanField: React.FC<{
     const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
-        <InputDecorator indicator={false} disableBlink description={helperText}>
+        <InputDecorator indicator={false} disableBlink description={helperText} showValidity={false}>
             <BooleanField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}
@@ -159,6 +210,18 @@ export const DialogBooleanField: React.FC<{
                 tooltip={tooltip}
                 indeterminate={field.indeterminate}
                 autoFocus={field.autoFocus}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
             />
         </InputDecorator>
     );
@@ -169,12 +232,16 @@ export const DialogEditorField: React.FC<{
     runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
 }> = (props) => {
     const {
         field,
         runtimeContext,
         structure,
         onChange,
+        invalidFields,
+        onValidityChange,
     } = props;
 
     const label = resolveStringFactory(field.label, runtimeContext);
@@ -184,7 +251,7 @@ export const DialogEditorField: React.FC<{
     const required = resolveBooleanFactory(field.required, runtimeContext);
 
     return (
-        <InputDecorator indicator={false} disableBlink description={helperText} label={label}>
+        <InputDecorator indicator={false} disableBlink description={helperText} label={label} showValidity={false}>
             <EditorField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}
@@ -193,6 +260,22 @@ export const DialogEditorField: React.FC<{
                 width={field.width}
                 height={field.height}
                 readOnly={field.readOnly}
+                language={field.language}
+                autoFocus={field.autoFocus}
+                tooltip={tooltip}
+                statusBar={true}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
             />
         </InputDecorator>
     );

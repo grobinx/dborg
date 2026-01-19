@@ -67,6 +67,12 @@ export interface BaseInputProps<T = any> {
      */
     onValidate?: (value: T) => boolean | FormattedContent;
     /**
+     * Funkcja wywoływana po zmianie stanu poprawności wartości
+     * @param isValid 
+     * @returns 
+     */
+    onValidityChange?: (isValid: boolean) => void;
+    /**
      * Szerokość elementu
      * Może być podana jako liczba (w pikselach) lub jako string
      * Przykłady: 200, '100%', '50px', 'auto'

@@ -1,4 +1,26 @@
-export function tableDdl(version: number): string {
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { versionToNumber } from "../../../../src/api/version";
+
+export async function tableDdl(session: IDatabaseSession, schemaName: string, tableName: string) {
+    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+
+    return [
+        await session.query<{ source: string }>(tableBodyDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableOwnerDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tablePrivilegesDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableColumnPrivilegesDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableCommentDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableColumnCommentsDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableIndexesDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableIndexCommentsDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableTriggersDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableTriggerCommentsDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableRulesDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(tableRuleCommentsDdl(versionNumber), [schemaName, tableName]).then(res => res.rows.map(row => row.source).join("\n")),
+    ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+}
+
+export function tableBodyDdl(version: number): string {
 
     // IF [NOT] EXISTS support: CREATE TABLE IF NOT EXISTS - PG 9.1+, DROP TABLE IF EXISTS - PG 8.2+
     const dropIfExists = 'IF EXISTS ';

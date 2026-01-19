@@ -262,6 +262,8 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
     const [hover, setHover] = React.useState<boolean>(false);
     const [type, setType] = React.useState<string>("text");
     const inputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
+    const previouseValueRef = React.useRef<any>(null);
+    const [wasCleared, setWasCleared] = React.useState<boolean>(false);
 
     // Idle-attention (blink after inactivity while focused)
     const [idleAttention, setIdleAttention] = React.useState(false);
@@ -362,6 +364,15 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
         setIdleAttention(false);
         scheduleIdleOn();
     }, [type, value, focused, clearIdleTimers, scheduleIdleOn, disableBlink]);
+
+    React.useEffect(() => {
+        if (previouseValueRef.current && (value === "" || value === null || value === undefined)) {
+            setWasCleared(true);
+        } else {
+            setWasCleared(false);
+        }
+        previouseValueRef.current = value;
+    }, [value]);
 
     const [previousValue] = React.useState(value);
 
@@ -496,7 +507,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                     {showValidity !== false && (
                         <StyledInputDecoratorValidity
                             disablePortal={true}
-                            open={!!invalid && isPopperVisible}
+                            open={!!invalid && isPopperVisible && wasCleared}
                             anchorEl={visibleInputRef.current || undefined}
                             placement="bottom-start"
                             sx={{

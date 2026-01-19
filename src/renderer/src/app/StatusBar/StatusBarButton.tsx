@@ -34,8 +34,14 @@ interface StatusBarButtonOwnProps extends StatusBarButtonProps {
     /**
      * This function is called when an option is selected from the menu.
      * @param value Value of the selected option.
+     * @return Return false to prevent the menu from closing after selection.
      */
-    onOptionSelect?: (value: any) => void; // Funkcja wywoływana po wyborze opcji
+    onOptionSelect?: (value: any) => boolean | void;
+    /**
+     * This function is called when the options menu is closed.
+     * @returns 
+     */
+    onOptionsClose?: () => void;
 }
 
 function isStatusBarOption(options: any): options is StatusBarOption {
@@ -48,25 +54,27 @@ function isStatusBarOption(options: any): options is StatusBarOption {
  * @returns StatusBarButton component.
  */
 const StatusBarButton: React.FC<StatusBarButtonOwnProps> = (props) => {
-    const { toolTip, className, options, optionSelected, onOptionSelect, ...other } = useThemeProps({ name: "StatusBarButton", props });
+    const { toolTip, className, options, optionSelected, onOptionSelect, onOptionsClose, ...other } = useThemeProps({ name: "StatusBarButton", props });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleOpenMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
         if (options && options.length > 0) {
             setAnchorEl(event.currentTarget);
         }
-        else {
-            other.onClick?.(event);
-        }
+        other.onClick?.(event);
     };
 
     const handleCloseMenu = () => {
         setAnchorEl(null);
+        onOptionsClose?.();
     };
 
     const handleOptionSelect = (value: any) => {
         if (onOptionSelect) {
-            onOptionSelect(value); // Wywołanie funkcji przekazanej z góry
+            const result = onOptionSelect(value);
+            if (result === false) {
+                return;
+            }
         }
         handleCloseMenu();
     };

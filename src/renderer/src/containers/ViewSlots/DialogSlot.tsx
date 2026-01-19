@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 interface DialogSlotProps {
     slot: IDialogSlot;
     open?: boolean;
-	params?: Record<string, any>;
+    params?: Record<string, any>;
     onClose?: (structure: Record<string, any> | null) => void;
 }
 
@@ -53,7 +53,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     const {
         slot,
         open = true,
-		params,
+        params,
         onClose,
     } = props;
 
@@ -70,6 +70,8 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     const [structure, setStructure] = React.useState<Record<string, any>>(params ?? applyDefaults(items, runtimeContext, {}));
     const [, forceRender] = React.useState<bigint>(0n);
     const [dialogRef, dialogVisible] = useVisibleState<HTMLDivElement>();
+    const invalidFields = React.useRef<Set<string>>(new Set());
+    const [dialogValid, setDialogValid] = React.useState(false);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
@@ -161,9 +163,15 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
                             item={item}
                             runtimeContext={runtimeContext}
                             structure={structure}
-							onChange={(structure) => {
+                            onChange={(structure) => {
                                 slot.onChange?.(structure);
                                 setStructure(structure);
+                                setError(null);
+                            }}
+                            invalidFields={invalidFields.current}
+                            onValidityChange={() => {
+                                const isValid = invalidFields.current.size === 0;
+                                setDialogValid(isValid);
                             }}
                         />
                     ))}
@@ -173,7 +181,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
                 <Button color="secondary" onClick={handleCancel} disabled={submitting}>
                     {cancelLabel}
                 </Button>
-                <Button color="primary" onClick={handleConfirm} disabled={submitting}>
+                <Button color="primary" onClick={handleConfirm} disabled={submitting || !dialogValid}>
                     {confirmLabel}
                 </Button>
             </DialogActions>

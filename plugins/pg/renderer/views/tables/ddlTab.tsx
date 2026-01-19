@@ -4,11 +4,7 @@ import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { PLUGIN_ID } from "../../PostgresPlugin";
-import {
-    tableCommentDdl, tableColumnCommentsDdl, tableDdl, tableIndexesDdl, tableOwnerDdl,
-    tableTriggersDdl, tableIndexCommentsDdl, tableTriggerCommentsDdl, tableRulesDdl,
-    tableRuleCommentsDdl, tablePrivilegesDdl, tableColumnPrivilegesDdl
-} from "../../../common/ddls/table";
+import { tableDdl } from "../../../common/ddls/table";
 import { versionToNumber } from "../../../../../src/api/version";
 
 const ddlTab = (
@@ -72,20 +68,7 @@ const ddlTab = (
                         }
                     }
                     else {
-                        return [
-                            await session.query<{ source: string }>(tableDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableOwnerDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tablePrivilegesDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableColumnPrivilegesDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableCommentDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableColumnCommentsDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableIndexesDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableIndexCommentsDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableTriggersDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableTriggerCommentsDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableRulesDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                            await session.query<{ source: string }>(tableRuleCommentsDdl(versionNumber), [row.schema_name, row.table_name]).then(res => res.rows.map(row => row.source).join("\n")),
-                        ].filter(Boolean).join("\n\n") ?? "-- No DDL available";
+                        return tableDdl(session, row.schema_name, row.table_name);
                     }
                 },
             } as IEditorSlot),

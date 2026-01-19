@@ -596,6 +596,10 @@ export interface IContentSlot extends ICustomSlot {
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
     keybinding?: string;
+    /**
+     * Dialogs dostępne w zawartości (opcjonalnie).
+     */
+    dialogs?: DialogsSlotFactory;
 }
 
 /**
