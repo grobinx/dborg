@@ -605,7 +605,7 @@ export const DataGrid = <T extends object>({
     const [adjustWidthExecuted, setAdjustWidthExecuted] = useState(false);
     const previousStatusRef = useRef<DataGridStatus | null>(null);
     const previousStatusStringRef = useRef<string | null>(null);
-    const { selectedRows, toggleRowSelection, setSelectedRows } = useRowSelection();
+    const { selectedRows, toggleRowSelection, setSelectedRows, selectedRowsRef } = useRowSelection();
     const [fontFamily] = useSetting("ui", mode === "data" ? "monospaceFontFamily" : "fontFamily");
     const [settingFontSize] = useSetting<number>("dborg", `data_grid.${mode}.font_size`);
     const [settingRowNumberColumn] = useSetting<boolean>("dborg", `data_grid.${mode}.row_number_column`);
@@ -959,7 +959,7 @@ export const DataGrid = <T extends object>({
             return displayDataRef.current;
         },
         getSelectedRows() {
-            return selectedRows;
+            return selectedRowsRef.current;
         },
         getField: () => {
             if (selectedCellRef.current) {

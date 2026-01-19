@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const useRowSelection = () => {
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const selectedRowsRef = useRef(selectedRows);
 
     /**
      * 
@@ -29,7 +30,9 @@ const useRowSelection = () => {
         });
     };
 
-    return { selectedRows, toggleRowSelection, setSelectedRows };
+    selectedRowsRef.current = selectedRows;
+
+    return { selectedRows, toggleRowSelection, setSelectedRows, selectedRowsRef };
 };
 
 export default useRowSelection;
