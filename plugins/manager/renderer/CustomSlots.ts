@@ -76,7 +76,7 @@ export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((runtimeCon
 export type DialogTabsTabsFactory = IDialogTab[] | ((runtimeContext: SlotRuntimeContext) => IDialogTab[]);
 
 export type ToolKind<T = any> =
-    | string
+    | string | string[]
     | Action<T>
     | Actions<T>
     | CommandDescriptor<T>
@@ -559,7 +559,11 @@ export type ContentSlotKind =
     | IRenderedSlot
     | IGridSlot
     | IEditorSlot
-    | IContentSlot;
+    | IContentSlot
+    | IColumnSlot
+    | IRowSlot
+    | ITitleSlot
+    ;
 
 export type TitleSlotKind =
     ITitleSlot
@@ -803,7 +807,7 @@ export interface ITextSlot extends ICustomSlot {
     maxLines?: number;
 }
 
-export interface IColumnSlot {
+export interface IColumnSlot extends ICustomSlot {
     /**
      * Typ elementu layoutu.
      */
@@ -816,10 +820,10 @@ export interface IColumnSlot {
      * Szerokość kolumny (1-12, jak w Grid System).
      * @default undefined równa dystrybucja
      */
-    width?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+    size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 }
 
-export interface IRowSlot {
+export interface IRowSlot extends ICustomSlot {
     /**
      * Typ elementu layoutu.
      */
@@ -828,6 +832,11 @@ export interface IRowSlot {
      * Zawartość wiersza (pola, wiersze lub kolumny).
      */
     items: ContentSlotKindsFactory;
+    /**
+     * Wysokość wiersza (1-12, jak w Grid System).
+     * @default undefined równa dystrybucja
+     */
+    size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 }
 
 export interface IToolBarSlot extends ICustomSlot {

@@ -52,6 +52,8 @@ import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
 import ToolBarSlot from "./ToolBarSlot";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import ProgressBarSlot from "./ProgressBarSlot";
+import ColumnSlot from "./ColumnSlot";
+import RowSlot from "./RowSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -72,6 +74,12 @@ export function createContentComponent(
             return <SplitSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         } else if (resolvedContent.type === "editor") {
             return <EditorSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "column") {
+            return <ColumnSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "row") {
+            return <RowSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "title") {
+            return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -106,10 +114,10 @@ export function createTabContent(
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } 
+        }
         else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } 
+        }
     }
     return null;
 }
@@ -392,13 +400,29 @@ export function createActionComponents(
             }
 
             if (typeof action === "string" && actionContext && actionManager) {
-                return <ToolButton
-                    key={action}
-                    action={action}
-                    actionContext={() => actionContext}
-                    actionManager={actionManager}
-                    size="small"
-                />;
+                return (
+                    <ToolButton
+                        key={action}
+                        action={action}
+                        actionContext={() => actionContext}
+                        actionManager={actionManager}
+                        size="small"
+                    />
+                );
+            } else if (Array.isArray(action) && actionContext && actionManager) {
+                return (
+                    <ButtonGroup key={index}>
+                        {action.map((actionId) => (
+                            <ToolButton
+                                key={actionId}
+                                action={actionId}
+                                actionContext={() => actionContext}
+                                actionManager={actionManager!}
+                                size="small"
+                            />
+                        ))}
+                    </ButtonGroup>
+                );
             }
 
             return null

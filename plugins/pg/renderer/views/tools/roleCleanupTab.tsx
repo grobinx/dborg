@@ -397,33 +397,81 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         ],
                                     } as IGridSlot,
                                     second: {
-                                        id: cid("role-owned-ddl"),
-                                        type: "editor",
-                                        readOnly: true,
-                                        miniMap: false,
-                                        content: async () => {
-                                            if (!selectedOwnedObject) {
-                                                return "-- Select an object to see DDL preview --";
+                                        id: cid("role-owned-tabs"),
+                                        type: "tabs",
+                                        tabs: [
+                                            {
+                                                id: cid("role-owned-info-tab"),
+                                                type: "tab",
+                                                label: {
+                                                    id: cid("role-owned-info-tab-label"),
+                                                    type: "tablabel",
+                                                    label: t("info", "Info"),
+                                                },
+                                                content: {
+                                                    id: cid("role-owned-info-tab-content"),
+                                                    type: "tabcontent",
+                                                    content: {
+                                                        id: cid("role-owned-info-text"),
+                                                        type: "column",
+                                                        items: [
+                                                            {
+                                                                id: cid("role-owned-info-text-content1"),
+                                                                type: "title",
+                                                                title: "Title 1",
+                                                            },
+                                                            {
+                                                                id: cid("role-owned-info-text-content2"),
+                                                                type: "title",
+                                                                title: "Title 2",
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                id: cid("role-owned-ddl-tab"),
+                                                type: "tab",
+                                                label: {
+                                                    id: cid("role-owned-ddl-tab-label"),
+                                                    type: "tablabel",
+                                                    label: t("ddl", "DDL"),
+                                                },
+                                                content: {
+                                                    id: cid("role-owned-ddl-tab-content"),
+                                                    type: "tabcontent",
+                                                    content: {
+                                                        id: cid("role-owned-ddl"),
+                                                        type: "editor",
+                                                        readOnly: true,
+                                                        miniMap: false,
+                                                        content: async () => {
+                                                            if (!selectedOwnedObject) {
+                                                                return "-- Select an object to see DDL preview --";
+                                                            }
+                                                            const key = objectDllsKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                            if (objectDlls[key]) {
+                                                                return objectDlls[key];
+                                                            }
+                                                            if (selectedOwnedObject.objtype === "table") {
+                                                                objectDlls[key] = await tableDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
+                                                                return objectDlls[key];
+                                                            } else if (selectedOwnedObject.objtype === "view" || selectedOwnedObject.objtype === "matview") {
+                                                                objectDlls[key] = await viewDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
+                                                                return objectDlls[key];
+                                                            } else if (selectedOwnedObject.objtype === "sequence") {
+                                                                objectDlls[key] = await sequenceDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
+                                                                return objectDlls[key];
+                                                            } else if (selectedOwnedObject.objtype === "schema") {
+                                                                objectDlls[key] = await schemaDdl(session, selectedOwnedObject.name);
+                                                                return objectDlls[key];
+                                                            }
+                                                            return "-- DDL preview not available for this object type --";
+                                                        },
+                                                    },
+                                                },
                                             }
-                                            const key = objectDllsKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
-                                            if (objectDlls[key]) {
-                                                return objectDlls[key];
-                                            }
-                                            if (selectedOwnedObject.objtype === "table") {
-                                                objectDlls[key] = await tableDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                return objectDlls[key];
-                                            } else if (selectedOwnedObject.objtype === "view" || selectedOwnedObject.objtype === "matview") {
-                                                objectDlls[key] = await viewDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                return objectDlls[key];
-                                            } else if (selectedOwnedObject.objtype === "sequence") {
-                                                objectDlls[key] = await sequenceDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                return objectDlls[key];
-                                            } else if (selectedOwnedObject.objtype === "schema") {
-                                                objectDlls[key] = await schemaDdl(session, selectedOwnedObject.name);
-                                                return objectDlls[key];
-                                            }
-                                            return "-- DDL preview not available for this object type --";
-                                        },
+                                        ] as ITabSlot[],
                                     }
                                 },
                             },
@@ -431,10 +479,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 id: cid("role-owners-tab-toolbar"),
                                 type: "toolbar",
                                 tools: [
-                                    "drop-restrict-owned-objects-action",
-                                    "drop-cascade-owned-objects-action",
-                                    "reassign-owner-action",
-                                    "move-object-action",
+                                    [
+                                        "drop-restrict-owned-objects-action",
+                                        "drop-cascade-owned-objects-action",
+                                        "reassign-owner-action",
+                                        "move-object-action",
+                                    ],
                                     "clear-object-action",
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
@@ -603,8 +653,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 id: cid("role-owners-tab-toolbar"),
                                 type: "toolbar",
                                 tools: [
-                                    "revoke-privilege-action",
-                                    "revoke-admin-option-action",
+                                    [
+                                        "revoke-privilege-action",
+                                        "revoke-admin-option-action",
+                                    ],
                                     "clear-privilege-action",
                                 ],
                                 actionSlotId: cid("role-privs-grid"),
