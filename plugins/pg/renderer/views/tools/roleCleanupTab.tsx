@@ -459,9 +459,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                     first: {
                                         id: cid("role-privs-grid"),
                                         type: "grid",
+                                        autoSaveId: `role-cleanup-privs-grid-${session.profile.sch_id}`,
+                                        statuses: ["data-rows"],
+                                        canSelectRows: true,
                                         rows: async () => {
                                             if (!selectedRole) return [];
                                             privsCache = await listPrivileges(session, selectedRole, versionNumber);
+                                            editorRefresh(slotContext);
                                             return privsCache;
                                         },
                                         columns: [
@@ -574,8 +578,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 }
                                             }
                                         ],
-                                        autoSaveId: `role-cleanup-privs-grid-${session.profile.sch_id}`,
-                                        statuses: ["data-rows"],
                                     } as IGridSlot,
                                     second: {
                                         id: cid("role-privs-ddl"),
