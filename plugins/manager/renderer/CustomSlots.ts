@@ -31,6 +31,8 @@ export type CustomSlotType =
     | "toolbar"
     | "progress"
     | "dialog"
+    | "column"
+    | "row"
     ;
 
 export interface SlotRuntimeContext {
@@ -63,6 +65,7 @@ export type TabSlotsFactory = ITabSlot[] | ((runtimeContext: SlotRuntimeContext)
 export type TabLabelSlotKindFactory = TabLabelSlotKind | ((runtimeContext: SlotRuntimeContext) => TabLabelSlotKind);
 export type TabContentSlotKindFactory = TabContentSlotKind | ((runtimeContext: SlotRuntimeContext) => TabContentSlotKind);
 export type ContentSlotKindFactory = ContentSlotKind | ((runtimeContext: SlotRuntimeContext) => ContentSlotKind);
+export type ContentSlotKindsFactory = ContentSlotKind[] | ((runtimeContext: SlotRuntimeContext) => ContentSlotKind[]);
 export type TitleSlotKindFactory = TitleSlotKind | ((runtimeContext: SlotRuntimeContext) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((runtimeContext: SlotRuntimeContext) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((runtimeContext: SlotRuntimeContext) => IContentSlot);
@@ -800,6 +803,33 @@ export interface ITextSlot extends ICustomSlot {
     maxLines?: number;
 }
 
+export interface IColumnSlot {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "column";
+    /**
+     * Zawartość kolumny (pola, wiersze lub kolumny).
+     */
+    items: ContentSlotKindsFactory;
+    /**
+     * Szerokość kolumny (1-12, jak w Grid System).
+     * @default undefined równa dystrybucja
+     */
+    width?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+}
+
+export interface IRowSlot {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "row";
+    /**
+     * Zawartość wiersza (pola, wiersze lub kolumny).
+     */
+    items: ContentSlotKindsFactory;
+}
+
 export interface IToolBarSlot extends ICustomSlot {
     type: "toolbar";
     /**
@@ -1159,6 +1189,9 @@ export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFact
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, context: SlotRuntimeContext): ContentSlotKind | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveContentSlotKindsFactory(factory: ContentSlotKindsFactory | undefined, context: SlotRuntimeContext): ContentSlotKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, context: SlotRuntimeContext): TitleSlotKind | undefined {
