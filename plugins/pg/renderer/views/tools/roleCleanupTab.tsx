@@ -2,12 +2,12 @@ import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice, isValidCleanupAction } from "./roleAudit";
+import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice, isValidCleanupAction, DependencyInfo, CodeUsage, TableStats, SecurityContext, analyzeDependencies, findUsagesInCode, getTableStats, checkSecurityContext, RiskAssessment, assessDependencyRisk, assessCodeUsageRisk, assessTableStatsRisk, assessSecurityContextRisk, RiskLevel, analyzeForeignKeyDependencies, assessForeignKeyRisk, assessOverallRisk } from "./roleAudit";
 import { versionToNumber } from "../../../../../src/api/version";
 import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
 import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
 import debounce from "@renderer/utils/debounce";
-import { Stack } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
 import { tableDdl } from "../../../common/ddls/table";
 import { viewDdl } from "../../../common/ddls/view";
@@ -22,13 +22,28 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     let targetOwner: string | null = null;
     let lastReassignOwner: Record<string, any> = { "new-owner": null };
     let lastMoveObject: Record<string, any> = { "new-schema": null, "new-owner": null };
+    let analyzingObject = false;
 
     let selectedOwnedObject: OwnedObjectRecord | null = null;
     let selectedPrivilege: PrivilegeRecord | null = null;
 
     let ownedCache: OwnedObjectRecord[] = [];
     let privsCache: PrivilegeRecord[] = [];
-    const objectDlls: Record<string, string> = {};
+    let objectCache: Record<string, {
+        ddl?: string,
+        depInfo?: DependencyInfo,
+        codeUsages?: CodeUsage[],
+        tableStats?: TableStats | null,
+        securityContext?: SecurityContext | null,
+        risk?: {
+            dependency: RiskAssessment,
+            codeUsage: RiskAssessment,
+            tableStats: RiskAssessment,
+            securityContext: RiskAssessment,
+            foreignKey: RiskAssessment,
+            overall: RiskAssessment,
+        }
+    }> = {};
 
     let selectedRole: string | null = null;
     const setSelectedRoleName = async () => {
@@ -81,9 +96,76 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         runtimeContext.refresh(cid("role-cleanup-editor"));
     }, 1000);
 
-    const objectDllsKey = (objtype: string, schema: string | null, name: string) => {
+    const objectDllKey = (objtype: string, schema: string | null, name: string) => {
         return `${objtype}||${schema || ""}||${name}`;
     };
+
+    const objectDdl = async (obj: OwnedObjectRecord) => {
+        try {
+            if (obj.objtype === "table") {
+                return await tableDdl(session, obj.schema!, obj.name);
+            } else if (obj.objtype === "view" || obj.objtype === "matview") {
+                return await viewDdl(session, obj.schema!, obj.name);
+            } else if (obj.objtype === "sequence") {
+                return await sequenceDdl(session, obj.schema!, obj.name);
+            } else if (obj.objtype === "schema") {
+                return await schemaDdl(session, obj.name);
+            }
+            return t("ddl-preview-not-available", '-- DDL preview not available for object type: {{obj.objtype}} --', { objtype: obj.objtype });
+        } catch (e) {
+            return t("ddl-preview-error", '-- Error fetching DDL preview for {{obj.name}} --', { name: obj.name });
+        }
+    };
+
+    const analyzeObject = async (obj: OwnedObjectRecord) => {
+        const [depInfo, fkDeps, codeUsages, tableStats, securityContext, ] = await Promise.all([
+            analyzeDependencies(session, obj.objtype, obj.schema, obj.name),
+            obj.objtype === 'table' 
+                ? analyzeForeignKeyDependencies(session, obj.schema!, obj.name)
+                : Promise.resolve([]),
+            obj.objtype === 'table' || obj.objtype === 'view' || obj.objtype === 'matview' || obj.objtype === 'function' || obj.objtype === 'procedure'
+                ? findUsagesInCode(session, obj.schema!, obj.name)
+                : Promise.resolve([]),
+            obj.objtype === 'table'
+                ? getTableStats(session, obj.schema!, obj.name)
+                : Promise.resolve(null),
+            obj.objtype === 'function'
+                ? checkSecurityContext(session, obj.objtype, obj.identity)
+                : Promise.resolve(null)
+        ]);
+
+        const dependencyRisk = assessDependencyRisk(depInfo);
+        const codeUsageRisk = assessCodeUsageRisk(codeUsages);
+        const tableStatsRisk = assessTableStatsRisk(tableStats);
+        const securityContextRisk = assessSecurityContextRisk(securityContext);
+        const foreignKeyRisk = assessForeignKeyRisk(fkDeps);
+        const overallRisk = assessOverallRisk(dependencyRisk, codeUsageRisk, tableStatsRisk, securityContextRisk, foreignKeyRisk);
+        const risk = {
+            dependency: dependencyRisk,
+            codeUsage: codeUsageRisk,
+            tableStats: tableStatsRisk,
+            securityContext: securityContextRisk,
+            foreignKey: foreignKeyRisk,
+            overall: overallRisk,
+        }
+
+        return { depInfo, codeUsages, tableStats, securityContext, risk };
+
+    };
+
+    const RiskLevelIcon = (props: { level: RiskLevel, slotContext: SlotRuntimeContext }) => {
+        const { level, slotContext } = props;
+        if (level === "low") {
+            return <slotContext.theme.icons.Check color="info" />;
+        } else if (level === "medium") {
+            return <slotContext.theme.icons.Warning color="warning" />;
+        } else if (level === "high") {
+            return <slotContext.theme.icons.Error color="warning" />;
+        } else if (level === "critical") {
+            return <slotContext.theme.icons.Error color="error" />;
+        }
+        return <slotContext.theme.icons.Check color="success" />;
+    }
 
     return {
         id: cid("role-cleanup-tab"),
@@ -169,6 +251,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         rows: async () => {
                                             if (!selectedRole || isSuperuser === null) return [];
                                             ownedCache = await listOwnedObjects(session, selectedRole, versionNumber, isSuperuser);
+                                            objectCache = {};
                                             editorRefresh(slotContext);
                                             return ownedCache;
                                         },
@@ -211,8 +294,32 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             },
                                         ] as ColumnDefinition[],
                                         onRowSelect: (row) => {
-                                            selectedOwnedObject = row;
-                                            slotContext.refresh(cid("role-owned-ddl"));
+                                            if (selectedOwnedObject?.identity !== row?.identity) {
+                                                selectedOwnedObject = row;
+                                                if (selectedOwnedObject) {
+                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                    if (!objectCache[key]?.risk) {
+                                                        analyzingObject = true;
+                                                        slotContext.refresh(cid("role-owned-info"));
+                                                        analyzeObject(selectedOwnedObject).then(result => {
+                                                            objectCache[key] = {
+                                                                ...objectCache[key],
+                                                                ...result,
+                                                            };
+                                                            slotContext.refresh(cid("role-owned-ddl"));
+                                                            slotContext.refresh(cid("role-owned-info"));
+                                                            editorRefresh(slotContext);
+                                                        }).finally(() => {
+                                                            analyzingObject = false
+                                                            slotContext.refresh(cid("role-owned-info"));
+                                                        });
+                                                    }
+                                                    else {
+                                                        slotContext.refresh(cid("role-owned-ddl"));
+                                                        slotContext.refresh(cid("role-owned-info"));
+                                                    }
+                                                }
+                                            }
                                         },
                                         actions: [
                                             {
@@ -409,24 +516,65 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     label: t("info", "Info"),
                                                 },
                                                 content: {
-                                                    id: cid("role-owned-info-tab-content"),
+                                                    id: cid("role-owned-info"),
                                                     type: "tabcontent",
-                                                    content: {
-                                                        id: cid("role-owned-info-text"),
+                                                    content: () => ({
+                                                        id: cid("role-owned-info-risk"),
                                                         type: "column",
-                                                        items: [
+                                                        items: () => [
                                                             {
-                                                                id: cid("role-owned-info-text-content1"),
-                                                                type: "title",
-                                                                title: "Title 1",
+                                                                id: cid("role-owned-info-risk-analyzing"),
+                                                                type: "rendered",
+                                                                render: () => {
+                                                                    if (!selectedOwnedObject) {
+                                                                        return (
+                                                                            <Typography variant="body1" component="div">
+                                                                                {t("select-object-to-see-info", "Select an object to see info")}
+                                                                            </Typography>
+                                                                        );
+                                                                    }
+                                                                    return (
+                                                                        <Box>
+                                                                            <Typography variant="body1" component="div">
+                                                                                {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
+                                                                            </Typography>
+                                                                            {analyzingObject && (
+                                                                                <Typography variant="body1" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }} >
+                                                                                    <slotContext.theme.icons.Loading />
+                                                                                    {t("analyzing-object", "Analyzing...")}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </Box>
+                                                                    );
+                                                                }
                                                             },
                                                             {
-                                                                id: cid("role-owned-info-text-content2"),
-                                                                type: "title",
-                                                                title: "Title 2",
-                                                            }
+                                                                id: cid("role-owned-info-dependency-risk"),
+                                                                type: "rendered",
+                                                                render: () => {
+                                                                    if (!selectedOwnedObject || analyzingObject) {
+                                                                        return null;
+                                                                    }
+                                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                                    const risk = objectCache[key]?.risk?.overall;
+                                                                    if (!risk) {
+                                                                        return null;
+                                                                    }
+                                                                    return (
+                                                                        <Stack gap={4}>
+                                                                            <Typography variant="h6" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                                                <RiskLevelIcon level={risk.level} slotContext={slotContext} />
+                                                                                {t("overall-risk-assessment", "Overall Risk")}
+                                                                            </Typography>
+                                                                            {risk.reasons.map((reason, idx) => (
+                                                                                <Typography variant="body2" component="div" key={idx}>{reason}</Typography>
+                                                                            ))}
+                                                                        </Stack>
+                                                                    )
+                                                                },
+                                                            },
                                                         ]
-                                                    }
+                                                    }),
                                                 }
                                             },
                                             {
@@ -447,26 +595,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         miniMap: false,
                                                         content: async () => {
                                                             if (!selectedOwnedObject) {
-                                                                return "-- Select an object to see DDL preview --";
+                                                                return t("select-object-to-see-ddl-preview", "-- Select an object to see DDL preview --");
                                                             }
-                                                            const key = objectDllsKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
-                                                            if (objectDlls[key]) {
-                                                                return objectDlls[key];
+                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                            if (objectCache[key]?.ddl) {
+                                                                return objectCache[key].ddl;
                                                             }
-                                                            if (selectedOwnedObject.objtype === "table") {
-                                                                objectDlls[key] = await tableDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                                return objectDlls[key];
-                                                            } else if (selectedOwnedObject.objtype === "view" || selectedOwnedObject.objtype === "matview") {
-                                                                objectDlls[key] = await viewDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                                return objectDlls[key];
-                                                            } else if (selectedOwnedObject.objtype === "sequence") {
-                                                                objectDlls[key] = await sequenceDdl(session, selectedOwnedObject.schema!, selectedOwnedObject.name);
-                                                                return objectDlls[key];
-                                                            } else if (selectedOwnedObject.objtype === "schema") {
-                                                                objectDlls[key] = await schemaDdl(session, selectedOwnedObject.name);
-                                                                return objectDlls[key];
-                                                            }
-                                                            return "-- DDL preview not available for this object type --";
+                                                            objectCache[key] = { ...objectCache[key], ddl: await objectDdl(selectedOwnedObject) };
+                                                            return objectCache[key].ddl;
                                                         },
                                                     },
                                                 },
@@ -515,6 +651,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         rows: async () => {
                                             if (!selectedRole) return [];
                                             privsCache = await listPrivileges(session, selectedRole, versionNumber);
+                                            objectCache = {};
                                             editorRefresh(slotContext);
                                             return privsCache;
                                         },
@@ -639,9 +776,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 return "-- Select a privilege to see DDL preview --";
                                             }
 
-                                            const key = objectDllsKey(selectedPrivilege.objtype, selectedPrivilege.schema || null, selectedPrivilege.name);
-                                            if (objectDlls[key]) {
-                                                return objectDlls[key];
+                                            const key = objectDllKey(selectedPrivilege.objtype, selectedPrivilege.schema || null, selectedPrivilege.name);
+                                            if (objectCache[key]?.ddl) {
+                                                return objectCache[key].ddl;
                                             }
 
                                             return `-- DDL preview not available for privileges --`;

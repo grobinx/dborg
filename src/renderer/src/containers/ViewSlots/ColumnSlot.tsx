@@ -21,7 +21,6 @@ const StyledColumnSlot = styled(Box)(() => ({
     display: "flex",
     flexDirection: "column",
     width: "100%",
-    height: "100%",
     minHeight: 0,
     minWidth: 0,
     gap: 8,
@@ -97,7 +96,7 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
             ref={rootRef}
             className={'ColumnSlot-root'}
             sx={{
-                flex: slot.size ? `0 0 ${columnWidth}` : "1 1 0",
+                flex: slot.size ? `0 0 ${columnWidth}` : "0 1 auto",
                 maxWidth: slot.size ? columnWidth : undefined,
                 minWidth: 0,
             }}
