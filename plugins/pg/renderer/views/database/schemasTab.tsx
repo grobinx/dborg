@@ -205,12 +205,14 @@ where n.nspname not like 'pg_toast%'
                         if (selectedRow?.schema_name !== row?.schema_name) {
                             selectedRow = row ?? null;
                             slotContext.refresh(cid("schemas-editor"));
+                            slotContext.refresh(cid("schemas-toolbar"));
                         }
                     },
                     actions: [
                         {
                             id: "schema-stats-refresh",
                             label: t("refresh-schema-stats", "Refresh Schema Stats"),
+                            icon: "Reload",
                             keySequence: ["Space"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 1,
@@ -222,6 +224,7 @@ where n.nspname not like 'pg_toast%'
                                     loadingStatsRow.push(row);
                                     slotContext.refresh(cid("schemas-grid"), "only");
                                     slotContext.refresh(cid("schemas-stats-progress"));
+                                    slotContext.refresh(cid("schemas-toolbar"));
                                     try {
                                         const stats = await getSchemaStats(row.schema_name);
                                         Object.assign(row, stats);
@@ -233,13 +236,15 @@ where n.nspname not like 'pg_toast%'
                                         loadingStats = false;
                                         slotContext.refresh(cid("schemas-grid"), "compute");
                                         slotContext.refresh(cid("schemas-stats-progress"));
+                                        slotContext.refresh(cid("schemas-toolbar"));
                                     }
                                 }
                             },
                         },
                         {
-                            id: "schema-refresh-all",
+                            id: "schema-stats-refresh-all",
                             label: () => loadingStats ? t("cancel-refresh-schemas", "Cancel Refresh All Schema Stats") : t("refresh-schemas", "Refresh All Schema Stats"),
+                            icon: () => loadingStats ? "ReloadStop" : "ReloadAll",
                             keySequence: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "schema-stats",
                             contextMenuOrder: 2,
@@ -250,6 +255,7 @@ where n.nspname not like 'pg_toast%'
                                     return;
                                 }
                                 loadingStats = true;
+                                slotContext.refresh(cid("schemas-toolbar"));
                                 try {
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
@@ -276,6 +282,7 @@ where n.nspname not like 'pg_toast%'
                                     loadingProgress = null;
                                     slotContext.refresh(cid("schemas-grid"), "compute");
                                     slotContext.refresh(cid("schemas-stats-progress"));
+                                    slotContext.refresh(cid("schemas-toolbar"));
                                 }
                             }
                         }
@@ -305,7 +312,12 @@ where n.nspname not like 'pg_toast%'
         toolBar: {
             id: cid("schemas-toolbar"),
             type: "toolbar",
-            tools: [],
+            tools: [
+                [
+                    "schema-stats-refresh",
+                    "schema-stats-refresh-all",
+                ]
+            ],
             actionSlotId: cid("schemas-grid"),
         }
     };

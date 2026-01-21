@@ -23,6 +23,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     let lastReassignOwner: Record<string, any> = { "new-owner": null };
     let lastMoveObject: Record<string, any> = { "new-schema": null, "new-owner": null };
     let analyzingObject = false;
+    let analyzingProgress: number | null = null;
+    const analyzingRows: any[] = [];
 
     let selectedOwnedObject: OwnedObjectRecord | null = null;
     let selectedPrivilege: PrivilegeRecord | null = null;
@@ -261,8 +263,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             { key: "identity", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
                                             { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                             {
-                                                key: "risk", label: t("risk-level", "Risk"), width: 40, dataType: "string", 
-                                                formatter: (value: RiskLevel | null) => {
+                                                key: "risk", label: t("risk-level", "Risk"), width: 40, dataType: "string",
+                                                formatter: (value: RiskLevel | null, row) => {
+                                                    if (analyzingRows.indexOf(row) >= 0) {
+                                                        return <slotContext.theme.icons.Loading />;
+                                                    }
                                                     if (!value) {
                                                         return null;
                                                     }
@@ -305,31 +310,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             if (selectedOwnedObject?.identity !== row?.identity) {
                                                 selectedOwnedObject = row;
                                                 if (selectedOwnedObject) {
-                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
-                                                    if (!objectCache[key]?.risk) {
-                                                        analyzingObject = true;
-                                                        slotContext.refresh(cid("role-owned-info"));
-                                                        analyzeObject(selectedOwnedObject).then(result => {
-                                                            objectCache[key] = {
-                                                                ...objectCache[key],
-                                                                ...result,
-                                                            };
-                                                            if (selectedOwnedObject) {
-                                                                selectedOwnedObject.risk = result?.risk?.overall?.level;
-                                                                slotContext.refresh(cid("role-owned-grid"), "only");
-                                                            }
-                                                            slotContext.refresh(cid("role-owned-ddl"));
-                                                            slotContext.refresh(cid("role-owned-info"));
-                                                            editorRefresh(slotContext);
-                                                        }).finally(() => {
-                                                            analyzingObject = false
-                                                            slotContext.refresh(cid("role-owned-info"));
-                                                        });
-                                                    }
-                                                    else {
-                                                        slotContext.refresh(cid("role-owned-ddl"));
-                                                        slotContext.refresh(cid("role-owned-info"));
-                                                    }
+                                                    slotContext.refresh(cid("role-owned-ddl"));
+                                                    slotContext.refresh(cid("role-owned-info"));
+                                                    slotContext.refresh(cid("role-owners-tab-toolbar"));
                                                 }
                                             }
                                         },
@@ -512,8 +495,106 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     slotContext.refresh(cid("role-owned-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
+                                            },
+                                            {
+                                                id: "reload-info-refresh",
+                                                label: t("reload-object-info", "Reload Object Info"),
+                                                icon: "Reload",
+                                                keySequence: ["Space"],
+                                                contextMenuGroupId: "reload-actions",
+                                                contextMenuOrder: 1,
+                                                disabled: () => selectedOwnedObject === null || analyzingObject,
+                                                run: async () => {
+                                                    if (selectedOwnedObject) {
+                                                        const row = selectedOwnedObject;
+                                                        analyzingObject = true;
+                                                        analyzingRows.push(row);
+                                                        slotContext.refresh(cid("role-owned-grid"), "only");
+                                                        slotContext.refresh(cid("role-owned-progress"));
+                                                        slotContext.refresh(cid("role-owners-tab-toolbar"));
+                                                        slotContext.refresh(cid("role-owned-info"));
+                                                        try {
+                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
+                                                            const result = await analyzeObject(selectedOwnedObject);
+                                                            objectCache[key] = {
+                                                                ...objectCache[key],
+                                                                ...result,
+                                                            };
+                                                            selectedOwnedObject.risk = result?.risk?.overall?.level;
+                                                        } finally {
+                                                            const index = analyzingRows.indexOf(row);
+                                                            if (index !== -1) {
+                                                                analyzingRows.splice(index, 1);
+                                                            }
+                                                            analyzingObject = false;
+                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("role-owned-progress"));
+                                                            slotContext.refresh(cid("role-owners-tab-toolbar"));
+                                                            slotContext.refresh(cid("role-owned-info"));
+                                                        }
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                id: "reload-info-refresh-all",
+                                                label: () => analyzingObject ? t("cancel-reload-info", "Cancel Reload All Object Info") : t("reload-info", "Reload All Object Info"),
+                                                icon: () => analyzingObject ? "ReloadStop" : "ReloadAll",
+                                                keySequence: ["Alt+Shift+Enter"],
+                                                contextMenuGroupId: "reload-actions",
+                                                contextMenuOrder: 2,
+                                                //disabled: () => loadingStats,
+                                                run: async () => {
+                                                    if (analyzingObject) {
+                                                        analyzingObject = false;
+                                                        return;
+                                                    }
+                                                    analyzingObject = true;
+                                                    slotContext.refresh(cid("schemas-toolbar"));
+                                                    try {
+                                                        for (const [index, row] of ownedCache.entries()) {
+                                                            analyzingProgress = Math.round(((index + 1) / ownedCache.length) * 100);
+                                                            analyzingRows.push(row);
+                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("role-owned-progress"));
+                                                            slotContext.refresh(cid("role-owners-tab-toolbar"));
+                                                            slotContext.refresh(cid("role-owned-info"));
+                                                            try {
+                                                                const key = objectDllKey(row.objtype, row.schema || null, row.identity);
+                                                                const result = await analyzeObject(row);
+                                                                objectCache[key] = {
+                                                                    ...objectCache[key],
+                                                                    ...result,
+                                                                };
+                                                                row.risk = result?.risk?.overall?.level;
+                                                            } finally {
+                                                                const index = analyzingRows.indexOf(row);
+                                                                if (index !== -1) {
+                                                                    analyzingRows.splice(index, 1);
+                                                                }
+                                                                slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            }
+                                                            if (!analyzingObject) {
+                                                                break;
+                                                            }
+                                                        };
+                                                    }
+                                                    finally {
+                                                        analyzingObject = false;
+                                                        analyzingProgress = null;
+                                                        slotContext.refresh(cid("role-owned-grid"), "compute");
+                                                        slotContext.refresh(cid("role-owned-progress"));
+                                                        slotContext.refresh(cid("role-owners-tab-toolbar"));
+                                                        slotContext.refresh(cid("role-owned-info"));
+                                                    }
+                                                }
                                             }
                                         ],
+                                        progress: {
+                                            id: cid("role-owned-progress"),
+                                            type: "progress",
+                                            display: () => analyzingObject,
+                                            value: () => analyzingProgress,
+                                        },
                                     } as IGridSlot,
                                     second: {
                                         id: cid("role-owned-tabs"),
@@ -550,7 +631,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                             <Typography variant="body1" component="div">
                                                                                 {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
                                                                             </Typography>
-                                                                            {analyzingObject && (
+                                                                            {analyzingRows.indexOf(selectedOwnedObject) >= 0 && (
                                                                                 <Typography variant="body1" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }} >
                                                                                     <slotContext.theme.icons.Loading />
                                                                                     {t("analyzing-object", "Analyzing...")}
@@ -639,6 +720,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         "move-object-action",
                                     ],
                                     "clear-object-action",
+                                    [
+                                        "reload-info-refresh",
+                                        "reload-info-refresh-all",
+                                    ]
                                 ],
                                 actionSlotId: cid("role-owned-grid"),
                             }
@@ -803,7 +888,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 },
                             },
                             toolBar: {
-                                id: cid("role-owners-tab-toolbar"),
+                                id: cid("role-privilege-tab-toolbar"),
                                 type: "toolbar",
                                 tools: [
                                     [

@@ -889,15 +889,19 @@ export async function findUsagesInCode(
     schema: string,
     name: string
 ): Promise<CodeUsage[]> {
-    const usages: CodeUsage[] = [];
     const searchPattern = `%${schema}.${name}%`;
     const namePattern = `%${name}%`;
     const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
 
-    // Widoki
-    const viewSql = `
+    // Warunek dla funkcji zależny od wersji
+    const funcCondition = versionNumber >= 110000
+        ? "p.prokind IN ('f','p')"  // PG 11+
+        : "NOT p.proisagg AND NOT p.proiswindow";  // PG 9.6-10
+
+    const sql = `
+        -- Widoki
         SELECT 
-            'view' as type,
+            'view'::text as type,
             n.nspname || '.' || c.relname as location,
             pg_get_viewdef(c.oid, true) as definition
         FROM pg_class c
@@ -907,66 +911,27 @@ export async function findUsagesInCode(
             pg_get_viewdef(c.oid, true) ILIKE $1
             OR pg_get_viewdef(c.oid, true) ILIKE $2
         )
-    `;
-    const { rows: viewRows } = await session.query<any>(viewSql, [searchPattern, namePattern]);
-    for (const row of viewRows) {
-        usages.push({
-            type: 'view',
-            location: row.location,
-            code_snippet: row.definition.substring(0, 200) + (row.definition.length > 200 ? '...' : ''),
-            full_definition: row.definition
-        });
-    }
 
-    // Funkcje - obsługa wersji
-    let funcSql = '';
-    if (versionNumber >= 110000) {
-        // PG 11+: używamy prokind
-        funcSql = `
-            SELECT 
-                'function' as type,
-                n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as location,
-                pg_get_functiondef(p.oid) as definition
-            FROM pg_proc p
-            JOIN pg_namespace n ON n.oid = p.pronamespace
-            WHERE p.prokind IN ('f','p')  -- wyklucz agregaty ('a') i okna ('w')
-              AND (
-                pg_get_functiondef(p.oid) ILIKE $1
-                OR pg_get_functiondef(p.oid) ILIKE $2
-            )
-        `;
-    } else {
-        // PG 9.6-10: używamy proisagg i proiswindow
-        funcSql = `
-            SELECT 
-                'function' as type,
-                n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as location,
-                pg_get_functiondef(p.oid) as definition
-            FROM pg_proc p
-            JOIN pg_namespace n ON n.oid = p.pronamespace
-            WHERE NOT p.proisagg  -- wyklucz agregaty
-              AND NOT p.proiswindow  -- wyklucz funkcje okna
-              AND (
-                pg_get_functiondef(p.oid) ILIKE $1
-                OR pg_get_functiondef(p.oid) ILIKE $2
-            )
-        `;
-    }
-    
-    const { rows: funcRows } = await session.query<any>(funcSql, [searchPattern, namePattern]);
-    for (const row of funcRows) {
-        usages.push({
-            type: 'function',
-            location: row.location,
-            code_snippet: row.definition.substring(0, 200) + (row.definition.length > 200 ? '...' : ''),
-            full_definition: row.definition
-        });
-    }
+        UNION ALL
 
-    // Triggery
-    const triggerSql = `
+        -- Funkcje
         SELECT 
-            'trigger' as type,
+            'function'::text as type,
+            n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as location,
+            pg_get_functiondef(p.oid) as definition
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE ${funcCondition}
+          AND (
+            pg_get_functiondef(p.oid) ILIKE $1
+            OR pg_get_functiondef(p.oid) ILIKE $2
+        )
+
+        UNION ALL
+
+        -- Triggery
+        SELECT 
+            'trigger'::text as type,
             n.nspname || '.' || c.relname || ' -> ' || t.tgname as location,
             pg_get_triggerdef(t.oid) as definition
         FROM pg_trigger t
@@ -977,21 +942,12 @@ export async function findUsagesInCode(
             pg_get_triggerdef(t.oid) ILIKE $1
             OR pg_get_triggerdef(t.oid) ILIKE $2
         )
-    `;
-    const { rows: triggerRows } = await session.query<any>(triggerSql, [searchPattern, namePattern]);
-    for (const row of triggerRows) {
-        usages.push({
-            type: 'trigger',
-            location: row.location,
-            code_snippet: row.definition,
-            full_definition: row.definition
-        });
-    }
 
-    // Constraints (sprawdź definicje CHECK)
-    const constraintSql = `
+        UNION ALL
+
+        -- Constraints (CHECK)
         SELECT 
-            'constraint' as type,
+            'constraint'::text as type,
             n.nspname || '.' || c.relname || ' -> ' || con.conname as location,
             pg_get_constraintdef(con.oid) as definition
         FROM pg_constraint con
@@ -1002,21 +958,12 @@ export async function findUsagesInCode(
             pg_get_constraintdef(con.oid) ILIKE $1
             OR pg_get_constraintdef(con.oid) ILIKE $2
         )
-    `;
-    const { rows: constraintRows } = await session.query<any>(constraintSql, [searchPattern, namePattern]);
-    for (const row of constraintRows) {
-        usages.push({
-            type: 'constraint',
-            location: row.location,
-            code_snippet: row.definition,
-            full_definition: row.definition
-        });
-    }
 
-    // Indeksy (częściowe, z WHERE)
-    const indexSql = `
+        UNION ALL
+
+        -- Indeksy częściowe
         SELECT 
-            'index' as type,
+            'index'::text as type,
             n.nspname || '.' || c.relname || ' -> ' || i.relname as location,
             pg_get_indexdef(i.oid) as definition
         FROM pg_index idx
@@ -1028,21 +975,12 @@ export async function findUsagesInCode(
             pg_get_indexdef(i.oid) ILIKE $1
             OR pg_get_indexdef(i.oid) ILIKE $2
         )
-    `;
-    const { rows: indexRows } = await session.query<any>(indexSql, [searchPattern, namePattern]);
-    for (const row of indexRows) {
-        usages.push({
-            type: 'index',
-            location: row.location,
-            code_snippet: row.definition,
-            full_definition: row.definition
-        });
-    }
 
-    // Rules
-    const ruleSql = `
+        UNION ALL
+
+        -- Rules
         SELECT 
-            'rule' as type,
+            'rule'::text as type,
             n.nspname || '.' || c.relname || ' -> ' || r.rulename as location,
             pg_get_ruledef(r.oid) as definition
         FROM pg_rewrite r
@@ -1054,17 +992,15 @@ export async function findUsagesInCode(
             OR pg_get_ruledef(r.oid) ILIKE $2
         )
     `;
-    const { rows: ruleRows } = await session.query<any>(ruleSql, [searchPattern, namePattern]);
-    for (const row of ruleRows) {
-        usages.push({
-            type: 'rule',
-            location: row.location,
-            code_snippet: row.definition,
-            full_definition: row.definition
-        });
-    }
 
-    return usages;
+    const { rows } = await session.query<any>(sql, [searchPattern, namePattern]);
+    
+    return rows.map(row => ({
+        type: row.type,
+        location: row.location,
+        code_snippet: row.definition.substring(0, 200) + (row.definition.length > 200 ? '...' : ''),
+        full_definition: row.definition
+    }));
 }
 
 export interface TableStats {
@@ -1329,24 +1265,24 @@ export function assessTableStatsRisk(tableStats: TableStats | null | undefined):
     }
 
     // Sprawdź martwą pamięć
-    if (tableStats.n_live_tup > 0) {
-        const deadRatio = (tableStats.n_dead_tup / tableStats.n_live_tup);
-        if (deadRatio > 0.5) {
-            warnings.push(t("many-dead-tuples", "Many dead tuples: {{percent}}%", { percent: Number((deadRatio * 100).toFixed(1)) }));
-            reasons.push(t("requires-vacuum", "Requires VACUUM: {{count}} dead rows", { count: tableStats.n_dead_tup }));
-            return { level: "medium", reasons, warnings };
-        }
-    }
+    // if (tableStats.n_live_tup > 0) {
+    //     const deadRatio = (tableStats.n_dead_tup / tableStats.n_live_tup);
+    //     if (deadRatio > 0.5) {
+    //         warnings.push(t("many-dead-tuples", "Many dead tuples: {{percent}}%", { percent: Number((deadRatio * 100).toFixed(1)) }));
+    //         reasons.push(t("requires-vacuum", "Requires VACUUM: {{count}} dead rows", { count: tableStats.n_dead_tup }));
+    //         return { level: "medium", reasons, warnings };
+    //     }
+    // }
 
     // Sprawdź ostatni VACUUM
-    if (tableStats.last_vacuum) {
-        const daysSinceVacuum = (Date.now() - tableStats.last_vacuum.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceVacuum > 30) {
-            warnings.push(t("vacuum-performed-days-ago", "VACUUM performed {{days}} days ago", { days: Number(daysSinceVacuum.toFixed(0)) }));
-        }
-    } else {
-        warnings.push(t("vacuum-never-performed", "VACUUM has never been performed"));
-    }
+    // if (tableStats.last_vacuum) {
+    //     const daysSinceVacuum = (Date.now() - tableStats.last_vacuum.getTime()) / (1000 * 60 * 60 * 24);
+    //     if (daysSinceVacuum > 30) {
+    //         warnings.push(t("vacuum-performed-days-ago", "VACUUM performed {{days}} days ago", { days: Number(daysSinceVacuum.toFixed(0)) }));
+    //     }
+    // } else {
+    //     warnings.push(t("vacuum-never-performed", "VACUUM has never been performed"));
+    // }
 
     // Tabela nie jest intensywnie używana
     if (tableStats.seq_scan_count === 0 && tableStats.idx_scan_count === 0) {
@@ -1357,6 +1293,8 @@ export function assessTableStatsRisk(tableStats: TableStats | null | undefined):
     if (tableStats.row_count > 0) {
         reasons.push(t("table-has-data", "Table contains data: {{count}} rows", { count: tableStats.row_count }));
         return { level: "low", reasons, warnings };
+    } else if (!tableStats.last_analyze) {
+        warnings.push(t("table-never-analyzed", "Table has never been analyzed"));
     }
 
     return { level: "low", reasons: [t("empty-table", "Empty table")], warnings };

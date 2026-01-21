@@ -820,7 +820,7 @@ export interface IColumnSlot extends ICustomSlot {
      * Szerokość kolumny (1-12, jak w Grid System).
      * @default undefined równa dystrybucja
      */
-    size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+    size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
 }
 
 export interface IRowSlot extends ICustomSlot {

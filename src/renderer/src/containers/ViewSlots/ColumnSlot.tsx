@@ -89,15 +89,15 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
         );
     }, [slot.items, runtimeContext, refresh]);
 
-    const columnWidth = slot.size ? `${(slot.size / 12) * 100}%` : undefined;
+    const columnWidth = typeof slot.size === "number" ? `${(slot.size / 12) * 100}%` : undefined;
 
     return (
         <StyledColumnSlot
             ref={rootRef}
             className={'ColumnSlot-root'}
             sx={{
-                flex: slot.size ? `0 0 ${columnWidth}` : "0 1 auto",
-                maxWidth: slot.size ? columnWidth : undefined,
+                flex: columnWidth ? `0 0 ${columnWidth}` : slot.size === "auto" ? "0 1 auto" : undefined,
+                maxWidth: columnWidth,
                 minWidth: 0,
             }}
         >

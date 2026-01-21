@@ -206,6 +206,9 @@ export interface ThemeIcons {
     ReassignUser: IconWrapperFC;
     RevokePrivileges: IconWrapperFC;
     RevokeAdminOption: IconWrapperFC;
+    Reload: IconWrapperFC;
+    ReloadAll: IconWrapperFC;
+    ReloadStop: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

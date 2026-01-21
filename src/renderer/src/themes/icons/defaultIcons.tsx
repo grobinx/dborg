@@ -173,6 +173,9 @@ const icons = (_palette: Palette): ThemeOptions => {
             ReassignUser: (props) => <IconWrapper {...props} className="reassign-user"><ReassignUser fontSize="inherit" /></IconWrapper>,
             RevokePrivileges: (props) => <IconWrapper {...props} className="revoke-privileges"><MuiIcons.LockOutlined fontSize="inherit" /></IconWrapper>,
             RevokeAdminOption: (props) => <IconWrapper {...props} className="revoke-admin-option"><MuiIcons.GroupRemoveOutlined fontSize="inherit" /></IconWrapper>,
+            Reload: (props) => <IconWrapper {...props} className="reload"><MuiIcons.ReplayOutlined fontSize="inherit" /></IconWrapper>,
+            ReloadAll: (props) => <IconWrapper {...props} className="reload-all"><MuiIcons.SyncOutlined fontSize="inherit" /></IconWrapper>,
+            ReloadStop: (props) => <IconWrapper {...props} className="reload-stop"><MuiIcons.SyncDisabledOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }
