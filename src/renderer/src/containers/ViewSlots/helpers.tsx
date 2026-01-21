@@ -62,24 +62,25 @@ export function createContentComponent(
 ): React.ReactNode {
     const resolvedContent = resolveContentSlotKindFactory(slot, runtimeContext);
     if (resolvedContent) {
-        if (resolvedContent.type === "grid") {
-            return <GridSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "content") {
-            return <ContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "tabs") {
-            return <TabsSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "rendered") {
-            return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "split") {
-            return <SplitSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "editor") {
-            return <EditorSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "column") {
-            return <ColumnSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "row") {
-            return <RowSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "title") {
-            return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        switch (resolvedContent.type) {
+            case "grid":
+                return <GridSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "content":
+                return <ContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "tabs":
+                return <TabsSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "rendered":
+                return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "split":
+                return <SplitSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "editor":
+                return <EditorSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "column":
+                return <ColumnSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "row":
+                return <RowSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "title":
+                return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;

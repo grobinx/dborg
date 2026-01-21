@@ -32,6 +32,7 @@ export interface OwnedObjectRecord {
     identity: string; // w pełni kwalifikowana nazwa (dla funkcji z sygnaturą)
     owner: string;
     choice?: CleanupChoice;
+    risk?: RiskLevel;
     [key: string]: any;
 }
 
@@ -68,9 +69,9 @@ export async function listOwnedObjects(
         WHEN 'S' THEN 'sequence'
         ELSE 'table'
       END AS objtype,
-      n.nspname AS schema,
-      c.relname::varchar AS name,
-      format('%I.%I', n.nspname, c.relname) AS identity,
+      format('%I', n.nspname) AS schema,
+      c.relname AS name,
+      format('%I', c.relname) AS identity,
       pg_get_userbyid(c.relowner) AS owner
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -82,9 +83,9 @@ export async function listOwnedObjects(
     segments.push(`
     SELECT
       'function' AS objtype,
-      n.nspname AS schema,
-      format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS name,
-      format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
+      format('%I', n.nspname) AS schema,
+      p.proname AS name,
+      format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
       pg_get_userbyid(p.proowner) AS owner
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -95,9 +96,9 @@ export async function listOwnedObjects(
     segments.push(`
     SELECT
       CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END AS objtype,
-      n.nspname AS schema,
-      t.typname::varchar AS name,
-      format('%I.%I', n.nspname, t.typname) AS identity,
+      format('%I', n.nspname) AS schema,
+      t.typname AS name,
+      format('%I', t.typname) AS identity,
       pg_get_userbyid(t.typowner) AS owner
     FROM pg_type t
     JOIN pg_namespace n ON n.oid = t.typnamespace
@@ -111,8 +112,8 @@ export async function listOwnedObjects(
     segments.push(`
     SELECT
       'schema' AS objtype,
-      n.nspname AS schema,
-      n.nspname::varchar AS name,
+      format('%I', n.nspname) AS schema,
+      n.nspname AS name,
       format('%I', n.nspname) AS identity,
       pg_get_userbyid(n.nspowner) AS owner
     FROM pg_namespace n
@@ -124,9 +125,9 @@ export async function listOwnedObjects(
     segments.push(`
     SELECT
       'extension' AS objtype,
-      n.nspname AS schema,
-      e.extname::varchar AS name,
-      e.extname::varchar AS identity,
+      format('%I', n.nspname) AS schema,
+      e.extname AS name,
+      format('%I', e.extname) AS identity,
       pg_get_userbyid(e.extowner) AS owner
     FROM pg_extension e
     LEFT JOIN pg_namespace n ON n.oid = e.extnamespace
@@ -138,8 +139,8 @@ export async function listOwnedObjects(
     SELECT
       'fdw' AS objtype,
       NULL::text AS schema,
-      w.fdwname::varchar AS name,
-      w.fdwname::varchar AS identity,
+      w.fdwname AS name,
+      format('%I', w.fdwname) AS identity,
       pg_get_userbyid(w.fdwowner) AS owner
     FROM pg_foreign_data_wrapper w
     JOIN r ON r.oid = w.fdwowner
@@ -150,8 +151,8 @@ export async function listOwnedObjects(
     SELECT
       'server' AS objtype,
       NULL::text AS schema,
-      s.srvname::varchar AS name,
-      s.srvname::varchar AS identity,
+      s.srvname AS name,
+      format('%I', s.srvname) AS identity,
       pg_get_userbyid(s.srvowner) AS owner
     FROM pg_foreign_server s
     JOIN r ON r.oid = s.srvowner
@@ -161,9 +162,9 @@ export async function listOwnedObjects(
     segments.push(`
     SELECT
       'foreign_table' AS objtype,
-      n.nspname AS schema,
-      ft.relname::varchar AS name,
-      format('%I.%I', n.nspname, ft.relname) AS identity,
+      format('%I', n.nspname) AS schema,
+      ft.relname AS name,
+      format('%I', ft.relname) AS identity,
       pg_get_userbyid(ft.relowner) AS owner
     FROM pg_class ft
     JOIN pg_namespace n ON n.oid = ft.relnamespace
@@ -177,8 +178,8 @@ export async function listOwnedObjects(
       SELECT
         'publication' AS objtype,
         NULL::text AS schema,
-        p.pubname::varchar AS name,
-        p.pubname::varchar AS identity,
+        p.pubname AS name,
+        format('%I', p.pubname) AS identity,
         pg_get_userbyid(p.pubowner) AS owner
       FROM pg_publication p
       JOIN r ON r.oid = p.pubowner
@@ -191,8 +192,8 @@ export async function listOwnedObjects(
         SELECT
           'language' AS objtype,
           NULL::text AS schema,
-          l.lanname::varchar AS name,
-          l.lanname::varchar AS identity,
+          l.lanname AS name,
+          format('%I', l.lanname) AS identity,
           pg_get_userbyid(l.lanowner) AS owner
         FROM pg_language l
         JOIN r ON r.oid = l.lanowner
@@ -204,8 +205,8 @@ export async function listOwnedObjects(
     SELECT
       'database' AS objtype,
       NULL::text AS schema,
-      d.datname::varchar AS name,
-      d.datname::varchar AS identity,
+      d.datname AS name,
+      format('%I', d.datname) AS identity,
       pg_get_userbyid(d.datdba) AS owner
     FROM pg_database d
     JOIN r ON r.oid = d.datdba
@@ -260,8 +261,9 @@ export async function listPrivileges(
     // relacje
     segments.push(`
     SELECT CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'matview' WHEN 'S' THEN 'sequence' ELSE 'table' END AS objtype,
-           n.nspname AS schema, c.relname::varchar AS name,
-           format('%I.%I', n.nspname, c.relname) AS identity,
+           format('%I', n.nspname) AS schema, 
+           c.relname::varchar AS name,
+           format('%I', c.relname) AS identity,
            a.privilege_type, a.is_grantable,
            pg_get_userbyid(a.grantee) AS grantee_name,
            pg_get_userbyid(a.grantor) AS grantor_name,
@@ -276,9 +278,10 @@ export async function listPrivileges(
 
     // funkcje
     segments.push(`
-    SELECT 'function' AS objtype, n.nspname AS schema, 
-        format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS name,
-        format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
+    SELECT 'function' AS objtype, 
+        format('%I', n.nspname) AS schema, 
+        p.proname AS name,
+        format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) AS identity,
         a.privilege_type, a.is_grantable,
         pg_get_userbyid(a.grantee) AS grantee_name,
         pg_get_userbyid(a.grantor) AS grantor_name,
@@ -294,8 +297,9 @@ export async function listPrivileges(
     // typy/domeny
     segments.push(`
     SELECT CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END AS objtype,
-           n.nspname AS schema, t.typname::varchar AS name,
-           format('%I.%I', n.nspname, t.typname) AS identity,
+           format('%I', n.nspname) AS schema, 
+           t.typname::varchar AS name,
+           format('%I', t.typname) AS identity,
            a.privilege_type, a.is_grantable,
            pg_get_userbyid(a.grantee) AS grantee_name,
            pg_get_userbyid(a.grantor) AS grantor_name,
@@ -310,8 +314,10 @@ export async function listPrivileges(
 
     // FDW
     segments.push(`
-    SELECT 'fdw' AS objtype, NULL::text AS schema, w.fdwname::varchar AS name,
-           w.fdwname AS identity,
+    SELECT 'fdw' AS objtype, 
+           NULL::text AS schema, 
+           w.fdwname::varchar AS name,
+           format('%I', w.fdwname) AS identity,
            a.privilege_type, a.is_grantable,
            pg_get_userbyid(a.grantee) AS grantee_name,
            pg_get_userbyid(a.grantor) AS grantor_name,
@@ -325,8 +331,10 @@ export async function listPrivileges(
 
     // serwery obce
     segments.push(`
-    SELECT 'server' AS objtype, NULL::text AS schema, s.srvname::varchar AS name,
-           s.srvname AS identity,
+    SELECT 'server' AS objtype, 
+           NULL::text AS schema, 
+           s.srvname::varchar AS name,
+           format('%I', s.srvname) AS identity,
            a.privilege_type, a.is_grantable,
            pg_get_userbyid(a.grantee) AS grantee_name,
            pg_get_userbyid(a.grantor) AS grantor_name,
@@ -341,8 +349,10 @@ export async function listPrivileges(
     // języki (PG 16+)
     if (versionNumber >= 160000) {
         segments.push(`
-      SELECT 'language' AS objtype, NULL::text AS schema, l.lanname::varchar AS name,
-             l.lanname AS identity,
+      SELECT 'language' AS objtype, 
+             NULL::text AS schema, 
+             l.lanname AS name,
+             format('%I', l.lanname) AS identity,
              a.privilege_type, a.is_grantable,
              pg_get_userbyid(a.grantee) AS grantee_name,
              pg_get_userbyid(a.grantor) AS grantor_name,
@@ -357,8 +367,10 @@ export async function listPrivileges(
 
     // bieżąca baza
     segments.push(`
-    SELECT 'database' AS objtype, NULL::text AS schema, d.datname::varchar AS name,
-           d.datname AS identity,
+    SELECT 'database' AS objtype, 
+           NULL::text AS schema, 
+           d.datname AS name,
+           format('%I', d.datname) AS identity,
            a.privilege_type, a.is_grantable,
            pg_get_userbyid(a.grantee) AS grantee_name,
            pg_get_userbyid(a.grantor) AS grantor_name,
@@ -460,14 +472,14 @@ export function buildCleanupSql(
 
         if (choice === "drop_cascade" || choice === "drop_restrict") {
             switch (o.objtype) {
-                case "table": lines.push(`DROP TABLE IF EXISTS ${o.identity}${cascade};`); break;
-                case "foreign_table": lines.push(`DROP FOREIGN TABLE IF EXISTS ${o.identity}${cascade};`); break;
-                case "view": lines.push(`DROP VIEW IF EXISTS ${o.identity}${cascade};`); break;
-                case "matview": lines.push(`DROP MATERIALIZED VIEW IF EXISTS ${o.identity}${cascade};`); break;
-                case "sequence": lines.push(`DROP SEQUENCE IF EXISTS ${o.identity}${cascade};`); break;
-                case "function": lines.push(`DROP FUNCTION IF EXISTS ${o.identity}${cascade};`); break;
-                case "type": lines.push(`DROP TYPE IF EXISTS ${o.identity}${cascade};`); break;
-                case "domain": lines.push(`DROP DOMAIN IF EXISTS ${o.identity}${cascade};`); break;
+                case "table": lines.push(`DROP TABLE IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "foreign_table": lines.push(`DROP FOREIGN TABLE IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "view": lines.push(`DROP VIEW IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "matview": lines.push(`DROP MATERIALIZED VIEW IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "sequence": lines.push(`DROP SEQUENCE IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "function": lines.push(`DROP FUNCTION IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "type": lines.push(`DROP TYPE IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
+                case "domain": lines.push(`DROP DOMAIN IF EXISTS ${o.schema}.${o.identity}${cascade};`); break;
                 case "extension": lines.push(`DROP EXTENSION IF EXISTS ${o.identity}${cascade};`); break;
                 case "schema": lines.push(`DROP SCHEMA IF EXISTS ${o.identity}${cascade || (opts.dropSchemasCascade ? " CASCADE" : "")};`); break;
                 case "server": lines.push(`DROP SERVER IF EXISTS ${o.identity}${cascade};`); break;
@@ -483,14 +495,14 @@ export function buildCleanupSql(
         if (choice === "reassign") {
             if (!objOwner) throw new Error("Brak newOwner dla reassign");
             switch (o.objtype) {
-                case "table": lines.push(`ALTER TABLE ${o.identity} OWNER TO ${objOwner};`); break;
-                case "foreign_table": lines.push(`ALTER FOREIGN TABLE ${o.identity} OWNER TO ${objOwner};`); break;
-                case "view": lines.push(`ALTER VIEW ${o.identity} OWNER TO ${objOwner};`); break;
-                case "matview": lines.push(`ALTER MATERIALIZED VIEW ${o.identity} OWNER TO ${objOwner};`); break;
-                case "sequence": lines.push(`ALTER SEQUENCE ${o.identity} OWNER TO ${objOwner};`); break;
-                case "function": lines.push(`ALTER FUNCTION ${o.identity} OWNER TO ${objOwner};`); break;
-                case "type": lines.push(`ALTER TYPE ${o.identity} OWNER TO ${objOwner};`); break;
-                case "domain": lines.push(`ALTER DOMAIN ${o.identity} OWNER TO ${objOwner};`); break;
+                case "table": lines.push(`ALTER TABLE ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "foreign_table": lines.push(`ALTER FOREIGN TABLE ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "view": lines.push(`ALTER VIEW ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "matview": lines.push(`ALTER MATERIALIZED VIEW ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "sequence": lines.push(`ALTER SEQUENCE ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "function": lines.push(`ALTER FUNCTION ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "type": lines.push(`ALTER TYPE ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
+                case "domain": lines.push(`ALTER DOMAIN ${o.schema}.${o.identity} OWNER TO ${objOwner};`); break;
                 case "extension": lines.push(`ALTER EXTENSION ${o.identity} OWNER TO ${objOwner};`); break;
                 case "schema": lines.push(`ALTER SCHEMA ${o.identity} OWNER TO ${objOwner};`); break;
                 case "server": lines.push(`ALTER SERVER ${o.identity} OWNER TO ${objOwner};`); break;
@@ -506,7 +518,7 @@ export function buildCleanupSql(
         if (choice === "move") {
             if (!targetSchema) throw new Error("Brak newSchema dla move");
             if (objOwner) {
-                const alterOwnerStmt = (kind: string) => `ALTER ${kind} ${o.identity} OWNER TO ${objOwner};`;
+                const alterOwnerStmt = (kind: string) => `ALTER ${kind} ${o.schema}.${o.identity} OWNER TO ${objOwner};`;
                 switch (o.objtype) {
                     case "table": lines.push(alterOwnerStmt("TABLE")); break;
                     case "view": lines.push(alterOwnerStmt("VIEW")); break;
@@ -517,7 +529,7 @@ export function buildCleanupSql(
                     case "domain": lines.push(alterOwnerStmt("DOMAIN")); break;
                 }
             }
-            const alterSchemaStmt = (kind: string) => `ALTER ${kind} ${o.identity} SET SCHEMA ${targetSchema};`;
+            const alterSchemaStmt = (kind: string) => `ALTER ${kind} ${o.schema}.${o.identity} SET SCHEMA ${targetSchema};`;
             switch (o.objtype) {
                 case "table": lines.push(alterSchemaStmt("TABLE")); break;
                 case "foreign_table": lines.push(alterSchemaStmt("FOREIGN TABLE")); break;
@@ -547,11 +559,11 @@ export function buildCleanupSql(
                 // ALL działa na FOREIGN SERVER/FDW pewnie
                 lines.push(`REVOKE ALL ON ${kw} ${p.identity} FROM ${opts.roleName};`);
             } else {
-                lines.push(`REVOKE ${p.privilege_type} ON ${kw} ${p.identity} FROM ${opts.roleName};`);
+                lines.push(`REVOKE ${p.privilege_type} ON ${kw} ${p.schema ? p.schema + "." : ""}${p.identity} FROM ${opts.roleName};`);
             }
         } else if (choice === "revoke_grant_option") {
             // grant option pozostaje per-privilege
-            lines.push(`REVOKE GRANT OPTION FOR ${p.privilege_type} ON ${kw} ${p.identity} FROM ${opts.roleName};`);
+            lines.push(`REVOKE GRANT OPTION FOR ${p.privilege_type} ON ${kw} ${p.schema ? p.schema + "." : ""}${p.identity} FROM ${opts.roleName};`);
         }
     }
 
@@ -650,7 +662,8 @@ export async function analyzeDependencies(
                 SELECT p.oid
                 FROM pg_proc p
                 JOIN pg_namespace n ON n.oid = p.pronamespace
-                WHERE n.nspname = $1 and format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) = $2
+                WHERE n.nspname = $1 
+                and format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) = $2
             `;
             break;
         case 'type':
@@ -808,7 +821,7 @@ export async function analyzeDependencies(
         WHERE COALESCE(c.oid, p.oid, t.oid, ns.oid, e.oid) IS NOT NULL  -- tylko znalezione obiekty
     `;
 
-    const params = schema ? [schema, name] : [name];
+    const params = (schema && objtype !== "schema") ? [schema, name] : [name];
     const { rows } = await session.query<any>(sql, params);
 
     const dependent_objects = rows
@@ -1140,6 +1153,7 @@ export interface SecurityContext {
 export async function checkSecurityContext(
     session: IDatabaseSession,
     objtype: ObjType,
+    schema: string,
     identity: string,
 ): Promise<SecurityContext | null> {
     if (objtype !== 'function') {
@@ -1164,10 +1178,11 @@ export async function checkSecurityContext(
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         JOIN pg_language l ON l.oid = p.prolang
-        WHERE format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) = $1::varchar
+        WHERE n.nspname = $1 
+        AND format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) = $2::varchar
     `;
 
-    const { rows } = await session.query<any>(sql, [identity as string]);
+    const { rows } = await session.query<any>(sql, [schema, identity]);
     if (rows.length === 0) return null;
 
     return rows[0];

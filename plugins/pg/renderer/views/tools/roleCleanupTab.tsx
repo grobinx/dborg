@@ -118,9 +118,9 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     };
 
     const analyzeObject = async (obj: OwnedObjectRecord) => {
-        const [depInfo, fkDeps, codeUsages, tableStats, securityContext, ] = await Promise.all([
+        const [depInfo, fkDeps, codeUsages, tableStats, securityContext,] = await Promise.all([
             analyzeDependencies(session, obj.objtype, obj.schema, obj.name),
-            obj.objtype === 'table' 
+            obj.objtype === 'table'
                 ? analyzeForeignKeyDependencies(session, obj.schema!, obj.name)
                 : Promise.resolve([]),
             obj.objtype === 'table' || obj.objtype === 'view' || obj.objtype === 'matview' || obj.objtype === 'function' || obj.objtype === 'procedure'
@@ -130,7 +130,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                 ? getTableStats(session, obj.schema!, obj.name)
                 : Promise.resolve(null),
             obj.objtype === 'function'
-                ? checkSecurityContext(session, obj.objtype, obj.identity)
+                ? checkSecurityContext(session, obj.objtype, obj.schema!, obj.identity)
                 : Promise.resolve(null)
         ]);
 
@@ -258,9 +258,17 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         columns: [
                                             { key: "objtype", label: t("type", "Type"), width: 120, dataType: "string" },
                                             { key: "schema", label: t("schema", "Schema"), width: 140, dataType: "string", sortDirection: "asc", sortOrder: 1 },
-                                            { key: "name", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
+                                            { key: "identity", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
                                             { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
-                                            //{ key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
+                                            {
+                                                key: "risk", label: t("risk-level", "Risk"), width: 40, dataType: "string", 
+                                                formatter: (value: RiskLevel | null) => {
+                                                    if (!value) {
+                                                        return null;
+                                                    }
+                                                    return <RiskLevelIcon level={value || "none"} slotContext={slotContext} />;
+                                                }
+                                            },
                                             {
                                                 key: "choice", label: t("action", "Action"), width: 150, dataType: "object",
                                                 formatter: (value: CleanupChoice | undefined, _row) => {
@@ -297,7 +305,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             if (selectedOwnedObject?.identity !== row?.identity) {
                                                 selectedOwnedObject = row;
                                                 if (selectedOwnedObject) {
-                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
                                                     if (!objectCache[key]?.risk) {
                                                         analyzingObject = true;
                                                         slotContext.refresh(cid("role-owned-info"));
@@ -306,6 +314,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 ...objectCache[key],
                                                                 ...result,
                                                             };
+                                                            if (selectedOwnedObject) {
+                                                                selectedOwnedObject.risk = result?.risk?.overall?.level;
+                                                                slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            }
                                                             slotContext.refresh(cid("role-owned-ddl"));
                                                             slotContext.refresh(cid("role-owned-info"));
                                                             editorRefresh(slotContext);
@@ -555,7 +567,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                     if (!selectedOwnedObject || analyzingObject) {
                                                                         return null;
                                                                     }
-                                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
                                                                     const risk = objectCache[key]?.risk?.overall;
                                                                     if (!risk) {
                                                                         return null;
@@ -566,8 +578,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                                 <RiskLevelIcon level={risk.level} slotContext={slotContext} />
                                                                                 {t("overall-risk-assessment", "Overall Risk")}
                                                                             </Typography>
+                                                                            <hr style={{ width: "98%" }} />
                                                                             {risk.reasons.map((reason, idx) => (
                                                                                 <Typography variant="body2" component="div" key={idx}>{reason}</Typography>
+                                                                            ))}
+                                                                            <hr style={{ width: "98%" }} />
+                                                                            {risk.warnings.map((warning, idx) => (
+                                                                                <Typography variant="body2" component="div" color="warning" key={idx}>{warning}</Typography>
                                                                             ))}
                                                                         </Stack>
                                                                     )
@@ -597,7 +614,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             if (!selectedOwnedObject) {
                                                                 return t("select-object-to-see-ddl-preview", "-- Select an object to see DDL preview --");
                                                             }
-                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.name);
+                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
                                                             if (objectCache[key]?.ddl) {
                                                                 return objectCache[key].ddl;
                                                             }
@@ -658,12 +675,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         columns: [
                                             { key: "objtype", label: t("type", "Type"), width: 120, dataType: "string" },
                                             { key: "schema", label: t("schema", "Schema"), width: 140, dataType: "string", sortDirection: "asc", sortOrder: 1 },
-                                            { key: "name", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
+                                            { key: "identity", label: t("name", "Name"), width: 240, dataType: "string", sortDirection: "asc", sortOrder: 2 },
                                             { key: "privilege_type", label: t("privilege", "Privilege"), width: 160, dataType: "string", sortDirection: "asc", sortOrder: 3 },
                                             { key: "is_grantable", label: t("grantable", "Grantable"), width: 100, dataType: "boolean" },
                                             { key: "grantee_name", label: t("grantee", "Grantee"), width: 160, dataType: "string" },
                                             { key: "grantor_name", label: t("grantor", "Grantor"), width: 160, dataType: "string" },
-                                            //{ key: "identity", label: t("identity", "Identity"), width: 320, dataType: "string" },
                                             {
                                                 key: "choice", label: t("action", "Action"), width: 150, dataType: "object",
                                                 formatter: (value: PrivilegeChoice | undefined, _row) => {
@@ -776,7 +792,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 return "-- Select a privilege to see DDL preview --";
                                             }
 
-                                            const key = objectDllKey(selectedPrivilege.objtype, selectedPrivilege.schema || null, selectedPrivilege.name);
+                                            const key = objectDllKey(selectedPrivilege.objtype, selectedPrivilege.schema || null, selectedPrivilege.identity);
                                             if (objectCache[key]?.ddl) {
                                                 return objectCache[key].ddl;
                                             }
