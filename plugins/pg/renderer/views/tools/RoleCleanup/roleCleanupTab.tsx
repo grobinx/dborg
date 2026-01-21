@@ -1,18 +1,18 @@
 import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../manager/renderer/CustomSlots";
+import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice, isValidCleanupAction, DependencyInfo, CodeUsage, TableStats, SecurityContext, analyzeDependencies, findUsagesInCode, getTableStats, checkSecurityContext, RiskAssessment, assessDependencyRisk, assessCodeUsageRisk, assessTableStatsRisk, assessSecurityContextRisk, RiskLevel, analyzeForeignKeyDependencies, assessForeignKeyRisk, assessOverallRisk } from "./roleAudit";
-import { versionToNumber } from "../../../../../src/api/version";
-import { SelectRoleAction, SelectRoleAction_ID } from "../../actions/SelectRoleAction";
-import { SelectRoleGroup } from "../../actions/SelectRoleGroup";
+import { versionToNumber } from "../../../../../../src/api/version";
+import { SelectRoleAction, SelectRoleAction_ID } from "../../../actions/SelectRoleAction";
+import { SelectRoleGroup } from "../../../actions/SelectRoleGroup";
 import debounce from "@renderer/utils/debounce";
 import { Box, Stack, Typography } from "@mui/material";
 import Tooltip from "@renderer/components/Tooltip";
-import { tableDdl } from "../../../common/ddls/table";
-import { viewDdl } from "../../../common/ddls/view";
-import { sequenceDdl } from "../../../common/ddls/sequence";
-import { schemaDdl } from "../../../common/ddls/schema";
+import { tableDdl } from "../../../../common/ddls/table";
+import { viewDdl } from "../../../../common/ddls/view";
+import { sequenceDdl } from "../../../../common/ddls/sequence";
+import { schemaDdl } from "../../../../common/ddls/schema";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);

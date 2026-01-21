@@ -2,7 +2,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import tableSizesTab from "./tableSizesTab";
-import roleCleanupTab from "./roleCleanupTab";
+import roleCleanupTab from "./RoleCleanup/roleCleanupTab";
 
 export function toolsView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);

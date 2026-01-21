@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { versionToNumber } from "../../../../../src/api/version";
+import { versionToNumber } from "../../../../../../src/api/version";
 import { t } from "i18next";
 
 /*typy obiektów w bazie (przykłady wartości dla objtype)
