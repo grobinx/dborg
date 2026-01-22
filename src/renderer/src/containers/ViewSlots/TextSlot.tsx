@@ -3,6 +3,7 @@ import { Box, Typography, styled, useTheme, useThemeProps } from "@mui/material"
 import { ITextSlot, resolveReactNodeFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { uuidv7 } from "uuidv7";
 
 interface TextSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -24,6 +25,7 @@ const StyledTextSlot = styled(Box, {
 const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, className, ...other } = useThemeProps({ name: "TextSlot", props });
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [text, setText] = React.useState<React.ReactNode | null>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
@@ -32,7 +34,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -44,7 +46,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {

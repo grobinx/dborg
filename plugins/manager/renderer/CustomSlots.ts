@@ -353,7 +353,7 @@ export interface ISlot {
     /**
      * Unique identifier for the slot.
      */
-    id: string;
+    id?: string;
     /**
      * Type of the slot (not defined in this base interface).
      */
@@ -503,6 +503,8 @@ export type TabContentSlotKind =
  * Reprezentuje pojedynczą zakładkę w TabsSlot.
  */
 export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
+    id: string;
+    
     type: "tab";
     /**
      * Czy zakładka jest zamykalna (opcjonalnie).
@@ -1115,6 +1117,8 @@ export interface IDialogTabs {
 export type DialogSize = "small" | "medium" | "large" | "full";
 
 export interface IDialogSlot extends ICustomSlot {
+    id: string;
+
     type: "dialog";
     /**
      * Tytuł dialogu.

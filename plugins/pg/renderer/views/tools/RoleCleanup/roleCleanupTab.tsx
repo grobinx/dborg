@@ -13,10 +13,11 @@ import { tableDdl } from "../../../../common/ddls/table";
 import { viewDdl } from "../../../../common/ddls/view";
 import { sequenceDdl } from "../../../../common/ddls/sequence";
 import { schemaDdl } from "../../../../common/ddls/schema";
+import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = cidFactory("tools-role-cleanup", session.info.uniqueId);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let targetOwner: string | null = null;
@@ -95,7 +96,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     };
 
     const editorRefresh = debounce((runtimeContext: SlotRuntimeContext) => {
-        runtimeContext.refresh(cid("role-cleanup-editor"));
+        runtimeContext.refresh(cid("editor"));
     }, 1000);
 
     const objectDllKey = (objtype: string, schema: string | null, name: string) => {
@@ -170,22 +171,22 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     }
 
     return {
-        id: cid("role-cleanup-tab"),
+        id: cid("tab"),
         type: "tab",
         onMount: (slotContext) => {
             (async () => {
                 await setSelectedRoleName();
                 await superuserCheck();
-                slotContext.refresh(cid("role-cleanup-selected-role-label"));
-                slotContext.refresh(cid("role-owned-grid"));
-                slotContext.refresh(cid("role-privs-grid"));
-                slotContext.refresh(cid("role-cleanup-tab-label"));
+                slotContext.refresh(cid("selected-role-label"));
+                slotContext.refresh(cid("owned-grid"));
+                slotContext.refresh(cid("privs-grid"));
+                slotContext.refresh(cid("tab-label"));
             })();
             loadRoleNameList();
             loadSchemaNameList();
         },
         label: {
-            id: cid("role-cleanup-tab-label"),
+            id: cid("tab", "label"),
             type: "tablabel",
             label: (slotContext) => {
                 return (
@@ -204,7 +205,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             icon: "UserRemove"
         },
         content: {
-            id: cid("role-cleanup-tab-content"),
+            id: cid("tab", "content"),
             type: "tabcontent",
             actions: [
                 SelectRoleAction(),
@@ -212,40 +213,38 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             actionGroups: (slotContext) => [
                 SelectRoleGroup(session, () => selectedRole, (roleName: string | null) => {
                     selectedRole = roleName;
-                    slotContext.refresh(cid("role-cleanup-selected-role-label"));
-                    slotContext.refresh(cid("role-owned-grid"));
-                    slotContext.refresh(cid("role-privs-grid"));
+                    slotContext.refresh(cid("selected-role-label"));
+                    slotContext.refresh(cid("owned-grid"));
+                    slotContext.refresh(cid("privs-grid"));
                     editorRefresh(slotContext);
                 })
             ],
             content: (slotContext) => ({
-                id: cid("role-cleanup-split"),
                 type: "split",
                 direction: "vertical",
                 secondSize: 40,
                 autoSaveId: `role-cleanup-split-view-${session.profile.sch_id}`,
                 first: {
-                    id: cid("role-data-tabs"),
                     type: "tabs",
                     tabs: [
                         {
-                            id: cid("role-owners-tab"),
+                            id: cid("owned-tab"),
                             type: "tab",
                             label: {
-                                id: cid("role-owners-tab-label"),
+                                id: cid("owned-tab-label"),
                                 type: "tablabel",
                                 label: t("role-owned-objects", "Owned Objects"),
                             },
                             content: {
-                                id: cid("role-owners-tab-content"),
+                                id: cid("owned-tab-content"),
                                 type: "tabcontent",
                                 content: {
-                                    id: cid("role-owners-split"),
+                                    id: cid("owned-split"),
                                     type: "split",
                                     direction: "horizontal",
-                                    autoSaveId: `role-cleanup-owners-split-${session.profile.sch_id}`,
+                                    autoSaveId: `role-cleanup-owned-split-${session.profile.sch_id}`,
                                     first: {
-                                        id: cid("role-owned-grid"),
+                                        id: cid("owned-grid"),
                                         type: "grid",
                                         autoSaveId: `role-cleanup-owned-grid-${session.profile.sch_id}`,
                                         statuses: ["data-rows"],
@@ -310,15 +309,15 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             if (selectedOwnedObject?.identity !== row?.identity) {
                                                 selectedOwnedObject = row;
                                                 if (selectedOwnedObject) {
-                                                    slotContext.refresh(cid("role-owned-ddl"));
-                                                    slotContext.refresh(cid("role-owned-info"));
-                                                    slotContext.refresh(cid("role-owners-tab-toolbar"));
+                                                    slotContext.refresh(cid("owned-ddl-editor"));
+                                                    slotContext.refresh(cid("owned-info"));
+                                                    slotContext.refresh(cid("owned-toolbar"));
                                                 }
                                             }
                                         },
                                         actions: [
                                             {
-                                                id: "drop-restrict-owned-objects-action",
+                                                id: "role-cleanup-owned-drop-restrict-action",
                                                 label: t("drop-object", "Drop Object"),
                                                 icon: <slotContext.theme.icons.DropRestrict color="warning" />,
                                                 keySequence: ["Ctrl+D"],
@@ -341,12 +340,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-owned-grid"), "only");
+                                                    slotContext.refresh(cid("owned-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             },
                                             {
-                                                id: "drop-cascade-owned-objects-action",
+                                                id: "role-cleanup-owned-drop-cascade-action",
                                                 label: t("drop-object-cascade", "Drop Object Cascade"),
                                                 icon: <slotContext.theme.icons.DropCascade color="error" />,
                                                 keySequence: ["Ctrl+Shift+D"],
@@ -369,12 +368,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-owned-grid"), "only");
+                                                    slotContext.refresh(cid("owned-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             },
                                             {
-                                                id: "reassign-owner-action",
+                                                id: "role-cleanup-owned-reassign-action",
                                                 label: t("reassign-owner", "Reassign Owner"),
                                                 icon: <slotContext.theme.icons.ReassignUser color="secondary" />,
                                                 keySequence: ["Ctrl+R"],
@@ -391,7 +390,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         if (row?.choice?.action === "reassign") {
                                                             row.choice = null;
                                                             selectedRows.length = 0;
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-grid"), "only");
                                                             editorRefresh(slotContext);
                                                             return;
                                                         }
@@ -404,7 +403,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         return;
                                                     }
 
-                                                    slotContext.openDialog(cid("role-cleanup-reassign-owner-dialog"), lastReassignOwner).then((result) => {
+                                                    slotContext.openDialog(cid("dialog-reassign-owner"), lastReassignOwner).then((result) => {
                                                         if (result) {
                                                             lastReassignOwner = result;
 
@@ -418,14 +417,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 }
                                                             });
                                                             selectedRows.length = 0;
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-grid"), "only");
                                                             editorRefresh(slotContext);
                                                         }
                                                     });
                                                 }
                                             },
                                             {
-                                                id: "move-object-action",
+                                                id: "role-cleanup-owned-move-action",
                                                 label: t("move-object", "Move Object"),
                                                 icon: <slotContext.theme.icons.MoveObject color="success" />,
                                                 keySequence: ["Ctrl+M"],
@@ -442,7 +441,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         if (row?.choice?.action === "move") {
                                                             row.choice = null;
                                                             selectedRows.length = 0;
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-grid"), "only");
                                                             editorRefresh(slotContext);
                                                             return;
                                                         }
@@ -455,7 +454,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         return;
                                                     }
 
-                                                    slotContext.openDialog(cid("role-cleanup-move-object-dialog"), lastMoveObject).then((result) => {
+                                                    slotContext.openDialog(cid("dialog-move-object"), lastMoveObject).then((result) => {
                                                         if (result) {
                                                             lastMoveObject = result;
                                                             selectedRows.forEach(rowIdx => {
@@ -469,14 +468,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 }
                                                             });
                                                             selectedRows.length = 0;
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-grid"), "only");
                                                             editorRefresh(slotContext);
                                                         }
                                                     });
                                                 }
                                             },
                                             {
-                                                id: "clear-object-action",
+                                                id: "role-cleanup-owned-clear-action",
                                                 label: t("clear-action", "Clear Action"),
                                                 icon: <slotContext.theme.icons.Clear />,
                                                 keySequence: ["Ctrl+Q"],
@@ -492,12 +491,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         row.choice = null;
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-owned-grid"), "only");
+                                                    slotContext.refresh(cid("owned-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             },
                                             {
-                                                id: "reload-info-refresh",
+                                                id: "role-cleanup-owned-reload-action",
                                                 label: t("reload-object-info", "Reload Object Info"),
                                                 icon: "Reload",
                                                 keySequence: ["Space"],
@@ -509,10 +508,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         const row = selectedOwnedObject;
                                                         analyzingObject = true;
                                                         analyzingRows.push(row);
-                                                        slotContext.refresh(cid("role-owned-grid"), "only");
-                                                        slotContext.refresh(cid("role-owned-progress"));
-                                                        slotContext.refresh(cid("role-owners-tab-toolbar"));
-                                                        slotContext.refresh(cid("role-owned-info"));
+                                                        slotContext.refresh(cid("owned-grid"), "only");
+                                                        slotContext.refresh(cid("owned-progress"));
+                                                        slotContext.refresh(cid("owned-toolbar"));
+                                                        slotContext.refresh(cid("owned-info"));
                                                         try {
                                                             const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
                                                             const result = await analyzeObject(selectedOwnedObject);
@@ -527,22 +526,21 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 analyzingRows.splice(index, 1);
                                                             }
                                                             analyzingObject = false;
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
-                                                            slotContext.refresh(cid("role-owned-progress"));
-                                                            slotContext.refresh(cid("role-owners-tab-toolbar"));
-                                                            slotContext.refresh(cid("role-owned-info"));
+                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-progress"));
+                                                            slotContext.refresh(cid("owned-toolbar"));
+                                                            slotContext.refresh(cid("owned-info"));
                                                         }
                                                     }
                                                 },
                                             },
                                             {
-                                                id: "reload-info-refresh-all",
+                                                id: "role-cleanup-owned-reload-all-action",
                                                 label: () => analyzingObject ? t("cancel-reload-info", "Cancel Reload All Object Info") : t("reload-info", "Reload All Object Info"),
                                                 icon: () => analyzingObject ? "ReloadStop" : "ReloadAll",
                                                 keySequence: ["Alt+Shift+Enter"],
                                                 contextMenuGroupId: "reload-actions",
                                                 contextMenuOrder: 2,
-                                                //disabled: () => loadingStats,
                                                 run: async () => {
                                                     if (analyzingObject) {
                                                         analyzingObject = false;
@@ -554,10 +552,10 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         for (const [index, row] of ownedCache.entries()) {
                                                             analyzingProgress = Math.round(((index + 1) / ownedCache.length) * 100);
                                                             analyzingRows.push(row);
-                                                            slotContext.refresh(cid("role-owned-grid"), "only");
-                                                            slotContext.refresh(cid("role-owned-progress"));
-                                                            slotContext.refresh(cid("role-owners-tab-toolbar"));
-                                                            slotContext.refresh(cid("role-owned-info"));
+                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            slotContext.refresh(cid("owned-progress"));
+                                                            slotContext.refresh(cid("owned-toolbar"));
+                                                            slotContext.refresh(cid("owned-info"));
                                                             try {
                                                                 const key = objectDllKey(row.objtype, row.schema || null, row.identity);
                                                                 const result = await analyzeObject(row);
@@ -571,7 +569,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 if (index !== -1) {
                                                                     analyzingRows.splice(index, 1);
                                                                 }
-                                                                slotContext.refresh(cid("role-owned-grid"), "only");
+                                                                slotContext.refresh(cid("owned-grid"), "only");
                                                             }
                                                             if (!analyzingObject) {
                                                                 break;
@@ -581,43 +579,43 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     finally {
                                                         analyzingObject = false;
                                                         analyzingProgress = null;
-                                                        slotContext.refresh(cid("role-owned-grid"), "compute");
-                                                        slotContext.refresh(cid("role-owned-progress"));
-                                                        slotContext.refresh(cid("role-owners-tab-toolbar"));
-                                                        slotContext.refresh(cid("role-owned-info"));
+                                                        slotContext.refresh(cid("owned-grid"), "compute");
+                                                        slotContext.refresh(cid("owned-progress"));
+                                                        slotContext.refresh(cid("owned-toolbar"));
+                                                        slotContext.refresh(cid("owned-info"));
                                                     }
                                                 }
                                             }
                                         ],
                                         progress: {
-                                            id: cid("role-owned-progress"),
+                                            id: cid("owned-progress"),
                                             type: "progress",
                                             display: () => analyzingObject,
                                             value: () => analyzingProgress,
                                         },
                                     } as IGridSlot,
                                     second: {
-                                        id: cid("role-owned-tabs"),
+                                        id: cid("owned-tabs"),
                                         type: "tabs",
                                         tabs: [
                                             {
-                                                id: cid("role-owned-overall-tab"),
+                                                id: cid("owned-overall-tab"),
                                                 type: "tab",
                                                 label: {
-                                                    id: cid("role-owned-overall-tab-label"),
+                                                    id: cid("owned-overall-tab-label"),
                                                     type: "tablabel",
                                                     label: t("overall", "Overall"),
                                                 },
                                                 content: {
-                                                    id: cid("role-owned-info"),
+                                                    id: cid("owned-info"),
                                                     type: "tabcontent",
                                                     content: () => ({
-                                                        id: cid("role-owned-info-risk"),
+                                                        id: cid("owned-info-risk"),
                                                         type: "column",
                                                         padding: 8,
                                                         items: [
                                                             {
-                                                                id: cid("role-owned-info-risk-analyzing"),
+                                                                id: cid("owned-info-analyzing"),
                                                                 type: "rendered",
                                                                 render: () => {
                                                                     if (!selectedOwnedObject) {
@@ -643,7 +641,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 }
                                                             },
                                                             {
-                                                                id: cid("role-owned-info-dependency-risk"),
+                                                                id: cid("owned-info-risk-details"),
                                                                 type: "rendered",
                                                                 render: () => {
                                                                     if (!selectedOwnedObject) {
@@ -677,18 +675,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 }
                                             },
                                             {
-                                                id: cid("role-owned-ddl-tab"),
+                                                id: cid("owned-ddl-tab"),
                                                 type: "tab",
                                                 label: {
-                                                    id: cid("role-owned-ddl-tab-label"),
+                                                    id: cid("owned-ddl-tab-label"),
                                                     type: "tablabel",
                                                     label: t("ddl", "DDL"),
                                                 },
                                                 content: {
-                                                    id: cid("role-owned-ddl-tab-content"),
+                                                    id: cid("owned-ddl-tab-content"),
                                                     type: "tabcontent",
                                                     content: {
-                                                        id: cid("role-owned-ddl"),
+                                                        id: cid("owned-ddl-editor"),
                                                         type: "editor",
                                                         readOnly: true,
                                                         miniMap: false,
@@ -711,42 +709,41 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 },
                             },
                             toolBar: {
-                                id: cid("role-owners-tab-toolbar"),
+                                id: cid("owned-toolbar"),
                                 type: "toolbar",
                                 tools: [
                                     [
-                                        "drop-restrict-owned-objects-action",
-                                        "drop-cascade-owned-objects-action",
-                                        "reassign-owner-action",
-                                        "move-object-action",
+                                        "role-cleanup-owned-drop-restrict-action",
+                                        "role-cleanup-owned-drop-cascade-action",
+                                        "role-cleanup-owned-reassign-action",
+                                        "role-cleanup-owned-move-action",
                                     ],
-                                    "clear-object-action",
+                                    "role-cleanup-owned-clear-action",
                                     [
-                                        "reload-info-refresh",
-                                        "reload-info-refresh-all",
+                                        "role-cleanup-owned-reload-action",
+                                        "role-cleanup-owned-reload-all-action",
                                     ]
                                 ],
-                                actionSlotId: cid("role-owned-grid"),
+                                actionSlotId: cid("owned-grid"),
                             }
                         },
                         {
-                            id: cid("role-privs-tab"),
+                            id: cid("privs-tab"),
                             type: "tab",
                             label: {
-                                id: cid("role-privs-tab-label"),
+                                id: cid("privs-tab-label"),
                                 type: "tablabel",
                                 label: t("role-privileges", "Privileges"),
                             },
                             content: {
-                                id: cid("role-privs-tab-content"),
+                                id: cid("privs-tab-content"),
                                 type: "tabcontent",
                                 content: {
-                                    id: cid("role-privs-split"),
                                     type: "split",
                                     direction: "horizontal",
                                     autoSaveId: `role-cleanup-privs-split-${session.profile.sch_id}`,
                                     first: {
-                                        id: cid("role-privs-grid"),
+                                        id: cid("privs-grid"),
                                         type: "grid",
                                         autoSaveId: `role-cleanup-privs-grid-${session.profile.sch_id}`,
                                         statuses: ["data-rows"],
@@ -790,11 +787,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 return;
                                             }
                                             selectedPrivilege = row;
-                                            slotContext.refresh(cid("role-privs-ddl"));
+                                            slotContext.refresh(cid("privs-ddl-editor"));
                                         },
                                         actions: [
                                             {
-                                                id: "revoke-privilege-action",
+                                                id: "role-cleanup-privs-revoke-action",
                                                 label: t("revoke-privilege", "Revoke Privilege"),
                                                 icon: <slotContext.theme.icons.RevokePrivileges color="warning" />,
                                                 keySequence: ["Ctrl+R"],
@@ -815,12 +812,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    slotContext.refresh(cid("privs-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             },
                                             {
-                                                id: "revoke-admin-option-action",
+                                                id: "role-cleanup-privs-revoke-admin-action",
                                                 label: t("revoke-admin-option", "Revoke Admin Option"),
                                                 icon: <slotContext.theme.icons.RevokeAdminOption color="error" />,
                                                 keySequence: ["Ctrl+Shift+R"],
@@ -841,12 +838,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         }
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    slotContext.refresh(cid("privs-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             },
                                             {
-                                                id: "clear-privilege-action",
+                                                id: "role-cleanup-privs-clear-action",
                                                 label: t("clear-action", "Clear Action"),
                                                 icon: <slotContext.theme.icons.Clear />,
                                                 keySequence: ["Ctrl+Q"],
@@ -862,14 +859,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         row.choice = null;
                                                     });
                                                     selectedRows.length = 0;
-                                                    slotContext.refresh(cid("role-privs-grid"), "only");
+                                                    slotContext.refresh(cid("privs-grid"), "only");
                                                     editorRefresh(slotContext);
                                                 }
                                             }
                                         ],
                                     } as IGridSlot,
                                     second: {
-                                        id: cid("role-privs-ddl"),
+                                        id: cid("privs-ddl-editor"),
                                         type: "editor",
                                         readOnly: true,
                                         miniMap: false,
@@ -889,22 +886,22 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 },
                             },
                             toolBar: {
-                                id: cid("role-privilege-tab-toolbar"),
+                                id: cid("privs-toolbar"),
                                 type: "toolbar",
                                 tools: [
                                     [
-                                        "revoke-privilege-action",
-                                        "revoke-admin-option-action",
+                                        "role-cleanup-privs-revoke-action",
+                                        "role-cleanup-privs-revoke-admin-action",
                                     ],
-                                    "clear-privilege-action",
+                                    "role-cleanup-privs-clear-action",
                                 ],
-                                actionSlotId: cid("role-privs-grid"),
+                                actionSlotId: cid("privs-grid"),
                             }
                         }
                     ],
                 },
                 second: {
-                    id: cid("role-cleanup-editor"),
+                    id: cid("editor"),
                     type: "editor",
                     content: async () => {
                         if (!selectedRole) return "-- No role selected --";
@@ -932,7 +929,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             }),
             dialogs: [
                 {
-                    id: cid("role-cleanup-reassign-owner-dialog"),
+                    id: cid("dialog-reassign-owner"),
                     type: "dialog",
                     title: t("reassing-owner", "Reassign Owner"),
                     items: () => [
@@ -950,7 +947,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     ],
                 },
                 {
-                    id: cid("role-cleanup-move-object-dialog"),
+                    id: cid("dialog-move-object"),
                     type: "dialog",
                     title: t("move-object", "Move Object"),
                     items: () => [
@@ -984,18 +981,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             ],
         },
         toolBar: {
-            id: cid("role-cleanup-title-toolbar"),
+            id: cid("title-toolbar"),
             type: "toolbar",
             tools: [
                 SelectRoleAction_ID,
                 {
-                    id: cid("role-cleanup-selected-role-label"),
+                    id: cid("selected-role-label"),
                     type: "text",
                     text: () => t("role-role", "Role: {{role}}", { role: selectedRole || t("none", "None") }),
                     maxLines: 1,
                 } as ITextSlot,
             ],
-            actionSlotId: cid("role-cleanup-tab-content"),
+            actionSlotId: cid("tab-content"),
         },
     };
 };

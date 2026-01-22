@@ -9,6 +9,7 @@ import {
 import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { uuidv7 } from "uuidv7";
 
 interface ColumnSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> { }
 
@@ -29,6 +30,7 @@ const StyledColumnSlot = styled(Box)(() => ({
 const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref } = props;
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
 
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const runtimeContext: SlotRuntimeContext = React.useMemo(
@@ -43,7 +45,7 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -55,7 +57,7 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {

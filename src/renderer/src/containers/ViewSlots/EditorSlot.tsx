@@ -14,6 +14,7 @@ import {
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { createProgressBarContent } from "./helpers";
+import { uuidv7 } from "uuidv7";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -24,6 +25,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     slot
 }) => {
     const theme = useTheme();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
@@ -47,7 +49,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     };
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (readOnly) => {
+        const unregisterRefresh = registerRefresh(slotId, (readOnly) => {
             if (readOnly) {
                 reRender(prev => prev + 1n);
             } else {
@@ -59,7 +61,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {

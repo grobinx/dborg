@@ -6,6 +6,7 @@ import { createSplitPartContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ImperativePanelGroupHandle } from "react-resizable-panels";
 import { useTheme } from "@mui/material";
+import { uuidv7 } from "uuidv7";
 
 interface SplitSlotProps {
 }
@@ -18,6 +19,7 @@ interface SplitSlotOwnProps extends SplitSlotProps {
 const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref } = props;
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [first, setFirst] = React.useState<{
             ref: React.Ref<HTMLDivElement>,
             node: React.ReactNode
@@ -32,7 +34,7 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -44,10 +46,9 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
-        console.debug("SplitSlot updating content for slot:", slot.id);
         setFirst(prev => ({
             ...prev,
             node: createSplitPartContent(slot.first, runtimeContext, prev.ref)
@@ -57,8 +58,6 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
             node: createSplitPartContent(slot.second, runtimeContext, prev.ref)
         }));
     }, [slot.first, slot.second, refresh]);
-
-    console.debug("SplitSlot rendering slot:", slot.id);
 
     return (
         <SplitPanelGroup

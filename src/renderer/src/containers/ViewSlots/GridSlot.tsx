@@ -25,6 +25,7 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { resolveIcon } from "@renderer/themes/icons";
 import { createProgressBarContent } from "./helpers";
+import { uuidv7 } from "uuidv7";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -35,6 +36,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     slot, ref
 }) => {
     const theme = useTheme();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const addToast = useToast();
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
@@ -62,7 +64,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else if (redraw === "compute") {
@@ -71,14 +73,14 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 setPendingRefresh(true);
             }
         });
-        const unregisterRefSlot = registerRefSlot(slot.id, "datagrid", dataGridRef);
+        const unregisterRefSlot = registerRefSlot(slotId, "datagrid", dataGridRef);
         slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {
@@ -99,7 +101,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
         const fetchRows = async () => {
             setLoading(true);
             try {
-                console.debug("GridSlot fetching rows for slot:", slot.id);
                 const result = await resolveRecordsFactory(slot.rows, runtimeContext);
                 if (Array.isArray(result)) {
                     setMessage(undefined);
@@ -107,7 +108,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setColumns(resolveColumnDefinitionsFactory(slot.columns, runtimeContext) ?? []);
                     setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, runtimeContext));
                     setPivot(resolveBooleanFactory(slot.pivot, runtimeContext) ?? false);
-                    console.debug("GridSlot fetched rows for slot:", slot.id, result.length);
                 } else if (result && typeof result === "object") {
                     setMessage(undefined);
                     setRows(Object.entries(result).map(([key, value]) => ({
@@ -141,7 +141,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
             node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
         }));
         fetchRows();
-        console.debug("GridSlot updating content for slot:", slot.id, refresh);
     }, [slot.columns, slot.rows, refresh]);
 
     // Debounced click handler
@@ -150,7 +149,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             debounce((row: Record<string, any> | undefined) => {
                 slot.onRowSelect?.(row, runtimeContext);
             }, 250),
-        [slot.id, runtimeContext]
+        [slotId, runtimeContext]
     );
 
     React.useEffect(() => {
@@ -194,8 +193,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
         rowClick(row);
     }
 
-    //console.debug("GridSlot rendering slot:", slot.id);
-
     return (
         <Stack
             direction="column"
@@ -209,7 +206,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
         >
             {progressBar.node}
             <Box
-                key={slot.id}
+                key={slotId}
                 sx={{
                     flex: 1,
                     overflow: "hidden",
@@ -237,7 +234,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     onRowSelect={handleRowSelect}
                     ref={dataGridRef}
                     onMount={dataGridMountHandler}
-                    autoSaveId={slot.autoSaveId ?? slot.id}
+                    autoSaveId={slot.autoSaveId ?? slotId}
                     mode={slot.mode ?? "defined"}
                     onChange={(status) => setDataGridStatus(status)}
                     pivot={pivot}

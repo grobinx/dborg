@@ -54,6 +54,7 @@ import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import ProgressBarSlot from "./ProgressBarSlot";
 import ColumnSlot from "./ColumnSlot";
 import RowSlot from "./RowSlot";
+import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -432,3 +433,10 @@ export function createActionComponents(
 
     return { actionComponents, actionManager, commandManager, actionContext };
 }
+
+export const cidFactory = (futureId: string, uniqueId?: string) => {
+    if (uniqueId) {
+        return (...parts: (string)[]) => `${futureId}-${parts.join("-")}-${uniqueId}`;
+    }
+    return (...parts: (string)[]) => `${futureId}-${parts.join("-")}`;
+};

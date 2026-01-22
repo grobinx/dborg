@@ -3,6 +3,7 @@ import { Box, styled, useTheme } from "@mui/material";
 import { IRenderedSlot, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { uuidv7 } from "uuidv7";
 
 interface RenderedSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -21,6 +22,7 @@ const StyledRenderedSlotBox = styled(Box)({
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, className, tabsItemID, ...other } = props;
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
@@ -28,7 +30,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     const [, reRender] = React.useState<bigint>(0n);
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -40,7 +42,7 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {
@@ -60,7 +62,6 @@ const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
     return (
         <StyledRenderedSlotBox
             ref={rootRef}
-            //key={`${slot.id}-${refresh}`}
             className={`RenderedSlot-root ${className ?? ""}`}
             {...other}
         >

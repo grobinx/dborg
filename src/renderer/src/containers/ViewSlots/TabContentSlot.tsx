@@ -12,6 +12,7 @@ import { ActionManager } from "@renderer/components/CommandPalette/ActionManager
 import { isKeyBinding } from "@renderer/hooks/useKeyboardNavigation";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import DialogSlot from "./DialogSlot";
+import { uuidv7 } from "uuidv7";
 
 export interface TabContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -31,6 +32,7 @@ interface TabContentSlotOwnProps extends TabContentSlotProps {
 const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [content, setContent] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode,
@@ -64,26 +66,26 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     React.useImperativeHandle(tabSlotRef, () => tabSlotContext);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
                 setPendingRefresh(true);
             }
         });
-        const unregisterRefSlot = registerRefSlot(slot.id, "tabcontent", tabSlotRef);
+        const unregisterRefSlot = registerRefSlot(slotId, "tabcontent", tabSlotRef);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
         }
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         slot?.onMount?.(runtimeContext);
         return () => {
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (active && pendingRefresh) {
@@ -114,7 +116,6 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         }
 
         if (isFirstActivation || (active && refreshChanged)) {
-            console.debug("TabContentSlot updating content for slot:", slot.id, refresh);
             setContent(prev => ({
                 ...prev,
                 node: createContentComponent(slot.content!, runtimeContext, prev.ref),

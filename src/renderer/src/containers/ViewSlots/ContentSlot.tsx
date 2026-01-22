@@ -10,6 +10,7 @@ import { useRefSlot } from "./RefSlotContext";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
 import DialogSlot from "./DialogSlot";
+import { uuidv7 } from "uuidv7";
 
 export interface ContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -34,6 +35,7 @@ const StyledContentSlot = styled(Box)(() => ({
 const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, className, ...other } = useThemeProps({ name: "ContentSlot", props });
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [titleSlot, setTitleSlot] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
@@ -72,21 +74,21 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     React.useImperativeHandle(slotRef, () => contentSlotContext);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
                 setPendingRefresh(true);
             }
         });
-        const unregisterRefSlot = registerRefSlot(slot.id, "content", slotRef);
+        const unregisterRefSlot = registerRefSlot(slotId, "content", slotRef);
         slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
             unregisterRefSlot();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {
@@ -223,7 +225,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 </AppBar>
             )}
             <Box
-                key={slot.id + "-" + "inner-box"}
+                key={slotId + "-" + "inner-box"}
                 sx={{
                     width: "100%",
                     flex: 1,

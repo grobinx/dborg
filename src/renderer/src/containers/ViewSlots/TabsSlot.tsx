@@ -8,6 +8,7 @@ import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import ToolBarSlot from "./ToolBarSlot";
 import { useTheme } from "@mui/material";
+import { uuidv7 } from "uuidv7";
 
 interface TabsSlotProps {
 }
@@ -20,6 +21,7 @@ interface TabsSlotOwnProps extends TabsSlotProps {
 const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref } = props;
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [toolBar, setToolBar] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
@@ -29,7 +31,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -41,7 +43,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         const tabs: ITabSlot[] = [];
@@ -73,7 +75,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                     tab.onMount?.(runtimeContext);
                     tabs.push(tab);
                     if (defaultTabId && tab.id === defaultTabId) {
-                        queueMessage(SWITCH_PANEL_TAB, slot.id, defaultTabId);
+                        queueMessage(SWITCH_PANEL_TAB, slotId, defaultTabId);
                     }
                     return panel;
                 }
@@ -97,8 +99,8 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
 
     return (
         <TabsPanel
-            key={slot.id}
-            itemID={slot.id}
+            key={slotId}
+            itemID={slotId}
             ref={ref}
             className="TabsSlot-root"
             tabPosition={slot.position}

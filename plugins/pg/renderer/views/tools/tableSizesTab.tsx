@@ -5,6 +5,7 @@ import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
+import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 
 interface RelationSizeRecord {
     schema_name: string;
@@ -27,7 +28,7 @@ interface RelationSizeRecord {
 
 const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = cidFactory("tools-table-sizes", session.info.uniqueId);
 
     let selectedSchemaName: string | null = null;
     const setSelectedSchemaName = async () => {
@@ -40,24 +41,22 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
     };
 
     return {
-        id: cid("database-table-sizes-tab"),
+        id: cid("tab"),
         type: "tab",
         onMount: (slotContext) => {
             setSelectedSchemaName().then(() => {
-                slotContext.refresh(cid("database-table-sizes-grid"));
+                slotContext.refresh(cid("grid"));
             });
         },
         label: {
-            id: cid("database-table-sizes-tab-label"),
             type: "tablabel",
             label: t("database-table-sizes", "Relation Sizes"),
             icon: "Storage",
         },
         content: {
-            id: cid("database-table-sizes-tab-content"),
             type: "tabcontent",
             content: () => ({
-                id: cid("database-table-sizes-grid"),
+                id: cid("grid"),
                 type: "grid",
                 rows: async () => {
                     if (!selectedSchemaName) return [];
@@ -133,7 +132,7 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                 actionGroups: (slotContext) => [
                     SelectSchemaGroup(session, selectedSchemaName, (schemaName: string | null) => {
                         selectedSchemaName = schemaName;
-                        slotContext.refresh(cid("database-table-sizes-grid"));
+                        slotContext.refresh(cid("grid"));
                     })
                 ],
                 autoSaveId: `database-table-sizes-grid-${session.profile.sch_id}`,
@@ -141,13 +140,13 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
             } as IGridSlot),
         },
         toolBar: {
-            id: cid("database-table-sizes-tab-toolbar"),
+            id: cid("tab", "toolbar"),
             type: "toolbar",
             tools: () => [
                 SelectSchemaAction_ID,
                 SearchData_ID,
             ],
-            actionSlotId: cid("database-table-sizes-grid"),
+            actionSlotId: cid("grid"),
         },
     };
 };

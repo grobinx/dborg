@@ -6,6 +6,7 @@ import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ThemeColor } from "@renderer/types/colors";
 import { resolveColor } from "@renderer/utils/colors";
+import { uuidv7 } from "uuidv7";
 
 interface ProgressBarSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -34,6 +35,7 @@ const ProgressContainer = styled(Box)({
 const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const { slot, ref, className, absolute: absoluteInit, ...other } = useThemeProps({ name: "ProgressBarSlot", props });
     const theme = useTheme();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [display, setDisplay] = React.useState<boolean>(false);
     const [showPercent, setShowPercent] = React.useState<boolean>(false);
@@ -48,7 +50,7 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -60,7 +62,7 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {
@@ -98,7 +100,7 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
             const resolvedDisplay = resolveBooleanFactory(displayFactory, runtimeContext) ?? false;
             setDisplay(resolvedDisplay);
         }
-    }, [slot.id, refresh]);
+    }, [slotId, refresh]);
 
     const variant = value === null || value === undefined ? "indeterminate" : "determinate";
     const progressValue = value ?? 0;

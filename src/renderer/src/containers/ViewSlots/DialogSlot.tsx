@@ -19,6 +19,7 @@ import { useViewSlot } from "./ViewSlotContext";
 import { DialogLayoutItem } from "./dialog/DialogLayoutItem";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { useTranslation } from "react-i18next";
+import { uuidv7 } from "uuidv7";
 
 interface DialogSlotProps {
     slot: IDialogSlot;
@@ -59,6 +60,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
 
     const theme = useTheme();
     const { t } = useTranslation();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
@@ -74,7 +76,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     const [dialogValid, setDialogValid] = React.useState(false);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 forceRender(prev => prev + 1n);
             } else {
@@ -86,12 +88,12 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id, runtimeContext, registerRefresh]);
+    }, [slotId, runtimeContext, registerRefresh]);
 
     React.useEffect(() => {
         const resolved = resolveDialogLayoutItemsKindFactory(slot.items, runtimeContext) ?? [];
         setItems(resolved);
-    }, [slot.id, slot.items, refresh, runtimeContext]);
+    }, [slotId, slot.items, refresh, runtimeContext]);
 
     React.useEffect(() => {
         if (dialogVisible && pendingRefresh) {

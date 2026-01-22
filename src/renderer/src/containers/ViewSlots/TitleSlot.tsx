@@ -6,6 +6,7 @@ import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory, Slo
 import { useViewSlot } from "./ViewSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { uuidv7 } from "uuidv7";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -27,6 +28,7 @@ const StyledTitleSlot = styled(Box)(() => ({
 const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [title, setTitle] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
@@ -38,7 +40,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
              if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -50,7 +52,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (rootVisible && pendingRefresh) {

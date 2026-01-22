@@ -1,7 +1,6 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { Plugin, ConnectionViewsFactory, ConnectionView } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { View } from "@renderer/contexts/ApplicationContext";
 
 export interface IPluginManager {
     /**

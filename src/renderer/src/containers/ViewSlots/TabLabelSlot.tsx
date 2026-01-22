@@ -8,6 +8,7 @@ import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
+import { uuidv7 } from "uuidv7";
 
 interface TabLabelSlotProps {
 }
@@ -26,6 +27,7 @@ interface TabLabelSlotOwnProps extends TabLabelSlotProps {
 const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const { tabSlot, slot, ref, tabsItemID, itemID, onClose, onPin, pinned, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const theme = useTheme();
+    const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
@@ -39,7 +41,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const pinnable = resolveBooleanFactory(tabSlot.pinnable, runtimeContext);
 
     React.useEffect(() => {
-        const unregisterRefresh = registerRefresh(slot.id, (redraw) => {
+        const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
@@ -51,7 +53,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
             unregisterRefresh();
             slot?.onUnmount?.(runtimeContext);
         };
-    }, [slot.id]);
+    }, [slotId]);
 
     React.useEffect(() => {
         if (active) {

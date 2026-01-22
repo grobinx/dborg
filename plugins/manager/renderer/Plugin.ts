@@ -1,4 +1,4 @@
-import { IContainer, IView, View } from "@renderer/contexts/ApplicationContext";
+import { IContainer, IView } from "@renderer/contexts/ApplicationContext";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { IContentSlot } from "./CustomSlots";
