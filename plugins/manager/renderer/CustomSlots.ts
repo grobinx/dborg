@@ -504,7 +504,7 @@ export type TabContentSlotKind =
  */
 export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     id: string;
-    
+
     type: "tab";
     /**
      * Czy zakładka jest zamykalna (opcjonalnie).
@@ -1088,6 +1088,7 @@ export interface IDialogRow {
 }
 
 export interface IDialogTab {
+    id: string;
     /**
      * Etykieta zakładki.
      */
