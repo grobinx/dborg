@@ -601,12 +601,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         type: "tabs",
                                         tabs: [
                                             {
-                                                id: cid("role-owned-info-tab"),
+                                                id: cid("role-owned-overall-tab"),
                                                 type: "tab",
                                                 label: {
-                                                    id: cid("role-owned-info-tab-label"),
+                                                    id: cid("role-owned-overall-tab-label"),
                                                     type: "tablabel",
-                                                    label: t("info", "Info"),
+                                                    label: t("overall", "Overall"),
                                                 },
                                                 content: {
                                                     id: cid("role-owned-info"),
@@ -614,7 +614,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     content: () => ({
                                                         id: cid("role-owned-info-risk"),
                                                         type: "column",
-                                                        items: () => [
+                                                        padding: 8,
+                                                        items: [
                                                             {
                                                                 id: cid("role-owned-info-risk-analyzing"),
                                                                 type: "rendered",
@@ -631,7 +632,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                             <Typography variant="body1" component="div">
                                                                                 {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
                                                                             </Typography>
-                                                                            {analyzingRows.indexOf(selectedOwnedObject) >= 0 && (
+                                                                            {(analyzingRows.indexOf(selectedOwnedObject) >= 0 || (analyzingObject && !selectedOwnedObject.risk)) && (
                                                                                 <Typography variant="body1" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }} >
                                                                                     <slotContext.theme.icons.Loading />
                                                                                     {t("analyzing-object", "Analyzing...")}
@@ -645,7 +646,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 id: cid("role-owned-info-dependency-risk"),
                                                                 type: "rendered",
                                                                 render: () => {
-                                                                    if (!selectedOwnedObject || analyzingObject) {
+                                                                    if (!selectedOwnedObject) {
                                                                         return null;
                                                                     }
                                                                     const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
@@ -657,7 +658,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                         <Stack gap={4}>
                                                                             <Typography variant="h6" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                                                 <RiskLevelIcon level={risk.level} slotContext={slotContext} />
-                                                                                {t("overall-risk-assessment", "Overall Risk")}
+                                                                                {t("risk-assessment", "{{level}} Risk", { level: t(`risk-level-${risk.level}`, risk.level.charAt(0).toUpperCase() + risk.level.slice(1)) })}
                                                                             </Typography>
                                                                             <hr style={{ width: "98%" }} />
                                                                             {risk.reasons.map((reason, idx) => (

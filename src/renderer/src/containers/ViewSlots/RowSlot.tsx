@@ -100,6 +100,7 @@ const RowSlot: React.FC<RowSlotOwnProps> = (props) => {
                 flex: slot.size ? `0 0 ${rowHeight}` : "1 1 0",
                 maxHeight: slot.size ? rowHeight : undefined,
                 minHeight: 0,
+                padding: slot.padding,
             }}
         >
             {itemsNodes}

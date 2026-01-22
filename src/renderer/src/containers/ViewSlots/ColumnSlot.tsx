@@ -99,6 +99,8 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
                 flex: columnWidth ? `0 0 ${columnWidth}` : slot.size === "auto" ? "0 1 auto" : undefined,
                 maxWidth: columnWidth,
                 minWidth: 0,
+                padding: slot.padding,
+                overflow: !slot.size ? "auto" : "hidden",
             }}
         >
             {itemsNodes}

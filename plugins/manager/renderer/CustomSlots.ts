@@ -821,6 +821,10 @@ export interface IColumnSlot extends ICustomSlot {
      * @default undefined równa dystrybucja
      */
     size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
+    /**
+     * Odstęp wewnętrzny kolumny (np. "10px", 1).
+     */
+    padding?: string | number;
 }
 
 export interface IRowSlot extends ICustomSlot {
@@ -837,6 +841,10 @@ export interface IRowSlot extends ICustomSlot {
      * @default undefined równa dystrybucja
      */
     size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+    /**
+     * Odstęp wewnętrzny wiersza (np. "10px", 1).
+     */
+    padding?: string | number;
 }
 
 export interface IToolBarSlot extends ICustomSlot {
