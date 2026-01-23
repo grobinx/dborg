@@ -220,84 +220,101 @@ export class MetadataCollector implements api.IMetadataCollector {
             progress("tables" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
-            `select c.oid as id, n.nspname schema_name, c.relname as name, d.description,
-                    pg_catalog.pg_get_userbyid(c.relowner) as owner,
-                    case
-                        when c.relkind in ('r', 'f', 'p', 't') then 'table'
-                        when c.relkind in ('v', 'm') then 'view'
-                    end as type,
-                    case
-                        when c.relkind in ('r', 'v') then 'regular'
-                        when c.relkind = 'f' then 'foreign'
-                        when c.relkind = 'p' then 'partitioned'
-                        when c.relkind = 't' then 'temporary'
-                        when c.relkind = 'm' then 'materialized'
-                    end as kind,
-                    pg_catalog.json_build_object(
-                        'select', pg_catalog.has_table_privilege(current_user, c.oid, 'SELECT'),
-                        'insert', pg_catalog.has_table_privilege(current_user, c.oid, 'INSERT'),
-                        'update', pg_catalog.has_table_privilege(current_user, c.oid, 'UPDATE'),
-                        'delete', pg_catalog.has_table_privilege(current_user, c.oid, 'DELETE')
-                    ) as permissions
-               from pg_catalog.pg_class c
-                    join pg_catalog.pg_namespace n on c.relnamespace = n.oid
-                    left join pg_catalog.pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
-                    left join pg_catalog.pg_inherits inh on c.oid = inh.inhrelid
-              where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
-                and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
-                and (n.nspname = $1 or $1 is null)
-                and (c.relname = $2 or $2 is null)
-                and inh.inhrelid is null
-              order by schema_name`,
-            [schemaName, name]
-        );
+            `with kw as (
+                select lower(word) as word from pg_catalog.pg_get_keywords()
+                union
+                select lower(lanname) from pg_language
+            )
+            select c.oid as id, n.nspname schema_name, c.relname as name, d.description,
+                pg_catalog.pg_get_userbyid(c.relowner) as owner,
+                case
+                    when c.relkind in ('r', 'f', 'p', 't') then 'table'
+                    when c.relkind in ('v', 'm') then 'view'
+                end as type,
+                case
+                    when c.relkind in ('r', 'v') then 'regular'
+                    when c.relkind = 'f' then 'foreign'
+                    when c.relkind = 'p' then 'partitioned'
+                    when c.relkind = 't' then 'temporary'
+                    when c.relkind = 'm' then 'materialized'
+                end as kind,
+                pg_catalog.json_build_object(
+                    'select', pg_catalog.has_table_privilege(current_user, c.oid, 'SELECT'),
+                    'insert', pg_catalog.has_table_privilege(current_user, c.oid, 'INSERT'),
+                    'update', pg_catalog.has_table_privilege(current_user, c.oid, 'UPDATE'),
+                    'delete', pg_catalog.has_table_privilege(current_user, c.oid, 'DELETE')
+                ) as permissions,
+                ids.identifiers
+            from pg_catalog.pg_class c
+                join pg_catalog.pg_namespace n on c.relnamespace = n.oid
+                left join pg_catalog.pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
+                left join pg_catalog.pg_inherits inh on c.oid = inh.inhrelid
+                left join lateral (
+                    select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
+                    from regexp_matches(
+                            pg_catalog.pg_get_viewdef(c.oid, true),
+                            '([A-Za-z_][A-Za-z0-9_]*)',
+                            'g'
+                        ) as m
+                    where lower(m[1]) not in (select word from kw)
+                        and m[1] not in ('', '_')
+                        and c.relkind in ('v', 'm')  -- tylko dla widoków
+                ) ids on true
+            where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
+            and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+            and (n.nspname = $1 or $1 is null)
+            and (c.relname = $2 or $2 is null)
+            and inh.inhrelid is null
+            order by schema_name`,
+        [schemaName, name]
+    );
 
-        const exists = new Set<string>();
-        let schema: api.SchemaMetadata | undefined;
-        let schema_name: string | undefined;
+    const exists = new Set<string>();
+    let schema: api.SchemaMetadata | undefined;
+    let schema_name: string | undefined;
 
-        for (const row of rows as api.RelationMetadata[]) {
-            if (schema_name !== row["schema_name"]) {
-                if (!name && schema) {
-                    this.removeUnused(schema.relations, exists);
-                }
-                exists.clear();
-                schema = database.schemas[row["schema_name"]];
-                schema_name = row["schema_name"];
+    for (const row of rows as api.RelationMetadata[]) {
+        if (schema_name !== row["schema_name"]) {
+            if (!name && schema) {
+                this.removeUnused(schema.relations, exists);
             }
-
-            delete row["schema_name"];
-            if (schema) {
-                exists.add(row.name);
-                if (schema.relations[row.name]) {
-                    schema.relations[row.name] = {
-                        ...schema.relations[row.name],
-                        ...row,
-                    };
-                }
-                else {
-                    schema.relations[row.name] = {
-                        ...row,
-                        columns: [],
-                    };
-                }
-            }
+            exists.clear();
+            schema = database.schemas[row["schema_name"]];
+            schema_name = row["schema_name"];
         }
 
-        if (rows.length === 0 && schemaName && name) {
-            delete schema?.[schemaName].tables[name];
-        }
-
-        if (rows.length === 0 && !schemaName && name) {
-            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-                delete schema.relations[name];
+        delete row["schema_name"];
+        if (schema) {
+            exists.add(row.name);
+            if (schema.relations[row.name]) {
+                schema.relations[row.name] = {
+                    ...schema.relations[row.name],
+                    ...row,
+                };
             }
-        }
-
-        if (!name && schema) {
-            this.removeUnused(schema.relations, exists);
+            else {
+                schema.relations[row.name] = {
+                    ...row,
+                    columns: [],
+                };
+            }
         }
     }
+
+    if (rows.length === 0 && schemaName && name) {
+        delete schema?.[schemaName].tables[name];
+    }
+
+    if (rows.length === 0 && !schemaName && name) {
+        for (const schema of Object.values(database.schemas).filter(s => s.default)) {
+            delete schema.relations[name];
+        }
+    }
+
+    if (!name && schema) {
+        this.removeUnused(schema.relations, exists);
+    }
+}
 
     async updateRoutines(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
         const database = this.connectedDatabase();
@@ -309,33 +326,50 @@ export class MetadataCollector implements api.IMetadataCollector {
         const v11OrHigher = this.version?.major !== undefined && this.version.major >= 11;
 
         const { rows } = await this.client!.query(
-            `select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, f.proname as name,
-                    ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
-                    case 
-                        when t.typname = 'trigger' then 'trigger'
-                        when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
-                        when ${v11OrHigher ? "f.prokind = 'w'" : "f.proiswindow"} then 'window'
-                        ${v11OrHigher ? "when f.prokind in ('f', 'p') then 'regular'" : "else 'regular'"}
-                    end as kind,
-                    json_build_object(
-                        'execute', has_function_privilege(f.oid, 'EXECUTE')
-                    ) AS permissions,
-                    pg_catalog.pg_get_function_result(f.oid) as "returnType",
-                    d.description as description,
-                    (select json_agg(row_to_json(a))
-                        from (select f.oid::bigint *100 +n id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
-                                    case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
-                                    trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs -n +1) +1 end]) as "defaultValue"
-                                from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments
-                from pg_catalog.pg_proc f
-                    left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
-                    left join pg_catalog.pg_type t on f.prorettype = t.oid
-                    left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
-                where (n.nspname = $1 or $1 is null)
-                    and (f.proname = $2 or $2 is null)
-                    and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
-                ${v11OrHigher ? "and f.prokind in ('a', 'w', 'f', 'p')" : ""}
-              order by schema_name, name`,
+            `with kw as (
+                select lower(word) as word from pg_catalog.pg_get_keywords()
+                union
+                select lower(lanname) from pg_language
+            )
+            select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, f.proname as name,
+                ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
+                case 
+                    when t.typname = 'trigger' then 'trigger'
+                    when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
+                    when ${v11OrHigher ? "f.prokind = 'w'" : "f.proiswindow"} then 'window'
+                    ${v11OrHigher ? "when f.prokind in ('f', 'p') then 'regular'" : "else 'regular'"}
+                end as kind,
+                json_build_object(
+                    'execute', has_function_privilege(f.oid, 'EXECUTE')
+                ) AS permissions,
+                pg_catalog.pg_get_function_result(f.oid) as "returnType",
+                d.description as description,
+                (select json_agg(row_to_json(a))
+                    from (select f.oid::bigint *100 +n id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
+                                case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
+                                trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs -n +1) +1 end]) as "defaultValue"
+                            from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments,
+                ids.identifiers
+            from pg_catalog.pg_proc f
+                left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
+                left join pg_catalog.pg_type t on f.prorettype = t.oid
+                left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
+                left join lateral (
+                    select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
+                    from regexp_matches(
+                            -- użyj prosrc, jeśli wolisz bez deklaracji; możesz zamienić na pg_get_functiondef(f.oid)
+                            f.prosrc,
+                            '([A-Za-z_][A-Za-z0-9_]*)',  -- tylko identyfikatory, bez stringów
+                            'g'
+                        ) as m
+                    where lower(m[1]) not in (select word from kw)  -- odfiltruj słowa kluczowe i języki
+                        and m[1] not in ('', '_')
+                    ) ids on true
+            where (n.nspname = $1 or $1 is null)
+                and (f.proname = $2 or $2 is null)
+                and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+            ${v11OrHigher ? "and f.prokind in ('a', 'w', 'f', 'p')" : ""}
+            order by schema_name, name`,
             [schemaName, name]
         );
 

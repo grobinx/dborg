@@ -1,5 +1,3 @@
-import { Connection } from "src/main/api/db";
-
 /** Structure describing multiple databases */
 export type DatabasesMetadata = Record<string, DatabaseMetadata>;
 
@@ -166,6 +164,9 @@ export interface RoutineMetadata {
     /** List of function arguments */
     arguments: RoutineArgumentMetadata[];
 
+    /** List of identifiers for the routine code */
+    identifiers?: string[];
+
     /** Custom data */
     data?: Record<string, any>;
 }
@@ -286,6 +287,9 @@ export interface RelationMetadata {
 
     /** Custom data */
     data?: Record<string, any>;
+
+    /** List of identifiers (for views) */
+    identifiers?: string[];
 }
 
 export type ColumnPermissions = {
