@@ -43,7 +43,7 @@ export async function analyzeDependencies(
     name: string,
 ): Promise<DependencyInfo> {
     let targetOidQuery = '';
-    
+
     // Zapytanie do znalezienia OID obiektu
     switch (objtype) {
         case 'table':
@@ -254,7 +254,7 @@ export async function analyzeDependencies(
     // Bezpieczny do dropnięcia jeśli:
     // 1. Nie ma żadnych zależności wychodzących (dependent_objects pusta)
     // 2. Lub wszystkie zależności są auto/internal/pin (nie normal/extension)
-    const safe_to_drop = dependent_objects.length === 0 || 
+    const safe_to_drop = dependent_objects.length === 0 ||
         dependent_objects.every(d => ['auto', 'internal', 'pin'].includes(d.dependency_type));
 
     return {
@@ -268,7 +268,7 @@ export async function analyzeDependencies(
 export interface CodeUsage {
     type: 'view' | 'function' | 'trigger' | 'constraint' | 'index' | 'rule';
     location: string;
-    code_snippet: string;
+    code_snippet?: string;
     full_definition?: string;
 }
 
@@ -291,99 +291,35 @@ export async function findUsagesInCode(
     schema: string,
     name: string
 ): Promise<CodeUsage[]> {
-    const namePattern = `%${name}%`;
-    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+    const databases = await session.getMetadata();
+    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
 
-    // Warunek dla funkcji zależny od wersji
-    const funcCondition = versionNumber >= 110000
-        ? "p.prokind IN ('f','p')"  // PG 11+
-        : "NOT p.proisagg AND NOT p.proiswindow";  // PG 9.6-10
+    const usages: CodeUsage[] = [];
 
-    const sql = `
-        -- Widoki
-        SELECT 
-            'view'::text as type,
-            n.nspname || '.' || c.relname as location,
-            pg_get_viewdef(c.oid, true) as definition
-        FROM pg_class c
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE c.relkind = 'v' 
-        AND pg_get_viewdef(c.oid, true) ILIKE $1
+    for (const schema of Object.values(schemas || {})) {
+        for (const routines of Object.values(schema.routines || {})) {
+            for (const overload of routines) {
+                if (overload.identifiers?.some(word => word.toLowerCase() === name.toLowerCase())) {
+                    usages.push({
+                        type: "function",
+                        location: overload.identity!,
+                    });
+                }
+            }
+        }
+        for (const view of Object.values(schema.relations || {})) {
+            if (view.type === 'view') {
+                if (view.identifiers?.some(word => word.toLowerCase() === name.toLowerCase())) {
+                    usages.push({
+                        type: 'view',
+                        location: view.identity!,
+                    });
+                }
+            }
+        }
+    }
 
-        UNION ALL
-
-        -- Funkcje
-        SELECT 
-            'function'::text as type,
-            n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as location,
-            pg_get_functiondef(p.oid) as definition
-        FROM pg_proc p
-        JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE ${funcCondition}
-          AND pg_get_functiondef(p.oid) ILIKE $1
-
-        UNION ALL
-
-        -- Triggery
-        SELECT 
-            'trigger'::text as type,
-            n.nspname || '.' || c.relname || ' -> ' || t.tgname as location,
-            pg_get_triggerdef(t.oid) as definition
-        FROM pg_trigger t
-        JOIN pg_class c ON c.oid = t.tgrelid
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE NOT t.tgisinternal
-        AND pg_get_triggerdef(t.oid) ILIKE $1
-
-        UNION ALL
-
-        -- Constraints (CHECK)
-        SELECT 
-            'constraint'::text as type,
-            n.nspname || '.' || c.relname || ' -> ' || con.conname as location,
-            pg_get_constraintdef(con.oid) as definition
-        FROM pg_constraint con
-        JOIN pg_class c ON c.oid = con.conrelid
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE con.contype = 'c'
-        AND pg_get_constraintdef(con.oid) ILIKE $1
-
-        UNION ALL
-
-        -- Indeksy częściowe
-        SELECT 
-            'index'::text as type,
-            n.nspname || '.' || c.relname || ' -> ' || i.relname as location,
-            pg_get_indexdef(i.oid) as definition
-        FROM pg_index idx
-        JOIN pg_class i ON i.oid = idx.indexrelid
-        JOIN pg_class c ON c.oid = idx.indrelid
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE idx.indpred IS NOT NULL
-        AND pg_get_indexdef(i.oid) ILIKE $1
-
-        UNION ALL
-
-        -- Rules
-        SELECT 
-            'rule'::text as type,
-            n.nspname || '.' || c.relname || ' -> ' || r.rulename as location,
-            pg_get_ruledef(r.oid) as definition
-        FROM pg_rewrite r
-        JOIN pg_class c ON c.oid = r.ev_class
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE r.rulename != '_RETURN'
-        AND pg_get_ruledef(r.oid) ILIKE $1
-    `;
-
-    const { rows } = await session.query<any>(sql, [namePattern]);
-    
-    return rows.map(row => ({
-        type: row.type,
-        location: row.location,
-        code_snippet: row.definition.substring(0, 200) + (row.definition.length > 200 ? '...' : ''),
-        full_definition: row.definition
-    }));
+    return usages;
 }
 
 export interface TableStats {
@@ -439,16 +375,16 @@ export async function getTableStats(
         WHERE n.nspname = $1 AND c.relname = $2
         AND c.relkind IN ('r', 'p')
     `;
-    
+
     const { rows } = await session.query<any>(sql, [schema, tableName]);
     if (rows.length === 0) return null;
-    
+
     return rows[0];
 }
 
 export interface SecurityContext {
     is_security_definer: boolean;
-    function_owner: string | null;
+    owner: string | null;
     execute_as: 'invoker' | 'definer';
     language: string;
     volatility: 'immutable' | 'stable' | 'volatile';
@@ -472,39 +408,39 @@ export interface SecurityContext {
 export async function checkSecurityContext(
     session: IDatabaseSession,
     objtype: ObjType,
-    schema: string,
+    schemaName: string,
+    name: string,
     identity: string,
 ): Promise<SecurityContext | null> {
     if (objtype !== 'function') {
         return null;
     }
 
-    const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
+    const databases = await session.getMetadata();
+    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
 
-    // Dla funkcji name zawiera sygnaturę
-    const sql = `
-        SELECT 
-            p.prosecdef as is_security_definer,
-            pg_get_userbyid(p.proowner) as function_owner,
-            CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END as execute_as,
-            l.lanname as language,
-            CASE p.provolatile
-                WHEN 'i' THEN 'immutable'
-                WHEN 's' THEN 'stable'
-                WHEN 'v' THEN 'volatile'
-            END as volatility,
-            ${versionNumber >= 90600 ? 'p.proparallel != \'u\' as parallel_safe' : 'false as parallel_safe'}
-        FROM pg_proc p
-        JOIN pg_namespace n ON n.oid = p.pronamespace
-        JOIN pg_language l ON l.oid = p.prolang
-        WHERE n.nspname = $1 
-        AND format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) = $2::varchar
-    `;
+    const usages: CodeUsage[] = [];
 
-    const { rows } = await session.query<any>(sql, [schema, identity]);
-    if (rows.length === 0) return null;
+    const schema = schemas?.[schemaName];
+    if (schema) {
+        const routines = schema.routines?.[name];
+        if (routines) {
+            for (const overload of routines) {
+                if (overload.identity === identity) {
+                    return {
+                        is_security_definer: overload.data?.is_security_definer || false,
+                        owner: overload.owner || null,
+                        execute_as: overload.data?.execute_as || 'invoker',
+                        language: overload.data?.language || 'unknown',
+                        volatility: overload.data?.volatility || 'volatile',
+                        parallel_safe: overload.data?.parallel_safe || false,
+                    };
+                }
+            }
+        }
+    }
 
-    return rows[0];
+    return null;
 }
 
 export type RiskLevel = "none" | "low" | "medium" | "high" | "critical";
@@ -695,7 +631,7 @@ export function assessSecurityContextRisk(securityContext: SecurityContext | nul
     const warnings: string[] = [];
 
     // SECURITY DEFINER z superuserem - krytyczne
-    if (securityContext.is_security_definer && securityContext.function_owner === "postgres") {
+    if (securityContext.is_security_definer && securityContext.owner === "postgres") {
         warnings.push(t("security-definer-postgres-owner", "SECURITY DEFINER owned by postgres"));
         warnings.push(t("function-has-superuser-privileges", "Function has superuser privileges"));
         reasons.push(t("function-has-admin-privileges", "Function has administrative privileges"));
@@ -723,7 +659,7 @@ export function assessSecurityContextRisk(securityContext: SecurityContext | nul
 
     // SECURITY DEFINER w ogóle
     if (securityContext.is_security_definer) {
-        warnings.push(t("security-definer-general", "SECURITY DEFINER: Executes as {{owner}}", { owner: securityContext.function_owner }));
+        warnings.push(t("security-definer-general", "SECURITY DEFINER: Executes as {{owner}}", { owner: securityContext.owner }));
         reasons.push(t("function-has-different-user-privileges", "Function has privileges of a different user"));
         return { level: "medium", reasons, warnings };
     }
@@ -767,11 +703,8 @@ export interface ForeignKeyDependency {
     to_schema: string;
     to_table: string;
     to_columns: string;
-    on_update: string;
-    on_delete: string;
-    match_type: string;
-    is_deferrable: boolean;
-    is_deferred: boolean;
+    on_update?: string;
+    on_delete?: string;
     [key: string]: any;
 }
 
@@ -781,117 +714,60 @@ export interface ForeignKeyDependency {
  * Zwraca FK wychodzące (OUT) - z tej tabeli do innych
  * Zwraca FK przychodzące (IN) - z innych tabel do tej
  * @param session 
- * @param schema 
+ * @param schemaName 
  * @param tableName 
  * @returns 
  */
 export async function analyzeForeignKeyDependencies(
     session: IDatabaseSession,
-    schema: string,
+    schemaName: string,
     tableName: string
 ): Promise<ForeignKeyDependency[]> {
-    const sql = `
-        WITH ct AS (
-            SELECT c.oid, n.nspname as nsp, c.relname as rel
-            FROM pg_class c
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE n.nspname = $1 AND c.relname = $2
-        )
-        SELECT *
-        FROM (
-            -- FK wychodzące z bieżącej tabeli
-            SELECT
-                'out'::text as direction,
-                con.conname as constraint_name,
-                n.nspname as from_schema,
-                c.relname as from_table,
-                COALESCE(array_to_string(ARRAY(
-                    SELECT att.attname
-                    FROM unnest(con.conkey) WITH ORDINALITY k(attnum, ord)
-                    JOIN pg_attribute att ON att.attrelid = c.oid AND att.attnum = k.attnum
-                    ORDER BY k.ord
-                ), ', '), '') as from_columns,
-                rn.nspname as to_schema,
-                rc.relname as to_table,
-                COALESCE(array_to_string(ARRAY(
-                    SELECT ratt.attname
-                    FROM unnest(con.confkey) WITH ORDINALITY rk(attnum, ord)
-                    JOIN pg_attribute ratt ON ratt.attrelid = rc.oid AND ratt.attnum = rk.attnum
-                    ORDER BY rk.ord
-                ), ', '), '') as to_columns,
-                CASE con.confupdtype
-                    WHEN 'a' THEN 'no action' WHEN 'r' THEN 'restrict'
-                    WHEN 'c' THEN 'cascade'   WHEN 'n' THEN 'set null'
-                    WHEN 'd' THEN 'set default' ELSE con.confupdtype::text 
-                END as on_update,
-                CASE con.confdeltype
-                    WHEN 'a' THEN 'no action' WHEN 'r' THEN 'restrict'
-                    WHEN 'c' THEN 'cascade'   WHEN 'n' THEN 'set null'
-                    WHEN 'd' THEN 'set default' ELSE con.confdeltype::text 
-                END as on_delete,
-                CASE con.confmatchtype
-                    WHEN 'f' THEN 'full' WHEN 'p' THEN 'partial'
-                    WHEN 's' THEN 'simple' ELSE con.confmatchtype::text 
-                END as match_type,
-                con.condeferrable as is_deferrable,
-                con.condeferred as is_deferred
-            FROM pg_constraint con
-            JOIN ct t ON con.conrelid = t.oid
-            JOIN pg_class c ON c.oid = con.conrelid
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            JOIN pg_class rc ON rc.oid = con.confrelid
-            JOIN pg_namespace rn ON rn.oid = rc.relnamespace
-            WHERE con.contype = 'f'
+    const databases = await session.getMetadata();
+    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
 
-            UNION ALL
+    const foreignKeys: ForeignKeyDependency[] = [];
 
-            -- FK przychodzące do bieżącej tabeli
-            SELECT
-                'in'::text as direction,
-                con.conname as constraint_name,
-                n.nspname as from_schema,
-                c.relname as from_table,
-                COALESCE(array_to_string(ARRAY(
-                    SELECT att.attname
-                    FROM unnest(con.conkey) WITH ORDINALITY k(attnum, ord)
-                    JOIN pg_attribute att ON att.attrelid = c.oid AND att.attnum = k.attnum
-                    ORDER BY k.ord
-                ), ', '), '') as from_columns,
-                t.nsp as to_schema,
-                t.rel as to_table,
-                COALESCE(array_to_string(ARRAY(
-                    SELECT ratt.attname
-                    FROM unnest(con.confkey) WITH ORDINALITY rk(attnum, ord)
-                    JOIN pg_attribute ratt ON ratt.attrelid = t.oid AND ratt.attnum = rk.attnum
-                    ORDER BY rk.ord
-                ), ', '), '') as to_columns,
-                CASE con.confupdtype
-                    WHEN 'a' THEN 'no action' WHEN 'r' THEN 'restrict'
-                    WHEN 'c' THEN 'cascade'   WHEN 'n' THEN 'set null'
-                    WHEN 'd' THEN 'set default' ELSE con.confupdtype::text 
-                END as on_update,
-                CASE con.confdeltype
-                    WHEN 'a' THEN 'no action' WHEN 'r' THEN 'restrict'
-                    WHEN 'c' THEN 'cascade'   WHEN 'n' THEN 'set null'
-                    WHEN 'd' THEN 'set default' ELSE con.confdeltype::text 
-                END as on_delete,
-                CASE con.confmatchtype
-                    WHEN 'f' THEN 'full' WHEN 'p' THEN 'partial'
-                    WHEN 's' THEN 'simple' ELSE con.confmatchtype::text 
-                END as match_type,
-                con.condeferrable as is_deferrable,
-                con.condeferred as is_deferred
-            FROM pg_constraint con
-            JOIN ct t ON con.confrelid = t.oid
-            JOIN pg_class c ON c.oid = con.conrelid
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE con.contype = 'f'
-        ) q
-        ORDER BY direction, from_schema, from_table, constraint_name
-    `;
+    for (const schema of Object.values(schemas || {})) {
+        for (const relation of Object.values(schema.relations || {})) {
+            if (relation.type === 'table') {
+                if (relation.foreignKeys) {
+                    for (const fk of relation.foreignKeys) {
+                        if (fk.referencedSchema === schema.name && fk.referencedTable === tableName) {
+                            foreignKeys.push({
+                                direction: 'in',
+                                constraint_name: fk.name,
+                                from_schema: schema.name,
+                                from_table: relation.name,
+                                from_columns: fk.column.join(', '),
+                                to_schema: fk.referencedSchema,
+                                to_table: fk.referencedTable,
+                                to_columns: fk.referencedColumn.join(', '),
+                                on_update: fk.onUpdate,
+                                on_delete: fk.onDelete,
+                            });
+                        }
+                        if (schema.name === schemaName && relation.name === tableName) {
+                            foreignKeys.push({
+                                direction: 'out',
+                                constraint_name: fk.name,
+                                from_schema: schema.name,
+                                from_table: relation.name,
+                                from_columns: fk.column.join(', '),
+                                to_schema: fk.referencedSchema,
+                                to_table: fk.referencedTable,
+                                to_columns: fk.referencedColumn.join(', '),
+                                on_update: fk.onUpdate,
+                                on_delete: fk.onDelete,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    const { rows } = await session.query<ForeignKeyDependency>(sql, [schema, tableName]);
-    return rows;
+    return foreignKeys;
 }
 
 /**
@@ -953,12 +829,12 @@ export function assessOverallRisk(
     fkRisk?: RiskAssessment
 ): RiskAssessment {
     const riskLevels: RiskLevel[] = [
-        depRisk.level, 
-        codeRisk.level, 
-        statsRisk.level, 
+        depRisk.level,
+        codeRisk.level,
+        statsRisk.level,
         securityRisk.level
     ];
-    
+
     if (fkRisk) {
         riskLevels.push(fkRisk.level);
     }

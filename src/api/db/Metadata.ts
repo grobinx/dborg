@@ -18,6 +18,9 @@ export interface DatabaseMetadata {
     /** Database name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Description of the database */
     description?: string;
 
@@ -72,6 +75,9 @@ export interface SchemaMetadata {
     /** Schema name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Description of the schema */
     description?: string;
 
@@ -113,6 +119,9 @@ export interface PackageMetadata {
     /** Package name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Description of the package */
     description?: string;
 
@@ -133,7 +142,7 @@ export interface PackageMetadata {
 }
 
 export type RoutineType = "function" | "procedure";
-export type RoutineKind = "trigger" | "aggregate" | "window" | "set-returning";
+export type RoutineKind = "regular" | "trigger" | "aggregate" | "window" | "set-returning";
 
 /** Structure describing a function overload */
 export interface RoutineMetadata {
@@ -142,6 +151,9 @@ export interface RoutineMetadata {
 
     /** Function name */
     name: string;
+
+    /** Unique object identity */
+    identity?: string;
 
     /** Routine type */
     type: RoutineType;
@@ -252,6 +264,9 @@ export interface RelationMetadata {
     /** Table name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Type of the relation */
     type?: RelationType;
 
@@ -311,6 +326,9 @@ export interface ColumnMetadata {
     /** Column name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Description of the column */
     description?: string;
 
@@ -352,6 +370,9 @@ export interface ForeignKeyMetadata {
     /** Foreign key name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Column name in the relation */
     column: string[];
 
@@ -385,6 +406,9 @@ export interface IndexColumnMetadata {
     /** Column name in the index */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Sort order (e.g., ASC, DESC) */
     order?: SortOrder;
 
@@ -417,6 +441,9 @@ export interface IndexMetadata {
     /** Index name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** Description of the index */
     description?: string;
 
@@ -443,6 +470,9 @@ export interface PrimaryKeyMetadata {
     /** Primary key name */
     name: string;
 
+    /** Unique object identity */
+    identity?: string;
+
     /** List of columns in the primary key */
     columns: string[];
 
@@ -461,6 +491,9 @@ export interface ConstraintMetadata {
 
     /** Constraint name */
     name: string;
+
+    /** Unique object identity */
+    identity?: string;
 
     /** Description of the constraint */
     description?: string;
@@ -494,6 +527,9 @@ export interface SequenceMetadata {
 
     /** Sequence name */
     name: string;
+
+    /** Unique object identity */
+    identity?: string;
 
     /** Description of the sequence */
     description?: string;
@@ -541,6 +577,9 @@ export interface TypeMetadata {
 
     /** Type name */
     name: string;
+
+    /** Unique object identity */
+    identity?: string;
 
     /** Description of the type */
     description?: string;

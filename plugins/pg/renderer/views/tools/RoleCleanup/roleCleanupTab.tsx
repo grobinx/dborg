@@ -134,7 +134,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                 ? getTableStats(session, obj.schema!, obj.name)
                 : Promise.resolve(null),
             obj.objtype === 'function'
-                ? checkSecurityContext(session, obj.objtype, obj.schema!, obj.identity)
+                ? checkSecurityContext(session, obj.objtype, obj.schema!, obj.name, obj.identity)
                 : Promise.resolve(null)
         ]);
 
@@ -214,6 +214,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             actionGroups: (slotContext) => [
                 SelectRoleGroup(session, () => selectedRole, (roleName: string | null) => {
                     selectedRole = roleName;
+                    analyzingObject = false;
                     slotContext.refresh(cid("selected-role-label"));
                     slotContext.refresh(cid("owned-grid"));
                     slotContext.refresh(cid("privs-grid"));
@@ -254,6 +255,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             if (!selectedRole || isSuperuser === null) return [];
                                             ownedCache = await listOwnedObjects(session, selectedRole, versionNumber, isSuperuser);
                                             objectCache = {};
+                                            analyzingObject = false;
                                             editorRefresh(slotContext);
                                             return ownedCache;
                                         },
@@ -549,14 +551,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     }
                                                     analyzingObject = true;
                                                     slotContext.refresh(cid("schemas-toolbar"));
+                                                    let tc = Date.now() -500;
                                                     try {
                                                         for (const [index, row] of ownedCache.entries()) {
                                                             analyzingProgress = Math.round(((index + 1) / ownedCache.length) * 100);
                                                             analyzingRows.push(row);
-                                                            slotContext.refresh(cid("owned-grid"), "only");
-                                                            slotContext.refresh(cid("owned-progress"));
-                                                            slotContext.refresh(cid("owned-toolbar"));
-                                                            slotContext.refresh(cid("owned-info"));
+                                                            if (Date.now() - tc > 500) {
+                                                                slotContext.refresh(cid("owned-grid"), "only");
+                                                                slotContext.refresh(cid("owned-progress"));
+                                                                slotContext.refresh(cid("owned-toolbar"));
+                                                                slotContext.refresh(cid("owned-info"));
+                                                                tc = Date.now();
+                                                            }
                                                             try {
                                                                 const key = objectDllKey(row.objtype, row.schema || null, row.identity);
                                                                 const result = await analyzeObject(row);
@@ -570,7 +576,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 if (index !== -1) {
                                                                     analyzingRows.splice(index, 1);
                                                                 }
-                                                                slotContext.refresh(cid("owned-grid"), "only");
                                                             }
                                                             if (!analyzingObject) {
                                                                 break;

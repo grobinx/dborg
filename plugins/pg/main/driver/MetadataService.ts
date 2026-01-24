@@ -1,10 +1,9 @@
-import { Connection } from 'src/main/api/db';
 import * as api from '../../../../src/api/db';
-import Version from 'src/api/version';
+import Version, { versionToNumber } from '../../../../src/api/version';
 import pg from 'pg';
 import fs from 'fs/promises';
 import zlib from "zlib";
-import { version as dborgVersion, dborgReleaseName, version } from '../../../../src/api/consts';
+import { version } from '../../../../src/api/consts';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private databases: api.DatabasesMetadata = {};
@@ -107,6 +106,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const { rows } = await this.client!.query(
             `select d.oid as id, 
                     d.datname as name, 
+                    format('%I', d.datname) as identity,
                     pg_catalog.pg_get_userbyid(d.datdba) as owner,
                     d.datname = current_database() as connected,
                     pg_catalog.shobj_description(d.oid, 'pg_database') as description,
@@ -168,6 +168,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const { rows } = await this.client!.query(
             `select n.oid as id,
                     n.nspname as name,
+                    format('%I', n.nspname) as identity,
                     pg_catalog.pg_get_userbyid(n.nspowner) as owner, 
                     pg_catalog.obj_description(n.oid, 'pg_namespace') as description,
                     n.nspname = any (current_schemas(true)) as default,
@@ -225,7 +226,10 @@ export class MetadataCollector implements api.IMetadataCollector {
                 union
                 select lower(lanname) from pg_language
             )
-            select c.oid as id, n.nspname schema_name, c.relname as name, d.description,
+            select c.oid as id, n.nspname schema_name, 
+                c.relname as name, 
+                format('%I', c.relname) as identity,
+                d.description,
                 pg_catalog.pg_get_userbyid(c.relowner) as owner,
                 case
                     when c.relkind in ('r', 'f', 'p', 't') then 'table'
@@ -324,6 +328,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
 
         const v11OrHigher = this.version?.major !== undefined && this.version.major >= 11;
+        const versionNumber = versionToNumber(this.version?.toString() ?? "");
 
         const { rows } = await this.client!.query(
             `with kw as (
@@ -331,7 +336,9 @@ export class MetadataCollector implements api.IMetadataCollector {
                 union
                 select lower(lanname) from pg_language
             )
-            select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, f.proname as name,
+            select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, 
+                f.proname as name,
+                format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
                 ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
                 case 
                     when t.typname = 'trigger' then 'trigger'
@@ -349,8 +356,20 @@ export class MetadataCollector implements api.IMetadataCollector {
                                 case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
                                 trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs -n +1) +1 end]) as "defaultValue"
                             from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments,
-                ids.identifiers
+                ids.identifiers,
+                json_build_object(
+                    'is_security_definer', f.prosecdef,
+                    'execute_as', CASE WHEN f.prosecdef THEN 'definer' ELSE 'invoker' END,
+                    'language', l.lanname,
+                    'volatility', CASE f.provolatile
+                        WHEN 'i' THEN 'immutable'
+                        WHEN 's' THEN 'stable'
+                        WHEN 'v' THEN 'volatile'
+                    END,
+                    'parallel_safe', ${versionNumber >= 90600 ? 'f.proparallel != \'u\'' : 'false'}
+                ) as data
             from pg_catalog.pg_proc f
+                join pg_catalog.pg_language l on f.prolang = l.oid
                 left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
                 left join pg_catalog.pg_type t on f.prorettype = t.oid
                 left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
@@ -443,6 +462,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                         json_agg(json_build_object(
                             'id', cl.oid::bigint *10000 +att.attnum, 
                             'name', att.attname, 
+                            'identity', format('%I.%I', cl.relname, att.attname),
                             'no', att.attnum, 
                             'dataType', att.atttypid::regtype::text,
                             'displayType', pg_catalog.format_type(att.atttypid, att.atttypmod),
@@ -496,6 +516,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 json_agg(json_build_object(
                     'id', con.oid,
                     'name', con.conname,
+                    'identity', format('%I', con.conname),
                     'column', array(select a.attname from pg_attribute a where a.attnum = any(con.conkey) and a.attrelid = cl.oid),
                     'referencedSchema', rn.nspname,
                     'referencedTable', rcl.relname,
@@ -565,6 +586,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ct.relname as relation_name,
                     ix.indexrelid as id,
                     ci.relname as name,
+                    format('%I', ci.relname) as identity,
                     pg_catalog.obj_description(ix.indexrelid, 'pg_class') as description,
                     json_agg(json_build_object(
                         'name', a.attname,
@@ -672,6 +694,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ct.relname as relation_name,
                     con.oid as id,
                     con.conname as name,
+                    format('%I', con.conname) as identity,
                     pg_catalog.obj_description(con.oid, 'pg_constraint') as description,
                     case con.contype
                         when 'c' then 'check'
@@ -717,6 +740,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 n.nspname as schema_name,
                 t.oid as id,
                 t.typname as name,
+                format('%I', t.typname) as identity,
                 pg_catalog.obj_description(t.oid, 'pg_type') as description,
                 pg_catalog.pg_get_userbyid(t.typowner) as owner,
                 case t.typtype
@@ -827,6 +851,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 n.nspname as schema_name,
                 seq.oid as id,
                 seq.relname as name,
+                format('%I', seq.relname) as identity,
                 pg_catalog.pg_get_userbyid(seq.relowner) as owner,
                 pg_catalog.obj_description(seq.oid, 'pg_class') as description,
                 s.seqincrement as increment,

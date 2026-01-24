@@ -4,8 +4,8 @@ import dborgPackage from '../../package.json';
 export const version: Version = {
     major: 1,
     minor: 0,
-    release: 6,
-    build: 405,
+    release: 7,
+    build: 406,
 
     toString: function () {
         return `${this.major}.${this.minor}.${this.release}.${this.build}`;
