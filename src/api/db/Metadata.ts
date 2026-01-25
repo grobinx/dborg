@@ -538,7 +538,7 @@ export interface SequenceMetadata {
     owner?: string;
 
     /** Permissions assigned to the sequence */
-    permissions?: Permissions;
+    permissions?: SequencePermissions;
 
     /** Increment value */
     increment?: number;

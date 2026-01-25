@@ -1,887 +1,741 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { ObjType } from "./roleAudit";
-import { versionToNumber } from "../../../../../../src/api/version";
+import { RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata, DatabaseMetadata } from "src/api/db";
 import { t } from "i18next";
 
-export interface DependencyInfo {
-    dependent_objects: Array<{
-        objtype: string;
-        schema: string | null;
+export type RiskLevel = "low" | "medium" | "high" | "critical";
+
+export interface OperationRisk {
+    level: RiskLevel;
+    message: string;
+    details: string[];
+}
+
+export interface ObjectSafetyAssessment {
+    canDelete: OperationRisk;
+    canMove: OperationRisk;
+    canChangeOwner: OperationRisk;
+}
+
+export interface AnalysisResult {
+    found: boolean;
+    objectType?: "relation" | "routine" | "schema" | "sequence" | "type";
+    objectName?: string;
+    schemaName?: string;
+    assessment?: ObjectSafetyAssessment;
+    usedInIdentifiers?: {
+        type: "relation" | "routine";
         name: string;
-        identity: string;
-        dependency_type: 'normal' | 'auto' | 'internal' | 'pin' | 'extension';
-    }>;
-    referenced_by: Array<{
-        objtype: string;
-        schema: string | null;
-        name: string;
-        identity: string;
-        dependency_type: 'normal' | 'auto' | 'internal' | 'pin' | 'extension';
-    }>;
-    requires_cascade: boolean;
-    safe_to_drop: boolean;
+        location: string;
+    }[];
+    error?: string;
 }
 
-/**
- * analyzeDependencies - analizuje zależności obiektów używając pg_depend:
- *
- * Zwraca obiekty zależne (wymagające CASCADE)
- * Zwraca obiekty, od których dany obiekt zależy
- * Określa czy DROP wymaga CASCADE
- * Ocenia bezpieczeństwo usunięcia
- * @param session 
- * @param objtype 
- * @param schema 
- * @param name 
- * @param versionNumber 
- * @returns 
- */
-export async function analyzeDependencies(
-    session: IDatabaseSession,
-    objtype: ObjType,
-    schema: string | null,
-    name: string,
-): Promise<DependencyInfo> {
-    let targetOidQuery = '';
+export class ObjectSafetyAnalyzer {
+    /**
+     * Ocenia bezpieczeństwo usuwania obiektu
+     */
+    assessDeletion(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
 
-    // Zapytanie do znalezienia OID obiektu
-    switch (objtype) {
-        case 'table':
-        case 'view':
-        case 'matview':
-        case 'sequence':
-        case 'foreign_table':
-            targetOidQuery = `
-                SELECT c.oid 
-                FROM pg_class c 
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                WHERE n.nspname = $1 AND c.relname = $2
-            `;
-            break;
-        case 'function':
-            // Dla funkcji name zawiera sygnaturę
-            targetOidQuery = `
-                SELECT p.oid
-                FROM pg_proc p
-                JOIN pg_namespace n ON n.oid = p.pronamespace
-                WHERE n.nspname = $1 
-                and format('%I(%s)', p.proname, pg_get_function_identity_arguments(p.oid)) = $2
-            `;
-            break;
-        case 'type':
-        case 'domain':
-            targetOidQuery = `
-                SELECT t.oid
-                FROM pg_type t
-                JOIN pg_namespace n ON n.oid = t.typnamespace
-                WHERE n.nspname = $1 AND t.typname = $2
-            `;
-            break;
-        case 'schema':
-            targetOidQuery = `SELECT oid FROM pg_namespace WHERE nspname = $1`;
-            break;
-        case 'extension':
-            targetOidQuery = `SELECT oid FROM pg_extension WHERE extname = $1`;
-            break;
-        case 'fdw':
-            targetOidQuery = `SELECT oid FROM pg_foreign_data_wrapper WHERE fdwname = $1`;
-            break;
-        case 'server':
-            targetOidQuery = `SELECT oid FROM pg_foreign_server WHERE srvname = $1`;
-            break;
-        case 'language':
-            targetOidQuery = `SELECT oid FROM pg_language WHERE lanname = $1`;
-            break;
-        case 'database':
-            targetOidQuery = `SELECT oid FROM pg_database WHERE datname = $1`;
-            break;
-        default:
-            return {
-                dependent_objects: [],
-                referenced_by: [],
-                requires_cascade: false,
-                safe_to_drop: true
-            };
-    }
+        // Sprawdzenie typu relacji
+        if (relation.type === "view") {
+            details.push(t("relation-is-view-safe-to-delete", "Relation is a view - safe to delete"));
+        } else if (relation.kind === "temporary") {
+            details.push(t("relation-is-temporary-table-safe-to-delete", "Relation is a temporary table - safe to delete"));
+        } else if (relation.kind === "partitioned") {
+            level = "high";
+            details.push(t("relation-is-partitioned-table-may-contain-many-partitions", "Relation is partitioned - may contain many partitions"));
+        }
 
-    // Zapytanie o zależności
-    const sql = `
-        WITH target AS (
-            ${targetOidQuery}
-        ),
-        -- Obiekty zależne OD naszego obiektu (inne obiekty mają zależność do nas)
-        -- Gdy dropujemy nasz obiekt, te obiekty też muszą być dropnięte (CASCADE)
-        deps_out AS (
-            SELECT 
-                d.deptype,
-                d.objid,
-                d.classid
-            FROM pg_depend d
-            JOIN target t ON t.oid = d.refobjid
-            WHERE d.deptype IN ('n', 'a', 'i', 'e', 'p')
-              AND d.objid != t.oid
-              AND d.objid != 0  -- wyklucz systemowe zależności
-        ),
-        -- Obiekty od których nasz obiekt ZALEŻY (nasz obiekt ma zależność do innych)
-        deps_in AS (
-            SELECT 
-                d.deptype,
-                d.refobjid,
-                d.refclassid
-            FROM pg_depend d
-            JOIN target t ON t.oid = d.objid
-            WHERE d.deptype IN ('n', 'a', 'i', 'e', 'p')
-              AND d.refobjid != t.oid
-              AND d.refobjid != 0  -- wyklucz systemowe zależności
-        )
-        SELECT 
-            'out' as direction,
-            CASE 
-                WHEN c.relkind = 'r' THEN 'table'
-                WHEN c.relkind = 'v' THEN 'view'
-                WHEN c.relkind = 'm' THEN 'matview'
-                WHEN c.relkind = 'S' THEN 'sequence'
-                WHEN c.relkind = 'f' THEN 'foreign_table'
-                WHEN p.oid IS NOT NULL THEN 'function'
-                WHEN t.oid IS NOT NULL THEN CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END
-                WHEN ns.oid IS NOT NULL THEN 'schema'
-                WHEN e.oid IS NOT NULL THEN 'extension'
-                ELSE 'unknown'
-            END as objtype,
-            COALESCE(n.nspname, '') as schema,
-            COALESCE(c.relname, p.proname, t.typname, ns.nspname, e.extname, '') as name,
-            CASE
-                WHEN c.oid IS NOT NULL AND n.nspname IS NOT NULL THEN format('%I.%I', n.nspname, c.relname)
-                WHEN p.oid IS NOT NULL AND pn.nspname IS NOT NULL THEN format('%I.%I(%s)', pn.nspname, p.proname, pg_get_function_identity_arguments(p.oid))
-                WHEN t.oid IS NOT NULL AND tn.nspname IS NOT NULL THEN format('%I.%I', tn.nspname, t.typname)
-                WHEN ns.oid IS NOT NULL THEN format('%I', ns.nspname)
-                WHEN e.oid IS NOT NULL THEN e.extname
-                ELSE ''
-            END as identity,
-            CASE d.deptype
-                WHEN 'n' THEN 'normal'
-                WHEN 'a' THEN 'auto'
-                WHEN 'i' THEN 'internal'
-                WHEN 'e' THEN 'extension'
-                WHEN 'p' THEN 'pin'
-                ELSE 'unknown'
-            END as dependency_type
-        FROM deps_out d
-        LEFT JOIN pg_class c ON c.oid = d.objid AND d.classid = 'pg_class'::regclass
-        LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-        LEFT JOIN pg_proc p ON p.oid = d.objid AND d.classid = 'pg_proc'::regclass
-        LEFT JOIN pg_namespace pn ON pn.oid = p.pronamespace
-        LEFT JOIN pg_type t ON t.oid = d.objid AND d.classid = 'pg_type'::regclass
-        LEFT JOIN pg_namespace tn ON tn.oid = t.typnamespace
-        LEFT JOIN pg_namespace ns ON ns.oid = d.objid AND d.classid = 'pg_namespace'::regclass
-        LEFT JOIN pg_extension e ON e.oid = d.objid AND d.classid = 'pg_extension'::regclass
-        WHERE COALESCE(c.oid, p.oid, t.oid, ns.oid, e.oid) IS NOT NULL  -- tylko znalezione obiekty
-        
-        UNION ALL
-        
-        SELECT 
-            'in' as direction,
-            CASE 
-                WHEN c.relkind = 'r' THEN 'table'
-                WHEN c.relkind = 'v' THEN 'view'
-                WHEN c.relkind = 'm' THEN 'matview'
-                WHEN c.relkind = 'S' THEN 'sequence'
-                WHEN c.relkind = 'f' THEN 'foreign_table'
-                WHEN p.oid IS NOT NULL THEN 'function'
-                WHEN t.oid IS NOT NULL THEN CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END
-                WHEN ns.oid IS NOT NULL THEN 'schema'
-                WHEN e.oid IS NOT NULL THEN 'extension'
-                ELSE 'unknown'
-            END as objtype,
-            COALESCE(n.nspname, '') as schema,
-            COALESCE(c.relname, p.proname, t.typname, ns.nspname, e.extname, '') as name,
-            CASE
-                WHEN c.oid IS NOT NULL AND n.nspname IS NOT NULL THEN format('%I.%I', n.nspname, c.relname)
-                WHEN p.oid IS NOT NULL AND pn.nspname IS NOT NULL THEN format('%I.%I(%s)', pn.nspname, p.proname, pg_get_function_identity_arguments(p.oid))
-                WHEN t.oid IS NOT NULL AND tn.nspname IS NOT NULL THEN format('%I.%I', tn.nspname, t.typname)
-                WHEN ns.oid IS NOT NULL THEN format('%I', ns.nspname)
-                WHEN e.oid IS NOT NULL THEN e.extname
-                ELSE ''
-            END as identity,
-            CASE d.deptype
-                WHEN 'n' THEN 'normal'
-                WHEN 'a' THEN 'auto'
-                WHEN 'i' THEN 'internal'
-                WHEN 'e' THEN 'extension'
-                WHEN 'p' THEN 'pin'
-                ELSE 'unknown'
-            END as dependency_type
-        FROM deps_in d
-        LEFT JOIN pg_class c ON c.oid = d.refobjid AND d.refclassid = 'pg_class'::regclass
-        LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-        LEFT JOIN pg_proc p ON p.oid = d.refobjid AND d.refclassid = 'pg_proc'::regclass
-        LEFT JOIN pg_namespace pn ON pn.oid = p.pronamespace
-        LEFT JOIN pg_type t ON t.oid = d.refobjid AND d.refclassid = 'pg_type'::regclass
-        LEFT JOIN pg_namespace tn ON tn.oid = t.typnamespace
-        LEFT JOIN pg_namespace ns ON ns.oid = d.refobjid AND d.refclassid = 'pg_namespace'::regclass
-        LEFT JOIN pg_extension e ON e.oid = d.refobjid AND d.refclassid = 'pg_extension'::regclass
-        WHERE COALESCE(c.oid, p.oid, t.oid, ns.oid, e.oid) IS NOT NULL  -- tylko znalezione obiekty
-    `;
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "critical";
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.forEach(u => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+        }
 
-    const params = (schema && objtype !== "schema") ? [schema, name] : [name];
-    const { rows } = await session.query<any>(sql, params);
+        // Sprawdzenie statystyk
+        if (relation.stats?.rows && relation.stats.rows > 100000) {
+            level = level === "low" ? "medium" : "high";
+            details.push(t("relation-has-many-rows", "Relation contains {{count}} rows - large amount of data", { count: relation.stats.rows }));
+        }
 
-    const dependent_objects = rows
-        .filter((r: any) => r.direction === 'out' && r.objtype !== 'unknown')
-        .map((r: any) => ({
-            objtype: r.objtype,
-            schema: r.schema || null,
-            name: r.name,
-            identity: r.identity,
-            dependency_type: r.dependency_type as any
-        }));
+        // Sprawdzenie klucza obcego
+        if (relation.foreignKeys && relation.foreignKeys.length > 0) {
+            level = "critical";
+            details.push(t("relation-has-foreign-keys", "Relation has {{count}} foreign key(s) - may be referenced by other tables", { count: relation.foreignKeys.length }));
+            relation.foreignKeys.forEach(fk => {
+                details.push(t("relation-foreign-key-detail", "  - FK: {{name}} → {{referencedSchema}}.{{referencedTable}}", { name: fk.name, referencedSchema: fk.referencedSchema, referencedTable: fk.referencedTable }));
+            });
+        }
 
-    const referenced_by = rows
-        .filter((r: any) => r.direction === 'in' && r.objtype !== 'unknown')
-        .map((r: any) => ({
-            objtype: r.objtype,
-            schema: r.schema || null,
-            name: r.name,
-            identity: r.identity,
-            dependency_type: r.dependency_type as any
-        }));
+        // Sprawdzenie ograniczeń
+        if (relation.constraints && relation.constraints.length > 0) {
+            details.push(t("relation-has-constraints", "Relation has {{count}} constraint(s)", { count: relation.constraints.length }));
+        }
 
-    // Wymaga CASCADE jeśli są normalne zależności (nie auto/internal/pin)
-    const requires_cascade = dependent_objects.some(
-        d => d.dependency_type === 'normal'
-    );
-
-    // Bezpieczny do dropnięcia jeśli:
-    // 1. Nie ma żadnych zależności wychodzących (dependent_objects pusta)
-    // 2. Lub wszystkie zależności są auto/internal/pin (nie normal/extension)
-    const safe_to_drop = dependent_objects.length === 0 ||
-        dependent_objects.every(d => ['auto', 'internal', 'pin'].includes(d.dependency_type));
-
-    return {
-        dependent_objects,
-        referenced_by,
-        requires_cascade,
-        safe_to_drop
-    };
-}
-
-export interface CodeUsage {
-    type: 'view' | 'function' | 'trigger' | 'constraint' | 'index' | 'rule';
-    location: string;
-    code_snippet?: string;
-    full_definition?: string;
-}
-
-/**
- * findUsagesInCode - wyszukuje odwołania w kodzie:
- *
- * Definicje widoków
- * Ciała funkcji
- * Triggery
- * Constraints CHECK
- * Indeksy częściowe
- * Rules
- * @param session 
- * @param schema 
- * @param name 
- * @returns 
- */
-export async function findUsagesInCode(
-    session: IDatabaseSession,
-    schema: string,
-    name: string
-): Promise<CodeUsage[]> {
-    const databases = await session.getMetadata();
-    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
-
-    const usages: CodeUsage[] = [];
-
-    for (const schema of Object.values(schemas || {})) {
-        for (const routines of Object.values(schema.routines || {})) {
-            for (const overload of routines) {
-                if (overload.identifiers?.some(word => word.toLowerCase() === name.toLowerCase())) {
-                    usages.push({
-                        type: "function",
-                        location: overload.identity!,
-                    });
-                }
+        // Sprawdzenie indeksów
+        if (relation.indexes && relation.indexes.length > 0) {
+            const nonPrimaryIndexes = relation.indexes.filter(idx => !idx.primary);
+            if (nonPrimaryIndexes.length > 0) {
+                details.push(t("relation-has-non-primary-indexes", "Relation has {{count}} index(es) - they will be dropped", { count: nonPrimaryIndexes.length }));
             }
         }
-        for (const view of Object.values(schema.relations || {})) {
-            if (view.type === 'view') {
-                if (view.identifiers?.some(word => word.toLowerCase() === name.toLowerCase())) {
-                    usages.push({
-                        type: 'view',
-                        location: view.identity!,
-                    });
-                }
-            }
+
+        // Sprawdzenie uprawnień
+        if (relation.permissions?.delete === false) {
+            level = "critical";
+            details.push(t("relation-no-permission-to-delete", "No permission to delete this relation"));
         }
+
+        return {
+            level,
+            message: this.getRiskMessage("delete", level),
+            details
+        };
     }
 
-    return usages;
-}
+    /**
+     * Ocenia bezpieczeństwo przenoszenia obiektu
+     */
+    assessMove(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
 
-export interface TableStats {
-    row_count: number;
-    size_bytes: number;
-    size_pretty: string;
-    last_vacuum: Date | null;
-    last_analyze: Date | null;
-    seq_scan_count: number;
-    idx_scan_count: number;
-    n_tup_ins: number;
-    n_tup_upd: number;
-    n_tup_del: number;
-    n_live_tup: number;
-    n_dead_tup: number;
-}
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "critical";
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes - moving would require updates:", { count: usage.length }));
+            usage.forEach(u => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+        }
 
-/**
- * getTableStats - pobiera statystyki tabeli z pg_stat_user_tables:
- *
- * Liczba wierszy i rozmiar
- * Daty ostatniego VACUUM/ANALYZE
- * Liczniki skanów (seq/idx)
- * Statystyki operacji DML
- * Liczba żywych/martwych krotek
- * @param session 
- * @param schema 
- * @param tableName 
- * @returns 
- */
-export async function getTableStats(
-    session: IDatabaseSession,
-    schema: string,
-    tableName: string
-): Promise<TableStats | null> {
-    const sql = `
-        SELECT 
-            COALESCE(c.reltuples::bigint, 0) as row_count,
-            COALESCE(pg_total_relation_size(c.oid), 0) as size_bytes,
-            pg_size_pretty(COALESCE(pg_total_relation_size(c.oid), 0)) as size_pretty,
-            st.last_vacuum,
-            st.last_analyze,
-            COALESCE(st.seq_scan, 0) as seq_scan_count,
-            COALESCE(st.idx_scan, 0) as idx_scan_count,
-            COALESCE(st.n_tup_ins, 0) as n_tup_ins,
-            COALESCE(st.n_tup_upd, 0) as n_tup_upd,
-            COALESCE(st.n_tup_del, 0) as n_tup_del,
-            COALESCE(st.n_live_tup, 0) as n_live_tup,
-            COALESCE(st.n_dead_tup, 0) as n_dead_tup
-        FROM pg_class c
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        LEFT JOIN pg_stat_user_tables st ON st.relid = c.oid
-        WHERE n.nspname = $1 AND c.relname = $2
-        AND c.relkind IN ('r', 'p')
-    `;
+        // Sprawdzenie typu relacji
+        if (relation.type === "view") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("relation-view-has-references", "Views can contain references to other objects"));
+        }
 
-    const { rows } = await session.query<any>(sql, [schema, tableName]);
-    if (rows.length === 0) return null;
+        // Sprawdzenie identyfikatorów
+        if (relation.identifiers && relation.identifiers.length > 0) {
+            level = level === "low" ? "medium" : "high";
+            details.push(t("relation-has-identifiers", "Relation has {{count}} identifiers - they may break", { count: relation.identifiers.length }));
+            relation.identifiers.forEach(id => {
+                details.push(`  - ${id}`);
+            });
+        }
 
-    return rows[0];
-}
+        // Sprawdzenie kluczy obcych
+        if (relation.foreignKeys && relation.foreignKeys.length > 0) {
+            level = "high";
+            details.push(t("relation-has-foreign-keys", "Relation has {{count}} foreign key(s) - references may break", { count: relation.foreignKeys.length }));
+            relation.foreignKeys.forEach(fk => {
+                details.push(t("relation-foreign-key-detail", "  - FK: {{name}} → {{referencedSchema}}.{{referencedTable}}", { name: fk.name, referencedSchema: fk.referencedSchema, referencedTable: fk.referencedTable }));
+            });
+        }
 
-export interface SecurityContext {
-    is_security_definer: boolean;
-    owner: string | null;
-    execute_as: 'invoker' | 'definer';
-    language: string;
-    volatility: 'immutable' | 'stable' | 'volatile';
-    parallel_safe: boolean;
-}
+        // Sprawdzenie uprawnień
+        if (relation.permissions?.select === false) {
+            level = "critical";
+            details.push(t("relation-no-permission-to-select", "No permission to access this relation"));
+        }
 
-/**
- * checkSecurityContext - sprawdza kontekst bezpieczeństwa funkcji:
- *
- * SECURITY DEFINER vs INVOKER
- * Właściciel funkcji
- * Język implementacji
- * Volatility (immutable/stable/volatile)
- * Parallel safety (PG 9.6+)
- * @param session 
- * @param objtype 
- * @param identity 
- * @param versionNumber 
- * @returns 
- */
-export async function checkSecurityContext(
-    session: IDatabaseSession,
-    objtype: ObjType,
-    schemaName: string,
-    name: string,
-    identity: string,
-): Promise<SecurityContext | null> {
-    if (objtype !== 'function') {
-        return null;
+        if (!usage || usage.length === 0) {
+            details.push(t("relation-usage-check-warning", "Note: Check all views/functions referencing this relation"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("move", level),
+            details
+        };
     }
 
-    const databases = await session.getMetadata();
-    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
+    /**
+     * Ocenia bezpieczeństwo zmiany właściciela
+     */
+    assessChangeOwner(relation: RelationMetadata, currentOwner?: string): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
 
-    const usages: CodeUsage[] = [];
+        if (currentOwner) {
+            details.push(t("current-owner-is", "Current owner: {{owner}}", { owner: currentOwner }));
+        }
 
-    const schema = schemas?.[schemaName];
-    if (schema) {
-        const routines = schema.routines?.[name];
-        if (routines) {
-            for (const overload of routines) {
-                if (overload.identity === identity) {
+        // Sprawdzenie uprawnień na kolumnach
+        if (relation.columns.some(col => col.permissions)) {
+            level = "medium";
+            details.push(t("relation-columns-have-granular-permissions", "Some columns have granular permissions - may be blocked"));
+        }
+
+        // Sprawdzenie indeksów
+        if (relation.indexes && relation.indexes.length > 0) {
+            details.push(t("relation-has-indexes", "Relation has {{count}} index(es) - owner may affect performance", { count: relation.indexes.length }));
+        }
+
+        // Sprawdzenie statystyk
+        if (relation.stats && (relation.stats.rows || relation.stats.writes)) {
+            level = level === "low" ? "medium" : level;
+            details.push(t("relation-is-actively-used", "Relation is actively used - owner change may affect permissions"));
+        }
+
+        details.push(t("new-owner-must-have-permissions", "New owner must have required schema permissions"));
+
+        return {
+            level,
+            message: this.getRiskMessage("changeOwner", level),
+            details
+        };
+    }
+
+    /**
+     * Pełna ocena wszystkich operacji na relacji
+     */
+    assessRelation(relation: RelationMetadata, currentOwner?: string): ObjectSafetyAssessment {
+        return {
+            canDelete: this.assessDeletion(relation),
+            canMove: this.assessMove(relation),
+            canChangeOwner: this.assessChangeOwner(relation, currentOwner)
+        };
+    }
+
+    /**
+     * Ocena dla rutyny (funkcji/procedury)
+     */
+    assessRoutineDeletion(routine: RoutineMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (routine.type === "function") {
+            details.push(t("routine-function-usage", "Function - check if used in column expressions or views"));
+        } else if (routine.type === "procedure") {
+            details.push(t("routine-procedure-usage", "Procedure - check if called by the application"));
+        }
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "critical";
+            details.push(t("routine-is-used-in-codes", "Routine is used in {{count}} codes:", { count: usage.length }));
+            usage.forEach(u => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+        }
+
+        if (routine.kind === "trigger") {
+            level = "high";
+            details.push(t("routine-is-trigger", "Routine is a trigger - may affect automatic base operations"));
+        }
+
+        if (routine.kind === "aggregate") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("routine-is-aggregate", "Routine is an aggregate - may be used in queries"));
+        }
+
+        if (routine.permissions?.execute === false) {
+            level = "critical";
+            details.push(t("no-permission-to-delete-routine", "No permission to delete this routine"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("delete", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena dla schematu
+     */
+    assessSchemaDeletion(schema: SchemaMetadata, relationsCount: number): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (schema.catalog) {
+            level = "critical";
+            details.push(t("schema-is-catalog", "Schema is catalog schema - cannot be deleted"));
+        }
+
+        if (schema.default) {
+            level = "high";
+            details.push(t("schema-is-default", "Schema is a default schema for the user"));
+        }
+
+        if (relationsCount > 0) {
+            level = level === "low" ? "high" : "critical";
+            details.push(t("schema-contains-objects", "Schema contains {{count}} objects - they will be deleted", { count: relationsCount }));
+        }
+
+        if (schema.routines && Object.keys(schema.routines).length > 0) {
+            level = "critical";
+            details.push(t("schema-contains-routines", "Schema contains {{count}} routine(s)", { count: Object.keys(schema.routines).length }));
+        }
+
+        if (schema.types && Object.keys(schema.types).length > 0) {
+            level = "critical";
+            details.push(t("schema-contains-types", "Schema contains {{count}} user-defined type(s)", { count: Object.keys(schema.types).length }));
+        }
+
+        if (schema.permissions?.usage === false) {
+            level = "critical";
+            details.push(t("no-permission-to-delete-schema", "No permission to delete this schema"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("delete", level),
+            details
+        };
+    }
+
+    /**
+     * Sprawdza gdzie dany obiekt jest używany w identifiers (funkcjach, widokach, etc.)
+     */
+    private findObjectUsageInIdentifiers(
+        objectName: string,
+        schemaName: string,
+        database: DatabaseMetadata
+    ): Array<{ type: "relation" | "routine"; name: string; location: string }> {
+        const usage: Array<{ type: "relation" | "routine"; name: string; location: string }> = [];
+
+        // Sprawdź wszystkie schematy
+        Object.entries(database.schemas).forEach(([currentSchemaName, schema]) => {
+            // Szukaj w widokach
+            Object.entries(schema.relations).forEach(([relName, relation]) => {
+                if (relation.identifiers && relation.identifiers.length > 0) {
+                    const found = relation.identifiers.some(id =>
+                        this.matchesIdentifier(id, objectName, schemaName)
+                    );
+                    if (found) {
+                        usage.push({
+                            type: "relation",
+                            name: `${currentSchemaName}.${relName}`,
+                            location: relation.type === "view" ? "view" : "table"
+                        });
+                    }
+                }
+            });
+
+            // Szukaj w funkcjach/procedurach
+            if (schema.routines) {
+                Object.entries(schema.routines).forEach(([routineName, routineList]) => {
+                    routineList.forEach((routine, index) => {
+                        if (routine.identifiers && routine.identifiers.length > 0) {
+                            const found = routine.identifiers.some(id =>
+                                this.matchesIdentifier(id, objectName, schemaName)
+                            );
+                            if (found) {
+                                const suffix = routineList.length > 1 ? ` [overload ${index + 1}]` : "";
+                                usage.push({
+                                    type: "routine",
+                                    name: `${currentSchemaName}.${routineName}${suffix}`,
+                                    location: `${routine.type}/${routine.kind || "regular"}`
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+        });
+
+        return usage;
+    }
+
+    /**
+     * Sprawdza czy identyfikator zawiera odniesienie do obiektu
+     */
+    private matchesIdentifier(identifier: string, objectName: string, schemaName: string): boolean {
+        // Normalizuj identyfikatory do porównania
+        const normalizedId = identifier.toLowerCase().trim();
+        const normalizedName = objectName.toLowerCase().trim();
+        const normalizedSchema = schemaName.toLowerCase().trim();
+
+        // Dokładne dopasowanie nazwy obiektu
+        if (normalizedId === normalizedName) {
+            return true;
+        }
+
+        // Dopasowanie w formacie schema.object
+        if (normalizedId === `${normalizedSchema}.${normalizedName}`) {
+            return true;
+        }
+
+        // Dopasowanie w formacie "schema"."object"
+        if (normalizedId === `"${schemaName}"."${objectName}"`) {
+            return true;
+        }
+
+        // Sprawdzenie czy identyfikator zawiera nazwę obiektu jako słowo kluczowe
+        const regex = new RegExp(`\\b${this.escapeRegex(normalizedName)}\\b`, "i");
+        if (regex.test(normalizedId)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Escapuje znaki specjalne do regex
+     */
+    private escapeRegex(str: string): string {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    private getRiskMessage(operation: string, level: RiskLevel): string {
+        const operationNames: Record<string, string> = {
+            delete: t("operation-delete", "Delete"),
+            move: t("operation-move", "Move"),
+            changeOwner: t("operation-change-owner", "Change owner")
+        };
+
+        const messages: Record<RiskLevel, string> = {
+            low: t("operation-risk-low", "{{operation}} is safe", { operation: operationNames[operation] }),
+            medium: t("operation-risk-medium", "{{operation}} has medium risk", { operation: operationNames[operation] }),
+            high: t("operation-risk-high", "{{operation}} has high risk", { operation: operationNames[operation] }),
+            critical: t("operation-risk-critical", "{{operation}} is CRITICAL - requires special caution", { operation: operationNames[operation] })
+        };
+
+        return messages[level];
+    }
+
+    /**
+     * Pobiera metadane i analizuje bezpieczeństwo operacji na obiekcie
+     */
+    async analyzeObjectSafety(
+        schemaName: string,
+        objectName: string,
+        objectType: string | null,
+        session: IDatabaseSession
+    ): Promise<AnalysisResult> {
+        try {
+            // Pobierz metadane z sesji
+            const metadata = await session.getMetadata();
+
+            if (!metadata || Object.keys(metadata).length === 0) {
+                return {
+                    found: false,
+                    error: t("error-metadata-fetch", "Could not fetch metadata from database")
+                };
+            }
+
+            // Pobierz pierwszą bazę danych do której jesteś podłączony
+            const database = Object.values(metadata).find(db => db.connected);
+
+            if (!database) {
+                return {
+                    found: false,
+                    error: t("error-database-not-found", "Database not found")
+                };
+            }
+
+            // Sprawdź czy schemat istnieje
+            const schema = database.schemas[schemaName];
+            if (!schema) {
+                return {
+                    found: false,
+                    error: t("error-schema-not-found", `Schema "${schemaName}" not found`)
+                };
+            }
+
+            // Szukaj relacji (tabela/widok)
+            const relation = schema.relations[objectName];
+            if (relation) {
+                const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                return {
+                    found: true,
+                    objectType: "relation",
+                    objectName,
+                    schemaName,
+                    usedInIdentifiers: usage,
+                    assessment: {
+                        canDelete: this.assessDeletion(relation, usage),
+                        canMove: this.assessMove(relation, usage),
+                        canChangeOwner: this.assessChangeOwner(relation, relation.owner)
+                    }
+                };
+            }
+
+            // Szukaj rutyn (funkcji/procedur)
+            if (schema.routines) {
+                const routineList = schema.routines[objectName];
+                if (routineList && routineList.length > 0) {
+                    const routine = routineList[0]; // Analizuj pierwszy overload
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
                     return {
-                        is_security_definer: overload.data?.is_security_definer || false,
-                        owner: overload.owner || null,
-                        execute_as: overload.data?.execute_as || 'invoker',
-                        language: overload.data?.language || 'unknown',
-                        volatility: overload.data?.volatility || 'volatile',
-                        parallel_safe: overload.data?.parallel_safe || false,
+                        found: true,
+                        objectType: "routine",
+                        objectName,
+                        schemaName,
+                        usedInIdentifiers: usage,
+                        assessment: {
+                            canDelete: this.assessRoutineDeletion(routine, usage),
+                            canMove: this.createUnavailableOperation(t("operation-move-routine", "Move routine")),
+                            canChangeOwner: this.assessRoutineChangeOwner(routine)
+                        }
                     };
                 }
             }
-        }
-    }
 
-    return null;
-}
-
-export type RiskLevel = "none" | "low" | "medium" | "high" | "critical";
-
-export interface RiskAssessment {
-    level: RiskLevel;
-    reasons: string[];
-    warnings: string[];
-}
-
-/**
- * Ocenia ryzyko na podstawie zależności obiektów
- */
-export function assessDependencyRisk(depInfo: DependencyInfo | undefined): RiskAssessment {
-    if (!depInfo) {
-        return { level: "none", reasons: [t("no-analysis", "No analysis performed")], warnings: [] };
-    }
-
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-
-    if (depInfo.safe_to_drop) {
-        reasons.push(t("no-dependencies", "No dependencies"));
-        return { level: "low", reasons, warnings };
-    }
-
-    // Wylicz liczbę zależności
-    const depCount = depInfo.dependent_objects.length;
-    const normalDeps = depInfo.dependent_objects.filter(d => d.dependency_type === "normal").length;
-
-    if (normalDeps > 0) {
-        warnings.push(t("normal-dependencies-cascade-required", "{{count}} object(s) have normal dependency - CASCADE required", { count: normalDeps }));
-    }
-
-    if (depCount > 10) {
-        reasons.push(t("many-dependencies", "Many dependencies: {{count}} objects", { count: depCount }));
-        return { level: "critical", reasons, warnings };
-    }
-
-    if (depCount > 5) {
-        reasons.push(t("medium-dependencies", "Medium number of dependencies: {{count}} objects", { count: depCount }));
-        return { level: "high", reasons, warnings };
-    }
-
-    if (depCount > 0) {
-        reasons.push(t("dependent-objects", "Dependent objects: {{count}}", { count: depCount }));
-        return { level: "medium", reasons, warnings };
-    }
-
-    return { level: "low", reasons: [t("no-normal-dependencies", "No normal dependencies")], warnings };
-}
-
-/**
- * Ocenia ryzyko na podstawie użyć w kodzie
- */
-export function assessCodeUsageRisk(codeUsages: CodeUsage[] | undefined): RiskAssessment {
-    if (!codeUsages || codeUsages.length === 0) {
-        return { level: "none", reasons: [t("no-code-usage", "No code usage")], warnings: [] };
-    }
-
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-
-    const typeCount: Record<string, number> = {};
-    for (const usage of codeUsages) {
-        typeCount[usage.type] = (typeCount[usage.type] || 0) + 1;
-    }
-
-    const totalCount = codeUsages.length;
-
-    // Funkcje wywołujące się nawzajem - wysokie ryzyko
-    if (typeCount["function"] && typeCount["function"] > 3) {
-        warnings.push(t("many-functions-using-object", "Many functions use this object: {{count}}", { count: typeCount["function"] }));
-        reasons.push(t("dependent-functions", "Dependent functions: {{count}}", { count: typeCount["function"] }));
-        return { level: "critical", reasons, warnings };
-    }
-
-    // Widoki - średnie ryzyko
-    if (typeCount["view"] && typeCount["view"] > 2) {
-        warnings.push(t("many-views-using-object", "{{count}} views use this object", { count: typeCount["view"] }));
-        reasons.push(t("dependent-views", "Dependent views: {{count}}", { count: typeCount["view"] }));
-        return { level: "high", reasons, warnings };
-    }
-
-    // Triggery - wysokie ryzyko
-    if (typeCount["trigger"] && typeCount["trigger"] > 0) {
-        warnings.push(t("many-triggers-using-object", "{{count}} triggers use this object", { count: typeCount["trigger"] }));
-        reasons.push(t("dependent-triggers", "Dependent triggers: {{count}}", { count: typeCount["trigger"] }));
-        return { level: "high", reasons, warnings };
-    }
-
-    // Constraints - średnie ryzyko
-    if (typeCount["constraint"] && typeCount["constraint"] > 2) {
-        warnings.push(t("many-constraints-using-object", "{{count}} constraints use this object", { count: typeCount["constraint"] }));
-        reasons.push(t("dependent-constraints", "Dependent constraints: {{count}}", { count: typeCount["constraint"] }));
-        return { level: "medium", reasons, warnings };
-    }
-
-    if (totalCount > 5) {
-        reasons.push(t("many-code-usages", "Many code usages: {{count}}", { count: totalCount }));
-        return { level: "medium", reasons, warnings };
-    }
-
-    if (totalCount > 0) {
-        reasons.push(t("code-usage", "Code usage: {{count}}", { count: totalCount }));
-        return { level: "low", reasons, warnings };
-    }
-
-    return { level: "low", reasons: [t("no-code-usage", "No code usage")], warnings };
-}
-
-/**
- * Ocenia ryzyko na podstawie statystyk tabeli
- */
-export function assessTableStatsRisk(tableStats: TableStats | null | undefined): RiskAssessment {
-    if (!tableStats) {
-        return { level: "none", reasons: [t("no-table-stats", "No table statistics available")], warnings: [] };
-    }
-
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-
-    // Bardzo dużą tabelę
-    if (tableStats.row_count > 1000000) {
-        warnings.push(t("very-large-table", "Very large table: {{count}}M rows", { count: Number((tableStats.row_count / 1000000).toFixed(2)) }));
-        reasons.push(t("table-size", "Table size: {{size}}", { size: tableStats.size_pretty }));
-        return { level: "critical", reasons, warnings };
-    }
-
-    // Duża tabela
-    if (tableStats.row_count > 100000) {
-        warnings.push(t("large-table", "Large table: {{count}}K rows", { count: Number((tableStats.row_count / 1000).toFixed(0)) }));
-        reasons.push(t("table-size", "Table size: {{size}}", { size: tableStats.size_pretty }));
-        return { level: "high", reasons, warnings };
-    }
-
-    // Średnia tabela
-    if (tableStats.row_count > 10000) {
-        reasons.push(t("medium-table", "Medium table: {{count}}K rows", { count: Number((tableStats.row_count / 1000).toFixed(0)) }));
-        return { level: "medium", reasons, warnings };
-    }
-
-    // Sprawdź martwą pamięć
-    // if (tableStats.n_live_tup > 0) {
-    //     const deadRatio = (tableStats.n_dead_tup / tableStats.n_live_tup);
-    //     if (deadRatio > 0.5) {
-    //         warnings.push(t("many-dead-tuples", "Many dead tuples: {{percent}}%", { percent: Number((deadRatio * 100).toFixed(1)) }));
-    //         reasons.push(t("requires-vacuum", "Requires VACUUM: {{count}} dead rows", { count: tableStats.n_dead_tup }));
-    //         return { level: "medium", reasons, warnings };
-    //     }
-    // }
-
-    // Sprawdź ostatni VACUUM
-    // if (tableStats.last_vacuum) {
-    //     const daysSinceVacuum = (Date.now() - tableStats.last_vacuum.getTime()) / (1000 * 60 * 60 * 24);
-    //     if (daysSinceVacuum > 30) {
-    //         warnings.push(t("vacuum-performed-days-ago", "VACUUM performed {{days}} days ago", { days: Number(daysSinceVacuum.toFixed(0)) }));
-    //     }
-    // } else {
-    //     warnings.push(t("vacuum-never-performed", "VACUUM has never been performed"));
-    // }
-
-    // Tabela nie jest intensywnie używana
-    if (tableStats.seq_scan_count === 0 && tableStats.idx_scan_count === 0) {
-        reasons.push(t("table-not-scanned", "Table is not scanned - may be unused"));
-        return { level: "low", reasons, warnings };
-    }
-
-    if (tableStats.row_count > 0) {
-        reasons.push(t("table-has-data", "Table contains data: {{count}} rows", { count: tableStats.row_count }));
-        return { level: "low", reasons, warnings };
-    } else if (!tableStats.last_analyze) {
-        warnings.push(t("table-never-analyzed", "Table has never been analyzed"));
-    }
-
-    return { level: "low", reasons: [t("empty-table", "Empty table")], warnings };
-}
-
-/**
- * Ocenia ryzyko na podstawie kontekstu bezpieczeństwa funkcji
- */
-export function assessSecurityContextRisk(securityContext: SecurityContext | null | undefined): RiskAssessment {
-    if (!securityContext) {
-        return { level: "none", reasons: [t("no-security-data", "No security data available")], warnings: [] };
-    }
-
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-
-    // SECURITY DEFINER z superuserem - krytyczne
-    if (securityContext.is_security_definer && securityContext.owner === "postgres") {
-        warnings.push(t("security-definer-postgres-owner", "SECURITY DEFINER owned by postgres"));
-        warnings.push(t("function-has-superuser-privileges", "Function has superuser privileges"));
-        reasons.push(t("function-has-admin-privileges", "Function has administrative privileges"));
-        return { level: "critical", reasons, warnings };
-    }
-
-    // SECURITY DEFINER + volatile + język zewnętrzny
-    if (
-        securityContext.is_security_definer &&
-        securityContext.volatility === "volatile" &&
-        ["plpython", "plperl", "c"].includes(securityContext.language)
-    ) {
-        warnings.push(t("security-definer-volatile-language", "SECURITY DEFINER + volatile + {{language}}", { language: securityContext.language }));
-        warnings.push(t("may-modify-data-with-elevated-privileges", "May modify data with elevated privileges"));
-        reasons.push(t("high-risk-combination", "High-risk combination"));
-        return { level: "high", reasons, warnings };
-    }
-
-    // SECURITY DEFINER z rozszerzeniami C
-    if (securityContext.is_security_definer && securityContext.language === "c") {
-        warnings.push(t("security-definer-native-c-extension", "SECURITY DEFINER + native extension (C)"));
-        reasons.push(t("native-extension-with-elevated-privileges", "Native extension with elevated privileges"));
-        return { level: "high", reasons, warnings };
-    }
-
-    // SECURITY DEFINER w ogóle
-    if (securityContext.is_security_definer) {
-        warnings.push(t("security-definer-general", "SECURITY DEFINER: Executes as {{owner}}", { owner: securityContext.owner }));
-        reasons.push(t("function-has-different-user-privileges", "Function has privileges of a different user"));
-        return { level: "medium", reasons, warnings };
-    }
-
-    // Volatile funkcje mogą modyfikować dane
-    if (securityContext.volatility === "volatile") {
-        if (["plpython", "plperl"].includes(securityContext.language)) {
-            warnings.push(t("volatile-language-may-modify-data", "Volatile {{language}} - may modify data", { language: securityContext.language }));
-            reasons.push(t("function-may-have-side-effects", "Function may have side effects"));
-            return { level: "medium", reasons, warnings };
-        }
-    }
-
-    // Immutable SQL - zwykle bezpieczna
-    if (securityContext.volatility === "immutable" && securityContext.language === "sql") {
-        reasons.push(t("sql-immutable-safe", "SQL immutable - safe"));
-        return { level: "low", reasons, warnings };
-    }
-
-    // Stable SQL
-    if (securityContext.volatility === "stable" && securityContext.language === "sql") {
-        reasons.push(t("sql-stable-safe", "SQL stable - safe"));
-        return { level: "low", reasons, warnings };
-    }
-
-    // Brak parallel safety
-    if (!securityContext.parallel_safe) {
-        warnings.push(t("not-parallel-safe", "Not parallel-safe"));
-    }
-
-    reasons.push(`${securityContext.language} (${securityContext.volatility})`);
-    return { level: "low", reasons, warnings };
-}
-
-export interface ForeignKeyDependency {
-    direction: 'in' | 'out';
-    constraint_name: string;
-    from_schema: string;
-    from_table: string;
-    from_columns: string;
-    to_schema: string;
-    to_table: string;
-    to_columns: string;
-    on_update?: string;
-    on_delete?: string;
-    [key: string]: any;
-}
-
-/**
- * analyzeForeignKeyDependencies - analizuje zależności Foreign Key dla tabeli
- * 
- * Zwraca FK wychodzące (OUT) - z tej tabeli do innych
- * Zwraca FK przychodzące (IN) - z innych tabel do tej
- * @param session 
- * @param schemaName 
- * @param tableName 
- * @returns 
- */
-export async function analyzeForeignKeyDependencies(
-    session: IDatabaseSession,
-    schemaName: string,
-    tableName: string
-): Promise<ForeignKeyDependency[]> {
-    const databases = await session.getMetadata();
-    const schemas = Object.values(databases).find(database => database.connected)?.schemas;
-
-    const foreignKeys: ForeignKeyDependency[] = [];
-
-    for (const schema of Object.values(schemas || {})) {
-        for (const relation of Object.values(schema.relations || {})) {
-            if (relation.type === 'table') {
-                if (relation.foreignKeys) {
-                    for (const fk of relation.foreignKeys) {
-                        if (fk.referencedSchema === schema.name && fk.referencedTable === tableName) {
-                            foreignKeys.push({
-                                direction: 'in',
-                                constraint_name: fk.name,
-                                from_schema: schema.name,
-                                from_table: relation.name,
-                                from_columns: fk.column.join(', '),
-                                to_schema: fk.referencedSchema,
-                                to_table: fk.referencedTable,
-                                to_columns: fk.referencedColumn.join(', '),
-                                on_update: fk.onUpdate,
-                                on_delete: fk.onDelete,
-                            });
+            // Szukaj sekwencji
+            if (schema.sequences) {
+                const sequence = schema.sequences[objectName];
+                if (sequence) {
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                    return {
+                        found: true,
+                        objectType: "sequence",
+                        objectName,
+                        schemaName,
+                        usedInIdentifiers: usage,
+                        assessment: {
+                            canDelete: this.assessSequenceDeletion(sequence, usage),
+                            canMove: this.createUnavailableOperation(t("operation-move-sequence", "Move sequence")),
+                            canChangeOwner: this.assessSequenceChangeOwner(sequence)
                         }
-                        if (schema.name === schemaName && relation.name === tableName) {
-                            foreignKeys.push({
-                                direction: 'out',
-                                constraint_name: fk.name,
-                                from_schema: schema.name,
-                                from_table: relation.name,
-                                from_columns: fk.column.join(', '),
-                                to_schema: fk.referencedSchema,
-                                to_table: fk.referencedTable,
-                                to_columns: fk.referencedColumn.join(', '),
-                                on_update: fk.onUpdate,
-                                on_delete: fk.onDelete,
-                            });
-                        }
-                    }
+                    };
                 }
             }
+
+            // Szukaj typów
+            if (schema.types) {
+                const type = schema.types[objectName];
+                if (type) {
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                    return {
+                        found: true,
+                        objectType: "type",
+                        objectName,
+                        schemaName,
+                        usedInIdentifiers: usage,
+                        assessment: {
+                            canDelete: this.assessTypeDeletion(type, usage),
+                            canMove: this.createUnavailableOperation(t("operation-move-type", "Move type")),
+                            canChangeOwner: this.assessTypeChangeOwner(type)
+                        }
+                    };
+                }
+            }
+
+            // Sprawdź czy szukano schematu
+            if (objectName === "" || objectName === schemaName) {
+                const relationsCount = Object.keys(schema.relations).length;
+                return {
+                    found: true,
+                    objectType: "schema",
+                    objectName: schemaName,
+                    schemaName,
+                    assessment: {
+                        canDelete: this.assessSchemaDeletion(schema, relationsCount),
+                        canMove: this.createUnavailableOperation(t("operation-move-schema", "Move schema")),
+                        canChangeOwner: this.assessSchemaChangeOwner(schema)
+                    }
+                };
+            }
+
+            return {
+                found: false,
+                error: t("error-object-not-found", "Object \"{{objectName}}\" not found in schema \"{{schemaName}}\"", { objectName, schemaName })
+            };
+
+        } catch (error) {
+            return {
+                found: false,
+                error: t("error-analysis-failed", "Analysis failed: {{message}}", { message: error instanceof Error ? error.message : String(error) })
+            };
         }
     }
 
-    return foreignKeys;
+    /**
+     * Ocena zmiany właściciela dla rutyny
+     */
+    private assessRoutineChangeOwner(routine: RoutineMetadata): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (routine.owner) {
+            details.push(t("current-owner-is", "Current owner: {{owner}}", { owner: routine.owner }));
+        }
+
+        if (routine.kind === "trigger") {
+            level = "high";
+            details.push(t("trigger-owner-change-warning", "Trigger - owner change may affect execution"));
+        }
+
+        if (routine.arguments && routine.arguments.length > 0) {
+            details.push(t("routine-arguments-count", "Routine has {{count}} argument(s)", { count: routine.arguments.length }));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("changeOwner", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena usuwania sekwencji
+     */
+    private assessSequenceDeletion(sequence: SequenceMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        details.push(t("sequence-name", "Sequence: {{name}}", { name: sequence.name }));
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "high";
+            details.push(t("sequence-used-in-codes", "Sequence is used in {{count}} codes:", { count: usage.length }));
+            usage.forEach(u => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+        }
+
+        if (sequence.permissions?.usage === false) {
+            level = "critical";
+            details.push(t("no-permission-to-delete-sequence", "No permission to delete this sequence"));
+        }
+
+        if (!usage || usage.length === 0) {
+            level = "medium";
+            details.push(t("check-sequence-used-by-columns", "Note: Check if the sequence is used by columns (DEFAULT clauses)"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("delete", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena zmiany właściciela sekwencji
+     */
+    private assessSequenceChangeOwner(sequence: SequenceMetadata): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (sequence.owner) {
+            details.push(t("current-owner-is", "Current owner: {{owner}}", { owner: sequence.owner }));
+        }
+
+        details.push(t("sequence-owner-change-safe", "Changing sequence owner is usually safe"));
+
+        return {
+            level,
+            message: this.getRiskMessage("changeOwner", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena usuwania typu
+     */
+    private assessTypeDeletion(type: TypeMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        details.push(`Type: ${type.name} (${type.kind})`);
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "high";
+            details.push(t("type-used-in-codes", "Type is used in {{count}} codes:", { count: usage.length }));
+            usage.forEach(u => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+        }
+
+        if (type.kind === "composite") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("composite-type-warning", "Composite type - may be used by tables"));
+        }
+
+        if (type.kind === "enum") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("enum-type-warning", "ENUM type - check if used by columns"));
+        }
+
+        if (type.kind === "domain") {
+            level = "high";
+            details.push(t("domain-type-warning", "Domain - may underlie other types and columns"));
+        }
+
+        if (type.permissions?.usage === false) {
+            level = "critical";
+            details.push(t("no-permission-to-delete-type", "No permission to delete this type"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("delete", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena zmiany właściciela typu
+     */
+    private assessTypeChangeOwner(type: TypeMetadata): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (type.owner) {
+            details.push(t("current-owner", "Obecny właściciel: {{owner}}", { owner: type.owner }));
+        }
+
+        if (type.kind === "composite" || type.kind === "domain") {
+            level = "medium";
+            details.push(t("composite-type-owner-change-warning", "Composite type - owner change may affect access"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("changeOwner", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena zmiany właściciela schematu
+     */
+    private assessSchemaChangeOwner(schema: SchemaMetadata): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        if (schema.owner) {
+            details.push(t("current-owner", "Obecny właściciel: {{owner}}", { owner: schema.owner }));
+        }
+
+        if (schema.default) {
+            level = "medium";
+            details.push(t("default-schema-owner-change-warning", "Default schema - owner change may affect the user"));
+        }
+
+        if (schema.catalog) {
+            level = "critical";
+            details.push(t("catalog-schema-owner-change-warning", "Schema katalogowa - nie można zmienić właściciela"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("changeOwner", level),
+            details
+        };
+    }
+
+    /**
+     * Pomocnicza funkcja zwracająca niedostępną operację
+     */
+    private createUnavailableOperation(operationName: string): OperationRisk {
+        return {
+            level: "high",
+            message: t("operation-not-available", "{{operationName}} is not available for this object type", { operationName }),
+            details: [t("operation-not-supported-for-object", "This operation is not supported for the selected object type")]
+        };
+    }
 }
 
-/**
- * Ocenia ryzyko na podstawie Foreign Key dependencies
- */
-export function assessForeignKeyRisk(fkDeps: ForeignKeyDependency[] | undefined): RiskAssessment {
-    if (!fkDeps || fkDeps.length === 0) {
-        return { level: "none", reasons: [t("no-fk-dependencies", "No foreign key dependencies")], warnings: [] };
-    }
-
-    const reasons: string[] = [];
-    const warnings: string[] = [];
-
-    const incomingFKs = fkDeps.filter(fk => fk.direction === 'in');
-    const outgoingFKs = fkDeps.filter(fk => fk.direction === 'out');
-
-    // FK przychodzące (IN) - inne tabele wskazują na tę tabelę
-    if (incomingFKs.length > 0) {
-        const cascadeDeletes = incomingFKs.filter(fk => fk.on_delete === 'cascade');
-        const restrictDeletes = incomingFKs.filter(fk => fk.on_delete === 'restrict' || fk.on_delete === 'no action');
-
-        if (restrictDeletes.length > 0) {
-            warnings.push(t("fk-restrict-prevents-delete", "{{count}} FK(s) with RESTRICT/NO ACTION prevent deletion", { count: restrictDeletes.length }));
-            reasons.push(t("incoming-fk-restrict", "Incoming FK restrictions: {{count}}", { count: restrictDeletes.length }));
-            return { level: "high", reasons, warnings };
-        }
-
-        if (cascadeDeletes.length > 5) {
-            warnings.push(t("many-cascade-deletes", "{{count}} tables will CASCADE DELETE", { count: cascadeDeletes.length }));
-            reasons.push(t("many-cascade-fks", "Many CASCADE FKs: {{count}}", { count: cascadeDeletes.length }));
-            return { level: "critical", reasons, warnings };
-        }
-
-        if (cascadeDeletes.length > 0) {
-            warnings.push(t("cascade-deletes-warning", "{{count}} table(s) will be affected by CASCADE DELETE", { count: cascadeDeletes.length }));
-            reasons.push(t("cascade-fks", "CASCADE FKs: {{count}}", { count: cascadeDeletes.length }));
-            return { level: "medium", reasons, warnings };
-        }
-
-        reasons.push(t("incoming-fks", "Incoming FKs: {{count}}", { count: incomingFKs.length }));
-        return { level: "low", reasons, warnings };
-    }
-
-    // FK wychodzące (OUT) - ta tabela wskazuje na inne
-    if (outgoingFKs.length > 0) {
-        reasons.push(t("outgoing-fks", "Outgoing FKs: {{count}}", { count: outgoingFKs.length }));
-        return { level: "low", reasons, warnings };
-    }
-
-    return { level: "none", reasons: [t("no-fk-dependencies", "No foreign key dependencies")], warnings };
-}
-
-// Zaktualizuj assessOverallRisk
-export function assessOverallRisk(
-    depRisk: RiskAssessment,
-    codeRisk: RiskAssessment,
-    statsRisk: RiskAssessment,
-    securityRisk: RiskAssessment,
-    fkRisk?: RiskAssessment
-): RiskAssessment {
-    const riskLevels: RiskLevel[] = [
-        depRisk.level,
-        codeRisk.level,
-        statsRisk.level,
-        securityRisk.level
-    ];
-
-    if (fkRisk) {
-        riskLevels.push(fkRisk.level);
-    }
-
-    const riskPriority: Record<RiskLevel, number> = {
-        "none": 0,
-        "low": 1,
-        "medium": 2,
-        "high": 3,
-        "critical": 4
-    };
-
-    const maxRiskLevel = riskLevels.reduce((max, curr) => {
-        return riskPriority[curr] > riskPriority[max] ? curr : max;
-    });
-
-    const allReasons: string[] = [];
-    const allWarnings: string[] = [];
-
-    if (depRisk.level !== "none") {
-        allReasons.push(t("[dependencies]", "[Dependencies]") + ` ${depRisk.reasons.join(", ")}`);
-        allWarnings.push(...depRisk.warnings);
-    }
-
-    if (codeRisk.level !== "none") {
-        allReasons.push(t("[code]", "[Code]") + ` ${codeRisk.reasons.join(", ")}`);
-        allWarnings.push(...codeRisk.warnings);
-    }
-
-    if (statsRisk.level !== "none") {
-        allReasons.push(t("[statistics]", "[Statistics]") + ` ${statsRisk.reasons.join(", ")}`);
-        allWarnings.push(...statsRisk.warnings);
-    }
-
-    if (securityRisk.level !== "none") {
-        allReasons.push(t("[security]", "[Security]") + ` ${securityRisk.reasons.join(", ")}`);
-        allWarnings.push(...securityRisk.warnings);
-    }
-
-    if (fkRisk && fkRisk.level !== "none") {
-        allReasons.push(t("[foreign-keys]", "[Foreign Keys]") + ` ${fkRisk.reasons.join(", ")}`);
-        allWarnings.push(...fkRisk.warnings);
-    }
-
-    return {
-        level: maxRiskLevel,
-        reasons: allReasons,
-        warnings: allWarnings
-    };
-}
+export default ObjectSafetyAnalyzer;

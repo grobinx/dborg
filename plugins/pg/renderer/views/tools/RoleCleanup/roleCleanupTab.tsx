@@ -14,7 +14,7 @@ import { viewDdl } from "../../../../common/ddls/view";
 import { sequenceDdl } from "../../../../common/ddls/sequence";
 import { schemaDdl } from "../../../../common/ddls/schema";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
-import { analyzeDependencies, analyzeForeignKeyDependencies, assessCodeUsageRisk, assessDependencyRisk, assessForeignKeyRisk, assessOverallRisk, assessSecurityContextRisk, assessTableStatsRisk, checkSecurityContext, CodeUsage, DependencyInfo, findUsagesInCode, getTableStats, RiskAssessment, RiskLevel, SecurityContext, TableStats } from "./objectAnalyze";
+import ObjectSafetyAnalyzer, { AnalysisResult, RiskLevel } from "./objectAnalyze";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -33,21 +33,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
 
     let ownedCache: OwnedObjectRecord[] = [];
     let privsCache: PrivilegeRecord[] = [];
-    let objectCache: Record<string, {
-        ddl?: string,
-        depInfo?: DependencyInfo,
-        codeUsages?: CodeUsage[],
-        tableStats?: TableStats | null,
-        securityContext?: SecurityContext | null,
-        risk?: {
-            dependency: RiskAssessment,
-            codeUsage: RiskAssessment,
-            tableStats: RiskAssessment,
-            securityContext: RiskAssessment,
-            foreignKey: RiskAssessment,
-            overall: RiskAssessment,
-        }
-    }> = {};
+    let ddlCache: Record<string, string> = {};
 
     let selectedRole: string | null = null;
     const setSelectedRoleName = async () => {
@@ -121,46 +107,20 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         }
     };
 
-    const analyzeObject = async (obj: OwnedObjectRecord) => {
-        const [depInfo, fkDeps, codeUsages, tableStats, securityContext,] = await Promise.all([
-            analyzeDependencies(session, obj.objtype, obj.schema, obj.name),
-            obj.objtype === 'table'
-                ? analyzeForeignKeyDependencies(session, obj.schema!, obj.name)
-                : Promise.resolve([]),
-            obj.objtype === 'table' || obj.objtype === 'view' || obj.objtype === 'matview' || obj.objtype === 'function' || obj.objtype === 'procedure'
-                ? findUsagesInCode(session, obj.schema!, obj.name)
-                : Promise.resolve([]),
-            obj.objtype === 'table'
-                ? getTableStats(session, obj.schema!, obj.name)
-                : Promise.resolve(null),
-            obj.objtype === 'function'
-                ? checkSecurityContext(session, obj.objtype, obj.schema!, obj.name, obj.identity)
-                : Promise.resolve(null)
-        ]);
-
-        const dependencyRisk = assessDependencyRisk(depInfo);
-        const codeUsageRisk = assessCodeUsageRisk(codeUsages);
-        const tableStatsRisk = assessTableStatsRisk(tableStats);
-        const securityContextRisk = assessSecurityContextRisk(securityContext);
-        const foreignKeyRisk = assessForeignKeyRisk(fkDeps);
-        const overallRisk = assessOverallRisk(dependencyRisk, codeUsageRisk, tableStatsRisk, securityContextRisk, foreignKeyRisk);
-        const risk = {
-            dependency: dependencyRisk,
-            codeUsage: codeUsageRisk,
-            tableStats: tableStatsRisk,
-            securityContext: securityContextRisk,
-            foreignKey: foreignKeyRisk,
-            overall: overallRisk,
+    const analyzeObject = async (obj: OwnedObjectRecord): Promise<AnalysisResult | null> => {
+        if (obj.schema === null) {
+            return null;
         }
+        return await new Promise<AnalysisResult | null>((resolve) => {
+            const osa = new ObjectSafetyAnalyzer();
+            resolve(osa.analyzeObjectSafety(obj.schema!, obj.name, obj.objtype, session));
+        });
+    }
 
-        return { depInfo, codeUsages, tableStats, securityContext, risk };
-
-    };
-
-    const RiskLevelIcon = (props: { level: RiskLevel, slotContext: SlotRuntimeContext }) => {
+    const RiskLevelIcon = (props: { level: RiskLevel | null, slotContext: SlotRuntimeContext }) => {
         const { level, slotContext } = props;
         if (level === "low") {
-            return <slotContext.theme.icons.Check color="info" />;
+            return <slotContext.theme.icons.Check color="success" />;
         } else if (level === "medium") {
             return <slotContext.theme.icons.Warning color="warning" />;
         } else if (level === "high") {
@@ -168,7 +128,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
         } else if (level === "critical") {
             return <slotContext.theme.icons.Error color="error" />;
         }
-        return <slotContext.theme.icons.Check color="success" />;
+        return null;
     }
 
     return {
@@ -254,7 +214,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         rows: async () => {
                                             if (!selectedRole || isSuperuser === null) return [];
                                             ownedCache = await listOwnedObjects(session, selectedRole, versionNumber, isSuperuser);
-                                            objectCache = {};
+                                            ddlCache = {};
                                             analyzingObject = false;
                                             editorRefresh(slotContext);
                                             return ownedCache;
@@ -266,14 +226,18 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             { key: "owner", label: t("owner", "Owner"), width: 140, dataType: "string" },
                                             {
                                                 key: "risk", label: t("risk-level", "Risk"), width: 40, dataType: "string",
-                                                formatter: (value: RiskLevel | null, row) => {
+                                                formatter: (value: AnalysisResult | null, row) => {
                                                     if (analyzingRows.indexOf(row) >= 0) {
                                                         return <slotContext.theme.icons.Loading />;
                                                     }
                                                     if (!value) {
                                                         return null;
                                                     }
-                                                    return <RiskLevelIcon level={value || "none"} slotContext={slotContext} />;
+                                                    return (<Stack direction="row" gap={2}>
+                                                        <RiskLevelIcon level={value.assessment?.canDelete.level || null} slotContext={slotContext} />
+                                                        <RiskLevelIcon level={value.assessment?.canChangeOwner.level || null} slotContext={slotContext} />
+                                                        <RiskLevelIcon level={value.assessment?.canMove.level || null} slotContext={slotContext} />
+                                                    </Stack>);
                                                 }
                                             },
                                             {
@@ -516,13 +480,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         slotContext.refresh(cid("owned-toolbar"));
                                                         slotContext.refresh(cid("owned-info"));
                                                         try {
-                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
-                                                            const result = await analyzeObject(selectedOwnedObject);
-                                                            objectCache[key] = {
-                                                                ...objectCache[key],
-                                                                ...result,
-                                                            };
-                                                            selectedOwnedObject.risk = result?.risk?.overall?.level;
+                                                            selectedOwnedObject.risk = await analyzeObject(selectedOwnedObject);
                                                         } finally {
                                                             const index = analyzingRows.indexOf(row);
                                                             if (index !== -1) {
@@ -551,32 +509,28 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     }
                                                     analyzingObject = true;
                                                     slotContext.refresh(cid("schemas-toolbar"));
-                                                    let tc = Date.now() -500;
+                                                    let tc = Date.now() - 250;
                                                     try {
                                                         for (const [index, row] of ownedCache.entries()) {
                                                             analyzingProgress = Math.round(((index + 1) / ownedCache.length) * 100);
                                                             analyzingRows.push(row);
-                                                            if (Date.now() - tc > 500) {
+                                                            if (Date.now() - tc > 250) {
                                                                 slotContext.refresh(cid("owned-grid"), "only");
                                                                 slotContext.refresh(cid("owned-progress"));
                                                                 slotContext.refresh(cid("owned-toolbar"));
                                                                 slotContext.refresh(cid("owned-info"));
                                                                 tc = Date.now();
+                                                                await new Promise(resolve => setTimeout(resolve, 0));
                                                             }
                                                             try {
-                                                                const key = objectDllKey(row.objtype, row.schema || null, row.identity);
-                                                                const result = await analyzeObject(row);
-                                                                objectCache[key] = {
-                                                                    ...objectCache[key],
-                                                                    ...result,
-                                                                };
-                                                                row.risk = result?.risk?.overall?.level;
+                                                                row.risk = await analyzeObject(row);
                                                             } finally {
                                                                 const index = analyzingRows.indexOf(row);
                                                                 if (index !== -1) {
                                                                     analyzingRows.splice(index, 1);
                                                                 }
                                                             }
+
                                                             if (!analyzingObject) {
                                                                 break;
                                                             }
@@ -653,27 +607,66 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                     if (!selectedOwnedObject) {
                                                                         return null;
                                                                     }
-                                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
-                                                                    const risk = objectCache[key]?.risk?.overall;
+                                                                    const risk = selectedOwnedObject.risk as AnalysisResult | null;
                                                                     if (!risk) {
                                                                         return null;
                                                                     }
-                                                                    return (
-                                                                        <Stack gap={4}>
-                                                                            <Typography variant="h6" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                                                <RiskLevelIcon level={risk.level} slotContext={slotContext} />
-                                                                                {t("risk-assessment", "{{level}} Risk", { level: t(`risk-level-${risk.level}`, risk.level.charAt(0).toUpperCase() + risk.level.slice(1)) })}
-                                                                            </Typography>
-                                                                            <hr style={{ width: "98%" }} />
-                                                                            {risk.reasons.map((reason, idx) => (
-                                                                                <Typography variant="body2" component="div" key={idx}>{reason}</Typography>
-                                                                            ))}
-                                                                            <hr style={{ width: "98%" }} />
-                                                                            {risk.warnings.map((warning, idx) => (
-                                                                                <Typography variant="body2" component="div" color="warning" key={idx}>{warning}</Typography>
-                                                                            ))}
+
+                                                                    // Nagłówek z podstawowymi informacjami
+                                                                    const header = (
+                                                                        <Stack gap={2}>
+                                                                            {!risk.found && !risk.error && (
+                                                                                <Typography variant="body2" color="warning">
+                                                                                    {t("object-not-found", "Object not found in metadata.")}
+                                                                                </Typography>
+                                                                            )}
+                                                                            {risk.error && (
+                                                                                <Typography variant="body2" color="error">
+                                                                                    {t("error", "Error")}: {risk.error}
+                                                                                </Typography>
+                                                                            )}
                                                                         </Stack>
-                                                                    )
+                                                                    );
+
+                                                                    // Oceny operacji (jeśli dostępne)
+                                                                    const assessment = risk.assessment;
+                                                                    const ops = assessment ? [
+                                                                        { key: "canDelete", label: t("delete", "Delete"), value: assessment.canDelete },
+                                                                        { key: "canChangeOwner", label: t("change-owner", "Change Owner"), value: assessment.canChangeOwner },
+                                                                        { key: "canMove", label: t("move", "Move"), value: assessment.canMove },
+                                                                    ] : [];
+
+                                                                    return (
+                                                                        <Stack gap={6}>
+                                                                            {header}
+
+                                                                            {assessment && (
+                                                                                <Stack gap={3}>
+                                                                                    <Typography variant="subtitle1" component="div">
+                                                                                        {t("risk-assessment", "Risk assessment")}
+                                                                                    </Typography>
+                                                                                    <Stack gap={2}>
+                                                                                        {ops.map(op => (
+                                                                                            <Box key={op.key} sx={{ border: "1px solid #ddd", borderRadius: 4, padding: 8 }}>
+                                                                                                <Typography variant="body2" component="div">
+                                                                                                    {op.value.message}
+                                                                                                </Typography>
+                                                                                                {op.value.details?.length > 0 && (
+                                                                                                    <Stack component="ul" sx={{ pl: 2, mt: 1 }} gap={0.5}>
+                                                                                                        {op.value.details.map((d, idx) => (
+                                                                                                            <div key={idx}>
+                                                                                                                <Typography variant="body2" component="span">{d}</Typography>
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </Stack>
+                                                                                                )}
+                                                                                            </Box>
+                                                                                        ))}
+                                                                                    </Stack>
+                                                                                </Stack>
+                                                                            )}
+                                                                        </Stack>
+                                                                    );
                                                                 },
                                                             },
                                                         ]
@@ -701,11 +694,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                 return t("select-object-to-see-ddl-preview", "-- Select an object to see DDL preview --");
                                                             }
                                                             const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
-                                                            if (objectCache[key]?.ddl) {
-                                                                return objectCache[key].ddl;
+                                                            if (ddlCache[key]) {
+                                                                return ddlCache[key];
                                                             }
-                                                            objectCache[key] = { ...objectCache[key], ddl: await objectDdl(selectedOwnedObject) };
-                                                            return objectCache[key].ddl;
+                                                            ddlCache[key] = await objectDdl(selectedOwnedObject);
+                                                            return ddlCache[key];
                                                         },
                                                     },
                                                 },
@@ -757,7 +750,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                         rows: async () => {
                                             if (!selectedRole) return [];
                                             privsCache = await listPrivileges(session, selectedRole, versionNumber);
-                                            objectCache = {};
+                                            ddlCache = {};
                                             editorRefresh(slotContext);
                                             return privsCache;
                                         },
@@ -882,8 +875,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             }
 
                                             const key = objectDllKey(selectedPrivilege.objtype, selectedPrivilege.schema || null, selectedPrivilege.identity);
-                                            if (objectCache[key]?.ddl) {
-                                                return objectCache[key].ddl;
+                                            if (ddlCache[key]) {
+                                                return ddlCache[key];
                                             }
 
                                             return `-- DDL preview not available for privileges --`;

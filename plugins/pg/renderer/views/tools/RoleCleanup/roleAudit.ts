@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { RiskLevel } from "./objectAnalyze";
+import { AnalysisResult } from "./objectAnalyze";
 
 /*typy obiektów w bazie (przykłady wartości dla objtype)
   schema
@@ -31,7 +31,7 @@ export interface OwnedObjectRecord {
     identity: string; // w pełni kwalifikowana nazwa (dla funkcji z sygnaturą)
     owner: string;
     choice?: CleanupChoice;
-    risk?: RiskLevel;
+    risk?: AnalysisResult | null;
     [key: string]: any;
 }
 
