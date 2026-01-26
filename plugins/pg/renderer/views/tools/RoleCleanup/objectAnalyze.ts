@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata, DatabaseMetadata } from "src/api/db";
+import { RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata, DatabaseMetadata, DatabasesMetadata } from "src/api/db";
 import { t } from "i18next";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
@@ -31,6 +31,69 @@ export interface AnalysisResult {
 }
 
 export class ObjectSafetyAnalyzer {
+    private session: IDatabaseSession;
+    private identifiersCache: Map<string, Array<{ database: DatabaseMetadata, schema: SchemaMetadata, object: RoutineMetadata | RelationMetadata }>> = new Map();
+
+    constructor(session: IDatabaseSession) {
+        this.session = session;
+        // Initialize cache when metadata becomes available
+        session.getMetadata().then(metadata => {
+            this.prepareIdentifierCache(metadata);
+        }).catch(error => {
+            console.error("Failed to prepare identifier cache:", error);
+        });
+    }
+
+    private prepareIdentifierCache(metadata: DatabasesMetadata): void {
+        const database = Object.values(metadata).find(db => db.connected);
+
+        if (!database) {
+            return;
+        }
+
+        this.identifiersCache.clear();
+        Object.entries(database.schemas).forEach(([_schemaName, schema]) => {
+            // Relacje
+            Object.entries(schema.relations).forEach(([_relName, relation]) => {
+                if (relation.identifiers && relation.identifiers.length > 0) {
+                    relation.identifiers.forEach(id => {
+                        const key = id.toLowerCase().trim();
+                        if (!this.identifiersCache.has(key)) {
+                            this.identifiersCache.set(key, []);
+                        }
+                        this.identifiersCache.get(key)!.push({
+                            database,
+                            schema,
+                            object: relation
+                        });
+                    });
+                }
+            });
+
+            // Rutyny
+            if (schema.routines) {
+                Object.entries(schema.routines).forEach(([_routineName, routineList]) => {
+                    routineList.forEach((routine) => {
+                        if (routine.identifiers && routine.identifiers.length > 0) {
+                            routine.identifiers.forEach(id => {
+                                const key = id.toLowerCase().trim();
+                                if (!this.identifiersCache.has(key)) {
+                                    this.identifiersCache.set(key, []);
+                                }
+                                this.identifiersCache.get(key)!.push({
+                                    database,
+                                    schema,
+                                    object: routine
+                                });
+                            });
+                        }
+                    });
+                });
+            }
+        });
+
+    }
+
     /**
      * Ocenia bezpieczeństwo usuwania obiektu
      */
@@ -52,9 +115,12 @@ export class ObjectSafetyAnalyzer {
         if (usage && usage.length > 0) {
             level = "critical";
             details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
-            usage.forEach(u => {
+            usage.slice(0, 10).forEach((u) => {
                 details.push(`  - ${u.name} (${u.location})`);
             });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
         }
 
         // Sprawdzenie statystyk
@@ -101,17 +167,20 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocenia bezpieczeństwo przenoszenia obiektu
      */
-    assessMove(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
+    assessRelationMove(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
         // Sprawdzenie użycia w kodzie
         if (usage && usage.length > 0) {
             level = "critical";
-            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes - moving would require updates:", { count: usage.length }));
-            usage.forEach(u => {
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
                 details.push(`  - ${u.name} (${u.location})`);
             });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
         }
 
         // Sprawdzenie typu relacji
@@ -155,6 +224,124 @@ export class ObjectSafetyAnalyzer {
         };
     }
 
+    private assessRoutineMove(routine: RoutineMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "critical";
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
+        }
+
+        if (routine.kind === "trigger") {
+            level = "high";
+            details.push(t("trigger-move-warning", "Trigger - moving may affect table associations"));
+        }
+
+        if (routine.permissions?.execute === false) {
+            level = "critical";
+            details.push(t("no-permission-to-move-routine", "No permission to move this routine"));
+        }
+
+        details.push(t("move-requires-recreate-references", "References in views/other functions may need to be updated"));
+
+        return {
+            level,
+            message: this.getRiskMessage("move", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena przenoszenia sekwencji
+     */
+    private assessSequenceMove(sequence: SequenceMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        details.push(t("sequence-can-be-moved", "Sequence can be moved to another schema"));
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "medium";
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
+        }
+
+        if (sequence.permissions?.usage === false) {
+            level = "critical";
+            details.push(t("no-permission-to-move-sequence", "No permission to move this sequence"));
+        }
+
+        details.push(t("move-sequence-check-defaults", "Note: Check columns that use this sequence in DEFAULT clauses"));
+
+        return {
+            level,
+            message: this.getRiskMessage("move", level),
+            details
+        };
+    }
+
+    /**
+     * Ocena przenoszenia typu
+     */
+    private assessTypeMove(type: TypeMetadata, usage?: Array<any>): OperationRisk {
+        const details: string[] = [];
+        let level: RiskLevel = "low";
+
+        details.push(t("type-can-be-moved", "Type can be moved to another schema"));
+
+        // Sprawdzenie użycia w kodzie
+        if (usage && usage.length > 0) {
+            level = "high";
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
+                details.push(`  - ${u.name} (${u.location})`);
+            });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
+        }
+
+        if (type.kind === "composite") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("composite-type-move-warning", "Composite type - tables using it may need updates"));
+        }
+
+        if (type.kind === "enum") {
+            level = level === "low" ? "medium" : level;
+            details.push(t("enum-type-move-warning", "ENUM type - columns using it need to be checked"));
+        }
+
+        if (type.kind === "domain") {
+            level = "high";
+            details.push(t("domain-type-move-warning", "Domain type - may underlie other types"));
+        }
+
+        if (type.permissions?.usage === false) {
+            level = "critical";
+            details.push(t("no-permission-to-move-type", "No permission to move this type"));
+        }
+
+        return {
+            level,
+            message: this.getRiskMessage("move", level),
+            details
+        };
+    }
+
     /**
      * Ocenia bezpieczeństwo zmiany właściciela
      */
@@ -167,10 +354,10 @@ export class ObjectSafetyAnalyzer {
         }
 
         // Sprawdzenie uprawnień na kolumnach
-        if (relation.columns.some(col => col.permissions)) {
-            level = "medium";
-            details.push(t("relation-columns-have-granular-permissions", "Some columns have granular permissions - may be blocked"));
-        }
+        // if (relation.columns.some(col => col.permissions)) {
+        //     level = "medium";
+        //     details.push(t("relation-columns-have-granular-permissions", "Some columns have granular permissions - may be blocked"));
+        // }
 
         // Sprawdzenie indeksów
         if (relation.indexes && relation.indexes.length > 0) {
@@ -198,7 +385,7 @@ export class ObjectSafetyAnalyzer {
     assessRelation(relation: RelationMetadata, currentOwner?: string): ObjectSafetyAssessment {
         return {
             canDelete: this.assessDeletion(relation),
-            canMove: this.assessMove(relation),
+            canMove: this.assessRelationMove(relation),
             canChangeOwner: this.assessChangeOwner(relation, currentOwner)
         };
     }
@@ -219,10 +406,13 @@ export class ObjectSafetyAnalyzer {
         // Sprawdzenie użycia w kodzie
         if (usage && usage.length > 0) {
             level = "critical";
-            details.push(t("routine-is-used-in-codes", "Routine is used in {{count}} codes:", { count: usage.length }));
-            usage.forEach(u => {
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
                 details.push(`  - ${u.name} (${u.location})`);
             });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
         }
 
         if (routine.kind === "trigger") {
@@ -293,53 +483,44 @@ export class ObjectSafetyAnalyzer {
 
     /**
      * Sprawdza gdzie dany obiekt jest używany w identifiers (funkcjach, widokach, etc.)
+     * Teraz korzysta z identifiersCache dla szybszego działania.
      */
     private findObjectUsageInIdentifiers(
         objectName: string,
-        schemaName: string,
-        database: DatabaseMetadata
+        schemaName: string
     ): Array<{ type: "relation" | "routine"; name: string; location: string }> {
         const usage: Array<{ type: "relation" | "routine"; name: string; location: string }> = [];
+        const keyVariants = [
+            objectName.toLowerCase().trim(),
+            `${schemaName.toLowerCase().trim()}.${objectName.toLowerCase().trim()}`,
+            `"${schemaName}"."${objectName}"`
+        ];
 
-        // Sprawdź wszystkie schematy
-        Object.entries(database.schemas).forEach(([currentSchemaName, schema]) => {
-            // Szukaj w widokach
-            Object.entries(schema.relations).forEach(([relName, relation]) => {
-                if (relation.identifiers && relation.identifiers.length > 0) {
-                    const found = relation.identifiers.some(id =>
-                        this.matchesIdentifier(id, objectName, schemaName)
-                    );
-                    if (found) {
+        // Przeszukaj cache po wszystkich wariantach klucza
+        for (const key of keyVariants) {
+            const found = this.identifiersCache.get(key);
+            if (found) {
+                found.forEach(obj => {
+                    if (obj.object.type === "view") {
                         usage.push({
                             type: "relation",
-                            name: `${currentSchemaName}.${relName}`,
-                            location: relation.type === "view" ? "view" : "table"
+                            name: `${obj.schema.identity}.${obj.object.name}`,
+                            location: obj.object.type
+                        });
+                    } else if (obj.object.type === "function" || obj.object.type === "procedure") {
+                        usage.push({
+                            type: "routine",
+                            name: `${obj.schema.identity}.${obj.object.name}`,
+                            location: `${obj.object.type}/${obj.object.kind || "regular"}`
                         });
                     }
-                }
-            });
-
-            // Szukaj w funkcjach/procedurach
-            if (schema.routines) {
-                Object.entries(schema.routines).forEach(([routineName, routineList]) => {
-                    routineList.forEach((routine, index) => {
-                        if (routine.identifiers && routine.identifiers.length > 0) {
-                            const found = routine.identifiers.some(id =>
-                                this.matchesIdentifier(id, objectName, schemaName)
-                            );
-                            if (found) {
-                                const suffix = routineList.length > 1 ? ` [overload ${index + 1}]` : "";
-                                usage.push({
-                                    type: "routine",
-                                    name: `${currentSchemaName}.${routineName}${suffix}`,
-                                    location: `${routine.type}/${routine.kind || "regular"}`
-                                });
-                            }
-                        }
-                    });
                 });
             }
-        });
+        }
+
+        // Dodatkowo, jeśli identyfikator jest zagnieżdżony (np. w kodzie), sprawdź regex
+        // (opcjonalnie, jeśli chcesz pełną zgodność jak poprzednio)
+        // Możesz dodać fallback do starej logiki jeśli chcesz
 
         return usage;
     }
@@ -407,12 +588,10 @@ export class ObjectSafetyAnalyzer {
     async analyzeObjectSafety(
         schemaName: string,
         objectName: string,
-        objectType: string | null,
-        session: IDatabaseSession
     ): Promise<AnalysisResult> {
         try {
             // Pobierz metadane z sesji
-            const metadata = await session.getMetadata();
+            const metadata = await this.session.getMetadata();
 
             if (!metadata || Object.keys(metadata).length === 0) {
                 return {
@@ -443,7 +622,7 @@ export class ObjectSafetyAnalyzer {
             // Szukaj relacji (tabela/widok)
             const relation = schema.relations[objectName];
             if (relation) {
-                const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
                 return {
                     found: true,
                     objectType: "relation",
@@ -452,7 +631,7 @@ export class ObjectSafetyAnalyzer {
                     usedInIdentifiers: usage,
                     assessment: {
                         canDelete: this.assessDeletion(relation, usage),
-                        canMove: this.assessMove(relation, usage),
+                        canMove: this.assessRelationMove(relation, usage),
                         canChangeOwner: this.assessChangeOwner(relation, relation.owner)
                     }
                 };
@@ -463,7 +642,7 @@ export class ObjectSafetyAnalyzer {
                 const routineList = schema.routines[objectName];
                 if (routineList && routineList.length > 0) {
                     const routine = routineList[0]; // Analizuj pierwszy overload
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "routine",
@@ -472,7 +651,7 @@ export class ObjectSafetyAnalyzer {
                         usedInIdentifiers: usage,
                         assessment: {
                             canDelete: this.assessRoutineDeletion(routine, usage),
-                            canMove: this.createUnavailableOperation(t("operation-move-routine", "Move routine")),
+                            canMove: this.assessRoutineMove(routine, usage),
                             canChangeOwner: this.assessRoutineChangeOwner(routine)
                         }
                     };
@@ -483,7 +662,7 @@ export class ObjectSafetyAnalyzer {
             if (schema.sequences) {
                 const sequence = schema.sequences[objectName];
                 if (sequence) {
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "sequence",
@@ -492,7 +671,7 @@ export class ObjectSafetyAnalyzer {
                         usedInIdentifiers: usage,
                         assessment: {
                             canDelete: this.assessSequenceDeletion(sequence, usage),
-                            canMove: this.createUnavailableOperation(t("operation-move-sequence", "Move sequence")),
+                            canMove: this.assessSequenceMove(sequence, usage),
                             canChangeOwner: this.assessSequenceChangeOwner(sequence)
                         }
                     };
@@ -503,7 +682,7 @@ export class ObjectSafetyAnalyzer {
             if (schema.types) {
                 const type = schema.types[objectName];
                 if (type) {
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName, database);
+                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "type",
@@ -512,7 +691,7 @@ export class ObjectSafetyAnalyzer {
                         usedInIdentifiers: usage,
                         assessment: {
                             canDelete: this.assessTypeDeletion(type, usage),
-                            canMove: this.createUnavailableOperation(t("operation-move-type", "Move type")),
+                            canMove: this.assessTypeMove(type, usage),
                             canChangeOwner: this.assessTypeChangeOwner(type)
                         }
                     };
@@ -587,10 +766,13 @@ export class ObjectSafetyAnalyzer {
         // Sprawdzenie użycia w kodzie
         if (usage && usage.length > 0) {
             level = "high";
-            details.push(t("sequence-used-in-codes", "Sequence is used in {{count}} codes:", { count: usage.length }));
-            usage.forEach(u => {
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
                 details.push(`  - ${u.name} (${u.location})`);
             });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
         }
 
         if (sequence.permissions?.usage === false) {
@@ -642,10 +824,13 @@ export class ObjectSafetyAnalyzer {
         // Sprawdzenie użycia w kodzie
         if (usage && usage.length > 0) {
             level = "high";
-            details.push(t("type-used-in-codes", "Type is used in {{count}} codes:", { count: usage.length }));
-            usage.forEach(u => {
+            details.push(t("object-used-in-code", "Object is used in {{count}} function/view codes:", { count: usage.length }));
+            usage.slice(0, 10).forEach((u) => {
                 details.push(`  - ${u.name} (${u.location})`);
             });
+            if (usage.length > 10) {
+                details.push(t("and-more-usages", "  ...and {{count}} more", { count: usage.length - 10 }));
+            }
         }
 
         if (type.kind === "composite") {

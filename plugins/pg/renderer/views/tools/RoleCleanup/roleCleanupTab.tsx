@@ -34,6 +34,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     let ownedCache: OwnedObjectRecord[] = [];
     let privsCache: PrivilegeRecord[] = [];
     let ddlCache: Record<string, string> = {};
+    const osa = new ObjectSafetyAnalyzer(session);
 
     let selectedRole: string | null = null;
     const setSelectedRoleName = async () => {
@@ -112,8 +113,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
             return null;
         }
         return await new Promise<AnalysisResult | null>((resolve) => {
-            const osa = new ObjectSafetyAnalyzer();
-            resolve(osa.analyzeObjectSafety(obj.schema!, obj.name, obj.objtype, session));
+            resolve(osa.analyzeObjectSafety(obj.schema!, obj.name));
         });
     }
 
