@@ -7,6 +7,8 @@ import { useViewSlot } from "./ViewSlotContext";
 import ToolBarSlot from "./ToolBarSlot";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -37,11 +39,21 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const addToast = useToast();
+    const { confirm } = useDialogs();
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
-             if (redraw === "only") {
+            if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else {
                 setPendingRefresh(true);

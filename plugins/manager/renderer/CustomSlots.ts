@@ -44,6 +44,19 @@ export interface SlotRuntimeContext {
      * @return A promise that resolves to the dialog result or null if the dialog was cancelled.
      */
     openDialog: DialogSlotFunction;
+
+    showNotification: (options: {
+        message: string;
+        severity?: "info" | "success" | "warning" | "error";
+    }) => void;
+
+    showConfirmDialog(options: {
+        title: string,
+        message: string,
+        confirmLabel: string,
+        cancelLabel: string,
+        severity: "info" | "success" | "warning" | "error",
+    }) : Promise<boolean>;
 }
 
 export type BooleanFactory = boolean | ((runtimeContext: SlotRuntimeContext) => boolean);

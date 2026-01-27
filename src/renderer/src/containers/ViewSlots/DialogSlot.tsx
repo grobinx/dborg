@@ -20,6 +20,8 @@ import { DialogLayoutItem } from "./dialog/DialogLayoutItem";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 interface DialogSlotProps {
     slot: IDialogSlot;
@@ -60,9 +62,19 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
 
     const theme = useTheme();
     const { t } = useTranslation();
+    const addToast = useToast();
+    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);

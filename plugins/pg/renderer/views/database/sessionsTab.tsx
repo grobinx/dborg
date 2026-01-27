@@ -65,6 +65,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     let hasPgBackendMemoryContexts: boolean | null = null;
     let hasHeapBlksWritten: boolean | null = null;
     let isSuperuser: boolean | null = null;
+    let hasPgSignalBackend: boolean | null = null;
 
     async function checkSuperuser() {
         try {
@@ -74,6 +75,17 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
             isSuperuser = rows[0]?.is_superuser ?? false;
         } catch {
             isSuperuser = false;
+        }
+    }
+
+    async function checkPgSignalBackend() {
+        try {
+            const { rows } = await session.query<{ has_role: boolean }>(
+                `SELECT pg_has_role(current_user, 'pg_signal_backend', 'MEMBER') AS has_role`
+            );
+            hasPgSignalBackend = rows[0]?.has_role ?? false;
+        } catch {
+            hasPgSignalBackend = false;
         }
     }
 
@@ -136,18 +148,20 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     return {
         id: cid("sessions-tab"),
         type: "tab",
-        onMount: (slotContext) => {
-            checkSuperuser().then(() => {
+        onMount: async (slotContext) => {
+            try {
+                await checkSuperuser();
+                await checkPgSignalBackend();
                 slotContext.refresh(cid("sessions-grid"));
                 if (versionNumber >= 130000) {
-                    ensureCapabilities().then(() => {
-                        slotContext.refresh(cid("memory-contexts-grid"));
-                    });
-                    ensureProgressClusterColumns().then(() => {
-                        slotContext.refresh(cid("progress-cluster-grid"));
-                    });
+                    await ensureCapabilities();
+                    slotContext.refresh(cid("memory-contexts-grid"));
+                    await ensureProgressClusterColumns();
+                    slotContext.refresh(cid("progress-cluster-grid"));
                 }
-            });
+            } catch (error) {
+                console.error("Error during sessions tab mount:", error);
+            }
         },
         label: {
             id: cid("sessions-tab-label"),
@@ -158,7 +172,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
         content: {
             id: cid("sessions-tab-content"),
             type: "tabcontent",
-            content: () => ({
+            content: (slotContext) => ({
                 id: cid("sessions-split"),
                 type: "split",
                 direction: "vertical",
@@ -169,7 +183,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         id: cid("sessions-grid"),
                         type: "grid",
                         uniqueField: "pid",
-                        onRowSelect: (row: SessionRecord | undefined, slotContext) => {
+                        onRowSelect: (row: SessionRecord | undefined) => {
                             const previousSelectedSession = selectedSession;
                             selectedSession = row ?? null;
                             slotContext.refresh(cid("locks-grid"));
@@ -185,6 +199,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             if (selectedSession?.blocking_pids || previousSelectedSession?.blocking_pids) {
                                 slotContext.refresh(cid("sessions-grid"), "only");
                             }
+                            slotContext.refresh(cid("sessions-tab-toolbar"));
                         },
                         rows: async () => {
                             if (isSuperuser === null) return [];
@@ -287,6 +302,80 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             }
                             return {};
                         },
+                        actions: [
+                            {
+                                id: "sessions-cancel-query-action",
+                                label: t("cancel-query", "Cancel Query"),
+                                icon: <slotContext.theme.icons.CancleQuery color="warning" />,
+                                contextMenuGroupId: "session-actions",
+                                contextMenuOrder: 1,
+                                keySequence: ["Ctrl+Q"],
+                                disabled: () => {
+                                    if (!selectedSession || selectedSession.state !== 'active') return true;
+                                    // Można anulować własne zapytanie lub jeśli jest superuser/pg_signal_backend
+                                    return !selectedSession.is_current_session && !isSuperuser && !hasPgSignalBackend;
+                                },
+                                run: async () => {
+                                    if (!selectedSession) return;
+                                    try {
+                                        await session.query(`SELECT pg_cancel_backend($1)`, [selectedSession.pid]);
+                                        slotContext.showNotification({
+                                            severity: "success",
+                                            message: t("query-cancelled", "Query cancelled successfully"),
+                                        });
+                                        slotContext.refresh(cid("sessions-grid"));
+                                    } catch (error) {
+                                        slotContext.showNotification({
+                                            severity: "error",
+                                            message: t("cancel-query-failed", "Failed to cancel query: {{error}}", {
+                                                error: (error as any)?.message ? (error as any).message : String(error)
+                                            }),
+                                        });
+                                    }
+                                },
+                            },
+                            {
+                                id: "sessions-kill-session-action",
+                                label: t("kill-session", "Kill Session"),
+                                icon: <slotContext.theme.icons.KillSession color="error" />,
+                                contextMenuGroupId: "session-actions",
+                                contextMenuOrder: 2,
+                                keySequence: ["Ctrl+Shift+X"],
+                                disabled: () => {
+                                    if (!selectedSession) return true;
+                                    // Można zabić własną sesję lub jeśli jest superuser/pg_signal_backend
+                                    return !selectedSession.is_current_session && !isSuperuser && !hasPgSignalBackend;
+                                },
+                                run: async () => {
+                                    if (!selectedSession) return;
+                                    const confirmed = await slotContext.showConfirmDialog({
+                                        title: t("confirm-kill-session", "Confirm Kill Session"),
+                                        message: t("kill-session-warning", "Are you sure you want to terminate session {{pid}}? This will forcibly disconnect the client.", {
+                                            pid: selectedSession.pid
+                                        }),
+                                        confirmLabel: t("kill", "Kill"),
+                                        cancelLabel: t("cancel", "Cancel"),
+                                        severity: "error",
+                                    });
+                                    if (!confirmed) return;
+                                    try {
+                                        await session.query(`SELECT pg_terminate_backend($1)`, [selectedSession.pid]);
+                                        slotContext.showNotification({
+                                            severity: "success",
+                                            message: t("session-killed", "Session terminated successfully"),
+                                        });
+                                        slotContext.refresh(cid("sessions-grid"));
+                                    } catch (error) {
+                                        slotContext.showNotification({
+                                            severity: "error",
+                                            message: t("kill-session-failed", "Failed to terminate session: {{error}}", {
+                                                error: (error as any)?.message ? (error as any).message : String(error)
+                                            }),
+                                        });
+                                    }
+                                },
+                            }
+                        ],
                     } as IGridSlot,
                 }),
                 second: () => ({
@@ -591,7 +680,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                         const heapBlksWrittenSel = hasHeapBlksWritten
                                             ? "p.heap_blks_written"
                                             : "NULL::bigint AS heap_blks_written";
-                                        const { rows } = await session.query<any>(`
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT
                                                 p.pid,
                                                 n.nspname AS schema_name,
@@ -765,6 +855,8 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
             id: cid("sessions-tab-toolbar"),
             type: "toolbar",
             tools: [
+                "sessions-cancel-query-action",
+                "sessions-kill-session-action",
                 {
                     onTick: async (slotContext) => {
                         slotContext.refresh(cid("sessions-grid"));

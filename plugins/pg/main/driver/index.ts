@@ -88,6 +88,25 @@ pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: 
     return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
 });
 
+// Prosta obsługa błędów z pg, żeby nie wywalały procesu gdy backend zostanie ubity
+function attachPgErrorHandlers(clientOrPool: pg.Client | pg.Pool, scope: string) {
+    const handler = (err: Error) => {
+        const code = (err as any)?.code;
+        const message = err?.message ?? String(err);
+        console.warn(`[pg][${scope}]`, code ? `${code}: ${message}` : message);
+    };
+    clientOrPool.on("error", handler);
+}
+
+const isTerminatedError = (err: unknown): boolean => {
+    const msg = (err as any)?.message ?? "";
+    const code = (err as any)?.code;
+    return code === "57P01" // admin command terminate
+        || msg.includes("terminating connection due to administrator command")
+        || msg.includes("terminating connection due to admin command")
+        || msg.includes("Connection terminated unexpectedly");
+};
+
 /**
  * Mapuje typy PostgreSQL (OID) na typy obsługiwane przez aplikację.
  */
@@ -498,6 +517,13 @@ export class Connection extends driver.Connection {
         if (this.pool) {
             const client = await (this.client as pg.Pool)!.connect();
 
+            // Jednorazowa obsługa błędu na wypożyczonym kliencie, usuń z puli jeśli martwy
+            client.once("error", (err) => {
+                const code = (err as any)?.code;
+                console.warn(`[pg][pool-client]`, code ? `${code}: ${err.message}` : err.message);
+                client.release(err); // release(true) -> usuń z puli
+            });
+
             try {
                 const { rows } = await client!.query("select pg_backend_pid() as pid");
                 if (rows.length) {
@@ -508,8 +534,13 @@ export class Connection extends driver.Connection {
             }
 
             cursor = client!.query(cursor);
-            cursor.once("error", (_error) => {
-                client.release();
+            cursor.once("error", (error) => {
+                // Jeśli backend ubity – wyrzuć klienta z puli
+                if (isTerminatedError(error)) {
+                    client.release(error); // release(true)
+                } else {
+                    client.release();
+                }
             });
             cursor.once("end", () => {
                 client.release();
@@ -801,10 +832,12 @@ export class Driver extends driver.Driver {
 
         if (pool) {
             const client = new pg.Pool(config);
+            attachPgErrorHandlers(client, `pool:${properties?.database ?? ""}`);
             //await client.connect();
             return new Connection(properties, this, client);
         }
         const client = new pg.Client(config);
+        attachPgErrorHandlers(client, `client:${properties?.database ?? ""}`);
         await client.connect();
 
         let pid: string | undefined;

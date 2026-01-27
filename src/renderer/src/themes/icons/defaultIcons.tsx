@@ -176,6 +176,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             Reload: (props) => <IconWrapper {...props} className="reload"><MuiIcons.ReplayOutlined fontSize="inherit" /></IconWrapper>,
             ReloadAll: (props) => <IconWrapper {...props} className="reload-all"><MuiIcons.SyncOutlined fontSize="inherit" /></IconWrapper>,
             ReloadStop: (props) => <IconWrapper {...props} className="reload-stop"><MuiIcons.SyncDisabledOutlined fontSize="inherit" /></IconWrapper>,
+            CancleQuery: (props) => <IconWrapper {...props} className="cancle-query"><MuiIcons.CancelOutlined fontSize="inherit" /></IconWrapper>,
+            KillSession: (props) => <IconWrapper {...props} className="kill-session"><BsIcons.DatabaseX fontSize="inherit" /></IconWrapper>,
         }
     }
 }

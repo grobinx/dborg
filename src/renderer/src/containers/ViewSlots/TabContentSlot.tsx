@@ -13,6 +13,8 @@ import { isKeyBinding } from "@renderer/hooks/useKeyboardNavigation";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import DialogSlot from "./DialogSlot";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 export interface TabContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
@@ -33,6 +35,8 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const theme = useTheme();
     const { slot, ref, tabsItemID, itemID, className, onClose, ...other } = useThemeProps({ name: "TabLabelSlot", props });
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
+    const addToast = useToast();
+    const { confirm } = useDialogs();
     const [content, setContent] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode,
@@ -61,7 +65,14 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const tabSlotRef = React.useRef<TabContentSlotContext>(null);
     const actionManager = React.useRef<ActionManager<TabContentSlotContext>>(null);
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     React.useImperativeHandle(tabSlotRef, () => tabSlotContext);
 

@@ -15,6 +15,8 @@ import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -25,6 +27,8 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     slot
 }) => {
     const theme = useTheme();
+    const addToast = useToast();
+    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
@@ -43,7 +47,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     const editorContext: IEditorContext = {
     };

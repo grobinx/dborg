@@ -209,6 +209,8 @@ export interface ThemeIcons {
     Reload: IconWrapperFC;
     ReloadAll: IconWrapperFC;
     ReloadStop: IconWrapperFC;
+    CancleQuery: IconWrapperFC;
+    KillSession: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

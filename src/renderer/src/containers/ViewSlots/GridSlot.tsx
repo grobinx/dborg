@@ -26,6 +26,7 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { resolveIcon } from "@renderer/themes/icons";
 import { createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
+import { useDialogs } from "@toolpad/core";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -38,10 +39,19 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const theme = useTheme();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const addToast = useToast();
+    const { confirm } = useDialogs();
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);

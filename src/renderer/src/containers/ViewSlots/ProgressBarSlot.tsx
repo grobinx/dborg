@@ -7,6 +7,8 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ThemeColor } from "@renderer/types/colors";
 import { resolveColor } from "@renderer/utils/colors";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 interface ProgressBarSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -35,6 +37,8 @@ const ProgressContainer = styled(Box)({
 const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const { slot, ref, className, absolute: absoluteInit, ...other } = useThemeProps({ name: "ProgressBarSlot", props });
     const theme = useTheme();
+    const addToast = useToast();
+    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [display, setDisplay] = React.useState<boolean>(false);
@@ -47,7 +51,15 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {

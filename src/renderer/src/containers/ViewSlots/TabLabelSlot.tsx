@@ -9,6 +9,8 @@ import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Message
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
 import { uuidv7 } from "uuidv7";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 interface TabLabelSlotProps {
 }
@@ -35,7 +37,16 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const [active, setActive] = React.useState(false);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [, reRender] = React.useState<bigint>(0n);
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
+    const addToast = useToast();
+    const { confirm } = useDialogs();
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     const closable = resolveBooleanFactory(tabSlot.closable, runtimeContext);
     const pinnable = resolveBooleanFactory(tabSlot.pinnable, runtimeContext);
