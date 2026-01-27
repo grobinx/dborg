@@ -41,7 +41,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             _version: version.release,
             _date: Date.now(),
             databases: this.databases
-        }, null, 2);
+        });
         const packed = zlib.gzipSync(json);
         await fs.writeFile(fileName, packed);
     }
