@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { appStatusBarButtons } from "@renderer/app/AppStatusBarRegistry";
 
-interface GetMetadataStatus {
+interface MetadataStatus {
     status: "start" | "process" | "error" | "success" | "end";
     name: string;
     progress: string;
@@ -15,7 +15,7 @@ interface GetMetadataStatus {
 const MetadataCollctorStatusBar: React.FC = () => {
     const theme = useTheme();
     const { subscribe, unsubscribe } = useMessages();
-    const [metadataStatuses, setMetadataStatuses] = React.useState<Record<string, GetMetadataStatus>>({});
+    const [metadataStatuses, setMetadataStatuses] = React.useState<Record<string, MetadataStatus>>({});
     const { t } = useTranslation();
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -51,7 +51,7 @@ const MetadataCollctorStatusBar: React.FC = () => {
                 ...prev,
                 [message.connectionId]: {
                     status: "process",
-                    name: prev[message.connectionId].name,
+                    name: prev[message.connectionId]?.name,
                     progress: message.progress,
                 },
             }));
@@ -142,7 +142,7 @@ const MetadataCollctorStatusBar: React.FC = () => {
                     </>
                 ) : (
                     (() => {
-                        const status = Object.values(metadataStatuses)[0] as GetMetadataStatus; // Ensure correct typing
+                        const status = Object.values(metadataStatuses)[0] as MetadataStatus; // Ensure correct typing
                         return (
                             <>
                                 {status.status !== "end" && <theme.icons.Loading />}
