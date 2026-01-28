@@ -1,4 +1,5 @@
-import { gzipSync, gunzipSync } from "zlib";
+import { createGunzip, gzipSync } from "zlib";
+import { Readable } from "stream";
 
 export interface InvokeResult {
     type: "result" | "error",
@@ -29,6 +30,7 @@ export type HandleResultCallback<T> = () => Promise<T>;
 
 
 const COMPRESS_THRESHOLD = 1024 * 1024; // 1MB
+const YIELD_BYTES = 1 * 1024 * 1024; // 1MB
 
 function tryCompress(result: unknown): { compressedResult?: string, originalSize?: number } | undefined {
     try {
@@ -87,21 +89,19 @@ function yieldToRenderer(ms = YIELD_MS) {
 
 /**
  * Change invoke result to promise with catch handle
- * @param promise invoke result
- * @returns 
- * @example
- * invokeResult(ipcRenderer.invoke(EVENT_INTERNAL_QUERY, sql, values))
  */
 export async function invokeResult<T>(promise: Promise<unknown>): Promise<T> {
     return await promise.then(async (handled) => {
         if (isRejectResult(handled)) {
-            throw handled.error
+            throw handled.error;
         }
+
         const result = handled as ResolveResult;
 
-        // Jeśli duże dane – daj „oddech” przed kosztownymi operacjami
-        const bigPayload =
-            !!result.compressed && typeof result.originalSize === 'number' && result.originalSize > 256 * 1024;
+        // Jeśli duże dane – daj „oddech" przed kosztownymi operacjami
+        const bigPayload = !!result.compressed &&
+            typeof result.originalSize === 'number' &&
+            result.originalSize > 256 * 1024;
 
         if (bigPayload) {
             await yieldToRenderer(); // oddaj sterowanie zanim zaczniemy dekompresję
@@ -111,10 +111,11 @@ export async function invokeResult<T>(promise: Promise<unknown>): Promise<T> {
             const buffer = Buffer.from(result.result as string, "base64");
 
             if (buffer.byteLength > 256 * 1024) {
-                await yieldToRenderer(); // przed gunzip
+                await yieldToRenderer(); // przed dekompresją
             }
 
-            const json = gunzipSync(buffer).toString("utf8");
+            // Dekompresja streamingowa (nie blokuje)
+            const json = await decompressStream(buffer);
 
             if (json.length > 1024 * 1024) {
                 await yieldToRenderer(); // przed JSON.parse
@@ -124,5 +125,39 @@ export async function invokeResult<T>(promise: Promise<unknown>): Promise<T> {
         }
 
         return result.result as T;
+    });
+}
+
+/**
+ * Dekompresuje dane po kawałkach z transferem sterowania do renderera
+ */
+function decompressStream(buffer: Buffer): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const readable = Readable.from([buffer]);
+        const gunzip = createGunzip();
+        const chunks: Buffer[] = [];
+        let bytesSinceYield = 0;
+
+        gunzip.on('data', async (chunk: Buffer) => {
+            chunks.push(chunk);
+            bytesSinceYield += chunk.length;
+
+            // Co ~1MB oddaj sterowanie
+            if (bytesSinceYield >= YIELD_BYTES) {
+                bytesSinceYield = 0;
+                gunzip.pause();
+                await yieldToRenderer();
+                gunzip.resume();
+            }
+        });
+
+        gunzip.on('end', () => {
+            const result = Buffer.concat(chunks).toString("utf8");
+            resolve(result);
+        });
+
+        gunzip.on('error', reject);
+
+        readable.pipe(gunzip);
     });
 }
