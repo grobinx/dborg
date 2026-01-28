@@ -66,15 +66,18 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     let hasHeapBlksWritten: boolean | null = null;
     let isSuperuser: boolean | null = null;
     let hasPgSignalBackend: boolean | null = null;
+    let currentUsername: string | null = null;
 
     async function checkSuperuser() {
         try {
-            const { rows } = await session.query<{ is_superuser: boolean }>(
-                `SELECT current_setting('is_superuser')::boolean AS is_superuser`
+            const { rows } = await session.query<{ is_superuser: boolean; usename: string }>(
+                `SELECT current_setting('is_superuser')::boolean AS is_superuser, current_user AS usename`
             );
             isSuperuser = rows[0]?.is_superuser ?? false;
+            currentUsername = rows[0]?.usename ?? null;
         } catch {
             isSuperuser = false;
+            currentUsername = null;
         }
     }
 
@@ -312,8 +315,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 keySequence: ["Ctrl+Q"],
                                 disabled: () => {
                                     if (!selectedSession || selectedSession.state !== 'active') return true;
-                                    // Można anulować własne zapytanie lub jeśli jest superuser/pg_signal_backend
-                                    return !selectedSession.is_current_session && !isSuperuser && !hasPgSignalBackend;
+                                    // Można anulować własne zapytanie, zapytania tego samego użytkownika, lub jeśli jest superuser/pg_signal_backend
+                                    const isSameUser = selectedSession.usename === currentUsername;
+                                    return !isSameUser && !isSuperuser && !hasPgSignalBackend;
                                 },
                                 run: async () => {
                                     if (!selectedSession) return;
@@ -343,8 +347,9 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 keySequence: ["Ctrl+Shift+X"],
                                 disabled: () => {
                                     if (!selectedSession) return true;
-                                    // Można zabić własną sesję lub jeśli jest superuser/pg_signal_backend
-                                    return !selectedSession.is_current_session && !isSuperuser && !hasPgSignalBackend;
+                                    // Można zabić własną sesję, sesje tego samego użytkownika, lub jeśli jest superuser/pg_signal_backend
+                                    const isSameUser = selectedSession.usename === currentUsername;
+                                    return !isSameUser && !isSuperuser && !hasPgSignalBackend;
                                 },
                                 run: async () => {
                                     if (!selectedSession) return;
@@ -579,9 +584,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                                 p.heap_blks_total,
                                                 p.heap_blks_scanned,
                                                 p.heap_blks_vacuumed,
-                                                p.index_vacuum_count,
-                                                p.max_dead_tuples,
-                                                p.num_dead_tuples
+                                                p.index_vacuum_count
                                             FROM pg_stat_progress_vacuum p
                                             LEFT JOIN pg_class c ON c.oid = p.relid
                                             LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -599,7 +602,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                         { key: "heap_blks_scanned", label: t("heap-scanned", "Heap Scanned"), width: 120, dataType: "number" },
                                         { key: "heap_blks_vacuumed", label: t("heap-vacuumed", "Heap Vacuumed"), width: 130, dataType: "number" },
                                         { key: "index_vacuum_count", label: t("index-vacuum-count", "Index Vacuum Count"), width: 160, dataType: "number" },
-                                        { key: "num_dead_tuples", label: t("dead-tuples", "Dead Tuples"), width: 130, dataType: "number" },
                                     ] as ColumnDefinition[],
                                     autoSaveId: `progress-vacuum-grid-${session.profile.sch_id}`,
                                     status: ["data-rows"] as any,

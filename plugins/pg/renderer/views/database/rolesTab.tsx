@@ -200,12 +200,14 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         if (selectedRow?.role_name !== row?.role_name) {
                             selectedRow = row ?? null;
                             slotContext.refresh(cid("roles-editor"));
+                            slotContext.refresh(cid("roles-toolbar"));
                         }
                     },
                     actions: [
                         {
                             id: "role-stats-refresh",
                             label: t("refresh-role-stats", "Refresh Role Stats"),
+                            icon: "Reload",
                             keySequence: ["Space"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 1,
@@ -233,6 +235,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         {
                             id: "role-refresh-all",
                             label: () => loadingStats ? t("cancel-refresh-roles", "Cancel Refresh All Role Stats") : t("refresh-roles", "Refresh All Role Stats"),
+                            icon: () => loadingStats ? "ReloadStop" : "ReloadAll",
                             keySequence: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 2,
@@ -296,7 +299,12 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
         toolBar: {
             id: cid("roles-toolbar"),
             type: "toolbar",
-            tools: [],
+            tools: [
+                [
+                    "role-stats-refresh",
+                    "role-refresh-all",
+                ]
+            ],
             actionSlotId: cid("roles-grid"),
         }
     };
