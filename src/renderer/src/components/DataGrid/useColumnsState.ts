@@ -13,7 +13,7 @@ interface UseColumnsState {
     showHiddenColumns: boolean;
     anySummarized: boolean;
     saveColumnsLayout: () => void;
-    sortColumn: (displayColumnIndex: number) => void;
+    sortColumn: (displayColumnIndex: number, force?: boolean) => void;
     resetColumns: () => void;
     moveColumn: (fromDiplayIndex: number, toDisplayIndex: number) => void;
     updateColumn: (displayIndex: number, updatedValues: Partial<ColumnDefinition>) => void;
@@ -252,7 +252,7 @@ export const useColumnsState = (
     }, [displayColumns, rowNumberColumnWidth]);
 
     // Funkcja do sortowania kolumny
-    const sortColumn = React.useCallback((displayColumnIndex: number) => {
+    const sortColumn = React.useCallback((displayColumnIndex: number, force: boolean = false) => {
         setColumnsState((prevColumns) =>
             produce(prevColumns, (draft) => {
                 // Pobierz klucz kolumny z displayColumns
@@ -262,6 +262,18 @@ export const useColumnsState = (
                 // Znajdź kolumnę w columnsState na podstawie klucza
                 const column = draft.find(col => col.key === columnKey);
                 if (!column) return; // Jeśli kolumna nie istnieje, zakończ
+
+                if (force) {
+                    // Zresetuj sortowanie wszystkich kolumn
+                    draft.forEach(col => {
+                        col.sortDirection = undefined;
+                        col.sortOrder = undefined;
+                    });
+                    // Ustaw sortowanie tylko dla wybranej kolumny (ASC, order = 1)
+                    column.sortDirection = "asc";
+                    column.sortOrder = 1;
+                    return;
+                }
 
                 // Zmień sortDirection
                 column.sortDirection =

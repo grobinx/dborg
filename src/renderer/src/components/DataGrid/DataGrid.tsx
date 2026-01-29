@@ -992,7 +992,7 @@ export const DataGrid = <T extends object>({
         setSearchExclude: (exclude) => searchState.setExclude(exclude), // Ustawienie excludeQuery
         isSearchExclude: () => searchState.current.exclude, // Zwrócenie wartości excludeQuery
         getSearchText: () => searchState.current.text ?? "", // Zwrócenie queryData
-        sortData: (columnIndex: number) => columnsState.sortColumn(columnIndex),
+        sortData: (columnIndex: number, force?: boolean) => columnsState.sortColumn(columnIndex, force),
         resetSorting: () => columnsState.resetSorting(),
         getSummaryOperation: () => {
             if (!selectedCellRef.current) return;
@@ -1395,11 +1395,11 @@ export const DataGrid = <T extends object>({
                                     width: col.width || 150,
                                     left: columnsState.columnLeft(absoluteColIndex),
                                 }}
-                                onClick={() => {
+                                onClick={(e) => {
                                     if (!resizingColumn) {
                                         updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
                                         if ((col.sortable ?? true) && !pivot) {
-                                            dataGridActionContext.sortData(absoluteColIndex);
+                                            dataGridActionContext.sortData(absoluteColIndex, e.ctrlKey || e.metaKey);
                                         }
                                     }
                                 }}

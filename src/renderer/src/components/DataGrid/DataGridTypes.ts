@@ -221,7 +221,7 @@ export interface DataGridActionContext<T extends object> {
      */
     getTextWidth: (text: string) => number | null;
     setSearchText: (query?: string) => void;
-    sortData: (column: number) => void;
+    sortData: (column: number, force?: boolean) => void;
     setSearchWholeWord: (strict: boolean) => void;
     isSearchWholeWord: () => boolean;
     setSearchCaseSensitive: (caseSensitive: boolean) => void;

@@ -23,6 +23,10 @@ interface RelationSizeRecord {
     last_analyze?: string | null;
     last_vacuum?: string | null;
     comment?: string | null;
+    bloat_bytes?: number;
+    bloat_pct?: number;
+    bloat_size?: string;
+    bloat_status?: string;
     [key: string]: any;
 }
 
@@ -95,7 +99,45 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                             ) AS avg_row_size,
                             st.last_analyze,
                             st.last_vacuum,
-                            pd.description AS comment
+                            pd.description AS comment,
+                            -- simple heuristic bloat (fallback)
+                            CASE 
+                              WHEN c.relpages > 0 THEN
+                                ROUND(100.0 * GREATEST(0,
+                                  (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
+                                    COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                    / current_setting('block_size')::numeric
+                                  )::bigint
+                                )) / NULLIF(c.relpages, 0), 2)
+                              ELSE 0
+                            END AS bloat_pct,
+                            pg_size_pretty(
+                              CASE 
+                                WHEN c.relpages > 0 AND COALESCE(st.n_live_tup, c.reltuples) > 0 THEN
+                                  GREATEST(0,
+                                    (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
+                                      COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                      / current_setting('block_size')::numeric
+                                    )::bigint
+                                  ) * current_setting('block_size')::bigint)
+                                ELSE 0
+                              END
+                            ) AS bloat_size,
+                            CASE 
+                              WHEN st.n_dead_tup > (50 + 0.2 * COALESCE(st.n_live_tup, c.reltuples)) AND st.n_dead_tup > 1000 THEN 'vacuum critical'
+                              WHEN st.n_dead_tup > (50 + 0.2 * COALESCE(st.n_live_tup, c.reltuples)) * 0.5 AND st.n_dead_tup > 100 THEN 'vacuum recommended'
+                              WHEN (CASE 
+                                      WHEN c.relpages > 0 THEN
+                                        ROUND(100.0 * GREATEST(0,
+                                          (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
+                                            COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                            / current_setting('block_size')::numeric
+                                          )::bigint
+                                        )) / NULLIF(c.relpages, 0), 2)
+                                      ELSE 0
+                                    END) > 30 THEN 'high bloat'
+                              ELSE 'ok'
+                            END AS bloat_status
                         FROM pg_catalog.pg_class c
                         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                         LEFT JOIN pg_catalog.pg_stat_all_tables st ON st.schemaname = n.nspname AND st.relname = c.relname
@@ -124,6 +166,9 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                     { key: "avg_row_size", label: t("avg-row-size", "Avg Row Size"), width: 120, dataType: "size" },
                     { key: "last_analyze", label: t("last-analyze", "Last Analyze"), width: 160, dataType: "date" },
                     { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), width: 160, dataType: "date" },
+                    { key: "bloat_pct", label: t("bloat-pct", "Bloat %"), width: 100, dataType: "number" },
+                    { key: "bloat_size", label: t("bloat-size", "Bloat Size"), width: 120, dataType: "size" },
+                    { key: "bloat_status", label: t("status", "Status"), width: 140, dataType: "string" },
                     { key: "comment", label: t("comment", "Comment"), width: 240, dataType: "string" },
                 ] as ColumnDefinition[],
                 actions: [
