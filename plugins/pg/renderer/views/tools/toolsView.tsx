@@ -1,7 +1,7 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
-import tableSizesTab from "./tableSizesTab";
+import tableMaintenanceTab from "./tableSizesTab";
 import roleCleanupTab from "./RoleCleanup/roleCleanupTab";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 
@@ -24,7 +24,7 @@ export function toolsView(session: IDatabaseSession): ConnectionView {
                 main: () => ({
                     type: "tabs",
                     tabs: [
-                        tableSizesTab(session),
+                        tableMaintenanceTab(session),
                         roleCleanupTab(session),
                     ],
                 }),

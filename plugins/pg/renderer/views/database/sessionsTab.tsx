@@ -576,7 +576,6 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     id: cid("progress-vacuum-grid"),
                                     type: "grid" as const,
                                     mode: "defined" as const,
-                                    pivot: true,
                                     rows: async () => {
                                         if (!selectedSession) return [];
                                         const { rows } = await session.query<any>(

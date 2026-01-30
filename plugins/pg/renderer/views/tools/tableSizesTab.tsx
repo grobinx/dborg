@@ -8,8 +8,9 @@ import { SearchData_ID } from "@renderer/components/DataGrid/actions";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 import Decimal from "decimal.js";
 import { resolveColor } from "@renderer/utils/colors";
+import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 
-interface RelationSizeRecord {
+interface RelationMaintenanceRecord {
     schema_name: string;
     relname: string;
     relkind: string;
@@ -38,12 +39,12 @@ interface RelationSizeRecord {
     [key: string]: any;
 }
 
-const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
+const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = cidFactory("tools-table-sizes", session.info.uniqueId);
+    const cid = cidFactory("tools-table-maintenance", session.info.uniqueId);
 
     let selectedSchemaName: string | null = null;
-    let relationSizeRows: RelationSizeRecord[] = [];
+    let relationSizeRows: RelationMaintenanceRecord[] = [];
 
     const setSelectedSchemaName = async () => {
         try {
@@ -64,7 +65,7 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
         },
         label: {
             type: "tablabel",
-            label: t("database-table-sizes", "Relation Sizes"),
+            label: t("database-table-maintenance", "Relation Maintenance"),
             icon: "Storage",
         },
         content: {
@@ -76,7 +77,18 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                     if (!selectedSchemaName) return [];
 
                     const params = [selectedSchemaName];
-                    const { rows } = await session.query<RelationSizeRecord>(`
+                    const { rows } = await session.query<RelationMaintenanceRecord>(`
+                        WITH rec_widths AS (
+                            SELECT 
+                                c.oid,
+                                COALESCE(SUM(CASE WHEN a.attlen > 0 THEN a.attlen ELSE 32 END), 100)::numeric AS estimated_avg_width
+                            FROM pg_catalog.pg_class c
+                            LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid 
+                                AND a.attnum > 0 
+                                AND NOT a.attisdropped
+                            WHERE c.relkind IN ('r','m')
+                            GROUP BY c.oid
+                        )
                         SELECT
                             n.nspname AS schema_name,
                             c.relname,
@@ -95,7 +107,7 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                                 ELSE pg_catalog.pg_size_pretty(0::bigint)
                             END AS toast_size,
                             (SELECT count(*) FROM pg_catalog.pg_index i WHERE i.indrelid = c.oid AND i.indisvalid) AS index_count,
-                            COALESCE(st.n_live_tup, c.reltuples) AS n_live_tup,
+                            COALESCE(st.n_live_tup, c.reltuples)::numeric AS n_live_tup,
                             CASE WHEN COALESCE(st.n_live_tup, c.reltuples) > 0 
                                 THEN (pg_total_relation_size(c.oid)::numeric / GREATEST(COALESCE(st.n_live_tup, c.reltuples),1))
                                 ELSE NULL
@@ -114,31 +126,34 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                             p.heap_blks_scanned,
                             p.heap_blks_vacuumed,
                             CASE WHEN p.heap_blks_total > 0
-                                 THEN round(100.0 * p.heap_blks_scanned / p.heap_blks_total, 2)
-                                 ELSE NULL END AS heap_scanned_pct,
+                                THEN round(100.0 * p.heap_blks_scanned / p.heap_blks_total, 2)
+                                ELSE NULL END AS heap_scanned_pct,
                             CASE WHEN p.heap_blks_total > 0
-                                 THEN round(100.0 * p.heap_blks_vacuumed / p.heap_blks_total, 2)
-                                 ELSE NULL END AS heap_vacuumed_pct,
+                                THEN round(100.0 * p.heap_blks_vacuumed / p.heap_blks_total, 2)
+                                ELSE NULL END AS heap_vacuumed_pct,
+                            CASE WHEN (SELECT count(*) FROM pg_catalog.pg_index i WHERE i.indrelid = c.oid AND i.indisvalid) > 0
+                                THEN round(100.0 * p.index_vacuum_count / (SELECT count(*) FROM pg_catalog.pg_index i WHERE i.indrelid = c.oid AND i.indisvalid), 2)
+                                ELSE NULL END AS index_vacuumed_pct,
                             CASE 
                               WHEN c.relpages > 0 THEN
-                                ROUND(100.0 * GREATEST(0,
-                                  (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
-                                    COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                ROUND(100.0 * GREATEST(0::numeric,
+                                  (c.relpages::numeric - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
+                                    tm.estimated_avg_width
                                     / current_setting('block_size')::numeric
-                                  )::bigint
-                                )) / NULLIF(c.relpages, 0), 2)
+                                  ))
+                                ) / NULLIF(c.relpages::numeric, 0), 2)
                               ELSE 0
                             END AS bloat_pct,
                             pg_size_pretty(
                               CASE 
                                 WHEN c.relpages > 0 AND COALESCE(st.n_live_tup, c.reltuples) > 0 THEN
-                                  GREATEST(0,
+                                  GREATEST(0::bigint,
                                     (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
-                                      COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                      tm.estimated_avg_width
                                       / current_setting('block_size')::numeric
-                                    )::bigint
-                                  ) * current_setting('block_size')::bigint)
-                                ELSE 0
+                                    )::bigint)
+                                  ) * current_setting('block_size')::bigint
+                                ELSE 0::bigint
                               END
                             ) AS bloat_size,
                             coalesce(p.phase, 
@@ -147,12 +162,12 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                                 WHEN st.n_dead_tup > (50 + 0.2 * COALESCE(st.n_live_tup, c.reltuples)) * 0.5 AND st.n_dead_tup > 100 THEN 'vacuum recommended'
                                 WHEN (CASE
                                         WHEN c.relpages > 0 THEN
-                                            ROUND(100.0 * GREATEST(0,
-                                            (c.relpages - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
-                                                COALESCE((SELECT SUM(avg_width) FROM pg_stats WHERE schemaname = n.nspname AND tablename = c.relname), 100)
+                                            ROUND(100.0 * GREATEST(0::numeric,
+                                            (c.relpages::numeric - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
+                                                tm.estimated_avg_width
                                                 / current_setting('block_size')::numeric
-                                            )::bigint
-                                            )) / NULLIF(c.relpages, 0), 2)
+                                            ))
+                                            ) / NULLIF(c.relpages::numeric, 0), 2)
                                         ELSE 0
                                         END) > 30 THEN 'high bloat'
                                 ELSE 'ok'
@@ -160,6 +175,7 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                             ) AS status
                         FROM pg_catalog.pg_class c
                         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                        JOIN rec_widths tm ON tm.oid = c.oid
                         LEFT JOIN pg_catalog.pg_stat_all_tables st ON st.schemaname = n.nspname AND st.relname = c.relname
                         LEFT JOIN pg_catalog.pg_description pd ON pd.objoid = c.oid AND pd.objsubid = 0
                         LEFT JOIN pg_catalog.pg_stat_progress_vacuum p ON p.relid = c.oid
@@ -188,47 +204,21 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
                     { key: "avg_row_size", label: t("avg-row-size", "Avg Row Size"), width: 120, dataType: "size" },
                     { key: "last_analyze", label: t("last-analyze", "Last Analyze"), width: 160, dataType: "date" },
                     { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), width: 160, dataType: "date" },
-                    { key: "heap_scanned_pct", label: t("heap-scanned-pct", "Heap Scanned %"), width: 140, dataType: "number" },
-                    { key: "heap_vacuumed_pct", label: t("heap-vacuumed-pct", "Heap Vacuumed %"), width: 150, dataType: "number" },
+                    {
+                        key: "heap_scanned_pct", label: t("heap-scanned-pct", "Heap Scanned %"), width: 140, dataType: "number",
+                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
+                    },
+                    {
+                        key: "heap_vacuumed_pct", label: t("heap-vacuumed-pct", "Heap Vacuumed %"), width: 150, dataType: "number",
+                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
+                    },
+                    {
+                        key: "index_vacuumed_pct", label: t("index-vacuumed-pct", "Index Vacuumed %"), width: 150, dataType: "number",
+                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
+                    },
                     {
                         key: "bloat_pct", label: t("bloat-pct", "Bloat %"), width: 100, dataType: "number",
-                        formatter: (value: any) => {
-                            if (value === null || isNaN(value)) return null;
-                            const pct = new Decimal(value).toNumber();
-                            const clampedPct = Math.min(Math.max(pct, 0), 100);
-                            
-                            // Color based on bloat percentage
-                            let color = resolveColor("success", slotContext.theme).main; // green
-                            if (pct > 30) color = resolveColor("warning", slotContext.theme).main; // orange
-                            if (pct > 50) color = resolveColor("error", slotContext.theme).main; // red
-                            
-                            return (
-                                <div style={{ 
-                                    position: 'relative', 
-                                    width: '100%', 
-                                    height: '100%',
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        width: `${clampedPct}%`,
-                                        backgroundColor: color,
-                                        opacity: 0.2,
-                                    }} />
-                                    <span style={{ 
-                                        position: 'relative', 
-                                        marginLeft: 'auto',
-                                        paddingRight: 2
-                                    }}>
-                                        {pct.toFixed(2)} %
-                                    </span>
-                                </div>
-                            );
-                        }
+                        formatter: (value: any) => <PercentageCell value={value} mode="percentage" />
                     },
                     { key: "bloat_size", label: t("bloat-size", "Bloat Size"), width: 120, dataType: "size" },
                     { key: "status", label: t("status", "Status"), width: 140, dataType: "string" },
@@ -267,4 +257,4 @@ const tableSizesTab = (session: IDatabaseSession): ITabSlot => {
     };
 };
 
-export default tableSizesTab;
+export default tableMaintenanceTab;
