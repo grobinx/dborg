@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IAutoRefresh, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
@@ -155,24 +155,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                                   ) * current_setting('block_size')::bigint
                                 ELSE 0::bigint
                               END
-                            ) AS bloat_size,
-                            coalesce(p.phase, 
-                                CASE 
-                                WHEN st.n_dead_tup > (50 + 0.2 * COALESCE(st.n_live_tup, c.reltuples)) AND st.n_dead_tup > 1000 THEN 'vacuum critical'
-                                WHEN st.n_dead_tup > (50 + 0.2 * COALESCE(st.n_live_tup, c.reltuples)) * 0.5 AND st.n_dead_tup > 100 THEN 'vacuum recommended'
-                                WHEN (CASE
-                                        WHEN c.relpages > 0 THEN
-                                            ROUND(100.0 * GREATEST(0::numeric,
-                                            (c.relpages::numeric - CEIL(COALESCE(st.n_live_tup, c.reltuples)::numeric *
-                                                tm.estimated_avg_width
-                                                / current_setting('block_size')::numeric
-                                            ))
-                                            ) / NULLIF(c.relpages::numeric, 0), 2)
-                                        ELSE 0
-                                        END) > 30 THEN 'high bloat'
-                                ELSE 'ok'
-                                END
-                            ) AS status
+                            ) AS bloat_size
                         FROM pg_catalog.pg_class c
                         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                         JOIN rec_widths tm ON tm.oid = c.oid
@@ -205,23 +188,30 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     { key: "last_analyze", label: t("last-analyze", "Last Analyze"), width: 160, dataType: "date" },
                     { key: "last_vacuum", label: t("last-vacuum", "Last Vacuum"), width: 160, dataType: "date" },
                     {
-                        key: "heap_scanned_pct", label: t("heap-scanned-pct", "Heap Scanned %"), width: 140, dataType: "number",
-                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
-                    },
-                    {
-                        key: "heap_vacuumed_pct", label: t("heap-vacuumed-pct", "Heap Vacuumed %"), width: 150, dataType: "number",
-                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
-                    },
-                    {
-                        key: "index_vacuumed_pct", label: t("index-vacuumed-pct", "Index Vacuumed %"), width: 150, dataType: "number",
-                        formatter: (value: any) => <PercentageCell value={value} mode="primary" />
+                        key: "vacuum_phase", label: t("vacuum-phase", "Vacuum Phase"), width: 140, dataType: "string",
+                        formatter: (_value: any, row: RelationMaintenanceRecord) => {
+                            let prc: number | null = null;
+                            if (row.vacuum_phase === "scanning heap" && row.heap_scanned_pct) {
+                                const l = new Decimal(row.heap_scanned_pct).toNumber();
+                                prc = l * 0.3;
+                            } else if (row.vacuum_phase === "vacuuming heap" && row.heap_vacuumed_pct) {
+                                const l = new Decimal(row.heap_vacuumed_pct).toNumber();
+                                prc = 30 + (l * 0.4);
+                            } else if (row.vacuum_phase === "vacuuming indexes") {
+                                prc = 70;
+                            } else if (row.vacuum_phase === "cleaning up indexes") {
+                                prc = 90;
+                            } else if (row.vacuum_phase === "performing final cleanup") {
+                                prc = 99;
+                            }
+                            return <PercentageCell value={prc} mode="primary" label={row.vacuum_phase ?? undefined} />
+                        }
                     },
                     {
                         key: "bloat_pct", label: t("bloat-pct", "Bloat %"), width: 100, dataType: "number",
                         formatter: (value: any) => <PercentageCell value={value} mode="percentage" />
                     },
                     { key: "bloat_size", label: t("bloat-size", "Bloat Size"), width: 120, dataType: "size" },
-                    { key: "status", label: t("status", "Status"), width: 140, dataType: "string" },
                     { key: "comment", label: t("comment", "Comment"), width: 240, dataType: "string" },
                 ] as ColumnDefinition[],
                 actions: [
@@ -244,6 +234,8 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     },
                 ],
             } as IGridSlot),
+            dialogs: [
+            ],
         },
         toolBar: {
             id: cid("tab", "toolbar"),
@@ -251,6 +243,15 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             tools: () => [
                 SelectSchemaAction_ID,
                 SearchData_ID,
+                {
+                    onTick: async (slotContext) => {
+                        slotContext.refresh(cid("grid"));
+                    },
+                    canPause: false,
+                    intervals: [5, 10, 15, 30, 60],
+                    defaultInterval: 10,
+                    canRefresh: true,
+                } as IAutoRefresh,
             ],
             actionSlotId: cid("grid"),
         },
