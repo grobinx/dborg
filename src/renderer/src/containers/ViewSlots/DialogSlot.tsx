@@ -14,6 +14,9 @@ import {
     isDialogNumberField,
     isDialogBooleanField,
     isDialogSelectField,
+    isDialogEditorField,
+    isDialogTabs,
+    resolveDialogTabsFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { DialogLayoutItem } from "./dialog/DialogLayoutItem";
@@ -40,13 +43,20 @@ const applyDefaults = (
     }
 
     items.forEach(item => {
-        if (isDialogTextField(item) || isDialogNumberField(item) || isDialogBooleanField(item) || isDialogSelectField(item)) {
+        if (isDialogTextField(item) || isDialogNumberField(item) || isDialogBooleanField(item) || 
+            isDialogSelectField(item) || isDialogEditorField(item)) {
             if (target[item.key] === undefined && item.defaultValue !== undefined) {
                 target[item.key] = item.defaultValue;
             }
         } else if (isDialogRow(item) || isDialogColumn(item)) {
             const nested = resolveDialogLayoutItemsKindFactory(item.items, runtimeContext) ?? [];
             applyDefaults(nested, runtimeContext, target);
+        } else if (isDialogTabs(item)) {
+            const tabs = resolveDialogTabsFactory(item.tabs, runtimeContext) ?? [];
+            tabs.forEach(tab => {
+                const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, runtimeContext) ?? [];
+                applyDefaults(tabItems, runtimeContext, target);
+            });
         }
     });
     return target;
@@ -166,8 +176,8 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
             ref={dialogRef}
         >
             <DialogTitle>{title}</DialogTitle>
-            <DialogContent dividers>
-                <Stack gap={8}>
+            <DialogContent dividers sx={{ height: slot.height }}>
+                <Stack gap={8} sx={{ height: "100%" }}>
                     {error && (
                         <Alert severity="error">{error}</Alert>
                     )}

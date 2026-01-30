@@ -8,10 +8,13 @@ import {
     isDialogSelectField,
     isDialogRow,
     isDialogColumn,
+    isDialogTabs,
+    isDialogEditorField,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
-import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField } from "./DialogFields";
+import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField } from "./DialogFields";
 import { DialogRow } from "./DialogLayout";
 import { DialogColumn } from "./DialogLayout";
+import { DialogTabs } from "./DialogTabs";
 
 export const DialogLayoutItem: React.FC<{
     item: DialogLayoutItemKind;
@@ -74,6 +77,17 @@ export const DialogLayoutItem: React.FC<{
         />;
     }
 
+    if (isDialogEditorField(item)) {
+        return <DialogEditorField
+            field={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
+    }
+
     if (isDialogRow(item)) {
         return <DialogRow
             row={item}
@@ -91,6 +105,17 @@ export const DialogLayoutItem: React.FC<{
             runtimeContext={runtimeContext} 
             structure={structure} 
             onChange={onChange} 
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
+    }
+
+    if (isDialogTabs(item)) {
+        return <DialogTabs
+            dialogTabs={item}
+            runtimeContext={runtimeContext}
+            structure={structure}
+            onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
         />;

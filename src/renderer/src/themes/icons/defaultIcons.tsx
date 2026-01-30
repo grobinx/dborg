@@ -37,6 +37,8 @@ import { LowerLetter } from "./svg/LowerLetter";
 import { Rotate } from "@renderer/components/useful/Rotate";
 import { Resume } from "./svg/Resume";
 import { ReassignUser } from "./svg/ReassignUser";
+import { Vacuum } from "./svg/Vacuum";
+import { Analyze } from "./svg/Analyze";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -178,6 +180,8 @@ const icons = (_palette: Palette): ThemeOptions => {
             ReloadStop: (props) => <IconWrapper {...props} className="reload-stop"><MuiIcons.SyncDisabledOutlined fontSize="inherit" /></IconWrapper>,
             CancleQuery: (props) => <IconWrapper {...props} className="cancle-query"><MuiIcons.CancelOutlined fontSize="inherit" /></IconWrapper>,
             KillSession: (props) => <IconWrapper {...props} className="kill-session"><BsIcons.DatabaseX fontSize="inherit" /></IconWrapper>,
+            Vacuum: (props) => <IconWrapper {...props} className="vacuum"><Vacuum fontSize="inherit" /></IconWrapper>,
+            Analyze: (props) => <IconWrapper {...props} className="analyze"><Analyze fontSize="inherit" /></IconWrapper>,
         }
     }
 }

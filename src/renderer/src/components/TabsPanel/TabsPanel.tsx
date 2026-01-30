@@ -51,12 +51,13 @@ interface TabsPanelOwnProps extends TabsPanelProps {
     buttons?: React.ReactNode;
     tabPosition?: "top" | "bottom";
     onMove?: (draggedItemID: string, targetItemID: string) => void;
+    onActivate?: (activeTabID: string) => void;
 }
 
 export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const {
         children, buttons, className, tabPosition = "top",
-        onMove, ...other
+        onMove, onActivate, ...other
     } = useThemeProps({ name: "TabsPanel", props: props });
     const { queueMessage, subscribe, unsubscribe } = useMessages();
 
@@ -78,6 +79,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             const index = tabs.findIndex((tab) => tab.props.itemID === tabID);
             if (index !== -1) {
                 setActiveTab(index);
+                onActivate?.(tabID);
             }
         }
     };
@@ -214,7 +216,10 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                 {buttons}
                 <Tabs
                     value={activeTab < tabs.length ? activeTab : 0}
-                    onChange={(_event, newValue: number) => setActiveTab(newValue)}
+                    onChange={(_event, newValue: number) => {
+                        setActiveTab(newValue);
+                        onActivate?.(tabs[newValue].props.itemID!);
+                    }}
                     aria-label="Tabs Panel"
                     variant="scrollable"
                     scrollButtons="auto"

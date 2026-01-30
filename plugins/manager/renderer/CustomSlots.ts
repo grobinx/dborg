@@ -1057,7 +1057,8 @@ export type DialogFieldKind =
     | IDialogTextField
     | IDialogNumberField
     | IDialogBooleanField
-    | IDialogSelectField;
+    | IDialogSelectField
+    | IDialogEditorField;
 
 export type DialogLayoutItemKind =
     | DialogFieldKind
@@ -1179,6 +1180,10 @@ export interface IDialogSlot extends ICustomSlot {
      * @default "small"
      */
     size?: DialogSize;
+    /**
+     * Wysokość dialogu (np. "400px", 500).
+     */
+    height?: string | number;
 }
 
 export function resolveStringFactory(factory: StringFactory | undefined, context: SlotRuntimeContext): string | undefined {
@@ -1332,6 +1337,10 @@ export function isDialogBooleanField(field: any): field is IDialogBooleanField {
 
 export function isDialogSelectField(field: any): field is IDialogSelectField {
     return field?.type === "select";
+}
+
+export function isDialogEditorField(field: any): field is IDialogEditorField {
+    return field?.type === "editor";
 }
 
 export function isDialogRow(item: any): item is IDialogRow {

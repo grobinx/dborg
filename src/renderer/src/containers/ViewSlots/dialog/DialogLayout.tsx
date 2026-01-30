@@ -29,7 +29,7 @@ export const DialogRow: React.FC<{
     const items = resolveDialogLayoutItemsKindFactory(row.items, runtimeContext) || [];
 
     return (
-        <div style={{ display: "flex", gap: "8px", width: "100%", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", width: "100%", flexWrap: "wrap", height: "100%" }}>
             {label && (
                 <div style={{ width: "100%", fontWeight: "bold", marginBottom: "4px" }}>
                     {label}
@@ -70,10 +70,25 @@ export const DialogColumn: React.FC<{
     const label = resolveStringFactory(column.label, runtimeContext);
     const items = resolveDialogLayoutItemsKindFactory(column.items, runtimeContext) || [];
 
-    const columnWidth = column.width ? `${(column.width / 12) * 100}%` : "auto";
+    const isStringWidth = typeof column.width === "string";
+    const isNumberWidth = typeof column.width === "number";
+
+    const columnPercentWidth = isNumberWidth ? `${(column.width! / 12) * 100}%` : undefined;
+
+    const columnStyle: React.CSSProperties = {
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        ...(isStringWidth
+            ? { width: column.width } // explicit width (e.g. "320px", "40%")
+            : isNumberWidth
+                ? { flex: `0 0 ${columnPercentWidth}` } // grid-based width (1..12)
+                : { flex: "1" } // auto
+        ),
+    };
 
     return (
-        <div style={{ flex: column.width ? "0 0 " + columnWidth : "1", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={columnStyle}>
             {label && (
                 <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
                     {label}

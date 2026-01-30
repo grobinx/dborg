@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IAutoRefresh, IDialogBooleanField, IDialogEditorField, IDialogSlot, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
@@ -45,6 +45,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
 
     let selectedSchemaName: string | null = null;
     let relationSizeRows: RelationMaintenanceRecord[] = [];
+    let selectedTable: RelationMaintenanceRecord | null = null;
 
     const setSelectedSchemaName = async () => {
         try {
@@ -68,9 +69,9 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             label: t("database-table-maintenance", "Relation Maintenance"),
             icon: "Storage",
         },
-        content: {
+        content: (slotContext) => ({
             type: "tabcontent",
-            content: (slotContext) => ({
+            content: () => ({
                 id: cid("grid"),
                 type: "grid",
                 rows: async () => {
@@ -214,8 +215,32 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     { key: "bloat_size", label: t("bloat-size", "Bloat Size"), width: 120, dataType: "size" },
                     { key: "comment", label: t("comment", "Comment"), width: 240, dataType: "string" },
                 ] as ColumnDefinition[],
+                onRowSelect: (row: RelationMaintenanceRecord | null) => {
+                    selectedTable = row;
+                    if (selectedTable) {
+                        slotContext.refresh(cid("tab", "toolbar"));
+                    }
+                },
                 actions: [
                     SelectSchemaAction(),
+                    {
+                        id: "vacuum-relation-action",
+                        label: t("vacuum-relation", "Vacuum Relation"),
+                        icon: "Vacuum",
+                        disabled: () => selectedTable === null,
+                        run: () => {
+                            slotContext.openDialog(cid("vacuum-relation-dialog"));
+                        }
+                    },
+                    {
+                        id: "analyze-relation-action",
+                        label: t("analyze-relation", "Analyze Relation"),
+                        icon: "Analyze",
+                        disabled: () => selectedTable === null,
+                        run: () => {
+
+                        }
+                    }
                 ],
                 actionGroups: (slotContext) => [
                     SelectSchemaGroup(session, selectedSchemaName, (schemaName: string | null) => {
@@ -235,12 +260,106 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                 ],
             } as IGridSlot),
             dialogs: [
+                {
+                    id: cid("vacuum-relation-dialog"),
+                    type: "dialog",
+                    title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: selectedTable ? `${selectedTable.schema_name}.${selectedTable.relname}` : "" }),
+                    height: "300px",
+                    items: [
+                        {
+                            type: "tabs",
+                            tabs: [
+                                {
+                                    id: "options",
+                                    label: t("options", "Options"),
+                                    items: [
+                                        {
+                                            type: "column",
+                                            width: "100%",
+                                            items: [
+                                                {
+                                                    type: "boolean",
+                                                    key: "full",
+                                                    label: t("vacuum-full", "Full Vacuum"),
+                                                    defaultValue: false,
+                                                    helperText: t("vacuum-full-dialog-tooltip", "Reclaim disk space (slower, locks table)"),
+                                                } as IDialogBooleanField,
+                                                {
+                                                    type: "boolean",
+                                                    key: "analyze",
+                                                    label: t("vacuum-analyze", "Analyze"),
+                                                    defaultValue: true,
+                                                    helperText: t("vacuum-analyze-dialog-tooltip", "Update table statistics after vacuum"),
+                                                } as IDialogBooleanField,
+                                                {
+                                                    type: "boolean",
+                                                    key: "verbose",
+                                                    label: t("vacuum-verbose", "Verbose"),
+                                                    defaultValue: false,
+                                                    helperText: t("vacuum-verbose-dialog-tooltip", "Show detailed progress messages"),
+                                                } as IDialogBooleanField,
+                                            ],
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: "editor",
+                                    label: t("sql", "SQL"),
+                                    items: [
+                                        {
+                                            type: "row",
+                                            items: [
+                                                {
+                                                    type: "editor",
+                                                    key: "sql",
+                                                    height: "100%",
+                                                    width: "100%",
+                                                    defaultValue: "-- no SQL preview available --",
+                                                } as IDialogEditorField
+                                            ]
+                                        }
+                                    ],
+                                }
+                            ]
+                        },
+                    ],
+                    confirmLabel: () => t("vacuum", "Vacuum"),
+                    onConfirm: async (values: Record<string, any>) => {
+                        if (!selectedTable) return;
+
+                        const vacuumCmd = `VACUUM ${values.full ? "FULL " : ""}${values.analyze ? "ANALYZE " : ""}${values.verbose ? "VERBOSE " : ""}${selectedTable.schema_name}.${selectedTable.relname}`;
+
+                        try {
+                            await session.query(vacuumCmd);
+                            slotContext.showNotification({
+                                message: t("vacuum-success", "Vacuum completed successfully"),
+                                severity: "success",
+                            });
+                            slotContext.refresh(cid("grid"));
+                        } catch (error: any) {
+                            slotContext.showNotification({
+                                message: t("vacuum-error-message", "Vacuum failed {{error}}", { error: error.message }),
+                                severity: "error",
+                            });
+                        }
+                    },
+                    onChange(values) {
+                        const sql = selectedTable ?
+                            `VACUUM ${values.full ? "FULL " : ""}${values.analyze ? "ANALYZE " : ""}${values.verbose ? "VERBOSE " : ""}${selectedTable.schema_name}.${selectedTable.relname}` 
+                            : "-- no table selected --";
+                        values.sql = sql;
+                    },
+                } as IDialogSlot,
             ],
-        },
+        }),
         toolBar: {
             id: cid("tab", "toolbar"),
             type: "toolbar",
             tools: () => [
+                [
+                    "vacuum-relation-action",
+                    "analyze-relation-action",
+                ],
                 SelectSchemaAction_ID,
                 SearchData_ID,
                 {

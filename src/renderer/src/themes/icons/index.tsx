@@ -211,6 +211,8 @@ export interface ThemeIcons {
     ReloadStop: IconWrapperFC;
     CancleQuery: IconWrapperFC;
     KillSession: IconWrapperFC;
+    Vacuum: IconWrapperFC;
+    Analyze: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

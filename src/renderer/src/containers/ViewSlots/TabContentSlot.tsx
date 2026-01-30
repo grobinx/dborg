@@ -126,6 +126,36 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 
+        const resolvedDialogs = resolveDialogsSlotFactory(slot.dialogs, runtimeContext);
+        if (resolvedDialogs && Object.keys(resolvedDialogs).length > 0) {
+            const dialogs = resolvedDialogs.reduce((acc, dialog) => ({
+                ...acc,
+                [dialog.id]: {
+                    opened: false,
+                    dialog: dialog,
+                    resolver: null as ((value: Record<string, any> | null) => void) | null,
+                }
+            }), {} as Record<string, {
+                opened: boolean;
+                dialog: IDialogSlot;
+                resolver: ((value: Record<string, any> | null) => void) | null;
+            }>);
+            setDialogs(dialogs);
+            unregisterDialogs = registerDialog(Object.keys(dialogs), (id: string, params?: Record<string, any>) => {
+                return new Promise<Record<string, any> | null>((resolve) => {
+                    setDialogs(prev => ({
+                        ...prev,
+                        [id]: {
+                            opened: true,
+                            dialog: prev[id].dialog,
+                            params,
+                            resolver: resolve,
+                        }
+                    }));
+                });
+            });
+        }
+
         if (isFirstActivation || (active && refreshChanged)) {
             setContent(prev => ({
                 ...prev,
@@ -135,35 +165,6 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
                 ...prev,
                 node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
             }));
-            const resolvedDialogs = resolveDialogsSlotFactory(slot.dialogs, runtimeContext);
-            if (resolvedDialogs && Object.keys(resolvedDialogs).length > 0) {
-                const dialogs = resolvedDialogs.reduce((acc, dialog) => ({
-                    ...acc,
-                    [dialog.id]: {
-                        opened: false,
-                        dialog: dialog,
-                        resolver: null as ((value: Record<string, any> | null) => void) | null,
-                    }
-                }), {} as Record<string, {
-                    opened: boolean;
-                    dialog: IDialogSlot;
-                    resolver: ((value: Record<string, any> | null) => void) | null;
-                }>);
-                setDialogs(dialogs);
-                unregisterDialogs = registerDialog(Object.keys(dialogs), (id: string, params?: Record<string, any>) => {
-                    return new Promise<Record<string, any> | null>((resolve) => {
-                        setDialogs(prev => ({
-                            ...prev,
-                            [id]: {
-                                opened: true,
-                                dialog: prev[id].dialog,
-                                params,
-                                resolver: resolve,
-                            }
-                        }));
-                    });
-                });
-            }
             previousRefreshRef.current = refresh;
         }
         if (active) {

@@ -52,6 +52,9 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
     const decorator = useInputDecorator();
     const editorRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const currentValue = value ?? '';
+    const onChangeRef = React.useRef(onChange);
+
+    onChangeRef.current = onChange;
 
     const handleEditorMount = React.useCallback((editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => {
         editorRef.current = editor;
@@ -59,12 +62,12 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
         // Nasłuchuj zmian w edytorze
         editor.onDidChangeModelContent(() => {
             const newValue = editor.getValue();
-            onChange?.(newValue);
+            onChangeRef.current?.(newValue);
         });
 
         onMount?.(editor, monacoApi);
-    }, [onChange, onMount]);
-
+    }, [onMount]);
+    
     React.useEffect(() => {
         // Aktualizuj wartość tylko jeśli różni się od wartości w edytorze
         if (editorRef.current) {
