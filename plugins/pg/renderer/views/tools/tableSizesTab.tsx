@@ -327,10 +327,8 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     onConfirm: async (values: Record<string, any>) => {
                         if (!selectedTable) return;
 
-                        const vacuumCmd = `VACUUM ${values.full ? "FULL " : ""}${values.analyze ? "ANALYZE " : ""}${values.verbose ? "VERBOSE " : ""}${selectedTable.schema_name}.${selectedTable.relname}`;
-
                         try {
-                            await session.query(vacuumCmd);
+                            await session.query(values.sql);
                             slotContext.showNotification({
                                 message: t("vacuum-success", "Vacuum completed successfully"),
                                 severity: "success",
