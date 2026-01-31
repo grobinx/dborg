@@ -34,11 +34,11 @@ export const DialogTextField: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, runtimeContext);
-    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
-    const helperText = resolveStringFactory(field.helperText, runtimeContext);
-    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
-    const required = resolveBooleanFactory(field.required, runtimeContext);
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
@@ -86,11 +86,11 @@ export const DialogNumberField: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, runtimeContext);
-    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
-    const helperText = resolveStringFactory(field.helperText, runtimeContext);
-    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
-    const required = resolveBooleanFactory(field.required, runtimeContext);
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
@@ -139,12 +139,12 @@ export const DialogSelectField: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, runtimeContext);
-    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
-    const helperText = resolveStringFactory(field.helperText, runtimeContext);
-    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
-    const required = resolveBooleanFactory(field.required, runtimeContext);
-    const options = resolveSelectOptionsFactory(field.options, runtimeContext) || [];
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
+    const options = resolveSelectOptionsFactory(field.options, structure) || [];
 
     return (
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
@@ -192,11 +192,11 @@ export const DialogBooleanField: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, runtimeContext);
-    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
-    const helperText = resolveStringFactory(field.helperText, runtimeContext);
-    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
-    const required = resolveBooleanFactory(field.required, runtimeContext);
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
 
     return (
         <InputDecorator indicator={false} disableBlink description={helperText} showValidity={false}>
@@ -244,14 +244,21 @@ export const DialogEditorField: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(field.label, runtimeContext);
-    const tooltip = resolveStringFactory(field.tooltip, runtimeContext);
-    const helperText = resolveStringFactory(field.helperText, runtimeContext);
-    const disabled = resolveBooleanFactory(field.disabled, runtimeContext);
-    const required = resolveBooleanFactory(field.required, runtimeContext);
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink description={helperText} label={label} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            description={helperText}
+            label={label}
+            showValidity={false}
+            sx={{ height: field.height}}
+        >
             <EditorField
                 value={structure[field.key]}
                 onChange={(value) => onChange({ ...structure, [field.key]: value })}

@@ -43,7 +43,7 @@ const applyDefaults = (
     }
 
     items.forEach(item => {
-        if (isDialogTextField(item) || isDialogNumberField(item) || isDialogBooleanField(item) || 
+        if (isDialogTextField(item) || isDialogNumberField(item) || isDialogBooleanField(item) ||
             isDialogSelectField(item) || isDialogEditorField(item)) {
             if (target[item.key] === undefined && item.defaultValue !== undefined) {
                 target[item.key] = item.defaultValue;
@@ -132,6 +132,15 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         }
     }, [dialogVisible]);
 
+    React.useEffect(() => {
+        if (open) {
+            if (slot.onOpen) {
+                slot.onOpen(structure);
+                setStructure(structure);
+            }
+        }
+    }, [open]);
+
     const handleConfirm = async () => {
         const validationError = slot.onValidate?.(structure);
         if (validationError) {
@@ -174,9 +183,16 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
             maxWidth={maxWidth}
             fullScreen={fullScreen}
             ref={dialogRef}
+            slotProps={{
+                paper: {
+                    sx: {
+                        ...(slot.height ? { height: slot.height } : {}),
+                    }
+                }
+            }}
         >
             <DialogTitle>{title}</DialogTitle>
-            <DialogContent dividers sx={{ height: slot.height }}>
+            <DialogContent dividers>
                 <Stack gap={8} sx={{ height: "100%" }}>
                     {error && (
                         <Alert severity="error">{error}</Alert>

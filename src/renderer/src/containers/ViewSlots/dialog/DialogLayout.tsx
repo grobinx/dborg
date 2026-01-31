@@ -1,10 +1,10 @@
 import React from "react";
 import {
-    SlotRuntimeContext,
-    IDialogRow,
     IDialogColumn,
-    resolveStringFactory,
+    IDialogRow,
     resolveDialogLayoutItemsKindFactory,
+    resolveStringFactory,
+    SlotRuntimeContext,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 
@@ -25,27 +25,63 @@ export const DialogRow: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(row.label, runtimeContext);
-    const items = resolveDialogLayoutItemsKindFactory(row.items, runtimeContext) || [];
+    const label = resolveStringFactory(row.label, structure);
+    const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
+
+    const getItemWrapperStyle = (item: any): React.CSSProperties => {
+        const size = item?.size;
+
+        // jeśli size string => jawna szerokość i nie ustawiamy flex (Twoje wymaganie)
+        if (typeof size === "string") {
+            return { width: size };
+        }
+
+        if (size === "auto") {
+            return { flex: "0 0 auto" };
+        }
+
+        if (typeof size === "number") {
+            const pct = `${(size / 12) * 100}%`;
+            return { flex: `0 0 ${pct}`, maxWidth: pct };
+        }
+
+        return { flex: "1" };
+    };
 
     return (
-        <div style={{ display: "flex", gap: "8px", width: "100%", flexWrap: "wrap", height: "100%" }}>
-            {label && (
-                <div style={{ width: "100%", fontWeight: "bold", marginBottom: "4px" }}>
-                    {label}
-                </div>
-            )}
-            {items.map((item, index) => (
-                <DialogLayoutItem
-                    key={index}
-                    item={item}
-                    runtimeContext={runtimeContext}
-                    structure={structure}
-                    onChange={onChange}
-                    invalidFields={invalidFields}
-                    onValidityChange={onValidityChange}
-                />
-            ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {label && <div style={{ fontWeight: "bold", marginBottom: "4px" }}>{label}</div>}
+
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    width: "100%",
+                    alignItems: "stretch",
+                }}
+            >
+                {items.map((item, index) => (
+                    <div
+                        key={index}
+                        style={{
+                            boxSizing: "border-box",
+                            minWidth: 0,
+                            ...getItemWrapperStyle(item),
+                        }}
+                    >
+                        <DialogLayoutItem
+                            item={item}
+                            runtimeContext={runtimeContext}
+                            structure={structure}
+                            onChange={onChange}
+                            invalidFields={invalidFields}
+                            onValidityChange={onValidityChange}
+                        />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
@@ -67,33 +103,18 @@ export const DialogColumn: React.FC<{
         onValidityChange,
     } = props;
 
-    const label = resolveStringFactory(column.label, runtimeContext);
-    const items = resolveDialogLayoutItemsKindFactory(column.items, runtimeContext) || [];
+    const label = resolveStringFactory(column.label, structure);
+    const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
 
-    const isStringWidth = typeof column.width === "string";
-    const isNumberWidth = typeof column.width === "number";
-
-    const columnPercentWidth = isNumberWidth ? `${(column.width! / 12) * 100}%` : undefined;
-
-    const columnStyle: React.CSSProperties = {
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        ...(isStringWidth
-            ? { width: column.width } // explicit width (e.g. "320px", "40%")
-            : isNumberWidth
-                ? { flex: `0 0 ${columnPercentWidth}` } // grid-based width (1..12)
-                : { flex: "1" } // auto
-        ),
-    };
-
+    // Kolumna: zawsze pionowo. `size` (jeśli jest) nie jest tutaj używane.
     return (
-        <div style={columnStyle}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
             {label && (
                 <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
                     {label}
                 </div>
             )}
+
             {items.map((item, index) => (
                 <DialogLayoutItem
                     key={index}

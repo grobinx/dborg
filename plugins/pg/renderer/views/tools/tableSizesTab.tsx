@@ -1,14 +1,14 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IDialogBooleanField, IDialogEditorField, IDialogSlot, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IAutoRefresh, IDialogBooleanField, IDialogEditorField, IDialogRow, IDialogSlot, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 import Decimal from "decimal.js";
-import { resolveColor } from "@renderer/utils/colors";
 import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
+import { versionToNumber } from "../../../../../src/api/version";
 
 interface RelationMaintenanceRecord {
     schema_name: string;
@@ -42,10 +42,28 @@ interface RelationMaintenanceRecord {
 const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = cidFactory("tools-table-maintenance", session.info.uniqueId);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let selectedSchemaName: string | null = null;
     let relationSizeRows: RelationMaintenanceRecord[] = [];
     let selectedTable: RelationMaintenanceRecord | null = null;
+
+    let vacuumStructure: Record<string, any> = {
+        full: false,
+        analyze: true,
+        freeze: false,
+        disable_page_skipping: false,
+        skip_locked: false,
+        index_cleanup: true,
+        truncate: true,
+        parallel: 0,
+        process_main: true,
+        process_toast: false,
+        buffer_usage_limit: 0,
+        skip_database_stats: false,
+        only_database_stats: false,
+        sql: "-- no SQL preview available --",
+    };
 
     const setSelectedSchemaName = async () => {
         try {
@@ -55,6 +73,27 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             selectedSchemaName = null;
         }
     };
+
+    const vacuumSql = (structure: Record<string, any>) => {
+        if (!selectedTable) return "-- no table selected --";
+        const options = [
+            structure.full && !structure.freeze && "FULL",
+            structure.analyze && !structure.freeze && "ANALYZE",
+            structure.freeze && "FREEZE",
+            structure.disable_page_skipping && "DISABLE_PAGE_SKIPPING",
+            (versionNumber >= 130000 && structure.skip_locked) && "SKIP_LOCKED",
+            (versionNumber >= 130000 && structure.index_cleanup === false) && "INDEX_CLEANUP FALSE",
+            (versionNumber >= 130000 && structure.truncate === false) && "TRUNCATE FALSE",
+            (versionNumber >= 140000 && structure.parallel > 0 && structure.index_cleanup) ? `PARALLEL ${structure.parallel}` : null,
+            (versionNumber >= 160000 && structure.process_main === false) && "PROCESS_MAIN FALSE",
+            (versionNumber >= 160000 && structure.process_toast === true) && "PROCESS_TOAST TRUE",
+            (versionNumber >= 160000 && structure.buffer_usage_limit > 0) && `BUFFER_USAGE_LIMIT '${structure.buffer_usage_limit}MB'`,
+            (versionNumber >= 160000 && structure.skip_database_stats && !structure.only_database_stats) && "SKIP_DATABASE_STATS",
+            (versionNumber >= 160000 && structure.only_database_stats && !structure.skip_database_stats) && "ONLY_DATABASE_STATS",
+        ].filter(Boolean).join(", ");
+
+        return `VACUUM ${options ? '(' + options + ')' : ''} ${selectedTable.schema_name}.${selectedTable.relname};`;
+    }
 
     return {
         id: cid("tab"),
@@ -74,6 +113,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             content: () => ({
                 id: cid("grid"),
                 type: "grid",
+                uniqueField: "relname",
                 rows: async () => {
                     if (!selectedSchemaName) return [];
 
@@ -229,7 +269,11 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Vacuum",
                         disabled: () => selectedTable === null,
                         run: () => {
-                            slotContext.openDialog(cid("vacuum-relation-dialog"));
+                            slotContext.openDialog(cid("vacuum-relation-dialog"), vacuumStructure).then(result => {
+                                if (result) {
+                                    vacuumStructure = result;
+                                }
+                            });
                         }
                     },
                     {
@@ -264,7 +308,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     id: cid("vacuum-relation-dialog"),
                     type: "dialog",
                     title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: selectedTable ? `${selectedTable.schema_name}.${selectedTable.relname}` : "" }),
-                    height: "300px",
+                    height: "70%",
                     items: [
                         {
                             type: "tabs",
@@ -275,29 +319,131 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                                     items: [
                                         {
                                             type: "column",
-                                            width: "100%",
                                             items: [
                                                 {
-                                                    type: "boolean",
-                                                    key: "full",
-                                                    label: t("vacuum-full", "Full Vacuum"),
-                                                    defaultValue: false,
-                                                    helperText: t("vacuum-full-dialog-tooltip", "Reclaim disk space (slower, locks table)"),
-                                                } as IDialogBooleanField,
+                                                    type: "row",
+                                                    items: [
+                                                        {
+                                                            type: "boolean",
+                                                            key: "full",
+                                                            label: t("vacuum-full", "Full Vacuum"),
+                                                            helperText: t("vacuum-full-dialog-tooltip", "Reclaim disk space (slower, locks table)"),
+                                                            disabled: (structure) => structure.freeze === true,
+                                                        } as IDialogBooleanField,
+                                                        {
+                                                            type: "boolean",
+                                                            key: "analyze",
+                                                            label: t("vacuum-analyze", "Analyze"),
+                                                            helperText: t("vacuum-analyze-dialog-tooltip", "Update table statistics after vacuum"),
+                                                            disabled: (structure) => structure.freeze === true,
+                                                        } as IDialogBooleanField,
+                                                    ]
+                                                } as IDialogRow,
                                                 {
                                                     type: "boolean",
-                                                    key: "analyze",
-                                                    label: t("vacuum-analyze", "Analyze"),
-                                                    defaultValue: true,
-                                                    helperText: t("vacuum-analyze-dialog-tooltip", "Update table statistics after vacuum"),
+                                                    key: "freeze",
+                                                    label: t("vacuum-freeze", "Freeze"),
+                                                    helperText: t("vacuum-freeze-dialog-tooltip", "Freeze tuples (prevents transaction ID wraparound)"),
                                                 } as IDialogBooleanField,
+                                                ...(versionNumber >= 160000 ? [
+                                                    {
+                                                        type: "row",
+                                                        items: [
+                                                            {
+                                                                type: "boolean",
+                                                                key: "skip_database_stats",
+                                                                label: t("vacuum-skip-database-stats", "Skip Database Stats"),
+                                                                helperText: t("vacuum-skip-database-stats-tooltip", "Skip updating database-wide statistics"),
+                                                                // mutually exclusive with ONLY_DATABASE_STATS
+                                                                disabled: (s) => s.only_database_stats === true,
+                                                            },
+                                                            {
+                                                                type: "boolean",
+                                                                key: "only_database_stats",
+                                                                label: t("vacuum-only-database-stats", "Only Database Stats"),
+                                                                helperText: t("vacuum-only-database-stats-tooltip", "Only update database-wide statistics"),
+                                                                // mutually exclusive with SKIP_DATABASE_STATS
+                                                                disabled: (s) => s.skip_database_stats === true,
+                                                            }
+                                                        ]
+                                                    }
+                                                ] : []),
                                                 {
                                                     type: "boolean",
-                                                    key: "verbose",
-                                                    label: t("vacuum-verbose", "Verbose"),
-                                                    defaultValue: false,
-                                                    helperText: t("vacuum-verbose-dialog-tooltip", "Show detailed progress messages"),
+                                                    key: "disable_page_skipping",
+                                                    label: t("vacuum-disable-page-skipping", "Disable Page Skipping"),
+                                                    helperText: t("vacuum-disable-page-skipping-tooltip", "Disable skipping of pages that are known to contain no dead tuples"),
+                                                    // not applicable for VACUUM FULL
+                                                    disabled: (s) => s.full === true,
                                                 } as IDialogBooleanField,
+                                                ...(versionNumber >= 130000 ? [
+                                                    {
+                                                        type: "boolean",
+                                                        key: "skip_locked",
+                                                        label: t("vacuum-skip-locked", "Skip Locked"),
+                                                        helperText: t("vacuum-skip-locked-tooltip", "Skip pages that are locked by other transactions"),
+                                                        // can't be used with VACUUM FULL; also conflicts with needing to process all pages (FREEZE)
+                                                        disabled: (s) => s.full === true || s.freeze === true,
+                                                    } as IDialogBooleanField,
+                                                    {
+                                                        type: "boolean",
+                                                        key: "index_cleanup",
+                                                        label: t("vacuum-index-cleanup", "Index Cleanup"),
+                                                        helperText: t("vacuum-index-cleanup-tooltip", "Specifies whether to clean up indexes"),
+                                                        // not applicable for VACUUM FULL
+                                                        disabled: (s) => s.full === true,
+                                                    },
+                                                    {
+                                                        type: "boolean",
+                                                        key: "truncate",
+                                                        label: t("vacuum-truncate", "Truncate"),
+                                                        helperText: t("vacuum-truncate-tooltip", "Specifies whether to truncate empty pages at the end of the table"),
+                                                        // not applicable for VACUUM FULL
+                                                        disabled: (s) => s.full === true,
+                                                    }
+                                                ] : []),
+                                                ...(versionNumber >= 140000 ? [
+                                                    {
+                                                        type: "number",
+                                                        key: "parallel",
+                                                        label: t("vacuum-parallel", "Parallel"),
+                                                        helperText: t("vacuum-parallel-tooltip", "Use multiple worker processes to vacuum the table"),
+                                                        min: 0,
+                                                        max: 16,
+                                                        // parallel vacuum is for lazy vacuum; also requires index cleanup enabled
+                                                        disabled: (s) => s.full === true || s.index_cleanup === false,
+                                                    },
+                                                ] : []),
+                                                ...(versionNumber >= 160000 ? [
+                                                    {
+                                                        type: "row",
+                                                        items: [{
+                                                            type: "boolean",
+                                                            key: "process_main",
+                                                            label: t("vacuum-process-main", "Process Main"),
+                                                            helperText: t("vacuum-process-main-tooltip", "Vacuum the main table (default). Disable to vacuum only the TOAST table."),
+                                                            // prevent both PROCESS_MAIN and PROCESS_TOAST being false
+                                                            disabled: (s) => s.process_main === true && s.process_toast !== true,
+                                                        } as IDialogBooleanField,
+                                                        {
+                                                            type: "boolean",
+                                                            key: "process_toast",
+                                                            label: t("vacuum-process-toast", "Process TOAST"),
+                                                            helperText: t("vacuum-process-toast-tooltip", "Vacuum the TOAST table. Disable to vacuum only the main table (default)."),
+                                                            // prevent both PROCESS_MAIN and PROCESS_TOAST being false
+                                                            disabled: (s) => s.process_toast === true && s.process_main !== true,
+                                                        } as IDialogBooleanField,
+                                                        ]
+                                                    } as IDialogRow,
+                                                    {
+                                                        type: "number",
+                                                        key: "buffer_usage_limit",
+                                                        label: t("vacuum-buffer-usage-limit", "Buffer Usage Limit (MB)"),
+                                                        helperText: t("vacuum-buffer-usage-limit-tooltip", "Sets the maximum number of shared buffers that can be used by the VACUUM operation"),
+                                                        // treat as not applicable for VACUUM FULL
+                                                        disabled: (s) => s.full === true,
+                                                    }
+                                                ] : []),
                                             ],
                                         }
                                     ]
@@ -307,23 +453,20 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                                     label: t("sql", "SQL"),
                                     items: [
                                         {
-                                            type: "row",
-                                            items: [
-                                                {
-                                                    type: "editor",
-                                                    key: "sql",
-                                                    height: "100%",
-                                                    width: "100%",
-                                                    defaultValue: "-- no SQL preview available --",
-                                                } as IDialogEditorField
-                                            ]
-                                        }
+                                            type: "editor",
+                                            key: "sql",
+                                            height: "100%",
+                                            width: "100%",
+                                        } as IDialogEditorField
                                     ],
                                 }
                             ]
                         },
                     ],
                     confirmLabel: () => t("vacuum", "Vacuum"),
+                    onOpen: (structure) => {
+                        structure.sql = vacuumSql(structure);
+                    },
                     onConfirm: async (values: Record<string, any>) => {
                         if (!selectedTable) return;
 
@@ -342,10 +485,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         }
                     },
                     onChange(values) {
-                        const sql = selectedTable ?
-                            `VACUUM ${values.full ? "FULL " : ""}${values.analyze ? "ANALYZE " : ""}${values.verbose ? "VERBOSE " : ""}${selectedTable.schema_name}.${selectedTable.relname}` 
-                            : "-- no table selected --";
-                        values.sql = sql;
+                        values.sql = vacuumSql(values);
                     },
                 } as IDialogSlot,
             ],

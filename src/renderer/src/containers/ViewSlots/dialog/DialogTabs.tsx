@@ -13,6 +13,7 @@ import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import { uuidv7 } from "uuidv7";
+import { alpha, useTheme } from "@mui/material";
 
 export const DialogTabs: React.FC<{
     dialogTabs: IDialogTabs;
@@ -31,9 +32,10 @@ export const DialogTabs: React.FC<{
         onValidityChange,
     } = props;
 
-    const tabs = resolveDialogTabsFactory(dialogTabs.tabs, runtimeContext) || [];
+    const tabs = resolveDialogTabsFactory(dialogTabs.tabs, structure) || [];
     const [activeTabId, setActiveTabId] = React.useState<string | null>(tabs[0]?.id || null);
     const tabsId = React.useMemo(() => uuidv7(), [dialogTabs]);
+    const theme = useTheme();
 
     const handleTabChange = (tabId: string) => {
         const tab = tabs.find(t => t.id === tabId);
@@ -51,15 +53,23 @@ export const DialogTabs: React.FC<{
     }, [tabs]);
 
     const tabPanels = tabs.map((tab) => {
-        const items = resolveDialogLayoutItemsKindFactory(tab.items, runtimeContext) || [];
+        const items = resolveDialogLayoutItemsKindFactory(tab.items, structure) || [];
 
         return (
             <TabPanel
                 key={tab.id}
                 itemID={tab.id}
-                label={<TabPanelLabel>{resolveStringFactory(tab.label, runtimeContext) || ""}</TabPanelLabel>}
+                label={<TabPanelLabel>{resolveStringFactory(tab.label, structure) || ""}</TabPanelLabel>}
                 content={
-                    <TabPanelContent>
+                    <TabPanelContent
+                        sx={{
+                            height: "100%",
+                            width: "100%",
+                            overflowY: "auto",
+                            backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                            padding: 8,
+                        }}
+                    >
                         {items.map((item, itemIndex) => (
                             <DialogLayoutItem
                                 key={itemIndex}

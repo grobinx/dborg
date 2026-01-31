@@ -59,16 +59,16 @@ export interface SlotRuntimeContext {
     }) : Promise<boolean>;
 }
 
-export type BooleanFactory = boolean | ((runtimeContext: SlotRuntimeContext) => boolean);
-export type NumberFactory = number | null | ((runtimeContext: SlotRuntimeContext) => number | null);
-export type NumberArrayFactory = number[] | ((runtimeContext: SlotRuntimeContext) => number[]);
-export type ReactNodeFactory = React.ReactNode | ((runtimeContext: SlotRuntimeContext) => React.ReactNode);
+export type BooleanFactory<T = SlotRuntimeContext> = boolean | ((runtimeContext: T) => boolean);
+export type NumberFactory<T = SlotRuntimeContext> = number | null | ((runtimeContext: T) => number | null);
+export type NumberArrayFactory<T = SlotRuntimeContext> = number[] | ((runtimeContext: T) => number[]);
+export type ReactNodeFactory<T = SlotRuntimeContext> = React.ReactNode | ((runtimeContext: T) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
-export type StringFactory = string | ((runtimeContext: SlotRuntimeContext) => string);
-export type StringAsyncFactory = Promise<string> | ((runtimeContext: SlotRuntimeContext) => Promise<string>);
-export type SelectOptionsFactory = Option[] | ((runtimeContext: SlotRuntimeContext) => Option[]);
-export type RecordsAsyncFactory = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: SlotRuntimeContext) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
-export type ColumnDefinitionsFactory = ColumnDefinition[] | ((runtimeContext: SlotRuntimeContext) => ColumnDefinition[]);
+export type StringFactory<T = SlotRuntimeContext> = string | ((runtimeContext: T) => string);
+export type StringAsyncFactory<T = SlotRuntimeContext> = Promise<string> | ((runtimeContext: T) => Promise<string>);
+export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeContext: T) => Option[]);
+export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
+export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
 export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((runtimeContext: SlotRuntimeContext) => monaco.editor.IActionDescriptor[]);
@@ -84,9 +84,9 @@ export type TextSlotKindFactory = TextSlotKind | ((runtimeContext: SlotRuntimeCo
 export type ContentSlotFactory = IContentSlot | ((runtimeContext: SlotRuntimeContext) => IContentSlot);
 export type ToolBarSlotKindFactory = ToolBarSlotKind | ((runtimeContext: SlotRuntimeContext) => ToolBarSlotKind);
 export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRuntimeContext) => IProgressBarSlot);
-export type DialogsSlotFactory = IDialogSlot[] | ((runtimeContext: SlotRuntimeContext) => IDialogSlot[]);
-export type DialogLayoutItemsKindFactory = DialogLayoutItemKind[] | ((runtimeContext: SlotRuntimeContext) => DialogLayoutItemKind[]);
-export type DialogTabsTabsFactory = IDialogTab[] | ((runtimeContext: SlotRuntimeContext) => IDialogTab[]);
+export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runtimeContext: T) => IDialogSlot[]);
+export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
+export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -112,16 +112,16 @@ export interface IField {
     /**
      * Etykieta pola tekstowego.
      */
-    placeholder?: string,
+    placeholder?: string;
     /**
      * Domyśla wartość pola tekstowego.
      */
-    defaultValue?: any,
+    defaultValue?: any;
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      * Wywołanie jest z opóźnieniem
      */
-    onChange: (value: any) => void,
+    onChange: (value: any) => void;
     /**
      * Czy pole tekstowe jest zablokowane.
      */
@@ -141,12 +141,12 @@ export interface ITextField extends IField {
     /**
      * Domyśla wartość pola tekstowego.
      */
-    defaultValue?: string,
+    defaultValue?: string;
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      * Wywołanie jest z opóźnieniem
      */
-    onChange: (value: string) => void,
+    onChange: (value: string) => void;
 
     minLength?: number;
     maxLength?: number;
@@ -157,12 +157,12 @@ export interface ISearchField extends IField {
     /**
      * Domyśla wartość pola tekstowego.
      */
-    defaultValue?: string,
+    defaultValue?: string;
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      * Wywołanie jest z opóźnieniem
      */
-    onChange: (value: string) => void,
+    onChange: (value: string) => void;
 
     minLength?: number;
     maxLength?: number;
@@ -173,12 +173,12 @@ export interface INumberField extends IField {
     /**
      * Domyśla wartość pola tekstowego.
      */
-    defaultValue?: number,
+    defaultValue?: number;
     /**
      * Funkcja wywoływana po zmianie wartości pola tekstowego.
      * Wywołanie jest z opóźnieniem
      */
-    onChange: (value: number | null) => void,
+    onChange: (value: number | null) => void;
 
     min?: number;
     max?: number;
@@ -919,6 +919,19 @@ export interface IProgressBarSlot extends ICustomSlot {
 
 export type DialogFieldType = "text" | "number" | "boolean" | "select" | "editor";
 
+export type DialogGridSize =
+    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+    | "auto"
+    | string;
+
+/**
+ * Opcjonalny hint layoutu używany przez IDialogRow (grid).
+ * Column go NIE interpretuje (kolumna zawsze układa pionowo).
+ */
+export interface IDialogGridItem {
+    size?: DialogGridSize;
+}
+
 export interface IDialogField {
     /**
      * Typ pola.
@@ -931,7 +944,7 @@ export interface IDialogField {
     /**
      * Etykieta pola.
      */
-    label: StringFactory;
+    label: StringFactory<Record<string, any>>;
     /**
      * Wartość domyślna pola.
      */
@@ -940,20 +953,20 @@ export interface IDialogField {
      * Czy pole jest wymagane.
      * @default false
      */
-    required?: BooleanFactory;
+    required?: BooleanFactory<Record<string, any>>;
     /**
      * Czy pole jest zablokowane.
      * @default false
      */
-    disabled?: BooleanFactory;
+    disabled?: BooleanFactory<Record<string, any>>;
     /**
      * Podpowiedź wyświetlana po najechaniu na pole.
      */
-    tooltip?: StringFactory;
+    tooltip?: StringFactory<Record<string, any>>;
     /**
      * Tekst pomocniczy wyświetlany pod polem.
      */
-    helperText?: StringFactory;
+    helperText?: StringFactory<Record<string, any>>;
     /**
      * Szerokość pola (np. "100%", 200).
      */
@@ -1045,7 +1058,7 @@ export interface IDialogSelectField extends IDialogField {
     /**
      * Opcje do wyboru.
      */
-    options: SelectOptionsFactory;
+    options: SelectOptionsFactory<Record<string, any>>;
     /**
      * Czy pole ma być wielokrotnego wyboru.
      * @default false
@@ -1060,11 +1073,16 @@ export type DialogFieldKind =
     | IDialogSelectField
     | IDialogEditorField;
 
+/**
+ * Layout item może mieć opcjonalne `size`, ale tylko `row` to wykorzystuje.
+ */
 export type DialogLayoutItemKind =
-    | DialogFieldKind
-    | IDialogRow
-    | IDialogColumn
-    | IDialogTabs;
+    (
+        | DialogFieldKind
+        | IDialogRow
+        | IDialogColumn
+        | IDialogTabs
+    ) & IDialogGridItem;
 
 export interface IDialogColumn {
     /**
@@ -1074,16 +1092,12 @@ export interface IDialogColumn {
     /**
      * Etykieta kolumny (opcjonalnie).
      */
-    label?: StringFactory;
+    label?: StringFactory<Record<string, any>>;
     /**
      * Zawartość kolumny (pola, wiersze lub kolumny).
+     * Kolumna układa elementy pionowo (pod sobą).
      */
-    items: DialogLayoutItemsKindFactory;
-    /**
-     * Szerokość kolumny (1-12, jak w Grid System).
-     * @default undefined równa dystrybucja
-     */
-    width?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+    items: DialogLayoutItemsKindFactory<Record<string, any>>;
 }
 
 export interface IDialogRow {
@@ -1094,11 +1108,12 @@ export interface IDialogRow {
     /**
      * Etykieta wiersza (opcjonalnie).
      */
-    label?: StringFactory;
+    label?: StringFactory<Record<string, any>>;
     /**
      * Zawartość wiersza (pola, wiersze lub kolumny).
+     * Wiersz układa elementy poziomo i interpretuje `item.size`.
      */
-    items: DialogLayoutItemsKindFactory;
+    items: DialogLayoutItemsKindFactory<Record<string, any>>;
 }
 
 export interface IDialogTab {
@@ -1106,11 +1121,11 @@ export interface IDialogTab {
     /**
      * Etykieta zakładki.
      */
-    label: StringFactory;
+    label: StringFactory<Record<string, any>>;
     /**
      * Zawartość zakładki (pola, wiersze, kolumny).
      */
-    items: DialogLayoutItemsKindFactory;
+    items: DialogLayoutItemsKindFactory<Record<string, any>>;
     /**
      * Funkcja wywoływana po aktywacji zakładki.
      * @returns 
@@ -1126,7 +1141,7 @@ export interface IDialogTabs {
     /**
      * Zakładki dialogu.
      */
-    tabs: DialogTabsTabsFactory;
+    tabs: DialogTabsTabsFactory<Record<string, any>>;
 }
 
 export type DialogSize = "small" | "medium" | "large" | "full";
@@ -1153,6 +1168,12 @@ export interface IDialogSlot extends ICustomSlot {
      * @default "Cancel"
      */
     cancelLabel?: StringFactory;
+    /**
+     * Funkcja wywoływana po otwarciu dialogu.
+     * @param values Wartości pól dialogu. Może być zmieniona przed wyświetleniem.
+     * @returns 
+     */
+    onOpen?: (values: Record<string, any>) => void;
     /**
      * Funkcja walidacji wywoływana przed zamknięciem dialogu.
      * Jeśli zwróci string, zostanie wyświetlony jako błąd.
@@ -1186,25 +1207,25 @@ export interface IDialogSlot extends ICustomSlot {
     height?: string | number;
 }
 
-export function resolveStringFactory(factory: StringFactory | undefined, context: SlotRuntimeContext): string | undefined {
+export function resolveStringFactory<T = SlotRuntimeContext>(factory: StringFactory<T> | undefined, context: T): string | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveStringAsyncFactory(factory: StringAsyncFactory | undefined, context: SlotRuntimeContext): Promise<string | undefined> | undefined {
+export function resolveStringAsyncFactory<T = SlotRuntimeContext>(factory: StringAsyncFactory<T> | undefined, context: T): Promise<string | undefined> | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveReactNodeFactory(factory: ReactNodeFactory | undefined, context: SlotRuntimeContext): React.ReactNode {
+export function resolveReactNodeFactory<T = SlotRuntimeContext>(factory: ReactNodeFactory<T> | undefined, context: T): React.ReactNode {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveBooleanFactory(factory: BooleanFactory | undefined, context: SlotRuntimeContext): boolean | undefined {
+export function resolveBooleanFactory<T = SlotRuntimeContext>(factory: BooleanFactory<T> | undefined, context: T): boolean | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotRuntimeContext): ToolKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveRecordsFactory(factory: RecordsAsyncFactory | undefined, context: SlotRuntimeContext): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
+export function resolveRecordsFactory<T = SlotRuntimeContext>(factory: RecordsAsyncFactory<T> | undefined, context: T): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveColumnDefinitionsFactory(factory: ColumnDefinitionsFactory | undefined, context: SlotRuntimeContext): ColumnDefinition[] | undefined {
+export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
@@ -1243,7 +1264,7 @@ export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefi
 export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, context: SlotRuntimeContext): IContentSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveSelectOptionsFactory(factory: SelectOptionsFactory | undefined, context: SlotRuntimeContext): Option[] | undefined {
+export function resolveSelectOptionsFactory<T = SlotRuntimeContext>(factory: SelectOptionsFactory<T> | undefined, context: T): Option[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, context: SlotRuntimeContext): ToolBarSlotKind | undefined {
@@ -1258,14 +1279,14 @@ export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefine
 export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotRuntimeContext): IProgressBarSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveDialogsSlotFactory(factory: DialogsSlotFactory | undefined, context: SlotRuntimeContext): IDialogSlot[] | undefined {
+export function resolveDialogsSlotFactory<T = SlotRuntimeContext>(factory: DialogsSlotFactory<T> | undefined, context: T): IDialogSlot[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveDialogLayoutItemsKindFactory(factory: DialogLayoutItemsKindFactory | undefined, context: SlotRuntimeContext): DialogLayoutItemKind[] | undefined {
+export function resolveDialogLayoutItemsKindFactory<T = SlotRuntimeContext>(factory: DialogLayoutItemsKindFactory<T> | undefined, context: T): DialogLayoutItemKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 
-export function resolveDialogTabsFactory(factory: DialogTabsTabsFactory | undefined, context: SlotRuntimeContext): IDialogTab[] | undefined {
+export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: DialogTabsTabsFactory<T> | undefined, context: T): IDialogTab[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 
