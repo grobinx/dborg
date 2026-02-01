@@ -7,6 +7,8 @@ import {
     SlotRuntimeContext,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
+import { Stack } from "@mui/material";
+import { DialogFieldset } from "./DialogFieldset";
 
 export const DialogRow: React.FC<{
     row: IDialogRow;
@@ -16,14 +18,7 @@ export const DialogRow: React.FC<{
     invalidFields: Set<string>;
     onValidityChange: () => void;
 }> = (props) => {
-    const {
-        row,
-        runtimeContext,
-        structure,
-        onChange,
-        invalidFields,
-        onValidityChange,
-    } = props;
+    const { row, runtimeContext, structure, onChange, invalidFields, onValidityChange } = props;
 
     const label = resolveStringFactory(row.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
@@ -31,58 +26,52 @@ export const DialogRow: React.FC<{
     const getItemWrapperStyle = (item: any): React.CSSProperties => {
         const size = item?.size;
 
-        // jeśli size string => jawna szerokość i nie ustawiamy flex (Twoje wymaganie)
-        if (typeof size === "string") {
-            return { width: size };
-        }
-
-        if (size === "auto") {
-            return { flex: "0 0 auto" };
-        }
-
+        if (typeof size === "string") return { width: size };
+        if (size === "auto") return { flex: "0 0 auto" };
         if (typeof size === "number") {
             const pct = `${(size / 12) * 100}%`;
             return { flex: `0 0 ${pct}`, maxWidth: pct };
         }
-
         return { flex: "1" };
     };
 
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {label && <div style={{ fontWeight: "bold", marginBottom: "4px" }}>{label}</div>}
-
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                    width: "100%",
-                    alignItems: "stretch",
-                }}
-            >
-                {items.map((item, index) => (
-                    <div
-                        key={index}
-                        style={{
-                            boxSizing: "border-box",
-                            minWidth: 0,
-                            ...getItemWrapperStyle(item),
-                        }}
-                    >
-                        <DialogLayoutItem
-                            item={item}
-                            runtimeContext={runtimeContext}
-                            structure={structure}
-                            onChange={onChange}
-                            invalidFields={invalidFields}
-                            onValidityChange={onValidityChange}
-                        />
-                    </div>
-                ))}
-            </div>
+    const content = (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: "8px",
+                width: "100%",
+                alignItems: "stretch",
+            }}
+        >
+            {items.map((item, index) => (
+                <div
+                    key={index}
+                    style={{
+                        boxSizing: "border-box",
+                        minWidth: 0,
+                        ...getItemWrapperStyle(item),
+                    }}
+                >
+                    <DialogLayoutItem
+                        item={item}
+                        runtimeContext={runtimeContext}
+                        structure={structure}
+                        onChange={onChange}
+                        invalidFields={invalidFields}
+                        onValidityChange={onValidityChange}
+                    />
+                </div>
+            ))}
         </div>
+    );
+
+    return (
+        <Stack direction="column" gap="8px">
+            <DialogFieldset label={label}>{content}</DialogFieldset>
+        </Stack>
     );
 };
 
@@ -94,27 +83,13 @@ export const DialogColumn: React.FC<{
     invalidFields: Set<string>;
     onValidityChange: () => void;
 }> = (props) => {
-    const {
-        column,
-        runtimeContext,
-        structure,
-        onChange,
-        invalidFields,
-        onValidityChange,
-    } = props;
+    const { column, runtimeContext, structure, onChange, invalidFields, onValidityChange } = props;
 
     const label = resolveStringFactory(column.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
 
-    // Kolumna: zawsze pionowo. `size` (jeśli jest) nie jest tutaj używane.
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
-            {label && (
-                <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
-                    {label}
-                </div>
-            )}
-
+    const content = (
+        <Stack direction="column" gap="8px" width="100%">
             {items.map((item, index) => (
                 <DialogLayoutItem
                     key={index}
@@ -126,6 +101,12 @@ export const DialogColumn: React.FC<{
                     onValidityChange={onValidityChange}
                 />
             ))}
-        </div>
+        </Stack>
+    );
+
+    return (
+        <Stack direction="column" gap="8px" width="100%">
+            <DialogFieldset label={label}>{content}</DialogFieldset>
+        </Stack>
     );
 };

@@ -1,8 +1,10 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
+import { versionToNumber } from "../../../../../src/api/version";
 
 const bloatTab = (
     session: IDatabaseSession,
@@ -10,6 +12,8 @@ const bloatTab = (
     cid: (id: string) => string
 ): ITabSlot => {
     const t = i18next.t.bind(i18next);
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
+    let vacuumStructure = { ...defaultVacuumStructure };
 
     return {
         id: cid("table-bloat-tab"),
@@ -19,7 +23,7 @@ const bloatTab = (
             type: "tablabel",
             label: t("bloat", "Bloat"),
         },
-        content: {
+        content: (slotContext) => ({
             id: cid("table-bloat-tab-content"),
             type: "tabcontent",
             content: () => ({
@@ -110,10 +114,57 @@ where s.schemaname = $1 and s.relname = $2;
                     { key: "bloat_size", label: t("bloat-size", "Bloat Size"), dataType: "size", width: 120 },
                     { key: "bloat_status", label: t("status", "Status"), dataType: "string", width: 180 },
                 ] as ColumnDefinition[],
+                actions: [
+                    {
+                        id: "vacuum-relation-action",
+                        label: t("vacuum-relation", "Vacuum Relation"),
+                        icon: "Vacuum",
+                        disabled: () => selectedRow() === null,
+                        run: () => {
+                            slotContext.openDialog(cid("vacuum-relation-dialog"), vacuumStructure).then(result => {
+                                if (result) {
+                                    vacuumStructure = result;
+                                }
+                            });
+                        }
+                    },
+                ],
                 autoSaveId: `table-bloat-grid-${session.profile.sch_id}`,
             } as IGridSlot),
+            dialogs: [
+                vacuumDialog(
+                    versionNumber,
+                    cid("vacuum-relation-dialog"),
+                    () => selectedRow() ? selectedRow()!.identifier : null,
+                    async (values: Record<string, any>) => {
+                        if (!selectedRow()) return;
+
+                        try {
+                            await session.query(values.sql);
+                            slotContext.showNotification({
+                                message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: selectedRow()!.identifier }),
+                                severity: "success",
+                            });
+                            slotContext.refresh(cid("table-bloat-grid"));
+                        } catch (error: any) {
+                            slotContext.showNotification({
+                                message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: selectedRow()!.identifier, error: error.message }),
+                                severity: "error",
+                            });
+                        }
+                    },
+                ),
+            ],
+        }),
+        toolBar: {
+            id: cid("table-bloat-toolbar"),
+            type: "toolbar",
+            tools: [
+                "vacuum-relation-action"
+            ],
+            actionSlotId: cid("table-bloat-grid"),
         },
     };
-};
+}
 
 export default bloatTab;

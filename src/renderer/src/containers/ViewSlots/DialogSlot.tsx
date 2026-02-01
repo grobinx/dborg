@@ -102,6 +102,20 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     const invalidFields = React.useRef<Set<string>>(new Set());
     const [dialogValid, setDialogValid] = React.useState(false);
 
+    const openSeq = React.useRef(0);
+    const onOpenRanForSeq = React.useRef<number | null>(null);
+    const [structureInitSeq, setStructureInitSeq] = React.useState(0);
+    const [itemsResolvedSeq, setItemsResolvedSeq] = React.useState(0);
+
+    React.useEffect(() => {
+        if (open) {
+            openSeq.current += 1;
+            onOpenRanForSeq.current = null;
+        } else {
+            onOpenRanForSeq.current = null;
+        }
+    }, [open]);
+
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {
@@ -118,13 +132,21 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     }, [slotId, runtimeContext, registerRefresh]);
 
     React.useEffect(() => {
-        setStructure(params ?? applyDefaults(items, structure, {}));
-    }, [items, params]);
+        if (!open) return;
+
+        const next = params ?? applyDefaults(items, structure, {});
+        setStructure(next);
+        setStructureInitSeq(openSeq.current);
+    }, [open, items, params]);
 
     React.useEffect(() => {
         const resolvedItems = resolveDialogLayoutItemsKindFactory(slot.items, structure) ?? [];
         setItems(resolvedItems);
-    }, [slotId, slot.items, refresh, structure]);
+
+        if (open) {
+            setItemsResolvedSeq(openSeq.current);
+        }
+    }, [slotId, slot.items, refresh, structure, open]);
 
     React.useEffect(() => {
         if (dialogVisible && pendingRefresh) {
@@ -142,13 +164,23 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     }, [dialogVisible]);
 
     React.useEffect(() => {
-        if (open) {
-            if (slot.onOpen) {
-                slot.onOpen(structure);
-                setStructure(structure);
-            }
-        }
-    }, [open]);
+        if (!open) return;
+        if (!slot.onOpen) return;
+
+        const seq = openSeq.current;
+        if (onOpenRanForSeq.current === seq) return;
+
+        // Wait until both structure defaults/params AND items are resolved for this open cycle
+        if (structureInitSeq !== seq) return;
+        if (itemsResolvedSeq !== seq) return;
+
+        // onOpen is allowed to mutate structure; pass a shallow copy to avoid in-place state mutation bugs
+        const next = { ...structure };
+        slot.onOpen(next);
+        setStructure(next);
+
+        onOpenRanForSeq.current = seq;
+    }, [open, slot, structure, structureInitSeq, itemsResolvedSeq]);
 
     const handleConfirm = async (confirmId: string) => {
         const validationError = slot.onValidate?.(structure);
@@ -174,21 +206,19 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     };
 
     const title = resolveStringFactory(slot.title, structure);
-    const confirmLabel = resolveStringFactory(slot.confirmLabel, structure) ?? t("ok", "OK");
-    const cancelLabel = resolveStringFactory(slot.cancelLabel, structure) ?? t("cancel", "Cancel");
     const resolvedLabels: (DialogConformLabel & { handle?: () => void })[] = resolveDialogConformLabelsFactory(slot.labels, structure) ?? [];
     let labels: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[]; 
 
     if (!resolvedLabels || resolvedLabels.length === 0) {
         labels = [{
             id: "cancel",
-            label: cancelLabel,
+            label: resolveStringFactory(slot.cancelLabel, structure) ?? t("cancel", "Cancel"),
             color: "secondary",
             disabled: submitting,
             handle: handleCancel,
         }, {
             id: "ok",
-            label: confirmLabel,
+            label: resolveStringFactory(slot.confirmLabel, structure) ?? t("ok", "OK"),
             color: "primary",
             disabled: submitting || !dialogValid,
             handle: () => handleConfirm("ok"),

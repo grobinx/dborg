@@ -16,6 +16,7 @@ import { tableView } from "./tableView";
 export interface TableRecord {
     schema_name: string;
     table_name: string;
+    identifier: string;
     owner_name: string;
     table_type: "foreign" | "partitioned" | "regular" | null;
     description: string;
@@ -67,21 +68,22 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                 main: {
                     id: cid("tables-grid"),
                     type: "grid",
-                    uniqueField: "table_name",
+                    uniqueField: "identifier",
                     rows: async () => {
                         const { rows } = await session.query(`
-                                        select 
-                                            n.nspname as schema_name, c.relname as table_name, pg_get_userbyid(c.relowner) as owner_name, d.description,
-                                            case c.relkind when 'r'::"char" then 'regular' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
-                                        from 
-                                            pg_class c
-                                            left join pg_namespace n on n.oid = c.relnamespace
-                                            left join pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
-                                        where 
-                                            c.relkind in ('r'::"char", 'f'::"char", 'p'::"char")
-                                            and (n.nspname = $1 or (n.nspname = any (current_schemas(false)) and coalesce($1, current_schema()) = current_schema() and n.nspname <> 'public'))
-                                        order by 
-                                            schema_name, table_name`,
+                            select 
+                                n.nspname as schema_name, c.relname as table_name, pg_get_userbyid(c.relowner) as owner_name, d.description,
+                                format('%I.%I', n.nspname, c.relname) as identifier,
+                                case c.relkind when 'r'::"char" then 'regular' when 'f'::"char" then 'foreign' when 'p'::"char" then 'partitioned' end table_type
+                            from 
+                                pg_class c
+                                left join pg_namespace n on n.oid = c.relnamespace
+                                left join pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
+                            where 
+                                c.relkind in ('r'::"char", 'f'::"char", 'p'::"char")
+                                and (n.nspname = $1 or (n.nspname = any (current_schemas(false)) and coalesce($1, current_schema()) = current_schema() and n.nspname <> 'public'))
+                            order by 
+                                schema_name, table_name`,
                             [selectedSchemaName]
                         );
                         return rows;

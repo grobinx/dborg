@@ -66,7 +66,7 @@ export const DialogTabs: React.FC<{
                             height: "100%",
                             width: "100%",
                             overflowY: "auto",
-                            backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                            backgroundColor: alpha(theme.palette.background.paper, 0.4),
                             padding: 8,
                         }}
                     >
