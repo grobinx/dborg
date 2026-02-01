@@ -87,6 +87,7 @@ export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRu
 export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runtimeContext: T) => IDialogSlot[]);
 export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
 export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
+export type DialogConformLabelsFactory<T = SlotRuntimeContext> = DialogConformLabel[] | ((runtimeContext: T) => DialogConformLabel[]);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -1146,6 +1147,13 @@ export interface IDialogTabs {
 
 export type DialogSize = "small" | "medium" | "large" | "full";
 
+export interface DialogConformLabel {
+    id: string;
+    label: StringFactory<Record<string, any>>;
+    color?: ThemeColor;
+    disabled?: BooleanFactory<Record<string, any>>;
+}
+
 export interface IDialogSlot extends ICustomSlot {
     id: string;
 
@@ -1153,21 +1161,28 @@ export interface IDialogSlot extends ICustomSlot {
     /**
      * Tytuł dialogu.
      */
-    title: StringFactory;
+    title: StringFactory<Record<string, any>>;
     /**
      * Układ pól dialogu.
      */
-    items: DialogLayoutItemsKindFactory;
+    items: DialogLayoutItemsKindFactory<Record<string, any>>;
     /**
      * Tekst przycisku potwierdzającego.
+     * id: "ok", label: "OK", color: "primary"
      * @default "OK"
      */
-    confirmLabel?: StringFactory;
+    confirmLabel?: StringFactory<Record<string, any>>;
     /**
      * Tekst przycisku anulującego.
+     * id: "cancel", label: "Cancel", color: "secondary"
      * @default "Cancel"
      */
-    cancelLabel?: StringFactory;
+    cancelLabel?: StringFactory<Record<string, any>>;
+    /**
+     * Etykiety przycisków dialogu (opcjonalnie).
+     * Jeśli podane, zastępują domyślne etykiety confirmLabel i cancelLabel.
+     */
+    labels?: DialogConformLabelsFactory<Record<string, any>>;
     /**
      * Funkcja wywoływana po otwarciu dialogu.
      * @param values Wartości pól dialogu. Może być zmieniona przed wyświetleniem.
@@ -1185,7 +1200,7 @@ export interface IDialogSlot extends ICustomSlot {
      * Funkcja wywoływana po potwierdzeniu dialogu.
      * @param values Wartości pól dialogu.
      */
-    onConfirm?: (values: Record<string, any>) => void | Promise<void>;
+    onConfirm?: (values: Record<string, any>, confirmId: string) => void | Promise<void>;
     /**
      * Funkcja wywoływana po anulowaniu dialogu.
      */
@@ -1285,8 +1300,10 @@ export function resolveDialogsSlotFactory<T = SlotRuntimeContext>(factory: Dialo
 export function resolveDialogLayoutItemsKindFactory<T = SlotRuntimeContext>(factory: DialogLayoutItemsKindFactory<T> | undefined, context: T): DialogLayoutItemKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-
 export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: DialogTabsTabsFactory<T> | undefined, context: T): IDialogTab[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveDialogConformLabelsFactory<T = SlotRuntimeContext>(factory: DialogConformLabelsFactory<T> | undefined, context: T): DialogConformLabel[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

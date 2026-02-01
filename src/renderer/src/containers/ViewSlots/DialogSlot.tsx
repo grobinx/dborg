@@ -17,6 +17,9 @@ import {
     isDialogEditorField,
     isDialogTabs,
     resolveDialogTabsFactory,
+    resolveDialogConformLabelsFactory,
+    DialogConformLabel,
+    resolveBooleanFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { DialogLayoutItem } from "./dialog/DialogLayoutItem";
@@ -25,6 +28,8 @@ import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { resolve } from "path";
+import { ThemeColor } from "@renderer/types/colors";
 
 interface DialogSlotProps {
     slot: IDialogSlot;
@@ -35,7 +40,7 @@ interface DialogSlotProps {
 
 const applyDefaults = (
     items: DialogLayoutItemKind[] | undefined,
-    runtimeContext: SlotRuntimeContext,
+    structure: Record<string, any>,
     target: Record<string, any>,
 ): Record<string, any> => {
     if (!items || items.length === 0) {
@@ -49,13 +54,13 @@ const applyDefaults = (
                 target[item.key] = item.defaultValue;
             }
         } else if (isDialogRow(item) || isDialogColumn(item)) {
-            const nested = resolveDialogLayoutItemsKindFactory(item.items, runtimeContext) ?? [];
-            applyDefaults(nested, runtimeContext, target);
+            const nested = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            applyDefaults(nested, structure, target);
         } else if (isDialogTabs(item)) {
-            const tabs = resolveDialogTabsFactory(item.tabs, runtimeContext) ?? [];
+            const tabs = resolveDialogTabsFactory(item.tabs, structure) ?? [];
             tabs.forEach(tab => {
-                const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, runtimeContext) ?? [];
-                applyDefaults(tabItems, runtimeContext, target);
+                const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, structure) ?? [];
+                applyDefaults(tabItems, structure, target);
             });
         }
     });
@@ -88,10 +93,10 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
 
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const [items, setItems] = React.useState<DialogLayoutItemKind[]>(resolveDialogLayoutItemsKindFactory(slot.items, runtimeContext) ?? []);
+    const [items, setItems] = React.useState<DialogLayoutItemKind[]>([]);
     const [error, setError] = React.useState<string | null>(null);
     const [submitting, setSubmitting] = React.useState(false);
-    const [structure, setStructure] = React.useState<Record<string, any>>(params ?? applyDefaults(items, runtimeContext, {}));
+    const [structure, setStructure] = React.useState<Record<string, any>>({});
     const [, forceRender] = React.useState<bigint>(0n);
     const [dialogRef, dialogVisible] = useVisibleState<HTMLDivElement>();
     const invalidFields = React.useRef<Set<string>>(new Set());
@@ -113,9 +118,13 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
     }, [slotId, runtimeContext, registerRefresh]);
 
     React.useEffect(() => {
-        const resolved = resolveDialogLayoutItemsKindFactory(slot.items, runtimeContext) ?? [];
-        setItems(resolved);
-    }, [slotId, slot.items, refresh, runtimeContext]);
+        setStructure(params ?? applyDefaults(items, structure, {}));
+    }, [items, params]);
+
+    React.useEffect(() => {
+        const resolvedItems = resolveDialogLayoutItemsKindFactory(slot.items, structure) ?? [];
+        setItems(resolvedItems);
+    }, [slotId, slot.items, refresh, structure]);
 
     React.useEffect(() => {
         if (dialogVisible && pendingRefresh) {
@@ -141,7 +150,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         }
     }, [open]);
 
-    const handleConfirm = async () => {
+    const handleConfirm = async (confirmId: string) => {
         const validationError = slot.onValidate?.(structure);
         if (validationError) {
             setError(validationError);
@@ -150,7 +159,7 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         setError(null);
         setSubmitting(true);
         try {
-            await slot.onConfirm?.(structure);
+            await slot.onConfirm?.(structure, confirmId);
             onClose?.(structure);
         } catch (err: any) {
             setError(err?.message ?? String(err));
@@ -164,9 +173,42 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         onClose?.(null);
     };
 
-    const title = resolveStringFactory(slot.title, runtimeContext);
-    const confirmLabel = resolveStringFactory(slot.confirmLabel, runtimeContext) ?? t("ok", "OK");
-    const cancelLabel = resolveStringFactory(slot.cancelLabel, runtimeContext) ?? t("cancel", "Cancel");
+    const title = resolveStringFactory(slot.title, structure);
+    const confirmLabel = resolveStringFactory(slot.confirmLabel, structure) ?? t("ok", "OK");
+    const cancelLabel = resolveStringFactory(slot.cancelLabel, structure) ?? t("cancel", "Cancel");
+    const resolvedLabels: (DialogConformLabel & { handle?: () => void })[] = resolveDialogConformLabelsFactory(slot.labels, structure) ?? [];
+    let labels: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[]; 
+
+    if (!resolvedLabels || resolvedLabels.length === 0) {
+        labels = [{
+            id: "cancel",
+            label: cancelLabel,
+            color: "secondary",
+            disabled: submitting,
+            handle: handleCancel,
+        }, {
+            id: "ok",
+            label: confirmLabel,
+            color: "primary",
+            disabled: submitting || !dialogValid,
+            handle: () => handleConfirm("ok"),
+        }];
+    } else {
+        labels = resolvedLabels.map(label => {
+            let handle: () => void;
+            let disabled: boolean | undefined;
+            const labelText = resolveStringFactory(label.label, structure)!;
+            if (label.id === "cancel") {
+                handle = handleCancel;
+                disabled = submitting;
+            } else {
+                handle = () => handleConfirm(label.id);
+                disabled = submitting || !dialogValid || resolveBooleanFactory(label.disabled, structure) === true;
+            }
+            return { id: label.id, handle: handle, disabled, label: labelText, color: label.color};
+        });
+    }
+
     const size = slot.size ?? "small";
     const maxWidth: "xs" | "sm" | "md" | "lg" | "xl" =
         size === "small" ? "sm" :
@@ -218,12 +260,16 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button color="secondary" onClick={handleCancel} disabled={submitting}>
-                    {cancelLabel}
-                </Button>
-                <Button color="primary" onClick={handleConfirm} disabled={submitting || !dialogValid}>
-                    {confirmLabel}
-                </Button>
+                {labels.map(label => (
+                    <Button
+                        key={label.id}
+                        color={label.color}
+                        onClick={label.handle}
+                        disabled={label.disabled}
+                    >
+                        {label.label}
+                    </Button>
+                ))}
             </DialogActions>
         </Dialog>
     );
