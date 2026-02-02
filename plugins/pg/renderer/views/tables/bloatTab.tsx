@@ -140,17 +140,23 @@ const bloatTab = (
                         if (!selectedRow()) return;
 
                         const identifier = selectedRow()!.identifier;
-                        session.query(values.sql).then(() => {
-                            slotContext.showNotification({
-                                message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: identifier }),
-                                severity: "success",
-                            });
-                            slotContext.refresh(cid("grid"));
-                        }).catch((error: any) => {
-                            slotContext.showNotification({
-                                message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: identifier, error: error.message }),
-                                severity: "error",
-                            });
+                        session.enqueue({
+                            execute: async (s) => {
+                                try {
+                                    await s.execute(values.sql);
+                                    slotContext.showNotification({
+                                        message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: identifier }),
+                                        severity: "success",
+                                    });
+                                    slotContext.refresh(cid("table-bloat-grid"));
+                                } catch (error: any) {
+                                    slotContext.showNotification({
+                                        message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: identifier, error: error.message }),
+                                        severity: "error",
+                                    });
+                                }
+                            },
+                            label: `Vacuum ${identifier}`,
                         });
                     },
                 ),

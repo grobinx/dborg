@@ -1,17 +1,7 @@
 import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-
-export type QueueTaskStatus = "queued" | "running" | "done" | "failed" | "canceled";
-
-export interface QueueTaskInfo {
-    id: string;
-    status: QueueTaskStatus;
-    enqueuedAt: number;
-    startedAt?: number;
-    finishedAt?: number;
-    error?: string;
-}
+import { QueueTask, QueueTaskInfo, TaskOptions } from "@renderer/utils/QueueTask";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
@@ -28,7 +18,7 @@ export interface IDatabaseSession extends api.BaseConnection {
      * Queue task (fire-and-forget). Per-session queue.
      * @param task
      */
-    enqueue(task: (session: IDatabaseSession) => Promise<unknown>): void;
+    enqueue(task: TaskOptions<IDatabaseSession>): void;
 
     /**
      * Get current queue tasks (including running).
@@ -53,7 +43,7 @@ export interface IDatabaseSessionCursor extends api.BaseCursor {
 
 export class DatabaseSessionCursor implements IDatabaseSessionCursor {
     info: api.CursorInfo; // Cursor information
-    ended: boolean = false;;
+    ended: boolean = false;;;
 
     constructor(info: api.CursorInfo) {
         this.info = info;
@@ -93,22 +83,20 @@ class DatabaseSession implements IDatabaseSession {
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
 
-    // Per-session concurrency state (default: sequential)
-    private maxConcurrency = 1;
-    // Keep only last N finished tasks
-    private maxQueueHistory = 200;
-    private active = 0;
-    private pending: Array<{ id: string; run: () => void }> = [];
-
-    // Queue task tracking
-    private queueTasks: QueueTaskInfo[] = [];
-    private queueSeq = 0;
+    // Per-session queue (default: sequential; keep last 200 finished)
+    private readonly queue: QueueTask<IDatabaseSession>;
 
     constructor(info: api.ConnectionInfo) {
         this.info = info;
         this.profile = info.userData.profile as ProfileRecord;
         this.metadata = undefined;
         this.metadataInitialized = false;
+
+        this.queue = new QueueTask<IDatabaseSession>({
+            idPrefix: this.info.uniqueId,
+            maxConcurrency: 1,
+            maxQueueHistory: 200,
+        });
     }
 
     async open(sql: string, values?: unknown[], maxRowsMode?: api.CursorFetchMaxRowsMode): Promise<IDatabaseSessionCursor> {
@@ -160,17 +148,7 @@ class DatabaseSession implements IDatabaseSession {
 
     close(): Promise<void> {
         // cancel all queued (not started) tasks
-        if (this.pending.length > 0) {
-            const canceledIds = new Set(this.pending.map((p) => p.id));
-            this.pending = [];
-            this.queueTasks.forEach((t) => {
-                if (t.status === "queued" && canceledIds.has(t.id)) {
-                    t.status = "canceled";
-                    t.finishedAt = Date.now();
-                }
-            });
-            this.trimQueueHistory(true);
-        }
+        this.queue.cancelAllQueued();
         return window.dborg.database.connection.close(this.info.uniqueId);
     }
 
@@ -210,103 +188,28 @@ class DatabaseSession implements IDatabaseSession {
      * max <= 1 => sequential FIFO
      */
     setQueueConcurrency(max: number): void {
-        this.maxConcurrency = Math.max(1, Math.floor(max));
-        this.pumpQueue();
+        this.queue.setConcurrency(max);
     }
 
     /**
      * Enqueue task (fire-and-forget). Per-session.
      */
-    enqueue(task: (session: IDatabaseSession) => Promise<unknown>): void {
-        const id = this.nextQueueId();
-        const info: QueueTaskInfo = {
-            id,
-            status: "queued",
-            enqueuedAt: Date.now(),
-        };
-        this.queueTasks.push(info);
-
-        const run = async () => {
-            this.active++;
-            info.status = "running";
-            info.startedAt = Date.now();
-
-            try {
-                await task(this);
-                info.status = "done";
-            } catch (err: any) {
-                info.status = "failed";
-                info.error = err?.message ?? String(err);
-                console.error("Queue task failed:", err);
-            } finally {
-                info.finishedAt = Date.now();
-                this.active--;
-                this.pumpQueue();
-                this.trimQueueHistory();
-            }
-        };
-
-        this.pending.push({ id, run });
-        this.pumpQueue();
-        this.trimQueueHistory();
+    enqueue(task: TaskOptions<IDatabaseSession>): void {
+        this.queue.enqueue(task, this);
     }
 
     /**
      * Get current queue tasks (including running).
      */
     getQueueTasks(): QueueTaskInfo[] {
-        return this.queueTasks.map((t) => ({ ...t }));
+        return this.queue.getTasks();
     }
 
     /**
      * Cancel a queued task by id (only if not started).
      */
     cancelQueuedTask(id: string): boolean {
-        const taskInfo = this.queueTasks.find((t) => t.id === id);
-        if (!taskInfo || taskInfo.status !== "queued") {
-            return false;
-        }
-
-        const index = this.pending.findIndex((p) => p.id === id);
-        if (index >= 0) {
-            this.pending.splice(index, 1);
-            taskInfo.status = "canceled";
-            taskInfo.finishedAt = Date.now();
-            return true;
-        }
-
-        return false;
-    }
-
-    private pumpQueue(): void {
-        while (this.active < this.maxConcurrency && this.pending.length > 0) {
-            const item = this.pending.shift();
-            if (item) {
-                item.run();
-            }
-        }
-    }
-
-    private nextQueueId(): string {
-        this.queueSeq += 1;
-        return `${this.info.uniqueId}-${this.queueSeq}`;
-    }
-
-    private trimQueueHistory(clearAllFinished: boolean = false): void {
-        // Keep all queued/running + last N finished (or none if clearAllFinished)
-        const active = this.queueTasks.filter((t) => t.status === "queued" || t.status === "running");
-        if (clearAllFinished) {
-            this.queueTasks = active;
-            return;
-        }
-
-        const finished = this.queueTasks.filter((t) => t.status !== "queued" && t.status !== "running");
-        if (finished.length <= this.maxQueueHistory) {
-            this.queueTasks = active.concat(finished);
-            return;
-        }
-        const tail = finished.slice(-this.maxQueueHistory);
-        this.queueTasks = active.concat(tail);
+        return this.queue.cancelQueuedTask(id);
     }
 }
 
