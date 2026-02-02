@@ -2,6 +2,17 @@ import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 
+export type QueueTaskStatus = "queued" | "running" | "done" | "failed" | "canceled";
+
+export interface QueueTaskInfo {
+    id: string;
+    status: QueueTaskStatus;
+    enqueuedAt: number;
+    startedAt?: number;
+    finishedAt?: number;
+    error?: string;
+}
+
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
@@ -12,6 +23,28 @@ export interface IDatabaseSession extends api.BaseConnection {
     open(sql: string, values?: unknown[], maxRowsMode?: api.CursorFetchMaxRowsMode): Promise<IDatabaseSessionCursor>;
 
     closeCursors(): Promise<void>; // Close all cursors
+
+    /**
+     * Queue task (fire-and-forget). Per-session queue.
+     * @param task
+     */
+    enqueue(task: (session: IDatabaseSession) => Promise<unknown>): void;
+
+    /**
+     * Get current queue tasks (including running).
+     */
+    getQueueTasks(): QueueTaskInfo[];
+
+    /**
+     * Cancel a queued task by id (only if not started).
+     */
+    cancelQueuedTask(id: string): boolean;
+
+    /**
+     * Configure queue concurrency for this session.
+     * max <= 1 => sequential FIFO
+     */
+    setQueueConcurrency(max: number): void;
 }
 
 export interface IDatabaseSessionCursor extends api.BaseCursor {
@@ -59,6 +92,17 @@ class DatabaseSession implements IDatabaseSession {
     profile: ProfileRecord; // Profile information
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
+
+    // Per-session concurrency state (default: sequential)
+    private maxConcurrency = 1;
+    // Keep only last N finished tasks
+    private maxQueueHistory = 200;
+    private active = 0;
+    private pending: Array<{ id: string; run: () => void }> = [];
+
+    // Queue task tracking
+    private queueTasks: QueueTaskInfo[] = [];
+    private queueSeq = 0;
 
     constructor(info: api.ConnectionInfo) {
         this.info = info;
@@ -147,6 +191,105 @@ class DatabaseSession implements IDatabaseSession {
 
     cancel(): Promise<void> {
         return window.dborg.database.connection.cancel(this.info.uniqueId);
+    }
+
+    /**
+     * Configure queue concurrency for this session.
+     * max <= 1 => sequential FIFO
+     */
+    setQueueConcurrency(max: number): void {
+        this.maxConcurrency = Math.max(1, Math.floor(max));
+        this.pumpQueue();
+    }
+
+    /**
+     * Enqueue task (fire-and-forget). Per-session.
+     */
+    enqueue(task: (session: IDatabaseSession) => Promise<unknown>): void {
+        const id = this.nextQueueId();
+        const info: QueueTaskInfo = {
+            id,
+            status: "queued",
+            enqueuedAt: Date.now(),
+        };
+        this.queueTasks.push(info);
+
+        const run = async () => {
+            this.active++;
+            info.status = "running";
+            info.startedAt = Date.now();
+
+            try {
+                await task(this);
+                info.status = "done";
+            } catch (err: any) {
+                info.status = "failed";
+                info.error = err?.message ?? String(err);
+                console.error("Queue task failed:", err);
+            } finally {
+                info.finishedAt = Date.now();
+                this.active--;
+                this.pumpQueue();
+                this.trimQueueHistory();
+            }
+        };
+
+        this.pending.push({ id, run });
+        this.pumpQueue();
+        this.trimQueueHistory();
+    }
+
+    /**
+     * Get current queue tasks (including running).
+     */
+    getQueueTasks(): QueueTaskInfo[] {
+        return this.queueTasks.map((t) => ({ ...t }));
+    }
+
+    /**
+     * Cancel a queued task by id (only if not started).
+     */
+    cancelQueuedTask(id: string): boolean {
+        const taskInfo = this.queueTasks.find((t) => t.id === id);
+        if (!taskInfo || taskInfo.status !== "queued") {
+            return false;
+        }
+
+        const index = this.pending.findIndex((p) => p.id === id);
+        if (index >= 0) {
+            this.pending.splice(index, 1);
+            taskInfo.status = "canceled";
+            taskInfo.finishedAt = Date.now();
+            return true;
+        }
+
+        return false;
+    }
+
+    private pumpQueue(): void {
+        while (this.active < this.maxConcurrency && this.pending.length > 0) {
+            const item = this.pending.shift();
+            if (item) {
+                item.run();
+            }
+        }
+    }
+
+    private nextQueueId(): string {
+        this.queueSeq += 1;
+        return `${this.info.uniqueId}-${this.queueSeq}`;
+    }
+
+    private trimQueueHistory(): void {
+        // Keep all queued/running + last N finished
+        const active = this.queueTasks.filter((t) => t.status === "queued" || t.status === "running");
+        const finished = this.queueTasks.filter((t) => t.status !== "queued" && t.status !== "running");
+        if (finished.length <= this.maxQueueHistory) {
+            this.queueTasks = active.concat(finished);
+            return;
+        }
+        const tail = finished.slice(-this.maxQueueHistory);
+        this.queueTasks = active.concat(tail);
     }
 }
 
