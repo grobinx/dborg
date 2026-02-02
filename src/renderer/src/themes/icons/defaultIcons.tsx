@@ -39,6 +39,7 @@ import { Resume } from "./svg/Resume";
 import { ReassignUser } from "./svg/ReassignUser";
 import { Vacuum } from "./svg/Vacuum";
 import { Analyze } from "./svg/Analyze";
+import { Queue } from "./svg/Queue";
 
 const icons = (_palette: Palette): ThemeOptions => {
     return {
@@ -182,6 +183,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             KillSession: (props) => <IconWrapper {...props} className="kill-session"><BsIcons.DatabaseX fontSize="inherit" /></IconWrapper>,
             Vacuum: (props) => <IconWrapper {...props} className="vacuum"><Vacuum fontSize="inherit" /></IconWrapper>,
             Analyze: (props) => <IconWrapper {...props} className="analyze"><Analyze fontSize="inherit" /></IconWrapper>,
+            Queue: (props) => <IconWrapper {...props} className="queue"><Queue fontSize="inherit" /></IconWrapper>,
         }
     }
 }

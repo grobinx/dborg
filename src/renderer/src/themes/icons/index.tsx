@@ -213,6 +213,7 @@ export interface ThemeIcons {
     KillSession: IconWrapperFC;
     Vacuum: IconWrapperFC;
     Analyze: IconWrapperFC;
+    Queue: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

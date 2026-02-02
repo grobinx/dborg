@@ -10,6 +10,7 @@ import Decimal from "decimal.js";
 import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 import { versionToNumber } from "../../../../../src/api/version";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
+import sleep from "@renderer/utils/sleep";
 
 interface RelationMaintenanceRecord {
     schema_name: string;

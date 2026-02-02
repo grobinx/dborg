@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Stack, styled, useTheme, Box } from "@mui/material"; // Importuj Badge z Material-UI
+import { Stack, styled, useTheme, Box, Badge } from "@mui/material"; // Importuj Badge z Material-UI
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useTranslation } from "react-i18next";
@@ -25,6 +25,7 @@ import { useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { QUEUE_TASK_MESSAGE, QueueTaskMessage } from "@renderer/utils/QueueTask";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -202,6 +203,8 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
     const { disconnectSession: disconnectFromDatabase } = useProfiles();
+    const [pendingTasks, setPendingTasks] = React.useState<number>(0);
+    const [queueTasks, setQueueTasks] = React.useState<number>(0);
 
     React.useEffect(() => {
         const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
@@ -218,17 +221,50 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             setGettingMetadata(false);
         };
 
+        const queueTaskUpdateHandle = (message: QueueTaskMessage) => {
+            if (message.queueId !== session.info.uniqueId) {
+                return;
+            }
+            setPendingTasks(session.getQueueTasks().filter(t => t.status === "running").length);
+            setQueueTasks(session.getQueueTasks().filter(t => t.status === "queued").length);
+        };
+
         subscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
         subscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
+        subscribe(QUEUE_TASK_MESSAGE, queueTaskUpdateHandle);
 
         return () => {
             unsubscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
             unsubscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
+            unsubscribe(QUEUE_TASK_MESSAGE, queueTaskUpdateHandle);
         };
     }, [subscribe, unsubscribe, session]);
 
     return (
         <TabPanelButtons>
+            <Tooltip title={t("queue", "Queue tasks")}>
+                <ToolButton
+                    onClick={() => {}}
+                    color="main"
+                    size="small"
+                >
+                    <Badge 
+                        badgeContent={queueTasks > 0 ? `${pendingTasks}/${queueTasks}` : pendingTasks} 
+                        color="primary" 
+                        invisible={pendingTasks === 0}
+                        slotProps={{
+                            badge: {
+                                sx: {
+                                    fontSize: "0.7em",
+                                    padding: "0 4px",
+                                }
+                            }
+                        }}
+                    >
+                        <theme.icons.Queue />
+                    </Badge>
+                </ToolButton>
+            </Tooltip>
             {session.info.driver.implements.includes("metadata") && (
                 < Tooltip title={t("refresh-metadata", "Refresh metadata")}>
                     <ToolButton

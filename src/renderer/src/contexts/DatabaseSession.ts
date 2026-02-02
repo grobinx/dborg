@@ -93,7 +93,7 @@ class DatabaseSession implements IDatabaseSession {
         this.metadataInitialized = false;
 
         this.queue = new QueueTask<IDatabaseSession>({
-            idPrefix: this.info.uniqueId,
+            id: this.info.uniqueId,
             maxConcurrency: 1,
             maxQueueHistory: 200,
         });
