@@ -278,19 +278,19 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     async (values: Record<string, any>) => {
                         if (!selectedTable) return;
 
-                        try {
-                            await session.query(values.sql);
+                        const identifier = selectedTable.identifier;
+                        session.query(values.sql).then(() => {
                             slotContext.showNotification({
-                                message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: selectedTable.identifier }),
+                                message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: identifier }),
                                 severity: "success",
                             });
                             slotContext.refresh(cid("grid"));
-                        } catch (error: any) {
+                        }).catch((error: any) => {
                             slotContext.showNotification({
-                                message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: selectedTable.identifier, error: error.message }),
+                                message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: identifier, error: error.message }),
                                 severity: "error",
                             });
-                        }
+                        });
                     },
                 ),
             ],
