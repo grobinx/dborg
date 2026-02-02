@@ -159,6 +159,18 @@ class DatabaseSession implements IDatabaseSession {
     }
 
     close(): Promise<void> {
+        // cancel all queued (not started) tasks
+        if (this.pending.length > 0) {
+            const canceledIds = new Set(this.pending.map((p) => p.id));
+            this.pending = [];
+            this.queueTasks.forEach((t) => {
+                if (t.status === "queued" && canceledIds.has(t.id)) {
+                    t.status = "canceled";
+                    t.finishedAt = Date.now();
+                }
+            });
+            this.trimQueueHistory(true);
+        }
         return window.dborg.database.connection.close(this.info.uniqueId);
     }
 
@@ -280,9 +292,14 @@ class DatabaseSession implements IDatabaseSession {
         return `${this.info.uniqueId}-${this.queueSeq}`;
     }
 
-    private trimQueueHistory(): void {
-        // Keep all queued/running + last N finished
+    private trimQueueHistory(clearAllFinished: boolean = false): void {
+        // Keep all queued/running + last N finished (or none if clearAllFinished)
         const active = this.queueTasks.filter((t) => t.status === "queued" || t.status === "running");
+        if (clearAllFinished) {
+            this.queueTasks = active;
+            return;
+        }
+
         const finished = this.queueTasks.filter((t) => t.status !== "queued" && t.status !== "running");
         if (finished.length <= this.maxQueueHistory) {
             this.queueTasks = active.concat(finished);

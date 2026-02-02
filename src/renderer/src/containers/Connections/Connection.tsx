@@ -23,6 +23,8 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import { useToast } from "@renderer/contexts/ToastContext";
+import { useDialogs } from "@toolpad/core";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -43,12 +45,21 @@ interface ConnectionsOwnProps extends ConnectionProps {
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const theme = useTheme();
     const { session, children, tabsItemID, ...other } = props;
+    const addToast = useToast();
+    const { confirm } = useDialogs();
     const { selectedView } = useSessionState(session.info.uniqueId);
     const { refreshSlot, openDialog } = useViewSlot();
     const { queueMessage } = useMessages();
     const [orientation] = useSetting("dborg", "general.layout.orientation");
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({ theme, refresh: refreshSlot, openDialog }), [theme, refreshSlot, openDialog]);
-
+    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
+        theme, refresh: refreshSlot, openDialog,
+        showNotification: ({ message, severity = "info" }) => {
+            addToast(severity, message);
+        },
+        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
+        },
+    }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);
