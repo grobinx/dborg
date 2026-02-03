@@ -21,12 +21,14 @@ export const defaultVacuumStructure: Record<string, any> = {
 export function vacuumDialog(
     versionNumber: number,
     dialogId: string,
-    getIdentifier: () => string | null,
+    getIdentifier: () => string | string[] | null,
     onConfirm: (values: Record<string, any>) => Promise<void>,
 ): IDialogSlot {
 
     const vacuumSql = (structure: Record<string, any>) => {
-        if (!getIdentifier()) return "-- no table selected --";
+        const identifier = getIdentifier();
+        if (identifier === null) return "-- no table selected --";
+
         const options = [
             structure.full && !structure.freeze && "FULL",
             structure.analyze && !structure.freeze && "ANALYZE",
@@ -43,13 +45,15 @@ export function vacuumDialog(
             (versionNumber >= 160000 && structure.only_database_stats && !structure.skip_database_stats) && "ONLY_DATABASE_STATS",
         ].filter(Boolean).join(", ");
 
-        return `VACUUM ${options ? '(' + options + ')' : ''} ${getIdentifier()};`;
+        const identifiers = Array.isArray(identifier) ? identifier.join(", ") : identifier;
+
+        return `VACUUM ${options ? '(' + options + ')' : ''} ${identifiers};`;
     }
 
     return {
         id: dialogId,
         type: "dialog",
-        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: getIdentifier() ?? "" }),
+        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: Array.isArray(getIdentifier()) ? "..." : getIdentifier() ?? "" }),
         height: "70%",
         items: [
             {

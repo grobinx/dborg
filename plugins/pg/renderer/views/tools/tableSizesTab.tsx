@@ -51,6 +51,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
     let relationSizeRows: RelationMaintenanceRecord[] = [];
     let selectedTable: RelationMaintenanceRecord | null = null;
 
+    let relationList: RelationMaintenanceRecord[] = [];
     let vacuumStructure = { ...defaultVacuumStructure };
 
     const setSelectedSchemaName = async () => {
@@ -236,7 +237,15 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         label: t("vacuum-relation", "Vacuum Relation"),
                         icon: "Vacuum",
                         disabled: () => selectedTable === null,
-                        run: () => {
+                        run: (context) => {
+                            const position = context.getPosition();
+                            if (!position) return;
+
+                            let selectedRows = context.getSelectedRows();
+                            selectedRows = (selectedRows.length ? selectedRows : [position.row]);
+
+                            relationList = selectedRows.map(row => context.getData(row)) as RelationMaintenanceRecord[];
+
                             slotContext.openDialog(cid("vacuum-relation-dialog"), vacuumStructure).then(result => {
                                 if (result) {
                                     vacuumStructure = result;
@@ -275,11 +284,11 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                 vacuumDialog(
                     versionNumber,
                     cid("vacuum-relation-dialog"),
-                    () => selectedTable ? selectedTable.identifier : null,
+                    () => relationList.length ? relationList.map(r => r.identifier) : null,
                     async (values: Record<string, any>) => {
-                        if (!selectedTable) return;
+                        if (!relationList.length) return;
 
-                        const identifier = selectedTable.identifier;
+                        const identifier = relationList.map(r => r.identifier).join(", ");
                         session.enqueue({
                             execute: async (s) => {
                                 try {
