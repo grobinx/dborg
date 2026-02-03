@@ -1,6 +1,6 @@
 import { IDialogBooleanField, IDialogEditorField, IDialogNumberField, IDialogRow, IDialogSlot } from "plugins/manager/renderer/CustomSlots";
 import { t } from "i18next";
-import identifiersLabel from "@renderer/utils/identifiersLabel";
+import textToLabel from "@renderer/utils/textToLabel";
 
 export const defaultVacuumStructure: Record<string, any> = {
     full: false,
@@ -58,7 +58,7 @@ export function vacuumDialog(
     return {
         id: dialogId,
         type: "dialog",
-        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: identifiersLabel(getIdentifier()) }),
+        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: textToLabel(getIdentifier()) }),
         height: "70%",
         items: [
             {

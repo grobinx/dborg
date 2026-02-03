@@ -11,7 +11,7 @@ import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 import { versionToNumber } from "../../../../../src/api/version";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
 import sleep from "@renderer/utils/sleep";
-import identifiersLabel from "@renderer/utils/identifiersLabel";
+import textToLabel from "@renderer/utils/textToLabel";
 
 interface RelationMaintenanceRecord {
     schema_name: string;
@@ -288,30 +288,30 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     async (values: Record<string, any>) => {
                         if (!relationList.length) return;
 
-                        const label = identifiersLabel(relationList.map(r => r.identifier));
-
                         const sqls = values.sql.split(";");
                         for (let sql of sqls) {
                             sql = sql.trim();
                             if (!sql) continue;
-                            
+
+                            const label = textToLabel(sql);
+
                             session.enqueue({
                                 execute: async (s) => {
                                     try {
                                         await s.execute(sql);
                                         slotContext.showNotification({
-                                            message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: label }),
+                                            message: t("vacuum-relation-success", "{{command}} completed successfully", { command: label }),
                                             severity: "success",
                                         });
                                         slotContext.refresh(cid("grid"));
                                     } catch (error: any) {
                                         slotContext.showNotification({
-                                            message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: label, error: error.message }),
+                                            message: t("vacuum-relation-error-message", "{{command}} failed {{error}}", { command: label, error: error.message }),
                                             severity: "error",
                                         });
                                     }
                                 },
-                                label: `Vacuum ${label}`,
+                                label: label,
                             });
                         }
                     },
