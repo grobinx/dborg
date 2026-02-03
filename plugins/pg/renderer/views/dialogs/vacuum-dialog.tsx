@@ -1,5 +1,6 @@
 import { IDialogBooleanField, IDialogEditorField, IDialogNumberField, IDialogRow, IDialogSlot } from "plugins/manager/renderer/CustomSlots";
 import { t } from "i18next";
+import identifiersLabel from "@renderer/utils/identifiersLabel";
 
 export const defaultVacuumStructure: Record<string, any> = {
     full: false,
@@ -26,8 +27,10 @@ export function vacuumDialog(
 ): IDialogSlot {
 
     const vacuumSql = (structure: Record<string, any>) => {
-        const identifier = getIdentifier();
+        let identifier = getIdentifier();
         if (identifier === null) return "-- no table selected --";
+
+        const identifiers = Array.isArray(identifier) ? identifier : [identifier];
 
         const options = [
             structure.full && !structure.freeze && "FULL",
@@ -45,15 +48,17 @@ export function vacuumDialog(
             (versionNumber >= 160000 && structure.only_database_stats && !structure.skip_database_stats) && "ONLY_DATABASE_STATS",
         ].filter(Boolean).join(", ");
 
-        const identifiers = Array.isArray(identifier) ? identifier.join(", ") : identifier;
+        if (versionNumber >= 140000) {
+            return `VACUUM ${options ? '(' + options + ')' : ''} ${identifiers.join(", ")};`;
+        }
 
-        return `VACUUM ${options ? '(' + options + ')' : ''} ${identifiers};`;
+        return identifiers.map(identifier => `VACUUM ${options ? '(' + options + ')' : ''} ${identifier};`).join("\n");
     }
 
     return {
         id: dialogId,
         type: "dialog",
-        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: Array.isArray(getIdentifier()) ? "..." : getIdentifier() ?? "" }),
+        title: () => t("vacuum-relation-dialog-title", "Vacuum Relation {{relation}}", { relation: identifiersLabel(getIdentifier()) }),
         height: "70%",
         items: [
             {

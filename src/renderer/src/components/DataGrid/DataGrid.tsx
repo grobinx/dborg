@@ -961,6 +961,18 @@ export const DataGrid = <T extends object>({
         getSelectedRows() {
             return selectedRowsRef.current;
         },
+        getSelectedData() {
+            if (!selectedCellRef.current) {
+                return [];
+            }
+            if (selectedRowsRef.current.length === 0) {
+                return [displayDataRef.current[selectedCellRef.current.row]];
+            }
+            return selectedRowsRef.current.map(i => displayDataRef.current[i]);
+        },
+        clearSelectedRows: () => {
+            setSelectedRows([]);
+        },
         getField: () => {
             if (selectedCellRef.current) {
                 return columnsState.current[selectedCellRef.current.column].key as keyof T;

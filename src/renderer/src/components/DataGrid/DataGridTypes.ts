@@ -211,6 +211,8 @@ export interface DataGridActionContext<T extends object> {
     getRows: () => T[];
     /** Zwraca indeksy zaznaczonych wierszy */
     getSelectedRows: () => number[];
+    getSelectedData: () => T[];
+    clearSelectedRows: () => void;
     getField: () => keyof T | null;
     openCommandPalette: (prefix: string, query: string) => void;
     closeCommandPalette: () => void;

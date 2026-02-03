@@ -11,6 +11,7 @@ import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 import { versionToNumber } from "../../../../../src/api/version";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
 import sleep from "@renderer/utils/sleep";
+import identifiersLabel from "@renderer/utils/identifiersLabel";
 
 interface RelationMaintenanceRecord {
     schema_name: string;
@@ -81,7 +82,8 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             content: () => ({
                 id: cid("grid"),
                 type: "grid",
-                uniqueField: "relname",
+                uniqueField: "identifier",
+                canSelectRows: true,
                 rows: async () => {
                     if (!selectedSchemaName) return [];
 
@@ -238,17 +240,15 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Vacuum",
                         disabled: () => selectedTable === null,
                         run: (context) => {
-                            const position = context.getPosition();
-                            if (!position) return;
-
-                            let selectedRows = context.getSelectedRows();
-                            selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-
-                            relationList = selectedRows.map(row => context.getData(row)) as RelationMaintenanceRecord[];
+                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            if (relationList.length === 0) {
+                                return;
+                            }
 
                             slotContext.openDialog(cid("vacuum-relation-dialog"), vacuumStructure).then(result => {
                                 if (result) {
                                     vacuumStructure = result;
+                                    context.clearSelectedRows();
                                 }
                             });
                         }
@@ -288,25 +288,32 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     async (values: Record<string, any>) => {
                         if (!relationList.length) return;
 
-                        const identifier = relationList.map(r => r.identifier).join(", ");
-                        session.enqueue({
-                            execute: async (s) => {
-                                try {
-                                    await s.execute(values.sql);
-                                    slotContext.showNotification({
-                                        message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: identifier }),
-                                        severity: "success",
-                                    });
-                                    slotContext.refresh(cid("grid"));
-                                } catch (error: any) {
-                                    slotContext.showNotification({
-                                        message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: identifier, error: error.message }),
-                                        severity: "error",
-                                    });
-                                }
-                            },
-                            label: `Vacuum ${identifier}`,
-                        });
+                        const label = identifiersLabel(relationList.map(r => r.identifier));
+
+                        const sqls = values.sql.split(";");
+                        for (let sql of sqls) {
+                            sql = sql.trim();
+                            if (!sql) continue;
+                            
+                            session.enqueue({
+                                execute: async (s) => {
+                                    try {
+                                        await s.execute(sql);
+                                        slotContext.showNotification({
+                                            message: t("vacuum-relation-success", "Vacuum {{relation}} completed successfully", { relation: label }),
+                                            severity: "success",
+                                        });
+                                        slotContext.refresh(cid("grid"));
+                                    } catch (error: any) {
+                                        slotContext.showNotification({
+                                            message: t("vacuum-relation-error-message", "Vacuum {{relation}} failed {{error}}", { relation: label, error: error.message }),
+                                            severity: "error",
+                                        });
+                                    }
+                                },
+                                label: `Vacuum ${label}`,
+                            });
+                        }
                     },
                 ),
             ],

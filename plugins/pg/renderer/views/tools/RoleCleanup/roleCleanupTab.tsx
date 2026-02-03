@@ -291,14 +291,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 1,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
 
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    selectedRows.forEach(row => {
                                                         if (row?.choice?.action === "drop_restrict") {
                                                             row.choice = null;
                                                         }
@@ -306,8 +304,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             row.choice = { action: "drop_restrict" };
                                                         }
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("owned-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             },
@@ -319,14 +316,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 2,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
 
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    selectedRows.forEach(row => {
                                                         if (row?.choice?.action === "drop_cascade") {
                                                             row.choice = null;
                                                         }
@@ -334,8 +329,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             row.choice = { action: "drop_cascade" };
                                                         }
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("owned-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             },
@@ -347,24 +341,22 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 3,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
 
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
                                                     if (selectedRows.length === 1) {
-                                                        const row = context.getData(selectedRows[0]);
+                                                        const row = selectedRows[0];
                                                         if (row?.choice?.action === "reassign") {
                                                             row.choice = null;
-                                                            selectedRows.length = 0;
-                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            context.clearSelectedRows();
                                                             editorRefresh(slotContext);
                                                             return;
                                                         }
                                                     }
 
-                                                    if (selectedRows.every(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    if (selectedRows.every(row => {
                                                         return !isValidCleanupAction(row.objtype, "reassign");
                                                     })) {
                                                         return;
@@ -374,8 +366,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         if (result) {
                                                             lastReassignOwner = result;
 
-                                                            selectedRows.forEach(rowIdx => {
-                                                                const row = context.getData(rowIdx);
+                                                            selectedRows.forEach(row => {
                                                                 if (isValidCleanupAction(row.objtype, "reassign")) {
                                                                     row.choice = {
                                                                         action: "reassign",
@@ -383,8 +374,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                     };
                                                                 }
                                                             });
-                                                            selectedRows.length = 0;
-                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            context.clearSelectedRows();
                                                             editorRefresh(slotContext);
                                                         }
                                                     });
@@ -398,24 +388,22 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 4,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
 
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
                                                     if (selectedRows.length === 1) {
-                                                        const row = context.getData(selectedRows[0]);
+                                                        const row = selectedRows[0];
                                                         if (row?.choice?.action === "move") {
                                                             row.choice = null;
-                                                            selectedRows.length = 0;
-                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            context.clearSelectedRows();
                                                             editorRefresh(slotContext);
                                                             return;
                                                         }
                                                     }
 
-                                                    if (selectedRows.every(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    if (selectedRows.every(row => {
                                                         return !isValidCleanupAction(row.objtype, "move");
                                                     })) {
                                                         return;
@@ -424,8 +412,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     slotContext.openDialog(cid("dialog-move-object"), lastMoveObject).then((result) => {
                                                         if (result) {
                                                             lastMoveObject = result;
-                                                            selectedRows.forEach(rowIdx => {
-                                                                const row = context.getData(rowIdx);
+                                                            selectedRows.forEach(row => {
                                                                 if (isValidCleanupAction(row.objtype, "move")) {
                                                                     row.choice = {
                                                                         action: "move",
@@ -434,8 +421,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                                     };
                                                                 }
                                                             });
-                                                            selectedRows.length = 0;
-                                                            slotContext.refresh(cid("owned-grid"), "only");
+                                                            context.clearSelectedRows();
                                                             editorRefresh(slotContext);
                                                         }
                                                     });
@@ -449,16 +435,15 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 5,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
+
+                                                    selectedRows.forEach(row => {
                                                         row.choice = null;
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("owned-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             },
@@ -797,12 +782,12 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 1,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
+
+                                                    selectedRows.forEach(row => {
                                                         if (row?.choice?.action === "revoke") {
                                                             row.choice = null;
                                                         }
@@ -810,8 +795,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             row.choice = { action: "revoke" };
                                                         }
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("privs-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             },
@@ -823,12 +807,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 2,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
+                                                    selectedRows.forEach(row => {
                                                         if (row?.choice?.action === "revoke_grant_option") {
                                                             row.choice = null;
                                                         }
@@ -836,8 +819,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                             row.choice = { action: "revoke_grant_option" };
                                                         }
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("privs-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             },
@@ -849,16 +831,14 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 3,
                                                 run: (context) => {
-                                                    const position = context.getPosition();
-                                                    if (!position) return;
-                                                    let selectedRows = context.getSelectedRows();
-                                                    selectedRows = (selectedRows.length ? selectedRows : [position.row]);
-                                                    selectedRows.forEach(rowIdx => {
-                                                        const row = context.getData(rowIdx);
+                                                    const selectedRows = context.getSelectedData();
+                                                    if (selectedRows.length === 0) {
+                                                        return;
+                                                    }
+                                                    selectedRows.forEach(row => {
                                                         row.choice = null;
                                                     });
-                                                    selectedRows.length = 0;
-                                                    slotContext.refresh(cid("privs-grid"), "only");
+                                                    context.clearSelectedRows();
                                                     editorRefresh(slotContext);
                                                 }
                                             }
