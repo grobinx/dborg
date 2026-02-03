@@ -26,6 +26,7 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { QUEUE_TASK_MESSAGE, QueueTaskMessage } from "@renderer/utils/QueueTask";
+import QueueTasksPopover from "@renderer/utils/QueueTasksPopover";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -203,8 +204,9 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
     const { disconnectSession: disconnectFromDatabase } = useProfiles();
-    const [pendingTasks, setPendingTasks] = React.useState<number>(0);
-    const [queueTasks, setQueueTasks] = React.useState<number>(0);
+    const [runningTasks, setRunningTasks] = React.useState<number>(0);
+    const [queuedTasks, setQueuedTasks] = React.useState<number>(0);
+    const [queueAnchorEl, setQueueAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 
     React.useEffect(() => {
         const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
@@ -225,8 +227,9 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             if (message.queueId !== session.info.uniqueId) {
                 return;
             }
-            setPendingTasks(session.getQueueTasks().filter(t => t.status === "running").length);
-            setQueueTasks(session.getQueueTasks().filter(t => t.status === "queued").length);
+            const tasks = session.getQueueTasks();
+            setRunningTasks(tasks.filter(t => t.status === "running").length);
+            setQueuedTasks(tasks.filter(t => t.status === "queued").length);
         };
 
         subscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
@@ -240,18 +243,30 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
         };
     }, [subscribe, unsubscribe, session]);
 
+    const handleQueueClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setQueueAnchorEl(event.currentTarget);
+    };
+
+    const handleQueueClose = () => {
+        setQueueAnchorEl(null);
+    };
+
+    const handleCancelTask = (taskId: string) => {
+        session.cancelQueuedTask(taskId);
+    };
+
     return (
         <TabPanelButtons>
             <Tooltip title={t("queue", "Queue tasks")}>
                 <ToolButton
-                    onClick={() => {}}
+                    onClick={handleQueueClick}
                     color="main"
                     size="small"
                 >
                     <Badge 
-                        badgeContent={queueTasks > 0 ? `${pendingTasks}/${queueTasks}` : pendingTasks} 
+                        badgeContent={queuedTasks > 0 ? `${runningTasks}/${queuedTasks}` : runningTasks} 
                         color="primary" 
-                        invisible={pendingTasks === 0}
+                        invisible={runningTasks === 0 && queuedTasks === 0}
                         slotProps={{
                             badge: {
                                 sx: {
@@ -265,8 +280,17 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                     </Badge>
                 </ToolButton>
             </Tooltip>
+
+            <QueueTasksPopover
+                anchorEl={queueAnchorEl}
+                open={Boolean(queueAnchorEl)}
+                onClose={handleQueueClose}
+                tasks={session.getQueueTasks()}
+                onCancelTask={handleCancelTask}
+            />
+
             {session.info.driver.implements.includes("metadata") && (
-                < Tooltip title={t("refresh-metadata", "Refresh metadata")}>
+                <Tooltip title={t("refresh-metadata", "Refresh metadata")}>
                     <ToolButton
                         onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
                         disabled={gettingMetadata}
@@ -286,7 +310,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                     <theme.icons.Disconnected />
                 </ToolButton>
             </Tooltip>
-        </TabPanelButtons >
+        </TabPanelButtons>
     );
 };
 

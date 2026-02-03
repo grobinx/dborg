@@ -298,6 +298,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                             session.enqueue({
                                 execute: async (s) => {
                                     try {
+                                        await sleep(20);
                                         await s.execute(sql);
                                         slotContext.showNotification({
                                             message: t("vacuum-relation-success", "{{command}} completed successfully", { command: label }),
