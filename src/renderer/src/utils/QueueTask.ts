@@ -1,5 +1,7 @@
 import { queueMessage } from "@renderer/contexts/MessageContext";
+import { TOAST_ADD_MESSAGE, ToastAddMessage } from "@renderer/contexts/ToastContext";
 import { uuidv7 } from "uuidv7";
+import { t } from "i18next";
 
 export const QUEUE_TASK_MESSAGE = "queue-task-message";
 export interface QueueTaskMessage {
@@ -89,8 +91,9 @@ export class QueueTask<T = any> {
             } catch (err: any) {
                 info.status = "failed";
                 info.error = err?.message ?? String(err);
-                console.error("Queue task failed:", err);
+                console.error("Queue task failed:", info.label, err);
                 queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "failed", taskId: id });
+                queueMessage(TOAST_ADD_MESSAGE, { type: "error", message: t("queue-task-failed", "Queue task failed: {{label}}", { label: info.label }) } as ToastAddMessage);
             } finally {
                 info.finished = Date.now();
                 queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "finished", taskId: id });

@@ -336,6 +336,12 @@ export interface IAutoRefresh {
      * @default false
      */
     canRefresh?: boolean;
+    /**
+     * Czy odświeżanie jest aktualnie wykonywane.
+     * To pole służy do zarządzania stanem przycisków w interfejsie użytkownika.
+     * @default false
+     */
+    executing?: BooleanFactory;
 }
 
 export interface ICopyData<T = any> {

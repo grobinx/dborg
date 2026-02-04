@@ -284,6 +284,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 {canRefresh && (
                     <Tooltip title={t("auto-refresh.refresh-tooltip", "Refresh now")}>
                         <ToolButton
+                            className="auto-refresh-refresh-button"
                             onClick={() => {
                                 onTick?.();
                             }}
@@ -297,6 +298,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                 {canClear && (
                     <Tooltip title={clearTooltip}>
                         <ToolButton
+                            className="auto-refresh-clear-button"
                             onClick={() => {
                                 onClear?.();
                             }}

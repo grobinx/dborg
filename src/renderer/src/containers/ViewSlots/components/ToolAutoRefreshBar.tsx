@@ -1,5 +1,5 @@
 import React from "react";
-import { AutoRefreshLifecycle, SlotRuntimeContext, IAutoRefresh, IAutoRefreshContext } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import { AutoRefreshLifecycle, SlotRuntimeContext, IAutoRefresh, IAutoRefreshContext, resolveBooleanFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { AutoRefreshBar, AutoRefreshInterval, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 
@@ -19,6 +19,13 @@ export const ToolAutoRefreshBar: React.FC<{ action: IAutoRefresh, runtimeContext
     const pausedByHide = React.useRef<boolean>(false); // track pause caused by hide
     const [interval, setInterval] = React.useState<AutoRefreshInterval>(action.defaultInterval ?? 5);
     const [barRef, isBarVisible] = useVisibleState<HTMLDivElement>();
+
+    const resolvedExecuting = resolveBooleanFactory(action.executing, runtimeContext);
+    React.useEffect(() => {
+        if (resolvedExecuting !== undefined) {
+            setExecuting(resolvedExecuting);
+        }
+    }, [resolvedExecuting]);
 
     const context: IAutoRefreshContext = {
         state,

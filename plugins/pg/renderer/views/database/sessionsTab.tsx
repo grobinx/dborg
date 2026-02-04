@@ -68,6 +68,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
     let isSuperuser: boolean | null = null;
     let hasPgSignalBackend: boolean | null = null;
     let currentUsername: string | null = null;
+    let refreshing = false;
 
     async function checkSuperuser() {
         try {
@@ -208,39 +209,45 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                         rows: async () => {
                             if (isSuperuser === null) return [];
 
-                            selectedSession = null;
-                            // Jeśli superuser, pobierz sesje ze wszystkich baz, inaczej tylko z bieżącej
-                            const whereClause = isSuperuser
-                                ? ''
-                                : `WHERE a.datname = $1`;
-                            const params = isSuperuser ? [] : [database];
+                            refreshing = true;
+                            slotContext.refresh(cid("sessions-tab-toolbar"));
+                            try {
+                                selectedSession = null;
+                                // Jeśli superuser, pobierz sesje ze wszystkich baz, inaczej tylko z bieżącej
+                                const whereClause = isSuperuser
+                                    ? ''
+                                    : `WHERE a.datname = $1`;
+                                const params = isSuperuser ? [] : [database];
 
-                            const { rows } = await session.query<SessionRecord>(
-                                `
-                                SELECT 
-                                    a.pid,
-                                    a.usename,
-                                    a.application_name,
-                                    a.datname,
-                                    coalesce(case when a.client_hostname = '' then null else a.client_hostname end, a.client_addr::text)||':'||a.client_port as client_addr,
-                                    a.client_port,
-                                    a.backend_start,
-                                    a.state,
-                                    a.state_change,
-                                    case when state in ('active') then to_char(now() - a.query_start, 'dd hh24:mi:ss') end as state_duration,
-                                    regexp_replace(a.query, E'^\\\\s+|\\\\s+$', '', 'g') as query,
-                                    ${waitEventFragment}
-                                    ${blockingPidsFragment}
-                                    (a.pid = pg_backend_pid()) as is_current_session
-                                FROM pg_catalog.pg_stat_activity a
-                                ${whereClause}
-                                -- ORDER BY state_duration desc nulls last, state_change desc
-                                `,
-                                params
-                            );
-                            sessions = rows;
-                            //rows.splice(2, 0, { } as any);
-                            return rows;
+                                const { rows } = await session.query<SessionRecord>(
+                                    `SELECT 
+                                        a.pid,
+                                        a.usename,
+                                        a.application_name,
+                                        a.datname,
+                                        coalesce(case when a.client_hostname = '' then null else a.client_hostname end, a.client_addr::text)||':'||a.client_port as client_addr,
+                                        a.client_port,
+                                        a.backend_start,
+                                        a.state,
+                                        a.state_change,
+                                        case when state in ('active') then to_char(now() - a.query_start, 'dd hh24:mi:ss') end as state_duration,
+                                        regexp_replace(a.query, E'^\\\\s+|\\\\s+$', '', 'g') as query,
+                                        ${waitEventFragment}
+                                        ${blockingPidsFragment}
+                                        (a.pid = pg_backend_pid()) as is_current_session
+                                    FROM pg_catalog.pg_stat_activity a
+                                    ${whereClause}
+                                    -- ORDER BY state_duration desc nulls last, state_change desc
+                                    `,
+                                    params
+                                );
+                                sessions = rows;
+                                //rows.splice(2, 0, { } as any);
+                                return rows;
+                            } finally {
+                                refreshing = false;
+                                slotContext.refresh(cid("sessions-tab-toolbar"));
+                            }
                         },
                         columns: [
                             { key: "pid", label: t("pid", "PID"), width: 80, dataType: "number" },
@@ -636,22 +643,22 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             }),
                         } as ITabSlot] : []),
 
-                // Progress CREATE INDEX (PG 12+)
-                ...(versionNumber >= 120000 ? [{
-                    id: cid("progress-create-index-tab"),
-                    type: "tab" as const,
-                    label: { id: cid("progress-create-index-tab-label"), type: "tablabel" as const, label: t("progress-create-index", "Progress CREATE INDEX") },
-                    content: {
-                        id: cid("progress-create-index-tab-content"),
-                        type: "tabcontent" as const,
-                        content: () => ({
-                            id: cid("progress-create-index-grid"),
-                            type: "grid" as const,
-                            mode: "defined" as const,
-                            rows: async () => {
-                                if (!selectedSession) return [];
-                                const { rows } = await session.query<any>(
-                                    `
+                        // Progress CREATE INDEX (PG 12+)
+                        ...(versionNumber >= 120000 ? [{
+                            id: cid("progress-create-index-tab"),
+                            type: "tab" as const,
+                            label: { id: cid("progress-create-index-tab-label"), type: "tablabel" as const, label: t("progress-create-index", "Progress CREATE INDEX") },
+                            content: {
+                                id: cid("progress-create-index-tab-content"),
+                                type: "tabcontent" as const,
+                                content: () => ({
+                                    id: cid("progress-create-index-grid"),
+                                    type: "grid" as const,
+                                    mode: "defined" as const,
+                                    rows: async () => {
+                                        if (!selectedSession) return [];
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT
                                                 p.pid,
                                                 n.nspname AS schema_name,
@@ -671,46 +678,46 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             LEFT JOIN pg_class ic ON ic.oid = p.index_relid
                                             WHERE p.pid = $1
                                             `,
-                                    [selectedSession.pid]
-                                );
-                                return rows;
+                                            [selectedSession.pid]
+                                        );
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
+                                        { key: "table_name", label: t("table", "Table"), width: 160, dataType: "string" },
+                                        { key: "index_name", label: t("index", "Index"), width: 160, dataType: "string" },
+                                        { key: "phase", label: t("phase", "Phase"), width: 180, dataType: "string" },
+                                        { key: "blocks_total", label: t("blocks-total", "Blocks Total"), width: 120, dataType: "number" },
+                                        { key: "blocks_done", label: t("blocks-done", "Blocks Done"), width: 120, dataType: "number" },
+                                        { key: "tuples_total", label: t("tuples-total", "Tuples Total"), width: 130, dataType: "number" },
+                                        { key: "tuples_done", label: t("tuples-done", "Tuples Done"), width: 130, dataType: "number" },
+                                    ] as ColumnDefinition[],
+                                    autoSaveId: `progress-create-index-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"] as any,
+                                }),
                             },
-                            columns: [
-                                { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
-                                { key: "table_name", label: t("table", "Table"), width: 160, dataType: "string" },
-                                { key: "index_name", label: t("index", "Index"), width: 160, dataType: "string" },
-                                { key: "phase", label: t("phase", "Phase"), width: 180, dataType: "string" },
-                                { key: "blocks_total", label: t("blocks-total", "Blocks Total"), width: 120, dataType: "number" },
-                                { key: "blocks_done", label: t("blocks-done", "Blocks Done"), width: 120, dataType: "number" },
-                                { key: "tuples_total", label: t("tuples-total", "Tuples Total"), width: 130, dataType: "number" },
-                                { key: "tuples_done", label: t("tuples-done", "Tuples Done"), width: 130, dataType: "number" },
-                            ] as ColumnDefinition[],
-                            autoSaveId: `progress-create-index-grid-${session.profile.sch_id}`,
-                            status: ["data-rows"] as any,
-                        }),
-                    },
-                }] : []),
+                        }] : []),
 
-                // Progress CLUSTER (PG 13+)
-                ...(versionNumber >= 130000 ? [{
-                    id: cid("progress-cluster-tab"),
-                    type: "tab" as const,
-                    label: { id: cid("progress-cluster-tab-label"), type: "tablabel" as const, label: t("progress-cluster", "Progress CLUSTER") },
-                    content: {
-                        id: cid("progress-cluster-tab-content"),
-                        type: "tabcontent" as const,
-                        content: () => ({
-                            id: cid("progress-cluster-grid"),
-                            type: "grid" as const,
-                            mode: "defined" as const,
-                            rows: async () => {
-                                if (!selectedSession) return [];
+                        // Progress CLUSTER (PG 13+)
+                        ...(versionNumber >= 130000 ? [{
+                            id: cid("progress-cluster-tab"),
+                            type: "tab" as const,
+                            label: { id: cid("progress-cluster-tab-label"), type: "tablabel" as const, label: t("progress-cluster", "Progress CLUSTER") },
+                            content: {
+                                id: cid("progress-cluster-tab-content"),
+                                type: "tabcontent" as const,
+                                content: () => ({
+                                    id: cid("progress-cluster-grid"),
+                                    type: "grid" as const,
+                                    mode: "defined" as const,
+                                    rows: async () => {
+                                        if (!selectedSession) return [];
 
-                                const heapBlksWrittenSel = hasHeapBlksWritten
-                                    ? "p.heap_blks_written"
-                                    : "NULL::bigint AS heap_blks_written";
-                                const { rows } = await session.query<any>(
-                                    `
+                                        const heapBlksWrittenSel = hasHeapBlksWritten
+                                            ? "p.heap_blks_written"
+                                            : "NULL::bigint AS heap_blks_written";
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT
                                                 p.pid,
                                                 n.nspname AS schema_name,
@@ -727,40 +734,40 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                                             WHERE p.pid = $1
                                         `, [selectedSession.pid]);
-                                return rows;
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
+                                        { key: "relation", label: t("relation", "Relation"), width: 160, dataType: "string" },
+                                        { key: "command", label: t("command", "Command"), width: 120, dataType: "string" },
+                                        { key: "phase", label: t("phase", "Phase"), width: 160, dataType: "string" },
+                                        { key: "heap_blks_total", label: t("heap-total", "Heap Total"), width: 110, dataType: "number" },
+                                        { key: "heap_blks_scanned", label: t("heap-scanned", "Heap Scanned"), width: 120, dataType: "number" },
+                                        { key: "heap_blks_written", label: t("heap-written", "Heap Written"), width: 130, dataType: "number" },
+                                        { key: "index_rebuild_count", label: t("index-rebuilds", "Index Rebuilds"), width: 140, dataType: "number" },
+                                    ] as ColumnDefinition[],
+                                    autoSaveId: `progress-cluster-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"] as any,
+                                }),
                             },
-                            columns: [
-                                { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
-                                { key: "relation", label: t("relation", "Relation"), width: 160, dataType: "string" },
-                                { key: "command", label: t("command", "Command"), width: 120, dataType: "string" },
-                                { key: "phase", label: t("phase", "Phase"), width: 160, dataType: "string" },
-                                { key: "heap_blks_total", label: t("heap-total", "Heap Total"), width: 110, dataType: "number" },
-                                { key: "heap_blks_scanned", label: t("heap-scanned", "Heap Scanned"), width: 120, dataType: "number" },
-                                { key: "heap_blks_written", label: t("heap-written", "Heap Written"), width: 130, dataType: "number" },
-                                { key: "index_rebuild_count", label: t("index-rebuilds", "Index Rebuilds"), width: 140, dataType: "number" },
-                            ] as ColumnDefinition[],
-                            autoSaveId: `progress-cluster-grid-${session.profile.sch_id}`,
-                            status: ["data-rows"] as any,
-                        }),
-                    },
-                }] : []),
+                        }] : []),
 
-                // Progress ANALYZE (PG 13+)
-                ...(versionNumber >= 130000 ? [{
-                    id: cid("progress-analyze-tab"),
-                    type: "tab" as const,
-                    label: { id: cid("progress-analyze-tab-label"), type: "tablabel" as const, label: t("progress-analyze", "Progress ANALYZE") },
-                    content: {
-                        id: cid("progress-analyze-tab-content"),
-                        type: "tabcontent" as const,
-                        content: () => ({
-                            id: cid("progress-analyze-grid"),
-                            type: "grid" as const,
-                            mode: "defined" as const,
-                            rows: async () => {
-                                if (!selectedSession) return [];
-                                const { rows } = await session.query<any>(
-                                    `
+                        // Progress ANALYZE (PG 13+)
+                        ...(versionNumber >= 130000 ? [{
+                            id: cid("progress-analyze-tab"),
+                            type: "tab" as const,
+                            label: { id: cid("progress-analyze-tab-label"), type: "tablabel" as const, label: t("progress-analyze", "Progress ANALYZE") },
+                            content: {
+                                id: cid("progress-analyze-tab-content"),
+                                type: "tabcontent" as const,
+                                content: () => ({
+                                    id: cid("progress-analyze-grid"),
+                                    type: "grid" as const,
+                                    mode: "defined" as const,
+                                    rows: async () => {
+                                        if (!selectedSession) return [];
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT
                                                 p.pid,
                                                 n.nspname AS schema_name,
@@ -773,38 +780,38 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
                                             WHERE p.pid = $1
                                             `,
-                                    [selectedSession.pid]
-                                );
-                                return rows;
+                                            [selectedSession.pid]
+                                        );
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
+                                        { key: "relation", label: t("relation", "Relation"), width: 160, dataType: "string" },
+                                        { key: "sample_blks_total", label: t("sample-total", "Sample Blocks Total"), width: 160, dataType: "number" },
+                                        { key: "sample_blks_scanned", label: t("sample-scanned", "Sample Blocks Scanned"), width: 160, dataType: "number" },
+                                    ] as ColumnDefinition[],
+                                    autoSaveId: `progress-analyze-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"] as any,
+                                }),
                             },
-                            columns: [
-                                { key: "schema_name", label: t("schema", "Schema"), width: 120, dataType: "string" },
-                                { key: "relation", label: t("relation", "Relation"), width: 160, dataType: "string" },
-                                { key: "sample_blks_total", label: t("sample-total", "Sample Blocks Total"), width: 160, dataType: "number" },
-                                { key: "sample_blks_scanned", label: t("sample-scanned", "Sample Blocks Scanned"), width: 160, dataType: "number" },
-                            ] as ColumnDefinition[],
-                            autoSaveId: `progress-analyze-grid-${session.profile.sch_id}`,
-                            status: ["data-rows"] as any,
-                        }),
-                    },
-                }] : []),
+                        }] : []),
 
-                // Progress COPY (PG 14+)
-                ...(versionNumber >= 140000 ? [{
-                    id: cid("progress-copy-tab"),
-                    type: "tab" as const,
-                    label: { id: cid("progress-copy-tab-label"), type: "tablabel" as const, label: t("progress-copy", "Progress COPY") },
-                    content: {
-                        id: cid("progress-copy-tab-content"),
-                        type: "tabcontent" as const,
-                        content: () => ({
-                            id: cid("progress-copy-grid"),
-                            type: "grid" as const,
-                            mode: "defined" as const,
-                            rows: async () => {
-                                if (!selectedSession) return [];
-                                const { rows } = await session.query<any>(
-                                    `
+                        // Progress COPY (PG 14+)
+                        ...(versionNumber >= 140000 ? [{
+                            id: cid("progress-copy-tab"),
+                            type: "tab" as const,
+                            label: { id: cid("progress-copy-tab-label"), type: "tablabel" as const, label: t("progress-copy", "Progress COPY") },
+                            content: {
+                                id: cid("progress-copy-tab-content"),
+                                type: "tabcontent" as const,
+                                content: () => ({
+                                    id: cid("progress-copy-grid"),
+                                    type: "grid" as const,
+                                    mode: "defined" as const,
+                                    rows: async () => {
+                                        if (!selectedSession) return [];
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT
                                                 p.pid,
                                                 p.datname,
@@ -815,39 +822,39 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             FROM pg_stat_progress_copy p
                                             WHERE p.pid = $1
                                             `,
-                                    [selectedSession.pid]
-                                );
-                                return rows;
+                                            [selectedSession.pid]
+                                        );
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "relation", label: t("relation", "Relation"), width: 180, dataType: "string" },
+                                        { key: "command", label: t("command", "Command"), width: 120, dataType: "string" },
+                                        { key: "bytes_processed_pretty", label: t("bytes", "Bytes"), width: 120, dataType: "string" },
+                                    ] as ColumnDefinition[],
+                                    autoSaveId: `progress-copy-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"] as any,
+                                }),
                             },
-                            columns: [
-                                { key: "relation", label: t("relation", "Relation"), width: 180, dataType: "string" },
-                                { key: "command", label: t("command", "Command"), width: 120, dataType: "string" },
-                                { key: "bytes_processed_pretty", label: t("bytes", "Bytes"), width: 120, dataType: "string" },
-                            ] as ColumnDefinition[],
-                            autoSaveId: `progress-copy-grid-${session.profile.sch_id}`,
-                            status: ["data-rows"] as any,
-                        }),
-                    },
-                }] : []),
+                        }] : []),
 
-                // Backend Memory Contexts (PG 13+)
-                ...(versionNumber >= 130000 ? [{
-                    id: cid("memory-contexts-tab"),
-                    type: "tab" as const,
-                    label: { id: cid("memory-contexts-tab-label"), type: "tablabel" as const, label: t("memory-contexts", "Memory Contexts") },
-                    content: {
-                        id: cid("memory-contexts-tab-content"),
-                        type: "tabcontent" as const,
-                        content: () => ({
-                            id: cid("memory-contexts-grid"),
-                            type: "grid" as const,
-                            mode: "defined" as const,
-                            rows: async () => {
-                                if (!selectedSession) return [];
-                                if (!hasPgBackendMemoryContexts) return t("memory-contexts-not-available", "The pg_backend_memory_contexts function is not available on this server.");
+                        // Backend Memory Contexts (PG 13+)
+                        ...(versionNumber >= 130000 ? [{
+                            id: cid("memory-contexts-tab"),
+                            type: "tab" as const,
+                            label: { id: cid("memory-contexts-tab-label"), type: "tablabel" as const, label: t("memory-contexts", "Memory Contexts") },
+                            content: {
+                                id: cid("memory-contexts-tab-content"),
+                                type: "tabcontent" as const,
+                                content: () => ({
+                                    id: cid("memory-contexts-grid"),
+                                    type: "grid" as const,
+                                    mode: "defined" as const,
+                                    rows: async () => {
+                                        if (!selectedSession) return [];
+                                        if (!hasPgBackendMemoryContexts) return t("memory-contexts-not-available", "The pg_backend_memory_contexts function is not available on this server.");
 
-                                const { rows } = await session.query<any>(
-                                    `
+                                        const { rows } = await session.query<any>(
+                                            `
                                             SELECT 
                                                 name,
                                                 ident,
@@ -859,45 +866,46 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                             FROM pg_backend_memory_contexts($1::int)
                                             ORDER BY level, total_bytes DESC
                                             `,
-                                    [selectedSession.pid]
-                                );
-                                return rows;
+                                            [selectedSession.pid]
+                                        );
+                                        return rows;
+                                    },
+                                    columns: [
+                                        { key: "level", label: t("level", "Level"), width: 70, dataType: "number" },
+                                        { key: "name", label: t("name", "Name"), width: 200, dataType: "string" },
+                                        { key: "ident", label: t("ident", "Ident"), width: 200, dataType: "string" },
+                                        { key: "parent", label: t("parent", "Parent"), width: 200, dataType: "string" },
+                                        { key: "total_bytes_pretty", label: t("bytes", "Bytes"), width: 120, dataType: "string" },
+                                    ] as ColumnDefinition[],
+                                    autoSaveId: `memory-contexts-grid-${session.profile.sch_id}`,
+                                    status: ["data-rows"] as any,
+                                }),
                             },
-                            columns: [
-                                { key: "level", label: t("level", "Level"), width: 70, dataType: "number" },
-                                { key: "name", label: t("name", "Name"), width: 200, dataType: "string" },
-                                { key: "ident", label: t("ident", "Ident"), width: 200, dataType: "string" },
-                                { key: "parent", label: t("parent", "Parent"), width: 200, dataType: "string" },
-                                { key: "total_bytes_pretty", label: t("bytes", "Bytes"), width: 120, dataType: "string" },
-                            ] as ColumnDefinition[],
-                            autoSaveId: `memory-contexts-grid-${session.profile.sch_id}`,
-                            status: ["data-rows"] as any,
-                        }),
-                    },
-                }] : []),
+                        }] : []),
                     ],
                 }),
-autoSaveId: `sessions-split-${session.profile.sch_id}`,
+                autoSaveId: `sessions-split-${session.profile.sch_id}`,
             }),
         },
-toolBar: () => ({
-    id: cid("sessions-tab-toolbar"),
-    type: "toolbar",
-    tools: [
-        "sessions-cancel-query-action",
-        "sessions-kill-session-action",
-        {
-            onTick: async (slotContext) => {
-                slotContext.refresh(cid("sessions-grid"));
-            },
-            canPause: false,
-            intervals: [2, 5, 10, 15, 30, 60],
-            defaultInterval: 5,
-            canRefresh: true,
-        } as IAutoRefresh,
-    ],
-    actionSlotId: cid("sessions-grid"),
-}),
+        toolBar: () => ({
+            id: cid("sessions-tab-toolbar"),
+            type: "toolbar",
+            tools: [
+                "sessions-cancel-query-action",
+                "sessions-kill-session-action",
+                {
+                    onTick: async (slotContext) => {
+                        slotContext.refresh(cid("sessions-grid"));
+                    },
+                    canPause: false,
+                    intervals: [2, 5, 10, 15, 30, 60],
+                    defaultInterval: 5,
+                    canRefresh: true,
+                    executing: () => refreshing,
+                } as IAutoRefresh,
+            ],
+            actionSlotId: cid("sessions-grid"),
+        }),
     };
 };
 

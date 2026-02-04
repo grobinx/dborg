@@ -75,7 +75,7 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
             sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 8,
                 width: "100%",
                 paddingX: 8,
             }}
@@ -93,10 +93,11 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                 label={t(`queued-task.${task.status}`, task.status)}
                 color={getStatusColor(task.status)}
                 size="small"
+                sx={{ fontSize: "0.75em", minHeight: "100%" }}
             />
 
             {opts?.cancel && onCancelTask && (
-                <IconButton size="small" onClick={() => onCancelTask(task.id)}>
+                <IconButton dense onClick={() => onCancelTask(task.id)}>
                     <theme.icons.Close />
                 </IconButton>
             )}
@@ -119,22 +120,33 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
             slotProps={{
                 paper: {
                     sx: {
-                        maxHeight: 500,
+                        maxHeight: "75%",
                         minWidth: 300,
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
                     }
                 }
             }}
         >
-            <Paper>
-                <Typography variant="body1" sx={{ px: 8, backgroundColor: alpha(theme.palette.primary.main, 0.1) }}>
+            <Paper square>
+                <Typography variant="h6" sx={{ px: 8, backgroundColor: theme.palette.background.header }}>
                     {t("queue-tasks", "Queue Tasks")}
                 </Typography>
+            </Paper>
+
+            <Box sx={{ overflowY: "auto", maxHeight: "100%", flex: 1 }}>
 
                 {runningTasks.length > 0 && (
                     <Box>
-                        <Typography variant="subtitle2" color="primary" sx={{ px: 8, backgroundColor: alpha(theme.palette.secondary.main, 0.1) }}>
-                            {t("running", "Running")} ({runningTasks.length})
-                        </Typography>
+                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ px: 8 }}
+                            >
+                                {t("running", "Running")} ({runningTasks.length})
+                            </Typography>
+                        </Paper>
 
                         <BaseList<QueueTaskInfo>
                             items={runningTasks}
@@ -156,9 +168,14 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {queuedTasks.length > 0 && (
                     <Box>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ px: 8, backgroundColor: alpha(theme.palette.secondary.main, 0.1) }}>
-                            {t("queued", "Queued")} ({queuedTasks.length})
-                        </Typography>
+                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ px: 8 }}
+                            >
+                                {t("queued", "Queued")} ({queuedTasks.length})
+                            </Typography>
+                        </Paper>
 
                         <BaseList<QueueTaskInfo>
                             items={queuedTasks}
@@ -171,33 +188,38 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                                     { cancel: true }
                                 )
                             }
+                            sx={{ maxHeight: 200, overflowY: "auto" }}
                         />
                     </Box>
                 )}
 
                 {finishedTasks.length > 0 && (
                     <Box>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ px: 8, backgroundColor: alpha(theme.palette.secondary.main, 0.1) }}>
-                            {t("finished", "Finished")} ({finishedTasks.length})
-                        </Typography>
+                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ px: 8 }}
+                            >
+                                {t("finished", "Finished")} ({finishedTasks.length})
+                            </Typography>
+                        </Paper>
 
-                        <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
-                            <BaseList<QueueTaskInfo>
-                                items={finishedLast10}
-                                getItemId={(task) => task.id}
-                                size="default"
-                                renderItem={(task) =>
-                                    renderTaskRow(
-                                        task,
-                                        task.error
-                                            ? t("error", "Error: {{error}}", { error: task.error })
-                                            : t("duration", "Duration: {{duration}}", {
-                                                duration: formatDuration(task.started, task.finished),
-                                            })
-                                    )
-                                }
-                            />
-                        </Box>
+                        <BaseList<QueueTaskInfo>
+                            items={finishedLast10}
+                            getItemId={(task) => task.id}
+                            size="default"
+                            renderItem={(task) =>
+                                renderTaskRow(
+                                    task,
+                                    task.error
+                                        ? t("error", "Error: {{error}}", { error: task.error })
+                                        : t("duration", "Duration: {{duration}}", {
+                                            duration: formatDuration(task.started, task.finished),
+                                        })
+                                )
+                            }
+                            sx={{ maxHeight: 200, overflowY: "auto" }}
+                        />
                     </Box>
                 )}
 
@@ -206,7 +228,7 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                         {t("no-tasks", "No tasks in queue")}
                     </Typography>
                 )}
-            </Paper>
+            </Box>
         </Popover>
     );
 };
