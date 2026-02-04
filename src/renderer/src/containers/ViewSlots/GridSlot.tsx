@@ -57,6 +57,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
     const [loading, setLoading] = React.useState(false);
+    const loadingRef = React.useRef(false);
     const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
@@ -75,6 +76,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
+            if (loadingRef.current) return;
+            
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else if (redraw === "compute") {
@@ -110,6 +113,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     React.useEffect(() => {
         const fetchRows = async () => {
             setLoading(true);
+            loadingRef.current = true;
             try {
                 const result = await resolveRecordsFactory(slot.rows, runtimeContext);
                 if (Array.isArray(result)) {
@@ -141,13 +145,16 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 addToast("error", t("refresh-failed", "Refresh failed"), { reason: error, source: "GridSlot", });
             } finally {
                 setLoading(false);
+                loadingRef.current = false;
             }
         };
         setProgressBar(prev => ({
             ...prev,
             node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
         }));
-        fetchRows();
+        if (!loadingRef.current) {
+            fetchRows();
+        }
     }, [slot.columns, slot.rows, refresh]);
 
     // Debounced click handler

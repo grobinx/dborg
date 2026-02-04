@@ -10,8 +10,8 @@ import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 import { Box, Stack, useTheme, useThemeProps } from "@mui/material";
 import i18next from "i18next";
-import { ToLowerCaseAction } from "./actions/ToLowerCase";
-import { ToUpperCaseAction } from "./actions/ToUpperCase";
+import { TransformToLowerCaseAction } from "./actions/TransformToLowerCase";
+import { TransformToUpperCaseAction } from "./actions/TransformToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
@@ -231,8 +231,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         disposables.push(editor.onDidBlurEditorText(() => onBlur?.()));
 
         // Dodaj akcje
-        editor.addAction(ToLowerCaseAction(t));
-        editor.addAction(ToUpperCaseAction(t));
+        editor.addAction(TransformToLowerCaseAction(t));
+        editor.addAction(TransformToUpperCaseAction(t));
         editor.addAction(CopyCodeAs((dialog) => setDialog(dialog)));
 
         // Ustaw początkowy język modelu na podstawie state

@@ -16,6 +16,7 @@ export const defaultVacuumStructure: Record<string, any> = {
     buffer_usage_limit: 0,
     skip_database_stats: false,
     only_database_stats: false,
+    separate_relations: false,
     sql: "-- no SQL preview available --",
 };
 
@@ -48,7 +49,7 @@ export function vacuumDialog(
             (versionNumber >= 160000 && structure.only_database_stats && !structure.skip_database_stats) && "ONLY_DATABASE_STATS",
         ].filter(Boolean).join(", ");
 
-        if (versionNumber >= 140000) {
+        if (versionNumber >= 140000 && !structure.separate_relations) {
             return `VACUUM ${options ? '(' + options + ')' : ''} ${identifiers.join(", ")};`;
         }
 
@@ -192,6 +193,13 @@ export function vacuumDialog(
                                             width: "30%",
                                         } as IDialogNumberField,
                                     ] : []),
+                                    {
+                                        type: "boolean",
+                                        key: "separate_relations",
+                                        label: t("vacuum-separate-relations", "Separate Relations as Statements"),
+                                        helperText: t("vacuum-separate-relations-tooltip", "Generate separate VACUUM statements for each relation"),
+                                        disabled: versionNumber < 140000,
+                                    }
                                 ],
                             }
                         ]
@@ -214,6 +222,9 @@ export function vacuumDialog(
         confirmLabel: () => t("vacuum", "Vacuum"),
         onOpen: (values) => {
             values.sql = vacuumSql(values);
+            if (versionNumber < 140000) {
+                values.separate_relations = true;
+            }
         },
         onConfirm: onConfirm,
         onChange(values) {
