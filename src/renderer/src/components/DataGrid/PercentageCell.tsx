@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { resolveColor } from '@renderer/utils/colors';
 import { useTheme } from '@mui/material';
@@ -20,7 +20,20 @@ interface PercentageCellProps {
     label?: string;
 }
 
-export const PercentageCell: React.FC<PercentageCellProps> = ({
+const DEFAULT_PERCENTAGE_THRESHOLDS = (theme: any): StatusThreshold[] => [
+    { start: 0, color: resolveColor("success", theme).main },
+    { start: 30, color: resolveColor("warning", theme).main },
+    { start: 50, color: resolveColor("error", theme).main },
+];
+
+const DEFAULT_THREAT_LEVEL_THRESHOLDS = (theme: any): StatusThreshold[] => [
+    { start: 0, color: resolveColor("success", theme).main, label: 'low' },
+    { start: 30, color: resolveColor("primary", theme).main, label: 'medium' },
+    { start: 70, color: resolveColor("warning", theme).main, label: 'high' },
+    { start: 90, color: resolveColor("error", theme).main, label: 'critical' },
+];
+
+export const PercentageCell: React.FC<PercentageCellProps> = React.memo(({
     value,
     mode = 'percentage',
     thresholds,
@@ -28,50 +41,35 @@ export const PercentageCell: React.FC<PercentageCellProps> = ({
     label,
 }) => {
     const theme = useTheme();
-    let displayText: string = '';
-    let clampedValue: number = 0;
-    let thresholdColor: string | undefined = undefined;
 
-    if (value !== null) {
-        // Default thresholds based on mode
-        if (!thresholds || (Array.isArray(thresholds) && thresholds.length === 0)) {
-            if (mode === 'threat-level') {
-                thresholds = [
-                    { start: 0, color: resolveColor("success", theme).main, label: 'low' },
-                    { start: 30, color: resolveColor("primary", theme).main, label: 'medium' },
-                    { start: 70, color: resolveColor("warning", theme).main, label: 'high' },
-                    { start: 90, color: resolveColor("error", theme).main, label: 'critical' },
-                ];
-            } else if (mode === 'percentage') {
-                thresholds = [
-                    { start: 0, color: resolveColor("success", theme).main },
-                    { start: 30, color: resolveColor("warning", theme).main },
-                    { start: 50, color: resolveColor("error", theme).main },
-                ];
-            }
+    const { displayText, clampedValue, thresholdColor } = useMemo(() => {
+        if (value === null) {
+            return { displayText: `${label ?? ''} -`, clampedValue: 0, thresholdColor: undefined };
         }
 
         const numValue = new Decimal(value).toNumber();
-        clampedValue = Math.min(Math.max(numValue, 0), 100);
+        const clamped = Math.min(Math.max(numValue, 0), 100);
 
-        let thresholdLabel: string | undefined = undefined;
+        // Determine thresholds
+        const activeThresholds = thresholds && thresholds.length > 0
+            ? thresholds
+            : mode === 'threat-level'
+                ? DEFAULT_THREAT_LEVEL_THRESHOLDS(theme)
+                : DEFAULT_PERCENTAGE_THRESHOLDS(theme);
 
-        if (Array.isArray(thresholds)) {
-            const threshold = thresholds.reduce((prev, current) =>
-                current.start <= clampedValue && current.start > (prev?.start ?? -1) ? current : prev,
-                thresholds[0]
-            );
-            if (threshold) {
-                thresholdColor = threshold.color;
-                thresholdLabel = threshold.label;
-            }
-        } else {
-            thresholdColor = resolveColor(mode as ThemeColor, theme).main;
-        }
-        displayText = `${label ?? ''} ${thresholdLabel ?? ''} ${numValue.toFixed(precision)} %`;
-    } else {
-        displayText = `${label ?? ''} -`;
-    }
+        // Find matching threshold
+        const threshold = activeThresholds.reduce((prev, current) =>
+            current.start <= clamped && current.start > (prev?.start ?? -1) ? current : prev,
+            activeThresholds[0]
+        );
+
+        const text = `${label ?? ''} ${threshold?.label ?? ''} ${numValue.toFixed(precision)} %`.trim();
+        return {
+            displayText: text,
+            clampedValue: clamped,
+            thresholdColor: threshold?.color,
+        };
+    }, [value, mode, thresholds, precision, label, theme]);
 
     return (
         <div style={{
@@ -100,4 +98,6 @@ export const PercentageCell: React.FC<PercentageCellProps> = ({
             </span>
         </div>
     );
-};
+});
+
+PercentageCell.displayName = 'PercentageCell';
