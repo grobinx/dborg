@@ -125,25 +125,21 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                         overflow: "hidden",
                         display: "flex",
                         flexDirection: "column",
+                        padding: 4,
                     }
                 }
             }}
         >
-            <Paper square>
-                <Typography variant="h6" sx={{ px: 8, backgroundColor: theme.palette.background.header }}>
-                    {t("queue-tasks", "Queue Tasks")}
-                </Typography>
-            </Paper>
+            <Typography variant="h6" sx={{ px: 8 }}>
+                {t("queue-tasks", "Queue Tasks")}
+            </Typography>
 
             <Box sx={{ overflowY: "auto", maxHeight: "100%", flex: 1 }}>
 
                 {runningTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
-                            <Typography
-                                variant="subtitle2"
-                                sx={{ px: 8 }}
-                            >
+                        <Paper square sx={{ position: "sticky", top: 0 }}>
+                            <Typography variant="subtitle2" sx={{ px: 8 }}>
                                 {t("running", "Running")} ({runningTasks.length})
                             </Typography>
                         </Paper>
@@ -168,11 +164,8 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {queuedTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
-                            <Typography
-                                variant="subtitle2"
-                                sx={{ px: 8 }}
-                            >
+                        <Paper square sx={{ position: "sticky", top: 0 }}>
+                            <Typography variant="subtitle2" sx={{ px: 8, mt: 2 }}>
                                 {t("queued", "Queued")} ({queuedTasks.length})
                             </Typography>
                         </Paper>
@@ -195,11 +188,8 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {finishedTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0, backgroundColor: theme.palette.background.header }}>
-                            <Typography
-                                variant="subtitle2"
-                                sx={{ px: 8 }}
-                            >
+                        <Paper square sx={{ position: "sticky", top: 0 }}>
+                            <Typography variant="subtitle2" sx={{ px: 8, mt: 2 }}                            >
                                 {t("finished", "Finished")} ({finishedTasks.length})
                             </Typography>
                         </Paper>
