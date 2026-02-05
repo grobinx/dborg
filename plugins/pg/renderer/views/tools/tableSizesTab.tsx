@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IDialogBooleanField, IDialogEditorField, IDialogNumberField, IDialogRow, IDialogSlot, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IAutoRefresh, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
@@ -10,7 +10,6 @@ import Decimal from "decimal.js";
 import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 import { versionToNumber } from "../../../../../src/api/version";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
-import sleep from "@renderer/utils/sleep";
 import textToLabel from "@renderer/utils/textToLabel";
 
 interface RelationMaintenanceRecord {
@@ -305,7 +304,6 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
 
                             session.enqueue({
                                 execute: async (s) => {
-                                    //await sleep(20);
                                     await s.execute(sql);
                                     slotContext.showNotification({
                                         message: t("vacuum-relation-success", "{{command}} completed successfully", { command: label }),

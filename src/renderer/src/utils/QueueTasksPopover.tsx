@@ -1,31 +1,31 @@
 import React from "react";
 import { Popover, Typography, Box, Chip, Paper, alpha } from "@mui/material";
 import { useTheme } from "@mui/material";
-import { QueueTaskInfo } from "@renderer/utils/QueueTask";
+import { IQueueTask, QueueTaskInfo } from "@renderer/utils/QueueTask";
 import { useTranslation } from "react-i18next";
 import { Duration } from "luxon";
 import { durationToHuman } from "@renderer/common";
 import { IconButton } from "@renderer/components/buttons/IconButton";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface QueueTasksPopoverProps {
     anchorEl: HTMLElement | null;
     open: boolean;
     onClose: () => void;
-    tasks: QueueTaskInfo[];
-    onCancelTask?: (taskId: string) => void;
+    queue: IQueueTask;
 }
 
 const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
     anchorEl,
     open,
     onClose,
-    tasks,
-    onCancelTask,
+    queue,
 }) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const [, setRefresh] = React.useState(0n);
+    const tasks = queue.getTasks();
 
     React.useEffect(() => {
         if (!open) return;
@@ -96,10 +96,12 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                 sx={{ fontSize: "0.75em", minHeight: "100%" }}
             />
 
-            {opts?.cancel && onCancelTask && (
-                <IconButton dense onClick={() => onCancelTask(task.id)}>
-                    <theme.icons.Close />
-                </IconButton>
+            {opts?.cancel && (
+                <Tooltip title={t("cancel", "Cancel")}>
+                    <IconButton size="small" onClick={() => queue.cancelQueuedTask(task.id)}>
+                        <theme.icons.Close />
+                    </IconButton>
+                </Tooltip>
             )}
         </Box>
     );
@@ -138,8 +140,8 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {runningTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0 }}>
-                            <Typography variant="subtitle2" sx={{ px: 8 }}>
+                        <Paper square sx={{ padding: "4px 8px", position: "sticky", top: 0, flexDirection: "row", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="subtitle2">
                                 {t("running", "Running")} ({runningTasks.length})
                             </Typography>
                         </Paper>
@@ -164,10 +166,15 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {queuedTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0 }}>
-                            <Typography variant="subtitle2" sx={{ px: 8, mt: 2 }}>
+                        <Paper square sx={{ padding: "4px 8px", position: "sticky", top: 0, flexDirection: "row", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="subtitle2">
                                 {t("queued", "Queued")} ({queuedTasks.length})
                             </Typography>
+                            <Tooltip title={t("cancel-all-tasks", "Cancel All Tasks")}>
+                                <IconButton size="small" onClick={() => queue.cancelAllQueued()}>
+                                    <theme.icons.Close />
+                                </IconButton>
+                            </Tooltip>
                         </Paper>
 
                         <BaseList<QueueTaskInfo>
@@ -188,10 +195,15 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
 
                 {finishedTasks.length > 0 && (
                     <Box>
-                        <Paper square sx={{ position: "sticky", top: 0 }}>
-                            <Typography variant="subtitle2" sx={{ px: 8, mt: 2 }}                            >
+                        <Paper square sx={{ padding: "4px 8px", position: "sticky", top: 0, flexDirection: "row", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="subtitle2">
                                 {t("finished", "Finished")} ({finishedTasks.length})
                             </Typography>
+                            <Tooltip title={t("clear-tasks-history", "Clear Tasks History")}>
+                                <IconButton size="small" onClick={() => queue.clearFinishedHistory()}>
+                                    <theme.icons.Clear />
+                                </IconButton>
+                            </Tooltip>
                         </Paper>
 
                         <BaseList<QueueTaskInfo>

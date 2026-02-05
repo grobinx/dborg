@@ -4,10 +4,17 @@ import { uuidv7 } from "uuidv7";
 import { t } from "i18next";
 
 export const QUEUE_TASK_MESSAGE = "queue-task-message";
+export interface QueueTaskSettingPayload {
+    name: string;
+    value: any;
+}
+export interface QueueTaskTaskIdPayload {
+    taskId: string;
+}
 export interface QueueTaskMessage {
     queueId: string;
-    type: QueueTaskStatus | "trimmed";
-    taskId?: string;
+    type: QueueTaskStatus | "trimmed" | "setting";
+    payload?: QueueTaskSettingPayload | QueueTaskTaskIdPayload;
 }
 
 export type QueueTaskStatus = "queued" | "running" | "done" | "failed" | "canceled";
@@ -22,10 +29,13 @@ export interface QueueTaskInfo {
     error?: string;
 }
 
-export interface QueueTaskOptions {
-    id?: string;
+export interface QueueTaskSettings {
     maxConcurrency?: number;
     maxQueueHistory?: number;
+}
+
+export interface QueueTaskOptions extends QueueTaskSettings {
+    id?: string;
 }
 
 export interface TaskOptions<T = any> {
@@ -38,15 +48,27 @@ interface PendingTask {
     execute: () => void;
 }
 
+export interface IQueueTask<T = any> {
+    getQueueId(): string;
+    setConcurrency(max: number): void;
+    setQueueHistory(max: number): void;
+    getSettings(): QueueTaskSettings;
+    enqueue(task: TaskOptions<T>, context: T): void;
+    getTasks(): QueueTaskInfo[];
+    cancelQueuedTask(id: string): boolean;
+    cancelAllQueued(): void;
+    clearFinishedHistory(): void;
+}
+
 /**
  * Simple in-memory FIFO queue with per-instance concurrency and task tracking.
  * Fire-and-forget: tasks are started automatically when capacity is available.
  */
-export class QueueTask<T = any> {
+export class QueueTask<T = any> implements IQueueTask<T> {
     private readonly id: string;
-    private readonly maxQueueHistory: number;
 
-    private maxConcurrency = 1;
+    private maxQueueHistory: number;
+    private maxConcurrency: number;
     private active = 0;
     private pending: PendingTask[] = [];
 
@@ -58,12 +80,28 @@ export class QueueTask<T = any> {
         this.maxQueueHistory = Math.max(0, Math.floor(options.maxQueueHistory ?? 200));
     }
 
+    getQueueId(): string {
+        return this.id;
+    }
+
     /**
      * max <= 1 => sequential FIFO
      */
     setConcurrency(max: number): void {
         this.maxConcurrency = Math.max(1, Math.floor(max));
         this.pumpQueue();
+    }
+
+    setQueueHistory(max: number): void {
+        this.maxQueueHistory = Math.max(0, Math.floor(max));
+        this.trimQueueHistory();
+    }
+
+    getSettings(): QueueTaskSettings {
+        return {
+            maxConcurrency: this.maxConcurrency,
+            maxQueueHistory: this.maxQueueHistory,
+        };
     }
 
     /**
@@ -83,7 +121,7 @@ export class QueueTask<T = any> {
             this.active++;
             info.status = "running";
             info.started = Date.now();
-            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "started", taskId: id });
+            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "running", payload: { taskId: id } } as QueueTaskMessage);
 
             try {
                 await task.execute(context);
@@ -92,11 +130,11 @@ export class QueueTask<T = any> {
                 info.status = "failed";
                 info.error = err?.message ?? String(err);
                 console.error("Queue task failed:", info.label, err);
-                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "failed", taskId: id });
+                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "failed", payload: { taskId: id } } as QueueTaskMessage);
                 queueMessage(TOAST_ADD_MESSAGE, { type: "error", message: t("queue-task-failed", "Queue task failed: {{label}}", { label: info.label }) } as ToastAddMessage);
             } finally {
                 info.finished = Date.now();
-                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "finished", taskId: id });
+                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "done", payload: { taskId: id } } as QueueTaskMessage);
                 this.active--;
                 this.pumpQueue();
                 this.trimQueueHistory();
@@ -104,7 +142,7 @@ export class QueueTask<T = any> {
         };
 
         this.pending.push({ id, execute });
-        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "queued", taskId: id } as QueueTaskMessage);
+        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "queued", payload: { taskId: id } } as QueueTaskMessage);
         this.pumpQueue();
         this.trimQueueHistory();
     }
@@ -130,7 +168,7 @@ export class QueueTask<T = any> {
             this.pending.splice(index, 1);
             taskInfo.status = "canceled";
             taskInfo.finished = Date.now();
-            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "canceled", taskId: id });
+            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "canceled", payload: { taskId: id } } as QueueTaskMessage);
             return true;
         }
 
@@ -150,10 +188,9 @@ export class QueueTask<T = any> {
             if (t.status === "queued" && canceledIds.has(t.id)) {
                 t.status = "canceled";
                 t.finished = Date.now();
-                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "canceled", taskId: t.id });
+                queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "canceled", payload: { taskId: t.id } } as QueueTaskMessage);
             }
         });
-        this.trimQueueHistory(true);
     }
 
     private pumpQueue(): void {
@@ -174,18 +211,22 @@ export class QueueTask<T = any> {
         const active = this.queueTasks.filter((t) => t.status === "queued" || t.status === "running");
         if (clearAllFinished) {
             this.queueTasks = active;
-            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" });
+            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" } as QueueTaskMessage);
             return;
         }
 
         const finished = this.queueTasks.filter((t) => t.status !== "queued" && t.status !== "running");
         if (finished.length <= this.maxQueueHistory) {
             this.queueTasks = active.concat(finished);
-            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" });
+            queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" } as QueueTaskMessage);
             return;
         }
         const tail = finished.slice(-this.maxQueueHistory);
         this.queueTasks = active.concat(tail);
-        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" });
+        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "trimmed" } as QueueTaskMessage);
+    }
+
+    clearFinishedHistory(): void {
+        this.trimQueueHistory(true);
     }
 }

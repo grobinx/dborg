@@ -18,6 +18,7 @@ export interface ProfileRecord {
     sch_db_version?: string;
     sch_script?: string;
     sch_order?: number;
+    [key: string]: any;
 }
 
 // Define the driver structure
@@ -28,6 +29,7 @@ export interface DriverRecord {
     drv_description: string;
     drv_icon: string;
     drv_version: string;
+    [key: string]: any;
 }
 
 export interface DborgRecord {
@@ -52,6 +54,7 @@ export interface DborgRecord {
         openssl: string;
         electron: string;
     };
+    [key: string]: any;
 }
 
 export interface QueryHistoryRecord {
@@ -66,4 +69,5 @@ export interface QueryHistoryRecord {
     qh_fetch_time: number | null;
     qh_rows: number | null;
     qh_error: string | null;
+    [key: string]: any;
 }

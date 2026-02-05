@@ -1,7 +1,7 @@
 import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { QueueTask, QueueTaskInfo, TaskOptions } from "@renderer/utils/QueueTask";
+import { IQueueTask, QueueTask, QueueTaskInfo, TaskOptions } from "@renderer/utils/QueueTask";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
@@ -23,18 +23,7 @@ export interface IDatabaseSession extends api.BaseConnection {
     /**
      * Get current queue tasks (including running).
      */
-    getQueueTasks(): QueueTaskInfo[];
-
-    /**
-     * Cancel a queued task by id (only if not started).
-     */
-    cancelQueuedTask(id: string): boolean;
-
-    /**
-     * Configure queue concurrency for this session.
-     * max <= 1 => sequential FIFO
-     */
-    setQueueConcurrency(max: number): void;
+    getQueue(): IQueueTask;
 }
 
 export interface IDatabaseSessionCursor extends api.BaseCursor {
@@ -94,8 +83,8 @@ class DatabaseSession implements IDatabaseSession {
 
         this.queue = new QueueTask<IDatabaseSession>({
             id: this.info.uniqueId,
-            maxConcurrency: 1,
-            maxQueueHistory: 200,
+            maxConcurrency: this.profile.sch_queue?.concurrency ?? 1,
+            maxQueueHistory: this.profile.sch_queue?.history ?? 200,
         });
     }
 
@@ -183,15 +172,7 @@ class DatabaseSession implements IDatabaseSession {
         return window.dborg.database.connection.cancel(this.info.uniqueId);
     }
 
-    /**
-     * Configure queue concurrency for this session.
-     * max <= 1 => sequential FIFO
-     */
-    setQueueConcurrency(max: number): void {
-        this.queue.setConcurrency(max);
-    }
-
-    /**
+        /**
      * Enqueue task (fire-and-forget). Per-session.
      */
     enqueue(task: TaskOptions<IDatabaseSession>): void {
@@ -201,15 +182,8 @@ class DatabaseSession implements IDatabaseSession {
     /**
      * Get current queue tasks (including running).
      */
-    getQueueTasks(): QueueTaskInfo[] {
-        return this.queue.getTasks();
-    }
-
-    /**
-     * Cancel a queued task by id (only if not started).
-     */
-    cancelQueuedTask(id: string): boolean {
-        return this.queue.cancelQueuedTask(id);
+    getQueue(): IQueueTask {
+        return this.queue;
     }
 }
 

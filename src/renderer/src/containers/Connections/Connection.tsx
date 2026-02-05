@@ -13,7 +13,7 @@ import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel"
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
-import { RefreshSlotFunction, ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
+import { ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
 import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
@@ -227,7 +227,12 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             if (message.queueId !== session.info.uniqueId) {
                 return;
             }
-            const tasks = session.getQueueTasks();
+            
+            if (message.type === "setting") {
+                return; // Ignore setting messages
+            }
+
+            const tasks = session.getQueue().getTasks();
             setRunningTasks(tasks.filter(t => t.status === "running").length);
             setQueuedTasks(tasks.filter(t => t.status === "queued").length);
         };
@@ -249,10 +254,6 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
 
     const handleQueueClose = () => {
         setQueueAnchorEl(null);
-    };
-
-    const handleCancelTask = (taskId: string) => {
-        session.cancelQueuedTask(taskId);
     };
 
     return (
@@ -285,8 +286,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                 anchorEl={queueAnchorEl}
                 open={Boolean(queueAnchorEl)}
                 onClose={handleQueueClose}
-                tasks={session.getQueueTasks()}
-                onCancelTask={handleCancelTask}
+                queue={session.getQueue()}
             />
 
             {session.info.driver.implements.includes("metadata") && (

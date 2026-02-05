@@ -59,8 +59,8 @@ interface ProfilesContextValue {
     profiles: ProfileRecord[];
     getProfile: (profileId: string, throwError?: boolean) => ProfileRecord | null;
     reloadProfiles: () => Promise<void>;
-    createProfile: (profile: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<string | undefined>;
-    updateProfile: (profile: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => Promise<boolean | undefined>;
+    createProfile: (profile: ProfileRecord) => Promise<string | undefined>;
+    updateProfile: (profile: ProfileRecord) => Promise<boolean | undefined>;
     deleteProfile: (profileId: string) => Promise<boolean>;
     swapProfilesOrder: (sourceProfileId: string, targetProfileId: string, group?: boolean) => Promise<void>;
     connectToDatabase: (profileId: string) => Promise<api.ConnectionInfo | undefined>;
@@ -355,7 +355,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile.sch_drv_unique_id The driver unique ID.
      * @returns The profile without the password property if the password is not saved.
      */
-    const passwordRetention = useCallback((profile: Pick<ProfileRecord, "sch_use_password" | "sch_properties" | "sch_drv_unique_id">) => {
+    const passwordRetention = useCallback((profile: ProfileRecord) => {
         const passwordProperty = drivers.find(profile.sch_drv_unique_id)?.passwordProperty;
         if (profile.sch_use_password !== "save" && passwordProperty) {
             delete profile.sch_properties?.[passwordProperty];
@@ -367,7 +367,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile The profile to create.
      * @returns The ID of the created profile.
      */
-    const createProfile = useCallback(async (profile: Omit<ProfileRecord, "sch_id" | "sch_created" | "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+    const createProfile = useCallback(async (profile: ProfileRecord) => {
         emitEvent('creating', { profile: profile as ProfileRecord, status: 'started' });
         if (!(await checkProfileExists(profile.sch_name))) {
             emitEvent('creating', { profile: profile as ProfileRecord, status: 'cancel' });
@@ -393,7 +393,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile The profile to update.
      * @returns True if the update was successful, false otherwise.
      */
-    const updateProfile = useCallback(async (profile: Omit<ProfileRecord, "sch_updated" | "sch_last_selected" | "sch_db_version" | "sch_order">) => {
+    const updateProfile = useCallback(async (profile: ProfileRecord) => {
         const existsProfile = getProfile(profile.sch_id)!;
 
         emitEvent('updating', { profile: existsProfile as ProfileRecord, status: 'started' });

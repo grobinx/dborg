@@ -9,8 +9,6 @@ import { uuidv7 } from "uuidv7";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { AutoRefreshBar } from "@renderer/components/AutoRefreshBar";
-import sleep from "@renderer/utils/sleep";
 
 export const SQL_RESULT_CLOSE = "sql-result:close";
 

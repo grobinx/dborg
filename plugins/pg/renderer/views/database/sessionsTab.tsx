@@ -7,7 +7,6 @@ import { alpha, Theme } from "@mui/material";
 import { resolveColor } from "@renderer/utils/colors";
 import { collapseWhitespaceExceptQuotes } from "@renderer/components/editor/editorUtils";
 import { versionToNumber } from "../../../../../src/api/version";
-import sleep from "@renderer/utils/sleep";
 
 interface SessionRecord {
     pid: number;
