@@ -9,6 +9,7 @@ const packageJsonPath = path.join(__dirname, '../package.json');
 // Pobierz aktualną datę i czas
 const currentDate = DateTime.now();
 const formattedDateTime = currentDate.toFormat('yyyy-MM-dd HH:mm:ss');
+const currentYear = currentDate.year;
 
 // Funkcja aktualizująca wersję i datę
 function updateConstsFile() {
@@ -23,6 +24,22 @@ function updateConstsFile() {
 
     // Zaktualizuj datę z godziną
     fileContent = fileContent.replace(/dborgDate:\s*string\s*=\s*".*?"/, `dborgDate: string = "${formattedDateTime}"`);
+
+    // Zaktualizuj dborgDuration (format: "YYYY-YYYY" lub "YYYY")
+    fileContent = fileContent.replace(/dborgDuration:\s*string\s*=\s*"(\d{4})(?:-(\d{4}))?"/g, (match, startYear, endYear) => {
+        const start = parseInt(startYear, 10);
+        
+        if (currentYear === start) {
+            // Ten sam rok - zostaw sam rok
+            return `dborgDuration: string = "${currentYear}"`;
+        } else if (currentYear > start) {
+            // Zakres lat
+            return `dborgDuration: string = "${start}-${currentYear}"`;
+        } else {
+            // Nie powinno się zdarzyć, ale zachowaj poprzednią wartość
+            return match;
+        }
+    });
 
     // Zapisz zmiany w pliku
     fs.writeFileSync(constsPath, fileContent, 'utf8');
