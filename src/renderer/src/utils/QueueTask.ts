@@ -27,6 +27,7 @@ export interface QueueTaskInfo {
     started?: number;
     finished?: number;
     error?: string;
+    cancel?: () => Promise<unknown>;
 }
 
 export interface QueueTaskSettings {
@@ -41,6 +42,7 @@ export interface QueueTaskOptions extends QueueTaskSettings {
 export interface TaskOptions<T = any> {
     execute: (context: T) => Promise<unknown>;
     label: string;
+    cancel?: () => Promise<unknown>;
 }
 
 interface PendingTask {
@@ -114,6 +116,7 @@ export class QueueTask<T = any> implements IQueueTask<T> {
             label: task.label,
             status: "queued",
             enqueued: Date.now(),
+            cancel: task.cancel,
         };
         this.queueTasks.push(info);
 

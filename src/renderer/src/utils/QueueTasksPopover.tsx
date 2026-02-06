@@ -103,6 +103,14 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
                     </IconButton>
                 </Tooltip>
             )}
+
+            {task?.cancel && (
+                <Tooltip title={t("cancel", "Cancel")}>
+                    <IconButton size="small" onClick={() => task.cancel && task.cancel()}>
+                        <theme.icons.Close />
+                    </IconButton>
+                </Tooltip>
+            )}
         </Box>
     );
 
