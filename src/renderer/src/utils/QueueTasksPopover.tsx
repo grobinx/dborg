@@ -10,6 +10,33 @@ import { BaseList } from "@renderer/components/inputs/base/BaseList";
 import Tooltip from "@renderer/components/Tooltip";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { LocalSettingsDialog } from "@renderer/components/settings/SettingsDialog";
+import { SettingsCollection } from "@renderer/components/settings/SettingsTypes";
+import { t } from "i18next";
+
+const queueSettingsDefinition: SettingsCollection = {
+    key: "queue.settings",
+    title: t("queue-settings", "Queue Settings"),
+    settings: [
+        {
+            storageGroup: "-",
+            storageKey: "maxConcurrency",
+            type: "number",
+            label: t("max-concurrency", "Max Concurrency"),
+            description: t("max-concurrency-desc", "The maximum number of tasks that can run concurrently."),
+            min: 1,
+            max: 10,
+        },
+        {
+            storageGroup: "-",
+            storageKey: "maxQueueHistory",
+            type: "number",
+            label: t("max-queue-history", "Max Queue History"),
+            description: t("max-queue-history-desc", "The maximum number of finished tasks to keep in history."),
+            min: 10,
+            max: 1000,
+        },
+    ]
+};
 
 interface QueueTasksPopoverProps {
     anchorEl: HTMLElement | null;
@@ -260,30 +287,7 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
             <LocalSettingsDialog
                 open={settingsDialogOpen}
                 onClose={() => setSettingsDialogOpen(false)}
-                collection={{
-                    key: "queue.settings",
-                    title: t("queue-settings", "Queue Settings"),
-                    settings: [
-                        {
-                            storageGroup: "-",
-                            storageKey: "maxConcurrency",
-                            type: "number",
-                            label: t("max-concurrency", "Max Concurrency"),
-                            description: t("max-concurrency-desc", "The maximum number of tasks that can run concurrently."),
-                            min: 1,
-                            max: 10,
-                        },
-                        {
-                            storageGroup: "-",
-                            storageKey: "maxQueueHistory",
-                            type: "number",
-                            label: t("max-queue-history", "Max Queue History"),
-                            description: t("max-queue-history-desc", "The maximum number of finished tasks to keep in history."),
-                            min: 10,
-                            max: 1000,
-                        },
-                    ]
-                }}
+                collection={queueSettingsDefinition}
                 initialValues={queueSettings}
                 onSave={(newValues) => {
                     queue.setConcurrency(newValues.maxConcurrency);
