@@ -36,8 +36,6 @@ const PostgresPlugin: Plugin = {
                 return null;
             }
 
-            const t = i18next.t.bind(i18next);
-
             return [
                 databaseView(session),
                 toolsView(session),

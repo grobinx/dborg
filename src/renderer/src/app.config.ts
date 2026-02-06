@@ -60,9 +60,9 @@ const settings_store_timeout = 1000; // 1 second
 const search_delay = 300; // 300 ms
 
 /* queue settings */
-const queue_main_refresh_interval = 1000; // 2 seconds
-const queue_main_visible_queued = 20;
-const queue_main_visible_finished = 50;
+const queue_view_refresh_interval = 1000; // 2 seconds
+const queue_view_visible_queued = 20;
+const queue_view_visible_finished = 50;
 
 export type QueryHistoryDeduplicateMode = "none" | "time-based" | "aggressive";
 
@@ -84,9 +84,9 @@ export const default_settings: ApplicationSettings = {
         "query_history.deduplicate_mode": "time-based",
         "query_history.deduplicate_time_window": 60, // 1 minute
 
-        "queue.main.refresh_interval": queue_main_refresh_interval,
-        "queue.main.visible_queued": queue_main_visible_queued,
-        "queue.main.visible_finished": queue_main_visible_finished,
+        "queue.view.refresh_interval": queue_view_refresh_interval,
+        "queue.view.visible_queued": queue_view_visible_queued,
+        "queue.view.visible_finished": queue_view_visible_finished,
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
@@ -250,16 +250,16 @@ settingsRegistry.register((context) => {
         },
         queryHistorySettingsDefinition(),
         {
-            key: 'queue-main',
-            title: t('main-queue-settings', 'Main Queue Settings'),
-            description: t('main-queue-settings-description', 'Settings related to the main task queue.'),
+            key: 'queue-view',
+            title: t('queue-view-settings', 'Queue View Settings'),
+            description: t('queue-view-settings-description', 'Settings related to the view task queue.'),
             settings: [
                 {
                     type: 'number',
                     storageGroup: 'app',
-                    storageKey: 'queue.main.refresh_interval',
-                    label: t('main-queue-refresh-interval', 'Main Queue Refresh Interval (ms)'),
-                    description: t('main-queue-refresh-interval-description', 'Interval in milliseconds for refreshing the main queue.'),
+                    storageKey: 'queue.view.refresh_interval',
+                    label: t('queue-view-refresh-interval', 'Queue View Refresh Interval (ms)'),
+                    description: t('queue-view-refresh-interval-description', 'Interval in milliseconds for refreshing the queue view.'),
                     min: 100,
                     max: 10000,
                     step: 100,
@@ -267,9 +267,9 @@ settingsRegistry.register((context) => {
                 {
                     type: 'number',
                     storageGroup: 'app',
-                    storageKey: 'queue.main.visible_queued',
-                    label: t('main-queue-visible-queued', 'Visible Queued Items'),
-                    description: t('main-queue-visible-queued-description', 'Number of queued items visible in the main queue.'),
+                    storageKey: 'queue.view.visible_queued',
+                    label: t('queue-view-visible-queued', 'Visible Queued Items'),
+                    description: t('queue-view-visible-queued-description', 'Number of queued items visible in the queue view.'),
                     min: 1,
                     max: 200,
                     step: 1,
@@ -277,9 +277,9 @@ settingsRegistry.register((context) => {
                 {
                     type: 'number',
                     storageGroup: 'app',
-                    storageKey: 'queue.main.visible_finished',
-                    label: t('main-queue-visible-finished', 'Visible Finished Items'),
-                    description: t('main-queue-visible-finished-description', 'Number of finished items visible in the main queue.'),
+                    storageKey: 'queue.view.visible_finished',
+                    label: t('queue-view-visible-finished', 'Visible Finished Items'),
+                    description: t('queue-view-visible-finished-description', 'Number of finished items visible in the queue view.'),
                     min: 1,
                     max: 200,
                     step: 1,

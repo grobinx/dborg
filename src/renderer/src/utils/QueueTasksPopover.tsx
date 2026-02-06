@@ -32,9 +32,9 @@ const QueueTasksPopover: React.FC<QueueTasksPopoverProps> = ({
     const [, setRefresh] = React.useState(0n);
     const tasks = queue.getTasks();
     const [queueSettings, setQueueSettings] = React.useState(queue.getSettings());
-    const [refreshInterval] = useSetting<number>("app", "queue.main.refresh_interval");
-    const [visibleQueued] = useSetting<number>("app", "queue.main.visible_queued");
-    const [visibleFinished] = useSetting<number>("app", "queue.main.visible_finished");
+    const [refreshInterval] = useSetting<number>("app", "queue.view.refresh_interval");
+    const [visibleQueued] = useSetting<number>("app", "queue.view.visible_queued");
+    const [visibleFinished] = useSetting<number>("app", "queue.view.visible_finished");
     const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
 
     const queueSettingsDefinition: SettingsCollection = {
