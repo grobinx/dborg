@@ -1,4 +1,4 @@
-import { useTheme } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
@@ -10,15 +10,15 @@ import { useProfiles } from './ProfilesContext';
 import { useDatabase } from './DatabaseContext';
 import { usePluginManager } from './PluginManagerContext';
 import DatabaseSession, { IDatabaseSession } from './DatabaseSession';
-import { RefreshMetadata, TabPanelChangedMessage } from '@renderer/app/Messages';
-import { CustomContainer, RenderedView, ConnectionView, CustomView } from 'plugins/manager/renderer/Plugin';
+import { RefreshMetadata, SWITCH_PANEL_TAB, TabPanelChangedMessage } from '@renderer/app/Messages';
+import { CustomContainer, RenderedView, ConnectionView, CustomView, ClickableView } from 'plugins/manager/renderer/Plugin';
 import SchemaAssistant from '@renderer/containers/SchemaAssistant';
 import ProfileBook from '@renderer/containers/SchemaBook';
 import Connections from '@renderer/containers/Connections/Connections';
 import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
-import "../containers/Connections/MetadataCollctorStatusBar";
+import "../containers/Connections/MetadataCollectorStatusBarButton";
 
 // ============================================================================
 // TYPES
@@ -44,7 +44,7 @@ export interface IContainer {
     disabled?: () => boolean;
 }
 
-export type ViewType = "rendered" | "connection" | "custom";
+export type ViewType = "rendered" | "connection" | "custom" | "clickable";
 
 export interface IView {
     type: ViewType;
@@ -58,7 +58,8 @@ export interface IView {
 export type View =
     RenderedView
     | ConnectionView
-    | CustomView;
+    | CustomView
+    | ClickableView;
 
 interface NewProfileContainer extends IContainer { type: "new-profile"; }
 interface ConnectionsContainer extends IContainer { type: "connections"; }
@@ -277,6 +278,15 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [plugins]);
 
+    const getAcronym = (text: string): string => {
+        const words = text.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+        return words
+            .map(word => word[0])
+            .slice(0, 4)
+            .join('')
+            .toUpperCase();
+    };
+
     const updateViewsForContainer = React.useCallback((container: SpecificContainer | null, session: IDatabaseSession | null) => {
         if (!container) {
             setViews(null);
@@ -295,6 +305,47 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             } else {
                 setSelectedView(list[0] || null);
             }
+        } else if (container.type === "profile-list") {
+            const views = sessionsRef.current?.map(session => {
+                const acronym = getAcronym(session.profile.sch_name);
+                return {
+                    type: "clickable",
+                    id: `connection-${session.info.uniqueId}`,
+                    icon: <span style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 32,
+                        height: 32,
+                    }}>
+                        <theme.icons.Connected sx={{
+                            position: 'absolute',
+                            fontSize: '4rem',
+                            opacity: 0.4,
+                            color: 'text.secondary',
+                            zIndex: 0
+                        }} />
+                        <span style={{
+                            position: 'relative',
+                            zIndex: 1,
+                            fontWeight: 600,
+                            fontStretch: 'extra-condensed',
+                            letterSpacing: `${acronym.length > 3 ? '-0.1em' : '0'}`,
+                        }}>
+                            {acronym}
+                        </span>
+                    </span>,
+                    label: session.profile.sch_name,
+                    onClick: () => {
+                        sendMessage(Messages.SWITCH_CONTAINER, "connections").then(() => {
+                            sendMessage(SWITCH_PANEL_TAB, "connections-tabs-panel", session.info.uniqueId);
+                        })
+                    },
+                } as ClickableView;
+            }) || null;
+            setViews(views);
+            setSelectedView(null);
         } else {
             setViews(null);
             setSelectedView(null);
@@ -333,6 +384,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 };
             }
             return;
+        }
+        else {
+            const isSess = selectedContainer?.type === "profile-list";
+            if (isSess) {
+                const target = views.find(v => v.id === viewId) || null;
+                if (target && target.type === "clickable") {
+                    target.onClick();
+                    return;
+                }
+            }
         }
         const next = views.find(v => v.id === viewId) || null;
         setSelectedView(next);

@@ -12,7 +12,7 @@ interface MetadataStatus {
     progress: string;
 }
 
-const MetadataCollctorStatusBar: React.FC = () => {
+const MetadataCollectorStatusBarButton: React.FC = () => {
     const theme = useTheme();
     const { subscribe, unsubscribe } = useMessages();
     const [metadataStatuses, setMetadataStatuses] = React.useState<Record<string, MetadataStatus>>({});
@@ -215,9 +215,9 @@ const MetadataCollctorStatusBar: React.FC = () => {
 };
 
 Promise.resolve().then(() => {
-    if (!appStatusBarButtons.hidden.has("MetadataCollctorStatusBar")) {
-        appStatusBarButtons.hidden.set("MetadataCollctorStatusBar", MetadataCollctorStatusBar);
+    if (!appStatusBarButtons.hidden.has("MetadataCollectorStatusBarButton")) {
+        appStatusBarButtons.hidden.set("MetadataCollectorStatusBarButton", MetadataCollectorStatusBarButton);
     }
 });
 
-export default MetadataCollctorStatusBar;
+export default MetadataCollectorStatusBarButton;

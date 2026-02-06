@@ -102,6 +102,14 @@ export interface RenderedView extends IView {
 }
 
 /**
+ * Interface representing a clickable button only
+ */
+export interface ClickableView extends IView {
+    type: "clickable"; // Type of the view
+    onClick: () => void; // Callback function to be executed when the view is clicked
+}
+
+/**
  * Interface representing a connection view
  */
 export interface ConnectionView extends IView {

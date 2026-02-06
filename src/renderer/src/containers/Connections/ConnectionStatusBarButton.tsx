@@ -10,7 +10,7 @@ interface ConnectionStatus {
     name: string;
 }
 
-const ConnectionStatusBar: React.FC = () => {
+const ConnectionStatusBarButton: React.FC = () => {
     const theme = useTheme();
     const [connectionStatuses, setConnectionStatuses] = React.useState<Record<string, ConnectionStatus>>({});
     const [iconStates, setIconStates] = React.useState<Record<string, boolean>>({}); // Przechowuje stan ikon (true = Connected, false = Disconnected)
@@ -160,9 +160,9 @@ const ConnectionStatusBar: React.FC = () => {
 };
 
 Promise.resolve().then(() => {
-    if (!appStatusBarButtons.hidden.has("ConnectionStatusBar")) {
-        appStatusBarButtons.hidden.set("ConnectionStatusBar", ConnectionStatusBar);
+    if (!appStatusBarButtons.hidden.has("ConnectionStatusBarButton")) {
+        appStatusBarButtons.hidden.set("ConnectionStatusBarButton", ConnectionStatusBarButton);
     }
 });
 
-export default ConnectionStatusBar;
+export default ConnectionStatusBarButton;

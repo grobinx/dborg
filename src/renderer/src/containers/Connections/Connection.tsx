@@ -7,7 +7,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { EditorsTabs, editorsTabsId } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
-import "./ConnectionStatusBar";
+import "./ConnectionStatusBarButton";
 import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
