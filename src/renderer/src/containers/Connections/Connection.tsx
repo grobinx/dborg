@@ -246,7 +246,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             unsubscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
             unsubscribe(QUEUE_TASK_MESSAGE, queueTaskUpdateHandle);
         };
-    }, [subscribe, unsubscribe, session]);
+    }, [subscribe, unsubscribe, session, session.getQueue()]);
 
     const handleQueueClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setQueueAnchorEl(event.currentTarget);

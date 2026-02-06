@@ -390,7 +390,7 @@ export const SettingsViewList: React.FC<{
     );
 };
 
-const SettingsViewGroup: React.FC<{
+export const SettingsViewGroup: React.FC<{
     group: SettingsGroup;
     selected?: string | null;
     selectedGroup?: string;

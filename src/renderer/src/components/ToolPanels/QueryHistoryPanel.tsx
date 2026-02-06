@@ -10,6 +10,8 @@ import { DataGrid } from "../DataGrid/DataGrid";
 import Tooltip from "../Tooltip";
 import { ToolButton } from "../buttons/ToolButton";
 import { collapseWhitespaceExceptQuotes } from "../editor/editorUtils";
+import { LocalSettingsDialog } from "../settings/SettingsDialog";
+import { queryHistorySettingsDefinition } from "@renderer/app.config";
 
 export const QueryHistoryPanel: React.FC<TabPanelContentProps> = () => {
     const { queryHistory } = useQueryHistory();
@@ -53,6 +55,7 @@ export const QueryHistoryPanelButtons: React.FC = () => {
     const { queryHistory, clearQueryHistory } = useQueryHistory();
     const theme = useTheme();
     const { t } = useTranslation();
+    const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
 
     return <TabPanelButtons>
         <Tooltip title={t("queryHistory-clear-all", "Clear query history")}>
@@ -64,6 +67,20 @@ export const QueryHistoryPanelButtons: React.FC = () => {
                 <theme.icons.Delete />
             </ToolButton>
         </Tooltip>
+        <Tooltip title={t("queryHistory-settings", "Query history settings")}>
+            <ToolButton
+                size="small"
+                disabled={queryHistory.length === 0}
+                onClick={() => setSettingsDialogOpen(true)}
+            >
+                <theme.icons.Settings />
+            </ToolButton>
+        </Tooltip>
+        <LocalSettingsDialog
+            open={settingsDialogOpen}
+            onClose={() => setSettingsDialogOpen(false)}
+            settings={queryHistorySettingsDefinition()}
+        />
     </TabPanelButtons>;
 };
 

@@ -5,10 +5,11 @@ import {
     DialogContent,
     DialogActions,
     styled,
+    Typography,
 } from '@mui/material';
-import { SettingsCollection } from './SettingsTypes';
+import { isSettingsCollection, isSettingsGroup, SettingsCollection, SettingsGroup } from './SettingsTypes';
 import { useTranslation } from 'react-i18next';
-import { SettingsViewCollection } from './SettingsForm';
+import { SettingsViewCollection, SettingsViewGroup } from './SettingsForm';
 import { Button } from '../buttons/Button';
 
 const StyledDialogContent = styled(DialogContent)(({ }) => ({
@@ -16,6 +17,7 @@ const StyledDialogContent = styled(DialogContent)(({ }) => ({
     overflowY: 'auto',
     minWidth: 500,
     minHeight: 400,
+    maxHeight: '75vh',
     display: 'flex',
     flexDirection: 'column',
 }));
@@ -23,8 +25,8 @@ const StyledDialogContent = styled(DialogContent)(({ }) => ({
 export interface LocalSettingsDialogProps {
     open: boolean;
     onClose: () => void;
-    collection: SettingsCollection;
-    initialValues?: Record<string, any>;
+    settings: SettingsCollection | SettingsGroup;
+    defaultValues?: Record<string, any>;
     onSave?: (values: Record<string, any>) => void;
     title?: string;
 }
@@ -32,23 +34,23 @@ export interface LocalSettingsDialogProps {
 export const LocalSettingsDialog: React.FC<LocalSettingsDialogProps> = ({
     open,
     onClose,
-    collection,
-    initialValues = {},
+    settings,
+    defaultValues,
     onSave,
     title,
 }) => {
     const { t } = useTranslation();
 
     // Local state for edited values
-    const [localValues, setLocalValues] = useState<Record<string, any>>(() => ({ ...initialValues }));
+    const [localValues, setLocalValues] = useState<Record<string, any>>(() => ({ ...defaultValues }));
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
     // Reset local values when dialog opens
     React.useEffect(() => {
-        if (open) {
-            setLocalValues({ ...initialValues });
+        if (open && defaultValues) {
+            setLocalValues({ ...defaultValues });
         }
-    }, [open, initialValues]);
+    }, [open, defaultValues]);
 
     const handleSave = useCallback(() => {
         onSave?.(localValues);
@@ -56,19 +58,22 @@ export const LocalSettingsDialog: React.FC<LocalSettingsDialogProps> = ({
     }, [localValues, onSave, onClose]);
 
     const handleCancel = useCallback(() => {
-        setLocalValues({ ...initialValues });
+        if (defaultValues) {
+            setLocalValues({ ...defaultValues });
+        }
         onClose();
-    }, [initialValues, onClose]);
+    }, [defaultValues, onClose]);
 
     // Create mutable proxy for SettingsViewCollection
     const mutableValues = useMemo(() => {
+        if (!defaultValues) return undefined;
         return new Proxy(localValues, {
             set(_target, prop: string, value) {
                 setLocalValues((prev) => ({ ...prev, [prop]: value }));
                 return true;
             },
         });
-    }, [localValues]);
+    }, [localValues, defaultValues]);
 
     return (
         <Dialog
@@ -84,21 +89,38 @@ export const LocalSettingsDialog: React.FC<LocalSettingsDialogProps> = ({
             )}
 
             <StyledDialogContent>
-                <SettingsViewCollection
-                    collection={collection}
-                    values={mutableValues}
-                    selected={selectedKey}
-                    onSelect={setSelectedKey}
-                />
+                {isSettingsCollection(settings) ? (
+                    <SettingsViewCollection
+                        collection={settings}
+                        values={mutableValues}
+                        selected={selectedKey}
+                        onSelect={setSelectedKey}
+                    />
+                ) : isSettingsGroup(settings) ? (
+                    <SettingsViewGroup
+                        group={settings}
+                        values={mutableValues}
+                        selected={selectedKey}
+                        onSelect={setSelectedKey}
+                    />
+                ) : <Typography color="error">{t('invalid-settings-structure', 'Invalid settings structure')}</Typography>}
             </StyledDialogContent>
 
             <DialogActions>
-                <Button onClick={handleCancel}>
-                    {t('cancel', 'Cancel')}
-                </Button>
-                <Button onClick={handleSave} color="primary">
-                    {t('save', 'Save')}
-                </Button>
+                {defaultValues !== undefined ? (
+                    <>
+                        <Button onClick={handleCancel}>
+                            {t('cancel', 'Cancel')}
+                        </Button>
+                        <Button onClick={handleSave} color="primary">
+                            {t('save', 'Save')}
+                        </Button>
+                    </>
+                ) : (
+                    <Button onClick={onClose} color="primary">
+                        {t('close', 'Close')}
+                    </Button>
+                )}
             </DialogActions>
         </Dialog>
     );
