@@ -92,11 +92,13 @@ export class QueueTask<T = any> implements IQueueTask<T> {
     setConcurrency(max: number): void {
         this.maxConcurrency = Math.max(1, Math.floor(max));
         this.pumpQueue();
+        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "setting", payload: { name: "maxConcurrency", value: this.maxConcurrency } } as QueueTaskMessage);
     }
 
     setQueueHistory(max: number): void {
         this.maxQueueHistory = Math.max(0, Math.floor(max));
         this.trimQueueHistory();
+        queueMessage(QUEUE_TASK_MESSAGE, { queueId: this.id, type: "setting", payload: { name: "maxQueueHistory", value: this.maxQueueHistory } } as QueueTaskMessage);
     }
 
     getSettings(): QueueTaskSettings {

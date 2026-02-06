@@ -5,7 +5,7 @@ import { SettingDecorator } from "./SettingDecorator";
 import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
 import { BooleanField } from "../inputs/BooleanField";
-import { alpha, styled, Typography, useTheme } from "@mui/material";
+import { alpha, styled, Typography } from "@mui/material";
 import createKey from "./createKey";
 import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
@@ -152,8 +152,15 @@ const calculateWidth = (setting: SettingTypeUnion) => {
     return defaultTextWidth;
 };
 
-function useSettingBinding(setting: SettingTypeUnion) {
-    const [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
+function useSettingBinding(setting: SettingTypeUnion, values?: Record<string, any>) {
+    let [settingValue, setSettingValue, defaultValue]: [any, (any: any) => void, any] = [null, () => { }, null];
+
+    if (values) {
+        [settingValue, setSettingValue] = React.useMemo(() => [values[setting.storageKey], (value: any) => values[setting.storageKey] = value], [values, setting.storageKey]);
+        defaultValue = setting.defaultValue;
+    } else {
+        [settingValue, setSettingValue, defaultValue] = useSetting(setting.storageGroup, setting.storageKey, setting.defaultValue);
+    }
     const [value, setValue] = React.useState<any>(settingValue);
 
     React.useEffect(() => {
@@ -176,8 +183,9 @@ const StringSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "string" }>,
     selected?: boolean;
     onSelect?: () => void;
-}> = ({ setting, selected, onSelect }) => {
-    const [value, onChange, onChanged] = useSettingBinding(setting);
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, values }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting, values);
 
     return (
         <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
@@ -201,8 +209,9 @@ const NumberSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "number" }>,
     selected?: boolean;
     onSelect?: () => void;
-}> = ({ setting, selected, onSelect }) => {
-    const [value, onChange, onChanged] = useSettingBinding(setting);
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, values }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting, values);
     return (
         <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <NumberField
@@ -226,8 +235,9 @@ const SelectSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "select" }>,
     selected?: boolean;
     onSelect?: () => void;
-}> = ({ setting, selected, onSelect }) => {
-    const [value, onChange, onChanged] = useSettingBinding(setting);
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, values }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting, values);
     return (
         <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <SelectField
@@ -249,8 +259,9 @@ const FilePathSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "filePath" }>,
     selected?: boolean;
     onSelect?: () => void;
-}> = ({ setting, selected, onSelect }) => {
-    const [value, onChange, onChanged] = useSettingBinding(setting);
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, values }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting, values);
     return (
         <SettingDecorator setting={setting} value={value} setValue={onChange} selected={selected}>
             <FilePathField
@@ -271,8 +282,9 @@ const BooleanSetting: React.FC<{
     setting: Extract<SettingTypeUnion, { type: "boolean" }>,
     selected?: boolean;
     onSelect?: () => void;
-}> = ({ setting, selected, onSelect }) => {
-    const [value, onChange, onChanged] = useSettingBinding(setting);
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, values }) => {
+    const [value, onChange, onChanged] = useSettingBinding(setting, values);
     return (
         <SettingDecorator setting={setting} value={value} setValue={onChange} showDescription={false} selected={selected}>
             <BooleanField
@@ -295,12 +307,13 @@ const registry: Partial<Record<SettingType, React.FC<{
     setting: any,
     selected?: boolean,
     onSelect?: () => void,
+    values?: Record<string, any>;
 }>>> = {
-    string: ({ setting, selected, onSelect }) => <StringSetting setting={setting} selected={selected} onSelect={onSelect} />,
-    number: ({ setting, selected, onSelect }) => <NumberSetting setting={setting} selected={selected} onSelect={onSelect} />,
-    select: ({ setting, selected, onSelect }) => <SelectSetting setting={setting} selected={selected} onSelect={onSelect} />,
-    boolean: ({ setting, selected, onSelect }) => <BooleanSetting setting={setting} selected={selected} onSelect={onSelect} />,
-    filePath: ({ setting, selected, onSelect }) => <FilePathSetting setting={setting} selected={selected} onSelect={onSelect} />,
+    string: ({ setting, selected, onSelect, values }) => <StringSetting setting={setting} selected={selected} onSelect={onSelect} values={values} />,
+    number: ({ setting, selected, onSelect, values }) => <NumberSetting setting={setting} selected={selected} onSelect={onSelect} values={values} />,
+    select: ({ setting, selected, onSelect, values }) => <SelectSetting setting={setting} selected={selected} onSelect={onSelect} values={values} />,
+    boolean: ({ setting, selected, onSelect, values }) => <BooleanSetting setting={setting} selected={selected} onSelect={onSelect} values={values} />,
+    filePath: ({ setting, selected, onSelect, values }) => <FilePathSetting setting={setting} selected={selected} onSelect={onSelect} values={values} />,
 };
 
 export const SettingsViewItem: React.FC<{
@@ -308,7 +321,8 @@ export const SettingsViewItem: React.FC<{
     selected?: boolean,
     onSelect?: () => void,
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ setting, selected, onSelect, onPinned }) => {
+    values?: Record<string, any>;
+}> = ({ setting, selected, onSelect, onPinned, values }) => {
     const Renderer = registry[setting.type];
     if (!Renderer) {
         return <>Unsupported setting type: {setting.type}</>;
@@ -344,17 +358,18 @@ export const SettingsViewItem: React.FC<{
             className="SettingsView-item"
             ref={itemRef}
         >
-            <Renderer setting={setting} selected={selected} onSelect={onSelect} />
+            <Renderer setting={setting} selected={selected} onSelect={onSelect} values={values} />
         </StyledSettingsViewItem>
     );
 };
 
 export const SettingsViewList: React.FC<{
     settings: SettingTypeUnion[] | undefined,
-    selected?: string,
+    selected?: string | null,
     onSelect?: (key: string) => void,
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ settings, selected, onSelect, onPinned }) => {
+    values?: Record<string, any>;
+}> = ({ settings, selected, onSelect, onPinned, values }) => {
     if (!settings || settings.length === 0) {
         return null;
     }
@@ -368,6 +383,7 @@ export const SettingsViewList: React.FC<{
                     selected={createKey(setting) === selected}
                     onSelect={() => onSelect?.(createKey(setting))}
                     onPinned={onPinned}
+                    values={values}
                 />)
             )}
         </StyledSettingsViewList>
@@ -376,13 +392,13 @@ export const SettingsViewList: React.FC<{
 
 const SettingsViewGroup: React.FC<{
     group: SettingsGroup;
-    selected?: string;
+    selected?: string | null;
     selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ group, selected, selectedGroup, onSelect, onPinned }) => {
-    const theme = useTheme();
-
+    values?: Record<string, any>;
+}> = ({ group, selected, selectedGroup, onSelect, onPinned, values }) => {
+    
     if (!group) {
         return null;
     }
@@ -408,6 +424,7 @@ const SettingsViewGroup: React.FC<{
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
+                values={values}
             />
 
             <SettingsViewGroupList
@@ -416,6 +433,7 @@ const SettingsViewGroup: React.FC<{
                 selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
+                values={values}
             />
         </StyledSettingsViewGroup>
     )
@@ -423,11 +441,12 @@ const SettingsViewGroup: React.FC<{
 
 const SettingsViewGroupList: React.FC<{
     groups?: SettingsGroup[];
-    selected?: string;
+    selected?: string | null;
     selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ groups, selected, selectedGroup, onSelect, onPinned }) => {
+    values?: Record<string, any>;
+}> = ({ groups, selected, selectedGroup, onSelect, onPinned, values }) => {
     if (!groups || groups.length === 0) {
         return null;
     }
@@ -440,19 +459,20 @@ const SettingsViewGroupList: React.FC<{
                 selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
+                values={values}
             />
         ))
     );
 };
 
-const SettingsViewCollection: React.FC<{
+export const SettingsViewCollection: React.FC<{
     collection: SettingsCollection;
-    selected?: string;
+    selected?: string | null;
     selectedGroup?: string;
     onSelect?: (key: string) => void;
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
-}> = ({ collection, selected, selectedGroup, onSelect, onPinned }) => {
-    const theme = useTheme();
+    values?: Record<string, any>;
+}> = ({ collection, selected, selectedGroup, onSelect, onPinned, values }) => {
 
     return (
         <StyledSettingsViewCollection className="SettingsView-collection">
@@ -475,6 +495,7 @@ const SettingsViewCollection: React.FC<{
                 selected={selected}
                 onSelect={onSelect}
                 onPinned={onPinned}
+                values={values}
             />
 
             <SettingsViewGroupList
@@ -483,6 +504,7 @@ const SettingsViewCollection: React.FC<{
                 selectedGroup={selectedGroup}
                 onSelect={onSelect}
                 onPinned={onPinned}
+                values={values}
             />
         </StyledSettingsViewCollection>
     );
@@ -496,6 +518,7 @@ export interface SettingsViewProps {
     onSelect: (key: string) => void;
     onPinned: (operation: 'add' | 'remove', key: string) => void;
     className?: string;
+    values?: Record<string, any>;
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({
@@ -506,14 +529,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onSelect,
     onPinned,
     className,
+    values,
 }) => {
     const { t } = useTranslation();
     console.count("SettingsView Render");
 
-    useScrollIntoView({ 
-        containerRef: ref, 
-        targetId: selectedGroup ?? selected, 
-        scrollOptions: { block: selectedGroup ? 'start' : 'nearest' } 
+    useScrollIntoView({
+        containerRef: ref,
+        targetId: selectedGroup ?? selected,
+        scrollOptions: { block: selectedGroup ? 'start' : 'nearest' }
     });
 
     return (
@@ -535,6 +559,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         selectedGroup={selectedGroup}
                         onSelect={onSelect}
                         onPinned={onPinned}
+                        values={values}
                     />
                 ))}
             </StyledSettingsViewContent>

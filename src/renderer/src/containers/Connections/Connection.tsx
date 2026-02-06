@@ -21,7 +21,7 @@ import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { useProfiles } from "@renderer/contexts/ProfilesContext";
+import { PROFILE_UPDATE_MESSAGE, ProfileUpdateMessage, useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
@@ -287,6 +287,11 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                 open={Boolean(queueAnchorEl)}
                 onClose={handleQueueClose}
                 queue={session.getQueue()}
+                onSaveSettings={(values) => {
+                    const sch_queue = { concurrency: values.maxConcurrency, history: values.maxQueueHistory };
+                    queueMessage(PROFILE_UPDATE_MESSAGE, { profileId: session.profile.sch_id, profile: { sch_queue } } as ProfileUpdateMessage);
+                    session.setUserData("profile", { ...session.profile, sch_queue });
+                }}
             />
 
             {session.info.driver.implements.includes("metadata") && (

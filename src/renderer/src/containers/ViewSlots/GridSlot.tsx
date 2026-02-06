@@ -77,7 +77,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (loadingRef.current) return;
-            
+
             if (redraw === "only") {
                 reRender(prev => prev + 1n);
             } else if (redraw === "compute") {
@@ -144,8 +144,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), { reason: error, source: "GridSlot", });
             } finally {
-                setLoading(false);
-                loadingRef.current = false;
+                setTimeout(() => {
+                    setLoading(false);
+                    loadingRef.current = false;
+                }, 0);
             }
         };
         setProgressBar(prev => ({

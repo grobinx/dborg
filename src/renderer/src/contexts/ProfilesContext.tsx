@@ -11,6 +11,13 @@ import PasswordDialog from "@renderer/dialogs/PasswordDialog";
 import { Properties } from "src/api/db";
 import useListeners from "@renderer/hooks/useListeners";
 import { ProfileRecord, ProfileUsePasswordType } from "../../../api/entities";
+import { useMessages } from "./MessageContext";
+
+export const PROFILE_UPDATE_MESSAGE = "profile-update";
+export interface ProfileUpdateMessage {
+    profileId: string;
+    profile: Partial<ProfileRecord>;
+}
 
 export type ProfileEventType =
     | 'creating'
@@ -60,7 +67,7 @@ interface ProfilesContextValue {
     getProfile: (profileId: string, throwError?: boolean) => ProfileRecord | null;
     reloadProfiles: () => Promise<void>;
     createProfile: (profile: ProfileRecord) => Promise<string | undefined>;
-    updateProfile: (profile: ProfileRecord) => Promise<boolean | undefined>;
+    updateProfile: (profileId: string, profile: Partial<ProfileRecord>) => Promise<boolean | undefined>;
     deleteProfile: (profileId: string) => Promise<boolean>;
     swapProfilesOrder: (sourceProfileId: string, targetProfileId: string, group?: boolean) => Promise<void>;
     connectToDatabase: (profileId: string) => Promise<api.ConnectionInfo | undefined>;
@@ -84,6 +91,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const profilesRef = React.useRef<ProfileRecord[]>(profiles);
     const [justFetched, setJustFetched] = useState<boolean>(false);
     const [oryginalProfilesData, setOryginalProfilesData] = useState<string | null>(null);
+    const { subscribe } = useMessages();
 
     const getProfile = useCallback((profileId: string, throwError: boolean = true) => {
         if (profilesRef.current) {
@@ -160,7 +168,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     React.useEffect(() => {
         loadProfiles();
     }, []);
-
+    
     const reloadProfiles = useCallback(async () => {
         await loadProfiles();
     }, []);
@@ -355,7 +363,10 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile.sch_drv_unique_id The driver unique ID.
      * @returns The profile without the password property if the password is not saved.
      */
-    const passwordRetention = useCallback((profile: ProfileRecord) => {
+    const passwordRetention = useCallback((profile: Partial<ProfileRecord>) => {
+        if (!profile.sch_properties || !profile.sch_drv_unique_id) {
+            return;
+        }
         const passwordProperty = drivers.find(profile.sch_drv_unique_id)?.passwordProperty;
         if (profile.sch_use_password !== "save" && passwordProperty) {
             delete profile.sch_properties?.[passwordProperty];
@@ -393,14 +404,14 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile The profile to update.
      * @returns True if the update was successful, false otherwise.
      */
-    const updateProfile = useCallback(async (profile: ProfileRecord) => {
-        const existsProfile = getProfile(profile.sch_id)!;
+    const updateProfile = useCallback(async (profileId: string, profile: Partial<ProfileRecord>) => {
+        const existsProfile = getProfile(profileId)!;
 
-        emitEvent('updating', { profile: existsProfile as ProfileRecord, status: 'started' });
-        if (!(await checkProfileExists(profile.sch_name, profile.sch_id))) {
-            emitEvent('updating', { profile: existsProfile as ProfileRecord, status: 'cancel' });
+        if (!existsProfile) {
+            emitEvent('updating', { profile: profile as ProfileRecord, status: 'error', error: new Error(t("profile-not-found", "Profile not found!")) });
             return false;
         }
+
         passwordRetention(profile);
 
         const updatedProfile: ProfileRecord = {
@@ -461,6 +472,15 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             });
         }
     }, []);
+
+    React.useEffect(() => {
+        const unsubscribeProfileUpdate = subscribe(PROFILE_UPDATE_MESSAGE, (message: ProfileUpdateMessage) => {
+            return updateProfile(message.profileId, message.profile);
+        });
+        return () => {
+            unsubscribeProfileUpdate();
+        };
+    }, [updateProfile]);
 
     console.count("ProfilesProvider render");
 

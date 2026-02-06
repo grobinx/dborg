@@ -10,6 +10,12 @@ export interface AppSettings extends TSettings {
 
     "toast.max"?: number;
     "toast.timeout"?: number;
+
+    "queue.main.refresh_interval"?: number;
+    "queue.main.visible_queued"?: number;
+    "queue.main.visible_finished"?: number;
+
+    "i_am_developer"?: boolean;
 }
 
 export interface DborgSettings extends TSettings {
@@ -52,6 +58,11 @@ const data_grid_defined_font_size = 14;
 const settings_store_timeout = 1000; // 1 second
 const search_delay = 300; // 300 ms
 
+/* queue settings */
+const queue_main_refresh_interval = 1000; // 2 seconds
+const queue_main_visible_queued = 20;
+const queue_main_visible_finished = 50;
+
 export type QueryHistoryDeduplicateMode = "none" | "time-based" | "aggressive";
 
 export const default_settings: ApplicationSettings = {
@@ -71,6 +82,10 @@ export const default_settings: ApplicationSettings = {
         "query_history.compress_text": true,
         "query_history.deduplicate_mode": "time-based",
         "query_history.deduplicate_time_window": 60, // 1 minute
+
+        "queue.main.refresh_interval": queue_main_refresh_interval,
+        "queue.main.visible_queued": queue_main_visible_queued,
+        "queue.main.visible_finished": queue_main_visible_finished,
     },
     dborg: {
         "data_grid.null_value": data_grid_null_value,
@@ -223,6 +238,43 @@ settingsRegistry.register((context) => {
                     description: t('query-history-deduplicate-time-window-description', 'Time window in seconds during which all duplicate queries are preserved. After this window, only one historical entry is kept per query. Useful for comparing cold vs cached query performance.'),
                     min: 1,
                     max: 600,
+                    step: 1,
+                },
+            ],
+        },
+        {
+            key: 'queue-main',
+            title: t('main-queue-settings', 'Main Queue Settings'),
+            description: t('main-queue-settings-description', 'Settings related to the main task queue.'),
+            settings: [
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'queue.main.refresh_interval',
+                    label: t('main-queue-refresh-interval', 'Main Queue Refresh Interval (ms)'),
+                    description: t('main-queue-refresh-interval-description', 'Interval in milliseconds for refreshing the main queue.'),
+                    min: 100,
+                    max: 10000,
+                    step: 100,
+                },
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'queue.main.visible_queued',
+                    label: t('main-queue-visible-queued', 'Visible Queued Items'),
+                    description: t('main-queue-visible-queued-description', 'Number of queued items visible in the main queue.'),
+                    min: 1,
+                    max: 200,
+                    step: 1,
+                },
+                {
+                    type: 'number',
+                    storageGroup: 'app',
+                    storageKey: 'queue.main.visible_finished',
+                    label: t('main-queue-visible-finished', 'Visible Finished Items'),
+                    description: t('main-queue-visible-finished-description', 'Number of finished items visible in the main queue.'),
+                    min: 1,
+                    max: 200,
                     step: 1,
                 },
             ],
