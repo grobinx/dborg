@@ -40,6 +40,8 @@ import { ReassignUser } from "./svg/ReassignUser";
 import { Vacuum } from "./svg/Vacuum";
 import { Analyze } from "./svg/Analyze";
 import { Queue } from "./svg/Queue";
+import { Reindex } from "./svg/Reindex";
+import { Cluster } from "./svg/Cluster";
 
 const icons = (palette: Palette): ThemeOptions => {
     return {
@@ -185,6 +187,8 @@ const icons = (palette: Palette): ThemeOptions => {
             Vacuum: (props) => <IconWrapper {...props} className="vacuum"><Vacuum fontSize="inherit" /></IconWrapper>,
             Analyze: (props) => <IconWrapper {...props} className="analyze"><Analyze fontSize="inherit" /></IconWrapper>,
             Queue: (props) => <IconWrapper {...props} className="queue"><Queue fontSize="inherit" /></IconWrapper>,
+            Reindex: (props) => <IconWrapper {...props} className="reindex"><Reindex fontSize="inherit" /></IconWrapper>,
+            Cluster: (props) => <IconWrapper {...props} className="cluster"><Cluster fontSize="inherit" /></IconWrapper>,
         }
     }
 }

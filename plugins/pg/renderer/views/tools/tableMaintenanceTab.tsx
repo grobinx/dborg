@@ -11,6 +11,9 @@ import { PercentageCell } from "@renderer/components/DataGrid/PercentageCell";
 import { versionToNumber } from "../../../../../src/api/version";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
 import textToLabel from "@renderer/utils/textToLabel";
+import { analyzeDialog, defaultAnalyzeStructure } from "../dialogs/analyze-dialog";
+import { reindexDialog, defaultReindexStructure } from "../dialogs/reindex-dialog";
+import { clusterDialog, defaultClusterStructure } from "../dialogs/cluster-dialog";
 
 interface RelationMaintenanceRecord {
     schema_name: string;
@@ -54,6 +57,9 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
 
     let relationList: RelationMaintenanceRecord[] = [];
     let vacuumStructure = { ...defaultVacuumStructure };
+    let analyzeStructure = { ...defaultAnalyzeStructure };
+    let reindexStructure = { ...defaultReindexStructure };
+    let clusterStructure = { ...defaultClusterStructure };
 
     const setSelectedSchemaName = async () => {
         try {
@@ -74,6 +80,16 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             session.getProfileSettings("wizzard-vacuum").then(settings => {
                 if (settings) {
                     vacuumStructure = { ...vacuumStructure, ...settings };
+                }
+            });
+            session.getProfileSettings("wizzard-analyze").then(settings => {
+                if (settings) {
+                    analyzeStructure = { ...analyzeStructure, ...settings };
+                }
+            });
+            session.getProfileSettings("wizzard-reindex").then(settings => {
+                if (settings) {
+                    reindexStructure = { ...reindexStructure, ...settings };
                 }
             });
         },
@@ -270,10 +286,58 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         label: t("analyze-relation", "Analyze Relation"),
                         icon: "Analyze",
                         disabled: () => selectedTable === null,
-                        run: () => {
+                        run: (context) => {
+                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            if (relationList.length === 0) {
+                                return;
+                            }
 
+                            slotContext.openDialog(cid("analyze-relation-dialog"), analyzeStructure).then(result => {
+                                if (result) {
+                                    analyzeStructure = result;
+                                    context.clearSelectedRows();
+                                }
+                            });
                         }
-                    }
+                    },
+                    {
+                        id: "reindex-relation-action",
+                        label: t("reindex-relation", "Reindex Relation"),
+                        icon: "Reindex",
+                        disabled: () => selectedTable === null,
+                        run: (context) => {
+                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            if (relationList.length === 0) {
+                                return;
+                            }
+
+                            slotContext.openDialog(cid("reindex-relation-dialog"), reindexStructure).then(result => {
+                                if (result) {
+                                    reindexStructure = result;
+                                    context.clearSelectedRows();
+                                }
+                            });
+                        }
+                    },
+                    {
+                        id: "cluster-relation-action",
+                        label: t("cluster-relation", "Cluster Relation"),
+                        icon: "Cluster",
+                        disabled: () => selectedTable === null,
+                        run: (context) => {
+                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            if (relationList.length === 0) {
+                                return;
+                            }
+
+                            slotContext.openDialog(cid("cluster-relation-dialog"), clusterStructure).then(result => {
+                                if (result) {
+                                    clusterStructure = result;
+                                    context.clearSelectedRows();
+                                }
+                            });
+                        }
+                    },
                 ],
                 actionGroups: (slotContext) => [
                     SelectSchemaGroup(session, selectedSchemaName, (schemaName: string | null) => {
@@ -324,6 +388,99 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         }
                     },
                 ),
+                analyzeDialog(
+                    versionNumber,
+                    cid("analyze-relation-dialog"),
+                    () => relationList.length ? relationList.map(r => r.identifier) : null,
+                    async (values: Record<string, any>) => {
+                        if (!relationList.length) return;
+
+                        const { sql, ...toStore } = values;
+                        session.storeProfileSettings("wizzard-analyze", toStore);
+
+                        const sqls = values.sql.split(";");
+                        for (let sql of sqls) {
+                            sql = sql.trim();
+                            if (!sql) continue;
+
+                            const label = textToLabel(sql);
+
+                            session.enqueue({
+                                execute: async (s) => {
+                                    await s.execute(sql);
+                                    slotContext.showNotification({
+                                        message: t("analyze-relation-success", "{{command}} completed successfully", { command: label }),
+                                        severity: "success",
+                                    });
+                                    slotContext.refresh(cid("grid"));
+                                },
+                                label: label,
+                            });
+                        }
+                    },
+                ),
+                reindexDialog(
+                    versionNumber,
+                    cid("reindex-relation-dialog"),
+                    () => relationList.length ? relationList.map(r => r.identifier) : null,
+                    async (values: Record<string, any>) => {
+                        if (!relationList.length) return;
+
+                        const { sql, ...toStore } = values;
+                        session.storeProfileSettings("wizzard-reindex", toStore);
+
+                        const sqls = values.sql.split(";");
+                        for (let sql of sqls) {
+                            sql = sql.trim();
+                            if (!sql) continue;
+
+                            const label = textToLabel(sql);
+
+                            session.enqueue({
+                                execute: async (s) => {
+                                    await s.execute(sql);
+                                    slotContext.showNotification({
+                                        message: t("reindex-relation-success", "{{command}} completed successfully", { command: label }),
+                                        severity: "success",
+                                    });
+                                    slotContext.refresh(cid("grid"));
+                                },
+                                label: label,
+                            });
+                        }
+                    },
+                ),
+                clusterDialog(
+                    versionNumber,
+                    cid("cluster-relation-dialog"),
+                    () => relationList.length ? relationList.map(r => r.identifier) : null,
+                    async (values: Record<string, any>) => {
+                        if (!relationList.length) return;
+
+                        const { sql, ...toStore } = values;
+                        session.storeProfileSettings("wizzard-cluster", toStore);
+
+                        const sqls = values.sql.split(";");
+                        for (let sql of sqls) {
+                            sql = sql.trim();
+                            if (!sql) continue;
+
+                            const label = textToLabel(sql);
+
+                            session.enqueue({
+                                execute: async (s) => {
+                                    await s.execute(sql);
+                                    slotContext.showNotification({
+                                        message: t("cluster-relation-success", "{{command}} completed successfully", { command: label }),
+                                        severity: "success",
+                                    });
+                                    slotContext.refresh(cid("grid"));
+                                },
+                                label: label,
+                            });
+                        }
+                    },
+                ),
             ],
         }),
         toolBar: {
@@ -333,6 +490,8 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                 [
                     "vacuum-relation-action",
                     "analyze-relation-action",
+                    "reindex-relation-action",
+                    "cluster-relation-action",
                 ],
                 SelectSchemaAction_ID,
                 SearchData_ID,
