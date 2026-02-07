@@ -71,7 +71,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             setSelectedSchemaName().then(() => {
                 slotContext.refresh(cid("grid"));
             });
-            session.getProfileSettings("vacuum").then(settings => {
+            session.getProfileSettings("wizzard-vacuum").then(settings => {
                 if (settings) {
                     vacuumStructure = { ...vacuumStructure, ...settings };
                 }
@@ -301,7 +301,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         if (!relationList.length) return;
 
                         const { sql, ...toStore } = values;
-                        session.storeProfileSettings("vacuum", toStore);
+                        session.storeProfileSettings("wizzard-vacuum", toStore);
 
                         const sqls = values.sql.split(";");
                         for (let sql of sqls) {
