@@ -533,7 +533,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
         } else if ((record?.connected ?? 0) > 0) {
             icon = (
                 <div style={{ position: "relative" }}>
-                    <theme.icons.Connected />
+                    <theme.icons.ConnectedGlow />
                     <UnboundBadge
                         content={(record?.connected ?? 0) > 1 ? (record?.connected ?? 0) : 0}
                         sx={{

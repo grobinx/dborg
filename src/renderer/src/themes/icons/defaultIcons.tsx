@@ -41,7 +41,7 @@ import { Vacuum } from "./svg/Vacuum";
 import { Analyze } from "./svg/Analyze";
 import { Queue } from "./svg/Queue";
 
-const icons = (_palette: Palette): ThemeOptions => {
+const icons = (palette: Palette): ThemeOptions => {
     return {
         icons: {
             MaximizeWindow: (props) => <IconWrapper {...props} className="maximize-window">&#128470;</IconWrapper>,
@@ -72,6 +72,7 @@ const icons = (_palette: Palette): ThemeOptions => {
             Drink: (props) => <IconWrapper {...props} className="drink"><MuiIcons.LocalBarOutlined fontSize="inherit" /></IconWrapper>,
             Properties: (props) => <IconWrapper {...props} className="properties"><BsIcons.CardList fontSize="inherit" /></IconWrapper>,
             Connected: (props) => <IconWrapper {...props} className="connected"><Connected fontSize="inherit" /></IconWrapper>,
+            ConnectedGlow: (props) => <IconWrapper {...props} sx={{ ...props.sx, filter: 'drop-shadow(0 0 4px ' + palette.success.main + ') drop-shadow(0 0 8px ' + palette.success.light + ')', }} className="connected-glow"><Connected fontSize="inherit" /></IconWrapper>,
             Disconnected: (props) => <IconWrapper {...props} className="disconnected"><Disconnected fontSize="inherit" /></IconWrapper>,
             Delete: (props) => <IconWrapper {...props} className="delete"><MuiIcons.DeleteOutline fontSize="inherit" /></IconWrapper>,
             GroupList: (props) => <IconWrapper {...props} className="group-list"><GroupList fontSize="inherit" /></IconWrapper>,

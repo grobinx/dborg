@@ -26,10 +26,10 @@ export const DBORG_SETTINGS_PATH = "settings"
 export const DBORG_EDITORS_PATH = "editors"
 export const DBORG_DATA_PATH = "data"
 
-export function dataPath(subPath: string | undefined = undefined): string {
+export function dataPath(...subPath: string[]): string {
     let result = join(app.getPath("home"), DBORG_USER_DATA_PATH);
     if (subPath !== undefined) {
-        result = join(result, subPath)
+        result = join(result, ...subPath)
     }
     if (!fs.existsSync(result)) {
         fs.mkdirSync(result, { recursive: true });

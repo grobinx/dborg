@@ -1,7 +1,7 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionView } from "plugins/manager/renderer/Plugin";
-import tableMaintenanceTab from "./tableSizesTab";
+import tableMaintenanceTab from "./tableMaintenanceTab";
 import roleCleanupTab from "./RoleCleanup/roleCleanupTab";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 

@@ -102,6 +102,7 @@ export interface ThemeIcons {
     Drink: IconWrapperFC;
     Properties: IconWrapperFC;
     Connected: IconWrapperFC;
+    ConnectedGlow: IconWrapperFC;
     Disconnected: IconWrapperFC;
     Delete: IconWrapperFC;
     GroupList: IconWrapperFC;

@@ -76,8 +76,8 @@ declare global {
                 onFileChanged: (callback: (filePath: string, eventType?: FileChangeEvent) => void, options?: { events?: FileChangeEvent[], filePath?: string }) => () => void,
             },
             settings: {
-                get: (name: string) => Promise<TSettings>,
-                store: (name: string, settings: TSettings) => void
+                get: (name: string, ...subPath: string[]) => Promise<TSettings>,
+                store: (name: string, settings: TSettings, ...subPath: string[]) => void
             },
             database: {
                 driver: {

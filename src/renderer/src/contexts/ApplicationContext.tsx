@@ -85,6 +85,49 @@ interface ApplicationState {
     getSessionState: (sessionId: string) => { views: View[]; selectedView: View | null };
 }
 
+const ConnectedViewIcon: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
+    const theme = useTheme();
+
+    const getAcronym = (text: string): string => {
+        const words = text.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+        return words
+            .map(word => word[0])
+            .slice(0, 4)
+            .join('')
+            .toUpperCase();
+    };
+
+    const acronym = getAcronym(session.profile.sch_name);
+
+    return (
+        <span style={{
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 32,
+            height: 32,
+        }}>
+            <theme.icons.ConnectedGlow sx={{
+                position: 'absolute',
+                fontSize: '4rem',
+                opacity: 0.4,
+                color: 'text.secondary',
+                zIndex: 0,
+            }} />
+            <span style={{
+                position: 'relative',
+                zIndex: 1,
+                fontWeight: 600,
+                fontStretch: 'extra-condensed',
+                letterSpacing: `${acronym.length > 3 ? '-0.1em' : '0'}`,
+            }}>
+                {acronym}
+            </span>
+        </span>
+    )
+}
+
 // ============================================================================
 // CONTEXT
 // ============================================================================
@@ -278,15 +321,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [plugins]);
 
-    const getAcronym = (text: string): string => {
-        const words = text.split(/[^a-zA-Z0-9]+/).filter(Boolean);
-        return words
-            .map(word => word[0])
-            .slice(0, 4)
-            .join('')
-            .toUpperCase();
-    };
-
     const updateViewsForContainer = React.useCallback((container: SpecificContainer | null, session: IDatabaseSession | null) => {
         if (!container) {
             setViews(null);
@@ -307,35 +341,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             }
         } else if (container.type === "profile-list") {
             const views = sessionsRef.current?.map(session => {
-                const acronym = getAcronym(session.profile.sch_name);
                 return {
                     type: "clickable",
                     id: `connection-${session.info.uniqueId}`,
-                    icon: <span style={{
-                        position: 'relative',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 32,
-                        height: 32,
-                    }}>
-                        <theme.icons.Connected sx={{
-                            position: 'absolute',
-                            fontSize: '4rem',
-                            opacity: 0.4,
-                            color: 'text.secondary',
-                            zIndex: 0
-                        }} />
-                        <span style={{
-                            position: 'relative',
-                            zIndex: 1,
-                            fontWeight: 600,
-                            fontStretch: 'extra-condensed',
-                            letterSpacing: `${acronym.length > 3 ? '-0.1em' : '0'}`,
-                        }}>
-                            {acronym}
-                        </span>
-                    </span>,
+                    icon: <ConnectedViewIcon session={session} />,
                     label: session.profile.sch_name,
                     onClick: () => {
                         sendMessage(Messages.SWITCH_CONTAINER, "connections").then(() => {

@@ -71,6 +71,11 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
             setSelectedSchemaName().then(() => {
                 slotContext.refresh(cid("grid"));
             });
+            session.getProfileSettings("vacuum").then(settings => {
+                if (settings) {
+                    vacuumStructure = { ...vacuumStructure, ...settings };
+                }
+            });
         },
         label: {
             type: "tablabel",
@@ -294,6 +299,9 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                     () => relationList.length ? relationList.map(r => r.identifier) : null,
                     async (values: Record<string, any>) => {
                         if (!relationList.length) return;
+
+                        const { sql, ...toStore } = values;
+                        session.storeProfileSettings("vacuum", toStore);
 
                         const sqls = values.sql.split(";");
                         for (let sql of sqls) {

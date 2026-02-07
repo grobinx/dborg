@@ -123,9 +123,6 @@ export const ProfileListLayout = (palette: Palette, _root: ThemeOptions): Profil
                 alignItems: 'center',
                 width: '4rem',
                 fontSize: '1.4rem',
-                '& .connected': {
-                    filter: 'drop-shadow(0 0 4px ' + palette.success.main + ') drop-shadow(0 0 8px ' + palette.success.light + ')',
-                }
             },
             actionButtons: {
                 display: 'flex',

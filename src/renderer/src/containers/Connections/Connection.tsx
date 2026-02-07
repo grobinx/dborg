@@ -289,8 +289,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                 queue={session.getQueue()}
                 onSaveSettings={(values) => {
                     const sch_queue = { concurrency: values.maxConcurrency, history: values.maxQueueHistory };
-                    queueMessage(PROFILE_UPDATE_MESSAGE, { profileId: session.profile.sch_id, profile: { sch_queue } } as ProfileUpdateMessage);
-                    session.setUserData("profile", { ...session.profile, sch_queue });
+                    session.storeProfileField("sch_queue", sch_queue);
                 }}
             />
 

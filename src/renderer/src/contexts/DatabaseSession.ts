@@ -2,10 +2,13 @@ import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IQueueTask, QueueTask, QueueTaskInfo, TaskOptions } from "@renderer/utils/QueueTask";
+import { queueMessage } from "./MessageContext";
+import { PROFILE_UPDATE_MESSAGE } from "./ProfilesContext";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
+    settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)
     metadata?: api.DatabasesMetadata | undefined; // Metadata of the database
 
     getVersion(): string | undefined; // Get the version of the database
@@ -24,6 +27,24 @@ export interface IDatabaseSession extends api.BaseConnection {
      * Get current queue tasks (including running).
      */
     getQueue(): IQueueTask;
+
+    /**
+     * Store a value in the profile field (persisted). 
+     * This will update the profile both in-memory and in the database, and trigger profile change listeners. 
+     * The value will be available in session profile structure.
+     * @param property profile property name
+     * @param value value or structured object to store
+     */
+    storeProfileField(property: string, values: Record<string, any>): void;
+
+    /**
+     * Store a value on user data folder in a file. 
+     * @param name name for a file in user data folder (without extension)
+     * @param value value or structured object to store
+     */
+    storeProfileSettings(name: string, value: Record<string, any>): void; 
+
+    getProfileSettings(name: string): Promise<Record<string, any> | null>;
 }
 
 export interface IDatabaseSessionCursor extends api.BaseCursor {
@@ -69,6 +90,7 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
 class DatabaseSession implements IDatabaseSession {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
+    settings: Map<string, Record<string, any>> = new Map(); 
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
 
@@ -172,9 +194,9 @@ class DatabaseSession implements IDatabaseSession {
         return window.dborg.database.connection.cancel(this.info.uniqueId);
     }
 
-        /**
-     * Enqueue task (fire-and-forget). Per-session.
-     */
+    /**
+ * Enqueue task (fire-and-forget). Per-session.
+ */
     enqueue(task: TaskOptions<IDatabaseSession>): void {
         this.queue.enqueue(task, this);
     }
@@ -184,6 +206,23 @@ class DatabaseSession implements IDatabaseSession {
      */
     getQueue(): IQueueTask {
         return this.queue;
+    }
+
+    storeProfileField(property: string, value: Record<string, any>): void {
+        queueMessage(PROFILE_UPDATE_MESSAGE, { profileId: this.profile.sch_id, profile: { [property]: value } });
+        this.setUserData("profile", { ...this.profile, [property]: value });
+    }
+
+    storeProfileSettings(name: string, value: Record<string, any>): void {
+        window.dborg.settings.store(name, value, "profiles", this.profile.sch_id);
+        this.settings.set(name, value);
+    }
+
+    getProfileSettings(name: string): Promise<Record<string, any> | null> {
+        if (this.settings.has(name)) {
+            return Promise.resolve(this.settings.get(name)!);
+        }
+        return window.dborg.settings.get(name, "profiles", this.profile.sch_id) ?? null;
     }
 }
 
