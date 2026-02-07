@@ -7,6 +7,7 @@ export interface ProfileRecord {
     sch_id: string;
     sch_created?: string;
     sch_updated?: string;
+    sch_deleted?: boolean;
     sch_drv_unique_id: string;
     sch_group?: string;
     sch_pattern?: string;

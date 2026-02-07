@@ -66,8 +66,8 @@ interface ProfilesContextValue {
     profiles: ProfileRecord[];
     getProfile: (profileId: string, throwError?: boolean) => ProfileRecord | null;
     reloadProfiles: () => Promise<void>;
-    createProfile: (profile: ProfileRecord) => Promise<string | undefined>;
-    updateProfile: (profileId: string, profile: Partial<ProfileRecord>) => Promise<boolean | undefined>;
+    createProfile: (profile: Omit<ProfileRecord, 'sch_id' | 'sch_created' | 'sch_updated' | 'sch_order'>) => Promise<string | undefined>;
+    updateProfile: (profileId: string, profile: Partial<ProfileRecord>) => boolean | undefined;
     deleteProfile: (profileId: string) => Promise<boolean>;
     swapProfilesOrder: (sourceProfileId: string, targetProfileId: string, group?: boolean) => Promise<void>;
     connectToDatabase: (profileId: string) => Promise<api.ConnectionInfo | undefined>;
@@ -325,13 +325,27 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const deleteProfile = useCallback(async (profileId: string) => {
         const profile = getProfile(profileId)!;
+        emitEvent('deleting', { profile, status: 'started' });
+        
         if (await dialogs.confirm(
             t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: profile.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
         )) {
-            setProfiles(prev => normalizeOrder(prev.filter(s => s.sch_id !== profileId)));
+            const deletedProfile: ProfileRecord = {
+                ...profile,
+                sch_deleted: true,
+                sch_updated: DateTime.now().toSQL(),
+            };
+            
+            setProfiles(prev =>
+                prev.map(p => p.sch_id === profileId ? deletedProfile : p)
+            );
+            
+            emitEvent('deleting', { profile: deletedProfile, status: 'success' });
             return true;
         }
+        
+        emitEvent('deleting', { profile, status: 'cancel' });
         return false;
     }, []);
 
@@ -342,7 +356,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @returns True if the profile does not exist or the user confirms to continue.
      */
     const checkProfileExists = useCallback(async (profileName: string, profileId?: string): Promise<boolean> => {
-        const profile = profilesRef.current.find(s => s.sch_name === profileName && s.sch_id !== profileId);
+        const profile = profilesRef.current.find(profile => !profile.sch_deleted && profile.sch_name === profileName && profile.sch_id !== profileId);
 
         if (profile) {
             const confirm = await dialogs.confirm(
@@ -378,7 +392,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile The profile to create.
      * @returns The ID of the created profile.
      */
-    const createProfile = useCallback(async (profile: ProfileRecord) => {
+    const createProfile = useCallback(async (profile: Omit<ProfileRecord, 'sch_id' | 'sch_created' | 'sch_updated' | 'sch_order'>) => {
         emitEvent('creating', { profile: profile as ProfileRecord, status: 'started' });
         if (!(await checkProfileExists(profile.sch_name))) {
             emitEvent('creating', { profile: profile as ProfileRecord, status: 'cancel' });
@@ -387,13 +401,13 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         passwordRetention(profile);
 
         const uniqueId = uuidv7();
-        const newProfile: ProfileRecord = {
+        const newProfile = {
             ...profile,
             sch_id: uniqueId,
             sch_created: DateTime.now().toSQL(),
             sch_updated: DateTime.now().toSQL(),
             sch_order: Infinity,
-        };
+        } as ProfileRecord;
         setProfiles((prev) => normalizeOrder([...prev, newProfile]));
         emitEvent('creating', { profile: newProfile, status: 'success' });
         return uniqueId;
@@ -404,7 +418,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
      * @param profile The profile to update.
      * @returns True if the update was successful, false otherwise.
      */
-    const updateProfile = useCallback(async (profileId: string, profile: Partial<ProfileRecord>) => {
+    const updateProfile = useCallback((profileId: string, profile: Partial<ProfileRecord>) => {
         const existsProfile = getProfile(profileId)!;
 
         if (!existsProfile) {

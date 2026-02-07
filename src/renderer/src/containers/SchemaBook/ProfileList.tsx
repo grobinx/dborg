@@ -144,6 +144,7 @@ const ProfileListSecondaryText = styled('div', {
 })(() => ({
 }));
 
+const newProfile = "new-profile";
 const refreshActionId = "profile-list-refresh";
 const groupActionId = "profile-list-group";
 const sortActionId = "profile-list-sort";
@@ -242,7 +243,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     }, [searchedData, groupList, t]);
     const { drivers, connections } = useDatabase();
     const addToast = useToast();
-    const { queueMessage } = useMessages();
+    const { sendMessage, queueMessage } = useMessages();
     const [connecting, setConnecting] = React.useState<string[]>([]);
     const [disconnecting, setDisconnecting] = React.useState<string[]>([]);
     const [erroring, setErroring] = React.useState<string[]>([]);
@@ -265,6 +266,16 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
 
     React.useEffect(() => {
         actions.current.registerAction({
+            id: newProfile,
+            label: t("new-profile", "New Profile"),
+            keySequence: ["F2"],
+            icon: "NewConnection",
+            run: () => {
+                sendMessage(Messages.SWITCH_CONTAINER, "new-profile").then(() => {
+                    queueMessage(Messages.SET_PROFILE_ID, undefined);
+                });
+            }
+        }, {
             id: refreshActionId,
             label: t("refresh-profile-list", "Refresh profile list"),
             keySequence: ["F5"],
@@ -396,7 +407,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
                 const id = String((conn.userData?.profile as ProfileRecord)?.sch_id ?? "");
                 if (id) counts[id] = (counts[id] ?? 0) + 1;
             });
-            const updated: Profile[] = profiles.map(record => {
+            const updated: Profile[] = profiles.filter(record => !record.sch_deleted).map(record => {
                 const driver = drivers.find(record.sch_drv_unique_id as string);
                 return {
                     ...record,
@@ -825,6 +836,12 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
                     <ToolButton
                         actionManager={actions.current}
                         action={refreshActionId}
+                        actionContext={() => context}
+                        size="large"
+                    />
+                    <ToolButton
+                        actionManager={actions.current}
+                        action={newProfile}
                         actionContext={() => context}
                         size="large"
                     />

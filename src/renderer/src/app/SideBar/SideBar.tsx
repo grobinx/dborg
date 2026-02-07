@@ -144,6 +144,9 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
                                     queueMessage(Messages.SWITCH_VIEW, view.id);
                                 }
                             }
+                            if (selectedContainer?.type === container.type && container.type === "new-profile") {
+                                queueMessage(Messages.SET_PROFILE_ID, undefined);
+                            }
                         }}
                         expanded={expanded}
                         placement={placement}

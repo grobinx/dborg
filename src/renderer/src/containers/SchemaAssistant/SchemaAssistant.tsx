@@ -94,7 +94,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
-    const { testConnection, connectToDatabase, getProfile: getSchema, createProfile: createSchema, updateProfile: updateSchema } = useProfiles();
+    const { testConnection, connectToDatabase, getProfile, createProfile, updateProfile } = useProfiles();
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -122,7 +122,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
         }
 
         try {
-            const schema = getSchema(schemaId)!;
+            const schema = getProfile(schemaId)!;
             setSchemaParams({
                 uniqueId: schemaId,
                 driverUniqueId: schema.sch_drv_unique_id,
@@ -144,7 +144,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
 
     const handleSetCloneSchemaIdMessage = React.useCallback(async (schemaId: string) => {
         try {
-            const schema = getSchema(schemaId)!;
+            const schema = getProfile(schemaId)!;
             setSchemaParams({
                 driverUniqueId: schema.sch_drv_unique_id,
                 schemaGroup: schema.sch_group,
@@ -195,7 +195,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             if (schema) {
                 try {
                     if (!schema.uniqueId) {
-                        const uniqueId = await createSchema({
+                        const uniqueId = await createProfile({
                             sch_drv_unique_id: schema.driverUniqueId!,
                             sch_group: schema.schemaGroup,
                             sch_pattern: schema.schemaPattern,
@@ -210,16 +210,18 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                         schema.uniqueId = uniqueId;
                     }
                     else {
-                        const result = await updateSchema({
-                            sch_id: schema.uniqueId,
-                            sch_drv_unique_id: schema.driverUniqueId!,
-                            sch_group: schema.schemaGroup,
-                            sch_pattern: schema.schemaPattern,
-                            sch_name: schema.schemaName,
-                            sch_color: schema.schemaColor,
-                            sch_use_password: schema.usePassword,
-                            sch_properties: schema.properties as Properties,
-                        }) as boolean;
+                        const result = updateProfile(
+                            schema.uniqueId,
+                            {
+                                sch_drv_unique_id: schema.driverUniqueId!,
+                                sch_group: schema.schemaGroup,
+                                sch_pattern: schema.schemaPattern,
+                                sch_name: schema.schemaName,
+                                sch_color: schema.schemaColor,
+                                sch_use_password: schema.usePassword,
+                                sch_properties: schema.properties as Properties,
+                            }
+                        );
                         if (!result) {
                             return;
                         }
