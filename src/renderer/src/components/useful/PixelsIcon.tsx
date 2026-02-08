@@ -67,6 +67,10 @@ export interface PixelsIconProps {
     fit?: "contain" | "stretch";
 }
 
+export function stringsTo2dArray(s: string[]): number[][] {
+    return s.map(row => row.split("").map(c => parseInt(c, 10)));
+}
+
 function resolveColor(palette: PixelsIconPalette, value: number): string | undefined {
     if (Array.isArray(palette)) return palette[value];
     return palette[value];

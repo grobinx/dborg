@@ -1263,10 +1263,7 @@ export const DataGrid = <T extends object>({
         setTimeout(() => setResizingColumn(null), 0);
     };
 
-    const handleRowNumberCellClick = (
-        event: React.MouseEvent,
-        absoluteRowIndex: number
-    ) => {
+    const handleRowNumberCellClick = (event: React.MouseEvent, absoluteRowIndex: number) => {
         if (containerRef.current) {
             containerRef.current.focus(); // Ustaw focus na StyledTableContainer
         }
@@ -1274,6 +1271,21 @@ export const DataGrid = <T extends object>({
         toggleRowSelection(absoluteRowIndex, event.ctrlKey, event.shiftKey);
         updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
     };
+
+    const handleCornerRowNumberCellClick = (event: React.MouseEvent) => {
+        if (containerRef.current) {
+            containerRef.current.focus(); // Ustaw focus na StyledTableContainer
+        }
+        if (displayData.length === 0) return;
+
+        const allSelected = selectedRows.length === displayData.length;
+        if (allSelected) {
+            setSelectedRows([]);
+        } else {
+            setSelectedRows(displayData.map((_, idx) => idx));
+        }
+        updateSelectedCell({ row: 0, column: selectedCell?.column ?? 0 });
+    }
 
     const onScroll = React.useCallback(() => {
         if (!isScrolling) setIsScrolling(true);
@@ -1384,6 +1396,7 @@ export const DataGrid = <T extends object>({
                                 borderBottom: `1px solid ${theme.palette.divider}`,
                                 borderRight: `1px solid ${theme.palette.divider}`,
                             }}
+                            onClick={handleCornerRowNumberCellClick}
                         >
                             #
                         </StyledHeaderCell>
