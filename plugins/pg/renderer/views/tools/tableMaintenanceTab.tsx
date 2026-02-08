@@ -494,6 +494,13 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         "reindex-relation-action",
                         "cluster-relation-action",
                     ],
+                ],
+                actionSlotId: cid("grid"),
+            },
+            {
+                id: cid("tab", "toolbar", "general"),
+                type: "toolbar",
+                tools: () => [
                     SelectSchemaAction_ID,
                     SearchData_ID,
                 ],
