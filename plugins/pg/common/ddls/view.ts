@@ -29,9 +29,9 @@ SELECT
   '-- DROP VIEW IF EXISTS ' || quote_ident(o.schema_name) || '.' || quote_ident(o.view_name) || E';\\n\\n' ||
   CASE
     WHEN o.relkind = 'm' THEN
-      'CREATE MATERIALIZED VIEW ' || quote_ident(o.schema_name) || '.' || quote_ident(o.view_name) || E' AS\\n' || pg_get_viewdef(o.oid, true) || ';'
+      'CREATE MATERIALIZED VIEW ' || quote_ident(o.schema_name) || '.' || quote_ident(o.view_name) || E' AS\\n' || pg_get_viewdef(o.oid, true) --|| ';'
     ELSE
-      'CREATE VIEW ' || quote_ident(o.schema_name) || '.' || quote_ident(o.view_name) || E' AS\\n' || pg_get_viewdef(o.oid, true) || ';'
+      'CREATE VIEW ' || quote_ident(o.schema_name) || '.' || quote_ident(o.view_name) || E' AS\\n' || pg_get_viewdef(o.oid, true) --|| ';'
   END AS source
 FROM obj o;
 `;
