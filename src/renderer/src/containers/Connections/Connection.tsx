@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
 import { ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";

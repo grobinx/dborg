@@ -1,16 +1,16 @@
 import React from "react";
-import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createTabPanel } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
-import ToolBarSlot from "./ToolBarSlot";
 import { useTheme } from "@mui/material";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { ToolBarSlots } from "./ToolBarSlot";
 
 interface TabsSlotProps {
 }
@@ -95,9 +95,9 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
         } else {
             setTabs([]);
         }
-        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, runtimeContext);
+        const resolvedToolBarSlot = resolveToolBarSlotsKindFactory(slot.toolBar, runtimeContext);
         if (resolvedToolBarSlot) {
-            setToolBar(<ToolBarSlot slot={resolvedToolBarSlot} />);
+            setToolBar(<ToolBarSlots slot={resolvedToolBarSlot} />);
         } else {
             setToolBar(null);
         }

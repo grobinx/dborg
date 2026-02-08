@@ -1,4 +1,4 @@
-import { SlotRuntimeContext, ToolBarSlotKind } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { SlotRuntimeContext, ToolBarSlotKind, ToolBarSlotsKind } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { useViewSlot } from "./ViewSlotContext";
 import { useRefSlot } from "./RefSlotContext";
@@ -12,7 +12,29 @@ import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 
-export interface ToolBarProps {
+export interface ToolBarsProps {
+    slot: ToolBarSlotsKind;
+    ref?: React.Ref<HTMLDivElement>;
+}
+
+export const ToolBarSlots: React.FC<ToolBarsProps> = ({
+    slot,
+    ref,
+}) => {
+    if (Array.isArray(slot)) {
+        return (
+            <TabPanelButtons>
+                {slot.map((s, index) => (
+                    <ToolBarSlot key={s.id ?? index} slot={s} ref={ref} />
+                ))}
+            </TabPanelButtons>
+        );
+    }
+
+    return <ToolBarSlot slot={slot} ref={ref} />;
+};
+
+interface ToolBarProps {
     slot: ToolBarSlotKind;
     ref?: React.Ref<HTMLDivElement>;
 }
@@ -132,5 +154,3 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
         </TabPanelButtons>
     );
 };
-
-export default ToolBarSlot;

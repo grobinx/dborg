@@ -19,8 +19,8 @@ import {
     isSelectField,
     isAutoRefresh,
     isCopyData,
-    resolveToolBarSlotKindFactory,
-    ToolBarSlotKindFactory,
+    resolveToolBarSlotsKindFactory,
+    ToolBarSlotsKindFactory,
     ITabSlot,
     resolveBooleanFactory,
     isSearchField,
@@ -49,12 +49,11 @@ import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { ToolBooleanField, ToolNumberField, ToolSearchField, ToolSelectedField, ToolTextField } from "./components/ToolFields";
 import { ToolAutoRefreshBar } from "./components/ToolAutoRefreshBar";
 import { ToolCopyDataButton } from "./components/ToolCopyDataButton";
-import ToolBarSlot from "./ToolBarSlot";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import ProgressBarSlot from "./ProgressBarSlot";
 import ColumnSlot from "./ColumnSlot";
 import RowSlot from "./RowSlot";
-import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { ToolBarSlots } from "./ToolBarSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -163,17 +162,13 @@ export function createTabPanel(
 }
 
 export function createTabToolbar(
-    slot: ToolBarSlotKindFactory | undefined,
+    slot: ToolBarSlotsKindFactory | undefined,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveToolBarSlotKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveToolBarSlotsKindFactory(slot, runtimeContext);
     if (resolvedContent) {
-        if (resolvedContent.type === "toolbar") {
-            return <ToolBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        } else if (resolvedContent.type === "rendered") {
-            return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        }
+        return <ToolBarSlots slot={resolvedContent} ref={ref} />
     }
     return null;
 }

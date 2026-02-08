@@ -2,13 +2,13 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
-import ToolBarSlot from "./ToolBarSlot";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { ToolBarSlots } from "./ToolBarSlot";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -82,11 +82,11 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedToolBarSlot = resolveToolBarSlotKindFactory(slot.toolBar, runtimeContext);
+        const resolvedToolBarSlot = resolveToolBarSlotsKindFactory(slot.toolBar, runtimeContext);
         setTitle(resolveReactNodeFactory(slot.title, runtimeContext));
         setIcon(resolveIcon(theme, slot.icon));
         if (resolvedToolBarSlot) {
-            setActionBar(<ToolBarSlot slot={resolvedToolBarSlot} ref={ref} />);
+            setActionBar(<ToolBarSlots slot={resolvedToolBarSlot} ref={ref} />);
         } else {
             setActionBar(null);
         }

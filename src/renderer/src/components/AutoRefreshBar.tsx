@@ -1,4 +1,4 @@
-import { SxProps, useTheme } from "@mui/material";
+import { Box, Stack, SxProps, useTheme } from "@mui/material";
 import React from "react";
 import TabPanelButtons from "./TabsPanel/TabPanelButtons";
 import { useTranslation } from "react-i18next";
@@ -203,7 +203,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
 
     // Renderowanie komponentu (przykładowe przyciski)
     return (
-        <TabPanelButtons ref={ref} style={style} sx={sx}>
+        <Stack direction="row" ref={ref} style={style} sx={sx} gap={2}>
             <InputDecorator indicator={false} disableBlink>
                 <SelectField
                     value={currentInterval}
@@ -309,7 +309,7 @@ export const AutoRefreshBar: React.FC<AutoRefreshBarProps> = (props) => {
                     </Tooltip>
                 )}
             </ButtonGroup>
-        </TabPanelButtons>
+        </Stack>
     );
 };
 

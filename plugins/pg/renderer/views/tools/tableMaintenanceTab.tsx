@@ -483,31 +483,39 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                 ),
             ],
         }),
-        toolBar: {
-            id: cid("tab", "toolbar"),
-            type: "toolbar",
-            tools: () => [
-                [
-                    "vacuum-relation-action",
-                    "analyze-relation-action",
-                    "reindex-relation-action",
-                    "cluster-relation-action",
+        toolBar: [
+            {
+                id: cid("tab", "toolbar"),
+                type: "toolbar",
+                tools: () => [
+                    [
+                        "vacuum-relation-action",
+                        "analyze-relation-action",
+                        "reindex-relation-action",
+                        "cluster-relation-action",
+                    ],
+                    SelectSchemaAction_ID,
+                    SearchData_ID,
                 ],
-                SelectSchemaAction_ID,
-                SearchData_ID,
-                {
-                    onTick: async (slotContext) => {
-                        slotContext.refresh(cid("grid"));
-                    },
-                    canPause: false,
-                    intervals: [5, 10, 15, 30, 60],
-                    defaultInterval: 10,
-                    canRefresh: true,
-                    executing: () => refreshing,
-                } as IAutoRefresh,
-            ],
-            actionSlotId: cid("grid"),
-        },
+                actionSlotId: cid("grid"),
+            },
+            {
+                id: cid("tab", "toolbar", "auto-refresh"),
+                type: "toolbar",
+                tools: [
+                    {
+                        onTick: async (slotContext) => {
+                            slotContext.refresh(cid("grid"));
+                        },
+                        canPause: false,
+                        intervals: [5, 10, 15, 30, 60],
+                        defaultInterval: 10,
+                        canRefresh: true,
+                        executing: () => refreshing,
+                    } as IAutoRefresh
+                ],
+            }
+        ]
     };
 };
 

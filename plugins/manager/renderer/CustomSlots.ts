@@ -82,7 +82,7 @@ export type ContentSlotKindsFactory = ContentSlotKind[] | ((runtimeContext: Slot
 export type TitleSlotKindFactory = TitleSlotKind | ((runtimeContext: SlotRuntimeContext) => TitleSlotKind);
 export type TextSlotKindFactory = TextSlotKind | ((runtimeContext: SlotRuntimeContext) => TextSlotKind);
 export type ContentSlotFactory = IContentSlot | ((runtimeContext: SlotRuntimeContext) => IContentSlot);
-export type ToolBarSlotKindFactory = ToolBarSlotKind | ((runtimeContext: SlotRuntimeContext) => ToolBarSlotKind);
+export type ToolBarSlotsKindFactory = ToolBarSlotsKind | ((runtimeContext: SlotRuntimeContext) => ToolBarSlotsKind);
 export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRuntimeContext) => IProgressBarSlot);
 export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runtimeContext: T) => IDialogSlot[]);
 export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
@@ -453,7 +453,7 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Akcje dostępne dla listy zakładek (opcjonalnie).
      */
-    toolBar?: ToolBarSlotKindFactory;
+    toolBar?: ToolBarSlotsKindFactory;
     /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
@@ -537,7 +537,7 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    toolBar?: ToolBarSlotKindFactory;
+    toolBar?: ToolBarSlotsKindFactory;
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
@@ -648,7 +648,7 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    toolBar?: ToolBarSlotKindFactory;
+    toolBar?: ToolBarSlotsKindFactory;
 }
 
 export type StatusBarValueFunction = () => string;
@@ -885,6 +885,10 @@ export interface IToolBarSlot extends ICustomSlot {
 export type ToolBarSlotKind =
     IToolBarSlot
     | IRenderedSlot;
+
+export type ToolBarSlotsKind = 
+    ToolBarSlotKind 
+    | ToolBarSlotKind[];
 
 export type ProgressBarDisplay = "auto" | BooleanFactory;
 
@@ -1288,7 +1292,7 @@ export function resolveContentSlotFactory(factory: ContentSlotFactory | undefine
 export function resolveSelectOptionsFactory<T = SlotRuntimeContext>(factory: SelectOptionsFactory<T> | undefined, context: T): Option[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveToolBarSlotKindFactory(factory: ToolBarSlotKindFactory | undefined, context: SlotRuntimeContext): ToolBarSlotKind | undefined {
+export function resolveToolBarSlotsKindFactory(factory: ToolBarSlotsKindFactory | undefined, context: SlotRuntimeContext): ToolBarSlotsKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveNumberFactory(factory: NumberFactory | undefined, context: SlotRuntimeContext): number | null | undefined {
