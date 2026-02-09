@@ -97,8 +97,8 @@ const columnsTab = (
                 first: () => ({
                     id: cid("table-columns-grid"),
                     type: "grid",
-                    uniqueField: "no",
-                    //changes: [{no: 2, name: "apf_created_at"}, {no: 3, name: "apf_updated_at", not_null: false}],
+                    uniqueField: "_row_unique_id",
+                    changes: [{_row_unique_id: 20, _row_state:"added", name: "apf_created_at"}, {_row_unique_id: 21, _row_state:"added", name: "apf_updated_at", not_null: false}],
                     onRowSelect(row: TableColumnRecord) {
                         selected = row;
                         slotContext.refresh(cid("table-columns-info-panel-title"));
@@ -109,6 +109,8 @@ const columnsTab = (
                         if (!selectedTable()) return [];
                         const { rows } = await session.query<TableColumnRecord>(`
                         select 
+                            att.attnum as _row_unique_id,
+                            'exists' as _row_state,
                             att.attnum as no, 
                             att.attname as name, 
                             att.atttypid::regtype::text as data_type,
@@ -149,11 +151,16 @@ const columnsTab = (
                             label: t("null", "Null"),
                             width: 40,
                             dataType: "boolean",
-                            formatter: (value: boolean) => (
-                                <Typography component="span" variant="inherit" color={value ? "success" : "warning"}>
-                                    {value ? t("no", "No") : t("yes", "Yes")}
-                                </Typography>
-                            ),
+                            formatter: (value: boolean) => {
+                                if (typeof value === "boolean") {
+                                    return (
+                                        <Typography component="span" variant="inherit" color={value ? "success" : "warning"}>
+                                            {value ? t("no", "No") : t("yes", "Yes")}
+                                        </Typography>
+                                    );
+                                }
+                                return null;
+                            },
                         },
                         { key: "default_value", label: t("default", "Default"), width: 120, dataType: "string" },
                         { key: "foreign_key", label: t("fk", "FK"), width: 40, dataType: "boolean", formatter: (v: boolean) => v ? t("yes", "Yes") : "" },

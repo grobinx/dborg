@@ -689,6 +689,15 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet: T[] = [...(data || [])];
 
+        if (changes && uniqueField && changes.length > 0) {
+            const existingIds = new Set(resultSet.map((row) => (row as any)[uniqueField]));
+            const newRows = changes.filter((change) => {
+                const changeId = (change as any)[uniqueField];
+                return changeId !== undefined && !existingIds.has(changeId);
+            }) as T[];
+            resultSet.push(...newRows);
+        }
+
         // Filtry kolumn
         resultSet = filterColumns.filterData(resultSet, columnsState.current);
 
@@ -747,6 +756,8 @@ export const DataGrid = <T extends object>({
         return resultSet;
     }, [
         data,
+        changes,
+        uniqueField,
         searchState.current, searchState.current?.text,
         columnsState.stateChanged,
         groupingColumns.columns,
@@ -1554,6 +1565,8 @@ export const DataGrid = <T extends object>({
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
                         const hasKeys = Object.keys(row).length > 0;
+                        const uniqueFieldValue = (row as any)[uniqueField];
+                        const changeRecord = changesMap?.get(uniqueFieldValue);
 
                         return (
                             <StyledRow
@@ -1611,10 +1624,8 @@ export const DataGrid = <T extends object>({
                                         let oldValue: any = undefined;
                                         let isChanged = false;
 
-                                        if (changesMap && uniqueField && col.key !== uniqueField) {
-                                            const uniqueValue = (row as any)[uniqueField];
-                                            const changeRecord = changesMap.get(uniqueValue);
-                                            if (changeRecord && col.key in changeRecord) {
+                                        if (changesMap && uniqueField && col.key !== uniqueField && changeRecord) {
+                                            if (col.key in changeRecord) {
                                                 oldValue = cellValue;
                                                 cellValue = (changeRecord as any)[col.key];
                                                 isChanged = true;
