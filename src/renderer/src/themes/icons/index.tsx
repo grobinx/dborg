@@ -217,6 +217,9 @@ export interface ThemeIcons {
     Queue: IconWrapperFC;
     Reindex: IconWrapperFC;
     Cluster: IconWrapperFC;
+    AddRow: IconWrapperFC;
+    RemoveRow: IconWrapperFC;
+    EditRow: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

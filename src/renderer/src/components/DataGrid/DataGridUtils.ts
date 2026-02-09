@@ -96,7 +96,7 @@ export const scrollToCell = (
     rowHeight: number,
     columns: ColumnDefinition[],
     footerVisible: boolean,
-    rowNumberColumnWidth: number
+    startWidth: number
 ) => {
     if (columns.length === 0 || columnIndex < 0) {
         return; // Brak kolumn, nie przewijaj
@@ -122,8 +122,8 @@ export const scrollToCell = (
 
     const visibleWidth = container.offsetWidth - scrollbarWidth; // Widoczna szerokość kontenera (bez paska przewijania)
 
-    if (columnLeft < container.scrollLeft + rowNumberColumnWidth) {
-        container.scrollLeft = columnLeft - rowNumberColumnWidth; // Przewiń w lewo
+    if (columnLeft < container.scrollLeft + startWidth) {
+        container.scrollLeft = columnLeft - startWidth; // Przewiń w lewo
     } else if (columnRight > container.scrollLeft + visibleWidth) {
         container.scrollLeft = columnRight - visibleWidth; // Przewiń w prawo
     }

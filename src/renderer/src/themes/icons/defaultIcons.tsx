@@ -189,6 +189,9 @@ const icons = (palette: Palette): ThemeOptions => {
             Queue: (props) => <IconWrapper {...props} className="queue"><Queue fontSize="inherit" /></IconWrapper>,
             Reindex: (props) => <IconWrapper {...props} className="reindex"><Reindex fontSize="inherit" /></IconWrapper>,
             Cluster: (props) => <IconWrapper {...props} className="cluster"><Cluster fontSize="inherit" /></IconWrapper>,
+            AddRow: (props) => <IconWrapper {...props} className="add-row"><MuiIcons.AddBoxOutlined fontSize="inherit" /></IconWrapper>,
+            RemoveRow: (props) => <IconWrapper {...props} className="remove-row"><MuiIcons.IndeterminateCheckBoxOutlined fontSize="inherit" /></IconWrapper>,
+            EditRow: (props) => <IconWrapper {...props} className="edit-row"><MuiIcons.EditOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

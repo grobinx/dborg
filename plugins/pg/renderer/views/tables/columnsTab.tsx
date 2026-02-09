@@ -6,6 +6,7 @@ import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { Action, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { versionToNumber } from "../../../../../src/api/version";
+import { DataGridRow } from "@renderer/components/DataGrid/DataGrid";
 
 export interface TableColumnRecord {
     no: number;
@@ -97,8 +98,13 @@ const columnsTab = (
                 first: () => ({
                     id: cid("table-columns-grid"),
                     type: "grid",
-                    uniqueField: "_row_unique_id",
-                    changes: [{_row_unique_id: 20, _row_state:"added", name: "apf_created_at"}, {_row_unique_id: 21, _row_state:"added", name: "apf_updated_at", not_null: false}],
+                    uniqueField: "no",
+                    changes: [
+                        { uniqueId: 20, type: "add", row: { name: "apf_created_at" } },
+                        { uniqueId: 21, type: "add", row: { name: "apf_updated_at", not_null: false } },
+                        { uniqueId: 1, type: "update", row: { no: 1, name: "id", not_null: true } },
+                        { uniqueId: 2, type: "remove", row: { no: 2, name: "name" } },
+                    ] as DataGridRow<Partial<TableColumnRecord>>[],
                     onRowSelect(row: TableColumnRecord) {
                         selected = row;
                         slotContext.refresh(cid("table-columns-info-panel-title"));
@@ -109,8 +115,6 @@ const columnsTab = (
                         if (!selectedTable()) return [];
                         const { rows } = await session.query<TableColumnRecord>(`
                         select 
-                            att.attnum as _row_unique_id,
-                            'exists' as _row_state,
                             att.attnum as no, 
                             att.attname as name, 
                             att.atttypid::regtype::text as data_type,

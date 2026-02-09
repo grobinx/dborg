@@ -2,7 +2,7 @@ import { Theme } from "@mui/material";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
-import { DataGridMode } from "@renderer/components/DataGrid/DataGrid";
+import { DataGridRow, DataGridMode } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
@@ -68,7 +68,7 @@ export type StringFactory<T = SlotRuntimeContext> = string | ((runtimeContext: T
 export type StringAsyncFactory<T = SlotRuntimeContext> = Promise<string> | ((runtimeContext: T) => Promise<string>);
 export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeContext: T) => Option[]);
 export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
-export type RecordsFactory<T = SlotRuntimeContext> = Record<string, any>[] | undefined | ((runtimeContext: T) => Record<string, any>[] | undefined);
+export type RecordsFactory<T = SlotRuntimeContext> = DataGridRow<Record<string, any>>[] | undefined | ((runtimeContext: T) => DataGridRow<Record<string, any>>[] | undefined);
 export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);

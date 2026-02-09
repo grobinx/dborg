@@ -164,7 +164,7 @@ export const useColumnsState = (
     autoSaveId?: string,
     onSave?: () => Record<string, any>,
     onRestore?: (data: Record<string, any> | null) => void,
-    rowNumberColumnWidth?: number,
+    startColumnsWidth?: number,
 ): UseColumnsState => {
     const layoutKey = useMemo(() => getColumnsLayoutKey(initialColumns, autoSaveId), [initialColumns]);
     const [columnsState, setColumnsState] = useState<ColumnDefinition[]>(() =>
@@ -248,8 +248,8 @@ export const useColumnsState = (
 
     useEffect(() => {
         const newTotalWidth = displayColumns.reduce((sum, col) => sum + (col.width || 150), 0);
-        setTotalWidth(newTotalWidth + (rowNumberColumnWidth || 0));
-    }, [displayColumns, rowNumberColumnWidth]);
+        setTotalWidth(newTotalWidth + (startColumnsWidth || 0));
+    }, [displayColumns, startColumnsWidth]);
 
     // Funkcja do sortowania kolumny
     const sortColumn = React.useCallback((displayColumnIndex: number, force: boolean = false) => {
@@ -395,8 +395,8 @@ export const useColumnsState = (
         return displayColumns
             .slice(0, displayColumnIndex)
             .reduce((sum, col) => sum + (col.width || 150), 0) +
-            (rowNumberColumnWidth || 0);
-    }, [displayColumns, rowNumberColumnWidth]);
+            (startColumnsWidth || 0);
+    }, [displayColumns, startColumnsWidth]);
 
     const setSummary = React.useCallback((columnKey: string, operation?: SummaryOperation) => {
         setColumnsState(prevColumns =>

@@ -11,7 +11,6 @@ import { TextField } from "@renderer/components/inputs/TextField";
 import { Button } from "@renderer/components/buttons/Button";
 import MonacoEditor from "@renderer/components/editor/MonacoEditor";
 import type { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
-import { createRoot } from "react-dom/client";
 
 type DataType = Record<string, any>;
 
@@ -315,7 +314,7 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                             // W miejscu pierwszego booleana pokaż grupę wszystkich booleanów
                             if (index === firstBooleanIndex && booleanOpts.length > 0) {
                                 return (
-                                    <Box sx={{ display: 'flex', gap: 8 }}>
+                                    <Box key={opt.key} sx={{ display: 'flex', gap: 8 }}>
                                         {booleanOpts.map((bopt: any, bindex: number) => (
                                             <InputDecorator key={bopt.key} indicator={false}>
                                                 <BooleanField

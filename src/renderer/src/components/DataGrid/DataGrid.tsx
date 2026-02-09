@@ -25,10 +25,18 @@ import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 
 export type DataGridMode = "defined" | "data";
 
+export type DataGridRowType = "regular" | "update" | "add" | "remove";
+
+export interface DataGridRow<T> {
+    uniqueId: any;
+    type: DataGridRowType;
+    row: T;
+}
+
 interface DataGridProps<T extends object> {
     columns: ColumnDefinition[];
     data: T[];
-    changes?: Partial<T>[];
+    changes?: DataGridRow<T>[];
 
     /**
      * Unikalne pole struktury. Grid bęzie próbował przy odświerzaniu odszukać rekord z wartością tego pola.
@@ -154,6 +162,7 @@ const StyledHeader = styled('div', {
     position: "sticky",
     top: 0,
     display: "flex",
+    flexDirection: "row",
     zIndex: 2,
     backgroundColor: theme.palette.background.table.header,
     color: theme.palette.table.contrastText,
@@ -193,7 +202,7 @@ const StyledHeaderCell = styled('div', {
         '&.active-column': {
             backgroundColor: alpha(theme.palette.primary.main, 0.1),
         },
-        '&.row-number-cell': {
+        '&.row-number-cell, &.row-change-cell': {
             backgroundColor: theme.palette.background.table.container,
         },
     })
@@ -251,6 +260,7 @@ const StyledRow = styled("div", {
     slot: "row",
 })(({ theme }) => ({
     display: "flex",
+    flexDirection: "row",
     position: "absolute",
     top: 0,
     left: 0,
@@ -329,7 +339,7 @@ const StyledCell = styled("div", {
             outline: `2px solid ${theme.palette.primary.main}`,
             outlineOffset: -2,
         },
-        '&.row-number-cell': {
+        '&.row-number-cell, &.row-change-cell': {
             backgroundColor: theme.palette.background.table.container,
             '.selected &': {
                 backgroundColor: theme.palette.background.table.selected,
@@ -337,16 +347,34 @@ const StyledCell = styled("div", {
             fontWeight: "bold",
             borderBottom: `1px solid ${theme.palette.divider}`,
         },
+        '&.row-change-cell': {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
         borderBottom: `1px solid transparent`,
         '.selected &': {
             borderBottom: `1px solid ${theme.palette.divider}`,
         },
-        '&.changed-cell': {
+        '&.changed-update': {
             backgroundColor: alpha(theme.palette.warning.main, 0.15),
             borderLeftColor: theme.palette.warning.main,
-            borderLeftWidth: '4px',
+            borderLeftWidth: '3px',
             borderLeftStyle: 'solid',
             //paddingLeft: `calc(var(--dg-cell-px))`,
+        },
+        '.changed-row.changed-row-remove &': {
+            ':not(.row-number-cell):not(.row-change-cell)': {
+                backgroundColor: alpha(theme.palette.error.main, 0.15),
+                color: alpha(theme.palette.main.main, 0.8),
+                textDecoration: "line-through",
+            }
+        },
+        '&.changed-add': {
+            backgroundColor: alpha(theme.palette.success.main, 0.15),
+            borderLeftColor: theme.palette.success.main,
+            borderLeftWidth: '3px',
+            borderLeftStyle: 'solid',
         },
     })
 );
@@ -358,7 +386,7 @@ const StyledFooter = styled('div', {
     position: "sticky",
     bottom: 0,
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row",
     zIndex: 3,
     backgroundColor: theme.palette.background.table.footer,
     color: theme.palette.table.contrastText,
@@ -400,7 +428,7 @@ const StyledFooterCell = styled('div', {
         '&.active-column': {
             backgroundColor: alpha(theme.palette.primary.main, 0.1),
         },
-        '&.row-number-cell': {
+        '&.row-number-cell, &.row-change-cell': {
             backgroundColor: theme.palette.background.table.container,
         },
     })
@@ -552,25 +580,26 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    // Mapa zmian dla szybkiego dostępu: uniqueValue → Partial<T>
+    // Mapa zmian dla szybkiego dostępu: uniqueValue → DataGridChange<T>
     const changesMap = React.useMemo(() => {
         if (!changes || !uniqueField) return null;
-        const map = new Map<any, Partial<T>>();
-        changes.forEach((change) => {
-            const key = (change as any)[uniqueField];
-            if (key !== undefined && key !== null) {
-                map.set(key, change);
-            }
-        });
+        const map = new Map<any, DataGridRow<T>>();
+        changes.forEach((change) => map.set(change.uniqueId, change));
         return map;
     }, [changes, uniqueField]);
 
     const { data, columns, pivotMap } = useMemo<{
-        data: T[],
+        data: DataGridRow<T>[],
         columns: ColumnDefinition[],
         pivotMap: Record<string, ColumnDataType> | null,
     }>(() => {
-        if (!pivot) return { data: initialData, columns: initialColumns, pivotMap: null };
+        if (!pivot) {
+            return {
+                data: initialData.map((row) => ({ uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>)),
+                columns: initialColumns,
+                pivotMap: null
+            };
+        }
         // Transponowanie: każda kolumna staje się wierszem
         return {
             data: pivotColumns?.length ?
@@ -589,13 +618,13 @@ export const DataGrid = <T extends object>({
                             row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
                         }
                     });
-                    return row as T;
+                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>;
                 }) : initialColumns.map((col) => {
                     const row: any = { name: col.label, key: col.key };
                     initialData.forEach((dataRow, rowIndex) => {
                         row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
                     });
-                    return row as T;
+                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>;
                 }),
             columns: pivotColumns?.length ? pivotColumns : [
                 {
@@ -619,7 +648,8 @@ export const DataGrid = <T extends object>({
     }, [pivot, initialColumns, initialData, pivotColumns, t]);
 
     const [rowNumberColumnWidth, setRowNumberColumnWidth] = useState(50); // Domyślna szerokość kolumny z numerami wierszy
-    const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState, rowNumberColumnWidth);
+    const [changeRowColumnWidth, setChangeRowColumnWidth] = useState(30); // Domyślna szerokość kolumny z informacją o zmianach
+    const columnsState = useColumnsState(columns, mode, autoSaveId, onSaveColumnsState, onRestoreColumnsState, rowNumberColumnWidth + changeRowColumnWidth);
     const [openCommandPalette, setOpenCommandPalette] = useState(false);
     const [commandPalettePrefix, setCommandPalettePrefix] = useState<string>("");
     const [selectedCell, setSelectedCell] = useState<TableCellPosition | null>(null);
@@ -640,8 +670,6 @@ export const DataGrid = <T extends object>({
     const [dialogContent, setDialogContent] = useState<React.ReactNode | null>(null);
 
     useImperativeHandle(ref, () => dataGridActionContext);
-
-    console.count("DataGrid render");
 
     const classes = React.useMemo(() => {
         return clsx(
@@ -684,17 +712,16 @@ export const DataGrid = <T extends object>({
         searchState.setSearchText(outerSearchText ?? null);
     }, [outerSearchText]);
 
-    const displayDataRef = useRef<T[]>([]);
-    const displayData = React.useMemo<T[]>(() => {
+    const displayDataRef = useRef<DataGridRow<T>[]>([]);
+    const displayData = React.useMemo<DataGridRow<T>[]>(() => {
         console.debug("DataGrid derive filteredDataState (memo)");
-        let resultSet: T[] = [...(data || [])];
+        let resultSet = [...(data || [])];
 
         if (changes && uniqueField && changes.length > 0) {
             const existingIds = new Set(resultSet.map((row) => (row as any)[uniqueField]));
             const newRows = changes.filter((change) => {
-                const changeId = (change as any)[uniqueField];
-                return changeId !== undefined && !existingIds.has(changeId);
-            }) as T[];
+                return !existingIds.has(change.uniqueId) && change.type === "add";
+            });
             resultSet.push(...newRows);
         }
 
@@ -901,11 +928,20 @@ export const DataGrid = <T extends object>({
         const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
-            prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.[uniqueField] : null;
+            prevUniqueValueRef.current = uniqueField ? displayData[next.row].row?.[uniqueField] : null;
             selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
-                    scrollToCell(containerRef.current, next.row, next.column, columnsState.columnLeft(next.column), rowHeight, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth);
+                    scrollToCell(
+                        containerRef.current,
+                        next.row,
+                        next.column,
+                        columnsState.columnLeft(next.column),
+                        rowHeight,
+                        columnsState.current,
+                        columnsState.anySummarized,
+                        rowNumberColumnWidth + changeRowColumnWidth
+                    );
                 }
             });
         });
@@ -921,7 +957,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid row click");
         if (onRowSelect) {
             if (selectedCell?.row !== undefined) {
-                onRowSelect(displayData[selectedCell.row]);
+                onRowSelect(displayData[selectedCell.row].row);
             }
             else {
                 onRowSelect(undefined);
@@ -943,6 +979,14 @@ export const DataGrid = <T extends object>({
             setRowNumberColumnWidth(0);
         }
     }, [displayData.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
+
+    React.useEffect(() => {
+        if (changes && uniqueField) {
+            setChangeRowColumnWidth(30);
+        } else {
+            setChangeRowColumnWidth(0);
+        }
+    }, [changes, uniqueField]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -967,7 +1011,7 @@ export const DataGrid = <T extends object>({
             setFontSize(height); // Funkcja do zmiany fontSize
             if (containerRef.current && selectedCellRef.current) {
                 const { row, column } = selectedCellRef.current;
-                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth);
+                scrollToCell(containerRef.current, row, column, columnsState.columnLeft(column), height, columnsState.current, columnsState.anySummarized, rowNumberColumnWidth + changeRowColumnWidth);
             }
         },
         getColumnWidth: () => columnsState.current[selectedCellRef.current?.column ?? 0]?.width || null,
@@ -982,14 +1026,14 @@ export const DataGrid = <T extends object>({
         getData: (row) => {
             if (row === undefined) {
                 if (selectedCellRef.current) {
-                    return displayDataRef.current[selectedCellRef.current.row] || null;
+                    return displayDataRef.current[selectedCellRef.current.row]?.row || null;
                 }
                 return null;
             }
-            return displayDataRef.current[row] || null;
+            return displayDataRef.current[row]?.row || null;
         },
         getRows() {
-            return displayDataRef.current;
+            return displayDataRef.current.map(r => r.row);
         },
         getSelectedRows() {
             return selectedRowsRef.current;
@@ -999,9 +1043,9 @@ export const DataGrid = <T extends object>({
                 return [];
             }
             if (selectedRowsRef.current.length === 0) {
-                return [displayDataRef.current[selectedCellRef.current.row]];
+                return [displayDataRef.current[selectedCellRef.current.row]?.row || null];
             }
-            return selectedRowsRef.current.map(i => displayDataRef.current[i]);
+            return selectedRowsRef.current.map(i => displayDataRef.current[i]?.row || null);
         },
         clearSelectedRows: () => {
             setSelectedRows([]);
@@ -1353,7 +1397,7 @@ export const DataGrid = <T extends object>({
             if (!el) return;
             const r = Number(el.dataset.r);
             const c = Number(el.dataset.c);
-            onRowDoubleClick(displayData[r]);
+            onRowDoubleClick(displayData[r]?.row);
         }
     }, [onRowDoubleClick, displayData]);
 
@@ -1412,7 +1456,7 @@ export const DataGrid = <T extends object>({
                         height: rowHeight
                     }}
                 >
-                    {showRowNumberColumn && (displayData.length > 0) && (
+                    {showRowNumberColumn && (
                         <StyledHeaderCell
                             key="row-number-cell"
                             className={clsx(
@@ -1432,6 +1476,27 @@ export const DataGrid = <T extends object>({
                             onClick={handleCornerRowNumberCellClick}
                         >
                             #
+                        </StyledHeaderCell>
+                    )}
+                    {changes && uniqueField && (
+                        <StyledHeaderCell
+                            key="row-change-cell"
+                            className={clsx(
+                                "DataGrid-headerCell",
+                                "row-change-cell",
+                                classes,
+                            )}
+                            style={{
+                                position: 'sticky',
+                                zIndex: 5,
+                                width: changeRowColumnWidth,
+                                left: rowNumberColumnWidth,
+                                textAlign: 'center',
+                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                borderRight: `1px solid ${theme.palette.divider}`,
+                            }}
+                        >
+                            ±
                         </StyledHeaderCell>
                     )}
                     {Array.from({ length: endColumn - startColumn }, (_, localColIndex) => {
@@ -1561,11 +1626,12 @@ export const DataGrid = <T extends object>({
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const row = displayData[absoluteRowIndex];
+                        const data = row?.row;
                         const isActiveRow = active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
-                        const hasKeys = Object.keys(row).length > 0;
-                        const uniqueFieldValue = (row as any)[uniqueField];
+                        const hasKeys = Object.keys(data).length > 0;
+                        const uniqueFieldValue = row.uniqueId;
                         const changeRecord = changesMap?.get(uniqueFieldValue);
 
                         return (
@@ -1577,11 +1643,12 @@ export const DataGrid = <T extends object>({
                                     rowClass,
                                     selectedRows.includes(absoluteRowIndex) && "selected",
                                     isActiveRow && 'active-row',
+                                    changeRecord?.type && changeRecord.type !== "regular" && `changed-row changed-row-${changeRecord.type}`,
                                 )}
                                 style={{
                                     top: absoluteRowIndex * rowHeight,
                                     height: rowHeight,
-                                    ...getRowStyle?.(row, absoluteRowIndex),
+                                    ...getRowStyle?.(data, absoluteRowIndex),
                                 }}
                             >
                                 {showRowNumberColumn && (displayData.length > 0) && (
@@ -1598,11 +1665,36 @@ export const DataGrid = <T extends object>({
                                             position: 'sticky',
                                             zIndex: 5,
                                             width: rowNumberColumnWidth,
+                                            top: 0,
                                             left: 0,
                                         }}
                                         onClick={(event) => handleRowNumberCellClick(event, absoluteRowIndex)}
                                     >
                                         {absoluteRowIndex + 1}
+                                    </StyledCell>
+                                )}
+                                {changes && uniqueField && (
+                                    <StyledCell
+                                        key="row-change-cell"
+                                        className={clsx(
+                                            "DataGrid-cell",
+                                            'row-change-cell',
+                                            classes,
+                                            'align-center',
+                                            isActiveRow && 'active-row',
+                                            changeRecord?.type && changeRecord.type !== "regular" && `changed-row changed-row-${changeRecord.type}`,
+                                        )}
+                                        style={{
+                                            position: 'sticky',
+                                            zIndex: 5,
+                                            width: changeRowColumnWidth,
+                                            left: rowNumberColumnWidth,
+                                            top: 0,
+                                        }}
+                                    >
+                                        {changeRecord?.type === "add" && <theme.icons.AddRow color="success" />}
+                                        {changeRecord?.type === "update" && <theme.icons.EditRow color="warning" />}
+                                        {changeRecord?.type === "remove" && <theme.icons.RemoveRow color="error" />}
                                     </StyledCell>
                                 )}
                                 {hasKeys ?
@@ -1617,18 +1709,24 @@ export const DataGrid = <T extends object>({
                                             : undefined) ?? col.dataType ?? 'string';
 
                                         if (pivot && absoluteColIndex > 0) {
-                                            columnDataType = pivotMap?.[row["key"]] ?? 'string';
+                                            columnDataType = pivotMap?.[data["key"]] ?? 'string';
                                         }
 
-                                        let cellValue = row[col.key];
+                                        let cellValue = data[col.key];
                                         let oldValue: any = undefined;
-                                        let isChanged = false;
+                                        let isChanged: DataGridRowType | null = null;
 
-                                        if (changesMap && uniqueField && col.key !== uniqueField && changeRecord) {
-                                            if (col.key in changeRecord) {
+                                        if (changesMap && uniqueField && changeRecord) {
+                                            console.debug("Change record for row", absoluteRowIndex, changeRecord);
+                                            if (changeRecord.type === "update" && col.key in changeRecord.row) {
                                                 oldValue = cellValue;
-                                                cellValue = (changeRecord as any)[col.key];
-                                                isChanged = true;
+                                                cellValue = changeRecord.row[col.key];
+                                                isChanged = "update";
+                                            } else if (changeRecord.type === "add" && col.key in changeRecord.row) {
+                                                cellValue = changeRecord.row[col.key];
+                                                isChanged = "add";
+                                            } else if (changeRecord.type === "remove" && col.key in changeRecord) {
+                                                isChanged = "remove";
                                             }
                                         }
 
@@ -1684,6 +1782,7 @@ export const DataGrid = <T extends object>({
                                                     isActiveColumn && 'active-column',
                                                     isActiveRow && 'active-row',
                                                     isChanged && 'changed-cell',
+                                                    isChanged && `changed-${isChanged}`,
                                                 )}
                                                 style={{
                                                     width: colWidth,
@@ -1694,7 +1793,7 @@ export const DataGrid = <T extends object>({
                                             </StyledCell>
                                         );
 
-                                        if (isChanged) {
+                                        if (isChanged === "update") {
                                             cell = (
                                                 <Tooltip
                                                     key={localColIndex}
@@ -1719,7 +1818,7 @@ export const DataGrid = <T extends object>({
                                             key="no-data-cell"
                                             className={clsx("DataGrid-cell")}
                                             style={{
-                                                width: columnsState.totalWidth - (showRowNumberColumn ? rowNumberColumnWidth : 0),
+                                                width: columnsState.totalWidth - (rowNumberColumnWidth + changeRowColumnWidth),
                                                 left: columnsState.columnLeft(0),
                                             }}
                                         >
@@ -1753,6 +1852,25 @@ export const DataGrid = <T extends object>({
                                     width: rowNumberColumnWidth,
                                     height: "100%",
                                     left: 0,
+                                    borderTop: `1px solid ${theme.palette.divider}`,
+                                    borderRight: `1px solid ${theme.palette.divider}`,
+                                }}
+                            />
+                        )}
+                        {changes && uniqueField && (
+                            <StyledFooterCell
+                                key="row-change-cell"
+                                className={clsx(
+                                    'DataGrid-footerCell',
+                                    "row-change-cell",
+                                    classes,
+                                )}
+                                style={{
+                                    position: 'sticky',
+                                    zIndex: 5,
+                                    width: changeRowColumnWidth,
+                                    height: "100%",
+                                    left: rowNumberColumnWidth,
                                     borderTop: `1px solid ${theme.palette.divider}`,
                                     borderRight: `1px solid ${theme.palette.divider}`,
                                 }}
