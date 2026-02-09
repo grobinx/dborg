@@ -68,6 +68,7 @@ export type StringFactory<T = SlotRuntimeContext> = string | ((runtimeContext: T
 export type StringAsyncFactory<T = SlotRuntimeContext> = Promise<string> | ((runtimeContext: T) => Promise<string>);
 export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeContext: T) => Option[]);
 export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
+export type RecordsFactory<T = SlotRuntimeContext> = Record<string, any>[] | undefined | ((runtimeContext: T) => Record<string, any>[] | undefined);
 export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
@@ -676,6 +677,10 @@ export interface IGridSlot extends ICustomSlot {
      */
     rows: RecordsAsyncFactory;
     /**
+     * Zmiany w danych (np. edycje w siatce) do zapisania lub przesłania do backendu (opcjonalnie).
+     */
+    changes?: RecordsFactory;
+    /**
      * Definicje kolumn (opcjonalnie).
      */
     columns?: ColumnDefinitionsFactory;
@@ -1247,7 +1252,10 @@ export function resolveBooleanFactory<T = SlotRuntimeContext>(factory: BooleanFa
 export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotRuntimeContext): ToolKind[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveRecordsFactory<T = SlotRuntimeContext>(factory: RecordsAsyncFactory<T> | undefined, context: T): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
+export function resolveRecordsAsyncFactory<T = SlotRuntimeContext>(factory: RecordsAsyncFactory<T> | undefined, context: T): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveRecordsFactory<T = SlotRuntimeContext>(factory: RecordsFactory<T> | undefined, context: T): Record<string, any>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {

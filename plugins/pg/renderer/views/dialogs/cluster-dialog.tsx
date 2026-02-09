@@ -8,7 +8,7 @@ export const defaultClusterStructure: Record<string, any> = {
 };
 
 export function clusterDialog(
-    versionNumber: number,
+    _versionNumber: number,
     dialogId: string,
     getIdentifier: () => string | string[] | null,
     onConfirm: (values: Record<string, any>) => Promise<void>,

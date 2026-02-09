@@ -11,6 +11,7 @@ import {
     resolveActionGroupFactory,
     resolveBooleanFactory,
     resolveColumnDefinitionsFactory,
+    resolveRecordsAsyncFactory,
     resolveRecordsFactory,
     resolveStringFactory,
     SlotRuntimeContext,
@@ -54,6 +55,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
+    const [changes, setChanges] = React.useState<Record<string, any>[] | undefined>(undefined);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
     const [loading, setLoading] = React.useState(false);
@@ -115,7 +117,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             setLoading(true);
             loadingRef.current = true;
             try {
-                const result = await resolveRecordsFactory(slot.rows, runtimeContext);
+                const result = await resolveRecordsAsyncFactory(slot.rows, runtimeContext);
                 if (Array.isArray(result)) {
                     setMessage(undefined);
                     setRows(result ?? []);
@@ -141,6 +143,8 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setPivotColumns(undefined);
                     setPivot(false);
                 }
+                const changesResult = resolveRecordsFactory(slot.changes, runtimeContext);
+                setChanges(changesResult);
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), { reason: error, source: "GridSlot", });
             } finally {
@@ -246,6 +250,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 ) : (<DataGrid
                     columns={columns}
                     data={rows}
+                    changes={changes}
                     loading={loading ? t("loading---", "Loading...") : undefined}
                     onRowSelect={handleRowSelect}
                     ref={dataGridRef}

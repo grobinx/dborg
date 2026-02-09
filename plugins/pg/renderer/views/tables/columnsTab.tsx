@@ -97,6 +97,8 @@ const columnsTab = (
                 first: () => ({
                     id: cid("table-columns-grid"),
                     type: "grid",
+                    uniqueField: "no",
+                    //changes: [{no: 2, name: "apf_created_at"}, {no: 3, name: "apf_updated_at", not_null: false}],
                     onRowSelect(row: TableColumnRecord) {
                         selected = row;
                         slotContext.refresh(cid("table-columns-info-panel-title"));

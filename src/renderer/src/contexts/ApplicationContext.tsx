@@ -19,6 +19,7 @@ import About from '@renderer/About';
 import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 import "../containers/Connections/MetadataCollectorStatusBarButton";
+import { acronym } from '@renderer/utils/strings';
 
 // ============================================================================
 // TYPES
@@ -88,16 +89,7 @@ interface ApplicationState {
 const ConnectedViewIcon: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
     const theme = useTheme();
 
-    const getAcronym = (text: string): string => {
-        const words = text.split(/[^a-zA-Z0-9]+/).filter(Boolean);
-        return words
-            .map(word => word[0])
-            .slice(0, 4)
-            .join('')
-            .toUpperCase();
-    };
-
-    const acronym = getAcronym(session.profile.sch_name);
+    const acr = acronym(session.profile.sch_name);
 
     return (
         <span style={{
@@ -120,9 +112,9 @@ const ConnectedViewIcon: React.FC<{ session: IDatabaseSession }> = ({ session })
                 zIndex: 1,
                 fontWeight: 600,
                 fontStretch: 'extra-condensed',
-                letterSpacing: `${acronym.length > 3 ? '-0.1em' : '0'}`,
+                letterSpacing: `${acr.length > 3 ? '-0.1em' : '0'}`,
             }}>
-                {acronym}
+                {acr}
             </span>
         </span>
     )

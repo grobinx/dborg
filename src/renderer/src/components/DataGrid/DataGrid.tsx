@@ -28,6 +28,7 @@ export type DataGridMode = "defined" | "data";
 interface DataGridProps<T extends object> {
     columns: ColumnDefinition[];
     data: T[];
+    changes?: Partial<T>[];
 
     /**
      * Unikalne pole struktury. Grid bęzie próbował przy odświerzaniu odszukać rekord z wartością tego pola.
@@ -340,6 +341,13 @@ const StyledCell = styled("div", {
         '.selected &': {
             borderBottom: `1px solid ${theme.palette.divider}`,
         },
+        '&.changed-cell': {
+            backgroundColor: alpha(theme.palette.warning.main, 0.15),
+            borderLeftColor: theme.palette.warning.main,
+            borderLeftWidth: '4px',
+            borderLeftStyle: 'solid',
+            //paddingLeft: `calc(var(--dg-cell-px))`,
+        },
     })
 );
 
@@ -463,6 +471,7 @@ const StyledLabel = styled('span', {
 export const DataGrid = <T extends object>({
     columns: initialColumns,
     data: initialData,
+    changes,
     uniqueField,
     mode = "defined",
     pivot: initialPivot = false,
@@ -542,6 +551,19 @@ export const DataGrid = <T extends object>({
             setPivot(data?.pivot);
         }
     };
+
+    // Mapa zmian dla szybkiego dostępu: uniqueValue → Partial<T>
+    const changesMap = React.useMemo(() => {
+        if (!changes || !uniqueField) return null;
+        const map = new Map<any, Partial<T>>();
+        changes.forEach((change) => {
+            const key = (change as any)[uniqueField];
+            if (key !== undefined && key !== null) {
+                map.set(key, change);
+            }
+        });
+        return map;
+    }, [changes, uniqueField]);
 
     const { data, columns, pivotMap } = useMemo<{
         data: T[],
@@ -1272,7 +1294,7 @@ export const DataGrid = <T extends object>({
         updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
     };
 
-    const handleCornerRowNumberCellClick = (event: React.MouseEvent) => {
+    const handleCornerRowNumberCellClick = (_event: React.MouseEvent) => {
         if (containerRef.current) {
             containerRef.current.focus(); // Ustaw focus na StyledTableContainer
         }
@@ -1585,7 +1607,20 @@ export const DataGrid = <T extends object>({
                                             columnDataType = pivotMap?.[row["key"]] ?? 'string';
                                         }
 
-                                        const cellValue = row[col.key];
+                                        let cellValue = row[col.key];
+                                        let oldValue: any = undefined;
+                                        let isChanged = false;
+
+                                        if (changesMap && uniqueField && col.key !== uniqueField) {
+                                            const uniqueValue = (row as any)[uniqueField];
+                                            const changeRecord = changesMap.get(uniqueValue);
+                                            if (changeRecord && col.key in changeRecord) {
+                                                oldValue = cellValue;
+                                                cellValue = (changeRecord as any)[col.key];
+                                                isChanged = true;
+                                            }
+                                        }
+
                                         let baseDataType: ColumnBaseType | "null" = toBaseType(columnDataType);
                                         if (cellValue === undefined || cellValue === null) {
                                             baseDataType = "null";
@@ -1623,7 +1658,7 @@ export const DataGrid = <T extends object>({
                                             baseDataType = "error";
                                         }
 
-                                        const cell = (
+                                        let cell = (
                                             <StyledCell
                                                 key={localColIndex}
                                                 data-r={absoluteRowIndex} // potrzebne do delegacji
@@ -1637,6 +1672,7 @@ export const DataGrid = <T extends object>({
                                                     alignClass,
                                                     isActiveColumn && 'active-column',
                                                     isActiveRow && 'active-row',
+                                                    isChanged && 'changed-cell',
                                                 )}
                                                 style={{
                                                     width: colWidth,
@@ -1646,6 +1682,23 @@ export const DataGrid = <T extends object>({
                                                 {formattedValue}
                                             </StyledCell>
                                         );
+
+                                        if (isChanged) {
+                                            cell = (
+                                                <Tooltip
+                                                    key={localColIndex}
+                                                    title={
+                                                        [
+                                                            t("changed-from", "Changed from"),
+                                                            columnDataFormatter(oldValue, columnDataType, col.formatter, null_value, row, col.key, { maxLength: displayMaxLengh })
+                                                        ]
+                                                    }
+                                                    disableInteractive
+                                                >
+                                                    {cell}
+                                                </Tooltip>
+                                            );
+                                        }
 
                                         columnLeft += colWidth;
 
@@ -1766,6 +1819,6 @@ export const DataGrid = <T extends object>({
                 )}
             </StyledTableContainer>
             {dialogContent}
-        </StyledTable>
+        </StyledTable >
     );
 };
