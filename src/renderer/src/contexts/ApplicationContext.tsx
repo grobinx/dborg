@@ -20,6 +20,7 @@ import EditableSettings from '@renderer/containers/Settings/EditableSettings';
 import DeveloperOptions from '@renderer/containers/Settings/DeveloperOptions';
 import "../containers/Connections/MetadataCollectorStatusBarButton";
 import { acronym } from '@renderer/utils/strings';
+import { versionToNumber } from '../../../../src/api/version';
 
 // ============================================================================
 // TYPES
@@ -429,7 +430,17 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handleProfileConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
         setSessions(prev => {
             const newSession = new DatabaseSession(connection);
-            initMetadata(newSession);
+            const version = versionToNumber(newSession.getVersion() ?? "0.0.0");
+            const supportVersion = versionToNumber(newSession.info.driver.supports.minVersion || "0.0.0");
+            if (version < supportVersion) {
+                addToast("error", t("database-version-not-supported", "Database version {{version}} is lower than supported {{supportVersion}}.", { version: newSession.getVersion(), supportVersion: newSession.info.driver.supports.minVersion }), {
+                    source: newSession.profile.sch_name,
+                    timeout: 0,
+                });
+            }
+            else {
+                initMetadata(newSession);
+            }
             const updated = [...(prev || []), newSession];
             setSelectedSession(newSession);
             updateViewsForContainer(selectedContainer, newSession);
