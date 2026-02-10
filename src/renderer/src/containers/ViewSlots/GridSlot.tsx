@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
-import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
+import { DataGrid, DataGridRow } from "@renderer/components/DataGrid/DataGrid";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
@@ -55,7 +55,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
-    const [changes, setChanges] = React.useState<Record<string, any>[] | undefined>(undefined);
+    const [changes, setChanges] = React.useState<DataGridRow<Record<string, any>>[] | undefined>(undefined);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
     const [loading, setLoading] = React.useState(false);

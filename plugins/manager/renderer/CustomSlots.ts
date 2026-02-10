@@ -1255,7 +1255,7 @@ export function resolveActionsFactory(factory: ToolFactory | undefined, context:
 export function resolveRecordsAsyncFactory<T = SlotRuntimeContext>(factory: RecordsAsyncFactory<T> | undefined, context: T): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveRecordsFactory<T = SlotRuntimeContext>(factory: RecordsFactory<T> | undefined, context: T): Record<string, any>[] | undefined {
+export function resolveRecordsFactory<T = SlotRuntimeContext>(factory: RecordsFactory<T> | undefined, context: T): DataGridRow<Record<string, any>>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {

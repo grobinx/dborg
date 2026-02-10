@@ -25,13 +25,21 @@ export type SqlParametersValue = Record<string, SqlParameterValue>;
 
 // Przykład funkcji wyciągającej parametry:
 export function extractSqlParameters(query: string): SqlParameterInfo[] {
-    // Zakresy stringów
+    // Zakresy stringów (zwykłe stringi + dollar-quoted)
     const stringRanges: Array<{ start: number; end: number }> = [];
+    
+    // Zwykłe stringi
     const regexString = /('([^']|\\')*')|("([^"]|\\")*")/g;
     let match: RegExpExecArray | null;
 
     while ((match = regexString.exec(query)) !== null) {
         stringRanges.push({ start: match.index, end: regexString.lastIndex });
+    }
+
+    // Dollar-quoted strings: $tag$...$tag$ lub $$...$$
+    const regexDollarQuoted = /\$([a-zA-Z_][a-zA-Z0-9_]*)?\$([\s\S]*?)\$\1\$/g;
+    while ((match = regexDollarQuoted.exec(query)) !== null) {
+        stringRanges.push({ start: match.index, end: regexDollarQuoted.lastIndex });
     }
 
     // Zakresy komentarzy
@@ -55,9 +63,9 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     const regexes: { re: RegExp; type: ParamType }[] = [
         { re: /:([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /@([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
-        { re: /\$([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
+        { re: /\$(?!\$)(?![a-zA-Z0-9_]*\$)([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, type: "named" },
-        { re: /\$([0-9]+)/g, type: "positional" },
+        { re: /\$(?!\$)(?![0-9]+\$)([0-9]+)/g, type: "positional" },
         { re: /\?/g, type: "question" },
     ];
 

@@ -22,12 +22,10 @@ import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { durationToHuman } from "@renderer/common";
 import { NumberField } from "@renderer/components/inputs/NumberField";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { AutoRefreshBar, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import SqlParametersDialog from "@renderer/dialogs/SqlParametersDialog";
 import { extractSqlParameters, mapSqlParamsToValues, replaceNamedParamsWithPositional, SqlParameterInfo, SqlParametersValue, SqlParameterValue } from "../../../../../../src/api/db/SqlParameters";
-import CodeToDialog from "@renderer/dialogs/CodeToDialog";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";

@@ -99,12 +99,12 @@ const columnsTab = (
                     id: cid("table-columns-grid"),
                     type: "grid",
                     uniqueField: "no",
-                    changes: [
-                        { uniqueId: 20, type: "add", row: { name: "apf_created_at" } },
-                        { uniqueId: 21, type: "add", row: { name: "apf_updated_at", not_null: false } },
-                        { uniqueId: 1, type: "update", row: { no: 1, name: "id", not_null: true } },
-                        { uniqueId: 2, type: "remove", row: { no: 2, name: "name" } },
-                    ] as DataGridRow<Partial<TableColumnRecord>>[],
+                    // changes: [
+                    //     { uniqueId: 20, type: "add", row: { name: "apf_created_at" } },
+                    //     { uniqueId: 21, type: "add", row: { name: "apf_updated_at", not_null: false } },
+                    //     { uniqueId: 1, type: "update", row: { no: 1, name: "id", not_null: true } },
+                    //     { uniqueId: 2, type: "remove", row: { no: 2, name: "name" } },
+                    // ] as DataGridRow<Partial<TableColumnRecord>>[],
                     onRowSelect(row: TableColumnRecord) {
                         selected = row;
                         slotContext.refresh(cid("table-columns-info-panel-title"));
