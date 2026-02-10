@@ -147,6 +147,7 @@ export const calculateSummary = (
     data: object[],
     columnsState: ColumnDefinition[],
     aggNotSummared?: boolean,
+    getItem?: (data: object) => object,
 ): Record<string, any> => {
     const summary: Record<string, any> = {};
 
@@ -156,7 +157,7 @@ export const calculateSummary = (
                 summary[col.key] = [
                     ...new Map(
                         data
-                            .map(row => row[col.key])
+                            .map(row => getItem ? getItem(row)[col.key] : row[col.key])
                             .filter(v => v != null)
                             .map(value => [typeof value === 'object' ? JSON.stringify(value) : value, value]) // Klucz: zserializowana wartość, Wartość: oryginalny obiekt
                     ).values()
@@ -169,7 +170,7 @@ export const calculateSummary = (
         }
 
         const baseType = api.toBaseType(col.dataType);
-        const values = data.filter(row => !Array.isArray(row[col.key])).map((row) => row[col.key]);
+        const values = data.filter(row => !Array.isArray(row[col.key])).map((row) => getItem ? getItem(row)[col.key] : row[col.key]);
 
         if (baseType === 'number') {
             let numericValues: Decimal[];

@@ -18,7 +18,7 @@ export interface UseSearchProps<T,> {
     /** Dane do przeszukania */
     data: T[] | null;
     /** Pola do przeszukania, wszystkie pola lub tablica nazw pól */
-    fields: ((keyof T)[]) | '*';
+    fields: string[] | '*';
     /** Tekst do wyszukania, null lub pusty string oznacza brak wyszukiwania */
     searchText: string | null;
     /** Opcje wyszukiwania */
@@ -29,6 +29,8 @@ export interface UseSearchProps<T,> {
     highlightColor?: ThemeColor;
     /** Opcjonalna funkcja filtrująca element podczas wyszukiwania */
     filter?: (item: T) => boolean;
+    /** Opcjonalna funkcja zwracająca obiekt do przeszukania dla danego elementu, obsługuje przypadek złożonej struktury */
+    getItem?: (data: T) => Record<string, any>;
 }
 
 /**
@@ -68,10 +70,11 @@ const normalize = (s: string, ignoreDiacritics: boolean, caseSensitive: boolean)
 
 export const searchArray = <T,>(
     data: T[], 
-    fields: ((keyof T)[]) | '*', 
+    fields: string[] | '*', 
     searchText: string | null, 
     options?: SearchOptions,
-    filter?: (item: T) => boolean
+    filter?: (item: T) => boolean,
+    getItem?: (data: T) => Record<string, any>
 ): T[] => {
     const {
         matchMode = 'contains',
@@ -124,18 +127,19 @@ export const searchArray = <T,>(
         return matched;
     };
 
-    let resolvedFields: (keyof T)[];
+    let resolvedFields: string[];
     if (Array.isArray(fields)) {
         resolvedFields = fields;
     } else {
-        resolvedFields = Object.keys(data[0] as object) as (keyof T)[];
+        resolvedFields = Object.keys(getItem ? getItem(data[0]) : data[0] as object) as string[];
     }
 
     return data.filter(item => {
         if (filter && !filter(item)) return false;
+        const element = getItem ? getItem(item) : item;
         for (const field of resolvedFields) {
-            if (item[field] === null || item[field] === undefined) continue;
-            const value = String(item[field]);
+            if (element[field] === null || element[field] === undefined) continue;
+            const value = String(element[field]);
             if (matches(value)) {
                 return true;
             }
@@ -163,6 +167,7 @@ export const useSearch = <T,>({
     delay: initialDelay,
     highlightColor = 'primary',
     filter,
+    getItem,
 }: UseSearchProps<T>): [T[] | null, (text: string | undefined | null) => React.ReactNode] => {
     const theme = useTheme();
     const [searchedData, setSearchedData] = React.useState<T[] | null>(data);
@@ -181,14 +186,14 @@ export const useSearch = <T,>({
         // if first run or searchText didn't change during debounce, search immediately
         if (firstRun || searchedTextRef.current === searchText) {
             setFirstRun(false);
-            const results = searchArray(data, fields, searchText, options, filter);
+            const results = searchArray(data, fields, searchText, options, filter, getItem);
             setSearchedData(results);
             setSearchedText(searchText ?? '');
             return;
         }
 
         const debouncedSearch = debounce(() => {
-            const results = searchArray(data, fields, searchText, options, filter);
+            const results = searchArray(data, fields, searchText, options, filter, getItem);
             setSearchedData(results);
             setSearchedText(searchText ?? '');
         }, initialDelay ?? delay);

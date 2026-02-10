@@ -25,12 +25,12 @@ import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 
 export type DataGridMode = "defined" | "data";
 
-export type DataGridRowType = "regular" | "update" | "add" | "remove";
+export type DataGridRowType = "regular" | "group" | "update" | "add" | "remove";
 
 export interface DataGridRow<T> {
     uniqueId: any;
     type: DataGridRowType;
-    row: T;
+    data: T;
 }
 
 interface DataGridProps<T extends object> {
@@ -595,7 +595,7 @@ export const DataGrid = <T extends object>({
     }>(() => {
         if (!pivot) {
             return {
-                data: initialData.map((row) => ({ uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>)),
+                data: initialData.map((data) => ({ uniqueId: uniqueField ? data[uniqueField] : undefined, type: "regular", data } as DataGridRow<T>)),
                 columns: initialColumns,
                 pivotMap: null
             };
@@ -618,13 +618,13 @@ export const DataGrid = <T extends object>({
                             row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
                         }
                     });
-                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>;
+                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", data: row } as DataGridRow<T>;
                 }) : initialColumns.map((col) => {
                     const row: any = { name: col.label, key: col.key };
                     initialData.forEach((dataRow, rowIndex) => {
                         row[`value_of_${rowIndex}`] = dataRow[col.key as keyof T];
                     });
-                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", row } as DataGridRow<T>;
+                    return { uniqueId: uniqueField ? (row as any)[uniqueField] : undefined, type: "regular", data: row } as DataGridRow<T>;
                 }),
             columns: pivotColumns?.length ? pivotColumns : [
                 {
@@ -718,7 +718,7 @@ export const DataGrid = <T extends object>({
         let resultSet = [...(data || [])];
 
         if (changes && uniqueField && changes.length > 0) {
-            const existingIds = new Set(resultSet.map((row) => (row as any)[uniqueField]));
+            const existingIds = new Set(resultSet.map((row) => row.data[uniqueField]));
             const newRows = changes.filter((change) => {
                 return !existingIds.has(change.uniqueId) && change.type === "add";
             });
@@ -726,9 +726,9 @@ export const DataGrid = <T extends object>({
         }
 
         // Filtry kolumn
-        resultSet = filterColumns.filterData(resultSet, columnsState.current);
+        resultSet = filterColumns.filterData(resultSet, columnsState.current, (row) => row.data);
 
-        resultSet = groupingColumns.groupData(resultSet, columnsState.current);
+        resultSet = groupingColumns.groupData(resultSet, columnsState.current, (row) => row.data, (values) => ({ uniqueId: null, type: "group", data: values } as DataGridRow<T>));
 
         resultSet = searchArray(
             resultSet,
@@ -738,7 +738,9 @@ export const DataGrid = <T extends object>({
                 matchMode: searchState.current.wholeWord ? 'wholeWord' : 'contains',
                 caseSensitive: searchState.current.caseSensitive,
                 exclude: searchState.current.exclude,
-            }
+            },
+            undefined,
+            (row) => row.data
         );
 
         // Sortowanie wielokolumnowe
@@ -756,8 +758,8 @@ export const DataGrid = <T extends object>({
         if (sortedColumns.length) {
             resultSet.sort((a, b) => {
                 for (const col of sortedColumns) {
-                    const va = (a as any)[col.key];
-                    const vb = (b as any)[col.key];
+                    const va = (a.data as any)[col.key];
+                    const vb = (b.data as any)[col.key];
 
                     // Nulle zawsze na końcu
                     const vaIsNull = va === null || va === undefined;
@@ -812,7 +814,7 @@ export const DataGrid = <T extends object>({
         const prevValue = prevUniqueValueRef.current;
         if (prevValue === null || prevValue === undefined) return;
 
-        const idx = displayData.findIndex((row: any) => row?.[uniqueField] === prevValue);
+        const idx = displayData.findIndex((row) => row?.data[uniqueField] === prevValue);
         if (idx >= 0) {
             // Utrzymaj kolumnę lub ustaw na kolumnę uniqueField, jeśli istnieje
             const uniqueColIdx = columnsState.current.findIndex(c => c.key === uniqueField);
@@ -831,7 +833,7 @@ export const DataGrid = <T extends object>({
         const dataForSummary = selectedRows.length > 0
             ? selectedRows.map(i => displayData[i]).filter(Boolean)
             : displayData;
-        return calculateSummary(dataForSummary, columnsState.current);
+        return calculateSummary(dataForSummary, columnsState.current, undefined, (row: any) => row.data);
     }, [
         displayData,
         selectedRows,
@@ -849,7 +851,7 @@ export const DataGrid = <T extends object>({
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
-                    ? displayData[selectedCell.row]?.[columnsState.current[selectedCell.column]?.key]
+                    ? displayData[selectedCell.row]?.data?.[columnsState.current[selectedCell.column]?.key]
                     : null;
 
                 const newStatus: DataGridStatus = {
@@ -928,7 +930,7 @@ export const DataGrid = <T extends object>({
         const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
-            prevUniqueValueRef.current = uniqueField ? displayData[next.row].row?.[uniqueField] : null;
+            prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.data?.[uniqueField] : null;
             selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
@@ -957,7 +959,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid row click");
         if (onRowSelect) {
             if (selectedCell?.row !== undefined) {
-                onRowSelect(displayData[selectedCell.row].row);
+                onRowSelect(displayData[selectedCell.row].data);
             }
             else {
                 onRowSelect(undefined);
@@ -998,7 +1000,7 @@ export const DataGrid = <T extends object>({
         getValue: () => {
             if (selectedCellRef.current) {
                 const column = columnsState.current[selectedCellRef.current.column];
-                return displayDataRef.current[selectedCellRef.current.row][column.key];
+                return displayDataRef.current[selectedCellRef.current.row].data[column.key];
             }
             return null;
         },
@@ -1026,14 +1028,14 @@ export const DataGrid = <T extends object>({
         getData: (row) => {
             if (row === undefined) {
                 if (selectedCellRef.current) {
-                    return displayDataRef.current[selectedCellRef.current.row]?.row || null;
+                    return displayDataRef.current[selectedCellRef.current.row]?.data || null;
                 }
                 return null;
             }
-            return displayDataRef.current[row]?.row || null;
+            return displayDataRef.current[row]?.data || null;
         },
         getRows() {
-            return displayDataRef.current.map(r => r.row);
+            return displayDataRef.current.map(r => r.data);
         },
         getSelectedRows() {
             return selectedRowsRef.current;
@@ -1043,9 +1045,9 @@ export const DataGrid = <T extends object>({
                 return [];
             }
             if (selectedRowsRef.current.length === 0) {
-                return [displayDataRef.current[selectedCellRef.current.row]?.row || null];
+                return [displayDataRef.current[selectedCellRef.current.row]?.data || null];
             }
-            return selectedRowsRef.current.map(i => displayDataRef.current[i]?.row || null);
+            return selectedRowsRef.current.map(i => displayDataRef.current[i]?.data || null);
         },
         clearSelectedRows: () => {
             setSelectedRows([]);
@@ -1397,7 +1399,7 @@ export const DataGrid = <T extends object>({
             if (!el) return;
             const r = Number(el.dataset.r);
             const c = Number(el.dataset.c);
-            onRowDoubleClick(displayData[r]?.row);
+            onRowDoubleClick(displayData[r]?.data);
         }
     }, [onRowDoubleClick, displayData]);
 
@@ -1626,11 +1628,11 @@ export const DataGrid = <T extends object>({
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const row = displayData[absoluteRowIndex];
-                        const data = row?.row;
+                        const data = row?.data;
                         const isActiveRow = active_highlight && absoluteRowIndex === selectedCell?.row;
                         const rowClass = absoluteRowIndex % 2 === 0 ? "even" : "odd";
                         let columnLeft = columnsState.columnLeft(startColumn);
-                        const hasKeys = Object.keys(data).length > 0;
+                        const hasKeys = Object.keys(data ?? {}).length > 0;
                         const uniqueFieldValue = row.uniqueId;
                         const changeRecord = changesMap?.get(uniqueFieldValue);
 
@@ -1718,12 +1720,12 @@ export const DataGrid = <T extends object>({
 
                                         if (changesMap && uniqueField && changeRecord) {
                                             console.debug("Change record for row", absoluteRowIndex, changeRecord);
-                                            if (changeRecord.type === "update" && col.key in changeRecord.row) {
+                                            if (changeRecord.type === "update" && col.key in changeRecord.data) {
                                                 oldValue = cellValue;
-                                                cellValue = changeRecord.row[col.key];
+                                                cellValue = changeRecord.data[col.key];
                                                 isChanged = "update";
-                                            } else if (changeRecord.type === "add" && col.key in changeRecord.row) {
-                                                cellValue = changeRecord.row[col.key];
+                                            } else if (changeRecord.type === "add" && col.key in changeRecord.data) {
+                                                cellValue = changeRecord.data[col.key];
                                                 isChanged = "add";
                                             } else if (changeRecord.type === "remove" && col.key in changeRecord) {
                                                 isChanged = "remove";

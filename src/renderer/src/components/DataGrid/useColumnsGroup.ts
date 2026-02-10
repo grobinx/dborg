@@ -7,7 +7,7 @@ interface ColumnsGroup {
     toggleColumn: (column: string) => void;
     clearColumns: () => void;
     isInGroup: (column: string) => boolean;
-    groupData<T extends object>(data: T[], columnsState: ColumnDefinition[]): T[]
+    groupData<T extends object>(data: T[], columnsState: ColumnDefinition[], getItem?: (data: T) => Record<string, any>, setItem?: (value: Record<string, any>) => T): T[]
 }
 
 // Zamiast createInterners → zbuduj od razu builder klucza bez alokacji tablicy na każdy wiersz
@@ -58,6 +58,8 @@ export const useColumnsGroup = (): ColumnsGroup => {
     const groupData = <T extends object>(
         data: T[],
         columnsState: ColumnDefinition[],
+        getItem?: (data: T) => Record<string, any>,
+        setItem?: (value: Record<string, any>) => T
     ): T[] => {
         if (columns.length === 0 || data.length === 0) return data;
 
@@ -65,7 +67,7 @@ export const useColumnsGroup = (): ColumnsGroup => {
 
         const groupedResultSet = data.reduce(
             (acc, row) => {
-                const groupKey = toKey(row);
+                const groupKey = toKey(getItem ? getItem(row) : row);
                 let bucket = acc.get(groupKey);
                 if (!bucket) {
                     bucket = { rows: [] as T[], summary: {} as Record<string, any> };
@@ -80,16 +82,16 @@ export const useColumnsGroup = (): ColumnsGroup => {
         // Oblicz podsumowanie dla każdej grupy w jednej iteracji
         groupedResultSet.forEach((group) => {
             const groupRows = group.rows;
-            group.summary = calculateSummary(groupRows, columnsState, true);
+            group.summary = calculateSummary(groupRows, columnsState, true, getItem as any);
 
             // Dodanie wartości pierwszego wiersza dla kolumn grupujących
             columns.forEach((col) => {
-                group.summary[col] = groupRows[0][col];
+                group.summary[col] = getItem ? getItem(groupRows[0])[col] : groupRows[0][col];
             });
         });
 
         // Zwrócenie wyników jako tablica
-        return Array.from(groupedResultSet.values()).map((group) => group.summary) as T[];
+        return Array.from(groupedResultSet.values()).map((group) => setItem ? setItem(group.summary) : group.summary) as T[];
     };
 
     return {

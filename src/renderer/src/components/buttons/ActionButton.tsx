@@ -65,7 +65,7 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
     const context = actionContext?.() ?? {} as T;
 
     if (resolvedAction) {
-        console.log('resolvedAction.id', resolvedAction.id);
+        //console.log('resolvedAction.id', resolvedAction.id);
         pa = prepareAction(context, resolvedAction, { label: true, icon: true, shortcut: true, tooltip: true, ...actionShows }, actionArgs);
     }
 

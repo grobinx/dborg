@@ -204,7 +204,7 @@ const profileGroup: Group<Profile> = {
     cache: true,
 }
 
-const searchFields: (keyof Profile)[] = ['driverName', 'sch_group', 'sch_name'];
+const searchFields: string[] = ['driverName', 'sch_group', 'sch_name'];
 
 const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const theme = useTheme();

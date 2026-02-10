@@ -116,7 +116,7 @@ export function useColumnFilterState() {
         return filters[key]?.active ?? false;
     }
 
-    const filterData = <T extends object>(data: T[], columns: ColumnDefinition[]): T[] => {
+    const filterData = <T extends object>(data: T[], columns: ColumnDefinition[], getItem?: (data: T) => Record<string, any>): T[] => {
         // Use temporary filter if active, otherwise use main filters
         const effectiveFilters: ColumnFilterState = temporaryFilter && temporaryFilter.filter.active
             ? { [temporaryFilter.key]: temporaryFilter.filter }
@@ -127,13 +127,14 @@ export function useColumnFilterState() {
         }
 
         return data.filter((row) => {
+            const item = getItem ? getItem(row) : row as Record<string, any>;
             return Object.entries(effectiveFilters).every(([key, filter]) => {
                 if (!filter.active) return true;
 
                 const column = columns.find(col => col.key === key);
                 if (!column || (filter.values.length === 0 && filter.operator !== "isNull")) return true;
 
-                const rowValue = (row as any)[key];
+                const rowValue = item[key];
                 const dataType = column.dataType;
                 const compare = (v1: any, v2: any) => compareValuesByType(v1, v2, dataType);
 
