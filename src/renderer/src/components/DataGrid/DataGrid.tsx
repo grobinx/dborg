@@ -27,16 +27,28 @@ export type DataGridMode = "defined" | "data";
 
 export type DataGridRowType = "regular" | "group" | "update" | "add" | "remove";
 
-export interface DataGridRow<T> {
+interface DataGridRowBase<T> {
     uniqueId: any;
     type: DataGridRowType;
     data: T;
 }
 
+export interface DataGridRow<T> extends DataGridRowBase<T> {
+}
+
+export interface DataGridChangeRow<T> extends DataGridRowBase<T> {
+    type: Extract<DataGridRowType, "update" | "add" | "remove">;
+}
+
 interface DataGridProps<T extends object> {
     columns: ColumnDefinition[];
     data: T[];
-    changes?: DataGridRow<T>[];
+
+    /**
+     * Zmiany w danych, które mają być wyświetlane w tabeli. Każda zmiana powinna zawierać unikalną wartość pola uniqueField, która pozwoli zidentyfikować rekord do zmiany.
+     * @requires uniqueField
+     */
+    changes?: DataGridChangeRow<T>[];
 
     /**
      * Unikalne pole struktury. Grid bęzie próbował przy odświerzaniu odszukać rekord z wartością tego pola.
@@ -758,8 +770,8 @@ export const DataGrid = <T extends object>({
         if (sortedColumns.length) {
             resultSet.sort((a, b) => {
                 for (const col of sortedColumns) {
-                    const va = (a.data as any)[col.key];
-                    const vb = (b.data as any)[col.key];
+                    const va = a.data[col.key];
+                    const vb = b.data[col.key];
 
                     // Nulle zawsze na końcu
                     const vaIsNull = va === null || va === undefined;
