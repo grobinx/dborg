@@ -12,7 +12,7 @@ import { ActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import Tooltip from "../Tooltip";
-import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
+import LoadingOverlay from "../useful/LoadingOverlay";
 import * as actions from "./actions";
 import { createDataGridCommands } from "./DataGridCommands";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
@@ -23,6 +23,7 @@ import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";
 import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 import useColumnSelection from "./useColumnSelection";
+import { LoadingOverlayMode } from "../useful/spinners/core";
 
 export type DataGridMode = "defined" | "data";
 

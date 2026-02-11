@@ -4,84 +4,25 @@ import { useTranslation } from "react-i18next";
 import { Duration } from "luxon";
 import Tooltip from "../Tooltip";
 import { ToolButton } from "../buttons/ToolButton";
+import LoadingSpinnerRing from "./spinners/LoadingSpinnerRing";
+import LoadingSpinnerDots from "./spinners/LoadingSpinnerDots";
+import LoadingSpinnerBars from "./spinners/LoadingSpinnerBars";
+import LoadingSpinnerOrbit from "./spinners/LoadingSpinnerOrbit";
+import LoadingSpinnerPulse from "./spinners/LoadingSpinnerPulse";
+import LoadingSpinnerGrid from "./spinners/LoadingSpinnerGrid";
+import LoadingSpinnerWave from "./spinners/LoadingSpinnerWave";
+import LoadingSpinnerHexagon from "./spinners/LoadingSpinnerHexagon";
+import LoadingSpinnerBounce from "./spinners/LoadingSpinnerBounce";
+import LoadingSpinnerRipple from "./spinners/LoadingSpinnerRipple";
+import LoadingSpinnerGears from "./spinners/LoadingSpinnerGears";
+import LoadingSpinnerFlip from "./spinners/LoadingSpinnerFlip";
+import LoadingSpinnerCube from "./spinners/LoadingSpinnerCube";
+import LoadingSpinnerParticles from "./spinners/LoadingSpinnerParticles";
+import LoadingSpinnerInfinity from "./spinners/LoadingSpinnerInfinity";
+import LoadingSpinnerClock from "./spinners/LoadingSpinnerClock";
+import { LoadingOverlayMode, shuffleArray, SPINNER_TYPES, spinnerColorsDark, spinnerColorsLight, SpinnerType } from "./spinners/core";
 
-const spinnerColorsLight = [
-    "#1976d2", // niebieski
-    "#43a047", // zielony
-    "#fbc02d", // żółty
-    "#e53935", // czerwony
-];
-const spinnerColorsDark = [
-    "#90caf9", // jasnoniebieski
-    "#a5d6a7", // jasnozielony
-    "#fff59d", // jasnobrązowy
-    "#ef9a9a", // jasnoczerwony
-];
-
-export type LoadingOverlayMode = "auto" | "small" | "full";
-
-// Dodaj funkcję pomocniczą do generowania losowych opóźnień
-const getRandomDelays = (count: number, min = -0.5, max = 0.0) =>
-    Array.from({ length: count }, () =>
-        (Math.random() * (max - min) + min).toFixed(2) + "s"
-    );
-
-// Funkcja do losowego tasowania tablicy (Fisher-Yates)
-function shuffleArray<T>(array: T[]): T[] {
-    const arr = array.slice();
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-const LoadingSpinner = styled("div")<{ 
-    speed: number; 
-    delays?: string[]; 
-    colors: string[];
-    size?: number;
-    borderWidth?: number;
-}>(({ speed, delays, colors, size = 54, borderWidth = 6 }) => {
-    return {
-        width: `${size}px`,
-        height: `${size}px`,
-        display: "inline-block",
-        position: "relative",
-        "& div": {
-            boxSizing: "border-box",
-            display: "block",
-            position: "absolute",
-            width: `${size}px`,
-            height: `${size}px`,
-            border: `${borderWidth}px solid`,
-            borderColor: `${colors[0]} transparent transparent transparent`,
-            borderRadius: "50%",
-            animation: `lds-ring-spin ${speed}s cubic-bezier(0.5, 0, 0.5, 1) infinite`,
-        },
-        "& div:nth-of-type(1)": {
-            borderColor: `${colors[0]} transparent transparent transparent`,
-            animationDelay: delays?.[0] ?? "-0.45s",
-        },
-        "& div:nth-of-type(2)": {
-            borderColor: `${colors[1]} transparent transparent transparent`,
-            animationDelay: delays?.[1] ?? "-0.3s",
-        },
-        "& div:nth-of-type(3)": {
-            borderColor: `${colors[2]} transparent transparent transparent`,
-            animationDelay: delays?.[2] ?? "-0.15s",
-        },
-        "& div:nth-of-type(4)": {
-            borderColor: `${colors[3]} transparent transparent transparent`,
-            animationDelay: delays?.[3] ?? "0s",
-        },
-        "@keyframes lds-ring-spin": {
-            "0%": { transform: "rotate(0deg)" },
-            "100%": { transform: "rotate(360deg)" },
-        },
-    };
-});
-
+// ========== Reszta komponentu ==========
 const LoadingLabel = styled("div")<{ color: string }>(({ color }) => ({
     display: "flex",
     flexDirection: "row",
@@ -119,7 +60,6 @@ interface LoadingOverlayProps {
     label?: string;
     color?: string;
     delay?: number;
-    speed?: number;
     labelPosition?: "below" | "side";
     timeDelaySec?: number;
     onCancelLoading?: () => void;
@@ -130,23 +70,27 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     label,
     color,
     delay = 1000,
-    speed = 1,
     labelPosition = "below",
     timeDelaySec = 10,
     onCancelLoading,
     mode = "auto",
 }) => {
     const theme = useTheme();
-    const [show, setShow] = useState<0 | 1 | 2>(0); // 0 = off, 1 = small spinner, 2 = full overlay
+    const [show, setShow] = useState<0 | 1 | 2>(0);
     const [elapsedTime, setElapsedTime] = useState<number | null>(null);
     const [startTime] = useState(Date.now());
     const { t } = useTranslation();
 
-    const [spinnerColors, setSpinnerColors] = useState(() => {
-        return theme.palette.mode === "dark"
+    const [spinnerColors, setSpinnerColors] = useState(() =>
+        theme.palette.mode === "dark"
             ? shuffleArray(spinnerColorsDark)
-            : shuffleArray(spinnerColorsLight);
-    });
+            : shuffleArray(spinnerColorsLight)
+    );
+
+    // Losowy wybór spinnera przy montowaniu
+    const [spinnerType] = useState<SpinnerType>(() =>
+        SPINNER_TYPES[Math.floor(Math.random() * SPINNER_TYPES.length)]
+    );
 
     useEffect(() => {
         setSpinnerColors(
@@ -162,12 +106,8 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
         } else if (mode === "full") {
             setShow(2);
         } else {
-            // Natychmiastowo po 1/10 delay pokaż mały spinner
             const smallTimer = setTimeout(() => setShow(1), delay / 10);
-            
-            // Po delay pokaż pełny overlay
             const fullTimer = setTimeout(() => setShow(2), delay);
-            
             return () => {
                 clearTimeout(smallTimer);
                 clearTimeout(fullTimer);
@@ -188,29 +128,41 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     color = color ?? theme.palette.action.active;
 
-    const [delays] = useState(() => getRandomDelays(4, -0.5, 0));
+
+    const renderSpinner = (size: number) => {
+        const spinnerKey = `${spinnerType}-${size}`; // Unikalny klucz dla każdego rozmiaru
+        
+        switch (spinnerType) {
+            case "ring": return <LoadingSpinnerRing key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "dots": return <LoadingSpinnerDots key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "bars": return <LoadingSpinnerBars key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "pulse": return <LoadingSpinnerPulse key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "grid": return <LoadingSpinnerGrid key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "orbit": return <LoadingSpinnerOrbit key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "wave": return <LoadingSpinnerWave key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "hexagon": return <LoadingSpinnerHexagon key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "bounce": return <LoadingSpinnerBounce key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "ripple": return <LoadingSpinnerRipple key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "gears": return <LoadingSpinnerGears key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "flip": return <LoadingSpinnerFlip key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "cube": return <LoadingSpinnerCube key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "particles": return <LoadingSpinnerParticles key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "infinity": return <LoadingSpinnerInfinity key={spinnerKey} colors={spinnerColors} size={size} />;
+            case "clock": return <LoadingSpinnerClock key={spinnerKey} colors={spinnerColors} size={size} />;
+        }
+    };
 
     return (
         <>
             {show === 1 && (
                 <SmallSpinnerContainer>
-                    <LoadingSpinner colors={spinnerColors} speed={1.2} size={24} borderWidth={3}>
-                        <div />
-                        <div />
-                        <div />
-                        <div />
-                    </LoadingSpinner>
+                    {renderSpinner(24)}
                 </SmallSpinnerContainer>
             )}
             {show === 2 && (
                 <Zoom in={true}>
                     <StyledLoadingOverlay labelPosition={labelPosition}>
-                        <LoadingSpinner speed={speed} delays={delays} colors={spinnerColors} size={54} borderWidth={6}>
-                            <div />
-                            <div />
-                            <div />
-                            <div />
-                        </LoadingSpinner>
+                        {renderSpinner(54)}
                         {label && [
                             <LoadingLabel color={color} key="label">
                                 <span>{label}</span>

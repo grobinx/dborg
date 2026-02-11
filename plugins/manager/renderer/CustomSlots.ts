@@ -7,7 +7,6 @@ import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatus
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
-import { LoadingOverlayMode } from "@renderer/components/useful/LoadingOverlay";
 import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
 import { DialogSlotFunction, RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
@@ -15,6 +14,7 @@ import { ThemeIconName } from "@renderer/themes/icons";
 import { ThemeColor } from "@renderer/types/colors";
 import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
+import { LoadingOverlayMode } from "@renderer/components/useful/spinners/core";
 
 export type CustomSlotType =
     "split"
