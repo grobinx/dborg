@@ -22,6 +22,7 @@ import { useColumnsGroup } from "./useColumnsGroup";
 import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";
 import { highlightText, searchArray } from "@renderer/hooks/useSearch";
+import useColumnSelection from "./useColumnSelection";
 
 export type DataGridMode = "defined" | "data";
 
@@ -152,6 +153,15 @@ interface DataGridProps<T extends object> {
      * Zwiększ/zmień aby wymusić recompute.
      */
     rebuildDisplayData?: bigint;
+
+    /**
+     * Czy można zaznaczać wiersze
+     */
+    canSelectRows?: boolean;
+    /**
+     * Czy można zaznaczać kolumny
+     */
+    canSelectColumns?: boolean;
 }
 
 const StyledTable = styled('div', {
@@ -217,6 +227,9 @@ const StyledHeaderCell = styled('div', {
         '&.row-number-cell, &.row-change-cell': {
             backgroundColor: theme.palette.background.table.container,
         },
+        "&.selected": {
+            backgroundColor: theme.palette.background.table.selected,
+        },
     })
 );
 
@@ -246,7 +259,7 @@ const StyledTableContainer = styled('div', {
     name: "DataGrid",
     slot: "tableContainer",
 })<{}>(
-    ({ }) => ({
+    ({ theme }) => ({
         position: "relative",
         overflow: "auto",
         width: "100%",
@@ -255,6 +268,7 @@ const StyledTableContainer = styled('div', {
         borderRadius: 0,
         outline: "none",
         scrollBehavior: "auto",
+        backgroundColor: theme.palette.background.table.container,
     })
 );
 
@@ -277,12 +291,12 @@ const StyledRow = styled("div", {
     top: 0,
     left: 0,
     width: "100%",
-    backgroundColor: theme.palette.background.table.container,
     willChange: "transform", // było: "transform, top"
+    zIndex: 1,
     "&.even": {
-        backgroundColor: theme.palette.mode === "dark" ?
-            lighten(theme.palette.background.table.container, 0.05) :
-            darken(theme.palette.background.table.container, 0.05),
+        backgroundColor: alpha(theme.palette.mode === "dark" ?
+            lighten(theme.palette.background.table.container, 0.4) :
+            darken(theme.palette.background.table.container, 0.4), 0.2),
     },
     "&:hover": {
         backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Kolor tła przy najechaniu myszką
@@ -508,6 +522,20 @@ const StyledLabel = styled('span', {
     maxWidth: "100%",
 }));
 
+const StyledColumnOverlay = styled('div', {
+    name: "DataGrid",
+    slot: "columnOverlay",
+})(({ theme }) => ({
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    pointerEvents: "none",
+    zIndex: 1, // nad tłem, pod komórkami (komórki mają zIndex:1)
+    "&.selected": {
+        backgroundColor: theme.palette.background.table.selected,
+    },
+}));
+
 export const DataGrid = <T extends object>({
     columns: initialColumns,
     data: initialData,
@@ -536,6 +564,8 @@ export const DataGrid = <T extends object>({
     getRowStyle,
     searchText: outerSearchText,
     rebuildDisplayData,
+    canSelectRows = true,
+    canSelectColumns = true,
 }: DataGridProps<T>) => {
     const theme = useTheme();
     const { t } = useTranslation();
@@ -670,6 +700,9 @@ export const DataGrid = <T extends object>({
     const previousStatusRef = useRef<DataGridStatus | null>(null);
     const previousStatusStringRef = useRef<string | null>(null);
     const { selectedRows, toggleRowSelection, setSelectedRows, selectedRowsRef } = useRowSelection();
+    const { toggleColumnSelection, selectedColumns, setSelectedColumns, selectedColumnsRef } = useColumnSelection();
+    const columnHeaderMouseDownTimerRef = useRef<number | null>(null);
+    const [firstColumnSelection, setFirstColumnSelection] = useState<boolean>(false);
     const [fontFamily] = useSetting("ui", mode === "data" ? "monospaceFontFamily" : "fontFamily");
     const [settingFontSize] = useSetting<number>("dborg", `data_grid.${mode}.font_size`);
     const [settingRowNumberColumn] = useSetting<boolean>("dborg", `data_grid.${mode}.row_number_column`);
@@ -701,6 +734,7 @@ export const DataGrid = <T extends object>({
     useEffect(() => {
         console.debug("DataGrid mounted");
         setSelectedRows([]);
+        setSelectedColumns([]);
     }, [data]);
 
     useEffect(() => {
@@ -1359,8 +1393,44 @@ export const DataGrid = <T extends object>({
             containerRef.current.focus(); // Ustaw focus na StyledTableContainer
         }
 
-        toggleRowSelection(absoluteRowIndex, event.ctrlKey, event.shiftKey);
-        updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
+        if (canSelectRows) {
+            toggleRowSelection(absoluteRowIndex, event.ctrlKey, event.shiftKey);
+            updateSelectedCell({ row: absoluteRowIndex, column: selectedCell?.column ?? 0 });
+        }
+    };
+
+    const handleColumnHeaderMouseDown = (_event: React.MouseEvent, key: string) => {
+        if (canSelectColumns && selectedColumns.length === 0) {
+            if (columnHeaderMouseDownTimerRef.current) {
+                clearTimeout(columnHeaderMouseDownTimerRef.current);
+            }
+            columnHeaderMouseDownTimerRef.current = window.setTimeout(() => {
+                toggleColumnSelection(key);
+                columnHeaderMouseDownTimerRef.current = null;
+                setFirstColumnSelection(true);
+            }, 500);
+        }
+    };
+
+    const handleHeaderClick = (absoluteColIndex: number, col: ColumnDefinition, e: React.MouseEvent) => {
+        if (resizingColumn) return;
+
+        if (firstColumnSelection) {
+            setFirstColumnSelection(false);
+            return;
+        }
+
+        if (columnHeaderMouseDownTimerRef.current) {
+            clearTimeout(columnHeaderMouseDownTimerRef.current);
+        }
+
+        if (selectedColumns.length) {
+            toggleColumnSelection(col.key);
+        }
+        else if ((col.sortable ?? true) && !pivot) {
+            dataGridActionContext.sortData(absoluteColIndex, e.ctrlKey || e.metaKey);
+        }
+        updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
     };
 
     const handleCornerRowNumberCellClick = (_event: React.MouseEvent) => {
@@ -1527,19 +1597,14 @@ export const DataGrid = <T extends object>({
                                     "DataGrid-headerCell",
                                     classes,
                                     active_highlight && absoluteColIndex === selectedCell?.column && 'active-column',
+                                    selectedColumns.includes(col.key) && "selected",
                                 )}
                                 style={{
                                     width: col.width || 150,
                                     left: columnsState.columnLeft(absoluteColIndex),
                                 }}
-                                onClick={(e) => {
-                                    if (!resizingColumn) {
-                                        updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
-                                        if ((col.sortable ?? true) && !pivot) {
-                                            dataGridActionContext.sortData(absoluteColIndex, e.ctrlKey || e.metaKey);
-                                        }
-                                    }
-                                }}
+                                onClick={(e) => handleHeaderClick(absoluteColIndex, col, e)}
+                                onMouseDown={(e) => handleColumnHeaderMouseDown(e, col.key)}
                             >
                                 <StyledHeaderCellContent
                                     className={clsx(
@@ -1637,6 +1702,27 @@ export const DataGrid = <T extends object>({
                     onMouseDown={onRowsContainerMouseDown} // delegacja
                     onDoubleClick={handleRowDoubleClick}
                 >
+                    {/* Overlay podświetlenia kolumny */}
+                    {selectedColumns.map((colKey) => {
+                        const colIndex = columnsState.current.findIndex(c => c.key === colKey);
+                        if (colIndex < startColumn || colIndex >= endColumn) return null;
+                        return (
+                            <StyledColumnOverlay
+                                className={
+                                    clsx(
+                                        "DataGrid-columnOverlay",
+                                        classes,
+                                        'selected',
+                                    )
+                                }
+                                style={{
+                                    left: columnsState.columnLeft(colIndex),
+                                    width: columnsState.current[colIndex].width || 150,
+                                }}
+                            />
+                        );
+                    })}
+
                     {Array.from({ length: overscanTo - overscanFrom }, (_, localRowIndex) => {
                         const absoluteRowIndex = overscanFrom + localRowIndex;
                         const row = displayData[absoluteRowIndex];
