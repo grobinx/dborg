@@ -539,19 +539,15 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                 }
             },
             onChange: (values) => {
-                // Zapisz opcje do localStorage
-                const { preview, ...exportOptions } = values;
-                saveFormatOptions(format, exportOptions);
-
                 // Aktualizuj podgląd
                 if (columns) {
-                    exportOptions.columns = columns;
+                    values.columns = columns;
                 }
 
                 if (data && data.length > 0) {
                     const sample = data.slice(0, 5);
                     try {
-                        const result = arrayTo(sample, format as any, exportOptions);
+                        const result = arrayTo(sample, format as any, values);
                         values.preview = result.content ?? "";
                     } catch (e) {
                         values.preview = "Preview unavailable.";
@@ -564,6 +560,8 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                 if (!data) return;
 
                 const { preview, ...exportOptions } = values;
+                saveFormatOptions(format, exportOptions);
+                
                 if (columns) {
                     exportOptions.columns = columns;
                 }
