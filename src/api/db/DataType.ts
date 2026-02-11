@@ -869,6 +869,20 @@ export const generateHash = (value: any): string => {
 };
 
 export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDataType): number => {
+    // Obsługa array (nawet jeśli nie powinny trafiać)
+    if (Array.isArray(value1) && Array.isArray(value2)) {
+        const len = Math.min(value1.length, value2.length);
+        for (let i = 0; i < len; i++) {
+            const cmp = compareValuesByType(value1[i], value2[i], Array.isArray(dataType) ? dataType[0] : dataType);
+            if (cmp !== 0) return cmp;
+        }
+        return value1.length - value2.length; // krótszy array < dłuższy
+    }
+    // Jeśli tylko jeden to array, traktuj jako stringi
+    if (Array.isArray(value1) || Array.isArray(value2)) {
+        return String(value1).localeCompare(String(value2));
+    }
+
     const baseType = toBaseType(dataType);
 
     switch (dataType) {

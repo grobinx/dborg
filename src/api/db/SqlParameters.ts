@@ -37,7 +37,9 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     }
 
     // Dollar-quoted strings: $tag$...$tag$ lub $$...$$
-    const regexDollarQuoted = /\$([a-zA-Z_][a-zA-Z0-9_]*)?\$([\s\S]*?)\$\1\$/g;
+    // Musi być non-greedy i poprawnie matchować tagi
+    const regexDollarQuoted = /\$([a-zA-Z_][a-zA-Z0-9_]*)?\$(.*?)\$\1\$/gs;
+    regexDollarQuoted.lastIndex = 0;
     while ((match = regexDollarQuoted.exec(query)) !== null) {
         stringRanges.push({ start: match.index, end: regexDollarQuoted.lastIndex });
     }
@@ -63,19 +65,26 @@ export function extractSqlParameters(query: string): SqlParameterInfo[] {
     const regexes: { re: RegExp; type: ParamType }[] = [
         { re: /:([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
         { re: /@([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
-        { re: /\$(?!\$)(?![a-zA-Z0-9_]*\$)([a-zA-Z_][a-zA-Z0-9_]*)/g, type: "named" },
+        // $name — musi być po whitespace, początek linii, lub znakach specjalnych
+        { re: /(?<![a-zA-Z0-9_$])\$([a-zA-Z_][a-zA-Z0-9_]*)(?!\$)/g, type: "named" },
         { re: /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, type: "named" },
-        { re: /\$(?!\$)(?![0-9]+\$)([0-9]+)/g, type: "positional" },
+        // $1 — liczby po $
+        { re: /(?<![a-zA-Z0-9_$])\$([0-9]+)(?!\$)/g, type: "positional" },
         { re: /\?/g, type: "question" },
     ];
 
     for (const { re, type } of regexes) {
+        re.lastIndex = 0; // reset regex state
         while ((match = re.exec(query)) !== null) {
             const idx = match.index;
             if (isInStringOrComment(idx)) continue;
+            
             // IGNORUJ podwójny dwukropek (PostgreSQL cast)
-            if (type === "named" && idx > 0 && query[idx - 1] === ":") continue;
-            if (type === "named" && query.slice(idx, idx + 2) === "::") continue;
+            if (type === "named" && match[0].startsWith(':')) {
+                if (idx > 0 && query[idx - 1] === ":") continue;
+                if (query.slice(idx, idx + 2) === "::") continue;
+            }
+
             if (type === "question") {
                 params.push({ name: "?", position: idx, paramType: type, index: params.length });
             } else if (type === "positional") {
