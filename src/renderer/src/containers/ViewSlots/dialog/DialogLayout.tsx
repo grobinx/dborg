@@ -4,7 +4,6 @@ import {
     IDialogRow,
     resolveDialogLayoutItemsKindFactory,
     resolveStringFactory,
-    SlotRuntimeContext,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import { Stack } from "@mui/material";
@@ -12,13 +11,12 @@ import { DialogFieldset } from "./DialogFieldset";
 
 export const DialogRow: React.FC<{
     row: IDialogRow;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
 }> = (props) => {
-    const { row, runtimeContext, structure, onChange, invalidFields, onValidityChange } = props;
+    const { row, structure, onChange, invalidFields, onValidityChange } = props;
 
     const label = resolveStringFactory(row.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
@@ -57,7 +55,6 @@ export const DialogRow: React.FC<{
                 >
                     <DialogLayoutItem
                         item={item}
-                        runtimeContext={runtimeContext}
                         structure={structure}
                         onChange={onChange}
                         invalidFields={invalidFields}
@@ -77,13 +74,12 @@ export const DialogRow: React.FC<{
 
 export const DialogColumn: React.FC<{
     column: IDialogColumn;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
 }> = (props) => {
-    const { column, runtimeContext, structure, onChange, invalidFields, onValidityChange } = props;
+    const { column, structure, onChange, invalidFields, onValidityChange } = props;
 
     const label = resolveStringFactory(column.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
@@ -94,7 +90,6 @@ export const DialogColumn: React.FC<{
                 <DialogLayoutItem
                     key={index}
                     item={item}
-                    runtimeContext={runtimeContext}
                     structure={structure}
                     onChange={onChange}
                     invalidFields={invalidFields}

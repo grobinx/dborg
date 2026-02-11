@@ -1169,10 +1169,7 @@ export interface DialogConformLabel {
     disabled?: BooleanFactory<Record<string, any>>;
 }
 
-export interface IDialogSlot extends ICustomSlot {
-    id: string;
-
-    type: "dialog";
+export interface IDialogStandalone {
     /**
      * Tytuł dialogu.
      */
@@ -1235,6 +1232,12 @@ export interface IDialogSlot extends ICustomSlot {
      * Wysokość dialogu (np. "400px", 500).
      */
     height?: string | number;
+}
+
+export interface IDialogSlot extends ICustomSlot, IDialogStandalone {
+    id: string;
+
+    type: "dialog";
 }
 
 export function resolveStringFactory<T = SlotRuntimeContext>(factory: StringFactory<T> | undefined, context: T): string | undefined {

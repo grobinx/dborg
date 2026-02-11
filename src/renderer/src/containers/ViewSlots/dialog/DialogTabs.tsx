@@ -17,7 +17,6 @@ import { alpha, useTheme } from "@mui/material";
 
 export const DialogTabs: React.FC<{
     dialogTabs: IDialogTabs;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -25,7 +24,6 @@ export const DialogTabs: React.FC<{
 }> = (props) => {
     const {
         dialogTabs,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -74,7 +72,6 @@ export const DialogTabs: React.FC<{
                             <DialogLayoutItem
                                 key={itemIndex}
                                 item={item}
-                                runtimeContext={runtimeContext}
                                 structure={structure}
                                 onChange={onChange}
                                 invalidFields={invalidFields}

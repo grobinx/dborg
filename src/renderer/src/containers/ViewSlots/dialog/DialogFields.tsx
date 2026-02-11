@@ -19,7 +19,6 @@ import { EditorField } from "@renderer/components/inputs/EditorField";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -27,7 +26,6 @@ export const DialogTextField: React.FC<{
 }> = (props) => {
     const {
         field,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -71,7 +69,6 @@ export const DialogTextField: React.FC<{
 
 export const DialogNumberField: React.FC<{
     field: IDialogNumberField;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -79,7 +76,6 @@ export const DialogNumberField: React.FC<{
 }> = (props) => {
     const {
         field,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -124,7 +120,6 @@ export const DialogNumberField: React.FC<{
 
 export const DialogSelectField: React.FC<{
     field: IDialogSelectField;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -132,7 +127,6 @@ export const DialogSelectField: React.FC<{
 }> = (props) => {
     const {
         field,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -177,7 +171,6 @@ export const DialogSelectField: React.FC<{
 
 export const DialogBooleanField: React.FC<{
     field: IDialogBooleanField;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -185,7 +178,6 @@ export const DialogBooleanField: React.FC<{
 }> = (props) => {
     const {
         field,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -229,7 +221,6 @@ export const DialogBooleanField: React.FC<{
 
 export const DialogEditorField: React.FC<{
     field: IDialogEditorField;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -237,7 +228,6 @@ export const DialogEditorField: React.FC<{
 }> = (props) => {
     const {
         field,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -257,7 +247,7 @@ export const DialogEditorField: React.FC<{
             description={helperText}
             label={label}
             showValidity={false}
-            sx={{ height: field.height}}
+            sx={{ height: field.height === "100%" ? field.height : undefined }}
         >
             <EditorField
                 value={structure[field.key]}

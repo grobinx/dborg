@@ -1456,7 +1456,6 @@ export const DataGrid = <T extends object>({
     }, [isScrolling]);
 
     useEffect(() => {
-        console.debug("DataGrid mouse move and up listeners");
         if (resizingColumn !== null) {
             window.addEventListener("mousemove", handleMouseMove);
             window.addEventListener("mouseup", handleMouseUp);
@@ -1469,6 +1468,8 @@ export const DataGrid = <T extends object>({
 
     // Delegacja klików z kontenera wierszy
     const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (resizingColumn !== null) return;
+        
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-r][data-c]');
         if (!el) return;
         const r = Number(el.dataset.r);
@@ -1709,6 +1710,7 @@ export const DataGrid = <T extends object>({
                         if (colIndex < startColumn || colIndex >= endColumn) return null;
                         return (
                             <StyledColumnOverlay
+                                key={colKey}
                                 className={
                                     clsx(
                                         "DataGrid-columnOverlay",

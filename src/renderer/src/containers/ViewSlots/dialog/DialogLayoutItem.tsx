@@ -18,7 +18,6 @@ import { DialogTabs } from "./DialogTabs";
 
 export const DialogLayoutItem: React.FC<{
     item: DialogLayoutItemKind;
-    runtimeContext: SlotRuntimeContext;
     structure: Record<string, any>;
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
@@ -26,7 +25,6 @@ export const DialogLayoutItem: React.FC<{
 }> = (props) => {
     const {
         item,
-        runtimeContext,
         structure,
         onChange,
         invalidFields,
@@ -36,7 +34,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogTextField(item)) {
         return <DialogTextField
             field={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -47,7 +44,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogNumberField(item)) {
         return <DialogNumberField
             field={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -58,7 +54,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogBooleanField(item)) {
         return <DialogBooleanField
             field={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -69,7 +64,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogSelectField(item)) {
         return <DialogSelectField
             field={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -80,7 +74,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogEditorField(item)) {
         return <DialogEditorField
             field={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -91,7 +84,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogRow(item)) {
         return <DialogRow
             row={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}
@@ -102,7 +94,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogColumn(item)) {
         return <DialogColumn 
             column={item} 
-            runtimeContext={runtimeContext} 
             structure={structure} 
             onChange={onChange} 
             invalidFields={invalidFields}
@@ -113,7 +104,6 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogTabs(item)) {
         return <DialogTabs
             dialogTabs={item}
-            runtimeContext={runtimeContext}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}

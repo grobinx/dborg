@@ -14,8 +14,9 @@ import { TransformToLowerCaseAction } from "./actions/TransformToLowerCase";
 import { TransformToUpperCaseAction } from "./actions/TransformToUpperCase";
 import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
-import LoadingOverlay, { LoadingOverlayMode } from "../useful/LoadingOverlay";
+import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
+import { LoadingOverlayMode } from "../useful/spinners/core";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
