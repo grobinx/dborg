@@ -1369,25 +1369,41 @@ export const DataGrid = <T extends object>({
     };
 
     const handleMouseDown = (colIndex: number, event: React.MouseEvent) => {
-        setResizingColumn(colIndex);
         event.preventDefault();
+        event.stopPropagation();
+        setResizingColumn(colIndex);
     };
 
-    const handleMouseMove = (event: MouseEvent) => {
-        if (resizingColumn !== null && containerRef.current) {
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const newWidth = Math.max(
-                25, // Minimalna szerokość kolumny
-                event.clientX - containerRect.left + containerRef.current.scrollLeft - columnsState.columnLeft(resizingColumn)
-            );
-            columnsState.updateColumn(resizingColumn, { width: newWidth });
+    useEffect(() => {
+        if (resizingColumn !== null) {
+            const handleGlobalMouseMove = (event: MouseEvent) => {
+                if (containerRef.current) {
+                    const containerRect = containerRef.current.getBoundingClientRect();
+                    const newWidth = Math.max(
+                        25,
+                        event.clientX - containerRect.left + containerRef.current.scrollLeft - columnsState.columnLeft(resizingColumn)
+                    );
+                    if (columnsState.current[resizingColumn]?.width !== newWidth) {
+                        columnsState.updateColumn(resizingColumn, { width: newWidth });
+                    }
+                }
+            };
+
+            const handleGlobalMouseUp = (event: MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setResizingColumn(null);
+            };
+
+            window.addEventListener("mousemove", handleGlobalMouseMove);
+            window.addEventListener("mouseup", handleGlobalMouseUp);
+
+            return () => {
+                window.removeEventListener("mousemove", handleGlobalMouseMove);
+                window.removeEventListener("mouseup", handleGlobalMouseUp);
+            };
         }
-    };
-
-    const handleMouseUp = () => {
-        // problem z onClick sortowania
-        setTimeout(() => setResizingColumn(null), 0);
-    };
+    }, [resizingColumn, columnsState]);
 
     const handleRowNumberCellClick = (event: React.MouseEvent, absoluteRowIndex: number) => {
         if (containerRef.current) {
@@ -1414,8 +1430,6 @@ export const DataGrid = <T extends object>({
     };
 
     const handleHeaderClick = (absoluteColIndex: number, col: ColumnDefinition, e: React.MouseEvent) => {
-        if (resizingColumn) return;
-
         if (firstColumnSelection) {
             setFirstColumnSelection(false);
             return;
@@ -1455,21 +1469,8 @@ export const DataGrid = <T extends object>({
         scrollStopTimer.current = window.setTimeout(() => setIsScrolling(false), 80);
     }, [isScrolling]);
 
-    useEffect(() => {
-        if (resizingColumn !== null) {
-            window.addEventListener("mousemove", handleMouseMove);
-            window.addEventListener("mouseup", handleMouseUp);
-        }
-        return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
-        };
-    }, [resizingColumn]);
-
     // Delegacja klików z kontenera wierszy
     const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (resizingColumn !== null) return;
-        
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-r][data-c]');
         if (!el) return;
         const r = Number(el.dataset.r);
