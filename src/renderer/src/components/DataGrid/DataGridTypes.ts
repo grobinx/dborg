@@ -106,6 +106,13 @@ export interface ColumnDefinition {
     formatter?: ColumnFormatter;
 
     info?: ColumnInfo;
+
+    /** Dla wewnętrznych potrzeb - Nazwa katalogu, do którego należy kolumna */
+    _catalogName?: string;
+    /** Dla wewnętrznych potrzeb - Nazwa schematu, do którego należy kolumna */
+    _schemaName?: string;
+    /** Dla wewnętrznych potrzeb - Nazwa tabeli, do której należy kolumna */
+    _tableName?: string;
 }
 
 export type SummaryOperation =

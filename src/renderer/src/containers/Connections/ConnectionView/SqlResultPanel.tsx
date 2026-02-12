@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Box, Stack, useTheme } from "@mui/material";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
-import { queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
+import { fillInternalColumnInfo, queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -227,7 +227,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setQueryDuration(info.duration ?? null);
                 fetchTime = Date.now() - fetchTime;
                 setFetchDuration(fetchTime);
-                setColumns(queryToDataGridColumns(info.columns ?? []))
+                setColumns(fillInternalColumnInfo(await session.getMetadata(), queryToDataGridColumns(info.columns ?? [])));
                 setRows(rows);
                 addQueryToHistory({
                     query: oryginalQuery!,
@@ -272,7 +272,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 const result = await session.execute(query!, queryValues);
                 if (result.rows) {
                     setRows(result.rows);
-                    setColumns(queryToDataGridColumns(result.columns ?? []));
+                    setColumns(fillInternalColumnInfo(await session.getMetadata(), queryToDataGridColumns(result.columns ?? [])));
                 }
                 else {
                     setRows([]);

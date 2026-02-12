@@ -143,6 +143,52 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
     return columns;
 }
 
+export const fillInternalColumnInfo = (metadata: api.DatabasesMetadata, columns: ColumnDefinition[]): ColumnDefinition[] => {
+    // Jeśli nie ma żadnego numerycznego ID, pomiń całą operację
+    const hasNumericIds = columns.some(c => c.info?.table && typeof c.info.table === 'number');
+    if (!hasNumericIds) return columns;
+    
+    // Zbierz unikalne ID do wyszukania
+    const idsToFind = new Set<number>();
+    for (const column of columns) {
+        if (column.info?.table && typeof column.info.table === 'number') {
+            idsToFind.add(column.info.table);
+        }
+    }
+    
+    // Buduj mapę tylko dla potrzebnych ID
+    const tableIdMap = new Map<number, { catalogName: string, schemaName: string, tableName: string }>();
+    
+    for (const [catalogName, database] of Object.entries(metadata)) {
+        if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
+        
+        for (const [schemaName, schema] of Object.entries(database.schemas)) {
+            for (const relation of Object.values(schema.relations)) {
+                const numId = typeof relation.id === 'number' ? relation.id : parseInt(relation.id);
+                if (!isNaN(numId) && idsToFind.has(numId)) {
+                    tableIdMap.set(numId, { catalogName, schemaName, tableName: relation.name });
+                    if (tableIdMap.size === idsToFind.size) break;
+                }
+            }
+            if (tableIdMap.size === idsToFind.size) break;
+        }
+    }
+    
+    // Wypełnij kolumny
+    for (const column of columns) {
+        if (!column.info?.table || typeof column.info.table === 'string') continue;
+        
+        const tableInfo = tableIdMap.get(column.info.table);
+        if (tableInfo) {
+            column._catalogName = tableInfo.catalogName;
+            column._schemaName = tableInfo.schemaName;
+            column._tableName = tableInfo.tableName;
+        }
+    }
+
+    return columns;
+}
+
 export const calculateSummary = (
     data: object[],
     columnsState: ColumnDefinition[],
