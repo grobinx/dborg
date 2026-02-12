@@ -1723,6 +1723,10 @@ export const DataGrid = <T extends object>({
                                                         filterColumns.clearTemporaryFilter() :
                                                         filterColumns.filterActive(col.key, false);
                                                     event.stopPropagation();
+                                                    event.preventDefault();
+                                                    if (columnHeaderMouseDownTimerRef.current) {
+                                                        clearTimeout(columnHeaderMouseDownTimerRef.current);
+                                                    }
                                                 }}
                                             >
                                                 <theme.icons.Filter color={isTemporaryFilter ? "warning" : undefined} />
@@ -1737,6 +1741,10 @@ export const DataGrid = <T extends object>({
                                                 onClick={(event) => {
                                                     groupingColumns.toggleColumn(col.key);
                                                     event.stopPropagation();
+                                                    event.preventDefault();
+                                                    if (columnHeaderMouseDownTimerRef.current) {
+                                                        clearTimeout(columnHeaderMouseDownTimerRef.current);
+                                                    }
                                                 }}
                                             >
                                                 <span className="group-icon">[]</span>
@@ -1751,6 +1759,10 @@ export const DataGrid = <T extends object>({
                                                 onClick={(event) => {
                                                     columnsState.toggleHidden(col.key);
                                                     event.stopPropagation();
+                                                    event.preventDefault();
+                                                    if (columnHeaderMouseDownTimerRef.current) {
+                                                        clearTimeout(columnHeaderMouseDownTimerRef.current);
+                                                    }
                                                 }}
                                             >
                                                 {col.hidden ? <theme.icons.VisibilityOff /> : <theme.icons.Visibility />}
