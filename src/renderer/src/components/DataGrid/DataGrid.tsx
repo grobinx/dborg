@@ -1416,8 +1416,8 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    const handleColumnHeaderMouseDown = (_event: React.MouseEvent, key: string) => {
-        if (canSelectColumns && selectedColumns.length === 0) {
+    const handleColumnHeaderMouseDown = (event: React.MouseEvent, key: string) => {
+        if (canSelectColumns && selectedColumns.length === 0 && event.button === 0) {
             if (columnHeaderMouseDownTimerRef.current) {
                 clearTimeout(columnHeaderMouseDownTimerRef.current);
             }
@@ -1429,7 +1429,7 @@ export const DataGrid = <T extends object>({
         }
     };
 
-    const handleHeaderClick = (absoluteColIndex: number, col: ColumnDefinition, e: React.MouseEvent) => {
+    const handleHeaderClick = (absoluteColIndex: number, col: ColumnDefinition, event: React.MouseEvent) => {
         if (firstColumnSelection) {
             setFirstColumnSelection(false);
             return;
@@ -1439,11 +1439,11 @@ export const DataGrid = <T extends object>({
             clearTimeout(columnHeaderMouseDownTimerRef.current);
         }
 
-        if (selectedColumns.length) {
+        if (selectedColumns.length && event.button === 0) {
             toggleColumnSelection(col.key);
         }
         else if ((col.sortable ?? true) && !pivot) {
-            dataGridActionContext.sortData(absoluteColIndex, e.ctrlKey || e.metaKey);
+            dataGridActionContext.sortData(absoluteColIndex, event.ctrlKey || event.metaKey);
         }
         updateSelectedCell({ row: selectedCell?.row ?? startRow, column: absoluteColIndex });
     };
