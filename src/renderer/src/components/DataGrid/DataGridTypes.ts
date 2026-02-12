@@ -2,6 +2,7 @@ import React from "react";
 import { Action, ActionGroup, ActionManager } from "../CommandPalette/ActionManager";
 import { ColumnBaseType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "../../../../../src/api/db";
 import { ColumnFilter, ColumnsFilterOperator } from "./useColumnsFilterState";
+import { Column } from "sql-taaf";
 
 export interface DataGridInfoMessage {
     /**
@@ -196,6 +197,29 @@ export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
     uniqueAgg: ["number", "boolean", "string", "object", "datetime"]
 };
 
+/** Mody dla wierszy i kolumn */
+export type DataSelectionMode = 
+    /** Wszystkie */
+    | "all"         
+    /** Zaznaczone lub wszystkie, jeśli brak zaznaczenia */
+    | "selected-or-all"          
+    /** Zaznaczone lub nic, jeśli brak zaznaczenia */
+    | "selected-or-none";        
+
+/** Opcje wyboru danych */
+export interface DataSelectionOptions {
+    /** 
+     * Tryb wyboru wierszy 
+     * @default "selected-or-all" 
+     */
+    rows?: DataSelectionMode;          
+    /** 
+     * Tryb wyboru kolumn
+     * @default "selected-or-all" 
+     */
+    columns?: DataSelectionMode; 
+}
+
 export interface DataGridActionContext<T extends object> {
     focus: () => void;
     isFocused: () => boolean;
@@ -213,13 +237,21 @@ export interface DataGridActionContext<T extends object> {
     getRowCount: (oryginalData?: boolean) => number;
     getColumn: (index?: number) => ColumnDefinition | null;
     updateColumn: (index: number, newColumn: Partial<ColumnDefinition>) => void;
-    getData: (row?: number) => T | null;
-    /** Zwraca wszystkie wiersze */
-    getRows: () => T[];
+    /** Zwraca dane wybranego lub przekazanego wiersza */
+    getRowData: (row?: number) => T | null;
+    /** Zwraca dane zaznaczonych wierszy lub wybrany kursorem wiersz */
+    getSelectedRowsData: (orCurrent?: boolean) => T[];
+    /** Zwraca dane zaznaczonych kolumn lub nic jeśli nie zaznaczono */
+    getSelectedColumnsData: () => Partial<T>[];
+    /** Zwraca dane zaznaczonych wierszy i kolumn lub nic jeśli nie zaznaczono */
+    getCrossSelectedData: () => Partial<T>[];
     /** Zwraca indeksy zaznaczonych wierszy */
     getSelectedRows: () => number[];
-    getSelectedData: () => T[];
+    getSelectedColumnsKeys: () => string[];
+    getSelectedColumns: (orAll?: boolean) => ColumnDefinition[];
+    getData: (options?: DataSelectionOptions) => Partial<T>[];
     clearSelectedRows: () => void;
+    clearSelectedColumns: () => void;
     getField: () => keyof T | null;
     openCommandPalette: (prefix: string, query: string) => void;
     closeCommandPalette: () => void;

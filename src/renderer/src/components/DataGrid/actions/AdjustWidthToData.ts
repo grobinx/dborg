@@ -35,7 +35,7 @@ export const AdjustWidthToData = (): Action<DataGridActionContext<any>> => {
 
             // Sprawdź szerokość danych w widocznych wierszach
             for (let row = start; row < endRow; row++) {
-                const data = context.getData(row);
+                const data = context.getRowData(row);
                 for (let column = 0; column < columns.length; column++) {
                     const columnDefinition = columns[column];
                     const columnDataType = pivotMap ? pivotMap[data["key"] as string] : columnDefinition.dataType;

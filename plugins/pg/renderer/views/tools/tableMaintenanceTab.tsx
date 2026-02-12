@@ -268,7 +268,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Vacuum",
                         disabled: () => selectedTable === null,
                         run: (context) => {
-                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            relationList = context.getSelectedRowsData() as RelationMaintenanceRecord[];
                             if (relationList.length === 0) {
                                 return;
                             }
@@ -287,7 +287,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Analyze",
                         disabled: () => selectedTable === null,
                         run: (context) => {
-                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            relationList = context.getSelectedRowsData() as RelationMaintenanceRecord[];
                             if (relationList.length === 0) {
                                 return;
                             }
@@ -306,7 +306,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Reindex",
                         disabled: () => selectedTable === null,
                         run: (context) => {
-                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            relationList = context.getSelectedRowsData() as RelationMaintenanceRecord[];
                             if (relationList.length === 0) {
                                 return;
                             }
@@ -325,7 +325,7 @@ const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
                         icon: "Cluster",
                         disabled: () => selectedTable === null,
                         run: (context) => {
-                            relationList = context.getSelectedData() as RelationMaintenanceRecord[];
+                            relationList = context.getSelectedRowsData() as RelationMaintenanceRecord[];
                             if (relationList.length === 0) {
                                 return;
                             }

@@ -114,7 +114,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                     actions: [
                         SelectSchemaAction(),
                         ShowRelationDataAction(context => {
-                            const record = context.getData();
+                            const record = context.getRowData();
                             if (record) {
                                 sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
                                     to: session.info.uniqueId,

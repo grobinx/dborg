@@ -12,7 +12,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             // search backwards for the previous row that has data (hasKeys)
             let target = row - 1;
             while (target >= 0) {
-                const data = context.getData(target);
+                const data = context.getRowData(target);
                 const hasKeys = data && Object.keys(data).length > 0;
                 if (hasKeys) {
                     context.setPosition({ row: target, column });
@@ -38,7 +38,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
             // search forwards for the next row that has data (hasKeys)
             let target = row + 1;
             while (target <= last) {
-                const data = context.getData(target);
+                const data = context.getRowData(target);
                 const hasKeys = data && Object.keys(data).length > 0;
                 if (hasKeys) {
                     context.setPosition({ row: target, column });
@@ -90,7 +90,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
 
             // find nearest row at or before target that has data
             while (target >= 0) {
-                const data = context.getData(target);
+                const data = context.getRowData(target);
                 const hasKeys = data && Object.keys(data).length > 0;
                 if (hasKeys) {
                     context.setPosition({ row: target, column });
@@ -117,7 +117,7 @@ export const createDataGridCommands = <T extends object>(): CommandDescriptor<Da
 
             // find nearest row at or after target that has data
             while (target <= last) {
-                const data = context.getData(target);
+                const data = context.getRowData(target);
                 const hasKeys = data && Object.keys(data).length > 0;
                 if (hasKeys) {
                     context.setPosition({ row: target, column });

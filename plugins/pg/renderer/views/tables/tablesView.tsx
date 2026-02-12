@@ -143,7 +143,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                     actions: [
                         SelectSchemaAction(),
                         ShowRelationDataAction(context => {
-                            const record = context.getData();
+                            const record = context.getRowData();
                             if (record) {
                                 if (record.table_type !== "foreign") {
                                     sendMessage(SQL_EDITOR_EXECUTE_QUERY, {

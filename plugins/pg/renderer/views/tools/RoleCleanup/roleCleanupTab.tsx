@@ -291,7 +291,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 1,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -316,7 +316,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 2,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -341,7 +341,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 3,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -388,7 +388,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 4,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -435,7 +435,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 5,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -782,7 +782,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 1,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -807,7 +807,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 2,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }
@@ -831,7 +831,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 contextMenuGroupId: "privilege-actions",
                                                 contextMenuOrder: 3,
                                                 run: (context) => {
-                                                    const selectedRows = context.getSelectedData();
+                                                    const selectedRows = context.getSelectedRowsData();
                                                     if (selectedRows.length === 0) {
                                                         return;
                                                     }

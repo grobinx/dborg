@@ -17,21 +17,8 @@ export const CopyDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
                 id: `dataGrid.copyData.${key}`,
                 label: format.label,
                 run: (context: DataGridActionContext<any>) => {
-                    const selectedRows = context.getSelectedRows();
-                    let data = context.getRows();
-                    if (selectedRows.length > 0) {
-                        data = selectedRows.map(i => data[i]);
-                    }
-                    const columns: Column[] = [];
-                    for (let i = 0; i < context.getColumnCount(); i++) {
-                        const column = context.getColumn(i);
-                        if (column && !column?.hidden) {
-                            columns.push({
-                                key: column.key as string,
-                                dataType: column.dataType,
-                            });
-                        }
-                    }
+                    const data = context.getData({ rows: "selected-or-all", columns: "selected-or-all" });
+                    const columns: Column[] = context.getSelectedColumns(true).map(col => ({ key: col.key, dataType: col.dataType }));
                     context.showDialog(
                         <CopyDataDialog
                             open={true}

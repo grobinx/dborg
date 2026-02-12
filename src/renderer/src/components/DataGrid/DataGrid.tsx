@@ -15,7 +15,7 @@ import Tooltip from "../Tooltip";
 import LoadingOverlay from "../useful/LoadingOverlay";
 import * as actions from "./actions";
 import { createDataGridCommands } from "./DataGridCommands";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, DataSelectionOptions, summaryOperationDisplayMap, summaryOperationToBaseTypeMap, TableCellPosition } from "./DataGridTypes";
 import { calculateSummary, calculateVisibleColumns, calculateVisibleRows, columnDataFormatter, displayMaxLengh, footerCaptionHeightFactor, scrollToCell } from "./DataGridUtils";
 import { filterToString, isColumnFilter, useColumnFilterState } from "./useColumnsFilterState";
 import { useColumnsGroup } from "./useColumnsGroup";
@@ -296,8 +296,8 @@ const StyledRow = styled("div", {
     zIndex: 1,
     "&.even": {
         backgroundColor: alpha(theme.palette.mode === "dark" ?
-            lighten(theme.palette.background.table.container, 0.4) :
-            darken(theme.palette.background.table.container, 0.4), 0.2),
+            lighten(theme.palette.background.table.container, 0.3) :
+            darken(theme.palette.background.table.container, 0.4), 0.1),
     },
     "&:hover": {
         backgroundColor: theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", // Kolor tła przy najechaniu myszką
@@ -1072,7 +1072,7 @@ export const DataGrid = <T extends object>({
         getRowCount: (originalData?: boolean) => !!originalData ? initialData.length : displayData.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCellRef.current ? columnsState.current[selectedCellRef.current.column] : null),
         updateColumn: (index, newColumn) => columnsState.updateColumn(index, newColumn),
-        getData: (row) => {
+        getRowData: (row) => {
             if (row === undefined) {
                 if (selectedCellRef.current) {
                     return displayDataRef.current[selectedCellRef.current.row]?.data || null;
@@ -1081,23 +1081,106 @@ export const DataGrid = <T extends object>({
             }
             return displayDataRef.current[row]?.data || null;
         },
-        getRows() {
-            return displayDataRef.current.map(r => r.data);
+        getSelectedRowsData(orCurrent: boolean = true) {
+            if (selectedRowsRef.current.length) {
+                return selectedRowsRef.current.map(i => displayDataRef.current[i]?.data || null);
+            }
+            if (!selectedCellRef.current) {
+                return [];
+            }
+            return orCurrent ? [displayDataRef.current[selectedCellRef.current.row]?.data || null] : [];
+        },
+        getSelectedColumnsData() {
+            if (selectedColumnsRef.current.length === 0) {
+                return [];
+            }
+            return displayDataRef.current.map(row => {
+                const rowData = row.data;
+                const selectedData: Partial<T> = {};
+                selectedColumnsRef.current.forEach(colIdx => {
+                    const colKey = columnsState.current[colIdx]?.key;
+                    if (colKey) {
+                        selectedData[colKey as keyof T] = rowData[colKey];
+                    }
+                });
+                return selectedData;
+            });
+        },
+        getCrossSelectedData() {
+            if (selectedRowsRef.current.length === 0 || selectedColumnsRef.current.length === 0) {
+                return [];
+            }
+            return selectedRowsRef.current.map(rowIdx => {
+                const rowData = displayDataRef.current[rowIdx]?.data || null;
+                if (rowData) {
+                    const selectedData: Partial<T> = {};
+                    selectedColumnsRef.current.forEach(colIdx => {
+                        const colKey = columnsState.current[colIdx]?.key;
+                        if (colKey) {
+                            selectedData[colKey as keyof T] = rowData[colKey];
+                        }
+                    });
+                    return selectedData;
+                }
+                return null;
+            }) as Partial<T>[];
+        },
+        getData(options?: DataSelectionOptions) {
+            const { rows, columns } = { rows: "selected-or-all", columns: "selected-or-all", ...options };
+
+            const allRowIndexes = displayDataRef.current.map((_, idx) => idx);
+            const selectedRowIndexes = selectedRowsRef.current;
+            const allColumnKeys = columnsState.current.map((c) => c.key);
+            const selectedColumnKeys = selectedColumnsRef.current;
+
+            const rowIndexes =
+                rows === "all"
+                    ? allRowIndexes
+                    : rows === "selected-or-none"
+                        ? selectedRowIndexes
+                        : (selectedRowIndexes.length ? selectedRowIndexes : allRowIndexes);
+
+            const columnKeys =
+                columns === "all"
+                    ? allColumnKeys
+                    : columns === "selected-or-none"
+                        ? selectedColumnKeys
+                        : (selectedColumnKeys.length ? selectedColumnKeys : allColumnKeys);
+
+            return rowIndexes
+                .map((rowIdx) => {
+                    const rowData = displayDataRef.current[rowIdx]?.data;
+                    if (!rowData) return null;
+
+                    const selectedData: Partial<T> = {};
+                    columnKeys.forEach((key) => {
+                        (selectedData as any)[key] = (rowData as any)[key];
+                    });
+
+                    return selectedData;
+                })
+                .filter((row): row is Partial<T> => row !== null);
         },
         getSelectedRows() {
             return selectedRowsRef.current;
         },
-        getSelectedData() {
-            if (!selectedCellRef.current) {
-                return [];
-            }
-            if (selectedRowsRef.current.length === 0) {
-                return [displayDataRef.current[selectedCellRef.current.row]?.data || null];
-            }
-            return selectedRowsRef.current.map(i => displayDataRef.current[i]?.data || null);
+        getSelectedColumnsKeys() {
+            return selectedColumnsRef.current;
+        },
+        getSelectedColumns(orAll: boolean = true) {
+            return (
+                (orAll && selectedColumnsRef.current.length === 0) ?
+                    columnsState.current :
+                    selectedColumnsRef.current.map(key => columnsState.current.find(col => col.key === key))
+                        .filter(Boolean)
+                        .filter(column => column !== undefined && !column.hidden) as ColumnDefinition[]
+            );
         },
         clearSelectedRows: () => {
             setSelectedRows([]);
+        },
+        clearSelectedColumns: () => {
+            setSelectedColumns([]);
         },
         getField: () => {
             if (selectedCellRef.current) {
@@ -1440,7 +1523,11 @@ export const DataGrid = <T extends object>({
         }
 
         if (selectedColumns.length && event.button === 0) {
-            toggleColumnSelection(col.key);
+            if (event.ctrlKey) {
+                toggleColumnSelection(col.key);
+            } else {
+                setSelectedColumns([]);
+            }
         }
         else if ((col.sortable ?? true) && !pivot) {
             dataGridActionContext.sortData(absoluteColIndex, event.ctrlKey || event.metaKey);
