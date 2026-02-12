@@ -109,7 +109,13 @@ const formatOptionsMap: Record<ExportFormat, DialogLayoutItemKind[]> = {
         },
     ],
     tsv: [
-        { type: "boolean", key: "includeHeaders", label: "Include headers", defaultValue: true },
+        {
+            type: "row",
+            items: [
+                { type: "boolean", key: "includeHeaders", label: "Include headers", defaultValue: true },
+                { type: "boolean", key: "localeFormat", label: "Locale format", defaultValue: false },
+            ],
+        },
         {
             type: "row",
             items: [
@@ -561,7 +567,7 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
 
                 const { preview, ...exportOptions } = values;
                 saveFormatOptions(format, exportOptions);
-                
+
                 if (columns) {
                     exportOptions.columns = columns;
                 }

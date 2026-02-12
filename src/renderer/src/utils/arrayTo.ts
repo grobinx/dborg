@@ -47,6 +47,8 @@ interface BaseExportOptions {
     columns?: Column[];
     nullValue?: string;
     booleanFormat?: 'text' | 'number' | 'yesno';
+    localeFormat?: boolean;
+    thousandsSeparator?: boolean;
 }
 
 // Opcje specyficzne dla JSON
@@ -162,16 +164,6 @@ export interface ExportResult {
     fileExtension: string | undefined;
 }
 
-const normalizeToStringOptions: ValueToStringOptions = {
-    display: false,
-    thousandsSeparator: false,
-};
-
-const normalizeToStringOptionsTSV: ValueToStringOptions = {
-    display: true,
-    thousandsSeparator: false,
-};
-
 /**
  * Normalizes a value for export
  */
@@ -195,7 +187,7 @@ const normalizeValue = (
         }
     }
 
-    return valueToString(value, resolveValueType(value, dataType), normalizeToStringOptions);
+    return valueToString(value, resolveValueType(value, dataType), { display: options.localeFormat ?? false, thousandsSeparator: options.thousandsSeparator ?? false });
 };
 
 /**
