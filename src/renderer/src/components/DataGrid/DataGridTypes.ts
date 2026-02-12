@@ -200,7 +200,9 @@ export const typeToOperationMap: Record<SummaryOperation, ColumnBaseType[]> = {
 /** Mody dla wierszy i kolumn */
 export type DataSelectionMode = 
     /** Wszystkie */
-    | "all"         
+    | "all"
+    /** Bieżący */
+    | "current"
     /** Zaznaczone lub wszystkie, jeśli brak zaznaczenia */
     | "selected-or-all"          
     /** Zaznaczone lub nic, jeśli brak zaznaczenia */

@@ -13,7 +13,21 @@ export const CopyDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
         prefix: "+",
         label: t(id, "+ Copy data"),
         actions: () => {
-            const actions: Action<any>[] = Object.entries(exportFormats).map(([key, format]) => ({
+            const actions: Action<any>[] = [];
+
+            actions.push({
+                id: "dataGrid.copyData.COLUMN-COMMA",
+                label: t("dataGrid.copyData.COLUMN-COMMA", "Column data separated by comma"),
+                run: (context: DataGridActionContext<any>) => {
+                    const data = context.getData({ rows: "selected-or-all", columns: "current" });
+                    const text = data.map(row => {
+                        return Object.values(row).join(",");
+                    }).join(",");
+                    navigator.clipboard.writeText(text);
+                }
+            });
+
+            actions.push(...Object.entries(exportFormats).map(([key, format]) => ({
                 id: `dataGrid.copyData.${key}`,
                 label: format.label,
                 run: (context: DataGridActionContext<any>) => {
@@ -29,7 +43,8 @@ export const CopyDataGroup = (): ActionGroup<DataGridActionContext<any>> => {
                         />
                     )
                 },
-            }));
+            })));
+
             return actions;
         },
         disabled: (context) => context.getRowCount() === 0,

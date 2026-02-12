@@ -1130,22 +1130,31 @@ export const DataGrid = <T extends object>({
 
             const allRowIndexes = displayDataRef.current.map((_, idx) => idx);
             const selectedRowIndexes = selectedRowsRef.current;
+            const currentRowIndexes = selectedCellRef.current ? [selectedCellRef.current.row] : [];
+
             const allColumnKeys = columnsState.current.map((c) => c.key);
             const selectedColumnKeys = selectedColumnsRef.current;
+            const currentColumnKeys = selectedCellRef.current
+                ? [columnsState.current[selectedCellRef.current.column]?.key].filter(Boolean) as string[]
+                : [];
 
             const rowIndexes =
                 rows === "all"
                     ? allRowIndexes
-                    : rows === "selected-or-none"
-                        ? selectedRowIndexes
-                        : (selectedRowIndexes.length ? selectedRowIndexes : allRowIndexes);
+                    : rows === "current"
+                        ? currentRowIndexes
+                        : rows === "selected-or-none"
+                            ? selectedRowIndexes
+                            : (selectedRowIndexes.length ? selectedRowIndexes : allRowIndexes);
 
             const columnKeys =
                 columns === "all"
                     ? allColumnKeys
-                    : columns === "selected-or-none"
-                        ? selectedColumnKeys
-                        : (selectedColumnKeys.length ? selectedColumnKeys : allColumnKeys);
+                    : columns === "current"
+                        ? currentColumnKeys
+                        : columns === "selected-or-none"
+                            ? selectedColumnKeys
+                            : (selectedColumnKeys.length ? selectedColumnKeys : allColumnKeys);
 
             return rowIndexes
                 .map((rowIdx) => {
