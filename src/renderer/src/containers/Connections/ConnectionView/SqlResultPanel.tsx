@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import { useTranslation } from "react-i18next";
 import { Box, Stack, useTheme } from "@mui/material";
@@ -14,7 +14,7 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { Duration } from "luxon";
 import { SQL_RESULT_CLOSE } from "./ResultsTabs";
 import { SQL_EDITOR_EXECUTE_QUERY, SQL_EDITOR_FOCUS, SQL_EDITOR_SHOW_STRUCTURE, SqlEditorExecuteQueryMessage } from "./SqlEditorPanel";
-import { QueryResultRow } from "src/api/db";
+import { ColumnDataType, QueryResultRow } from "src/api/db";
 import { SqlAnalyzer, SqlAstBuilder, SqlTokenizer } from "sql-taaf";
 import { useQueryHistory } from "../../../contexts/QueryHistoryContext";
 import { create } from "zustand";
@@ -27,6 +27,13 @@ import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import SqlParametersDialog from "@renderer/dialogs/SqlParametersDialog";
 import { extractSqlParameters, mapSqlParamsToValues, replaceNamedParamsWithPositional, SqlParameterInfo, SqlParametersValue, SqlParameterValue } from "../../../../../../src/api/db/SqlParameters";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
+import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
+import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
+import TabPanel from "@renderer/components/TabsPanel/TabPanel";
+import Tooltip from "@renderer/components/Tooltip";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { ValuePreview } from "@renderer/components/useful/ValuePreview";
+import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -145,6 +152,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         reject: () => void
     } | null>(null);
     const [queryValues, setQueryValues] = useState<(any | null)[]>([]);
+    const [showValuePreview, setShowValuePreview] = useState<boolean>(false);
+    const [valuePreview, setValuePreview] = useState<any>(null);
+    const [typePreview, setTypePreview] = useState<ColumnDataType | null>(null);
 
     // Funkcja otwierająca dialog i zwracająca Promise
     const askForSqlParams = (params: SqlParameterInfo[]): Promise<SqlParametersValue | null> => {
@@ -184,6 +194,14 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             keySequence: ["F5"],
             run: (_context) => {
                 setRefreshQuery(itemID!);
+            },
+        });
+        context.addAction({
+            id: "toggle-value-preview",
+            label: t("toggle-value-preview", "Toggle value preview"),
+            keySequence: ["Alt+F3"],
+            run: (_context) => {
+                setShowValuePreview((prev) => !prev);
             },
         });
     };
@@ -405,92 +423,144 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     }, [tabsItemID, itemID]);
 
     return (
-        <Stack
-            direction="column"
-            sx={{
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
-            }}
-        >
-            <Box
-                sx={{
-                    flex: 1, // Editor zajmuje pozostałą przestrzeń
-                    overflow: "hidden",
-                }}
-            >
-                <DataGrid
-                    columns={columns ?? []}
-                    data={rows ?? []}
-                    mode="data"
-                    columnsResizable={true}
-                    loading={
-                        rowsFetched ?? 0 > 0 ?
-                            t("fetching-data---", `Fetching data... {{rowsFetched}} rows`, { rowsFetched })
-                            : executing ?
-                                t("executing---", "Executing...")
-                                : undefined
-                    }
-                    onCancelLoading={
-                        (cancelExecution.current || rowsFetched !== undefined) ?
-                            () => {
-                                cancelLoading.current = true;
-                                if (cancelExecution.current) {
-                                    cancelExecution.current();
-                                }
+        <SplitPanelGroup direction="horizontal">
+            <SplitPanel>
+                <Stack
+                    direction="column"
+                    sx={{
+                        width: "100%",
+                        height: "100%",
+                        overflow: "hidden",
+                    }}
+                >
+                    <Box
+                        sx={{
+                            flex: 1, // Editor zajmuje pozostałą przestrzeń
+                            overflow: "hidden",
+                        }}
+                    >
+                        <DataGrid
+                            columns={columns ?? []}
+                            data={rows ?? []}
+                            mode="data"
+                            columnsResizable={true}
+                            loading={
+                                rowsFetched ?? 0 > 0 ?
+                                    t("fetching-data---", `Fetching data... {{rowsFetched}} rows`, { rowsFetched })
+                                    : executing ?
+                                        t("executing---", "Executing...")
+                                        : undefined
                             }
-                            : undefined
-                    }
-                    active={tabIsActive}
-                    onChange={(status) => setDataGridStatus(status)}
-                    onMount={onMountHandle}
-                    ref={dataGridRef}
-                    autoSaveId={session.profile.sch_id}
-                    canPivot={true}
-                />
-            </Box>
-            <DataGridStatusBar
-                status={dataGridStatus}
-                style={{
-                    zIndex: 3,
-                }}
-                buttons={{
-                    last: [
-                        <StatusBarButton key="queryDuration">
-                            {queryDuration !== null
-                                ? t(
-                                    "query-duration",
-                                    "Duration {{duration}}, fetch {{fetch}}",
-                                    {
-                                        duration: durationToHuman(Duration.fromMillis(queryDuration), { unitDisplay: "narrow" }),
-                                        fetch: durationToHuman(Duration.fromMillis(fetchDuration ?? 0), { unitDisplay: "narrow" })
+                            onCancelLoading={
+                                (cancelExecution.current || rowsFetched !== undefined) ?
+                                    () => {
+                                        cancelLoading.current = true;
+                                        if (cancelExecution.current) {
+                                            cancelExecution.current();
+                                        }
                                     }
-                                )
-                                : executing ? t("executing---", "Executing...") : t("no-query", "No Query")}
-                        </StatusBarButton>,
-                        updatedCount !== null && (
-                            <StatusBarButton key="command-updated">
-                                {t("updated-rows", "Updated {{count}} row(s)", { count: updatedCount })}
-                            </StatusBarButton>),
-                    ],
-                }}
-            />
-            <SqlParametersDialog
-                profileId={session.profile.sch_id}
-                open={sqlParametersDialogOpen}
-                onClose={() => {
-                    setSqlParametersDialogOpen(false);
-                    sqlParamsPromiseRef.current?.reject();
-                    sqlParamsPromiseRef.current = null;
-                }}
-                parameters={sqlParameters}
-                onSubmit={(values: SqlParametersValue) => {
-                    setSqlParametersDialogOpen(false);
-                    sqlParamsPromiseRef.current?.resolve(values);
-                    sqlParamsPromiseRef.current = null;
-                }}
-            />
-        </Stack>
+                                    : undefined
+                            }
+                            active={tabIsActive}
+                            onChange={(status) => setDataGridStatus(status)}
+                            onCell={(position) => {
+                                if (position) {
+                                    const value = dataGridRef.current?.getValue();
+                                    const column = dataGridRef.current?.getColumn();
+                                    setValuePreview(value);
+                                    setTypePreview(column?.dataType ?? null);
+                                }
+                            }}
+                            onMount={onMountHandle}
+                            ref={dataGridRef}
+                            autoSaveId={session.profile.sch_id}
+                            canPivot={true}
+                        />
+                    </Box>
+                    <DataGridStatusBar
+                        status={dataGridStatus}
+                        style={{
+                            zIndex: 3,
+                        }}
+                        buttons={{
+                            last: [
+                                <StatusBarButton key="queryDuration">
+                                    {queryDuration !== null
+                                        ? t(
+                                            "query-duration",
+                                            "Duration {{duration}}, fetch {{fetch}}",
+                                            {
+                                                duration: durationToHuman(Duration.fromMillis(queryDuration), { unitDisplay: "narrow" }),
+                                                fetch: durationToHuman(Duration.fromMillis(fetchDuration ?? 0), { unitDisplay: "narrow" })
+                                            }
+                                        )
+                                        : executing ? t("executing---", "Executing...") : t("no-query", "No Query")}
+                                </StatusBarButton>,
+                                updatedCount !== null && (
+                                    <StatusBarButton key="command-updated">
+                                        {t("updated-rows", "Updated {{count}} row(s)", { count: updatedCount })}
+                                    </StatusBarButton>),
+                            ],
+                        }}
+                    />
+                    <SqlParametersDialog
+                        profileId={session.profile.sch_id}
+                        open={sqlParametersDialogOpen}
+                        onClose={() => {
+                            setSqlParametersDialogOpen(false);
+                            sqlParamsPromiseRef.current?.reject();
+                            sqlParamsPromiseRef.current = null;
+                        }}
+                        parameters={sqlParameters}
+                        onSubmit={(values: SqlParametersValue) => {
+                            setSqlParametersDialogOpen(false);
+                            sqlParamsPromiseRef.current?.resolve(values);
+                            sqlParamsPromiseRef.current = null;
+                        }}
+                    />
+                </Stack>
+            </SplitPanel>
+            <Splitter hidden={!showValuePreview} />
+            <SplitPanel defaultSize={25} hidden={!showValuePreview}>
+                <TabsPanel
+                    itemID={`dataGrid-preview-${session.info.uniqueId}`}
+                    buttons={
+                        <TabPanelButtons>
+                            <Tooltip title={t("close-preview-panel", "Close Preview Panel")}>
+                                <ToolButton
+                                    onClick={() => setShowValuePreview(false)}
+                                    size="small"
+                                >
+                                    <theme.icons.Close />
+                                </ToolButton>
+                            </Tooltip>
+                        </TabPanelButtons>
+                    }
+                >
+                    <TabPanel
+                        itemID={`value-preview-${session.info.uniqueId}`}
+                        label={t("value-preview", "Value")}
+                        content={
+                            <TabPanelContent>
+                                <ValuePreview
+                                    value={valuePreview}
+                                    dataType={typePreview}
+                                    showToolbar={true}
+                                />
+                            </TabPanelContent>
+                        }
+                    />
+                    <TabPanel
+                        itemID={`metadata-preview-${session.info.uniqueId}`}
+                        label={t("metadata-preview", "Metadata")}
+                        content={
+                            <Box sx={{ padding: 1, height: "100%", overflow: "auto" }}>
+                            </Box>
+                        }
+                    />
+                </TabsPanel>
+            </SplitPanel>
+        </SplitPanelGroup>
     );
 };
 

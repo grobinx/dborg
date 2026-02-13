@@ -110,6 +110,12 @@ interface DataGridProps<T extends object> {
      */
     onChange?: (context: DataGridStatus) => void;
     /**
+     * Wywoływane jest po kliknięciu w komórkę
+     * @param context 
+     * @returns 
+     */
+    onCell?: (position: TableCellPosition | null) => void;
+    /**
      * Wywoływane jest po kliknięciu w wiersz
      * @param row 
      */
@@ -552,6 +558,7 @@ export const DataGrid = <T extends object>({
     onMount,
     onDismount,
     onChange,
+    onCell,
     onRowSelect,
     onRowDoubleClick,
     cellPaddingX = 3,
@@ -955,6 +962,7 @@ export const DataGrid = <T extends object>({
                 setSelectedCell(null);
                 selectedCellRef.current = null;
                 prevUniqueValueRef.current = null;
+                onCell?.(null);
             }
             return;
         }
@@ -965,6 +973,7 @@ export const DataGrid = <T extends object>({
                 setSelectedCell(null);
                 selectedCellRef.current = null;
                 prevUniqueValueRef.current = null;
+                onCell?.(null);
             }
             return;
         }
@@ -979,6 +988,7 @@ export const DataGrid = <T extends object>({
             setSelectedCell(next);
             prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.data?.[uniqueField] : null;
             selectedCellRef.current = next;
+            onCell?.(next);
             requestAnimationFrame(() => {
                 if (containerRef.current) {
                     scrollToCell(
