@@ -6,6 +6,7 @@ import ButtonGroup from "../buttons/ButtonGroup";
 import { ToolButton } from "../buttons/ToolButton";
 import Tooltip from "../Tooltip";
 import { useTranslation } from "react-i18next";
+import TabPanelButtons from "../TabsPanel/TabPanelButtons";
 
 export type PreviewMode = 'auto' | 'text' | 'json' | 'xml' | 'html' | 'hex' | 'image' | 'formatted';
 
@@ -68,12 +69,23 @@ export const resolveEffectivePreviewMode = (
     mode: PreviewMode,
     detectedInfo: ValuePreviewDetectedInfo
 ): Exclude<PreviewMode, 'auto'> => {
-    if (mode !== 'auto') return mode;
-    if (detectedInfo.canShowAs.includes('json')) return 'json';
-    if (detectedInfo.canShowAs.includes('xml')) return 'xml';
-    if (detectedInfo.canShowAs.includes('html')) return 'html';
-    if (detectedInfo.canShowAs.includes('image')) return 'image';
-    return 'formatted';
+    const preferred: Exclude<PreviewMode, 'auto'>[] = [
+        'json',
+        'xml',
+        'html',
+        'image',
+        'formatted',
+        'text',
+        'hex',
+    ];
+
+    const autoResolved =
+        preferred.find((m) => detectedInfo.canShowAs.includes(m)) ?? 'text';
+
+    if (mode === 'auto') return autoResolved;
+
+    // clamp: jeśli wybrany mode nie jest dostępny dla aktualnej wartości, fallback do autoResolved
+    return detectedInfo.canShowAs.includes(mode) ? mode : autoResolved;
 };
 
 interface ValuePreviewProps {
@@ -85,37 +97,107 @@ interface ValuePreviewProps {
     detectedInfo?: ValuePreviewDetectedInfo; // <- można przekazać z zewnątrz
 }
 
+interface ValuePreviewToolbarProps {
+    detectedInfo: ValuePreviewDetectedInfo;
+    effectiveMode: Exclude<PreviewMode, "auto">;
+    onChange: (mode: PreviewMode) => void;
+}
+
+export const ValuePreviewToolbar: React.FC<ValuePreviewToolbarProps> = ({
+    detectedInfo,
+    effectiveMode,
+    onChange,
+}) => {
+    const theme = useTheme();
+    const { t } = useTranslation();
+
+    return (
+        <TabPanelButtons>
+            <Stack direction="row" spacing={1} alignItems="center">
+                <ButtonGroup size="small">
+                    {detectedInfo.canShowAs.includes('formatted') && (
+                        <ToolButton onClick={() => onChange('formatted')} selected={effectiveMode === 'formatted'} tooltip={t("valuePreview.formattedTooltip", "Formatted view based on data type")}>
+                            <theme.icons.Formatted />
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('text') && (
+                        <ToolButton onClick={() => onChange('text')} selected={effectiveMode === 'text'} tooltip={t("valuePreview.textTooltip", "Plain text view")}>
+                            A
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('json') && (
+                        <ToolButton onClick={() => onChange('json')} selected={effectiveMode === 'json'} tooltip={t("valuePreview.jsonTooltip", "JSON view")}>
+                            <theme.icons.JsonEditor />
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('xml') && (
+                        <ToolButton onClick={() => onChange('xml')} selected={effectiveMode === 'xml'} tooltip={t("valuePreview.xmlTooltip", "XML view")}>
+                            <theme.icons.XmlEditor />
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('html') && (
+                        <ToolButton onClick={() => onChange('html')} selected={effectiveMode === 'html'} tooltip={t("valuePreview.htmlTooltip", "HTML view")}>
+                            <theme.icons.HtmlEditor />
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('hex') && (
+                        <ToolButton onClick={() => onChange('hex')} selected={effectiveMode === 'hex'} tooltip={t("valuePreview.hexTooltip", "Hex view")}>
+                            FF
+                        </ToolButton>
+                    )}
+                    {detectedInfo.canShowAs.includes('image') && (
+                        <ToolButton onClick={() => onChange('image')} selected={effectiveMode === 'image'} tooltip={t("valuePreview.imageTooltip", "Image view")}>
+                            <theme.icons.Image />
+                        </ToolButton>
+                    )}
+                </ButtonGroup>
+            </Stack>
+        </TabPanelButtons>
+    );
+};
+
 export const ValuePreview: React.FC<ValuePreviewProps> = ({
     value,
-    dataType: explicitDataType,
+    dataType,
     mode = 'auto',
     onModeChange,
     showToolbar = true,
     detectedInfo: detectedInfoProp,
 }) => {
-    const theme = useTheme();
-    const { t } = useTranslation();
-    const [localMode, setLocalMode] = useState<PreviewMode>(mode);
     const [fontSize] = useSetting("dborg", "data_grid.data.font_size");
     const [fontFamily] = useSetting("ui", "monospaceFontFamily");
 
     const computedDetectedInfo = useMemo(
-        () => detectValuePreviewInfo(value, explicitDataType),
-        [value, explicitDataType]
+        () => detectValuePreviewInfo(value, dataType),
+        [value, dataType]
     );
 
     const detectedInfo = detectedInfoProp ?? computedDetectedInfo;
 
+    // Single source of truth: userSelectedMode
+    const [userSelectedMode, setUserSelectedMode] = useState<PreviewMode | null>(null);
+
+    // Determine actual mode to display
     const effectiveMode = useMemo(
-        () => resolveEffectivePreviewMode(localMode, detectedInfo),
-        [localMode, detectedInfo]
+        () => {
+            const modeToResolve = userSelectedMode ?? mode;
+            return resolveEffectivePreviewMode(modeToResolve, detectedInfo);
+        },
+        [userSelectedMode, mode, detectedInfo]
     );
 
-    const handleModeChange = (newMode: PreviewMode | null) => {
-        if (newMode) {
-            setLocalMode(newMode);
-            onModeChange?.(newMode);
+    // Reset/sync user selection on external prop change
+    React.useEffect(() => {
+        if (mode === 'auto') {
+            setUserSelectedMode(null);
+        } else {
+            setUserSelectedMode(mode);
         }
+    }, [mode]);
+
+    const handleModeChange = (newMode: PreviewMode) => {
+        setUserSelectedMode(newMode);
+        onModeChange?.(newMode);
     };
 
     const renderContent = () => {
@@ -157,52 +239,14 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
     return (
         <Stack direction="column" sx={{ width: '100%', height: '100%', overflow: 'hidden' }}>
             {showToolbar && (
-                <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                        <ButtonGroup
-                            value={effectiveMode}
-                            exclusive
-                            onChange={(value) => handleModeChange(value as PreviewMode)}
-                            size="small"
-                        >
-                            {detectedInfo.canShowAs.includes('formatted') && (
-                                <ToolButton value="formatted" toggle="formatted" tooltip={t("valuePreview.formattedTooltip", "Formatted view based on data type")}>
-                                    <theme.icons.Formatted />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('text') && (
-                                <ToolButton value="text" toggle="text" tooltip={t("valuePreview.textTooltip", "Plain text view")}>
-                                    <theme.icons.TextField />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('json') && (
-                                <ToolButton value="json" toggle="json" tooltip={t("valuePreview.jsonTooltip", "JSON view")}>
-                                    <theme.icons.JsonEditor />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('xml') && (
-                                <ToolButton value="xml" toggle="xml" tooltip={t("valuePreview.xmlTooltip", "XML view")}>
-                                    <theme.icons.XmlEditor />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('html') && (
-                                <ToolButton value="html" toggle="html" tooltip={t("valuePreview.htmlTooltip", "HTML view")}>
-                                    <theme.icons.HtmlEditor />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('hex') && (
-                                <ToolButton value="hex" toggle="hex" tooltip={t("valuePreview.hexTooltip", "Hex view")}>
-                                    <theme.icons.Hexagon />
-                                </ToolButton>
-                            )}
-                            {detectedInfo.canShowAs.includes('image') && (
-                                <ToolButton value="image" toggle="image" tooltip={t("valuePreview.imageTooltip", "Image view")}>
-                                    <theme.icons.Image />
-                                </ToolButton>
-                            )}
-                        </ButtonGroup>
-                    </Stack>
-                </Box>
+                <>
+                    <ValuePreviewToolbar
+                        detectedInfo={detectedInfo}
+                        effectiveMode={effectiveMode}
+                        onChange={handleModeChange}
+                    />
+                    <hr style={{ margin: 0 }} />
+                </>
             )}
             <Box
                 sx={{
@@ -329,7 +373,7 @@ const HexPreview: React.FC<{ value: any }> = ({ value }) => {
     }, [value]);
 
     return (
-        <pre style={{ margin: 0, whiteSpace: 'pre', overflow: 'auto' }}>
+        <pre style={{ margin: 0, whiteSpace: 'pre' }}>
             {hexString}
         </pre>
     );

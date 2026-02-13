@@ -32,7 +32,7 @@ import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { ValuePreview } from "@renderer/components/useful/ValuePreview";
+import { detectValuePreviewInfo, PreviewMode, resolveEffectivePreviewMode, ValuePreview, ValuePreviewToolbar } from "@renderer/components/useful/ValuePreview";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import debounce from "@renderer/utils/debounce";
 
@@ -147,36 +147,42 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     });
     const [sqlParametersDialogOpen, setSqlParametersDialogOpen] = useState(false);
     const [sqlParameters, setSqlParameters] = useState<SqlParameterInfo[]>([]);
+
     // Resolver promisy dialogu parametrów
     const sqlParamsPromiseRef = useRef<{
         resolve: (v: Record<string, SqlParameterValue>) => void,
         reject: () => void
     } | null>(null);
-    const [queryValues, setQueryValues] = useState<(any | null)[]>([]);
-    const [showValuePreview, setShowValuePreview] = useState<boolean>(false);
-    const [valuePreview, setValuePreview] = useState<any>(null);
-    const [typePreview, setTypePreview] = useState<ColumnDataType | null>(null);
 
     // Funkcja otwierająca dialog i zwracająca Promise
     const askForSqlParams = (params: SqlParameterInfo[]): Promise<SqlParametersValue | null> => {
         setSqlParameters(params);
         setSqlParametersDialogOpen(true);
+
         return new Promise((resolve) => {
             sqlParamsPromiseRef.current = {
                 resolve: (values) => resolve(values),
-                reject: () => resolve(null)
+                reject: () => resolve(null),
             };
         });
     };
 
-    const debounceValuePreview = debounce((position: TableCellPosition | null) => {
-        if (position) {
-            const value = dataGridRef.current?.getValue(position);
-            const column = dataGridRef.current?.getColumn(position.column);
-            setValuePreview(value);
-            setTypePreview(column?.dataType ?? null);
-        }
-    }, 250);
+    const [queryValues, setQueryValues] = useState<(any | null)[]>([]);
+    const [showValuePreview, setShowValuePreview] = useState<boolean>(false);
+    const [valuePreview, setValuePreview] = useState<any>(null);
+    const [typePreview, setTypePreview] = useState<ColumnDataType | null>(null);
+    const [previewMode, setPreviewMode] = useState<PreviewMode>("auto");
+
+    // zamiast state na detectedInfoPreview:
+    const detectedInfoPreview = React.useMemo(
+        () => detectValuePreviewInfo(valuePreview, typePreview),
+        [valuePreview, typePreview]
+    );
+
+    const effectivePreviewMode = React.useMemo(
+        () => resolveEffectivePreviewMode(previewMode, detectedInfoPreview),
+        [previewMode, detectedInfoPreview]
+    );
 
     useEffect(() => {
         executingRef.current = executing ?? false;
@@ -472,10 +478,15 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                     : undefined
                             }
                             active={tabIsActive}
-                            onChange={(status) => setDataGridStatus(status)}
-                            onCell={(position) => {
-                                if (position) {
-                                    debounceValuePreview(position);
+                            onChange={(status) => {
+                                setDataGridStatus(status)
+                                if (status.position) {
+                                    const value = dataGridRef.current?.getValue(status.position);
+                                    const column = dataGridRef.current?.getColumn(status.position.column);
+                                    if (value !== valuePreview || column?.dataType !== typePreview) {
+                                        setValuePreview(value);
+                                        setTypePreview(column?.dataType ?? null);
+                                    }
                                 }
                             }}
                             onMount={onMountHandle}
@@ -547,12 +558,22 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     <TabPanel
                         itemID={`value-preview-${session.info.uniqueId}`}
                         label={t("value-preview", "Value")}
+                        buttons={
+                            <ValuePreviewToolbar
+                                detectedInfo={detectedInfoPreview}
+                                effectiveMode={effectivePreviewMode}
+                                onChange={(mode) => setPreviewMode(mode)}
+                            />
+                        }
                         content={
                             <TabPanelContent>
                                 <ValuePreview
                                     value={valuePreview}
                                     dataType={typePreview}
-                                    showToolbar={true}
+                                    detectedInfo={detectedInfoPreview}
+                                    mode={previewMode}
+                                    onModeChange={setPreviewMode}
+                                    showToolbar={false}
                                 />
                             </TabPanelContent>
                         }
