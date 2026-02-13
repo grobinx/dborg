@@ -902,6 +902,7 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         console.debug("DataGrid update status bar");
+        onCell?.(selectedCell);
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
@@ -952,7 +953,7 @@ export const DataGrid = <T extends object>({
         onChange,
         active,
         data,
-        columnsState.anySummarized
+        columnsState.anySummarized,
     ]);
 
     const updateSelectedCell = React.useCallback((cell: TableCellPosition | null) => {
@@ -962,7 +963,6 @@ export const DataGrid = <T extends object>({
                 setSelectedCell(null);
                 selectedCellRef.current = null;
                 prevUniqueValueRef.current = null;
-                onCell?.(null);
             }
             return;
         }
@@ -973,22 +973,20 @@ export const DataGrid = <T extends object>({
                 setSelectedCell(null);
                 selectedCellRef.current = null;
                 prevUniqueValueRef.current = null;
-                onCell?.(null);
             }
             return;
         }
         const row = Math.max(0, Math.min(cell.row, maxRow));
         const column = Math.max(0, Math.min(cell.column, maxCol));
         const prev = selectedCellRef.current;
+        const next = { row, column };
         if (prev && prev.row === row && prev.column === column) {
             return; // no-op
         }
-        const next = { row, column };
         requestAnimationFrame(() => {
             setSelectedCell(next);
             prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.data?.[uniqueField] : null;
             selectedCellRef.current = next;
-            onCell?.(next);
             requestAnimationFrame(() => {
                 if (containerRef.current) {
                     scrollToCell(
@@ -1054,10 +1052,11 @@ export const DataGrid = <T extends object>({
             }
         },
         isFocused: () => isFocused,
-        getValue: () => {
-            if (selectedCellRef.current) {
-                const column = columnsState.current[selectedCellRef.current.column];
-                return displayDataRef.current[selectedCellRef.current.row].data[column.key];
+        getValue: (position?: TableCellPosition) => {
+            const pos = position || selectedCellRef.current;
+            if (pos) {
+                const column = columnsState.current[pos.column];
+                return displayDataRef.current[pos.row].data[column.key];
             }
             return null;
         },

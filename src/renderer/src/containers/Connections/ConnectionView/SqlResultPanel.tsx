@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import { useTranslation } from "react-i18next";
 import { Box, Stack, useTheme } from "@mui/material";
@@ -34,6 +34,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { ValuePreview } from "@renderer/components/useful/ValuePreview";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
+import debounce from "@renderer/utils/debounce";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -167,6 +168,15 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             };
         });
     };
+
+    const debounceValuePreview = debounce((position: TableCellPosition | null) => {
+        if (position) {
+            const value = dataGridRef.current?.getValue(position);
+            const column = dataGridRef.current?.getColumn(position.column);
+            setValuePreview(value);
+            setTypePreview(column?.dataType ?? null);
+        }
+    }, 250);
 
     useEffect(() => {
         executingRef.current = executing ?? false;
@@ -465,10 +475,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                             onChange={(status) => setDataGridStatus(status)}
                             onCell={(position) => {
                                 if (position) {
-                                    const value = dataGridRef.current?.getValue();
-                                    const column = dataGridRef.current?.getColumn();
-                                    setValuePreview(value);
-                                    setTypePreview(column?.dataType ?? null);
+                                    debounceValuePreview(position);
                                 }
                             }}
                             onMount={onMountHandle}

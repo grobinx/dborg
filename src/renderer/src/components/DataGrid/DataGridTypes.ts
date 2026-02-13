@@ -227,7 +227,7 @@ export interface DataGridActionContext<T extends object> {
     isFocused: () => boolean;
     getPosition: () => TableCellPosition | null;
     setPosition: (position: TableCellPosition) => void;
-    getValue: () => any | null;
+    getValue: (position?: TableCellPosition) => any | null;
     getFontSize: () => number;
     setFontSize: (height: number) => void;
     getColumnWidth: () => number | null;

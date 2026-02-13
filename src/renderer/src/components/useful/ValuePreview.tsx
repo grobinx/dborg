@@ -89,7 +89,7 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
             }
         }
 
-        if (primitiveType === 'object') {
+        if (primitiveType === 'object' || primitiveType === 'array') {
             canShowAs.push('json');
         }
 
