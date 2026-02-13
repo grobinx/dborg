@@ -5,6 +5,7 @@ import Tooltip from "../Tooltip";
 import { Shortcut } from "../Shortcut";
 import { BaseButton } from "./BaseButton";
 import { BaseButtonProps } from "./BaseButtonProps";
+import { FormattedContent } from "../useful/FormattedText";
 
 export interface ActionShows {
     icon?: boolean;
@@ -48,10 +49,12 @@ export function prepareAction<T,>(context: T, action: Action<T> | undefined, sho
     };
 }
 
-export interface ActionButtonProps<T> extends BaseButtonProps, ActionProps<T> { }
+export interface ActionButtonProps<T> extends BaseButtonProps, ActionProps<T> { 
+    tooltip?: FormattedContent;
+}
 
 const ActionButton = <T,>(props: ActionButtonProps<T>) => {
-    const { componentName, action, actionManager, actionContext, children, disabled, loading, selected, actionShows, actionArgs, onClick, ...other } = props;
+    const { componentName, action, actionManager, actionContext, children, disabled, loading, selected, actionShows, actionArgs, onClick, tooltip, ...other } = props;
     const theme = useTheme();
 
     const resolvedAction =
@@ -110,11 +113,11 @@ const ActionButton = <T,>(props: ActionButtonProps<T>) => {
         </BaseButton>
     );
 
-    return pa?.tooltip ? (
+    return (pa?.tooltip ?? tooltip) ? (
         <Tooltip title={
             pa?.tooltipShortcut ?
-                <>{pa.tooltip || pa?.label}<br /><Shortcut keybindings={pa?.tooltipShortcut} /></>
-                : (pa.tooltip || pa?.label)}>
+                <>{pa?.tooltip ?? pa?.label ?? tooltip}<br /><Shortcut keybindings={pa?.tooltipShortcut} /></>
+                : (pa?.tooltip ?? pa?.label ?? tooltip)}>
             {button}
         </Tooltip>
     ) : (

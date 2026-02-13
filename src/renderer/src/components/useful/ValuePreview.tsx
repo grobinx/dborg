@@ -4,6 +4,8 @@ import { ColumnDataType, resolveDataTypeFromString, resolvePrimitiveType, valueT
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import ButtonGroup from "../buttons/ButtonGroup";
 import { ToolButton } from "../buttons/ToolButton";
+import Tooltip from "../Tooltip";
+import { useTranslation } from "react-i18next";
 
 export type PreviewMode = 'auto' | 'text' | 'json' | 'xml' | 'html' | 'hex' | 'image' | 'formatted';
 
@@ -42,7 +44,7 @@ export const detectValuePreviewInfo = (
             try {
                 JSON.parse(strValue);
                 canShowAs.push('json');
-            } catch {}
+            } catch { }
         }
 
         if (dataType === 'xml' || strValue.trim().startsWith('<')) canShowAs.push('xml');
@@ -92,6 +94,7 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
     detectedInfo: detectedInfoProp,
 }) => {
     const theme = useTheme();
+    const { t } = useTranslation();
     const [localMode, setLocalMode] = useState<PreviewMode>(mode);
     const [fontSize] = useSetting("dborg", "data_grid.data.font_size");
     const [fontFamily] = useSetting("ui", "monospaceFontFamily");
@@ -163,37 +166,37 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
                             size="small"
                         >
                             {detectedInfo.canShowAs.includes('formatted') && (
-                                <ToolButton value="formatted" toggle="formatted">
+                                <ToolButton value="formatted" toggle="formatted" tooltip={t("valuePreview.formattedTooltip", "Formatted view based on data type")}>
                                     <theme.icons.Formatted />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('text') && (
-                                <ToolButton value="text" toggle="text">
+                                <ToolButton value="text" toggle="text" tooltip={t("valuePreview.textTooltip", "Plain text view")}>
                                     <theme.icons.TextField />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('json') && (
-                                <ToolButton value="json" toggle="json">
+                                <ToolButton value="json" toggle="json" tooltip={t("valuePreview.jsonTooltip", "JSON view")}>
                                     <theme.icons.JsonEditor />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('xml') && (
-                                <ToolButton value="xml" toggle="xml">
+                                <ToolButton value="xml" toggle="xml" tooltip={t("valuePreview.xmlTooltip", "XML view")}>
                                     <theme.icons.XmlEditor />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('html') && (
-                                <ToolButton value="html" toggle="html">
+                                <ToolButton value="html" toggle="html" tooltip={t("valuePreview.htmlTooltip", "HTML view")}>
                                     <theme.icons.HtmlEditor />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('hex') && (
-                                <ToolButton value="hex" toggle="hex">
+                                <ToolButton value="hex" toggle="hex" tooltip={t("valuePreview.hexTooltip", "Hex view")}>
                                     <theme.icons.Hexagon />
                                 </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('image') && (
-                                <ToolButton value="image" toggle="image">
+                                <ToolButton value="image" toggle="image" tooltip={t("valuePreview.imageTooltip", "Image view")}>
                                     <theme.icons.Image />
                                 </ToolButton>
                             )}
