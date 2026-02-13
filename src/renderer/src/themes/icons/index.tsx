@@ -220,6 +220,9 @@ export interface ThemeIcons {
     AddRow: IconWrapperFC;
     RemoveRow: IconWrapperFC;
     EditRow: IconWrapperFC;
+    Formatted: IconWrapperFC;
+    Hexagon: IconWrapperFC;
+    Image: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;

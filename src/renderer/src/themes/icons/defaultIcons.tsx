@@ -192,6 +192,9 @@ const icons = (palette: Palette): ThemeOptions => {
             AddRow: (props) => <IconWrapper {...props} className="add-row"><MuiIcons.AddBoxOutlined fontSize="inherit" /></IconWrapper>,
             RemoveRow: (props) => <IconWrapper {...props} className="remove-row"><MuiIcons.IndeterminateCheckBoxOutlined fontSize="inherit" /></IconWrapper>,
             EditRow: (props) => <IconWrapper {...props} className="edit-row"><MuiIcons.EditOutlined fontSize="inherit" /></IconWrapper>,
+            Formatted: (props) => <IconWrapper {...props} className="formatted"><MuiIcons.FormatPaintOutlined fontSize="inherit" /></IconWrapper>,
+            Hexagon: (props) => <IconWrapper {...props} className="hexagon"><MuiIcons.Hexagon fontSize="inherit" /></IconWrapper>,
+            Image: (props) => <IconWrapper {...props} className="image"><MuiIcons.ImageOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

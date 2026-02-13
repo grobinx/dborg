@@ -1,18 +1,86 @@
 import React, { useMemo, useState } from "react";
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography, useTheme } from "@mui/material";
-import { useTranslation } from "react-i18next";
-import Tooltip from "../Tooltip";
+import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { ColumnDataType, resolveDataTypeFromString, resolvePrimitiveType, valueToString } from "../../../../api/db";
+import { useSetting } from "@renderer/contexts/SettingsContext";
+import ButtonGroup from "../buttons/ButtonGroup";
+import { ToolButton } from "../buttons/ToolButton";
 
 export type PreviewMode = 'auto' | 'text' | 'json' | 'xml' | 'html' | 'hex' | 'image' | 'formatted';
 
+export interface ValuePreviewDetectedInfo {
+    dataType: ColumnDataType | null;
+    primitiveType: ReturnType<typeof resolvePrimitiveType> | null;
+    canShowAs: PreviewMode[];
+}
+
+export const detectValuePreviewInfo = (
+    value: any,
+    explicitDataType?: ColumnDataType | null
+): ValuePreviewDetectedInfo => {
+    if (value === null || value === undefined) {
+        return { dataType: null, primitiveType: null, canShowAs: ['text'] };
+    }
+
+    const primitiveType = resolvePrimitiveType(value);
+    let dataType = explicitDataType ?? null;
+
+    if (!dataType) {
+        if (primitiveType === 'string') dataType = resolveDataTypeFromString(value);
+        else if (primitiveType === 'number') dataType = 'number';
+        else if (primitiveType === 'bigint') dataType = 'bigint';
+        else if (primitiveType === 'boolean') dataType = 'boolean';
+        else if (primitiveType === 'array') dataType = ['string'];
+        else if (primitiveType === 'object') dataType = 'json';
+    }
+
+    const canShowAs: PreviewMode[] = ['text', 'formatted'];
+
+    if (primitiveType === 'string') {
+        const strValue = value as string;
+
+        if (dataType === 'json' || strValue.trim().startsWith('{') || strValue.trim().startsWith('[')) {
+            try {
+                JSON.parse(strValue);
+                canShowAs.push('json');
+            } catch {}
+        }
+
+        if (dataType === 'xml' || strValue.trim().startsWith('<')) canShowAs.push('xml');
+        if (strValue.includes('<!DOCTYPE') || strValue.includes('<html') || strValue.includes('<div')) canShowAs.push('html');
+        if (strValue.length > 100 || /[\x00-\x1F\x7F-\x9F]/.test(strValue)) canShowAs.push('hex');
+    }
+
+    if (primitiveType === 'object' || primitiveType === 'array') canShowAs.push('json');
+
+    if (dataType === 'binary' || dataType === 'blob' || dataType === 'image') {
+        canShowAs.push('hex');
+        if (dataType === 'image' || (typeof Blob !== 'undefined' && value instanceof Blob && value.type.startsWith('image/'))) {
+            canShowAs.push('image');
+        }
+    }
+
+    return { dataType, primitiveType, canShowAs };
+};
+
+export const resolveEffectivePreviewMode = (
+    mode: PreviewMode,
+    detectedInfo: ValuePreviewDetectedInfo
+): Exclude<PreviewMode, 'auto'> => {
+    if (mode !== 'auto') return mode;
+    if (detectedInfo.canShowAs.includes('json')) return 'json';
+    if (detectedInfo.canShowAs.includes('xml')) return 'xml';
+    if (detectedInfo.canShowAs.includes('html')) return 'html';
+    if (detectedInfo.canShowAs.includes('image')) return 'image';
+    return 'formatted';
+};
+
 interface ValuePreviewProps {
     value: any;
-    dataType?: ColumnDataType | null; // Opcjonalny jawny typ
-    mode?: PreviewMode; // Tryb podglądu
+    dataType?: ColumnDataType | null;
+    mode?: PreviewMode;
     onModeChange?: (mode: PreviewMode) => void;
-    maxHeight?: number | string;
     showToolbar?: boolean;
+    detectedInfo?: ValuePreviewDetectedInfo; // <- można przekazać z zewnątrz
 }
 
 export const ValuePreview: React.FC<ValuePreviewProps> = ({
@@ -20,101 +88,25 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
     dataType: explicitDataType,
     mode = 'auto',
     onModeChange,
-    maxHeight = 400,
     showToolbar = true,
+    detectedInfo: detectedInfoProp,
 }) => {
-    const { t } = useTranslation();
     const theme = useTheme();
     const [localMode, setLocalMode] = useState<PreviewMode>(mode);
+    const [fontSize] = useSetting("dborg", "data_grid.data.font_size");
+    const [fontFamily] = useSetting("ui", "monospaceFontFamily");
 
-    const detectedInfo = useMemo(() => {
-        if (value === null || value === undefined) {
-            return { dataType: null, primitiveType: null, canShowAs: ['text'] as PreviewMode[] };
-        }
+    const computedDetectedInfo = useMemo(
+        () => detectValuePreviewInfo(value, explicitDataType),
+        [value, explicitDataType]
+    );
 
-        const primitiveType = resolvePrimitiveType(value);
-        let dataType = explicitDataType ?? null;
+    const detectedInfo = detectedInfoProp ?? computedDetectedInfo;
 
-        // Jeśli nie mamy jawnego typu, spróbuj wykryć
-        if (!dataType) {
-            if (primitiveType === 'string') {
-                dataType = resolveDataTypeFromString(value);
-            } else if (primitiveType === 'number') {
-                dataType = 'number';
-            } else if (primitiveType === 'bigint') {
-                dataType = 'bigint';
-            } else if (primitiveType === 'boolean') {
-                dataType = 'boolean';
-            } else if (primitiveType === 'array') {
-                dataType = ['string']; // domyślnie array of strings
-            } else if (primitiveType === 'object') {
-                // Sprawdź czy to JSON
-                try {
-                    if (value && typeof value === 'object') {
-                        dataType = 'json';
-                    }
-                } catch {
-                    dataType = 'object';
-                }
-            }
-        }
-
-        // Określ dostępne tryby podglądu
-        const canShowAs: PreviewMode[] = ['text', 'formatted'];
-
-        if (primitiveType === 'string') {
-            const strValue = value as string;
-
-            // JSON
-            if (dataType === 'json' || (strValue.trim().startsWith('{') || strValue.trim().startsWith('['))) {
-                try {
-                    JSON.parse(strValue);
-                    canShowAs.push('json');
-                } catch { }
-            }
-
-            // XML
-            if (dataType === 'xml' || strValue.trim().startsWith('<')) {
-                canShowAs.push('xml');
-            }
-
-            // HTML
-            if (strValue.includes('<!DOCTYPE') || strValue.includes('<html') || strValue.includes('<div')) {
-                canShowAs.push('html');
-            }
-
-            // Hex dla długich stringów lub binarnych
-            if (strValue.length > 100 || /[\x00-\x1F\x7F-\x9F]/.test(strValue)) {
-                canShowAs.push('hex');
-            }
-        }
-
-        if (primitiveType === 'object' || primitiveType === 'array') {
-            canShowAs.push('json');
-        }
-
-        // Binary/image
-        if (dataType === 'binary' || dataType === 'blob' || dataType === 'image') {
-            canShowAs.push('hex');
-            if (dataType === 'image' || (typeof Blob !== 'undefined' && value instanceof Blob && value.type.startsWith('image/'))) {
-                canShowAs.push('image');
-            }
-        }
-
-        return { dataType, primitiveType, canShowAs };
-    }, [value, explicitDataType]);
-
-    const effectiveMode = useMemo(() => {
-        if (localMode === 'auto') {
-            // Wybierz najlepszy domyślny tryb
-            if (detectedInfo.canShowAs.includes('json')) return 'json';
-            if (detectedInfo.canShowAs.includes('xml')) return 'xml';
-            if (detectedInfo.canShowAs.includes('html')) return 'html';
-            if (detectedInfo.canShowAs.includes('image')) return 'image';
-            return 'formatted';
-        }
-        return localMode;
-    }, [localMode, detectedInfo]);
+    const effectiveMode = useMemo(
+        () => resolveEffectivePreviewMode(localMode, detectedInfo),
+        [localMode, detectedInfo]
+    );
 
     const handleModeChange = (newMode: PreviewMode | null) => {
         if (newMode) {
@@ -164,51 +156,48 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
             {showToolbar && (
                 <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <ToggleButtonGroup
+                        <ButtonGroup
                             value={effectiveMode}
                             exclusive
-                            onChange={(_, value) => handleModeChange(value)}
+                            onChange={(value) => handleModeChange(value as PreviewMode)}
                             size="small"
                         >
                             {detectedInfo.canShowAs.includes('formatted') && (
-                                <ToggleButton value="formatted">
-                                    <theme.icons.Add />
-                                </ToggleButton>
+                                <ToolButton value="formatted" toggle="formatted">
+                                    <theme.icons.Formatted />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('text') && (
-                                <ToggleButton value="text">
-                                    <theme.icons.Delete />
-                                </ToggleButton>
+                                <ToolButton value="text" toggle="text">
+                                    <theme.icons.TextField />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('json') && (
-                                <ToggleButton value="json">
-                                    <theme.icons.AddRow />
-                                </ToggleButton>
+                                <ToolButton value="json" toggle="json">
+                                    <theme.icons.JsonEditor />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('xml') && (
-                                <ToggleButton value="xml">
-                                    <theme.icons.Analyze />
-                                </ToggleButton>
+                                <ToolButton value="xml" toggle="xml">
+                                    <theme.icons.XmlEditor />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('html') && (
-                                <ToggleButton value="html">
-                                    <theme.icons.Check />
-                                </ToggleButton>
+                                <ToolButton value="html" toggle="html">
+                                    <theme.icons.HtmlEditor />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('hex') && (
-                                <ToggleButton value="hex">
-                                    <theme.icons.AutoRefresh />
-                                </ToggleButton>
+                                <ToolButton value="hex" toggle="hex">
+                                    <theme.icons.Hexagon />
+                                </ToolButton>
                             )}
                             {detectedInfo.canShowAs.includes('image') && (
-                                <ToggleButton value="image">
-                                    <theme.icons.CheckBoxBlank />
-                                </ToggleButton>
+                                <ToolButton value="image" toggle="image">
+                                    <theme.icons.Image />
+                                </ToolButton>
                             )}
-                        </ToggleButtonGroup>
-                        <Typography variant="caption" color="text.secondary">
-                            {detectedInfo.dataType ? `[${detectedInfo.dataType}]` : ''}
-                        </Typography>
+                        </ButtonGroup>
                     </Stack>
                 </Box>
             )}
@@ -217,9 +206,8 @@ export const ValuePreview: React.FC<ValuePreviewProps> = ({
                     flex: 1,
                     overflow: 'auto',
                     p: 2,
-                    maxHeight,
-                    fontFamily: 'monospace',
-                    fontSize: '0.875rem',
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
                 }}
             >
                 {renderContent()}
