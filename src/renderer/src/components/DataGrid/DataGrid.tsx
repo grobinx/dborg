@@ -1014,7 +1014,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid row click");
         if (onRowSelect) {
             if (selectedCell?.row !== undefined) {
-                onRowSelect(displayData[selectedCell.row].data);
+                onRowSelect(displayData?.[selectedCell.row]?.data);
             }
             else {
                 onRowSelect(undefined);
