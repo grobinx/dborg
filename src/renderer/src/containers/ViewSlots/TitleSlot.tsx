@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -32,6 +32,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const theme = useTheme();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [title, setTitle] = React.useState<React.ReactNode>(null);
+    const [style, setStyle] = React.useState<React.CSSProperties | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
@@ -90,7 +91,8 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         } else {
             setActionBar(null);
         }
-    }, [slot.title, slot.icon, slot.toolBar, refresh]);
+        setStyle(resolveCSSPropertiesFactory(slot.style, runtimeContext));
+    }, [slot.title, slot.icon, slot.toolBar, slot.style, refresh]);
 
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);
 

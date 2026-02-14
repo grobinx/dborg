@@ -24,6 +24,7 @@ const StyledColumnSlot = styled(Box)(() => ({
     display: "flex",
     flexDirection: "column",
     width: "100%",
+    height: "100%",
     minHeight: 0,
     minWidth: 0,
     gap: 8,
@@ -89,12 +90,12 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
         const items = resolveContentSlotKindsFactory(slot.items, runtimeContext) ?? [];
 
         setItemsNodes(
-            items.map((item) => {
+            items.map((item, index) => {
                 const node = createContentComponent(() => item, runtimeContext);
                 if (!node) return null;
 
                 return (
-                    <React.Fragment key={item.id}>
+                    <React.Fragment key={item.id || index}>
                         {node}
                     </React.Fragment>
                 );

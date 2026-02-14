@@ -89,6 +89,7 @@ export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runti
 export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
 export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
 export type DialogConformLabelsFactory<T = SlotRuntimeContext> = DialogConformLabel[] | ((runtimeContext: T) => DialogConformLabel[]);
+export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -403,7 +404,10 @@ export type SplitSlotPartKind =
     | IContentSlot
     | IRenderedSlot
     | IGridSlot
-    | IEditorSlot;
+    | IEditorSlot
+    | IColumnSlot
+    | IRowSlot
+    ;
 
 /**
  * Slot typu split.
@@ -586,6 +590,7 @@ export type ContentSlotKind =
     | IColumnSlot
     | IRowSlot
     | ITitleSlot
+    | ITextSlot
     ;
 
 export type TitleSlotKind =
@@ -650,6 +655,10 @@ export interface ITitleSlot extends ICustomSlot {
      * Akcje dostępne przy tytule (opcjonalnie).
      */
     toolBar?: ToolBarSlotsKindFactory;
+    /**
+     * Funkcja zwracająca style dla tytułu (opcjonalnie).
+     */
+    style?: CSSPropertiesFactory;
 }
 
 export type StatusBarValueFunction = () => string;
@@ -832,6 +841,10 @@ export interface ITextSlot extends ICustomSlot {
      * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie, domyślnie 3).
      */
     maxLines?: number;
+    /**
+     * Styl tekstu (opcjonalnie).
+     */
+    style?: CSSPropertiesFactory;
 }
 
 export interface IColumnSlot extends ICustomSlot {
@@ -1325,6 +1338,9 @@ export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: Dialog
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveDialogConformLabelsFactory<T = SlotRuntimeContext>(factory: DialogConformLabelsFactory<T> | undefined, context: T): DialogConformLabel[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveCSSPropertiesFactory(factory: CSSPropertiesFactory | undefined, context: SlotRuntimeContext): React.CSSProperties | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

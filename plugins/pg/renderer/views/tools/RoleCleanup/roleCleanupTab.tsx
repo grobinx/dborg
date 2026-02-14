@@ -676,21 +676,30 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     id: cid("owned-ddl-tab-content"),
                                                     type: "tabcontent",
                                                     content: {
-                                                        id: cid("owned-ddl-editor"),
-                                                        type: "editor",
-                                                        readOnly: true,
-                                                        miniMap: false,
-                                                        content: async () => {
-                                                            if (!selectedOwnedObject) {
-                                                                return t("select-object-to-see-ddl-preview", "-- Select an object to see DDL preview --");
-                                                            }
-                                                            const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
-                                                            if (ddlCache[key]) {
-                                                                return ddlCache[key];
-                                                            }
-                                                            ddlCache[key] = await objectDdl(selectedOwnedObject);
-                                                            return ddlCache[key];
-                                                        },
+                                                        type: "column",
+                                                        items: [
+                                                            {
+                                                                type: "text",
+                                                                text: () => t("ddl-preview-info", "DDL preview is generated based on the current metadata. It may not reflect the actual DDL if there are issues with metadata or if the object has an unsupported type."),
+                                                            },
+                                                            {
+                                                                id: cid("owned-ddl-editor"),
+                                                                type: "editor",
+                                                                readOnly: true,
+                                                                miniMap: false,
+                                                                content: async () => {
+                                                                    if (!selectedOwnedObject) {
+                                                                        return t("select-object-to-see-ddl-preview", "-- Select an object to see DDL preview --");
+                                                                    }
+                                                                    const key = objectDllKey(selectedOwnedObject.objtype, selectedOwnedObject.schema || null, selectedOwnedObject.identity);
+                                                                    if (ddlCache[key]) {
+                                                                        return ddlCache[key];
+                                                                    }
+                                                                    ddlCache[key] = await objectDdl(selectedOwnedObject);
+                                                                    return ddlCache[key];
+                                                                },
+                                                            },
+                                                        ]
                                                     },
                                                 },
                                             }
@@ -886,31 +895,40 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     ],
                 },
                 second: {
-                    id: cid("editor"),
-                    type: "editor",
-                    content: async () => {
-                        if (!selectedRole) return "-- No role selected --";
+                    type: "column",
+                    items: [
+                        {
+                            type: "text",
+                            text: () => t("cleanup-actions-info", "Selected actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                        },
+                        {
+                            id: cid("editor"),
+                            type: "editor",
+                            content: async () => {
+                                if (!selectedRole) return "-- No role selected --";
 
-                        const sql = buildCleanupSql(ownedCache, privsCache, {
-                            roleName: selectedRole,
-                            newOwner: targetOwner ?? "",
-                            ownedChoices: ownedCache.reduce((acc: Record<string, CleanupChoice>, obj: Record<string, any>) => {
-                                if (obj?.choice && obj?.identity) {
-                                    acc[obj.identity] = obj.choice as CleanupChoice;
-                                }
-                                return acc;
-                            }, {}),
-                            privilegeChoices: privsCache.reduce((acc: Record<string, PrivilegeChoice>, priv: Record<string, any>) => {
-                                if (priv?.choice && priv?.identity) {
-                                    acc[`${priv.identity}|${priv.privilege_type}|${priv.grantee_name}|${priv.grantor_name}`] = priv.choice as PrivilegeChoice;
-                                }
-                                return acc;
-                            }, {}),
-                        });
+                                const sql = buildCleanupSql(ownedCache, privsCache, {
+                                    roleName: selectedRole,
+                                    newOwner: targetOwner ?? "",
+                                    ownedChoices: ownedCache.reduce((acc: Record<string, CleanupChoice>, obj: Record<string, any>) => {
+                                        if (obj?.choice && obj?.identity) {
+                                            acc[obj.identity] = obj.choice as CleanupChoice;
+                                        }
+                                        return acc;
+                                    }, {}),
+                                    privilegeChoices: privsCache.reduce((acc: Record<string, PrivilegeChoice>, priv: Record<string, any>) => {
+                                        if (priv?.choice && priv?.identity) {
+                                            acc[`${priv.identity}|${priv.privilege_type}|${priv.grantee_name}|${priv.grantor_name}`] = priv.choice as PrivilegeChoice;
+                                        }
+                                        return acc;
+                                    }, {}),
+                                });
 
-                        return sql;
-                    },
-                } as IEditorSlot,
+                                return sql;
+                            },
+                        } as IEditorSlot,
+                    ],
+                },
             }),
             dialogs: [
                 {

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, styled, useTheme, useThemeProps } from "@mui/material";
-import { ITextSlot, resolveReactNodeFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITextSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -29,6 +29,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     const { slot, ref, className, ...other } = useThemeProps({ name: "TextSlot", props });
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [text, setText] = React.useState<React.ReactNode | null>(null);
+    const [style, setStyle] = React.useState<React.CSSProperties | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
@@ -77,7 +78,8 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
 
     React.useEffect(() => {
         setText(resolveReactNodeFactory(slot.text, runtimeContext) ?? "");
-    }, [slot.text, refresh]);
+        setStyle(resolveCSSPropertiesFactory(slot.style, runtimeContext));
+    }, [slot.text, slot.style, refresh]);
 
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);
 
@@ -86,6 +88,7 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
             ref={rootRef}
             maxLines={slot.maxLines}
             className={`TextSlot-root ${className ?? ""}`}
+            style={style}
             {...other}
         >
             {isSimpleText ? (

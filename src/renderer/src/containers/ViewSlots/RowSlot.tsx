@@ -88,12 +88,12 @@ const RowSlot: React.FC<RowSlotOwnProps> = (props) => {
         const items = resolveContentSlotKindsFactory(slot.items, runtimeContext) ?? [];
 
         setItemsNodes(
-            items.map((item) => {
+            items.map((item, index) => {
                 const node = createContentComponent(() => item, runtimeContext);
                 if (!node) return null;
 
                 return (
-                    <React.Fragment key={item.id}>
+                    <React.Fragment key={item.id || index}>
                         {node}
                     </React.Fragment>
                 );

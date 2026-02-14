@@ -81,6 +81,8 @@ export function createContentComponent(
                 return <RowSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
             case "title":
                 return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "text":
+                return <TextSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -224,6 +226,10 @@ export function createSplitPartContent(
             return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         } else if (resolvedPart.type === "editor") {
             return <EditorSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        } else if (resolvedPart.type === "column") {
+            return <ColumnSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        } else if (resolvedPart.type === "row") {
+            return <RowSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         }
     }
     return null;
