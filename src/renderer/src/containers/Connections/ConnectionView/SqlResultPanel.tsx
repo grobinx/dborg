@@ -19,7 +19,7 @@ import {
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { fillInternalColumnInfo, queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
-import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
+import { DataGrid, PlainGrid } from "@renderer/components/DataGrid/DataGrid";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
@@ -452,52 +452,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         };
     }, [tabsItemID, itemID]);
 
-    const metaValue = (value: unknown) => {
-        if (value === null || value === undefined || value === "") return "—";
-        if (typeof value === "object") {
-            try {
-                return JSON.stringify(value, null, 2);
-            } catch {
-                return String(value);
-            }
-        }
-        return String(value);
-    };
-
-    const MetaTable = ({ rows }: { rows: Array<[string, unknown]> }) => (
-        <TableContainer component={Paper}>
-            <Table size="small" sx={{ tableLayout: "fixed", fontSize: "0.875em" }}>
-                <TableBody>
-                    {rows.map(([k, v]) => (
-                        <TableRow key={k} hover>
-                            <TableCell
-                                sx={{
-                                    width: 220,
-                                    fontWeight: 600,
-                                    color: "text.secondary",
-                                    borderBottomColor: "divider",
-                                    verticalAlign: "top",
-                                }}
-                            >
-                                {k}
-                            </TableCell>
-                            <TableCell
-                                sx={{
-                                    borderBottomColor: "divider",
-                                    fontFamily: "monospace",
-                                    whiteSpace: "pre-wrap",
-                                    wordBreak: "break-word",
-                                }}
-                            >
-                                {metaValue(v)}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
-    );
-
     return (
         <SplitPanelGroup direction="horizontal">
             <SplitPanel>
@@ -645,76 +599,28 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         itemID={`metadata-preview-${session.info.uniqueId}`}
                         label={t("metadata-preview", "Metadata")}
                         content={
-                            <Box sx={{ p: 1.5, height: "100%", overflow: "auto", bgcolor: "background.default" }}>
+                            <Box sx={{ height: "100%", overflow: "auto", bgcolor: "background.default" }}>
                                 {!columnPreview ? (
-                                    <Paper variant="outlined" sx={{ p: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {t("no-column-selected", "Select a cell to see column metadata")}
-                                        </Typography>
-                                    </Paper>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {t("no-column-selected", "Select a cell to see column metadata")}
+                                    </Typography>
                                 ) : (
-                                    <Stack spacing={1.25}>
-                                        <Paper variant="outlined" sx={{ p: 1.25 }}>
-                                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                                                <Typography variant="subtitle2" sx={{ mr: 0.5 }}>
-                                                    {columnPreview.label ?? columnPreview.key ?? "Column"}
-                                                </Typography>
-                                                <Chip size="small" label={metaValue(columnPreview.dataType)} />
-                                                {columnPreview.info?.dbDataType && (
-                                                    <Chip
-                                                        size="small"
-                                                        variant="outlined"
-                                                        label={`DB: ${metaValue(columnPreview.info.dbDataType)}`}
-                                                    />
-                                                )}
-                                            </Stack>
-                                        </Paper>
-
-                                        <Paper variant="outlined">
-                                            <Box sx={{ px: 1.5, py: 1 }}>
-                                                <Typography variant="overline" color="text.secondary">
-                                                    ColumnDefinition
-                                                </Typography>
-                                            </Box>
-                                            <Divider />
-                                            <MetaTable
-                                                rows={[
-                                                    ["key", columnPreview.key],
-                                                    ["label", columnPreview.label],
-                                                    ["dataType", columnPreview.dataType],
-                                                    ["width", columnPreview.width],
-                                                    ["sortable", columnPreview.sortable],
-                                                    ["sortDirection", columnPreview.sortDirection],
-                                                    ["sortOrder", columnPreview.sortOrder],
-                                                    ["hidden", columnPreview.hidden],
-                                                    ["summary", columnPreview.summary],
-                                                    ["catalog", (columnPreview as any)._catalogName],
-                                                    ["schema", (columnPreview as any)._schemaName],
-                                                    ["table", (columnPreview as any)._tableName],
-                                                ]}
-                                            />
-                                        </Paper>
-
-                                        <Paper variant="outlined">
-                                            <Box sx={{ px: 1.5, py: 1 }}>
-                                                <Typography variant="overline" color="text.secondary">
-                                                    ColumnInfo
-                                                </Typography>
-                                            </Box>
-                                            <Divider />
-                                            <MetaTable
-                                                rows={[
-                                                    ["name", columnPreview.info?.name],
-                                                    ["table", columnPreview.info?.table],
-                                                    ["field", columnPreview.info?.field],
-                                                    ["dbDataType", columnPreview.info?.dbDataType],
-                                                    ["dataTypeSize", columnPreview.info?.dataTypeSize],
-                                                    ["typeName", columnPreview.info?.typeName],
-                                                    ["dataType", columnPreview.info?.dataType],
-                                                ]}
-                                            />
-                                        </Paper>
-                                    </Stack>
+                                    <PlainGrid
+                                        data={[
+                                            [t("key", "Key"), columnPreview.key],
+                                            [t("catalog", "Catalog"), (columnPreview as any)._catalogName],
+                                            [t("schema", "Schema"), (columnPreview as any)._schemaName],
+                                            [t("table", "Table"), (columnPreview as any)._tableName],
+                                            [t("dataType", "Data Type"), columnPreview.dataType],
+                                            [t("width", "Width"), columnPreview.width],
+                                            [t("table", "Table"), columnPreview.info?.table],
+                                            [t("field", "Field"), columnPreview.info?.field],
+                                            [t("dbDataType", "DB Data Type"), columnPreview.info?.dbDataType],
+                                            [t("dataTypeSize", "Data Type Size"), columnPreview.info?.dataTypeSize],
+                                            [t("typeName", "Type Name"), columnPreview.info?.typeName],
+                                        ]}
+                                        showHeader={false}
+                                    />
                                 )}
                             </Box>
                         }

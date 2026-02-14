@@ -2172,3 +2172,214 @@ export const DataGrid = <T extends object>({
         </StyledTable >
     );
 };
+
+interface PlainGridProps<T extends object> {
+    columns?: ColumnDefinition[];
+    data: T[];
+    showHeader?: boolean;
+    cellPaddingX?: number;
+    cellPaddingY?: number;
+    nullValue?: string;
+    className?: string;
+    getRowStyle?: (row: T, rowIndex: number) => React.CSSProperties;
+    fontSize?: number;
+    fontFamily?: string;
+}
+
+export const PlainGrid = <T extends object>({
+    columns,
+    data,
+    showHeader = true,
+    cellPaddingX = 3,
+    cellPaddingY = 1,
+    nullValue = "NULL",
+    className,
+    getRowStyle,
+    fontSize: fontSizeProp,
+    fontFamily: fontFamilyProp,
+}: PlainGridProps<T>) => {
+    const [settingFontFamily] = useSetting<string>("ui", "fontFamily");
+    const [settingFontSize] = useSetting<number>("dborg", "data_grid.defined.font_size");
+    const [colors_enabled] = useSetting<boolean>("dborg", `data_grid.defined.colors_enabled`);
+
+    const fontFamily = fontFamilyProp ?? settingFontFamily;
+    const fontSize = fontSizeProp ?? settingFontSize ?? 12;
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const ro = new ResizeObserver((entries) => {
+            const w = entries[0]?.contentRect.width ?? 0;
+            setContainerWidth(w);
+        });
+
+        ro.observe(el);
+        setContainerWidth(el.clientWidth);
+
+        return () => ro.disconnect();
+    }, []);
+
+    const classes = React.useMemo(() => {
+        return clsx(
+            "mode-defined",
+            colors_enabled && 'color-enabled',
+        );
+    }, [colors_enabled]);
+
+    const rowHeight = useMemo(() => {
+        return Math.round((fontSize * 1.3) + cellPaddingY * 2);
+    }, [fontSize, cellPaddingY]);
+
+    const resolvedColumns = useMemo<ColumnDefinition[]>(() => {
+        if (columns && columns.length > 0) return columns;
+
+        const keys = new Set<string>();
+        data.forEach((row) => {
+            Object.keys((row ?? {}) as Record<string, unknown>).forEach((k) => keys.add(k));
+        });
+
+        return Array.from(keys).map((key) => {
+            const firstValue = data.find((r) => (r as any)[key] !== null && (r as any)[key] !== undefined)?.[key as keyof T];
+            return {
+                key,
+                label: key,
+                dataType: resolvePrimitiveType(firstValue) as any,
+            } as ColumnDefinition;
+        });
+    }, [columns, data]);
+
+    const baseWidths = useMemo(() => {
+        const minColWidth = 40;
+
+        return resolvedColumns.map((col) => {
+            if (col.width && col.width > 0) return col.width;
+
+            const headerText = String(col.label ?? col.key ?? "");
+            let maxTextWidth = calculateTextWidth(headerText, fontSize, fontFamily, "bold") ?? 0;
+
+            for (let i = 0; i < data.length; i++) {
+                const value = (data[i] as any)[col.key];
+                const text = String(valueToString(value, col.dataType, { display: true }) ?? nullValue);
+                const w = calculateTextWidth(text, fontSize, fontFamily) ?? 0;
+                if (w > maxTextWidth) maxTextWidth = w;
+            }
+
+            return Math.max(minColWidth, Math.ceil(maxTextWidth + (cellPaddingX * 2) + 10));
+        });
+    }, [resolvedColumns, data, fontSize, fontFamily, cellPaddingX, nullValue]);
+
+    const widths = useMemo(() => {
+        if (baseWidths.length === 0) return baseWidths;
+
+        const last = baseWidths.length - 1;
+        const sumWithoutLast = baseWidths.slice(0, last).reduce((a, b) => a + b, 0);
+        const remaining = Math.max(0, containerWidth - sumWithoutLast);
+
+        const next = [...baseWidths];
+        next[last] = Math.max(baseWidths[last], remaining);
+
+        return next;
+    }, [baseWidths, containerWidth]);
+
+    const columnLeft = useMemo(() => {
+        let left = 0;
+        return widths.map((w) => {
+            const current = left;
+            left += w;
+            return current;
+        });
+    }, [widths]);
+
+    const totalWidth = useMemo(() => widths.reduce((a, b) => a + b, 0), [widths]);
+    const totalHeight = data.length * rowHeight;
+
+    return (
+        <StyledTableContainer
+            ref={containerRef}
+            className={clsx("PlainGrid-tableContainer", classes)}
+        >
+            <StyledTable
+                className={clsx("PlainGrid-table", className, classes)}
+                style={{
+                    ["--dg-cell-px" as any]: `${cellPaddingX}px`,
+                    ["--dg-cell-py" as any]: `${cellPaddingY}px`,
+                    fontFamily,
+                    fontSize,
+                }}
+            >
+                <StyledTableContainer className={clsx("PlainGrid-tableContainer", classes)}>
+                    {showHeader && resolvedColumns.length > 0 && (
+                        <StyledHeader
+                            className={clsx("PlainGrid-header", classes)}
+                            style={{ width: totalWidth, height: rowHeight }}
+                        >
+                            {resolvedColumns.map((col, colIndex) => (
+                                <StyledHeaderCell
+                                    key={col.key}
+                                    className={clsx("PlainGrid-headerCell", classes)}
+                                    style={{
+                                        width: widths[colIndex],
+                                        left: columnLeft[colIndex],
+                                    }}
+                                >
+                                    <StyledLabel>{col.label ?? col.key}</StyledLabel>
+                                </StyledHeaderCell>
+                            ))}
+                        </StyledHeader>
+                    )}
+
+                    {data.length === 0 ? (
+                        <StyledNoRowsInfo className={clsx("PlainGrid-noRowsInfo", classes)}>
+                            No rows to display
+                        </StyledNoRowsInfo>
+                    ) : (
+                        <StyledRowsContainer
+                            className={clsx("PlainGrid-rowsContainer", classes)}
+                            style={{ width: totalWidth, height: totalHeight }}
+                        >
+                            {data.map((row, rowIndex) => (
+                                <StyledRow
+                                    key={rowIndex}
+                                    className={clsx("PlainGrid-row", rowIndex % 2 === 0 ? "even" : "odd", classes)}
+                                    style={{
+                                        top: rowIndex * rowHeight,
+                                        height: rowHeight,
+                                        ...getRowStyle?.(row, rowIndex),
+                                    }}
+                                >
+                                    {resolvedColumns.map((col, colIndex) => {
+                                        const value = (row as any)[col.key];
+                                        const baseType = value === null || value === undefined ? "null" : toBaseType(col.dataType);
+                                        const alignClass =
+                                            baseType === "number"
+                                                ? "align-end"
+                                                : baseType === "boolean" || baseType === "datetime"
+                                                    ? "align-center"
+                                                    : "align-start";
+
+                                        return (
+                                            <StyledCell
+                                                key={`${rowIndex}-${col.key}`}
+                                                className={clsx("PlainGrid-cell", `data-type-${baseType}`, alignClass, classes)}
+                                                style={{
+                                                    width: widths[colIndex],
+                                                    left: columnLeft[colIndex],
+                                                }}
+                                            >
+                                                {valueToString(value, col.dataType, { display: true }) ?? nullValue}
+                                            </StyledCell>
+                                        );
+                                    })}
+                                </StyledRow>
+                            ))}
+                        </StyledRowsContainer>
+                    )}
+                </StyledTableContainer>
+            </StyledTable>
+        </StyledTableContainer>
+    );
+};
