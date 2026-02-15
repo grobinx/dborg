@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useImperativeHandle, useState } from "react";
 import Editor, { loader, Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import * as sqlFormatter from "sql-formatter";
@@ -17,6 +17,7 @@ import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 import { LoadingOverlayMode } from "../useful/spinners/core";
+import { exportMonacoActionsToActionManager } from "./MonacoActionExporter";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
@@ -95,7 +96,12 @@ export const editorLanguageIds: EditorLanguageId[] = [
 
 loader.config({ monaco, "vs/nls": { availableLanguages: { "*": i18next.languages } } });
 
+export interface IEditorContext {
+    editor: () => monaco.editor.IStandaloneCodeEditor | null;
+}
+
 interface MonacoEditorProps {
+    ref?: React.Ref<IEditorContext>;
     rootRef?: React.Ref<HTMLDivElement>;
     defaultValue?: string;
     editorKey?: string;
@@ -130,7 +136,7 @@ interface MonacoEditorProps {
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const {
-        onMount, editorKey, onFocus, onBlur, defaultValue, value, rootRef,
+        onMount, editorKey, onFocus, onBlur, defaultValue, value, rootRef, ref,
         readOnly, wordWrap = false, lineNumbers = true, statusBar = true, miniMap = true,
         language: initialLanguage = defaultEditorLanguageId,
         encoding: initialEncoding = defaultEditorEncoding,
@@ -157,6 +163,12 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
     const [dialog, setDialog] = useState<React.ReactNode>(null);
     const [changeTabSize, setChangeTabSize] = useState<boolean>(false);
+
+    const editorContext: IEditorContext = {
+        editor: () => editorInstance!,
+    };
+
+    useImperativeHandle(ref, () => editorContext, [editorContext]);
 
     React.useEffect(() => {
         setLanguage(initialLanguage);
@@ -243,6 +255,16 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         }
 
         if (onMount) onMount(editor, monacoApi);
+
+        const actions = exportMonacoActionsToActionManager(editor, {
+            include: (id) =>
+                id.startsWith("editor.action.") ||
+                id.startsWith("actions."),
+            iconById: {
+                "editor.action.formatDocument": <span className="codicon codicon-symbol-key" />,
+                "actions.find": <span className="codicon codicon-search" />,
+            },
+        });
 
         // Store disposables on the editor for cleanup
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

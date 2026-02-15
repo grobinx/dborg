@@ -5,7 +5,7 @@ import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandMa
 import { DataGridRow, DataGridMode, DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
+import { EditorLanguageId, IEditorContext } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
 import { DialogSlotFunction, RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
@@ -753,9 +753,6 @@ export interface IGridSlot extends ICustomSlot {
      * CommandPalette, grupy akcji dostępne jako dodatkowe w siatce (opcjonalnie).
      */
     canSelectRows?: BooleanFactory;
-}
-
-export interface IEditorContext {
 }
 
 /**

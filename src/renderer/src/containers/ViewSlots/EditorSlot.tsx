@@ -2,9 +2,8 @@ import React from "react";
 import { useTheme } from "@mui/material";
 import Editor, { loader, Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import MonacoEditor from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { IEditorContext } from "@renderer/components/editor/MonacoEditor";
 import {
-    IEditorContext,
     IEditorSlot,
     resolveBooleanFactory,
     resolveEditorActionsFactory,
@@ -17,6 +16,7 @@ import { createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
+import { useRefSlot } from "./RefSlotContext";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -31,6 +31,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefSlot } = useRefSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
     const [actions, setActions] = React.useState<monaco.editor.IActionDescriptor[]>([]);
@@ -39,6 +40,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [lineNumbers, setLineNumbers] = React.useState<boolean>(true);
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const editorRef = React.useRef<IEditorContext | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
@@ -57,9 +59,6 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         },
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
-    const editorContext: IEditorContext = {
-    };
-
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (readOnly) => {
             if (readOnly) {
@@ -68,9 +67,11 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 setPendingRefresh(true);
             }
         });
+        const unregisterRefSlot = registerRefSlot(slotId, "editor", editorRef);
         slot?.onMount?.(runtimeContext);
         return () => {
             unregisterRefresh();
+            unregisterRefSlot();
             slot?.onUnmount?.(runtimeContext);
         };
     }, [slotId]);
@@ -127,24 +128,25 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
         slot?.onMounted?.(runtimeContext);
         editor.onDidChangeCursorPosition(() => {
-            slot?.onPositionChanged?.(runtimeContext, editorContext);
+            slot?.onPositionChanged?.(runtimeContext, editorRef.current!);
         });
         editor.onDidChangeCursorSelection(() => {
-            slot?.onSelectionChanged?.(runtimeContext, editorContext);
+            slot?.onSelectionChanged?.(runtimeContext, editorRef.current!);
         });
         editor.onDidFocusEditorText(() => {
-            slot?.onFocus?.(runtimeContext, editorContext);
+            slot?.onFocus?.(runtimeContext, editorRef.current!);
         });
         editor.onDidBlurEditorText(() => {
-            slot?.onBlur?.(runtimeContext, editorContext);
+            slot?.onBlur?.(runtimeContext, editorRef.current!);
         });
         editor.onDidChangeModelContent(() => {
-            slot?.onContentChanged?.(runtimeContext, editorContext);
+            slot?.onContentChanged?.(runtimeContext, editorRef.current!);
         });
     }
 
     return (
         <MonacoEditor
+            ref={editorRef}
             rootRef={rootRef}
             defaultValue={content}
             language={slot.language}

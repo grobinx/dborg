@@ -898,8 +898,8 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     type: "column",
                     items: [
                         {
-                            type: "text",
-                            text: () => t("cleanup-actions-info", "Selected actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                            type: "title",
+                            title: () => t("cleanup-actions-info", "Selected actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
                         },
                         {
                             id: cid("editor"),
