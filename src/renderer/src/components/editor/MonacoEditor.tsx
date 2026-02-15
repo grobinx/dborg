@@ -18,6 +18,7 @@ import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 import { LoadingOverlayMode } from "../useful/spinners/core";
 import { exportMonacoActionsToActionManager } from "./MonacoActionExporter";
+import { ActionManager } from "../CommandPalette/ActionManager";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
@@ -96,12 +97,13 @@ export const editorLanguageIds: EditorLanguageId[] = [
 
 loader.config({ monaco, "vs/nls": { availableLanguages: { "*": i18next.languages } } });
 
-export interface IEditorContext {
+export interface IEditorActionContext {
     editor: () => monaco.editor.IStandaloneCodeEditor | null;
+    actionManager: () => ActionManager<IEditorActionContext>;
 }
 
 interface MonacoEditorProps {
-    ref?: React.Ref<IEditorContext>;
+    ref?: React.Ref<IEditorActionContext>;
     rootRef?: React.Ref<HTMLDivElement>;
     defaultValue?: string;
     editorKey?: string;
@@ -163,9 +165,11 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
     const [dialog, setDialog] = useState<React.ReactNode>(null);
     const [changeTabSize, setChangeTabSize] = useState<boolean>(false);
+    const actionManagerRef = React.useRef<ActionManager<IEditorActionContext>>(new ActionManager<IEditorActionContext>());
 
-    const editorContext: IEditorContext = {
+    const editorContext: IEditorActionContext = {
         editor: () => editorInstance!,
+        actionManager: () => actionManagerRef.current,
     };
 
     useImperativeHandle(ref, () => editorContext, [editorContext]);
@@ -256,15 +260,12 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
         if (onMount) onMount(editor, monacoApi);
 
-        const actions = exportMonacoActionsToActionManager(editor, {
+        actionManagerRef.current.registerAction(...exportMonacoActionsToActionManager(editor, {
             include: (id) =>
                 id.startsWith("editor.action.") ||
                 id.startsWith("actions."),
-            iconById: {
-                "editor.action.formatDocument": <span className="codicon codicon-symbol-key" />,
-                "actions.find": <span className="codicon codicon-search" />,
-            },
-        });
+            iconById: {},
+        }));
 
         // Store disposables on the editor for cleanup
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

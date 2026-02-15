@@ -2,7 +2,7 @@ import React from "react";
 import { useTheme } from "@mui/material";
 import Editor, { loader, Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import MonacoEditor, { IEditorContext } from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import {
     IEditorSlot,
     resolveBooleanFactory,
@@ -34,13 +34,12 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const { registerRefSlot } = useRefSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
-    const [actions, setActions] = React.useState<monaco.editor.IActionDescriptor[]>([]);
     const [readOnly, setReadOnly] = React.useState<boolean>(false);
     const [wordWrap, setWordWrap] = React.useState<boolean>(false);
     const [lineNumbers, setLineNumbers] = React.useState<boolean>(true);
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-    const editorRef = React.useRef<IEditorContext | null>(null);
+    const editorRef = React.useRef<IEditorActionContext | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
@@ -106,7 +105,6 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             }
         };
         fetchContent();
-        setActions(resolveEditorActionsFactory(slot.actions, runtimeContext) ?? []);
         setReadOnly(resolveBooleanFactory(slot.readOnly, runtimeContext) ?? false);
         setWordWrap(resolveBooleanFactory(slot.wordWrap, runtimeContext) ?? false);
         setLineNumbers(resolveBooleanFactory(slot.lineNumbers, runtimeContext) ?? true);
@@ -122,6 +120,8 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
         editorInstanceRef.current = editor;
+
+        const actions = resolveEditorActionsFactory(slot.actions, runtimeContext) ?? [];
         actions.forEach(action => {
             editor.addAction(action);
         });

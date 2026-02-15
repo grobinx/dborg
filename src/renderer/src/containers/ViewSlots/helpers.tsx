@@ -281,6 +281,13 @@ export function createActionComponents(
                         actionManager = () => (contentRef.current?.actionManager()!);
                         actionContext = contentRef.current;
                     }
+                    else {
+                        const editorRef = getRefSlot<ContentSlotContext>(actionSlotId, "editor");
+                        if (editorRef) {
+                            actionManager = () => (editorRef.current?.actionManager()!);
+                            actionContext = editorRef.current;
+                        }
+                    }
                 }
             }
         }

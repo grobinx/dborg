@@ -5,7 +5,7 @@ import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandMa
 import { DataGridRow, DataGridMode, DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
-import { EditorLanguageId, IEditorContext } from "@renderer/components/editor/MonacoEditor";
+import { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import { Option } from "@renderer/components/inputs/DescribedList";
 import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
 import { DialogSlotFunction, RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
@@ -801,11 +801,11 @@ export interface IEditorSlot extends ICustomSlot {
     miniMap?: boolean;
 
     onMounted?: (runtimeContext: SlotRuntimeContext) => void;
-    onPositionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
-    onSelectionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
-    onFocus?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
-    onBlur?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
-    onContentChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorContext) => void;
+    onPositionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
+    onSelectionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
+    onFocus?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
+    onBlur?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
+    onContentChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
     /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
