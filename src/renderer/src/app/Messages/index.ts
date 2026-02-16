@@ -56,6 +56,13 @@ export interface TabPanelLengthMessage {
     length: number;
 }
 
+export const TAB_PANEL_VALUE = "tab-panel-value";
+export interface TabPanelValueMessage {
+    itemID: string;
+    name: string;
+    value: any;
+}
+
 /**
  * Switch to a specific container
  * @param containerName The name of the container to switch to.

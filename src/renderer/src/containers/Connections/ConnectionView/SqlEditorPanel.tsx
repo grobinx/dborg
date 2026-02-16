@@ -2,9 +2,9 @@ import MonacoEditor, { EditorLanguageId } from "@renderer/components/editor/Mona
 import React, { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
-import { ExecuteQueryAction } from "./editor/actions/ExecuteQueryAction";
+import { ExecuteQueryAction, ExecuteQueryActionId } from "./editor/actions/ExecuteQueryAction";
 import { useTranslation } from "react-i18next";
-import { Stack, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
@@ -26,7 +26,7 @@ import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { SelectQueryHistoryAction } from "./editor/actions/SelectQueryHistoryAction";
+import { SelectQueryHistoryAction, SelectQueryHistoryActionId } from "./editor/actions/SelectQueryHistoryAction";
 import { ProfileRecord } from "src/api/entities";
 import QueryHistoryDialog from "@renderer/dialogs/QueryHistoryDialog";
 import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
@@ -35,6 +35,9 @@ import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
 import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { useTabValue } from "@renderer/components/TabsPanel/TabPanel";
+import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
+import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -80,6 +83,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         }
     });
     const [openSelectQueryHistoryDialog, setOpenSelectQueryHistoryDialog] = React.useState(false);
+    const [, setTabActionManager] = useTabValue<IActionManager<monaco.editor.ICodeEditor> | undefined>(itemID!, "actionManager");
+    const [, setTabEditor] = useTabValue<monaco.editor.IStandaloneCodeEditor | undefined>(itemID!, "editor");
 
     useEffect(() => {
         editorInstanceRef.current = editorInstance;
@@ -288,6 +293,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
 
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         setEditorInstance(editor); // Ustaw editor w stanie
+        setTabActionManager(actionManager); // Ustaw action manager dla tego taba
+        setTabEditor(editor); // Ustaw instancję edytora dla tego taba
 
         // Dodanie polecenia do listy poleceń edytora
         actionManager.registerAction(ExecuteQueryAction((query: string) => {
@@ -327,7 +334,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         editor.addAction(SaveEditorTabAsFile(() => { queueMessage(SQL_EDITOR_SAVE_FILE, { tabsItemID, editorId: itemID }); }));
         editor.addAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
         editor.addAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
-        editor.addAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
+        actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
             queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.uniqueId });
@@ -429,6 +436,8 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
     const theme = useTheme();
     const dialogs = useDialogs();
     const { queueMessage } = useMessages();
+    const [tabActionManager] = useTabValue<IActionManager<monaco.editor.ICodeEditor> | undefined>(itemID!, "actionManager");
+    const [tabEditor] = useTabValue<monaco.editor.IStandaloneCodeEditor | undefined>(itemID!, "editor");
 
     const handleDeleteSqlEditor = () => {
         if (itemID) {
@@ -457,6 +466,20 @@ export const SqlEditorButtons: React.FC<SqlEditorButtonsProps> = (props) => {
 
     return (
         <TabPanelButtons>
+            <ButtonGroup>
+                <ToolButton
+                    action={ExecuteQueryActionId}
+                    actionManager={tabActionManager}
+                    actionContext={() => tabEditor!}
+                    size="small"
+                />
+                {/* <ToolButton
+                    action={SelectQueryHistoryActionId}
+                    actionManager={tabActionManager}
+                    actionContext={() => tabEditor!}
+                    size="small"
+                /> */}
+            </ButtonGroup>
             <Tooltip title={t("delete-sql-editor-tab", "Delete SQL Editor tab")}>
                 <ToolButton
                     onClick={handleDeleteSqlEditor}

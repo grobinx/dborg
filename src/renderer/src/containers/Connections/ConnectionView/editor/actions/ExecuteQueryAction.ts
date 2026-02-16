@@ -3,7 +3,7 @@ import { t } from "i18next";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
-const ExecuteQueryActionId = "editor.actions.executeQuery";
+export const ExecuteQueryActionId = "editor.actions.executeQuery";
 
 export function ExecuteQueryAction(
     onAction: (query: string) => void

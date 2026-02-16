@@ -11,13 +11,6 @@ export interface TabStructure {
     buttons?: React.ReactNode;
 }
 
-export interface TabsActionContext {
-    activeTabID: string | undefined;
-    getCount: () => number;
-    getTab: (tabID: string | number) => TabStructure | undefined;
-    setActiveTab: (tabID: string) => void;
-}
-
 // Styled TabsPanel root container
 const StyledTabsPanel = styled(Stack, {
     name: "TabsPanel",
@@ -68,21 +61,6 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const sourceDragIndexRef = React.useRef<number | null>(null);
 
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
-
-    const tabsActionContext: TabsActionContext = {
-        activeTabID: tabs[activeTab]?.props.itemID,
-        getCount: () => tabsMap.size,
-        getTab: (tabID) => {
-            return typeof tabID === "string" ? tabsMap.get(tabID) : tabsMap.get(tabs[tabID].props.itemID!);
-        },
-        setActiveTab: (tabID) => {
-            const index = tabs.findIndex((tab) => tab.props.itemID === tabID);
-            if (index !== -1) {
-                setActiveTab(index);
-                onActivate?.(tabID);
-            }
-        }
-    };
 
     const handleWheel = (event: React.WheelEvent) => {
         if (tabsListRef.current) {
