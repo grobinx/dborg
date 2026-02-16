@@ -5,7 +5,7 @@ import { IContentSlot, IDialogSlot, resolveActionFactory, resolveActionGroupFact
 import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { useRefSlot } from "./RefSlotContext";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
@@ -16,7 +16,7 @@ import { useDialogs } from "@toolpad/core";
 
 export interface ContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
-    actionManager: () => ActionManager<ContentSlotContext> | null;
+    actionManager: () => IActionManager<ContentSlotContext> | null;
 }
 
 interface ContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
@@ -72,7 +72,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const [commandPalettePrefix, setCommandPalettePrefix] = React.useState<string>("");
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const slotRef = React.useRef<ContentSlotContext>(null);
-    const actionManager = React.useRef<ActionManager<ContentSlotContext>>(null);
+    const actionManager = React.useRef<IActionManager<ContentSlotContext>>(null);
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
         theme, refresh: refreshSlot, openDialog,
         showNotification: ({ message, severity = "info" }) => {

@@ -8,7 +8,7 @@ import clsx from "@renderer/utils/clsx";
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"; // Dodaj import useMemo
 import { useTranslation } from "react-i18next";
 import { ColumnBaseType, columnBaseTypes, ColumnDataType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
-import { ActionManager } from "../CommandPalette/ActionManager";
+import { ActionManager, IActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
 import Tooltip from "../Tooltip";
@@ -579,7 +579,7 @@ export const DataGrid = <T extends object>({
     const { t } = useTranslation();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const commandManager = useRef<CommandManager<DataGridActionContext<T>> | null>(null);
-    const actionManager = useRef<ActionManager<DataGridActionContext<T>> | null>(null);
+    const actionManager = useRef<IActionManager<DataGridActionContext<T>> | null>(null);
     const isFocused = useFocus(containerRef);
     const [null_value] = useSetting("dborg", "data_grid.null_value");
     const [colors_enabled] = useSetting<boolean>("dborg", `data_grid.${mode}.colors_enabled`);

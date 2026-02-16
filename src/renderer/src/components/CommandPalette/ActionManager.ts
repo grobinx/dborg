@@ -231,7 +231,20 @@ export function isActions<A>(obj: any): obj is Actions<A> {
     return Object.values(obj).every(isAction<A>);
 }
 
-export class ActionManager<T> {
+export interface IActionManager<T> {
+    registerActionGroup(...groups: ActionGroup<T>[]): void;
+    getActionGroup(groupId: string): ActionGroup<T> | undefined;
+    getRegisteredActionGroups(): ActionGroup<T>[];
+    registerAction(...actions: Action<T>[]): void;
+    executeAction(actionId: string, context: T, ...args: any[]): void | Promise<void>;
+    executeAction(action: Action<T>, context: T, ...args: any[]): void | Promise<void>;
+    executeActionByKeybinding(event: KeyboardEvent | string, context: T, ...args: any[]): boolean;
+    getAction(actionId: string): Action<T> | undefined;
+    getRegisteredActions(prefix?: string | null, context?: T, query?: string): Promise<Action<T>[]>;
+    unregisterAction(actionId: string): void;
+}
+
+export class ActionManager<T> implements IActionManager<T> {
     private actions: Map<string, Action<T>> = new Map();
     private actionGroups: Map<string, ActionGroup<T>> = new Map();
     private currentSequence: string[] = [];

@@ -1,8 +1,7 @@
 import React from "react";
-import { Action, ActionGroup, ActionManager } from "../CommandPalette/ActionManager";
+import { Action, ActionGroup, IActionManager } from "../CommandPalette/ActionManager";
 import { ColumnBaseType, ColumnDataType, ColumnInfo, ValuePrimitiveType } from "../../../../../src/api/db";
 import { ColumnFilter, ColumnsFilterOperator } from "./useColumnsFilterState";
-import { Column } from "sql-taaf";
 
 export interface DataGridInfoMessage {
     /**
@@ -279,7 +278,7 @@ export interface DataGridActionContext<T extends object> {
     isShowRowNumberColumn: () => boolean;
     clearSummary: () => void;
     resetColumnsLayout: () => void;
-    actionManager: () => ActionManager<DataGridActionContext<T>> | null;
+    actionManager: () => IActionManager<DataGridActionContext<T>> | null;
     setUserData: (key: string, value: any) => void;
     getUserData: (key: string) => any;
     toggleGroupColumn: () => void;

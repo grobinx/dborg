@@ -40,7 +40,7 @@ import TabContentSlot, { TabContentSlotContext } from "./TabContentSlot";
 import TitleSlot from "./TitleSlot";
 import TextSlot from "./TextSlot";
 import SplitSlot from "./SplitSlot";
-import { ActionManager, isAction, isActions } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, IActionManager, isAction, isActions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager, isCommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
 import { useRefSlot } from "./RefSlotContext";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
@@ -257,7 +257,7 @@ export function createActionComponents(
     runtimeContext: SlotRuntimeContext,
 ) {
     let actionComponents: React.ReactNode[] = [];
-    let actionManager: (() => ActionManager<any>) | null = null;
+    let actionManager: (() => IActionManager<any>) | null = null;
     let commandManager: CommandManager<any> | null = null;
     let actionContext: any = null;
 

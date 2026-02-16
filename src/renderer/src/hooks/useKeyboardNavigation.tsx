@@ -1,4 +1,4 @@
-import { ActionManager, Actions, isActions } from "@renderer/components/CommandPalette/ActionManager";
+import { Actions, IActionManager, isActions } from "@renderer/components/CommandPalette/ActionManager";
 import { isKeybindingMatch, normalizeKeybinding } from "@renderer/components/CommandPalette/KeyBinding";
 import React from "react";
 
@@ -23,20 +23,20 @@ export function isKeyBindings(obj: any): obj is KeyBindings<any> {
 
 export interface UseKeyboardNavigationActionsProps<T, A> {
     actions: KeyBindings<T> | Actions<A>;
-    actionManager?: ActionManager<A>;
+    actionManager?: IActionManager<A>;
     actionContext?: never;
 }
 
 // Wariant 2: akcje przez manager i context
 export interface UseKeyboardNavigationManagerProps<T, A> {
     actions?: KeyBindings<T> | Actions<A>;
-    actionManager: ActionManager<A>;
+    actionManager: IActionManager<A>;
     actionContext: () => A;
 }
 
 export interface UseKeyboardNavigationActionsNoneProps<T, A> {
     actions?: KeyBindings<T> | Actions<A>;
-    actionManager?: ActionManager<A>;
+    actionManager?: IActionManager<A>;
     actionContext?: never;
 }
 

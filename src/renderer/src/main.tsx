@@ -62,25 +62,22 @@ const AppWrapper: React.FC = () => {
                 </ThemeWrapper>
             ) : (
                 <ToastProvider>
-                    <ErrorBoundaryWrapper>
-                        <GlobalErrorHandler />
-                        <DatabaseProvider>
-                            <ThemeWrapper>
-                                <DialogsProvider>
-                                    <ToastList />
-                                    <ProfilesProvider>
-                                        <PluginManagerProvider>
-                                            <ApplicationProvider>
-                                                <QueryHistoryProvider>
-                                                    <App />
-                                                </QueryHistoryProvider>
-                                            </ApplicationProvider>
-                                        </PluginManagerProvider>
-                                    </ProfilesProvider>
-                                </DialogsProvider>
-                            </ThemeWrapper>
-                        </DatabaseProvider>
-                    </ErrorBoundaryWrapper>
+                    <DatabaseProvider>
+                        <ThemeWrapper>
+                            <DialogsProvider>
+                                <ToastList />
+                                <ProfilesProvider>
+                                    <PluginManagerProvider>
+                                        <ApplicationProvider>
+                                            <QueryHistoryProvider>
+                                                <App />
+                                            </QueryHistoryProvider>
+                                        </ApplicationProvider>
+                                    </PluginManagerProvider>
+                                </ProfilesProvider>
+                            </DialogsProvider>
+                        </ThemeWrapper>
+                    </DatabaseProvider>
                 </ToastProvider>
             )}
         </div>
@@ -89,12 +86,15 @@ const AppWrapper: React.FC = () => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
-        <ConsoleProvider>
-            <MessageProvider>
-                <SettingsProvider>
-                    <AppWrapper />
-                </SettingsProvider>
-            </MessageProvider>
-        </ConsoleProvider>
+        <GlobalErrorHandler />
+        <ErrorBoundaryWrapper>
+            <ConsoleProvider>
+                <MessageProvider>
+                    <SettingsProvider>
+                        <AppWrapper />
+                    </SettingsProvider>
+                </MessageProvider>
+            </ConsoleProvider>
+        </ErrorBoundaryWrapper>
     </React.StrictMode>
 );

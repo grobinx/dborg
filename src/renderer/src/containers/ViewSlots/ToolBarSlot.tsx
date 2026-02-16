@@ -3,7 +3,7 @@ import React from "react";
 import { useViewSlot } from "./ViewSlotContext";
 import { useRefSlot } from "./RefSlotContext";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
-import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import { createActionComponents } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -50,7 +50,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [actionComponents, setActionComponents] = React.useState<{
         actionComponents: React.ReactNode[],
-        actionManager: (() => ActionManager<any>) | null,
+        actionManager: (() => IActionManager<any>) | null,
         commandManager: CommandManager<any> | null,
         actionContext: (() => any) | null
     } | null>(null);

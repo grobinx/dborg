@@ -1,5 +1,5 @@
-import { Stack, useTheme } from "@mui/material";
-import { Action, ActionManager } from "../CommandPalette/ActionManager";
+import { useTheme } from "@mui/material";
+import { Action, IActionManager } from "../CommandPalette/ActionManager";
 import { resolveIcon } from "@renderer/themes/icons";
 import Tooltip from "../Tooltip";
 import { Shortcut } from "../Shortcut";
@@ -15,7 +15,7 @@ export interface ActionShows {
 }
 
 export interface ActionProps<T> {
-    actionManager?: ActionManager<T> | (() => ActionManager<T>); // Menedżer akcji
+    actionManager?: IActionManager<T> | (() => IActionManager<T>); // Menedżer akcji
     /**
      * Identyfikator akcji lub opis akcji do powiązania z przyciskiem.
      * Jeśli podano menedżer akcji, można użyć identyfikatora akcji

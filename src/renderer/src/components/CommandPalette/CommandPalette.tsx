@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { List, ListItem, ListItemText, ListItemButton, Theme, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, InputAdornment } from '@mui/material';
+import { List, ListItem, ListItemText, ListItemButton, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon } from '@mui/material';
 import { styled } from '@mui/system';
-import { Action, ActionGroup, ActionGroupOption, ActionManager } from './ActionManager';
-import { isKeybindingMatch, normalizeKeybinding, splitKeybinding } from './KeyBinding';
+import { Action, ActionGroup, ActionGroupOption, IActionManager } from './ActionManager';
+import { isKeybindingMatch, normalizeKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
 import { resolveIcon } from '@renderer/themes/icons';
 import Tooltip from '../Tooltip';
@@ -17,7 +17,7 @@ import debounce from '@renderer/utils/debounce';
 import { useSetting } from '@renderer/contexts/SettingsContext';
 
 interface CommandPaletteProps {
-    manager: ActionManager<any>;
+    manager: IActionManager<any>;
     open: boolean;
     onAction?: (action: Action<any>) => void;
     getContext?: () => any;
@@ -118,7 +118,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, []);
 
     const fetchCommands = useCallback(async (
-        manager: ActionManager<any>,
+        manager: IActionManager<any>,
         searchText: string,
         selectedGroup: ActionGroup | null,
     ) => {

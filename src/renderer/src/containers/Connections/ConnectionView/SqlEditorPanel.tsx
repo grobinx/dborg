@@ -1,4 +1,4 @@
-import MonacoEditor, { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import React, { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
@@ -36,6 +36,7 @@ import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
 import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
+import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -287,7 +288,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         };
     }, [editorContentManager, itemID, editorInstance]);
 
-    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
+    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<IEditorActionContext>) => {
         setEditorInstance(editor); // Ustaw editor w stanie
 
         // Dodanie polecenia do listy poleceń edytora

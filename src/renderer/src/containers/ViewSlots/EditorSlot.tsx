@@ -1,6 +1,6 @@
 import React from "react";
 import { useTheme } from "@mui/material";
-import Editor, { loader, Monaco } from "@monaco-editor/react";
+import { Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import MonacoEditor, { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import {
@@ -17,6 +17,7 @@ import { uuidv7 } from "uuidv7";
 import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { useRefSlot } from "./RefSlotContext";
+import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -118,7 +119,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
-    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
+    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<IEditorActionContext>) => {
         editorInstanceRef.current = editor;
 
         const actions = resolveEditorActionsFactory(slot.actions, runtimeContext) ?? [];

@@ -456,7 +456,7 @@ class EditorContentManager implements IEditorContentManager {
         if (!editorState) {
             throw new Error(`EditorState not found for editorId: ${editorId}`);
         }
-        if (!contentState.loaded) {
+        if (!contentState.loaded || contentState.content === undefined) {
             return; // Jeśli zawartość nie została załadowana, zakończ metodę
         }
 

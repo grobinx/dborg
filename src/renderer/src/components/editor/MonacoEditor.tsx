@@ -18,7 +18,7 @@ import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 import { LoadingOverlayMode } from "../useful/spinners/core";
 import { exportMonacoActionsToActionManager } from "./MonacoActionExporter";
-import { ActionManager } from "../CommandPalette/ActionManager";
+import { ActionManager, IActionManager } from "../CommandPalette/ActionManager";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
@@ -99,7 +99,7 @@ loader.config({ monaco, "vs/nls": { availableLanguages: { "*": i18next.languages
 
 export interface IEditorActionContext {
     editor: () => monaco.editor.IStandaloneCodeEditor | null;
-    actionManager: () => ActionManager<IEditorActionContext>;
+    actionManager: () => IActionManager<IEditorActionContext>;
 }
 
 interface MonacoEditorProps {
@@ -127,7 +127,7 @@ interface MonacoEditorProps {
     onEncodingChange?: (encoding: EditorEncoding) => void;
     onEolChange?: (eol: EditorEolMode) => void;
 
-    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => void;
+    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco, actionManager: IActionManager<IEditorActionContext>) => void;
 
     loading?: string | boolean;
     onCancel?: () => void;
@@ -165,7 +165,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
     const [dialog, setDialog] = useState<React.ReactNode>(null);
     const [changeTabSize, setChangeTabSize] = useState<boolean>(false);
-    const actionManagerRef = React.useRef<ActionManager<IEditorActionContext>>(new ActionManager<IEditorActionContext>());
+    const actionManagerRef = React.useRef<IActionManager<IEditorActionContext>>(new ActionManager<IEditorActionContext>());
 
     const editorContext: IEditorActionContext = {
         editor: () => editorInstance!,
@@ -258,7 +258,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
             monaco.editor.setModelLanguage(model, language);
         }
 
-        if (onMount) onMount(editor, monacoApi);
+        if (onMount) onMount(editor, monacoApi, actionManagerRef.current);
 
         actionManagerRef.current.registerAction(...exportMonacoActionsToActionManager(editor, {
             include: (id) =>

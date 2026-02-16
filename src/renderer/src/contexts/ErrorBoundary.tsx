@@ -6,13 +6,42 @@ interface ErrorBoundaryProps {
     children: React.ReactNode;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, { hasError: boolean; error?: Error }> {
+    state = { hasError: false, error: undefined };
+
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        // Dodaj powiadomienie o błędzie
+        this.setState({ hasError: true, error });
         this.props.onError?.(error, errorInfo);
     }
 
     render() {
+        if (this.state.hasError) {
+            const { error } = this.state;
+            return (
+                <div style={{ padding: 24 }}>
+                    <h2>Wystąpił błąd</h2>
+                    <pre>{error?.["message"]}</pre>
+                    {error && (
+                        <details style={{ marginTop: 12, whiteSpace: 'pre-wrap' }}>
+                            <summary>Szczegóły błędu</summary>
+                            <pre>
+                                {Object.entries(error).map(([key, value]) =>
+                                    `${key}: ${String(value)}\n`
+                                )}
+                                {error?.["stack"] && `stack:\n${error["stack"]}`}
+                            </pre>
+                        </details>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        style={{ marginTop: 12 }}
+                    >
+                        Odśwież
+                    </button>
+                </div>
+            );
+        }
         return this.props.children;
     }
 }

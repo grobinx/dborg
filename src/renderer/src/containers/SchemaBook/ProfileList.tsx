@@ -16,7 +16,7 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import UnboundBadge from "@renderer/components/UnboundBadge";
-import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { ActionManager, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
@@ -249,7 +249,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const [erroring, setErroring] = React.useState<string[]>([]);
     const [deleting, setDeleting] = React.useState<string[]>([]);
     const [testing, setTesting] = React.useState<string[]>([]);
-    const actions = React.useRef<ActionManager<ProfileListContext>>(new ActionManager());
+    const actions = React.useRef<IActionManager<ProfileListContext>>(new ActionManager());
     const [selectedItem, setSelectedItem, handleSearchKeyDown] = useKeyboardNavigation({
         items: searchedData ?? [],
         getId: (item) => item.sch_id,

@@ -1,6 +1,6 @@
 import React from "react";
 import * as monaco from "monaco-editor";
-import { Action, ActionManager } from "../CommandPalette/ActionManager";
+import { Action } from "../CommandPalette/ActionManager";
 
 export interface MonacoActionExportOptions {
     groupId?: string;

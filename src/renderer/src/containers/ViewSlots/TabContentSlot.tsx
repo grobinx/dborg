@@ -8,8 +8,7 @@ import { createContentComponent, createProgressBarContent } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import { useRefSlot } from "./RefSlotContext";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
-import { ActionManager } from "@renderer/components/CommandPalette/ActionManager";
-import { isKeyBinding } from "@renderer/hooks/useKeyboardNavigation";
+import { ActionManager, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { isKeybindingMatch } from "@renderer/components/CommandPalette/KeyBinding";
 import DialogSlot from "./DialogSlot";
 import { uuidv7 } from "uuidv7";
@@ -18,7 +17,7 @@ import { useDialogs } from "@toolpad/core";
 
 export interface TabContentSlotContext {
     openCommandPalette: (prefix: string, query: string) => void;
-    actionManager: () => ActionManager<TabContentSlotContext> | null;
+    actionManager: () => IActionManager<TabContentSlotContext> | null;
 }
 
 interface TabContentSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
@@ -64,7 +63,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const [commandPalettePrefix, setCommandPalettePrefix] = React.useState<string>("");
     const [commandPaletteQuery, setCommandPaletteQuery] = React.useState<string>("");
     const tabSlotRef = React.useRef<TabContentSlotContext>(null);
-    const actionManager = React.useRef<ActionManager<TabContentSlotContext>>(null);
+    const actionManager = React.useRef<IActionManager<TabContentSlotContext>>(null);
     const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
         theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
             addToast(severity, message);
