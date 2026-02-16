@@ -63,7 +63,7 @@ export function changeCaseExceptQuotes(input: string, toUpper: boolean): string 
 }
 
 
-export const selectFragmentAroundCursor = (editor: monaco.editor.IStandaloneCodeEditor) => {
+export const selectFragmentAroundCursor = (editor: monaco.editor.ICodeEditor) => {
     if (!editor) {
         return;
     }

@@ -328,12 +328,12 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 query: query,
             } as SqlEditorExecuteQueryMessage);
         }));
-        editor.addAction(SelectCurrentCommand());
-        editor.addAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
-        editor.addAction(OpenFileSqlEditorTab(() => { queueMessage(SQL_EDITOR_OPEN_FILE, { tabsItemID }); }));
-        editor.addAction(SaveEditorTabAsFile(() => { queueMessage(SQL_EDITOR_SAVE_FILE, { tabsItemID, editorId: itemID }); }));
-        editor.addAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
-        editor.addAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
+        actionManager.registerAction(SelectCurrentCommand());
+        actionManager.registerAction(AddSqlEditorTab(() => { queueMessage(SQL_EDITOR_ADD, { tabsItemID }); }));
+        actionManager.registerAction(OpenFileSqlEditorTab(() => { queueMessage(SQL_EDITOR_OPEN_FILE, { tabsItemID }); }));
+        actionManager.registerAction(SaveEditorTabAsFile(() => { queueMessage(SQL_EDITOR_SAVE_FILE, { tabsItemID, editorId: itemID }); }));
+        actionManager.registerAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
+        actionManager.registerAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {

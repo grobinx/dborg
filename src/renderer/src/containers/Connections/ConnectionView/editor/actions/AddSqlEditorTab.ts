@@ -1,15 +1,16 @@
 import * as monaco from "monaco-editor";
 import { t } from "i18next";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
 export function AddSqlEditorTab(
     run: () => void
-): monaco.editor.IActionDescriptor {
+): Action<monaco.editor.ICodeEditor> {
     const actionId = "editor.actions.addSqlEditorTab";
 
     return {
         id: actionId,
         label: t(actionId, "Add SQL Editor tab"),
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN], // Opcjonalny skrót klawiszowy
+        keySequence: ["Ctrl+N"],
         run: run,
     };
 }
