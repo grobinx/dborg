@@ -1,19 +1,23 @@
 import * as monaco from "monaco-editor";
 import { t } from "i18next";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
+
+const ExecuteQueryActionId = "editor.actions.executeQuery";
 
 export function ExecuteQueryAction(
     onAction: (query: string) => void
-): monaco.editor.IActionDescriptor {
-    const actionId = "editor.actions.executeQuery";
+): Action<monaco.editor.ICodeEditor> {
 
     return {
-        id: actionId,
-        label: t(actionId, "Execute SQL Command"),
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter], // Opcjonalny skrót klawiszowy
+        id: ExecuteQueryActionId,
+        label: t(ExecuteQueryActionId, "Execute SQL Command"),
+        keySequence: ["Ctrl+Enter"],
+        //keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter], // Opcjonalny skrót klawiszowy
         contextMenuGroupId: "sql-editor", // Grupa w menu kontekstowym
         contextMenuOrder: 1, // Kolejność w menu kontekstowym
-        run: (editor: monaco.editor.IStandaloneCodeEditor) => {
+        icon: "Run",
+        run: (editor: monaco.editor.ICodeEditor) => {
             const selection = editor.getSelection();
             const model = editor.getModel();
 

@@ -119,7 +119,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
-    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<IEditorActionContext>) => {
+    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, _actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         editorInstanceRef.current = editor;
 
         const actions = resolveEditorActionsFactory(slot.actions, runtimeContext) ?? [];

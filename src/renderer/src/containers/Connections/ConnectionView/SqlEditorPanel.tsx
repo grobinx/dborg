@@ -1,4 +1,4 @@
-import MonacoEditor, { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { EditorLanguageId } from "@renderer/components/editor/MonacoEditor";
 import React, { useRef, useEffect } from "react";
 import * as monaco from "monaco-editor";
 import { Monaco } from "@monaco-editor/react";
@@ -23,14 +23,12 @@ import { getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTyp
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
 import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
-import { use } from "i18next";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { SelectQueryHistoryAction } from "./editor/actions/SelectQueryHistoryAction";
 import { ProfileRecord } from "src/api/entities";
 import QueryHistoryDialog from "@renderer/dialogs/QueryHistoryDialog";
-import { editor } from "monaco-editor";
 import { OpenFileSqlEditorTab } from "./editor/actions/OpenFileSqlEditorTab";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
@@ -288,11 +286,11 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         };
     }, [editorContentManager, itemID, editorInstance]);
 
-    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<IEditorActionContext>) => {
+    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         setEditorInstance(editor); // Ustaw editor w stanie
 
         // Dodanie polecenia do listy poleceń edytora
-        editor.addAction(ExecuteQueryAction((query: string) => {
+        actionManager.registerAction(ExecuteQueryAction((query: string) => {
             if ((query ?? "").trim() === "") {
                 return;
             }

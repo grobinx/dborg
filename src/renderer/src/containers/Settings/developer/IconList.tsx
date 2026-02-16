@@ -2,7 +2,7 @@ import { Box, Grid2 as Grid, Paper, Stack, Typography, useTheme } from "@mui/mat
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { TextField } from "@renderer/components/inputs/TextField";
 import TabPanelContent, { TabPanelContentOwnProps } from "@renderer/components/TabsPanel/TabPanelContent";
-import { ThemeIcons } from "@renderer/themes/icons";
+import { ThemeIcons, iconAliases } from "@renderer/themes/icons";
 import React from "react";
 
 export const IconListContent: React.FC<TabPanelContentOwnProps> = (props) => {
@@ -14,7 +14,13 @@ export const IconListContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const filteredIcons = React.useMemo(() => {
         const q = search.trim().toLowerCase();
         if (!q) return Object.entries(icons);
-        return Object.entries(icons).filter(([name]) => name.toLowerCase().includes(q));
+
+        return Object.entries(icons).filter(([name]) => {
+            if (name.toLowerCase().includes(q)) return true;
+
+            const aliases = iconAliases[name as keyof ThemeIcons] ?? [];
+            return aliases.some(alias => alias.toLowerCase().includes(q));
+        });
     }, [icons, search]);
 
     return (

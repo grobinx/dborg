@@ -17,8 +17,8 @@ import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
 import { LoadingOverlayMode } from "../useful/spinners/core";
-import { exportMonacoActionsToActionManager } from "./MonacoActionExporter";
-import { ActionManager, IActionManager } from "../CommandPalette/ActionManager";
+import { IActionManager } from "../CommandPalette/ActionManager";
+import { MonacoActionManager } from "./MonacoActionManager";
 
 // Konfiguracja MonacoEnvironment dla web workerów
 if (typeof self !== "undefined") {
@@ -99,7 +99,7 @@ loader.config({ monaco, "vs/nls": { availableLanguages: { "*": i18next.languages
 
 export interface IEditorActionContext {
     editor: () => monaco.editor.IStandaloneCodeEditor | null;
-    actionManager: () => IActionManager<IEditorActionContext>;
+    actionManager: () => IActionManager<monaco.editor.ICodeEditor>;
 }
 
 interface MonacoEditorProps {
@@ -127,7 +127,7 @@ interface MonacoEditorProps {
     onEncodingChange?: (encoding: EditorEncoding) => void;
     onEolChange?: (eol: EditorEolMode) => void;
 
-    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco, actionManager: IActionManager<IEditorActionContext>) => void;
+    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => void;
 
     loading?: string | boolean;
     onCancel?: () => void;
@@ -165,11 +165,11 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const [tabSize, setTabSize] = useState<number>(initialTabSize);
     const [dialog, setDialog] = useState<React.ReactNode>(null);
     const [changeTabSize, setChangeTabSize] = useState<boolean>(false);
-    const actionManagerRef = React.useRef<IActionManager<IEditorActionContext>>(new ActionManager<IEditorActionContext>());
+    const actionManagerRef = React.useRef<IActionManager<monaco.editor.ICodeEditor>>(null);
 
     const editorContext: IEditorActionContext = {
         editor: () => editorInstance!,
-        actionManager: () => actionManagerRef.current,
+        actionManager: () => actionManagerRef.current!,
     };
 
     useImperativeHandle(ref, () => editorContext, [editorContext]);
@@ -211,6 +211,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => {
         setEditorInstance(editor);
+        actionManagerRef.current = new MonacoActionManager(editor);
 
         const disposables: monaco.IDisposable[] = [];
 
@@ -259,13 +260,6 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         }
 
         if (onMount) onMount(editor, monacoApi, actionManagerRef.current);
-
-        actionManagerRef.current.registerAction(...exportMonacoActionsToActionManager(editor, {
-            include: (id) =>
-                id.startsWith("editor.action.") ||
-                id.startsWith("actions."),
-            iconById: {},
-        }));
 
         // Store disposables on the editor for cleanup
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -195,6 +195,7 @@ const icons = (palette: Palette): ThemeOptions => {
             Formatted: (props) => <IconWrapper {...props} className="formatted"><MuiIcons.FormatPaintOutlined fontSize="inherit" /></IconWrapper>,
             Hexagon: (props) => <IconWrapper {...props} className="hexagon"><MuiIcons.Hexagon fontSize="inherit" /></IconWrapper>,
             Image: (props) => <IconWrapper {...props} className="image"><MuiIcons.ImageOutlined fontSize="inherit" /></IconWrapper>,
+            Run: (props) => <IconWrapper {...props} className="run"><MuiIcons.PlayArrow fontSize="inherit" color={"success"} /></IconWrapper>,
         }
     }
 }

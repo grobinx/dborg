@@ -163,7 +163,7 @@ export const findFragmentBounds = (model: monaco.editor.ITextModel, currentLine:
  * @param editor Edytor Monaco.
  * @returns Fragment tekstu wokół kursora.
  */
-export const getFragmentAroundCursor = (editor: monaco.editor.IStandaloneCodeEditor, position?: monaco.Position) => {
+export const getFragmentAroundCursor = (editor: monaco.editor.ICodeEditor, position?: monaco.Position) => {
     if (!editor) {
         return;
     }
