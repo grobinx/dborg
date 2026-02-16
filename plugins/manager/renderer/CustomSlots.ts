@@ -72,7 +72,6 @@ export type RecordsChangeFactory<T = SlotRuntimeContext> = DataGridChangeRow<Rec
 export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
 export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
-export type EditorActionsFactory = monaco.editor.IActionDescriptor[] | ((runtimeContext: SlotRuntimeContext) => monaco.editor.IActionDescriptor[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((runtimeContext: SlotRuntimeContext) => ToolKind<T>[]);
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((runtimeContext: SlotRuntimeContext) => SplitSlotPartKind);
 export type TabSlotsFactory = ITabSlot[] | ((runtimeContext: SlotRuntimeContext) => ITabSlot[]);
@@ -764,7 +763,7 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: EditorActionsFactory;
+    actions?: ActionFactory<monaco.editor.ICodeEditor>;
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
@@ -1278,9 +1277,6 @@ export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefi
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotRuntimeContext): ActionGroup<T>[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveEditorActionsFactory(factory: EditorActionsFactory | undefined, context: SlotRuntimeContext): monaco.editor.IActionDescriptor[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotRuntimeContext): SplitSlotPartKind | undefined {

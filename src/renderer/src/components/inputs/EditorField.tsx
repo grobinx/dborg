@@ -6,6 +6,7 @@ import * as monaco from 'monaco-editor';
 import { Monaco } from '@monaco-editor/react';
 import { Box } from '@mui/material';
 import { useInputDecorator } from './decorators/InputDecoratorContext';
+import { IActionManager } from '../CommandPalette/ActionManager';
 
 interface EditorFieldProps extends BaseInputProps<string> {
     language?: EditorLanguageId;
@@ -23,7 +24,7 @@ interface EditorFieldProps extends BaseInputProps<string> {
     onLanguageChange?: (languageId: EditorLanguageId) => void;
     onEncodingChange?: (encoding: EditorEncoding) => void;
     onEolChange?: (eol: EditorEolMode) => void;
-    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => void;
+    onMount?: (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => void;
 }
 
 export const EditorField: React.FC<EditorFieldProps> = (props) => {
@@ -56,7 +57,7 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
 
     onChangeRef.current = onChange;
 
-    const handleEditorMount = React.useCallback((editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => {
+    const handleEditorMount = React.useCallback((editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         editorRef.current = editor;
 
         // Nasłuchuj zmian w edytorze
@@ -65,7 +66,7 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
             onChangeRef.current?.(newValue);
         });
 
-        onMount?.(editor, monacoApi);
+        onMount?.(editor, monacoApi, actionManager);
     }, [onMount]);
     
     React.useEffect(() => {

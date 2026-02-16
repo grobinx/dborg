@@ -72,7 +72,7 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
         }
     }, [selected, editorInstance]);
 
-    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco) => {
+    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
         setEditorInstance(editor);
     }
 

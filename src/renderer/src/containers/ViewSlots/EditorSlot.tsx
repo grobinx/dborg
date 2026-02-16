@@ -5,8 +5,8 @@ import * as monaco from "monaco-editor";
 import MonacoEditor, { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import {
     IEditorSlot,
+    resolveActionFactory,
     resolveBooleanFactory,
-    resolveEditorActionsFactory,
     resolveStringAsyncFactory,
     SlotRuntimeContext
 } from "../../../../../plugins/manager/renderer/CustomSlots";
@@ -119,13 +119,11 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
-    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, _actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
+    const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         editorInstanceRef.current = editor;
 
-        const actions = resolveEditorActionsFactory(slot.actions, runtimeContext) ?? [];
-        actions.forEach(action => {
-            editor.addAction(action);
-        });
+        const actions = resolveActionFactory(slot.actions, runtimeContext) ?? [];
+        actionManager.registerAction(...actions);
 
         slot?.onMounted?.(runtimeContext);
         editor.onDidChangeCursorPosition(() => {
