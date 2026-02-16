@@ -8,10 +8,10 @@ export const footerCaptionHeightFactor = 0.7;
 export const displayMaxLengh = 300;
 
 export const columnDataFormatter = (
-    value: any, 
-    dataType: api.ColumnDataType, 
+    value: any,
+    dataType: api.ColumnDataType,
     formatter: ColumnFormatter | undefined,
-    nullValue: string, 
+    nullValue: string,
     row: any,
     fieldName: string,
     options?: api.ValueToStringOptions,
@@ -63,7 +63,7 @@ export const calculateVisibleColumns = (
         const colWidth = columns[i].width || 150;
         currentWidth += colWidth;
         if (currentWidth > containerWidth) {
-            endColumn = i +1;
+            endColumn = i + 1;
             break;
         }
     }
@@ -147,7 +147,7 @@ export const fillInternalColumnInfo = (metadata: api.DatabasesMetadata, columns:
     // Jeśli nie ma żadnego numerycznego ID, pomiń całą operację
     const hasNumericIds = columns.some(c => c.info?.table && typeof c.info.table === 'number');
     if (!hasNumericIds) return columns;
-    
+
     // Zbierz unikalne ID do wyszukania
     const idsToFind = new Set<number>();
     for (const column of columns) {
@@ -155,34 +155,40 @@ export const fillInternalColumnInfo = (metadata: api.DatabasesMetadata, columns:
             idsToFind.add(column.info.table);
         }
     }
-    
+
     // Buduj mapę tylko dla potrzebnych ID
-    const tableIdMap = new Map<number, { catalogName: string, schemaName: string, tableName: string }>();
-    
+    const tableIdMap = new Map<number, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
+
     for (const [catalogName, database] of Object.entries(metadata)) {
         if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
-        
+
         for (const [schemaName, schema] of Object.entries(database.schemas)) {
             for (const relation of Object.values(schema.relations)) {
                 const numId = typeof relation.id === 'number' ? relation.id : parseInt(relation.id);
                 if (!isNaN(numId) && idsToFind.has(numId)) {
-                    tableIdMap.set(numId, { catalogName, schemaName, tableName: relation.name });
+                    tableIdMap.set(numId, {
+                        catalogName,
+                        schemaName,
+                        tableName: relation.name,
+                        primaryKeyFields: relation.primaryKey?.columns,
+                    });
                     if (tableIdMap.size === idsToFind.size) break;
                 }
             }
             if (tableIdMap.size === idsToFind.size) break;
         }
     }
-    
+
     // Wypełnij kolumny
     for (const column of columns) {
         if (!column.info?.table || typeof column.info.table === 'string') continue;
-        
+
         const tableInfo = tableIdMap.get(column.info.table);
         if (tableInfo) {
             column._catalogName = tableInfo.catalogName;
             column._schemaName = tableInfo.schemaName;
             column._tableName = tableInfo.tableName;
+            column._primaryKeyFields = tableInfo.primaryKeyFields;
         }
     }
 

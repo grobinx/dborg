@@ -113,6 +113,8 @@ export interface ColumnDefinition {
     _schemaName?: string;
     /** Dla wewnętrznych potrzeb - Nazwa tabeli, do której należy kolumna */
     _tableName?: string;
+    /** Dla wewnętrznych potrzeb - Pola klucza głównego tabeli, do której należy kolumna */
+    _primaryKeyFields?: string[];
 }
 
 export type SummaryOperation =

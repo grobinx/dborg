@@ -608,9 +608,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                     <PlainGrid
                                         data={[
                                             [t("key", "Key"), columnPreview.key],
-                                            [t("catalog", "Catalog"), (columnPreview as any)._catalogName],
-                                            [t("schema", "Schema"), (columnPreview as any)._schemaName],
-                                            [t("table", "Table"), (columnPreview as any)._tableName],
+                                            [t("catalog", "Catalog"), columnPreview._catalogName],
+                                            [t("schema", "Schema"), columnPreview._schemaName],
+                                            [t("table", "Table"), columnPreview._tableName],
+                                            [t("primaryKeyFields", "Primary Key Fields"), columnPreview._primaryKeyFields?.join(", ")],
                                             [t("dataType", "Data Type"), columnPreview.dataType],
                                             [t("width", "Width"), columnPreview.width],
                                             [t("table", "Table"), columnPreview.info?.table],
