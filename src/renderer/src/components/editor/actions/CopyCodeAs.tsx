@@ -2,14 +2,15 @@ import * as monaco from "monaco-editor";
 import { changeCaseExceptQuotes } from "../editorUtils";
 import { t } from "i18next";
 import CodeToDialog from "@renderer/dialogs/CodeToDialog";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
-export function CopyCodeAs(showDialog: (dialog: React.ReactNode) => void): monaco.editor.IActionDescriptor {
+export function CopyCodeAs(showDialog: (dialog: React.ReactNode) => void): Action<monaco.editor.ICodeEditor> {
     const actionId = "editor.actions.copyCodeAs";
 
     return {
         id: actionId,
         label: t(actionId, "Copy Code As ..."),
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyC],
+        keySequence: ["Ctrl+Shift+C"], // Skrót klawiszowy: Ctrl+Shift+C
         //contextMenuGroupId: "1_modification", // Grupa w menu kontekstowym
         //contextMenuOrder: 1, // Kolejność w menu kontekstowym
         run: (editor) => {

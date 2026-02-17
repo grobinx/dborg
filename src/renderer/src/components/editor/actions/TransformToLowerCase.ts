@@ -1,14 +1,15 @@
 import * as monaco from "monaco-editor";
 import { changeCaseExceptQuotes } from "../editorUtils";
-import { TFunction } from "i18next";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import { t } from "i18next";
 
-export function TransformToLowerCaseAction(t: TFunction<"translation", undefined>): monaco.editor.IActionDescriptor {
+export function TransformToLowerCaseAction(): Action<monaco.editor.ICodeEditor> {
     const actionId = "editor.actions.transformToLowerCaseExceptQuotes";
 
     return {
         id: actionId,
         label: t(actionId, "Transform to Lower Case (Except Quotes)"),
-        keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyL], // Skrót klawiszowy: Alt+Shift+L
+        keySequence: ["Alt+Shift+L"], // Skrót klawiszowy: Alt+Shift+L
         //contextMenuGroupId: "1_modification", // Grupa w menu kontekstowym
         //contextMenuOrder: 1, // Kolejność w menu kontekstowym
         run: (editor) => {

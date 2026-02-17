@@ -249,9 +249,9 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
         disposables.push(editor.onDidBlurEditorText(() => onBlur?.()));
 
         // Dodaj akcje
-        editor.addAction(TransformToLowerCaseAction(t));
-        editor.addAction(TransformToUpperCaseAction(t));
-        editor.addAction(CopyCodeAs((dialog) => setDialog(dialog)));
+        actionManagerRef.current.registerAction(TransformToLowerCaseAction());
+        actionManagerRef.current.registerAction(TransformToUpperCaseAction());
+        actionManagerRef.current.registerAction(CopyCodeAs((dialog) => setDialog(dialog)));
 
         // Ustaw początkowy język modelu na podstawie state
         const model = editor.getModel();

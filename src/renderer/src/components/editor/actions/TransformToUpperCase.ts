@@ -1,14 +1,15 @@
 import * as monaco from "monaco-editor";
 import { changeCaseExceptQuotes } from "../editorUtils";
-import { TFunction } from "i18next";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import { t } from "i18next";
 
-export function TransformToUpperCaseAction(t: TFunction<"translation", undefined>): monaco.editor.IActionDescriptor {
+export function TransformToUpperCaseAction(): Action<monaco.editor.ICodeEditor> {
     const actionId = "editor.actions.transformToUpperCaseExceptQuotes";
 
     return {
         id: actionId,
         label: t(actionId, "Transform to Upper Case (Except Quotes)"),
-        keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyU], // Skrót klawiszowy: Alt+Shift+U
+        keySequence: ["Alt+Shift+U"], // Skrót klawiszowy: Alt+Shift+U
         //contextMenuGroupId: "1_modification", // Grupa w menu kontekstowym
         //contextMenuOrder: 1, // Kolejność w menu kontekstowym
         run: (editor) => {
