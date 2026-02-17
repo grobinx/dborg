@@ -154,6 +154,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [cursorPosition, setCursorPosition] = useState<{ line?: number; column?: number }>({ line: undefined, column: undefined });
     const [lineCount, setLineCount] = useState(0);
     const [lineLength, setLineLength] = useState<number | undefined>(undefined);
@@ -168,7 +169,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
     const actionManagerRef = React.useRef<IActionManager<monaco.editor.ICodeEditor>>(null);
 
     const editorContext: IEditorActionContext = {
-        editor: () => editorInstance!,
+        editor: () => editorInstanceRef.current!,
         actionManager: () => actionManagerRef.current!,
     };
 
@@ -211,6 +212,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
 
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, monacoApi: Monaco) => {
         setEditorInstance(editor);
+        editorInstanceRef.current = editor;
         actionManagerRef.current = new MonacoActionManager(editor);
 
         const disposables: monaco.IDisposable[] = [];

@@ -22,7 +22,6 @@ import {
     resolveToolBarSlotsKindFactory,
     ToolBarSlotsKindFactory,
     ITabSlot,
-    resolveBooleanFactory,
     isSearchField,
     ProgressBarSlotFactory,
     resolveProgressBarFactory,
@@ -54,6 +53,7 @@ import ProgressBarSlot from "./ProgressBarSlot";
 import ColumnSlot from "./ColumnSlot";
 import RowSlot from "./RowSlot";
 import { ToolBarSlots } from "./ToolBarSlot";
+import { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -259,7 +259,7 @@ export function createActionComponents(
     let actionComponents: React.ReactNode[] = [];
     let actionManager: (() => IActionManager<any>) | null = null;
     let commandManager: CommandManager<any> | null = null;
-    let actionContext: any = null;
+    let actionContext: (() => any) | null = null;
 
     const resolvedActions = resolveActionsFactory(actions, runtimeContext);
     if (resolvedActions) {
@@ -267,25 +267,25 @@ export function createActionComponents(
             const dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");
             if (dataGridRef) {
                 actionManager = () => (dataGridRef.current?.actionManager()!);
-                actionContext = dataGridRef.current;
+                actionContext = () => dataGridRef.current;
             }
             else {
                 const tabContentRef = getRefSlot<TabContentSlotContext>(actionSlotId, "tabcontent");
                 if (tabContentRef) {
                     actionManager = () => (tabContentRef.current?.actionManager()!);
-                    actionContext = tabContentRef.current;
+                    actionContext = () => tabContentRef.current;
                 }
                 else {
                     const contentRef = getRefSlot<ContentSlotContext>(actionSlotId, "content");
                     if (contentRef) {
                         actionManager = () => (contentRef.current?.actionManager()!);
-                        actionContext = contentRef.current;
+                        actionContext = () => contentRef.current;
                     }
                     else {
-                        const editorRef = getRefSlot<ContentSlotContext>(actionSlotId, "editor");
+                        const editorRef = getRefSlot<IEditorActionContext>(actionSlotId, "editor");
                         if (editorRef) {
                             actionManager = () => (editorRef.current?.actionManager()!);
-                            actionContext = editorRef.current;
+                            actionContext = editorRef.current?.editor;
                         }
                     }
                 }
@@ -308,8 +308,8 @@ export function createActionComponents(
                                         <ToolButton
                                             key={groupAction.id}
                                             action={groupAction}
-                                            actionContext={() => actionContext}
-                                            actionManager={actionManager!}
+                                            actionContext={actionContext!}
+                                            actionManager={actionManager}
                                             size="small"
                                         />
                                     );
@@ -328,7 +328,7 @@ export function createActionComponents(
                         <ToolButton
                             key={action.id}
                             action={action}
-                            actionContext={() => actionContext}
+                            actionContext={actionContext!}
                             actionManager={actionManager}
                             size="small"
                         />
@@ -414,7 +414,7 @@ export function createActionComponents(
                     <ToolButton
                         key={action}
                         action={action}
-                        actionContext={() => actionContext}
+                        actionContext={actionContext}
                         actionManager={actionManager}
                         size="small"
                     />
@@ -426,7 +426,7 @@ export function createActionComponents(
                             <ToolButton
                                 key={actionId}
                                 action={actionId}
-                                actionContext={() => actionContext}
+                                actionContext={actionContext!}
                                 actionManager={actionManager!}
                                 size="small"
                             />

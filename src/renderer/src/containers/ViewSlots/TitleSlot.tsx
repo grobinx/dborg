@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { AppBar, Box, Paper, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
@@ -10,7 +10,7 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { ToolBarSlots } from "./ToolBarSlot";
 
-interface TitleSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
+interface TitleSlotProps extends Omit<React.ComponentProps<typeof AppBar>, "slot"> {
 }
 
 interface TitleSlotOwnProps extends TitleSlotProps {
@@ -18,7 +18,7 @@ interface TitleSlotOwnProps extends TitleSlotProps {
     ref?: React.Ref<HTMLDivElement>;
 }
 
-const StyledTitleSlot = styled(Box)(() => ({
+const StyledTitleSlot = styled(AppBar)(() => ({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -28,7 +28,7 @@ const StyledTitleSlot = styled(Box)(() => ({
 }));
 
 const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
-    const { slot, ref, className, ...other } = useThemeProps({ name: "TitleSlot", props });
+    const { slot, ref, className, sx, ...other } = useThemeProps({ name: "TitleSlot", props });
     const theme = useTheme();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [title, setTitle] = React.useState<React.ReactNode>(null);
@@ -100,6 +100,8 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         <StyledTitleSlot
             ref={rootRef}
             className={`TitleSlot-root ${className ?? ""}`}
+            position="static" 
+            sx={{ flexDirection: "row", zIndex: 10, ...sx }}
             {...other}
         >
             {icon}
@@ -110,7 +112,6 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                             variant="subtitle2"
                             noWrap
                             sx={{
-                                maxWidth: 320,
                                 textOverflow: "ellipsis",
                                 overflow: "hidden",
                                 whiteSpace: "nowrap",

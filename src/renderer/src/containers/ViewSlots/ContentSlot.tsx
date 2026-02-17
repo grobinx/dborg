@@ -79,7 +79,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
             addToast(severity, message);
         },
         showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, {title, severity, okText: confirmLabel, cancelText: cancelLabel});
+            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
         },
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
 
@@ -231,11 +231,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 />
             )}
             {progressBar.node}
-            {(titleSlot.node != null) && (
-                <AppBar position="static" sx={{ flexDirection: "row", zIndex: 10 }}>
-                    {titleSlot.node}
-                </AppBar>
-            )}
+            {titleSlot.node}
             <Box
                 key={slotId + "-" + "inner-box"}
                 sx={{

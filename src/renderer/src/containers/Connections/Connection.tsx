@@ -126,7 +126,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
         }
     }, [selectedView, session, sideViewsMap, rootViewsMap]);
 
-    console.log("ConnectionContentInner rendering", session.info.uniqueId, selectedView?.id);
+    // console.log("ConnectionContentInner rendering", session.info.uniqueId, selectedView?.id);
 
     return (
         <StyledConnection className="Connection-root" {...other}>

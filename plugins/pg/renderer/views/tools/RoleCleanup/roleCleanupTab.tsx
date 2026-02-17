@@ -679,10 +679,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                         type: "column",
                                                         items: [
                                                             {
-                                                                type: "text",
-                                                                text: () => t("ddl-preview-info", "DDL preview is generated based on the current metadata. It may not reflect the actual DDL if there are issues with metadata or if the object has an unsupported type."),
-                                                            },
-                                                            {
                                                                 id: cid("owned-ddl-editor"),
                                                                 type: "editor",
                                                                 readOnly: true,
@@ -900,6 +896,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                         {
                             type: "title",
                             title: () => t("cleanup-actions-info", "Selected actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                            toolBar: {
+                                type: "toolbar",
+                                tools: [
+                                    "role-cleanup-execute-action"
+                                ],
+                                actionSlotId: cid("editor"),
+                            }
                         },
                         {
                             id: cid("editor"),
@@ -926,6 +929,17 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
 
                                 return sql;
                             },
+                            actions: [
+                                {
+                                    id: "role-cleanup-execute-action",
+                                    label: t("execute", "Execute"),
+                                    icon: "Run",
+                                    keySequence: ["Ctrl+Enter"],
+                                    run: () => {
+                                        console.log("Execute SQL");
+                                    }
+                                }
+                            ],
                         } as IEditorSlot,
                     ],
                 },
