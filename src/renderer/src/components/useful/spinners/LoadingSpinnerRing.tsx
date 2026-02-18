@@ -1,6 +1,6 @@
 import { styled } from "@mui/material";
 import { useState } from "react";
-import { getRandomDelays } from "./core";
+import { getRandomDelays } from "./Spinners";
 
 const LoadingSpinnerRingStyled = styled("div")<{
     speed: number;

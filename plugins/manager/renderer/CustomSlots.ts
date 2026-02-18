@@ -14,7 +14,7 @@ import { ThemeIconName } from "@renderer/themes/icons";
 import { ThemeColor } from "@renderer/types/colors";
 import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
-import { LoadingOverlayMode } from "@renderer/components/useful/spinners/core";
+import { LoadingOverlayMode } from "@renderer/components/useful/spinners/Spinners";
 
 export type CustomSlotType =
     "split"

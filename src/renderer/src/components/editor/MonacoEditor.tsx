@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import StatusBar, { StatusBarButton } from "@renderer/app/StatusBar";
 import LoadingOverlay from "../useful/LoadingOverlay";
 import { CopyCodeAs } from "./actions/CopyCodeAs";
-import { LoadingOverlayMode } from "../useful/spinners/core";
+import { LoadingOverlayMode } from "../useful/spinners/Spinners";
 import { IActionManager } from "../CommandPalette/ActionManager";
 import { MonacoActionManager } from "./MonacoActionManager";
 

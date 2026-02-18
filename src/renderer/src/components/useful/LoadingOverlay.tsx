@@ -20,7 +20,8 @@ import LoadingSpinnerCube from "./spinners/LoadingSpinnerCube";
 import LoadingSpinnerParticles from "./spinners/LoadingSpinnerParticles";
 import LoadingSpinnerInfinity from "./spinners/LoadingSpinnerInfinity";
 import LoadingSpinnerClock from "./spinners/LoadingSpinnerClock";
-import { LoadingOverlayMode, shuffleArray, SPINNER_TYPES, spinnerColorsDark, spinnerColorsLight, SpinnerType } from "./spinners/core";
+import { LoadingOverlayMode, shuffleArray, SPINNER_TYPES, spinnerColorsDark, spinnerColorsLight, SpinnerType } from "./spinners/Spinners";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 // ========== Reszta komponentu ==========
 const LoadingLabel = styled("div")<{ color: string }>(({ color }) => ({
@@ -80,6 +81,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     const [elapsedTime, setElapsedTime] = useState<number | null>(null);
     const [startTime] = useState(Date.now());
     const { t } = useTranslation();
+    const [spinnerTypeSetting] = useSetting<SpinnerType>("ui", "loading-overlay-spinner-type");
 
     const [spinnerColors, setSpinnerColors] = useState(() =>
         theme.palette.mode === "dark"
@@ -89,7 +91,9 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     // Losowy wybór spinnera przy montowaniu
     const [spinnerType] = useState<SpinnerType>(() =>
-        SPINNER_TYPES[Math.floor(Math.random() * SPINNER_TYPES.length)]
+        spinnerTypeSetting === "random"
+            ? SPINNER_TYPES[Math.floor(Math.random() * SPINNER_TYPES.length)]
+            : spinnerTypeSetting
     );
 
     useEffect(() => {

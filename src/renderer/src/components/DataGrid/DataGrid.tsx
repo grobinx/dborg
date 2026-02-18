@@ -23,7 +23,7 @@ import { isSameColumnsSet, useColumnsState } from "./useColumnsState";
 import useRowSelection from "./useRowSelection";
 import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 import useColumnSelection from "./useColumnSelection";
-import { LoadingOverlayMode } from "../useful/spinners/core";
+import { LoadingOverlayMode } from "../useful/spinners/Spinners";
 
 export type DataGridMode = "defined" | "data";
 

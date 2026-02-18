@@ -3,6 +3,7 @@ import { settingsGroupDefaults } from "./contexts/SettingsContext";
 import settingsRegistry from "./components/settings/SettingsRegistry";
 import i18next from "i18next";
 import { SettingsGroup } from "./components/settings/SettingsTypes";
+import { SPINNER_TYPE_LABELS, SpinnerType } from "./components/useful/spinners/Spinners";
 
 export interface AppSettings extends TSettings {
     "settings.store_timeout"?: number;
@@ -38,6 +39,7 @@ export interface UiSettings extends TSettings {
     fontSize?: number;
     fontFamily?: string;
     monospaceFontFamily?: string;
+    "loading-overlay-spinner-type"?: SpinnerType;
 }
 
 export interface ApplicationSettings extends TSettings {
@@ -105,6 +107,7 @@ export const default_settings: ApplicationSettings = {
         fontSize: 14,
         fontFamily: 'Segoe WPC, Segoe UI, sans-serif',
         monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
+        "loading-overlay-spinner-type": 'ring',
     },
 };
 
@@ -435,6 +438,14 @@ settingsRegistry.register((context) => {
                         { value: "system", label: t('system-theme', 'System Default') },
                     ],
                 },
+                {
+                    type: 'select',
+                    storageGroup: 'ui',
+                    storageKey: "loading-overlay-spinner-type",
+                    label: t('loading-overlay-spinner-type', 'Loading Overlay Spinner Type'),
+                    description: t('loading-overlay-spinner-type-description', 'Select the spinner type for the loading overlay.'),
+                    options: Object.entries(SPINNER_TYPE_LABELS()).map(([value, label]) => ({ value, label })),
+                }
             ],
         },
         {
