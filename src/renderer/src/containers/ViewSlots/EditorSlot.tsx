@@ -58,6 +58,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
         },
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const unregisterRefSlotRef = React.useRef<(() => void) | null>(null);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (readOnly) => {
@@ -67,11 +68,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 setPendingRefresh(true);
             }
         });
-        const unregisterRefSlot = registerRefSlot(slotId, "editor", editorRef);
         slot?.onMount?.(runtimeContext);
         return () => {
+            unregisterRefSlotRef.current?.();
             unregisterRefresh();
-            unregisterRefSlot();
             slot?.onUnmount?.(runtimeContext);
         };
     }, [slotId]);
@@ -141,6 +141,8 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         editor.onDidChangeModelContent(() => {
             slot?.onContentChanged?.(runtimeContext, editorRef.current!);
         });
+
+        unregisterRefSlotRef.current = registerRefSlot(slotId, "editor", editorRef);
     }
 
     return (

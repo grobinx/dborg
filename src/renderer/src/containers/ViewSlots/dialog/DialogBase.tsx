@@ -110,7 +110,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
         if (open) {
             setItemsResolvedSeq(openSeq.current);
         }
-    }, [dialog.items, refresh, structure, open]);
+    }, [dialog.items, refresh, open]);
 
     React.useEffect(() => {
         if (!open) return;
@@ -230,6 +230,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
                             item={item}
                             structure={structure}
                             onChange={(structure) => {
+                                console.log('DialogLayoutItem onChange', structure);
                                 dialog.onChange?.(structure);
                                 setStructure(structure);
                                 setError(null);
