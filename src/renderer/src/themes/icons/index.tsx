@@ -224,6 +224,7 @@ export interface ThemeIcons {
     Hexagon: IconWrapperFC;
     Image: IconWrapperFC;
     Run: IconWrapperFC;
+    Tablespace: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -393,4 +394,5 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     Image: ["image", "picture", "photo", "graphic"],
     Run: ["run", "execute", "start", "play"],
     CancleQuery: ["cancel", "query", "stop", "abort"],
+    Tablespace: ["tablespace", "space", "storage", "database"],
 };

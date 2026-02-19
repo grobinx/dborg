@@ -196,6 +196,7 @@ const icons = (palette: Palette): ThemeOptions => {
             Hexagon: (props) => <IconWrapper {...props} className="hexagon"><MuiIcons.Hexagon fontSize="inherit" /></IconWrapper>,
             Image: (props) => <IconWrapper {...props} className="image"><MuiIcons.ImageOutlined fontSize="inherit" /></IconWrapper>,
             Run: (props) => <IconWrapper {...props} className="run"><MuiIcons.PlayArrow fontSize="inherit" color={"success"} /></IconWrapper>,
+            Tablespace: (props) => <IconWrapper {...props} className="tablespace"><BsIcons.HddNetwork fontSize="inherit" /></IconWrapper>,
         }
     }
 }

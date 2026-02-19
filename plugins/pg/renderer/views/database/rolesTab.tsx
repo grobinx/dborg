@@ -2,12 +2,9 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { icons } from "@renderer/themes/ThemeWrapper";
-import { resolveColor } from "@renderer/utils/colors";
-import { useTheme } from "@mui/material";
 import { versionToNumber } from "../../../../../src/api/version";
-import { roleConfigDdl, roleBodyDdl, roleGrantsDdl, roleMembershipDdl, roleDdl } from "../../../common/ddls/role";
+import { roleDdl } from "../../../common/ddls/role";
 import Span from "@renderer/components/useful/Span";
 
 export interface RoleRecord {
@@ -179,7 +176,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         return rows;
                     },
                     columns: [
-                        { key: "role_name", label: t("role-name", "Role"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 1 },
+                        { key: "role_name", label: t("role-name", "Role"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
                         { key: "rolcanlogin", label: t("can-login", "Login"), dataType: "boolean", width: 80, formatter: booleanFormatter },
                         { key: "rolsuper", label: t("superuser", "Superuser"), dataType: "boolean", width: 100, formatter: booleanFormatter },
                         { key: "rolcreaterole", label: t("create-role", "Create Role"), dataType: "boolean", width: 110, formatter: booleanFormatter },
@@ -187,7 +184,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                         { key: "rolinherit", label: t("inherit", "Inherit"), dataType: "boolean", width: 90, formatter: booleanFormatter },
                         { key: "rolreplication", label: t("replication", "Replication"), dataType: "boolean", width: 110, formatter: booleanFormatter },
                         { key: "rolbypassrls", label: t("bypass-rls", "Bypass RLS"), dataType: "boolean", width: 110, formatter: booleanFormatter },
-                        { key: "role_size", label: t("role-size", "Size"), dataType: "size", width: 130, formatter: loadingStatsText },
+                        { key: "role_size", label: t("role-size", "Size"), dataType: "size", width: 130, sortDirection: "desc", sortOrder: 1, formatter: loadingStatsText },
                         { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
                         { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100, formatter: loadingStatsText },
                         { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100, formatter: loadingStatsText },

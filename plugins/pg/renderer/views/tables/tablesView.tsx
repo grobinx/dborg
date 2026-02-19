@@ -177,6 +177,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                     text: () => {
                         return selectedRow && selectedRow.description ? selectedRow.description : "No description.";
                     },
+                    maxLines: 3,
                 } as ITextSlot
             },
             editors: [

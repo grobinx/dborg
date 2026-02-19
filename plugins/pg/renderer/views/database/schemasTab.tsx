@@ -190,9 +190,9 @@ where n.nspname not like 'pg_toast%'
                         return rows;
                     },
                     columns: [
-                        { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 1 },
+                        { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
                         { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
-                        { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, formatter: loadingStatsText },
+                        { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, sortDirection: "desc", sortOrder: 1, formatter: loadingStatsText },
                         { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
                         { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100, formatter: loadingStatsText },
                         { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100, formatter: loadingStatsText },

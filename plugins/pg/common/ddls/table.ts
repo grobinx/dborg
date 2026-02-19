@@ -119,6 +119,11 @@ SELECT
       ) ||
       E'\n)' ||
       COALESCE(
+        (SELECT E' TABLESPACE ' || quote_ident(spcname)
+         FROM pg_tablespace WHERE oid = (SELECT reltablespace FROM pg_class WHERE oid = o.oid) AND spcname NOT IN ('pg_default', 'pg_global')),
+        ''
+      ) ||
+      COALESCE(
         (SELECT E'\nOPTIONS (' || array_to_string(ft.ftoptions, ', ') || ')'
          FROM pg_foreign_table ft WHERE ft.ftrelid = o.oid AND array_length(ft.ftoptions, 1) > 0),
         ''
@@ -185,6 +190,11 @@ SELECT
           SELECT c.reloptions AS relopts
           FROM pg_class c WHERE c.oid = o.oid
         ) x
+      ) ||
+      COALESCE(
+        (SELECT E' TABLESPACE ' || quote_ident(spcname)
+         FROM pg_tablespace WHERE oid = (SELECT reltablespace FROM pg_class WHERE oid = o.oid) AND spcname NOT IN ('pg_default', 'pg_global')),
+        ''
       ) ||
       ${partitionFragment} || ';'
   END AS source

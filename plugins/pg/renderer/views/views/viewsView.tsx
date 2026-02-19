@@ -138,6 +138,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                     id: cid("views-text"),
                     type: "text",
                     text: () => (selectedRow && selectedRow.description ? selectedRow.description : "No description."),
+                    maxLines: 3,
                 } as ITextSlot,
             },
             editors: [
