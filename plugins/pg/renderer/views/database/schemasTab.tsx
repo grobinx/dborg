@@ -49,6 +49,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     const t = i18next.t.bind(i18next);
 
     let selectedRow: SchemaRecord | null = null;
+    let selectedRowDetails: SchemaRecord | null = null;
     let allRows: SchemaRecord[] = [];
     const loadingStatsRow: SchemaRecord[] = [];
     let loadingStats: boolean = false;
@@ -56,6 +57,23 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+
+    let roleNameList: string[] | null = null;
+    const loadRoleNameList = async () => {
+        if (roleNameList === null) {
+            try {
+                const { rows } = await session.query<{ rolname: string }>(
+                    `select rolname
+                 from pg_roles
+                 order by rolname`);
+                roleNameList = rows.map(r => r.rolname);
+            } catch (e) {
+                roleNameList = [];
+            }
+        }
+        return roleNameList;
+    };
+    loadRoleNameList();
 
     async function getSchemaStats(schemaName: string): Promise<SchemaStatsRecord> {
         const sql = `
@@ -123,7 +141,7 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
             return <Icon />;
         }
         return value;
-    }
+    };
 
     return {
         id: cid("schemas-editors-tab"),
@@ -139,17 +157,24 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
             id: cid("schemas-tab-content"),
             type: "tabcontent",
             content: {
-                id: cid("schemas-editor-splitter"),
+                id: cid("schemas-main-splitter"),
                 type: "split",
-                direction: "vertical",
-                autoSaveId: `schemas-editor-splitter-${session.profile.sch_id}`,
+                direction: "horizontal",
+                autoSaveId: `schemas-main-splitter-${session.profile.sch_id}`,
                 secondSize: 25,
-                first: (slotContext) => ({
-                    id: cid("schemas-grid"),
-                    type: "grid",
-                    uniqueField: "schema_name",
-                    rows: async () => {
-                        const sql = `
+                first: {
+                    id: cid("schemas-editor-splitter"),
+                    type: "split",
+                    direction: "vertical",
+                    autoSaveId: `schemas-editor-splitter-${session.profile.sch_id}`,
+                    secondSize: 25,
+                    first: (slotContext) =>
+                    ({
+                        id: cid("schemas-grid"),
+                        type: "grid",
+                        uniqueField: "schema_name",
+                        rows: async () => {
+                            const sql = `
 select
     n.nspname as schema_name,
     pg_get_userbyid(n.nspowner) as schema_owner,
@@ -171,7 +196,7 @@ select
             from (
                 select
                     pg_get_userbyid(grantor) as grantor,
-                    pg_get_userbyid(grantee) as grantee,
+                    case when grantee = 0 then 'PUBLIC' else pg_get_userbyid(grantee) end as grantee,
                     privilege_type,
                     is_grantable
                 from aclexplode(n.nspacl)
@@ -184,84 +209,49 @@ left join pg_description d on d.objoid = n.oid and d.classoid = 'pg_namespace'::
 where n.nspname not like 'pg_toast%'
   and n.nspname not like 'pg_temp%';
 `;
-
-                        const { rows } = await session.query<SchemaRecord>(sql);
-                        allRows = rows;
-                        return rows;
-                    },
-                    columns: [
-                        { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
-                        { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
-                        { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, sortDirection: "desc", sortOrder: 1, formatter: loadingStatsText },
-                        { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
-                        { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100, formatter: loadingStatsText },
-                        { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100, formatter: loadingStatsText },
-                        { key: "sequences_count", label: t("sequences-count", "Sequences"), dataType: "number", width: 100, formatter: loadingStatsText },
-                        { key: "functions_count", label: t("functions-count", "Functions"), dataType: "number", width: 100, formatter: loadingStatsText },
-                        { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100, formatter: loadingStatsText },
-                        { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
-                    ] as ColumnDefinition[],
-                    onRowSelect: (row: SchemaRecord | undefined) => {
-                        if (selectedRow?.schema_name !== row?.schema_name) {
-                            selectedRow = row ?? null;
-                            slotContext.refresh(cid("schemas-editor"));
-                            slotContext.refresh(cid("schemas-toolbar"));
-                        }
-                    },
-                    actions: [
-                        {
-                            id: "schema-stats-refresh",
-                            label: t("refresh-schema-stats", "Refresh Schema Stats"),
-                            icon: "Reload",
-                            keySequence: ["Space"],
-                            contextMenuGroupId: "schema-stats",
-                            contextMenuOrder: 1,
-                            disabled: () => selectedRow === null || loadingStats,
-                            run: async () => {
-                                if (selectedRow) {
-                                    const row = selectedRow;
-                                    loadingStats = true;
-                                    loadingStatsRow.push(row);
-                                    slotContext.refresh(cid("schemas-grid"), "only");
-                                    slotContext.refresh(cid("schemas-stats-progress"));
-                                    slotContext.refresh(cid("schemas-toolbar"));
-                                    try {
-                                        const stats = await getSchemaStats(row.schema_name);
-                                        Object.assign(row, stats);
-                                    } finally {
-                                        const index = loadingStatsRow.indexOf(row);
-                                        if (index !== -1) {
-                                            loadingStatsRow.splice(index, 1);
-                                        }
-                                        loadingStats = false;
-                                        slotContext.refresh(cid("schemas-grid"), "compute");
-                                        slotContext.refresh(cid("schemas-stats-progress"));
-                                        slotContext.refresh(cid("schemas-toolbar"));
-                                    }
-                                }
-                            },
+                            const { rows } = await session.query<SchemaRecord>(sql);
+                            allRows = rows;
+                            return rows;
                         },
-                        {
-                            id: "schema-stats-refresh-all",
-                            label: () => loadingStats ? t("cancel-refresh-schemas", "Cancel Refresh All Schema Stats") : t("refresh-schemas", "Refresh All Schema Stats"),
-                            icon: () => loadingStats ? "ReloadStop" : "ReloadAll",
-                            keySequence: ["Alt+Shift+Enter"],
-                            contextMenuGroupId: "schema-stats",
-                            contextMenuOrder: 2,
-                            //disabled: () => loadingStats,
-                            run: async () => {
-                                if (loadingStats) {
-                                    loadingStats = false;
-                                    return;
-                                }
-                                loadingStats = true;
+                        columns: [
+                            { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
+                            { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
+                            { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, sortDirection: "desc", sortOrder: 1, formatter: loadingStatsText },
+                            { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
+                            { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100, formatter: loadingStatsText },
+                            { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100, formatter: loadingStatsText },
+                            { key: "sequences_count", label: t("sequences-count", "Sequences"), dataType: "number", width: 100, formatter: loadingStatsText },
+                            { key: "functions_count", label: t("functions-count", "Functions"), dataType: "number", width: 100, formatter: loadingStatsText },
+                            { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100, formatter: loadingStatsText },
+                            { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                        ] as ColumnDefinition[],
+                        onRowSelect: (row: SchemaRecord | undefined) => {
+                            if (selectedRow?.schema_name !== row?.schema_name) {
+                                selectedRow = row ?? null;
+                                selectedRowDetails = row ?? null;
+                                slotContext.refresh(cid("schemas-editor"));
+                                slotContext.refresh(cid("schemas-details-grid"));
+                                slotContext.refresh(cid("schemas-details-acl-grid"));
                                 slotContext.refresh(cid("schemas-toolbar"));
-                                try {
-                                    for (const [index, row] of allRows.entries()) {
-                                        loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
+                            }
+                        },
+                        actions: [
+                            {
+                                id: "schema-stats-refresh",
+                                label: t("refresh-schema-stats", "Refresh Schema Stats"),
+                                icon: "Reload",
+                                keySequence: ["Space"],
+                                contextMenuGroupId: "schema-stats",
+                                contextMenuOrder: 1,
+                                disabled: () => selectedRow === null || loadingStats,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        const row = selectedRow;
+                                        loadingStats = true;
                                         loadingStatsRow.push(row);
                                         slotContext.refresh(cid("schemas-grid"), "only");
                                         slotContext.refresh(cid("schemas-stats-progress"));
+                                        slotContext.refresh(cid("schemas-toolbar"));
                                         try {
                                             const stats = await getSchemaStats(row.schema_name);
                                             Object.assign(row, stats);
@@ -270,55 +260,205 @@ where n.nspname not like 'pg_toast%'
                                             if (index !== -1) {
                                                 loadingStatsRow.splice(index, 1);
                                             }
-                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            loadingStats = false;
+                                            slotContext.refresh(cid("schemas-grid"), "compute");
+                                            slotContext.refresh(cid("schemas-stats-progress"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
                                         }
-                                        if (!loadingStats) {
-                                            break;
-                                        }
-                                    };
-                                }
-                                finally {
-                                    loadingStats = false;
-                                    loadingProgress = null;
-                                    slotContext.refresh(cid("schemas-grid"), "compute");
-                                    slotContext.refresh(cid("schemas-stats-progress"));
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-stats-refresh-all",
+                                label: () => loadingStats ? t("cancel-refresh-schemas", "Cancel Refresh All Schema Stats") : t("refresh-schemas", "Refresh All Schema Stats"),
+                                icon: () => loadingStats ? "ReloadStop" : "ReloadAll",
+                                keySequence: ["Alt+Shift+Enter"],
+                                contextMenuGroupId: "schema-stats",
+                                contextMenuOrder: 2,
+                                //disabled: () => loadingStats,
+                                run: async () => {
+                                    if (loadingStats) {
+                                        loadingStats = false;
+                                        return;
+                                    }
+                                    loadingStats = true;
                                     slotContext.refresh(cid("schemas-toolbar"));
+                                    try {
+                                        for (const [index, row] of allRows.entries()) {
+                                            loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
+                                            loadingStatsRow.push(row);
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-stats-progress"));
+                                            try {
+                                                const stats = await getSchemaStats(row.schema_name);
+                                                Object.assign(row, stats);
+                                            } finally {
+                                                const index = loadingStatsRow.indexOf(row);
+                                                if (index !== -1) {
+                                                    loadingStatsRow.splice(index, 1);
+                                                }
+                                                slotContext.refresh(cid("schemas-grid"), "only");
+                                            }
+                                            if (!loadingStats) {
+                                                break;
+                                            }
+                                        };
+                                    }
+                                    finally {
+                                        loadingStats = false;
+                                        loadingProgress = null;
+                                        slotContext.refresh(cid("schemas-grid"), "compute");
+                                        slotContext.refresh(cid("schemas-stats-progress"));
+                                        slotContext.refresh(cid("schemas-toolbar"));
+                                    }
                                 }
-                            }
-                        }
-                    ],
-                    autoSaveId: `schemas-grid-${session.profile.sch_id}`,
-                    statuses: ["data-rows"],
-                    progress: {
-                        id: cid("schemas-stats-progress"),
-                        type: "progress",
-                        display: () => loadingStats,
-                        value: () => loadingProgress,
+                            },
+                            {
+                                id: "schema-edit",
+                                label: t("edit-schema", "Edit Schema"),
+                                icon: "EditRow",
+                                keySequence: ["F2"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 1,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        await slotContext.openDialog(
+                                            cid("schema-edit-dialog"),
+                                            {
+                                                schema_name: selectedRow.schema_name,
+                                                schema_owner: selectedRow.schema_owner,
+                                            }
+                                        );
+                                    }
+                                },
+                            },
+                        ],
+                        autoSaveId: `schemas-grid-${session.profile.sch_id}`,
+                        statuses: ["data-rows"],
+                        progress: {
+                            id: cid("schemas-stats-progress"),
+                            type: "progress",
+                            display: () => loadingStats,
+                            value: () => loadingProgress,
+                        },
+                    } as IGridSlot),
+                    second: {
+                        id: cid("schemas-editor"),
+                        type: "editor",
+                        lineNumbers: false,
+                        readOnly: true,
+                        miniMap: false,
+                        content: async () => {
+                            if (!selectedRow) return "-- No schema selected";
+                            return schemaDdl(session, selectedRow.schema_name);
+                        },
                     },
-                } as IGridSlot),
+                },
                 second: {
-                    id: cid("schemas-editor"),
-                    type: "editor",
-                    lineNumbers: false,
-                    readOnly: true,
-                    miniMap: false,
-                    content: async () => {
-                        if (!selectedRow) return "-- No schema selected";
-                        return schemaDdl(session, selectedRow.schema_name);
+                    id: cid("schemas-details-splitter"),
+                    type: "split",
+                    direction: "vertical",
+                    autoSaveId: `schemas-details-splitter-${session.profile.sch_id}`,
+                    first: {
+                        id: cid("schemas-details-grid"),
+                        type: "grid",
+                        pivot: true,
+                        rows: async () => {
+                            if (!selectedRow) return [];
+                            selectedRowDetails = selectedRow;
+                            return [selectedRow];
+                        },
+                        columns: [
+                            { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220 },
+                            { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
+                            { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130 },
+                            { key: "schema_size_bytes", label: t("schema-size-bytes", "Size (bytes)"), dataType: "number", width: 150 },
+                            { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130 },
+                            { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100 },
+                            { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100 },
+                            { key: "sequences_count", label: t("sequences-count", "Sequences"), dataType: "number", width: 110 },
+                            { key: "functions_count", label: t("functions-count", "Functions"), dataType: "number", width: 110 },
+                            { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100 },
+                            { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                            { key: "is_system", label: t("is-system", "System"), dataType: "boolean", width: 100 },
+                        ] as ColumnDefinition[],
+                        pivotColumns: [
+                            { key: "property", label: t("property", "Property"), dataType: "string", width: 200 },
+                            { key: "value", label: t("value", "Value"), dataType: "string", width: 420 },
+                        ] as ColumnDefinition[],
+                        autoSaveId: `schemas-details-grid-${session.profile.sch_id}`,
+                    },
+                    second: {
+                        id: cid("schemas-details-acl-content"),
+                        type: "content",
+                        title: {
+                            id: cid("schemas-details-acl-title"),
+                            type: "title",
+                            title: t("schema-acl", "ACL"),
+                        },
+                        main: {
+                            id: cid("schemas-details-acl-grid"),
+                            type: "grid",
+                            rows: async () => {
+                                if (!selectedRowDetails) return [];
+                                return (selectedRowDetails.acl || []) as SchemaAclEntry[];
+                            },
+                            columns: [
+                                { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 100 },
+                                { key: "grantee", label: t("grantee", "Grantee"), dataType: "string", width: 100 },
+                                { key: "privilege_type", label: t("privilege-type", "Privilege Type"), dataType: "string", width: 100 },
+                                { key: "is_grantable", label: t("is-grantable", "Is Grantable"), dataType: "boolean", width: 50 },
+                            ] as ColumnDefinition[],
+                            autoSaveId: `schemas-details-acl-grid-${session.profile.sch_id}`,
+                        },
                     },
                 },
             },
-        },
-        toolBar: {
-            id: cid("schemas-toolbar"),
-            type: "toolbar",
-            tools: [
-                [
-                    "schema-stats-refresh",
-                    "schema-stats-refresh-all",
-                ]
+            dialogs: [
+                {
+                    id: cid("schema-edit-dialog"),
+                    type: "dialog",
+                    title: t("edit-schema", "Edit Schema"),
+                    items: [
+                        {
+                            type: "text",
+                            key: "schema_name",
+                            label: t("change-schema-name", "Change Schema Name"),
+                        },
+                        {
+                            type: "select",
+                            key: "schema_owner",
+                            label: t("change-schema-owner", "Change Owner"),
+                            options: () => {
+                                return roleNameList!.map(role => ({ label: role, value: role }));
+                            }
+                        }
+                    ],
+                    onValidate: (values: Record<string, any>) => {
+                        const newName = (values.schema_name || "").trim();
+
+                        if (newName && newName !== selectedRow?.schema_name) {
+                            if (allRows.some(row => row.schema_name === newName)) {
+                                return t("schema-name-already-exists", "Schema with this name already exists");
+                            }
+                        }
+
+                        return undefined;
+                    },
+                }
             ],
-            actionSlotId: cid("schemas-grid"),
-        }
+        },
+        toolBar: [
+            {
+                id: cid("schemas-toolbar"),
+                type: "toolbar",
+                tools: [
+                    ["schema-edit"],
+                    ["schema-stats-refresh", "schema-stats-refresh-all"]
+                ],
+                actionSlotId: cid("schemas-grid"),
+            }
+        ],
     };
 }

@@ -15,7 +15,7 @@ export function schemaBodyDdl(_version: number): string {
     return `
 SELECT
   '-- DROP SCHEMA IF EXISTS ' || quote_ident(nspname) || ' CASCADE;' || E'\\n' ||
-  'CREATE SCHEMA ' || quote_ident(nspname) ||
+  'CREATE SCHEMA IF NOT EXISTS ' || quote_ident(nspname) ||
   ' AUTHORIZATION ' || quote_ident(pg_get_userbyid(nspowner)) || ';' AS source
 FROM pg_namespace
 WHERE nspname = $1;

@@ -942,7 +942,7 @@ export interface IProgressBarSlot extends ICustomSlot {
     color?: ThemeColor;
 }
 
-export type DialogFieldType = "text" | "number" | "boolean" | "select" | "editor";
+export type DialogFieldType = "text" | "textarea" | "number" | "boolean" | "select" | "editor";
 
 export type DialogGridSize =
     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
@@ -1019,6 +1019,34 @@ export interface IDialogTextField extends IDialogField {
     maxLength?: number;
 }
 
+export interface IDialogTextareaField extends IDialogField {
+    type: "textarea";
+    /**
+     * Wartość domyślna pola tekstowego.
+     */
+    defaultValue?: string;
+    /**
+     * Minimalna długość tekstu.
+     */
+    minLength?: number;
+    /**
+     * Maksymalna długość tekstu.
+     */
+    maxLength?: number;
+    /**
+     * Liczba wierszy tekstu (wysokość pola).
+     */
+    rows?: number;
+    /**
+     * Minimalna liczba wierszy tekstu (opcjonalnie).
+     */
+    minRows?: number;
+    /**
+     * Maksymalna liczba wierszy tekstu (opcjonalnie).
+     */
+    maxRows?: number;
+}
+
 export interface IDialogEditorField extends IDialogField {
     type: "editor";
     /**
@@ -1093,6 +1121,7 @@ export interface IDialogSelectField extends IDialogField {
 
 export type DialogFieldKind =
     | IDialogTextField
+    | IDialogTextareaField
     | IDialogNumberField
     | IDialogBooleanField
     | IDialogSelectField
@@ -1393,6 +1422,10 @@ export function isGridStatusButton(obj: any): obj is IGridStatusButton {
 }
 export function isDialogTextField(field: any): field is IDialogTextField {
     return field?.type === "text";
+}
+
+export function isDialogTextareaField(field: any): field is IDialogTextareaField {
+    return field?.type === "textarea";
 }
 
 export function isDialogNumberField(field: any): field is IDialogNumberField {

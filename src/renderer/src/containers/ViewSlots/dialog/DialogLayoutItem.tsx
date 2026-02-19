@@ -10,8 +10,9 @@ import {
     isDialogColumn,
     isDialogTabs,
     isDialogEditorField,
+    isDialogTextareaField,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
-import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField } from "./DialogFields";
+import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField, DialogTextareaField } from "./DialogFields";
 import { DialogRow } from "./DialogLayout";
 import { DialogColumn } from "./DialogLayout";
 import { DialogTabs } from "./DialogTabs";
@@ -33,6 +34,16 @@ export const DialogLayoutItem: React.FC<{
 
     if (isDialogTextField(item)) {
         return <DialogTextField
+            field={item}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
+    }
+
+    if (isDialogTextareaField(item)) {
+        return <DialogTextareaField
             field={item}
             structure={structure}
             onChange={onChange}

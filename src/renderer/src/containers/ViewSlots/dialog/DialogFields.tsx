@@ -12,10 +12,12 @@ import {
     resolveBooleanFactory,
     resolveSelectOptionsFactory,
     resolveStringFactory,
-    IDialogEditorField
+    IDialogEditorField,
+    IDialogTextareaField
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { EditorField } from "@renderer/components/inputs/EditorField";
+import { TextareaField } from "@renderer/components/inputs/TextareaField";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
@@ -48,6 +50,59 @@ export const DialogTextField: React.FC<{
                 width={field.width}
                 minLength={field.minLength}
                 maxLength={field.maxLength}
+                tooltip={tooltip}
+                autoFocus={field.autoFocus}
+                onValidityChange={(isValid) => {
+                    if (!isValid) {
+                        if (!invalidFields.has(field.key)) {
+                            invalidFields.add(field.key);
+                        }
+                    } else {
+                        if (invalidFields.has(field.key)) {
+                            invalidFields.delete(field.key);
+                        }
+                    }
+                    onValidityChange();
+                }}
+            />
+        </InputDecorator>
+    );
+};
+
+export const DialogTextareaField: React.FC<{
+    field: IDialogTextareaField;
+    structure: Record<string, any>;
+    onChange: (structure: Record<string, any>) => void;
+    invalidFields: Set<string>;
+    onValidityChange: () => void;
+}> = (props) => {
+    const {
+        field,
+        structure,
+        onChange,
+        invalidFields,
+        onValidityChange,
+    } = props;
+
+    const label = resolveStringFactory(field.label, structure);
+    const tooltip = resolveStringFactory(field.tooltip, structure);
+    const helperText = resolveStringFactory(field.helperText, structure);
+    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const required = resolveBooleanFactory(field.required, structure);
+
+    return (
+        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
+            <TextareaField
+                value={structure[field.key]}
+                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                disabled={disabled}
+                required={required}
+                width={field.width}
+                minLength={field.minLength}
+                maxLength={field.maxLength}
+                minRows={field.minRows}
+                maxRows={field.maxRows}
+                rows={field.rows}
                 tooltip={tooltip}
                 autoFocus={field.autoFocus}
                 onValidityChange={(isValid) => {

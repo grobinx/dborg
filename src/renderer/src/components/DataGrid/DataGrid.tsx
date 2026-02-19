@@ -596,6 +596,8 @@ export const DataGrid = <T extends object>({
     const [pivot, setPivot] = useState(initialPivot);
     const prevUniqueValueRef = useRef<any>(null);
 
+    const hasChanges = !!changes?.length;
+
     const onSaveColumnsState = () => {
         return {
             filters: filterColumns.filters,
@@ -632,7 +634,7 @@ export const DataGrid = <T extends object>({
 
     // Mapa zmian dla szybkiego dostępu: uniqueValue → DataGridChange<T>
     const changesMap = React.useMemo(() => {
-        if (!changes || !uniqueField) return null;
+        if (!hasChanges || !uniqueField) return null;
         const map = new Map<any, DataGridRow<T>>();
         changes.forEach((change) => map.set(change.uniqueId, change));
         return map;
@@ -771,7 +773,7 @@ export const DataGrid = <T extends object>({
         console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet = [...(data || [])];
 
-        if (changes && uniqueField && changes.length > 0) {
+        if (hasChanges && uniqueField) {
             const existingIds = new Set(resultSet.map((row) => row.data[uniqueField]));
             const newRows = changes.filter((change) => {
                 return !existingIds.has(change.uniqueId) && change.type === "add";
@@ -1038,7 +1040,7 @@ export const DataGrid = <T extends object>({
     }, [displayData.length, fontSize, fontFamily, showRowNumberColumn, cellPaddingX]);
 
     React.useEffect(() => {
-        if (changes && uniqueField) {
+        if (hasChanges && uniqueField) {
             setChangeRowColumnWidth(30);
         } else {
             setChangeRowColumnWidth(0);
@@ -1670,7 +1672,7 @@ export const DataGrid = <T extends object>({
                             #
                         </StyledHeaderCell>
                     )}
-                    {changes && uniqueField && (
+                    {hasChanges && uniqueField && (
                         <StyledHeaderCell
                             key="row-change-cell"
                             className={clsx(
@@ -1894,7 +1896,7 @@ export const DataGrid = <T extends object>({
                                         {absoluteRowIndex + 1}
                                     </StyledCell>
                                 )}
-                                {changes && uniqueField && (
+                                {hasChanges && uniqueField && (
                                     <StyledCell
                                         key="row-change-cell"
                                         className={clsx(
@@ -2078,7 +2080,7 @@ export const DataGrid = <T extends object>({
                                 }}
                             />
                         )}
-                        {changes && uniqueField && (
+                        {hasChanges && uniqueField && (
                             <StyledFooterCell
                                 key="row-change-cell"
                                 className={clsx(
