@@ -16,6 +16,7 @@ import { databaseView } from "./views/database/databaseView";
 import { viewsView } from "./views/views/viewsView";
 import { sequencesView } from "./views/sequences/sequencesView";
 import { toolsView } from "./views/tools/toolsView";
+import { aggregatesView } from "./views/aggregates/aggregatesView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -42,6 +43,7 @@ const PostgresPlugin: Plugin = {
                 tablesView(session),
                 viewsView(session),
                 sequencesView(session),
+                aggregatesView(session),
             ];
         });
     }

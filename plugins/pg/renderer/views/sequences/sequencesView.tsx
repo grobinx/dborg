@@ -4,9 +4,8 @@ import { ConnectionView } from "plugins/manager/renderer/Plugin";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { IGridSlot } from "plugins/manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
-import { sequenceCommentDdl, sequenceBodyDdl, sequenceOperationalDdl, sequenceOwnerDdl, sequencePrivilegesDdl, sequenceDdl } from "../../../common/ddls/sequence";
+import { sequenceDdl } from "../../../common/ddls/sequence";
 import { versionToNumber } from "../../../../../src/api/version";
 
 export interface SequenceRecord {
@@ -78,39 +77,41 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
         label: t("database-sequences", "Sequences"),
         slot: {
             id: cid("sequences-slot"),
-            type: "integrated",
-            editors: [
-                {
-                    id: cid("sequences-editors-tab"),
-                    type: "tab",
-                    closable: false,
-                    label: {
-                        id: cid("sequences-tab-label"),
-                        type: "tablabel",
-                        label: t("database-sequences", "Sequences"),
-                        icon: "Sequence",
-                    },
-                    content: {
-                        id: cid("sequences-tab-content"),
-                        type: "tabcontent",
-                        content: {
-                            id: cid("sequences-details-splitter"),
-                            type: "split",
-                            direction: "horizontal",
-                            autoSaveId: `sequences-details-splitter-${session.profile.sch_id}`,
-                            secondSize: 25,
-                            first: {
-                                id: cid("sequences-editor-splitter"),
-                                type: "split",
-                                direction: "vertical",
-                                autoSaveId: `sequences-editor-splitter-${session.profile.sch_id}`,
-                                secondSize: 25,
-                                first: {
-                                    id: cid("sequences-grid"),
-                                    type: "grid",
-                                    uniqueField: "sequence_name",
-                                    rows: async () => {
-                                        const sql10plus = `
+            type: "root",
+            slot: {
+                id: cid("sequences-content"),
+                type: "content",
+                title: {
+                    type: "title",
+                    id: cid("sequences-title"),
+                    title: () => t("pg-sequences-with-schema", "Sequences {{schemaName}}", { schemaName: selectedSchemaName }),
+                    toolBar: {
+                        id: cid("sequences-toolbar"),
+                        type: "toolbar",
+                        tools: [
+                            SelectSchemaAction_ID
+                        ],
+                        actionSlotId: cid("sequences-grid"),
+                    }
+                },
+                main: {
+                    id: cid("sequences-details-splitter"),
+                    type: "split",
+                    direction: "horizontal",
+                    autoSaveId: `sequences-details-splitter-${session.profile.sch_id}`,
+                    secondSize: 25,
+                    first: {
+                        id: cid("sequences-editor-splitter"),
+                        type: "split",
+                        direction: "vertical",
+                        autoSaveId: `sequences-editor-splitter-${session.profile.sch_id}`,
+                        secondSize: 25,
+                        first: {
+                            id: cid("sequences-grid"),
+                            type: "grid",
+                            uniqueField: "sequence_name",
+                            rows: async () => {
+                                const sql10plus = `
 select
   s.schemaname as sequence_schema,
   s.sequencename as sequence_name,
@@ -135,7 +136,7 @@ where (s.schemaname = $1 or (s.schemaname = any (current_schemas(false)) and coa
 order by sequence_schema, sequence_name;
 `;
 
-                                        const sqlLegacy = `
+                                const sqlLegacy = `
 select
    n.nspname as sequence_schema,
    c.relname as sequence_name,
@@ -151,74 +152,75 @@ where c.relkind = 'S'
 order by sequence_schema, sequence_name;
 `;
 
-                                        const sql = versionNumber >= 100000 ? sql10plus : sqlLegacy;
+                                const sql = versionNumber >= 100000 ? sql10plus : sqlLegacy;
 
-                                        const { rows } = await session.query<SequenceRecord>(sql, [selectedSchemaName]);
-                                        return rows;
-                                    },
-                                    columns: [
-                                        { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
-                                        { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
-                                        { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
-                                        ...(versionNumber >= 100000 ? [
-                                            { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
-                                            { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
-                                            { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
-                                            { key: "min_value", label: t("min-value", "Min"), dataType: "number", width: 110 },
-                                            { key: "max_value", label: t("max-value", "Max"), dataType: "number", width: 130 },
-                                            { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
-                                            { key: "cache_size", label: t("cache-size", "Cache"), dataType: "number", width: 100 },
-                                            { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
-                                        ] : []),
-                                        { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
-                                    ] as ColumnDefinition[],
-                                    onRowSelect: (row: SequenceRecord | undefined, slotContext) => {
-                                        if (selectedRow?.sequence_name !== row?.sequence_name || selectedRow?.sequence_schema !== row?.sequence_schema) {
-                                            selectedRow = row ?? null;
-                                            slotContext.refresh(cid("sequences-editor"));
-                                            slotContext.refresh(cid("sequences-details-grid"));
-                                        }
-                                    },
-                                    actions: [
-                                        SelectSchemaAction(),
-                                    ],
-                                    actionGroups: (slotContext) => [
-                                        SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
-                                            selectedSchemaName = schemaName;
-                                            slotContext.refresh(cid("sequences-grid"));
-                                        }),
-                                    ],
-                                    autoSaveId: `sequences-grid-${session.profile.sch_id}`,
-                                    statuses: ["data-rows"]
-                                } as IGridSlot,
-                                second: {
-                                    id: cid("sequences-editor"),
-                                    type: "editor",
-                                    lineNumbers: false,
-                                    readOnly: true,
-                                    miniMap: false,
-                                    content: async () => {
-                                        if (!selectedRow) return "-- No sequence selected";
-                                        return sequenceDdl(session, selectedRow.sequence_schema, selectedRow.sequence_name);
-                                    },
-                                },
+                                const { rows } = await session.query<SequenceRecord>(sql, [selectedSchemaName]);
+                                return rows;
                             },
-                            second: {
-                                id: cid("sequences-details-splitter"),
-                                type: "split",
-                                direction: "vertical",
-                                autoSaveId: `sequences-details-splitter-${session.profile.sch_id}`,
-                                first: {
-                                    id: cid("sequences-details-grid"),
-                                    type: "grid",
-                                    pivot: true,
-                                    rows: async (slotContext) => {
-                                        if (!selectedRow) return [];
+                            columns: [
+                                { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
+                                { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
+                                { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
+                                ...(versionNumber >= 100000 ? [
+                                    { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
+                                    { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
+                                    { key: "start_value", label: t("start-value", "Start"), dataType: "number", width: 110 },
+                                    { key: "min_value", label: t("min-value", "Min"), dataType: "number", width: 110 },
+                                    { key: "max_value", label: t("max-value", "Max"), dataType: "number", width: 130 },
+                                    { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
+                                    { key: "cache_size", label: t("cache-size", "Cache"), dataType: "number", width: 100 },
+                                    { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
+                                ] : []),
+                                { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                            ] as ColumnDefinition[],
+                            onRowSelect: (row: SequenceRecord | undefined, slotContext) => {
+                                if (selectedRow?.sequence_name !== row?.sequence_name || selectedRow?.sequence_schema !== row?.sequence_schema) {
+                                    selectedRow = row ?? null;
+                                    slotContext.refresh(cid("sequences-editor"));
+                                    slotContext.refresh(cid("sequences-details-grid"));
+                                }
+                            },
+                            actions: [
+                                SelectSchemaAction(),
+                            ],
+                            actionGroups: (slotContext) => [
+                                SelectSchemaGroup(session, selectedSchemaName, (schemaName: string) => {
+                                    selectedSchemaName = schemaName;
+                                    slotContext.refresh(cid("sequences-grid"));
+                                    slotContext.refresh(cid("sequences-title"));
+                                }),
+                            ],
+                            autoSaveId: `sequences-grid-${session.profile.sch_id}`,
+                            statuses: ["data-rows"]
+                        } as IGridSlot,
+                        second: {
+                            id: cid("sequences-editor"),
+                            type: "editor",
+                            lineNumbers: false,
+                            readOnly: true,
+                            miniMap: false,
+                            content: async () => {
+                                if (!selectedRow) return "-- No sequence selected";
+                                return sequenceDdl(session, selectedRow.sequence_schema, selectedRow.sequence_name);
+                            },
+                        },
+                    },
+                    second: {
+                        id: cid("sequences-details-splitter"),
+                        type: "split",
+                        direction: "vertical",
+                        autoSaveId: `sequences-details-splitter-${session.profile.sch_id}`,
+                        first: {
+                            id: cid("sequences-details-grid"),
+                            type: "grid",
+                            pivot: true,
+                            rows: async (slotContext) => {
+                                if (!selectedRow) return [];
 
-                                        let sql: string;
+                                let sql: string;
 
-                                        if (versionNumber >= 100000) {
-                                            sql = `
+                                if (versionNumber >= 100000) {
+                                    sql = `
             with seq as (
                 select c.oid, n.nspname as sequence_schema, c.relname as sequence_name,
                        rol.rolname as owner,
@@ -270,8 +272,8 @@ order by sequence_schema, sequence_name;
             left join dep on dep.objid = seq.oid
             limit 1
         `;
-                                        } else {
-                                            sql = `
+                                } else {
+                                    sql = `
             with seq as (
                 select c.oid, n.nspname as sequence_schema, c.relname as sequence_name,
                     rol.rolname as owner,
@@ -334,79 +336,69 @@ order by sequence_schema, sequence_name;
             left join dep on dep.objid = seq.oid
             limit 1
         `;
-                                        }
-                                        selectedRowDetails = null;
-
-                                        const { rows } = await session.query<SequenceDetailsRecord>(sql, [selectedRow.sequence_name, selectedRow.sequence_schema]);
-                                        if (!rows.length) return [];
-
-                                        selectedRowDetails = rows[0];
-                                        slotContext.refresh(cid("sequences-details-acl-grid"));
-
-                                        // Zamiana na listę klucz-wartość do pivot grida
-                                        return rows;
-                                    },
-                                    columns: [
-                                        { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
-                                        { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
-                                        { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
-                                        { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
-                                        { key: "start_value", label: t("start-value", "Start Value"), dataType: "number", width: 110 },
-                                        { key: "min_value", label: t("min-value", "Min Value"), dataType: "number", width: 110 },
-                                        { key: "max_value", label: t("max-value", "Max Value"), dataType: "number", width: 130 },
-                                        { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
-                                        { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
-                                        { key: "cache_size", label: t("cache-size", "Cache Size"), dataType: "number", width: 100 },
-                                        { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
-                                        { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
-                                        { key: "owner_table", label: t("owner-table", "Owner Table"), dataType: "string", width: 220 },
-                                        { key: "owner_table_schema", label: t("owner-table-schema", "Owner Table Schema"), dataType: "string", width: 150 },
-                                        { key: "owner_column", label: t("owner-column", "Owner Column"), dataType: "string", width: 180 },
-                                        //{ key: "acl", label: t("acl", "ACL"), dataType: "json", width: 200 },
-                                    ] as ColumnDefinition[],
-                                    pivotColumns: [
-                                        { key: "property", label: t("property", "Property"), dataType: "string", width: 180 },
-                                        { key: "value", label: t("value", "Value"), dataType: "string", width: 400 },
-                                    ] as ColumnDefinition[],
-                                    autoSaveId: `sequences-details-grid-${session.profile.sch_id}`,
-                                },
-                                second: {
-                                    id: cid("sequences-details-acl-content"),
-                                    type: "content",
-                                    title: {
-                                        id: cid("sequences-details-acl-title"),
-                                        type: "title",
-                                        title: t("sequence-acl", "ACL"),
-                                    },
-                                    main: {
-                                        id: cid("sequences-details-acl-grid"),
-                                        type: "grid",
-                                        rows: async () => {
-                                            if (!selectedRowDetails) return [];
-                                            return (selectedRowDetails.acl || []) as SequenceAclEntry[];
-                                        },
-                                        columns: [
-                                            { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 200 },
-                                            { key: "grantee", label: t("grantee", "Grantee"), dataType: "string", width: 200 },
-                                            { key: "privilege_type", label: t("privilege-type", "Privilege Type"), dataType: "string", width: 200 },
-                                            { key: "is_grantable", label: t("is-grantable", "Is Grantable"), dataType: "boolean", width: 150 },
-                                        ] as ColumnDefinition[],
-                                        autoSaveId: `sequences-details-acl-grid-${session.profile.sch_id}`,
-                                    }
                                 }
+                                selectedRowDetails = null;
+
+                                const { rows } = await session.query<SequenceDetailsRecord>(sql, [selectedRow.sequence_name, selectedRow.sequence_schema]);
+                                if (!rows.length) return [];
+
+                                selectedRowDetails = rows[0];
+                                slotContext.refresh(cid("sequences-details-acl-grid"));
+
+                                // Zamiana na listę klucz-wartość do pivot grida
+                                return rows;
                             },
+                            columns: [
+                                { key: "sequence_schema", label: t("schema-name", "Schema Name"), dataType: "string", width: 150 },
+                                { key: "sequence_name", label: t("sequence-name", "Sequence Name"), dataType: "string", width: 220 },
+                                { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 160 },
+                                { key: "data_type", label: t("data-type", "Data Type"), dataType: "string", width: 120 },
+                                { key: "start_value", label: t("start-value", "Start Value"), dataType: "number", width: 110 },
+                                { key: "min_value", label: t("min-value", "Min Value"), dataType: "number", width: 110 },
+                                { key: "max_value", label: t("max-value", "Max Value"), dataType: "number", width: 130 },
+                                { key: "increment_by", label: t("increment-by", "Increment"), dataType: "number", width: 120 },
+                                { key: "cycle", label: t("cycle", "Cycle"), dataType: "boolean", width: 90 },
+                                { key: "cache_size", label: t("cache-size", "Cache Size"), dataType: "number", width: 100 },
+                                { key: "last_value", label: t("last-value", "Last Value"), dataType: "number", width: 130 },
+                                { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
+                                { key: "owner_table", label: t("owner-table", "Owner Table"), dataType: "string", width: 220 },
+                                { key: "owner_table_schema", label: t("owner-table-schema", "Owner Table Schema"), dataType: "string", width: 150 },
+                                { key: "owner_column", label: t("owner-column", "Owner Column"), dataType: "string", width: 180 },
+                                //{ key: "acl", label: t("acl", "ACL"), dataType: "json", width: 200 },
+                            ] as ColumnDefinition[],
+                            pivotColumns: [
+                                { key: "property", label: t("property", "Property"), dataType: "string", width: 180 },
+                                { key: "value", label: t("value", "Value"), dataType: "string", width: 400 },
+                            ] as ColumnDefinition[],
+                            autoSaveId: `sequences-details-grid-${session.profile.sch_id}`,
                         },
+                        second: {
+                            id: cid("sequences-details-acl-content"),
+                            type: "content",
+                            title: {
+                                id: cid("sequences-details-acl-title"),
+                                type: "title",
+                                title: t("sequence-acl", "ACL"),
+                            },
+                            main: {
+                                id: cid("sequences-details-acl-grid"),
+                                type: "grid",
+                                rows: async () => {
+                                    if (!selectedRowDetails) return [];
+                                    return (selectedRowDetails.acl || []) as SequenceAclEntry[];
+                                },
+                                columns: [
+                                    { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 200 },
+                                    { key: "grantee", label: t("grantee", "Grantee"), dataType: "string", width: 200 },
+                                    { key: "privilege_type", label: t("privilege-type", "Privilege Type"), dataType: "string", width: 200 },
+                                    { key: "is_grantable", label: t("is-grantable", "Is Grantable"), dataType: "boolean", width: 150 },
+                                ] as ColumnDefinition[],
+                                autoSaveId: `sequences-details-acl-grid-${session.profile.sch_id}`,
+                            }
+                        }
                     },
-                    toolBar: {
-                        id: cid("sequences-toolbar"),
-                        type: "toolbar",
-                        tools: [
-                            SelectSchemaAction_ID
-                        ],
-                        actionSlotId: cid("sequences-grid"),
-                    }
                 },
-            ]
+            },
         }
     };
 }

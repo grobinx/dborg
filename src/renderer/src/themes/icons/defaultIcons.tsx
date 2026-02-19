@@ -42,6 +42,7 @@ import { Analyze } from "./svg/Analyze";
 import { Queue } from "./svg/Queue";
 import { Reindex } from "./svg/Reindex";
 import { Cluster } from "./svg/Cluster";
+import { Aggregates } from "./svg/Aggregates";
 
 const icons = (palette: Palette): ThemeOptions => {
     return {
@@ -197,6 +198,7 @@ const icons = (palette: Palette): ThemeOptions => {
             Image: (props) => <IconWrapper {...props} className="image"><MuiIcons.ImageOutlined fontSize="inherit" /></IconWrapper>,
             Run: (props) => <IconWrapper {...props} className="run"><MuiIcons.PlayArrow fontSize="inherit" color={"success"} /></IconWrapper>,
             Tablespace: (props) => <IconWrapper {...props} className="tablespace"><BsIcons.HddNetwork fontSize="inherit" /></IconWrapper>,
+            Aggregates: (props) => <IconWrapper {...props} className="aggregates"><Aggregates fontSize="inherit" /></IconWrapper>,
         }
     }
 }

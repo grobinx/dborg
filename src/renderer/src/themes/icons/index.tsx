@@ -225,6 +225,7 @@ export interface ThemeIcons {
     Image: IconWrapperFC;
     Run: IconWrapperFC;
     Tablespace: IconWrapperFC;
+    Aggregates: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -395,4 +396,5 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     Run: ["run", "execute", "start", "play"],
     CancleQuery: ["cancel", "query", "stop", "abort"],
     Tablespace: ["tablespace", "space", "storage", "database"],
+    Aggregates: ["aggregates", "aggregate", "functions", "group", "by"],
 };

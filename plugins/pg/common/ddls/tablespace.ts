@@ -1,59 +1,70 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 
 export async function tablespaceDdl(session: IDatabaseSession, tablespaceName: string): Promise<string> {
-    const sql = `
-select
-    t.oid,
-    t.spcname,
-    pg_get_userbyid(t.spcowner) as owner_name,
-    pg_tablespace_location(t.oid) as location,
-    t.spcoptions,
-    shobj_description(t.oid, 'pg_tablespace') as comment,
-    (t.spcname in ('pg_default', 'pg_global')) as is_system
-from pg_tablespace t
-where t.spcname = $1;
-`;
-    const { rows } = await session.query<{
-        oid: number;
-        spcname: string;
-        owner_name: string;
-        location: string | null;
-        spcoptions: string[] | null;
-        comment: string | null;
-        is_system: boolean;
-    }>(sql, [tablespaceName]);
-
-    const row = rows[0];
-    if (!row) return `-- Tablespace not found: ${tablespaceName}`;
-
-    const lines: string[] = [];
-    lines.push(`-- Tablespace: ${row.spcname}`);
-
-    if (row.is_system) {
-        lines.push(`-- System tablespace (cannot be created/dropped manually).`);
-        lines.push(`-- Owner: ${row.owner_name}`);
-        if (row.comment) {
-            lines.push(`COMMENT ON TABLESPACE ${qIdent(row.spcname)} IS ${qLiteral(row.comment)};`);
-        }
-        return lines.join("\n");
-    }
-
-    lines.push(
-        `CREATE TABLESPACE ${qIdent(row.spcname)} OWNER ${qIdent(row.owner_name)} LOCATION ${qLiteral(row.location || "")}${optionsToSql(row.spcoptions)};`
-    );
-
-    if (row.comment) {
-        lines.push(`COMMENT ON TABLESPACE ${qIdent(row.spcname)} IS ${qLiteral(row.comment)};`);
-    }
-
-    return lines.join("\n");
+    return [
+        await session
+            .query<{ source: string }>(tablespaceBodyDdl(), [tablespaceName])
+            .then((res) => res.rows.map((row) => row.source).join("\n")),
+        await session
+            .query<{ source: string }>(tablespaceCommentDdl(), [tablespaceName])
+            .then((res) => res.rows.map((row) => row.source).join("\n")),
+    ]
+        .filter(Boolean)
+        .join("\n\n") || "-- No DDL available";
 }
 
-const qIdent = (v: string) => `"${String(v).replace(/"/g, `""`)}"`;
-const qLiteral = (v: string) => `'${String(v).replace(/'/g, `''`)}'`;
+export function tablespaceBodyDdl(): string {
+    return `
+WITH ts AS (
+  SELECT
+      t.oid,
+      t.spcname,
+      pg_get_userbyid(t.spcowner) AS owner_name,
+      pg_tablespace_location(t.oid) AS location,
+      t.spcoptions,
+      (t.spcname IN ('pg_default', 'pg_global')) AS is_system
+  FROM pg_tablespace t
+  WHERE t.spcname = $1
+)
+SELECT
+  CASE
+    WHEN is_system THEN
+      '-- Tablespace: ' || quote_ident(spcname) || E'\\n' ||
+      '-- System tablespace (cannot be created/dropped manually).' || E'\\n' ||
+      '-- Owner: ' || quote_ident(owner_name)
+    ELSE
+      '-- DROP TABLESPACE IF EXISTS ' || quote_ident(spcname) || E';\\n' ||
+      'CREATE TABLESPACE ' || quote_ident(spcname) ||
+      ' OWNER ' || quote_ident(owner_name) ||
+      ' LOCATION ' || quote_literal(COALESCE(location, '')) ||
+      CASE
+        WHEN spcoptions IS NOT NULL AND array_length(spcoptions, 1) > 0
+          THEN ' WITH (' || array_to_string(spcoptions, ', ') || ')'
+        ELSE ''
+      END ||
+      ';'
+  END AS source
+FROM ts;
+`;
+}
 
-function optionsToSql(options: string[] | null | undefined): string {
-    if (!options?.length) return "";
-    return ` WITH (${options.join(", ")})`;
+export function tablespaceCommentDdl(): string {
+    return `
+WITH ts AS (
+  SELECT
+      t.oid,
+      t.spcname
+  FROM pg_tablespace t
+  WHERE t.spcname = $1
+)
+SELECT
+  format(
+    'COMMENT ON TABLESPACE %I IS %L;',
+    ts.spcname,
+    shobj_description(ts.oid, 'pg_tablespace')
+  ) AS source
+FROM ts
+WHERE shobj_description(ts.oid, 'pg_tablespace') IS NOT NULL;
+`;
 }
 
