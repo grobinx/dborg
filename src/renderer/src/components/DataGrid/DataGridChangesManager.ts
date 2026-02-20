@@ -35,6 +35,16 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         return changed;
     }
 
+    private filledFields(record: Partial<T>): Partial<T> {
+        const filled: Partial<T> = {};
+        for (const key in record) {
+            if (record[key] !== undefined) {
+                filled[key] = record[key];
+            }
+        }
+        return filled;
+    }
+
     /**
      * Znajduje istniejący wpis w changes dla danego rekordu
      */
@@ -89,21 +99,12 @@ export class DataGridChangesManager<T extends Record<string, any>> {
      */
     addRecord(record: Partial<T>, options?: DataGridChangeRowOptions): boolean {
         const uniqueId = this.options.getUniqueId(record as T);
-        const existing = this.changes.find(c => c.uniqueId === uniqueId);
-
-        if (existing) {
-            // Aktualizuj istniejący wpis
-            existing.data = record;
-            existing.userData = options?.userData;
-            existing.icon = options?.icon;
-            return true;
-        }
 
         // Dodaj nowy wpis
         this.changes.push({
             uniqueId,
             type: "add",
-            data: record,
+            data: this.filledFields(record),
             userData: options?.userData,
             icon: options?.icon,
         });

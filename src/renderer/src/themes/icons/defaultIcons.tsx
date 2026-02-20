@@ -199,7 +199,7 @@ const icons = (palette: Palette): ThemeOptions => {
             Run: (props) => <IconWrapper {...props} className="run"><MuiIcons.PlayArrow fontSize="inherit" color={"success"} /></IconWrapper>,
             Tablespace: (props) => <IconWrapper {...props} className="tablespace"><BsIcons.HddNetwork fontSize="inherit" /></IconWrapper>,
             Aggregates: (props) => <IconWrapper {...props} className="aggregates"><Aggregates fontSize="inherit" /></IconWrapper>,
-            Rollback: (props) => <IconWrapper {...props} className="rollback"><MuiIcons.UndoOutlined fontSize="inherit" color="error" /></IconWrapper>,
+            Rollback: (props) => <IconWrapper {...props} className="rollback"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
         }
     }
 }

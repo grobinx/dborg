@@ -850,7 +850,7 @@ export const DataGrid = <T extends object>({
         return resultSet;
     }, [
         data,
-        changes, hasChanges,
+        changes, changes?.length, hasChanges,
         uniqueField,
         searchState.current, searchState.current?.text,
         columnsState.stateChanged,

@@ -165,6 +165,76 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
         return value;
     };
 
+    function generateChangesScript(): string {
+        const allChanges = changes.getChanges();
+
+        if (allChanges.length === 0) {
+            return "-- No changes";
+        }
+
+        const scripts: string[] = [];
+        scripts.push("-- Schema Changes Script");
+        scripts.push("-- Generated automatically from pending changes");
+        scripts.push("");
+
+        for (const change of allChanges) {
+            const original = allRows.find(r => r.id === change.uniqueId);
+            if (change.type === 'add') {
+                // CREATE SCHEMA
+                const schemaName = change.data.schema_name;
+                const owner = change.data.schema_owner;
+                const comment = change.data.comment;
+
+                scripts.push(`-- Create new schema: ${schemaName}`);
+                scripts.push(`CREATE SCHEMA ${schemaName} AUTHORIZATION ${owner};`);
+
+                if (comment) {
+                    const escapedComment = comment.replace(/'/g, "''");
+                    scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
+                }
+                scripts.push("");
+            } else if (change.type === 'update' && original) {
+                // ALTER SCHEMA
+                const oldName = original.schema_name;
+                const newName = change.data.schema_name;
+                const newOwner = change.data.schema_owner;
+                const newComment = change.data.comment;
+
+                scripts.push(`-- Update schema: ${oldName}`);
+
+                if (newName && newName !== oldName) {
+                    scripts.push(`ALTER SCHEMA ${oldName} RENAME TO ${newName};`);
+                }
+
+                if (newOwner && newOwner !== original.schema_owner) {
+                    const targetName = newName || oldName;
+                    scripts.push(`ALTER SCHEMA ${targetName} OWNER TO ${newOwner};`);
+                }
+
+                if (newComment !== undefined) {
+                    const targetName = newName || oldName;
+                    if (newComment) {
+                        const escapedComment = newComment.replace(/'/g, "''");
+                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS '${escapedComment}';`);
+                    } else {
+                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS NULL;`);
+                    }
+                }
+                scripts.push("");
+            } else if (change.type === 'remove' && original) {
+                // DROP SCHEMA
+                const schemaName = original.schema_name;
+                const cascade = change.userData?.cascade;
+
+                scripts.push(`-- Drop schema: ${schemaName}`);
+                scripts.push(`DROP SCHEMA ${schemaName}${cascade ? ' CASCADE' : ''};`);
+                scripts.push("");
+            }
+        }
+
+        return scripts.join('\n');
+    }
+
     return {
         id: cid("schemas-editors-tab"),
         type: "tab",
@@ -251,7 +321,9 @@ where n.nspname not like 'pg_toast%'
                             if (selectedRow?.schema_name !== row?.schema_name) {
                                 selectedRow = row ?? null;
                                 selectedRowDetails = row ?? null;
-                                slotContext.refresh(cid("schemas-editor"));
+                                if (changes.getChanges().length === 0) {
+                                    slotContext.refresh(cid("schemas-editor"));
+                                }
                                 slotContext.refresh(cid("schemas-details-grid"));
                                 slotContext.refresh(cid("schemas-details-acl-grid"));
                                 slotContext.refresh(cid("schemas-toolbar"));
@@ -347,9 +419,7 @@ where n.nspname not like 'pg_toast%'
                                     const result = await slotContext.openDialog(
                                         cid("schema-create-dialog"),
                                         {
-                                            schema_name: "",
-                                            schema_owner: currentUser ?? "",
-                                            schema_comment: "",
+                                            schema_owner: currentUser,
                                         }
                                     );
                                     if (result) {
@@ -357,9 +427,11 @@ where n.nspname not like 'pg_toast%'
                                             id: Date.now() * -1, // Temporary ID, should be replaced with real ID after saving to DB
                                             schema_name: result.schema_name,
                                             schema_owner: result.schema_owner,
-                                            schema_comment: result.schema_comment,
+                                            comment: !!result.schema_comment ? result.schema_comment : undefined,
                                         })) {
                                             slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-editor"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
                                         }
                                     }
                                 },
@@ -389,6 +461,8 @@ where n.nspname not like 'pg_toast%'
                                                 schema_owner: result.schema_owner,
                                             })) {
                                                 slotContext.refresh(cid("schemas-grid"), "only");
+                                                slotContext.refresh(cid("schemas-editor"));
+                                                slotContext.refresh(cid("schemas-toolbar"));
                                             }
                                         }
                                     }
@@ -436,6 +510,8 @@ where n.nspname not like 'pg_toast%'
                                                 comment: result.schema_comment,
                                             })) {
                                                 slotContext.refresh(cid("schemas-grid"), "only");
+                                                slotContext.refresh(cid("schemas-editor"));
+                                                slotContext.refresh(cid("schemas-toolbar"));
                                             }
                                         }
                                     }
@@ -453,6 +529,25 @@ where n.nspname not like 'pg_toast%'
                                     if (selectedRow) {
                                         changes.cancelChanges(selectedRow);
                                         slotContext.refresh(cid("schemas-grid"), "only");
+                                        slotContext.refresh(cid("schemas-editor"));
+                                        slotContext.refresh(cid("schemas-toolbar"));
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-rollback-all",
+                                label: t("rollback-all-schema-changes", "Rollback All Schema Changes"),
+                                icon: "Reset",
+                                keySequence: ["Ctrl+Shift+Z"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 6,
+                                disabled: () => !selectedRow || changes.getChanges().length === 0,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        changes.clearChanges();
+                                        slotContext.refresh(cid("schemas-grid"), "only");
+                                        slotContext.refresh(cid("schemas-editor"));
+                                        slotContext.refresh(cid("schemas-toolbar"));
                                     }
                                 },
                             },
@@ -470,9 +565,15 @@ where n.nspname not like 'pg_toast%'
                         id: cid("schemas-editor"),
                         type: "editor",
                         lineNumbers: false,
-                        readOnly: true,
+                        readOnly: false,
                         miniMap: false,
                         content: async () => {
+                            const allChanges = changes.getChanges();
+
+                            if (allChanges.length > 0) {
+                                return generateChangesScript();
+                            }
+
                             if (!selectedRow) return "-- No schema selected";
                             return schemaDdl(session, selectedRow.schema_name);
                         },
@@ -642,6 +743,8 @@ where n.nspname not like 'pg_toast%'
                             changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
                         }
                         slotContext.refresh(cid("schemas-grid"), "only");
+                        slotContext.refresh(cid("schemas-editor"));
+                        slotContext.refresh(cid("schemas-toolbar"));
                     },
                 }
             ],
@@ -652,7 +755,7 @@ where n.nspname not like 'pg_toast%'
                 type: "toolbar",
                 tools: [
                     ["schema-create", "schema-edit", "schema-comment"],
-                    ["schema-rollback"],
+                    ["schema-rollback", "schema-rollback-all"],
                     ["schema-drop"],
                     ["schema-stats-refresh", "schema-stats-refresh-all"]
                 ],
