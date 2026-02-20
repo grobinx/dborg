@@ -55,7 +55,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }), [theme, refreshSlot, openDialog, addToast, confirm]);
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
-    const [changes, setChanges] = React.useState<DataGridChangeRow<Record<string, any>>[] | undefined>(undefined);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
     const [pivotColumns, setPivotColumns] = React.useState<ColumnDefinition[] | undefined>(undefined);
     const [loading, setLoading] = React.useState(false);
@@ -143,8 +142,6 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setPivotColumns(undefined);
                     setPivot(false);
                 }
-                const changesResult = resolveRecordsChangeFactory(slot.changes, runtimeContext);
-                setChanges(changesResult);
             } catch (error) {
                 addToast("error", t("refresh-failed", "Refresh failed"), { reason: error, source: "GridSlot", });
             } finally {
@@ -250,7 +247,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 ) : (<DataGrid
                     columns={columns}
                     data={rows}
-                    changes={changes}
+                    changes={resolveRecordsChangeFactory(slot.changes, runtimeContext)}
                     loading={loading ? t("loading---", "Loading...") : undefined}
                     onRowSelect={handleRowSelect}
                     ref={dataGridRef}

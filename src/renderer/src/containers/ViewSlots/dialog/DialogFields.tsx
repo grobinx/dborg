@@ -13,11 +13,14 @@ import {
     resolveSelectOptionsFactory,
     resolveStringFactory,
     IDialogEditorField,
-    IDialogTextareaField
+    IDialogTextareaField,
+    IDialogStatic,
+    resolveCSSPropertiesFactory
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { EditorField } from "@renderer/components/inputs/EditorField";
 import { TextareaField } from "@renderer/components/inputs/TextareaField";
+import { Typography } from "@mui/material";
 
 export const DialogTextField: React.FC<{
     field: IDialogTextField;
@@ -330,5 +333,25 @@ export const DialogEditorField: React.FC<{
                 }}
             />
         </InputDecorator>
+    );
+};
+
+export const DialogStatic: React.FC<{
+    item: IDialogStatic;
+    structure: Record<string, any>;
+    onValidityChange: () => void;
+}> = (props) => {
+    const { item, structure, onValidityChange } = props;
+    const text = resolveStringFactory(item.text, structure);
+    const style = resolveCSSPropertiesFactory(item.style, structure);
+
+    React.useEffect(() => {
+        onValidityChange();
+    }, [text, style, onValidityChange]);
+
+    return (
+        <Typography component="div" variant="body1" style={style}>
+            {text}
+        </Typography>
     );
 };

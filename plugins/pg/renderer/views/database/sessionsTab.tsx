@@ -316,7 +316,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                             {
                                 id: "sessions-cancel-query-action",
                                 label: t("cancel-query", "Cancel Query"),
-                                icon: <slotContext.theme.icons.CancleQuery color="warning" />,
+                                icon: <slotContext.theme.icons.CancelQuery color="warning" />,
                                 contextMenuGroupId: "session-actions",
                                 contextMenuOrder: 1,
                                 keySequence: ["Ctrl+Q"],

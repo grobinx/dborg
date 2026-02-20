@@ -53,8 +53,8 @@ export interface SlotRuntimeContext {
     showConfirmDialog(options: {
         title: string,
         message: string,
-        confirmLabel: string,
-        cancelLabel: string,
+        confirmLabel?: string,
+        cancelLabel?: string,
         severity: "info" | "success" | "warning" | "error",
     }) : Promise<boolean>;
 }
@@ -1136,7 +1136,20 @@ export type DialogLayoutItemKind =
         | IDialogRow
         | IDialogColumn
         | IDialogTabs
+        | IDialogStatic
     ) & IDialogGridItem;
+
+export interface IDialogStatic {
+    type: "static";
+    /**
+     * Zawartość tekstu (tekst lub funkcja zwracająca tekst).
+     */
+    text: StringFactory<Record<string, any>>;
+    /**
+     * Styl tekstu (opcjonalnie).
+     */
+    style?: CSSPropertiesFactory<Record<string, any>>;
+}
 
 export interface IDialogColumn {
     /**
@@ -1362,7 +1375,7 @@ export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: Dialog
 export function resolveDialogConformLabelsFactory<T = SlotRuntimeContext>(factory: DialogConformLabelsFactory<T> | undefined, context: T): DialogConformLabel[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveCSSPropertiesFactory(factory: CSSPropertiesFactory | undefined, context: SlotRuntimeContext): React.CSSProperties | undefined {
+export function resolveCSSPropertiesFactory<T = SlotRuntimeContext>(factory: CSSPropertiesFactory<T> | undefined, context: T): React.CSSProperties | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 
@@ -1463,4 +1476,8 @@ export function isDialogTab(item: any): item is IDialogTab {
         "label" in item &&
         "items" in item
     );
+}
+
+export function isDialogStatic(item: any): item is IDialogStatic {
+    return item?.type === "static";
 }

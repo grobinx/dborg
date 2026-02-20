@@ -2,12 +2,15 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
-import { schemaCommentDdl, schemaBodyDdl, schemaPrivilegesDdl, schemaDdl } from "../../../common/ddls/schema";
+import { schemaDdl } from "../../../common/ddls/schema";
+import { DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
+import { useDataGridChanges } from "@renderer/components/DataGrid/useDataGridChanges";
+import { DataGridChangesManager } from "@renderer/components/DataGrid/DataGridChangesManager";
 
 export interface SchemaRecord {
+    id: number;
     schema_name: string;
     schema_owner: string;
     schema_size: string;
@@ -74,6 +77,25 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
         return roleNameList;
     };
     loadRoleNameList();
+
+    let currentUser: string | null = null;
+    const loadCurrentUser = async () => {
+        if (currentUser === null) {
+            try {
+                const { rows } = await session.query<{ current_user: string }>(
+                    `select current_user`);
+                currentUser = rows[0]?.current_user ?? null;
+            } catch (e) {
+                currentUser = null;
+            }
+        }
+        return currentUser;
+    };
+    loadCurrentUser();
+
+    const changes = new DataGridChangesManager<SchemaRecord>({
+        getUniqueId: (record) => record.id,
+    });
 
     async function getSchemaStats(schemaName: string): Promise<SchemaStatsRecord> {
         const sql = `
@@ -153,7 +175,7 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
             label: t("database-schemas", "Schemas"),
             icon: "SelectDatabaseSchema",
         },
-        content: {
+        content: (slotContext) => ({
             id: cid("schemas-tab-content"),
             type: "tabcontent",
             content: {
@@ -168,14 +190,14 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
                     direction: "vertical",
                     autoSaveId: `schemas-editor-splitter-${session.profile.sch_id}`,
                     secondSize: 25,
-                    first: (slotContext) =>
-                    ({
+                    first: {
                         id: cid("schemas-grid"),
                         type: "grid",
-                        uniqueField: "schema_name",
+                        uniqueField: "id",
                         rows: async () => {
                             const sql = `
 select
+    n.oid as id,
     n.nspname as schema_name,
     pg_get_userbyid(n.nspowner) as schema_owner,
     null::text as schema_size,
@@ -235,6 +257,7 @@ where n.nspname not like 'pg_toast%'
                                 slotContext.refresh(cid("schemas-toolbar"));
                             }
                         },
+                        changes: () => changes.getChanges(),
                         actions: [
                             {
                                 id: "schema-stats-refresh",
@@ -314,22 +337,122 @@ where n.nspname not like 'pg_toast%'
                                 }
                             },
                             {
-                                id: "schema-edit",
-                                label: t("edit-schema", "Edit Schema"),
-                                icon: "EditRow",
+                                id: "schema-create",
+                                label: t("create-schema", "Create Schema"),
+                                icon: "AddRow",
                                 keySequence: ["F2"],
                                 contextMenuGroupId: "schema-operations",
                                 contextMenuOrder: 1,
+                                run: async () => {
+                                    const result = await slotContext.openDialog(
+                                        cid("schema-create-dialog"),
+                                        {
+                                            schema_name: "",
+                                            schema_owner: currentUser ?? "",
+                                            schema_comment: "",
+                                        }
+                                    );
+                                    if (result) {
+                                        if (changes.addRecord({
+                                            id: Date.now() * -1, // Temporary ID, should be replaced with real ID after saving to DB
+                                            schema_name: result.schema_name,
+                                            schema_owner: result.schema_owner,
+                                            schema_comment: result.schema_comment,
+                                        })) {
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-edit",
+                                label: t("edit-schema", "Edit Schema"),
+                                icon: "EditRow",
+                                keySequence: ["F4"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 2,
                                 disabled: () => selectedRow === null || selectedRow.is_system,
                                 run: async () => {
                                     if (selectedRow) {
-                                        await slotContext.openDialog(
+                                        const updated = changes.findChange(selectedRow);
+
+                                        const result = await slotContext.openDialog(
                                             cid("schema-edit-dialog"),
                                             {
-                                                schema_name: selectedRow.schema_name,
-                                                schema_owner: selectedRow.schema_owner,
+                                                schema_name: updated?.data.schema_name ?? selectedRow.schema_name,
+                                                schema_owner: updated?.data.schema_owner ?? selectedRow.schema_owner,
                                             }
                                         );
+                                        if (result) {
+                                            if (changes.updateRecord(selectedRow, {
+                                                schema_name: result.schema_name,
+                                                schema_owner: result.schema_owner,
+                                            })) {
+                                                slotContext.refresh(cid("schemas-grid"), "only");
+                                            }
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-drop",
+                                label: t("drop-schema", "Drop Schema"),
+                                icon: "RemoveRow",
+                                keySequence: ["Ctrl+Delete"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 4,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        const result = await slotContext.openDialog(
+                                            cid("schema-drop-dialog"),
+                                            {
+                                                schema_name: selectedRow.schema_name,
+                                            }
+                                        );
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-comment",
+                                label: t("change-schema-comment", "Change Schema Comment"),
+                                icon: "Comment",
+                                keySequence: ["F3"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 3,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        const updated = changes.findChange(selectedRow);
+
+                                        const result = await slotContext.openDialog(
+                                            cid("schema-comment-dialog"),
+                                            {
+                                                schema_comment: updated?.data.comment ?? selectedRow.comment,
+                                            }
+                                        );
+                                        if (result) {
+                                            if (changes.updateRecord(selectedRow, {
+                                                comment: result.schema_comment,
+                                            })) {
+                                                slotContext.refresh(cid("schemas-grid"), "only");
+                                            }
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-rollback",
+                                label: t("rollback-schema-changes", "Rollback Schema Changes"),
+                                icon: "Rollback",
+                                keySequence: ["Ctrl+Z"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 5,
+                                disabled: () => !selectedRow || changes.findChange(selectedRow) === undefined,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        changes.cancelChanges(selectedRow);
+                                        slotContext.refresh(cid("schemas-grid"), "only");
                                     }
                                 },
                             },
@@ -342,7 +465,7 @@ where n.nspname not like 'pg_toast%'
                             display: () => loadingStats,
                             value: () => loadingProgress,
                         },
-                    } as IGridSlot),
+                    } as IGridSlot,
                     second: {
                         id: cid("schemas-editor"),
                         type: "editor",
@@ -417,6 +540,44 @@ where n.nspname not like 'pg_toast%'
             },
             dialogs: [
                 {
+                    id: cid("schema-create-dialog"),
+                    type: "dialog",
+                    title: t("create-schema", "Create Schema"),
+                    items: [
+                        {
+                            type: "text",
+                            key: "schema_name",
+                            label: t("schema-name", "Schema Name"),
+                            required: true,
+                        },
+                        {
+                            type: "select",
+                            key: "schema_owner",
+                            label: t("schema-owner", "Owner"),
+                            required: true,
+                            options: () => {
+                                return roleNameList!.map(role => ({ label: role, value: role }));
+                            }
+                        },
+                        {
+                            type: "textarea",
+                            key: "schema_comment",
+                            label: t("schema-comment", "Schema Comment"),
+                        },
+                    ],
+                    onValidate: (values: Record<string, any>) => {
+                        const newName = (values.schema_name || "").trim();
+
+                        if (newName && newName !== selectedRow?.schema_name) {
+                            if (allRows.some(row => row.schema_name === newName)) {
+                                return t("schema-name-already-exists", "Schema with this name already exists");
+                            }
+                        }
+
+                        return undefined;
+                    },
+                },
+                {
                     id: cid("schema-edit-dialog"),
                     type: "dialog",
                     title: t("edit-schema", "Edit Schema"),
@@ -446,15 +607,53 @@ where n.nspname not like 'pg_toast%'
 
                         return undefined;
                     },
+                },
+                {
+                    id: cid("schema-comment-dialog"),
+                    type: "dialog",
+                    title: t("edit-comment", "Edit Comment"),
+                    items: [
+                        {
+                            type: "textarea",
+                            key: "schema_comment",
+                            label: t("change-schema-comment", "Change Schema Comment"),
+                        },
+                    ],
+                },
+                {
+                    id: cid("schema-drop-dialog"),
+                    type: "dialog",
+                    title: t("drop-schema", "Drop Schema"),
+                    items: [
+                        {
+                            type: "static",
+                            text: (values) => t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: values.schema_name }),
+                        },
+                    ],
+                    labels: [
+                        { id: "cancel", label: t("cancel", "Cancel"), color: "secondary" },
+                        { id: "cascade", label: t("drop-cascade", "Cascade"), color: "error" },
+                        { id: "drop", label: t("drop", "Drop"), color: "error" },
+                    ],
+                    onConfirm: (_, confirmId) => {
+                        if (confirmId === "drop") {
+                            changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
+                        } else if (confirmId === "cascade") {
+                            changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
+                        }
+                        slotContext.refresh(cid("schemas-grid"), "only");
+                    },
                 }
             ],
-        },
+        }),
         toolBar: [
             {
                 id: cid("schemas-toolbar"),
                 type: "toolbar",
                 tools: [
-                    ["schema-edit"],
+                    ["schema-create", "schema-edit", "schema-comment"],
+                    ["schema-rollback"],
+                    ["schema-drop"],
                     ["schema-stats-refresh", "schema-stats-refresh-all"]
                 ],
                 actionSlotId: cid("schemas-grid"),

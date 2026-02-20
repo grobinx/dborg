@@ -24,6 +24,7 @@ import useRowSelection from "./useRowSelection";
 import { highlightText, searchArray } from "@renderer/hooks/useSearch";
 import useColumnSelection from "./useColumnSelection";
 import { LoadingOverlayMode } from "../useful/spinners/Spinners";
+import { resolveIcon } from "@renderer/themes/icons";
 
 export type DataGridMode = "defined" | "data";
 
@@ -33,6 +34,14 @@ interface DataGridRowBase<T> {
     uniqueId: any;
     type: DataGridRowType;
     data: T;
+    /**
+     * Dodatkowe dane związane z rekordem, które mogą być użyte w callbackach, np. w onRowSelect. Nie są używane bezpośrednio przez DataGrid, więc można tam przechowywać dowolne dane pomocnicze.
+     */
+    userData?: any;
+    /**
+     * Ikona do wyświetlenia obok rekordu
+     */
+    icon?: React.ReactNode;
 }
 
 export interface DataGridRow<T> extends DataGridRowBase<T> {
@@ -596,7 +605,7 @@ export const DataGrid = <T extends object>({
     const [pivot, setPivot] = useState(initialPivot);
     const prevUniqueValueRef = useRef<any>(null);
 
-    const hasChanges = !!changes?.length;
+    const hasChanges = changes && changes.length > 0;
 
     const onSaveColumnsState = () => {
         return {
@@ -638,7 +647,7 @@ export const DataGrid = <T extends object>({
         const map = new Map<any, DataGridRow<T>>();
         changes.forEach((change) => map.set(change.uniqueId, change));
         return map;
-    }, [changes, uniqueField]);
+    }, [hasChanges, changes, changes?.length, uniqueField]);
 
     const { data, columns, pivotMap } = useMemo<{
         data: DataGridRow<T>[],
@@ -841,7 +850,7 @@ export const DataGrid = <T extends object>({
         return resultSet;
     }, [
         data,
-        changes,
+        changes, hasChanges,
         uniqueField,
         searchState.current, searchState.current?.text,
         columnsState.stateChanged,
@@ -1045,7 +1054,7 @@ export const DataGrid = <T extends object>({
         } else {
             setChangeRowColumnWidth(0);
         }
-    }, [changes, uniqueField]);
+    }, [hasChanges, uniqueField]);
 
     const dataGridActionContext: DataGridActionContext<T> = {
         focus: () => {
@@ -1409,7 +1418,7 @@ export const DataGrid = <T extends object>({
             actionManager.current.registerAction(actions.SearchReset());
             actionManager.current.registerAction(actions.AdjustWidthToData());
             actionManager.current.registerAction(actions.SwitchColumnSort());
-            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn(!settingRowNumberColumn));
+            actionManager.current.registerAction(actions.ToggleShowRowNumberColumn());
             actionManager.current.registerAction(actions.ResetColumnsLayout());
             actionManager.current.registerAction(actions.ToggleShowHiddenColumns());
             actionManager.current.registerAction(actions.ToggleHideColumn());
@@ -1915,9 +1924,9 @@ export const DataGrid = <T extends object>({
                                             top: 0,
                                         }}
                                     >
-                                        {changeRecord?.type === "add" && <theme.icons.AddRow color="success" />}
-                                        {changeRecord?.type === "update" && <theme.icons.EditRow color="warning" />}
-                                        {changeRecord?.type === "remove" && <theme.icons.RemoveRow color="error" />}
+                                        {changeRecord?.type === "add" && (resolveIcon(theme, changeRecord.icon) ?? <theme.icons.AddRow />)}
+                                        {changeRecord?.type === "update" && (resolveIcon(theme, changeRecord.icon) ?? <theme.icons.EditRow />)}
+                                        {changeRecord?.type === "remove" && (resolveIcon(theme, changeRecord.icon) ?? <theme.icons.RemoveRow />)}
                                     </StyledCell>
                                 )}
                                 {hasKeys ?

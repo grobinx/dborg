@@ -251,13 +251,13 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                 formatter: (value: CleanupChoice | undefined, _row) => {
                                                     if (value?.action === "drop_restrict") {
                                                         return <Stack direction="row" gap={4}>
-                                                            <slotContext.theme.icons.DropRestrict color="warning" />
+                                                            <slotContext.theme.icons.DropRestrict />
                                                             {t("drop", "Drop")}
                                                         </Stack>;
                                                     }
                                                     else if (value?.action === "drop_cascade") {
                                                         return <Stack direction="row" gap={4}>
-                                                            <slotContext.theme.icons.DropCascade color="error" />
+                                                            <slotContext.theme.icons.DropCascade />
                                                             {t("drop-cascade", "Drop Cascade")}
                                                         </Stack>;
                                                     } else if (value?.action === "reassign") {
@@ -292,7 +292,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             {
                                                 id: "role-cleanup-owned-drop-restrict-action",
                                                 label: t("drop-object", "Drop Object"),
-                                                icon: <slotContext.theme.icons.DropRestrict color="warning" />,
+                                                icon: <slotContext.theme.icons.DropRestrict />,
                                                 keySequence: ["Ctrl+D"],
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 1,
@@ -317,7 +317,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                             {
                                                 id: "role-cleanup-owned-drop-cascade-action",
                                                 label: t("drop-object-cascade", "Drop Object Cascade"),
-                                                icon: <slotContext.theme.icons.DropCascade color="error" />,
+                                                icon: <slotContext.theme.icons.DropCascade />,
                                                 keySequence: ["Ctrl+Shift+D"],
                                                 contextMenuGroupId: "cleanup-actions",
                                                 contextMenuOrder: 2,

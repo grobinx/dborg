@@ -3,7 +3,7 @@ import i18next, { TFunction } from "i18next";
 import { DataGridActionContext } from "../DataGridTypes";
 
 
-export const ToggleShowRowNumberColumn = (contextMenu: boolean): Action<DataGridActionContext<any>> => {
+export const ToggleShowRowNumberColumn = (): Action<DataGridActionContext<any>> => {
     const t = i18next.t.bind(i18next);
     const id = "dataGrid.actions.toggleShowRowNumberColumn";
 
@@ -11,8 +11,6 @@ export const ToggleShowRowNumberColumn = (contextMenu: boolean): Action<DataGrid
         id: id,
         label: t(id, "Show/Hide row number column"),
         keySequence: ["Ctrl+K", "R", "N"],
-        contextMenuGroupId: contextMenu ? "layout" : undefined,
-        contextMenuOrder: contextMenu ? 2 : undefined,
         run: (context) => {
             context.setShowRowNumberColumn(!context.isShowRowNumberColumn());
         },

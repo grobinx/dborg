@@ -11,8 +11,9 @@ import {
     isDialogTabs,
     isDialogEditorField,
     isDialogTextareaField,
+    isDialogStatic,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
-import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField, DialogTextareaField } from "./DialogFields";
+import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField, DialogTextareaField, DialogStatic } from "./DialogFields";
 import { DialogRow } from "./DialogLayout";
 import { DialogColumn } from "./DialogLayout";
 import { DialogTabs } from "./DialogTabs";
@@ -120,6 +121,10 @@ export const DialogLayoutItem: React.FC<{
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
         />;
+    }
+
+    if (isDialogStatic(item)) {
+        return <DialogStatic item={item} structure={structure} onValidityChange={onValidityChange} />;
     }
 
     return null;

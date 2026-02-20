@@ -45,11 +45,11 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
         }
     }, [(value ?? "").length, decorator, maxLength]);
 
-    const handleChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+    const handleChange = (value: string) => {
         if (onChange) {
-            onChange(e.currentTarget.value);
+            onChange(value);
         } else {
-            setUncontrolledValue(e.currentTarget.value);
+            setUncontrolledValue(value);
         }
     };
 
@@ -62,7 +62,6 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
                 maxLength,
                 minLength,
                 rows,
-                onChange: handleChange,
                 style: { ...(inputProps?.style || {}), resize: 'none' },
             } as React.TextareaHTMLAttributes<HTMLTextAreaElement>}
             validations={[
@@ -71,6 +70,7 @@ export const TextareaField: React.FC<TextareaFieldProps> = (props) => {
                 (value: any) => validateMinRows(value, minRows),
                 (value: any) => validateMaxRows(value, maxRows),
             ]}
+            onChange={handleChange}
             {...other}
         />
     )

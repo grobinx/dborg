@@ -11,8 +11,6 @@ export const ToggleHideColumn = (): Action<DataGridActionContext<any>> => {
         keySequence: ["Ctrl+H"],
         label: t(id, "Toggle column visibility"),
         icon: "Visibility",
-        contextMenuGroupId: "layout",
-        contextMenuOrder: 3,
         run: (context) => {
             context.toggleHideColumn();
         },

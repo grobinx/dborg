@@ -22,6 +22,9 @@ export const ToolBarSlots: React.FC<ToolBarsProps> = ({
     ref,
 }) => {
     if (Array.isArray(slot)) {
+        if (slot.length === 1) {
+            return <ToolBarSlot slot={slot[0]} ref={ref} />;
+        }
         return (
             <TabPanelButtons>
                 {slot.map((s, index) => (

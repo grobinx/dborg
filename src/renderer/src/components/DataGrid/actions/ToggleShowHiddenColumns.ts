@@ -10,8 +10,6 @@ export const ToggleShowHiddenColumns = (): Action<DataGridActionContext<any>> =>
         id: id,
         keySequence: ["Alt+Shift+H"],
         label: t(id, "Show/hide hidden columns"),
-        contextMenuGroupId: "layout",
-        contextMenuOrder: 4,
         run: (context) => {
             context.toggleShowHiddenColumns();
         },

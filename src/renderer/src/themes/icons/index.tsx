@@ -210,7 +210,7 @@ export interface ThemeIcons {
     Reload: IconWrapperFC;
     ReloadAll: IconWrapperFC;
     ReloadStop: IconWrapperFC;
-    CancleQuery: IconWrapperFC;
+    CancelQuery: IconWrapperFC;
     KillSession: IconWrapperFC;
     Vacuum: IconWrapperFC;
     Analyze: IconWrapperFC;
@@ -226,6 +226,7 @@ export interface ThemeIcons {
     Run: IconWrapperFC;
     Tablespace: IconWrapperFC;
     Aggregates: IconWrapperFC;
+    Rollback: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -394,7 +395,8 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     Hexagon: ["hexagon", "shape", "polygon"],
     Image: ["image", "picture", "photo", "graphic"],
     Run: ["run", "execute", "start", "play"],
-    CancleQuery: ["cancel", "query", "stop", "abort"],
+    CancelQuery: ["cancel", "query", "stop", "abort"],
     Tablespace: ["tablespace", "space", "storage", "database"],
     Aggregates: ["aggregates", "aggregate", "functions", "group", "by"],
+    Rollback: ["rollback", "undo", "transaction", "revert", "cancel"],
 };
