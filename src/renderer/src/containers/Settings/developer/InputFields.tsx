@@ -1,4 +1,4 @@
-import { Chip, MenuItem, Stack, useTheme } from "@mui/material";
+import { Stack, useTheme } from "@mui/material";
 import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
 import { EmailField } from "@renderer/components/inputs/EmailField";
 import { NumberField } from "@renderer/components/inputs/NumberField";
@@ -26,6 +26,7 @@ import { ListField } from "@renderer/components/inputs/ListField";
 import { PropertyField } from "@renderer/components/inputs/PropertyField";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { EditorField } from "@renderer/components/inputs/EditorField";
+import { GridField } from "@renderer/components/inputs/GridField";
 
 export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => {
     const theme = useTheme(); // Pobierz motyw, aby uzyskać dostęp do ikon
@@ -84,6 +85,11 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
         small: { color: "red" },
         medium: { fruit: "kaktus", vegetable: "pulpet", dessert: "banan" },
         large: { color: "blue" },
+    });
+    const [gridValues, setGridValues] = React.useState<Record<string, Record<string, any>[] | undefined>>({
+        small: [{ name: "red", value: "#ff0000", type: "color" }],
+        medium: [{ name: "kaktus", value: "pulpet", type: "fruit" }, { name: "vegetable", value: "pulpet", type: "vegetable" }, { name: "dessert", value: "banan", type: "dessert" }],
+        large: [{ name: "blue", value: "#0000ff", type: "color" }],
     });
     const [selectValues, setSelectValues] = React.useState<Record<string, string | undefined>>({
         small: "red",
@@ -194,6 +200,12 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
     };
     const handleValueObjectChange = (size: string, value: Record<string, any> | undefined) => {
         setObjectValues((prev) => ({
+            ...prev,
+            [size]: value, // Aktualizuj wartość dla danego rozmiaru
+        }));
+    };
+    const handleValueGridChange = (size: string, value: Record<string, any>[] | undefined) => {
+        setGridValues((prev) => ({
             ...prev,
             [size]: value, // Aktualizuj wartość dla danego rozmiaru
         }));
@@ -563,6 +575,36 @@ export const InputFieldsContent: React.FC<TabPanelContentOwnProps> = (props) => 
                                 />
                             </InputDecorator>
                         ), [size, objectValues[size]])}
+                    </Stack>
+                ))}
+            </Stack>
+            <Stack key="gridFields" direction="row" width="100%" gap={8}>
+                {Sizes.map((size) => (
+                    <Stack key={size} direction={"column"} width="100%">
+                        GridField, size: {size}
+                        {React.useMemo(() => (
+                            <InputDecorator
+                                key={size}
+                                label={"Label for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                                description={"This is Long Description for " + size.charAt(0).toUpperCase() + size.slice(1)}
+                            >
+                                <GridField
+                                    key={size}
+                                    size={size}
+                                    columns={[
+                                        { key: 'name', label: 'Name', editable: true, required: true },
+                                        { key: 'value', label: 'Value', editable: true },
+                                        { key: 'type', label: 'Type', editable: false },
+                                        { key: 'true', label: 'True', editable: true, type: 'select', options: [{ value: true, label: 'True' }, { value: false, label: 'False' }] },
+                                    ]}
+                                    value={gridValues[size]} // Pobierz wartość dla danego rozmiaru
+                                    onChange={(value) => handleValueGridChange(size, value)} // Aktualizuj wartość dla danego rozmiaru
+                                    color="error"
+                                    sx={{ maxHeight: 200 }}
+                                    maxItems={6}
+                                />
+                            </InputDecorator>
+                        ), [size, gridValues[size]])}
                     </Stack>
                 ))}
             </Stack>

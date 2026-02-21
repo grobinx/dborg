@@ -13,7 +13,7 @@ export const GeneralReset = (): Action<DataGridActionContext<any>> => {
         icon: "Reset",
         run: (context) => {
             context.setSearchText();
-            context.resetSorting();
+            // context.resetSorting();
             context.clearSummary();
             context.clearGrouping();
             context.clearFilters();
