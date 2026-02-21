@@ -15,8 +15,8 @@ import {
     isDialogEditorField,
     isDialogTabs,
     resolveDialogTabsFactory,
-    resolveDialogConformLabelsFactory,
-    DialogConformLabel,
+    resolveDialogConformButtonsFactory,
+    DialogConformButton,
     resolveBooleanFactory,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
@@ -161,11 +161,11 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
     };
 
     const title = resolveStringFactory(dialog.title, structure);
-    const resolvedLabels: (DialogConformLabel & { handle?: () => void })[] = resolveDialogConformLabelsFactory(dialog.labels, structure) ?? [];
-    let labels: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[]; 
+    const resolvedButtons: (DialogConformButton & { handle?: () => void })[] = resolveDialogConformButtonsFactory(dialog.buttons, structure) ?? [];
+    let buttons: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[]; 
 
-    if (!resolvedLabels || resolvedLabels.length === 0) {
-        labels = [{
+    if (!resolvedButtons || resolvedButtons.length === 0) {
+        buttons = [{
             id: "cancel",
             label: resolveStringFactory(dialog.cancelLabel, structure) ?? t("cancel", "Cancel"),
             color: "secondary",
@@ -179,18 +179,18 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
             handle: () => handleConfirm("ok"),
         }];
     } else {
-        labels = resolvedLabels.map(label => {
+        buttons = resolvedButtons.map(button => {
             let handle: () => void;
             let disabled: boolean | undefined;
-            const labelText = resolveStringFactory(label.label, structure)!;
-            if (label.id === "cancel") {
+            const labelText = resolveStringFactory(button.label, structure)!;
+            if (button.id === "cancel") {
                 handle = handleCancel;
                 disabled = submitting;
             } else {
-                handle = () => handleConfirm(label.id);
-                disabled = submitting || !dialogValid || resolveBooleanFactory(label.disabled, structure) === true;
+                handle = () => handleConfirm(button.id);
+                disabled = submitting || !dialogValid || resolveBooleanFactory(button.disabled, structure) === true;
             }
-            return { id: label.id, handle: handle, disabled, label: labelText, color: label.color};
+            return { id: button.id, handle: handle, disabled, label: labelText, color: button.color};
         });
     }
 
@@ -245,14 +245,14 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
                 </Stack>
             </DialogContent>
             <DialogActions>
-                {labels.map(label => (
+                {buttons.map(button => (
                     <Button
-                        key={label.id}
-                        color={label.color}
-                        onClick={label.handle}
-                        disabled={label.disabled}
+                        key={button.id}
+                        color={button.color}
+                        onClick={button.handle}
+                        disabled={button.disabled}
                     >
-                        {label.label}
+                        {button.label}
                     </Button>
                 ))}
             </DialogActions>

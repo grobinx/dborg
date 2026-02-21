@@ -87,7 +87,7 @@ export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRu
 export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runtimeContext: T) => IDialogSlot[]);
 export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
 export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
-export type DialogConformLabelsFactory<T = SlotRuntimeContext> = DialogConformLabel[] | ((runtimeContext: T) => DialogConformLabel[]);
+export type DialogConformButtonsFactory<T = SlotRuntimeContext> = DialogConformButton[] | ((runtimeContext: T) => DialogConformButton[]);
 export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
 
 export type ToolKind<T = any> =
@@ -1213,7 +1213,7 @@ export interface IDialogTabs {
 
 export type DialogSize = "small" | "medium" | "large" | "full";
 
-export interface DialogConformLabel {
+export interface DialogConformButton {
     id: string;
     label: StringFactory<Record<string, any>>;
     color?: ThemeColor;
@@ -1245,7 +1245,7 @@ export interface IDialogStandalone {
      * Etykiety przycisków dialogu (opcjonalnie).
      * Jeśli podane, zastępują domyślne etykiety confirmLabel i cancelLabel.
      */
-    labels?: DialogConformLabelsFactory<Record<string, any>>;
+    buttons?: DialogConformButtonsFactory<Record<string, any>>;
     /**
      * Funkcja wywoływana po otwarciu dialogu.
      * @param values Wartości pól dialogu. Może być zmieniona przed wyświetleniem.
@@ -1372,7 +1372,7 @@ export function resolveDialogLayoutItemsKindFactory<T = SlotRuntimeContext>(fact
 export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: DialogTabsTabsFactory<T> | undefined, context: T): IDialogTab[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveDialogConformLabelsFactory<T = SlotRuntimeContext>(factory: DialogConformLabelsFactory<T> | undefined, context: T): DialogConformLabel[] | undefined {
+export function resolveDialogConformButtonsFactory<T = SlotRuntimeContext>(factory: DialogConformButtonsFactory<T> | undefined, context: T): DialogConformButton[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveCSSPropertiesFactory<T = SlotRuntimeContext>(factory: CSSPropertiesFactory<T> | undefined, context: T): React.CSSProperties | undefined {

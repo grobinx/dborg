@@ -731,7 +731,7 @@ where n.nspname not like 'pg_toast%'
                             text: (values) => t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: values.schema_name }),
                         },
                     ],
-                    labels: [
+                    buttons: [
                         { id: "cancel", label: t("cancel", "Cancel"), color: "secondary" },
                         { id: "cascade", label: t("drop-cascade", "Cascade"), color: "error" },
                         { id: "drop", label: t("drop", "Drop"), color: "error" },
