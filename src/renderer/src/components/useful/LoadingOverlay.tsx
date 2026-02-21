@@ -106,9 +106,15 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
     useEffect(() => {
         if (mode === "small") {
-            setShow(1);
+            const smallTimer = setTimeout(() => setShow(1), delay / 10);
+            return () => {
+                clearTimeout(smallTimer);
+            };
         } else if (mode === "full") {
-            setShow(2);
+            const fullTimer = setTimeout(() => setShow(2), delay / 10);
+            return () => {
+                clearTimeout(fullTimer);
+            };
         } else {
             const smallTimer = setTimeout(() => setShow(1), delay / 10);
             const fullTimer = setTimeout(() => setShow(2), delay);
@@ -131,7 +137,6 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     }, [show, timeDelaySec, startTime]);
 
     color = color ?? theme.palette.action.active;
-
 
     const renderSpinner = (size: number) => {
         const spinnerKey = `${spinnerType}-${size}`; // Unikalny klucz dla każdego rozmiaru

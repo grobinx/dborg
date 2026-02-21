@@ -25,6 +25,7 @@ export interface SchemaRecord {
     comment: string | null;
     is_system: boolean;
     acl: SchemaAclEntry[];
+    security_labels: SchemaSecurityLabelEntry[];
     [key: string]: any;
 }
 
@@ -33,6 +34,12 @@ export interface SchemaAclEntry {
     grantee: string;
     privilege_type: string;
     is_grantable: boolean;
+    [key: string]: any;
+}
+
+export interface SchemaSecurityLabelEntry {
+    provider: string;
+    label: string;
     [key: string]: any;
 }
 
@@ -52,7 +59,6 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     const t = i18next.t.bind(i18next);
 
     let selectedRow: SchemaRecord | null = null;
-    let selectedRowDetails: SchemaRecord | null = null;
     let allRows: SchemaRecord[] = [];
     const loadingStatsRow: SchemaRecord[] = [];
     let loadingStats: boolean = false;
@@ -295,7 +301,22 @@ select
             ) a
         ),
         '[]'::json
-    ) as acl
+    ) as acl,
+    coalesce(
+        (
+            select json_agg(row_to_json(s))
+            from (
+                select
+                    provider,
+                    label
+                from pg_seclabel
+                where classoid = 'pg_namespace'::regclass
+                  and objoid = n.oid
+                order by provider
+            ) s
+        ),
+        '[]'::json
+    ) as security_labels
 from pg_namespace n
 left join pg_description d on d.objoid = n.oid and d.classoid = 'pg_namespace'::regclass
 where n.nspname not like 'pg_toast%'
@@ -308,6 +329,7 @@ where n.nspname not like 'pg_toast%'
                         columns: [
                             { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
                             { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
+                            { key: "is_system", label: t("is-system", "System"), dataType: "boolean", width: 50, formatter: (v: boolean) => v ? t("yes", "Yes") : "" },
                             { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130, sortDirection: "desc", sortOrder: 1, formatter: loadingStatsText },
                             { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130, formatter: loadingStatsText },
                             { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100, formatter: loadingStatsText },
@@ -320,12 +342,11 @@ where n.nspname not like 'pg_toast%'
                         onRowSelect: (row: SchemaRecord | undefined) => {
                             if (selectedRow?.schema_name !== row?.schema_name) {
                                 selectedRow = row ?? null;
-                                selectedRowDetails = row ?? null;
                                 if (changes.getChanges().length === 0) {
                                     slotContext.refresh(cid("schemas-editor"));
                                 }
-                                slotContext.refresh(cid("schemas-details-grid"));
                                 slotContext.refresh(cid("schemas-details-acl-grid"));
+                                slotContext.refresh(cid("schemas-details-sl-grid"));
                                 slotContext.refresh(cid("schemas-toolbar"));
                             }
                         },
@@ -580,40 +601,11 @@ where n.nspname not like 'pg_toast%'
                     },
                 },
                 second: {
-                    id: cid("schemas-details-splitter"),
                     type: "split",
                     direction: "vertical",
-                    autoSaveId: `schemas-details-splitter-${session.profile.sch_id}`,
+                    autoSaveId: `schemas-details-bottom-splitter-${session.profile.sch_id}`,
+                    secondSize: 50,
                     first: {
-                        id: cid("schemas-details-grid"),
-                        type: "grid",
-                        pivot: true,
-                        rows: async () => {
-                            if (!selectedRow) return [];
-                            selectedRowDetails = selectedRow;
-                            return [selectedRow];
-                        },
-                        columns: [
-                            { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220 },
-                            { key: "schema_owner", label: t("schema-owner", "Owner"), dataType: "string", width: 160 },
-                            { key: "schema_size", label: t("schema-size", "Size"), dataType: "size", width: 130 },
-                            { key: "schema_size_bytes", label: t("schema-size-bytes", "Size (bytes)"), dataType: "number", width: 150 },
-                            { key: "total_objects", label: t("total-objects", "Total Objects"), dataType: "number", width: 130 },
-                            { key: "tables_count", label: t("tables-count", "Tables"), dataType: "number", width: 100 },
-                            { key: "views_count", label: t("views-count", "Views"), dataType: "number", width: 100 },
-                            { key: "sequences_count", label: t("sequences-count", "Sequences"), dataType: "number", width: 110 },
-                            { key: "functions_count", label: t("functions-count", "Functions"), dataType: "number", width: 110 },
-                            { key: "types_count", label: t("types-count", "Types"), dataType: "number", width: 100 },
-                            { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
-                            { key: "is_system", label: t("is-system", "System"), dataType: "boolean", width: 100 },
-                        ] as ColumnDefinition[],
-                        pivotColumns: [
-                            { key: "property", label: t("property", "Property"), dataType: "string", width: 200 },
-                            { key: "value", label: t("value", "Value"), dataType: "string", width: 420 },
-                        ] as ColumnDefinition[],
-                        autoSaveId: `schemas-details-grid-${session.profile.sch_id}`,
-                    },
-                    second: {
                         id: cid("schemas-details-acl-content"),
                         type: "content",
                         title: {
@@ -625,8 +617,8 @@ where n.nspname not like 'pg_toast%'
                             id: cid("schemas-details-acl-grid"),
                             type: "grid",
                             rows: async () => {
-                                if (!selectedRowDetails) return [];
-                                return (selectedRowDetails.acl || []) as SchemaAclEntry[];
+                                if (!selectedRow) return [];
+                                return (selectedRow.acl || []) as SchemaAclEntry[];
                             },
                             columns: [
                                 { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 100 },
@@ -636,7 +628,35 @@ where n.nspname not like 'pg_toast%'
                             ] as ColumnDefinition[],
                             autoSaveId: `schemas-details-acl-grid-${session.profile.sch_id}`,
                         },
+                        dialogs: [
+
+                        ]
                     },
+                    second: {
+                        id: cid("schemas-details-sl-content"),
+                        type: "content",
+                        title: {
+                            id: cid("schemas-details-sl-title"),
+                            type: "title",
+                            title: t("security-labels", "Security Labels"),
+                        },
+                        main: {
+                            id: cid("schemas-details-sl-grid"),
+                            type: "grid",
+                            rows: async () => {
+                                if (!selectedRow) return [];
+                                return (selectedRow.security_labels || []) as SchemaSecurityLabelEntry[];
+                            },
+                            columns: [
+                                { key: "provider", label: t("provider", "Provider"), dataType: "string", width: 160 },
+                                { key: "label", label: t("label", "Label"), dataType: "string", width: 420 },
+                            ] as ColumnDefinition[],
+                            autoSaveId: `schemas-details-sl-grid-${session.profile.sch_id}`,
+                        },
+                        dialogs: [
+
+                        ]
+                    }
                 },
             },
             dialogs: [
