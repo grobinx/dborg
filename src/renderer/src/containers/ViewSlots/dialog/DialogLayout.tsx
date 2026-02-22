@@ -34,16 +34,7 @@ export const DialogRow: React.FC<{
     };
 
     const content = (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: "8px",
-                width: "100%",
-                alignItems: "stretch",
-            }}
-        >
+        <Stack direction="row" flexWrap="wrap" gap="8px" width="100%" alignItems="stretch">
             {items.map((item, index) => (
                 <div
                     key={index}
@@ -62,13 +53,11 @@ export const DialogRow: React.FC<{
                     />
                 </div>
             ))}
-        </div>
+        </Stack>
     );
 
     return (
-        <Stack direction="column" gap="8px">
-            <DialogFieldset label={label}>{content}</DialogFieldset>
-        </Stack>
+        <DialogFieldset label={label}>{content}</DialogFieldset>
     );
 };
 
@@ -100,8 +89,6 @@ export const DialogColumn: React.FC<{
     );
 
     return (
-        <Stack direction="column" gap="8px" width="100%">
-            <DialogFieldset label={label}>{content}</DialogFieldset>
-        </Stack>
+        <DialogFieldset label={label}>{content}</DialogFieldset>
     );
 };

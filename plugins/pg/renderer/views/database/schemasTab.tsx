@@ -5,9 +5,8 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
 import { schemaDdl } from "../../../common/ddls/schema";
-import { DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
-import { useDataGridChanges } from "@renderer/components/DataGrid/useDataGridChanges";
 import { DataGridChangesManager } from "@renderer/components/DataGrid/DataGridChangesManager";
+import { executeScriptAction } from "../actions/ExecuteScript";
 
 export interface SchemaRecord {
     id: number;
@@ -192,7 +191,7 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
                 const comment = change.data.comment;
 
                 scripts.push(`-- Create new schema: ${schemaName}`);
-                scripts.push(`CREATE SCHEMA ${schemaName} AUTHORIZATION ${owner};`);
+                scripts.push(`CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION ${owner};`);
 
                 if (comment) {
                     const escapedComment = comment.replace(/'/g, "''");
@@ -233,7 +232,7 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
                 const cascade = change.userData?.cascade;
 
                 scripts.push(`-- Drop schema: ${schemaName}`);
-                scripts.push(`DROP SCHEMA ${schemaName}${cascade ? ' CASCADE' : ''};`);
+                scripts.push(`DROP SCHEMA IF EXISTS ${schemaName}${cascade ? ' CASCADE' : ''};`);
                 scripts.push("");
             }
         }
@@ -340,15 +339,13 @@ where n.nspname not like 'pg_toast%'
                             { key: "comment", label: t("comment", "Comment"), dataType: "string", width: 360 },
                         ] as ColumnDefinition[],
                         onRowSelect: (row: SchemaRecord | undefined) => {
-                            if (selectedRow?.schema_name !== row?.schema_name) {
-                                selectedRow = row ?? null;
-                                if (changes.getChanges().length === 0) {
-                                    slotContext.refresh(cid("schemas-editor"));
-                                }
-                                slotContext.refresh(cid("schemas-details-acl-grid"));
-                                slotContext.refresh(cid("schemas-details-sl-grid"));
-                                slotContext.refresh(cid("schemas-toolbar"));
+                            selectedRow = row ?? null;
+                            if (changes.getChanges().length === 0) {
+                                slotContext.refresh(cid("schemas-editor"));
                             }
+                            slotContext.refresh(cid("schemas-details-acl-grid"));
+                            slotContext.refresh(cid("schemas-details-sl-grid"));
+                            slotContext.refresh(cid("schemas-toolbar"));
                         },
                         changes: () => changes.getChanges(),
                         actions: [
@@ -464,7 +461,7 @@ where n.nspname not like 'pg_toast%'
                                 keySequence: ["F4"],
                                 contextMenuGroupId: "schema-operations",
                                 contextMenuOrder: 2,
-                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                disabled: () => selectedRow === null || selectedRow.is_system || changes.findChange(selectedRow)?.type === "remove",
                                 run: async () => {
                                     if (selectedRow) {
                                         const updated = changes.findChange(selectedRow);
@@ -515,7 +512,7 @@ where n.nspname not like 'pg_toast%'
                                 keySequence: ["F3"],
                                 contextMenuGroupId: "schema-operations",
                                 contextMenuOrder: 3,
-                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                disabled: () => selectedRow === null || selectedRow.is_system || changes.findChange(selectedRow)?.type === "remove",
                                 run: async () => {
                                     if (selectedRow) {
                                         const updated = changes.findChange(selectedRow);
@@ -583,21 +580,43 @@ where n.nspname not like 'pg_toast%'
                         },
                     } as IGridSlot,
                     second: {
-                        id: cid("schemas-editor"),
-                        type: "editor",
-                        lineNumbers: false,
-                        readOnly: false,
-                        miniMap: false,
-                        content: async () => {
-                            const allChanges = changes.getChanges();
+                        type: "column",
+                        items: [
+                            {
+                                type: "title",
+                                title: () => t("actions-not-be-executed-info", "Actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                                toolBar: {
+                                    type: "toolbar",
+                                    tools: [
+                                        "execute-script"
+                                    ],
+                                    actionSlotId: cid("schemas-editor"),
+                                }
+                            },
+                            {
+                                id: cid("schemas-editor"),
+                                type: "editor",
+                                lineNumbers: false,
+                                readOnly: false,
+                                miniMap: false,
+                                content: async () => {
+                                    const allChanges = changes.getChanges();
 
-                            if (allChanges.length > 0) {
-                                return generateChangesScript();
-                            }
+                                    if (allChanges.length > 0) {
+                                        return generateChangesScript();
+                                    }
 
-                            if (!selectedRow) return "-- No schema selected";
-                            return schemaDdl(session, selectedRow.schema_name);
-                        },
+                                    if (!selectedRow) return "-- No schema selected";
+                                    return schemaDdl(session, selectedRow.schema_name);
+                                },
+                                actions: [
+                                    executeScriptAction(session, slotContext, () => {
+                                        slotContext.refresh(cid("schemas-grid"), "full");
+                                        changes.clearChanges();
+                                    }),
+                                ],
+                            },
+                        ],
                     },
                 },
                 second: {

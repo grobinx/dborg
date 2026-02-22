@@ -605,7 +605,7 @@ export const DataGrid = <T extends object>({
     const [pivot, setPivot] = useState(initialPivot);
     const prevUniqueValueRef = useRef<any>(null);
 
-    const hasChanges = changes && changes.length > 0;
+    const hasChanges = (changes && changes.length> 0) ? JSON.stringify(changes) : null;
 
     const onSaveColumnsState = () => {
         return {
@@ -645,9 +645,9 @@ export const DataGrid = <T extends object>({
     const changesMap = React.useMemo(() => {
         if (!hasChanges || !uniqueField) return null;
         const map = new Map<any, DataGridRow<T>>();
-        changes.forEach((change) => map.set(change.uniqueId, change));
+        changes!.forEach((change) => map.set(change.uniqueId, change));
         return map;
-    }, [hasChanges, changes, changes?.length, uniqueField]);
+    }, [hasChanges, uniqueField]);
 
     const { data, columns, pivotMap } = useMemo<{
         data: DataGridRow<T>[],
@@ -784,7 +784,7 @@ export const DataGrid = <T extends object>({
 
         if (hasChanges && uniqueField) {
             const existingIds = new Set(resultSet.map((row) => row.data[uniqueField]));
-            const newRows = changes.filter((change) => {
+            const newRows = changes!.filter((change) => {
                 return !existingIds.has(change.uniqueId) && change.type === "add";
             });
             resultSet.push(...newRows);
@@ -850,7 +850,7 @@ export const DataGrid = <T extends object>({
         return resultSet;
     }, [
         data,
-        changes, changes?.length, hasChanges,
+        hasChanges,
         uniqueField,
         searchState.current, searchState.current?.text,
         columnsState.stateChanged,

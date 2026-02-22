@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, Box, Tabs, Tab, useThemeProps, AppBar, Stack, Menu, MenuItem } from "@mui/material";
+import { styled, Box, Tabs, Tab, useThemeProps, Stack, Paper } from "@mui/material";
 import TabPanel from "./TabPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB, TAB_PANEL_CHANGED, TAB_PANEL_CLICK, TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "../../app/Messages";
@@ -190,7 +190,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             className={`TabsPanel-header ${tabPosition === "top" ? "position-top" : "position-bottom"}`}
             sx={{ zIndex: 10 }}
         >
-            <AppBar position="static" sx={{ flexDirection: "row" }}>
+            <Paper sx={{ display: "flex", flexDirection: "row" }}>
                 {buttons}
                 <Tabs
                     value={activeTab < tabs.length ? activeTab : 0}
@@ -251,7 +251,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                         {tabsMap.get(tab.props.itemID!)?.buttons}
                     </Box>
                 ))}
-            </AppBar>
+            </Paper>
         </StyledTabsHeader>
     );
 

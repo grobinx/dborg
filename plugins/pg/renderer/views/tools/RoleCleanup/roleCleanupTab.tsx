@@ -15,6 +15,7 @@ import { sequenceDdl } from "../../../../common/ddls/sequence";
 import { schemaDdl } from "../../../../common/ddls/schema";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 import ObjectSafetyAnalyzer, { AnalysisResult, RiskLevel } from "./objectAnalyze";
+import { executeScriptAction } from "../../actions/ExecuteScript";
 
 const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
     const t = i18next.t.bind(i18next);
@@ -453,90 +454,6 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     editorRefresh(slotContext);
                                                 }
                                             },
-                                            // {
-                                            //     id: "role-cleanup-owned-reload-action",
-                                            //     label: t("reload-object-info", "Reload Object Info"),
-                                            //     icon: "Reload",
-                                            //     keySequence: ["Space"],
-                                            //     contextMenuGroupId: "reload-actions",
-                                            //     contextMenuOrder: 1,
-                                            //     disabled: () => selectedOwnedObject === null || analyzingObject,
-                                            //     run: async () => {
-                                            //         if (selectedOwnedObject) {
-                                            //             const row = selectedOwnedObject;
-                                            //             analyzingObject = true;
-                                            //             analyzingRows.push(row);
-                                            //             slotContext.refresh(cid("owned-grid"), "only");
-                                            //             slotContext.refresh(cid("owned-progress"));
-                                            //             slotContext.refresh(cid("owned-toolbar"));
-                                            //             slotContext.refresh(cid("owned-info"));
-                                            //             try {
-                                            //                 selectedOwnedObject.risk = await analyzeObject(selectedOwnedObject);
-                                            //             } finally {
-                                            //                 const index = analyzingRows.indexOf(row);
-                                            //                 if (index !== -1) {
-                                            //                     analyzingRows.splice(index, 1);
-                                            //                 }
-                                            //                 analyzingObject = false;
-                                            //                 slotContext.refresh(cid("owned-grid"), "only");
-                                            //                 slotContext.refresh(cid("owned-progress"));
-                                            //                 slotContext.refresh(cid("owned-toolbar"));
-                                            //                 slotContext.refresh(cid("owned-info"));
-                                            //             }
-                                            //         }
-                                            //     },
-                                            // },
-                                            // {
-                                            //     id: "role-cleanup-owned-reload-all-action",
-                                            //     label: () => analyzingObject ? t("cancel-reload-info", "Cancel Reload All Object Info") : t("reload-info", "Reload All Object Info"),
-                                            //     icon: () => analyzingObject ? "ReloadStop" : "ReloadAll",
-                                            //     keySequence: ["Alt+Shift+Enter"],
-                                            //     contextMenuGroupId: "reload-actions",
-                                            //     contextMenuOrder: 2,
-                                            //     run: async () => {
-                                            //         if (analyzingObject) {
-                                            //             analyzingObject = false;
-                                            //             return;
-                                            //         }
-                                            //         analyzingObject = true;
-                                            //         slotContext.refresh(cid("schemas-toolbar"));
-                                            //         let tc = Date.now() - 250;
-                                            //         try {
-                                            //             for (const [index, row] of ownedCache.entries()) {
-                                            //                 analyzingProgress = Math.round(((index + 1) / ownedCache.length) * 100);
-                                            //                 analyzingRows.push(row);
-                                            //                 if (Date.now() - tc > 250) {
-                                            //                     slotContext.refresh(cid("owned-grid"), "only");
-                                            //                     slotContext.refresh(cid("owned-progress"));
-                                            //                     slotContext.refresh(cid("owned-toolbar"));
-                                            //                     slotContext.refresh(cid("owned-info"));
-                                            //                     tc = Date.now();
-                                            //                     await new Promise(resolve => setTimeout(resolve, 0));
-                                            //                 }
-                                            //                 try {
-                                            //                     row.risk = await analyzeObject(row);
-                                            //                 } finally {
-                                            //                     const index = analyzingRows.indexOf(row);
-                                            //                     if (index !== -1) {
-                                            //                         analyzingRows.splice(index, 1);
-                                            //                     }
-                                            //                 }
-
-                                            //                 if (!analyzingObject) {
-                                            //                     break;
-                                            //                 }
-                                            //             };
-                                            //         }
-                                            //         finally {
-                                            //             analyzingObject = false;
-                                            //             analyzingProgress = null;
-                                            //             slotContext.refresh(cid("owned-grid"), "compute");
-                                            //             slotContext.refresh(cid("owned-progress"));
-                                            //             slotContext.refresh(cid("owned-toolbar"));
-                                            //             slotContext.refresh(cid("owned-info"));
-                                            //         }
-                                            //     }
-                                            // }
                                         ],
                                         progress: {
                                             id: cid("owned-progress"),
@@ -895,11 +812,11 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                     items: [
                         {
                             type: "title",
-                            title: () => t("cleanup-actions-info", "Selected actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                            title: () => t("actions-not-be-executed-info", "Actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
                             toolBar: {
                                 type: "toolbar",
                                 tools: [
-                                    "role-cleanup-execute-action"
+                                    "execute-script"
                                 ],
                                 actionSlotId: cid("editor"),
                             }
@@ -930,15 +847,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                 return sql;
                             },
                             actions: [
-                                {
-                                    id: "role-cleanup-execute-action",
-                                    label: t("execute", "Execute"),
-                                    icon: "Run",
-                                    keySequence: ["Ctrl+Enter"],
-                                    run: () => {
-                                        console.log("Execute SQL");
-                                    }
-                                }
+                                executeScriptAction(session, slotContext),
                             ],
                         } as IEditorSlot,
                     ],

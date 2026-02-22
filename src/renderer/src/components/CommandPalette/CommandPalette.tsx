@@ -513,6 +513,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, []);
 
     if (!open) {
+        if (!contextMenu) return null;
+        
         return (
             <Menu
                 open={contextMenu !== null}

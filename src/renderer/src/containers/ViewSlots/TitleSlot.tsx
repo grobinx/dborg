@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Box, Paper, Typography, useTheme } from "@mui/material";
+import { Paper, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
 import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
@@ -10,7 +10,7 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { ToolBarSlots } from "./ToolBarSlot";
 
-interface TitleSlotProps extends Omit<React.ComponentProps<typeof AppBar>, "slot"> {
+interface TitleSlotProps extends Omit<React.ComponentProps<typeof Paper>, "slot"> {
 }
 
 interface TitleSlotOwnProps extends TitleSlotProps {
@@ -18,7 +18,7 @@ interface TitleSlotOwnProps extends TitleSlotProps {
     ref?: React.Ref<HTMLDivElement>;
 }
 
-const StyledTitleSlot = styled(AppBar)(() => ({
+const StyledTitleSlot = styled(Paper)(() => ({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -100,7 +100,6 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
         <StyledTitleSlot
             ref={rootRef}
             className={`TitleSlot-root ${className ?? ""}`}
-            position="static" 
             sx={{ flexDirection: "row", zIndex: 10, ...sx }}
             {...other}
         >

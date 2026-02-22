@@ -861,6 +861,10 @@ export interface IColumnSlot extends ICustomSlot {
      * Odstęp wewnętrzny kolumny (np. "10px", 1).
      */
     padding?: string | number;
+    /**
+     * Odstęp między elementami kolumny (np. "10px", 1).
+     */
+    gap?: string | number;
 }
 
 export interface IRowSlot extends ICustomSlot {

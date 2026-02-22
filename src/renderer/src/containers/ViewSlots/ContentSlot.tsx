@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Box } from "@mui/material";
+import { Box } from "@mui/material";
 import { styled, useTheme, useThemeProps } from "@mui/material/styles";
 import { IContentSlot, IDialogSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";

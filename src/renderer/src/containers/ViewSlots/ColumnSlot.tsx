@@ -15,7 +15,7 @@ import { useDialogs } from "@toolpad/core";
 
 interface ColumnSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> { }
 
-interface ColumnSlotOwnProps {
+interface ColumnSlotOwnProps extends ColumnSlotProps {
     slot: IColumnSlot;
     ref?: React.Ref<HTMLDivElement>;
 }
@@ -27,12 +27,12 @@ const StyledColumnSlot = styled(Box)(() => ({
     height: "100%",
     minHeight: 0,
     minWidth: 0,
-    gap: 8,
+    //gap: 8,
 }));
 
 const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
     const theme = useTheme();
-    const { slot, ref } = props;
+    const { slot, ref, ...other } = props;
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const addToast = useToast();
     const { confirm } = useDialogs();
@@ -114,8 +114,10 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
                 maxWidth: columnWidth,
                 minWidth: 0,
                 padding: slot.padding,
+                gap: slot.gap,
                 overflow: !slot.size ? "auto" : "hidden",
             }}
+            {...other}
         >
             {itemsNodes}
         </StyledColumnSlot>
