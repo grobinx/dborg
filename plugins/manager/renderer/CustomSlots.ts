@@ -89,6 +89,7 @@ export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutI
 export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
 export type DialogConformButtonsFactory<T = SlotRuntimeContext> = DialogConformButton[] | ((runtimeContext: T) => DialogConformButton[]);
 export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
+export type DialogListColumnsFactory<T = SlotRuntimeContext> = IDialogListColumn[] | ((runtimeContext: T) => IDialogListColumn[]);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -946,7 +947,7 @@ export interface IProgressBarSlot extends ICustomSlot {
     color?: ThemeColor;
 }
 
-export type DialogFieldType = "text" | "textarea" | "number" | "boolean" | "select" | "editor";
+export type DialogFieldType = "text" | "textarea" | "number" | "boolean" | "select" | "editor" | "list";
 
 export type DialogGridSize =
     | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
@@ -1215,6 +1216,42 @@ export interface IDialogTabs {
     tabs: DialogTabsTabsFactory<Record<string, any>>;
 }
 
+export interface IDialogListColumn {
+    /**
+     * Klucz pola kolumny.
+     */
+    key: string;
+    /**
+     * Etykieta kolumny.
+     */
+    label: StringFactory<Record<string, any>>;
+    /**
+     * Rozmiar kolumny.
+     */
+    size?: DialogGridSize;
+}
+
+export interface IDialogList {
+    /**
+     * Typ elementu layoutu.
+     */
+    type: "list";
+    /**
+     * Klucz pola z listą.
+     */
+    key: string;
+    /**
+     * Elementy elementu listy (pola, wiersze, kolumny).
+     * Wszystkie elementy w items będą się odnośić do wartości elementu z listy z klucza `key` 
+     */
+    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    /**
+     * Definicje kolumn listy (opcjonalnie). 
+     * Jeśli nie podano, lista kolumn będzie pobrana z items.
+     */
+    columns?: DialogListColumnsFactory<Record<string, any>>;
+}
+
 export type DialogSize = "small" | "medium" | "large" | "full";
 
 export interface DialogConformButton {
@@ -1382,6 +1419,9 @@ export function resolveDialogConformButtonsFactory<T = SlotRuntimeContext>(facto
 export function resolveCSSPropertiesFactory<T = SlotRuntimeContext>(factory: CSSPropertiesFactory<T> | undefined, context: T): React.CSSProperties | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
+export function resolveDialogListColumnsFactory<T = SlotRuntimeContext>(factory: DialogListColumnsFactory<T> | undefined, context: T): IDialogListColumn[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
 
 export function isIField(obj: any): obj is FieldTypeKind {
     return (
@@ -1484,4 +1524,8 @@ export function isDialogTab(item: any): item is IDialogTab {
 
 export function isDialogStatic(item: any): item is IDialogStatic {
     return item?.type === "static";
+}
+
+export function isDialogList(item: any): item is IDialogList {
+    return item?.type === "list";
 }
