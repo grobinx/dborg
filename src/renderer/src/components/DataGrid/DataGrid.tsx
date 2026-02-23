@@ -1181,6 +1181,10 @@ export const DataGrid = <T extends object>({
                     const rowData = displayDataRef.current[rowIdx]?.data;
                     if (!rowData) return null;
 
+                    if (columnKeys.length === allColumnKeys.length) {
+                        return rowData;
+                    }
+
                     const selectedData: Partial<T> = {};
                     columnKeys.forEach((key) => {
                         (selectedData as any)[key] = (rowData as any)[key];
@@ -1979,7 +1983,7 @@ export const DataGrid = <T extends object>({
                                                 columnDataType,
                                                 col.formatter,
                                                 null_value,
-                                                row,
+                                                row.data,
                                                 col.key,
                                                 { maxLength: displayMaxLengh }
                                             );
@@ -2032,7 +2036,7 @@ export const DataGrid = <T extends object>({
                                                     title={
                                                         [
                                                             t("changed-from", "Changed from"),
-                                                            columnDataFormatter(oldValue, columnDataType, col.formatter, null_value, row, col.key, { maxLength: displayMaxLengh })
+                                                            columnDataFormatter(oldValue, columnDataType, col.formatter, null_value, row.data, col.key, { maxLength: displayMaxLengh })
                                                         ]
                                                     }
                                                     disableInteractive

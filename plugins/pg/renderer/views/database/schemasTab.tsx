@@ -106,7 +106,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
         if (allRows.length === 0) return;
 
         const stats = allRows
-            .filter(row => row.schema_size_bytes !== null && row.total_objects !== null)
+            .filter(row => row.total_objects !== null)
             .map(row => ({
                 schema_name: row.schema_name,
                 tables_count: row.tables_count,
