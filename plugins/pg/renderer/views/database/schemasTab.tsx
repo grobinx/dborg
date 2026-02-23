@@ -496,12 +496,39 @@ where n.nspname not like 'pg_toast%'
                                 disabled: () => selectedRow === null || selectedRow.is_system,
                                 run: async () => {
                                     if (selectedRow) {
-                                        const result = await slotContext.openDialog(
-                                            cid("schema-drop-dialog"),
-                                            {
-                                                schema_name: selectedRow.schema_name,
-                                            }
-                                        );
+                                        if (await slotContext.showConfirmDialog({
+                                            title: t("confirm-drop-schema", "Confirm Drop Schema"),
+                                            message: t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: selectedRow.schema_name }),
+                                            severity: "warning",
+                                        })) {
+                                            changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-editor"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-drop-cascade",
+                                label: t("drop-schema-cascade", "Drop Schema Cascade"),
+                                icon: "DropCascade",
+                                keySequence: ["Ctrl+Shift+Delete"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 5,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        if (await slotContext.showConfirmDialog({
+                                            title: t("confirm-drop-schema-cascade", "Confirm Drop Schema Cascade"),
+                                            message: t("drop-schema-cascade-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\" and all its dependent objects?", { schema_name: selectedRow.schema_name }),
+                                            severity: "warning",
+                                        })) {
+                                            changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-editor"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
+                                        }
                                     }
                                 },
                             },
@@ -760,32 +787,6 @@ where n.nspname not like 'pg_toast%'
                         },
                     ],
                 },
-                {
-                    id: cid("schema-drop-dialog"),
-                    type: "dialog",
-                    title: t("drop-schema", "Drop Schema"),
-                    items: [
-                        {
-                            type: "static",
-                            text: (values) => t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: values.schema_name }),
-                        },
-                    ],
-                    buttons: [
-                        { id: "cancel", label: t("cancel", "Cancel"), color: "secondary" },
-                        { id: "cascade", label: t("drop-cascade", "Cascade"), color: "error" },
-                        { id: "drop", label: t("drop", "Drop"), color: "error" },
-                    ],
-                    onConfirm: (_, confirmId) => {
-                        if (confirmId === "drop") {
-                            changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
-                        } else if (confirmId === "cascade") {
-                            changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
-                        }
-                        slotContext.refresh(cid("schemas-grid"), "only");
-                        slotContext.refresh(cid("schemas-editor"));
-                        slotContext.refresh(cid("schemas-toolbar"));
-                    },
-                }
             ],
         }),
         toolBar: [
@@ -794,8 +795,8 @@ where n.nspname not like 'pg_toast%'
                 type: "toolbar",
                 tools: [
                     ["schema-create", "schema-edit", "schema-comment"],
+                    ["schema-drop", "schema-drop-cascade"],
                     ["schema-rollback", "schema-rollback-all"],
-                    ["schema-drop"],
                     ["schema-stats-refresh", "schema-stats-refresh-all"]
                 ],
                 actionSlotId: cid("schemas-grid"),

@@ -328,6 +328,16 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                 },
                                 run: async () => {
                                     if (!selectedSession) return;
+                                    const confirmed = await slotContext.showConfirmDialog({
+                                        title: t("confirm-cancel-query", "Confirm Cancel Query"),
+                                        message: t("cancel-query-warning", "Are you sure you want to cancel the query for session {{pid}}?", {
+                                            pid: selectedSession.pid
+                                        }),
+                                        confirmLabel: t("cancel-query", "Cancel Query"),
+                                        cancelLabel: t("cancel", "Cancel"),
+                                        severity: "warning",
+                                    });
+                                    if (!confirmed) return;
                                     try {
                                         await session.query(`SELECT pg_cancel_backend($1)`, [selectedSession.pid]);
                                         slotContext.showNotification({
