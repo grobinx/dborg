@@ -102,6 +102,49 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
         getUniqueId: (record) => record.id,
     });
 
+    const storeSchemasStats = () => {
+        if (allRows.length === 0) return;
+
+        const stats = allRows
+            .filter(row => row.schema_size_bytes !== null && row.total_objects !== null)
+            .map(row => ({
+                schema_name: row.schema_name,
+                tables_count: row.tables_count,
+                views_count: row.views_count,
+                functions_count: row.functions_count,
+                sequences_count: row.sequences_count,
+                types_count: row.types_count,
+                total_objects: row.total_objects,
+                schema_size: row.schema_size,
+                schema_size_bytes: row.schema_size_bytes,
+            }));
+
+        session.storeProfileSettings("schemas", {
+            stats: stats,
+        })
+    }
+
+    const restoreSchemasStats = async () => {
+        if (allRows.length === 0) return;
+
+        const settings = await session.getProfileSettings("schemas");
+        if (settings && settings.stats) {
+            for (const stat of settings.stats) {
+                const row = allRows.find((r) => r.schema_name === stat.schema_name);
+                if (row) {
+                    row.tables_count = stat.tables_count;
+                    row.views_count = stat.views_count;
+                    row.functions_count = stat.functions_count;
+                    row.sequences_count = stat.sequences_count;
+                    row.types_count = stat.types_count;
+                    row.total_objects = stat.total_objects;
+                    row.schema_size = stat.schema_size;
+                    row.schema_size_bytes = stat.schema_size_bytes;
+                }
+            }
+        }
+    }
+
     async function getSchemaStats(schemaName: string): Promise<SchemaStatsRecord> {
         const sql = `
 select
@@ -323,6 +366,7 @@ where n.nspname not like 'pg_toast%'
 `;
                             const { rows } = await session.query<SchemaRecord>(sql);
                             allRows = rows;
+                            await restoreSchemasStats();
                             return rows;
                         },
                         columns: [
@@ -368,6 +412,7 @@ where n.nspname not like 'pg_toast%'
                                         try {
                                             const stats = await getSchemaStats(row.schema_name);
                                             Object.assign(row, stats);
+                                            storeSchemasStats();
                                         } finally {
                                             const index = loadingStatsRow.indexOf(row);
                                             if (index !== -1) {
@@ -416,6 +461,7 @@ where n.nspname not like 'pg_toast%'
                                                 break;
                                             }
                                         };
+                                        storeSchemasStats();
                                     }
                                     finally {
                                         loadingStats = false;
