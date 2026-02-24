@@ -22,6 +22,7 @@ export const DialogFieldset: React.FC<{
                 pb: 6,
                 m: 0,
                 minWidth: 0,
+                width: "100%",
                 ...sx,
             }}
         >
