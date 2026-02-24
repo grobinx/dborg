@@ -227,6 +227,8 @@ export interface ThemeIcons {
     Tablespace: IconWrapperFC;
     Aggregates: IconWrapperFC;
     Rollback: IconWrapperFC;
+    AccessControl: IconWrapperFC;
+    SecurityLabel: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -399,4 +401,6 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     Tablespace: ["tablespace", "space", "storage", "database"],
     Aggregates: ["aggregates", "aggregate", "functions", "group", "by"],
     Rollback: ["rollback", "undo", "transaction", "revert", "cancel"],
+    AccessControl: ["access", "control", "permissions", "privileges", "security"],
+    SecurityLabel: ["access", "control", "permissions", "privileges", "security", "label", "classification", "sensitivity"],
 };

@@ -4,7 +4,6 @@ import { SelectField } from "@renderer/components/inputs/SelectField";
 import { TextField } from "@renderer/components/inputs/TextField";
 import { BooleanField } from "@renderer/components/inputs/BooleanField";
 import {
-    SlotRuntimeContext,
     IDialogTextField,
     IDialogNumberField,
     IDialogSelectField,
@@ -28,6 +27,7 @@ export const DialogTextField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -35,12 +35,13 @@ export const DialogTextField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
 
     return (
@@ -78,6 +79,7 @@ export const DialogTextareaField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -85,12 +87,13 @@ export const DialogTextareaField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
 
     return (
@@ -131,6 +134,7 @@ export const DialogNumberField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -138,12 +142,13 @@ export const DialogNumberField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
 
     return (
@@ -182,6 +187,7 @@ export const DialogSelectField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -189,12 +195,13 @@ export const DialogSelectField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
     const options = resolveSelectOptionsFactory(field.options, structure) || [];
 
@@ -233,6 +240,7 @@ export const DialogBooleanField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -240,12 +248,13 @@ export const DialogBooleanField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
 
     return (
@@ -283,6 +292,7 @@ export const DialogEditorField: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         field,
@@ -290,12 +300,13 @@ export const DialogEditorField: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled: propDisabled,
     } = props;
 
     const label = resolveStringFactory(field.label, structure);
     const tooltip = resolveStringFactory(field.tooltip, structure);
     const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = resolveBooleanFactory(field.disabled, structure);
+    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
 
     return (

@@ -25,6 +25,7 @@ export const DialogLayoutItem: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         item,
@@ -32,6 +33,7 @@ export const DialogLayoutItem: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled,
     } = props;
 
     if (isDialogTextField(item)) {
@@ -41,6 +43,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -51,6 +54,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -61,6 +65,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -71,6 +76,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -81,6 +87,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -91,6 +98,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -101,6 +109,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -111,6 +120,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -121,6 +131,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 
@@ -131,6 +142,7 @@ export const DialogLayoutItem: React.FC<{
             onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
+            disabled={disabled}
         />;
     }
 

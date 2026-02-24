@@ -16,6 +16,7 @@ import {
     isDialogColumn,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import {
+    Box,
     Divider,
     Paper,
     Stack,
@@ -32,6 +33,11 @@ import { DialogLayoutItem } from "./DialogLayoutItem";
 import { getItemWrapperStyle } from "./DialogLayout";
 import { DialogFieldset } from "./DialogFieldset";
 import { IconButton } from "@renderer/components/buttons/IconButton";
+import { useTranslation } from "react-i18next";
+import { ActionManager, Actions, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { useKeyboardNavigation } from "@renderer/hooks/useKeyboardNavigation";
+import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
+import { focusElement } from "@renderer/components/useful/FocusContainerHandler";
 
 const isSimpleField = (item: DialogLayoutItemKind) =>
     isDialogTextField(item) ||
@@ -79,24 +85,38 @@ export const DialogList: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
-}> = ({ list, structure, onChange, invalidFields, onValidityChange }) => {
+    disabled?: boolean;
+}> = ({ list, structure, onChange, invalidFields, onValidityChange, disabled }) => {
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const rows: Record<string, any>[] = Array.isArray(structure?.[list.key]) ? structure[list.key] : [];
 
-    const [selectedIndex, setSelectedIndex] = React.useState<number>(rows.length > 0 ? 0 : -1);
+    const listRef = React.useRef<HTMLTableElement>(null);
+    const actionManagerRef = React.useRef<IActionManager<{}>>(new ActionManager());
+    const [selectedIndex, setSelectedIndex, handleKeyDown] = useKeyboardNavigation({
+        items: React.useMemo(() => rows.map((_, index) => index), [rows]),
+        getId: (index: number) => index,
+        actionManager: actionManagerRef.current,
+        actionContext: () => ({}),
+        onEnter: () => {
+            if (listRef.current) {
+                focusElement(listRef.current);
+            }
+        }
+    });
 
     React.useEffect(() => {
         if (rows.length === 0) {
             setSelectedIndex(-1);
             return;
         }
-        if (selectedIndex < 0 || selectedIndex >= rows.length) {
+        if (selectedIndex === null || selectedIndex >= rows.length) {
             setSelectedIndex(0);
         }
     }, [rows.length, selectedIndex]);
 
-    const selectedRow = selectedIndex >= 0 ? (rows[selectedIndex] ?? {}) : undefined;
+    const selectedRow = selectedIndex != null && selectedIndex >= 0 ? (rows[selectedIndex] ?? {}) : undefined;
 
     const label = resolveStringFactory(list.label, structure);
     const resolvedItems = resolveDialogLayoutItemsKindFactory(list.items, selectedRow ?? {}) || [];
@@ -111,7 +131,7 @@ export const DialogList: React.FC<{
     );
 
     const onSelectedRowChange = (nextRow: Record<string, any>) => {
-        if (selectedIndex < 0) return;
+        if (selectedIndex === null) return;
 
         const nextRows = [...rows];
         nextRows[selectedIndex] = nextRow;
@@ -122,28 +142,57 @@ export const DialogList: React.FC<{
         });
     };
 
+    const actions: Actions<{}> = {
+        cmAdd: {
+            id: "cmAdd",
+            label: t("add-item", "Add item"),
+            keySequence: ["F2"],
+            icon: <theme.icons.Add color="success" />,
+            run: () => {
+                const newItem = list.prepareItem ? list.prepareItem() : {};
+                const nextRows = [...rows, newItem];
+                onChange({
+                    ...structure,
+                    [list.key]: nextRows,
+                });
+                setSelectedIndex(nextRows.length - 1);
+            }
+        },
+        cmDelete: {
+            id: "cmDelete",
+            label: t("delete-item", "Delete item"),
+            keySequence: ["Delete"],
+            icon: <theme.icons.Delete color="error" />,
+            run: (_, index: number) => {
+                const nextRows = rows.filter((_, i) => i !== index);
+                onChange({
+                    ...structure,
+                    [list.key]: nextRows,
+                });
+                if (selectedIndex === null || selectedIndex >= nextRows.length) {
+                    setSelectedIndex(nextRows.length - 1);
+                }
+            }
+        }
+    }
+
+    useScrollIntoView({ containerRef: listRef, targetId: `item-${selectedIndex}`, stickyHeader: ".sticky", });
+
     return (
         <DialogFieldset label={label}>
-            <TableContainer style={{ height: `${5 * 2.3}rem` }}>
-                <Table size="small" stickyHeader>
-                    <TableHead>
+            <TableContainer style={{ height: `${5 * 2.3}rem` }} ref={listRef}>
+                <Table size="small" stickyHeader onKeyDown={handleKeyDown} tabIndex={0}>
+                    <TableHead className="sticky">
                         <TableRow>
                             {columns.map((column) => (
                                 <TableCell key={column.key} sx={{ ...getItemWrapperStyle(column.size) }}>
                                     {resolveStringFactory(column.label, structure) ?? column.key}
                                 </TableCell>
                             ))}
-                            <TableCell key="__actions" sx={{ width: "1px" }}>
-                                <IconButton size="small" onClick={() => {
-                                    const nextRows = [...rows, {}];
-                                    onChange({
-                                        ...structure,
-                                        [list.key]: nextRows,
-                                    });
-                                    setSelectedIndex(nextRows.length - 1);
-                                }}>
-                                    <theme.icons.Add color="success" />
-                                </IconButton>
+                            <TableCell key="__actions" sx={{ width: "1%" }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                    <IconButton size="small" action={actions.cmAdd} />
+                                </Box>
                             </TableCell>
                         </TableRow>
                     </TableHead>
@@ -151,9 +200,9 @@ export const DialogList: React.FC<{
                     <TableBody>
                         {rows.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={Math.max(columns.length, 1)}>
+                                <TableCell colSpan={Math.max(columns.length + 1, 1)}>
                                     <Typography variant="body2" color="text.secondary">
-                                        Brak danych
+                                        {t("no-rows-to-display", "No rows to display")}
                                     </Typography>
                                 </TableCell>
                             </TableRow>
@@ -161,30 +210,42 @@ export const DialogList: React.FC<{
                             rows.map((row: Record<string, any>, rowIndex: number) => (
                                 <TableRow
                                     key={rowIndex}
+                                    id={`item-${rowIndex}`}
                                     hover
                                     selected={rowIndex === selectedIndex}
                                     onClick={() => setSelectedIndex(rowIndex)}
                                     sx={{ cursor: "pointer" }}
                                 >
-                                    {columns.map((column) => (
-                                        <TableCell key={column.key}>
-                                            {row?.[column.key] == null ? "" : typeof row?.[column.key] === "boolean" ? row[column.key] : String(row[column.key])}
-                                        </TableCell>
-                                    ))}
+                                    {columns.map((column) => {
+                                        let cellValue = row?.[column.key];
+                                        let align: "left" | "right" | "center" = "left";
+
+                                        if (cellValue == null) cellValue = "";
+                                        else if (typeof cellValue === "boolean") cellValue = cellValue ? <theme.icons.CheckBoxChecked /> : <theme.icons.CheckBoxBlank />;
+                                        else cellValue = String(cellValue);
+
+                                        if (typeof row?.[column.key] === "number") align = "right";
+                                        else if (typeof row?.[column.key] === "boolean") align = "center";
+
+                                        return (
+                                            <TableCell
+                                                key={column.key}
+                                                align={align}
+                                            >
+                                                {align === "center" ? (
+                                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                        {cellValue}
+                                                    </Box>
+                                                ) : (
+                                                    cellValue
+                                                )}
+                                            </TableCell>
+                                        );
+                                    })}
                                     <TableCell key="__actions">
-                                        <IconButton size="small" onClick={(e) => {
-                                            e.stopPropagation();
-                                            const nextRows = rows.filter((_, i) => i !== rowIndex);
-                                            onChange({
-                                                ...structure,
-                                                [list.key]: nextRows,
-                                            });
-                                            if (selectedIndex >= nextRows.length) {
-                                                setSelectedIndex(nextRows.length - 1);
-                                            }
-                                        }}>
-                                            <theme.icons.Delete color="error" />
-                                        </IconButton>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                            <IconButton size="small" action={actions.cmDelete} actionArgs={[rowIndex]} />
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -193,18 +254,18 @@ export const DialogList: React.FC<{
                 </Table>
             </TableContainer>
             <Divider />
-            {selectedRow && (
-                resolvedItems.map((item, index) => (
-                    <DialogLayoutItem
-                        key={index}
-                        item={item}
-                        structure={selectedRow}
-                        onChange={onSelectedRowChange}
-                        invalidFields={invalidFields}
-                        onValidityChange={onValidityChange}
-                    />
-                ))
-            )}
+            {resolvedItems.map((item, index) => (
+                <DialogLayoutItem
+                    key={index}
+                    item={item}
+                    structure={selectedRow ?? {}}
+                    onChange={onSelectedRowChange}
+                    invalidFields={invalidFields}
+                    onValidityChange={onValidityChange}
+                    disabled={!selectedRow ? true : disabled}
+                />
+            ))
+            }
         </DialogFieldset>
     );
 };

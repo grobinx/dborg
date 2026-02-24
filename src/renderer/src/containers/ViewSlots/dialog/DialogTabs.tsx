@@ -21,6 +21,7 @@ export const DialogTabs: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
     const {
         dialogTabs,
@@ -28,6 +29,7 @@ export const DialogTabs: React.FC<{
         onChange,
         invalidFields,
         onValidityChange,
+        disabled,
     } = props;
 
     const tabs = resolveDialogTabsFactory(dialogTabs.tabs, structure) || [];
@@ -76,6 +78,7 @@ export const DialogTabs: React.FC<{
                                 onChange={onChange}
                                 invalidFields={invalidFields}
                                 onValidityChange={onValidityChange}
+                                disabled={disabled}
                             />
                         ))}
                     </TabPanelContent>

@@ -1255,6 +1255,12 @@ export interface IDialogList {
      * Jeśli nie podano, lista kolumn będzie pobrana z items.
      */
     columns?: DialogListColumnsFactory<Record<string, any>>;
+    /**
+     * Funkcja wywoływana przy dodawaniu nowego elementu do listy.
+     * Można w niej zainicjalizować wartości nowego elementu.
+     * @returns Wartości nowego elementu.
+     */
+    prepareItem?: () => Record<string, any>;
 }
 
 export type DialogSize = "small" | "medium" | "large" | "full";

@@ -27,8 +27,9 @@ export const DialogRow: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
-    const { row, structure, onChange, invalidFields, onValidityChange } = props;
+    const { row, structure, onChange, invalidFields, onValidityChange, disabled } = props;
 
     const label = resolveStringFactory(row.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
@@ -50,6 +51,7 @@ export const DialogRow: React.FC<{
                         onChange={onChange}
                         invalidFields={invalidFields}
                         onValidityChange={onValidityChange}
+                        disabled={disabled}
                     />
                 </div>
             ))}
@@ -67,8 +69,9 @@ export const DialogColumn: React.FC<{
     onChange: (structure: Record<string, any>) => void;
     invalidFields: Set<string>;
     onValidityChange: () => void;
+    disabled?: boolean;
 }> = (props) => {
-    const { column, structure, onChange, invalidFields, onValidityChange } = props;
+    const { column, structure, onChange, invalidFields, onValidityChange, disabled } = props;
 
     const label = resolveStringFactory(column.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
@@ -83,6 +86,7 @@ export const DialogColumn: React.FC<{
                     onChange={onChange}
                     invalidFields={invalidFields}
                     onValidityChange={onValidityChange}
+                    disabled={disabled}
                 />
             ))}
         </Stack>

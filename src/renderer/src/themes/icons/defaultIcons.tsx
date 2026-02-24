@@ -43,6 +43,7 @@ import { Queue } from "./svg/Queue";
 import { Reindex } from "./svg/Reindex";
 import { Cluster } from "./svg/Cluster";
 import { Aggregates } from "./svg/Aggregates";
+import { SecurityLabel } from "./svg/SecurityLabel";
 
 const icons = (palette: Palette): ThemeOptions => {
     return {
@@ -200,6 +201,8 @@ const icons = (palette: Palette): ThemeOptions => {
             Tablespace: (props) => <IconWrapper {...props} className="tablespace"><BsIcons.HddNetwork fontSize="inherit" /></IconWrapper>,
             Aggregates: (props) => <IconWrapper {...props} className="aggregates"><Aggregates fontSize="inherit" /></IconWrapper>,
             Rollback: (props) => <IconWrapper {...props} className="rollback"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
+            AccessControl: (props) => <IconWrapper {...props} className="access-control"><BsIcons.PersonLock fontSize="inherit" /></IconWrapper>,
+            SecurityLabel: (props) => <IconWrapper {...props} className="security-label"><SecurityLabel fontSize="inherit" /></IconWrapper>,
         }
     }
 }

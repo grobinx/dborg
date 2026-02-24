@@ -2213,6 +2213,7 @@ export const PlainGrid = <T extends object>({
     fontSize: fontSizeProp,
     fontFamily: fontFamilyProp,
 }: PlainGridProps<T>) => {
+    const { t } = useTranslation();
     const [settingFontFamily] = useSetting<string>("ui", "fontFamily");
     const [settingFontSize] = useSetting<number>("dborg", "data_grid.defined.font_size");
     const [colors_enabled] = useSetting<boolean>("dborg", `data_grid.defined.colors_enabled`);
@@ -2349,7 +2350,7 @@ export const PlainGrid = <T extends object>({
 
                     {data.length === 0 ? (
                         <StyledNoRowsInfo className={clsx("PlainGrid-noRowsInfo", classes)}>
-                            No rows to display
+                            {t("no-rows-to-display", "No rows to display")}
                         </StyledNoRowsInfo>
                     ) : (
                         <StyledRowsContainer

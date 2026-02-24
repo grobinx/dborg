@@ -7,6 +7,7 @@ import { versionToNumber } from "../../../../../src/api/version";
 import { schemaDdl } from "../../../common/ddls/schema";
 import { DataGridChangesManager } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { executeScriptAction } from "../actions/ExecuteScript";
+import { AclEntry, ALL_PRIVILEGES, mergeRecordsAcl } from "../../../common/acl";
 
 export interface SchemaRecord {
     id: number;
@@ -23,16 +24,8 @@ export interface SchemaRecord {
     total_objects: number | null;
     comment: string | null;
     is_system: boolean;
-    acl: SchemaAclEntry[];
+    acl: AclEntry[];
     security_labels: SchemaSecurityLabelEntry[];
-    [key: string]: any;
-}
-
-export interface SchemaAclEntry {
-    grantor: string;
-    grantee: string;
-    privilege_type: string;
-    is_grantable: boolean;
     [key: string]: any;
 }
 
@@ -71,9 +64,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
         if (roleNameList === null) {
             try {
                 const { rows } = await session.query<{ rolname: string }>(
-                    `select rolname
-                 from pg_roles
-                 order by rolname`);
+                    "select rolname from pg_roles union all select 'PUBLIC' order by rolname");
                 roleNameList = rows.map(r => r.rolname);
             } catch (e) {
                 roleNameList = [];
@@ -100,6 +91,73 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
 
     const changes = new DataGridChangesManager<SchemaRecord>({
         getUniqueId: (record) => record.id,
+        generateScript: (changes, rows) => {
+            if (changes.length === 0) {
+                return "-- No changes";
+            }
+
+            const scripts: string[] = [];
+            scripts.push("-- Schema Changes Script");
+            scripts.push("-- Generated automatically from pending changes");
+            scripts.push("");
+
+            for (const change of changes) {
+                const original = rows.find(r => r.id === change.uniqueId);
+                if (change.type === 'add') {
+                    // CREATE SCHEMA
+                    const schemaName = change.data.schema_name;
+                    const owner = change.data.schema_owner;
+                    const comment = change.data.comment;
+
+                    scripts.push(`-- Create new schema: ${schemaName}`);
+                    scripts.push(`CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION ${owner};`);
+
+                    if (comment) {
+                        const escapedComment = comment.replace(/'/g, "''");
+                        scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
+                    }
+                    scripts.push("");
+                } else if (change.type === 'update' && original) {
+                    // ALTER SCHEMA
+                    const oldName = original.schema_name;
+                    const newName = change.data.schema_name;
+                    const newOwner = change.data.schema_owner;
+                    const newComment = change.data.comment;
+
+                    scripts.push(`-- Update schema: ${oldName}`);
+
+                    if (newName && newName !== oldName) {
+                        scripts.push(`ALTER SCHEMA ${oldName} RENAME TO ${newName};`);
+                    }
+
+                    if (newOwner && newOwner !== original.schema_owner) {
+                        const targetName = newName || oldName;
+                        scripts.push(`ALTER SCHEMA ${targetName} OWNER TO ${newOwner};`);
+                    }
+
+                    if (newComment !== undefined) {
+                        const targetName = newName || oldName;
+                        if (newComment) {
+                            const escapedComment = newComment.replace(/'/g, "''");
+                            scripts.push(`COMMENT ON SCHEMA ${targetName} IS '${escapedComment}';`);
+                        } else {
+                            scripts.push(`COMMENT ON SCHEMA ${targetName} IS NULL;`);
+                        }
+                    }
+                    scripts.push("");
+                } else if (change.type === 'remove' && original) {
+                    // DROP SCHEMA
+                    const schemaName = original.schema_name;
+                    const cascade = change.userData?.cascade;
+
+                    scripts.push(`-- Drop schema: ${schemaName}`);
+                    scripts.push(`DROP SCHEMA IF EXISTS ${schemaName}${cascade ? ' CASCADE' : ''};`);
+                    scripts.push("");
+                }
+            }
+
+            return scripts.join('\n');
+        }
     });
 
     const storeSchemasStats = () => {
@@ -213,76 +271,6 @@ group by n.nspname, oc.tables_count, oc.views_count, fc.functions_count, oc.sequ
         return value;
     };
 
-    function generateChangesScript(): string {
-        const allChanges = changes.getChanges();
-
-        if (allChanges.length === 0) {
-            return "-- No changes";
-        }
-
-        const scripts: string[] = [];
-        scripts.push("-- Schema Changes Script");
-        scripts.push("-- Generated automatically from pending changes");
-        scripts.push("");
-
-        for (const change of allChanges) {
-            const original = allRows.find(r => r.id === change.uniqueId);
-            if (change.type === 'add') {
-                // CREATE SCHEMA
-                const schemaName = change.data.schema_name;
-                const owner = change.data.schema_owner;
-                const comment = change.data.comment;
-
-                scripts.push(`-- Create new schema: ${schemaName}`);
-                scripts.push(`CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION ${owner};`);
-
-                if (comment) {
-                    const escapedComment = comment.replace(/'/g, "''");
-                    scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
-                }
-                scripts.push("");
-            } else if (change.type === 'update' && original) {
-                // ALTER SCHEMA
-                const oldName = original.schema_name;
-                const newName = change.data.schema_name;
-                const newOwner = change.data.schema_owner;
-                const newComment = change.data.comment;
-
-                scripts.push(`-- Update schema: ${oldName}`);
-
-                if (newName && newName !== oldName) {
-                    scripts.push(`ALTER SCHEMA ${oldName} RENAME TO ${newName};`);
-                }
-
-                if (newOwner && newOwner !== original.schema_owner) {
-                    const targetName = newName || oldName;
-                    scripts.push(`ALTER SCHEMA ${targetName} OWNER TO ${newOwner};`);
-                }
-
-                if (newComment !== undefined) {
-                    const targetName = newName || oldName;
-                    if (newComment) {
-                        const escapedComment = newComment.replace(/'/g, "''");
-                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS '${escapedComment}';`);
-                    } else {
-                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS NULL;`);
-                    }
-                }
-                scripts.push("");
-            } else if (change.type === 'remove' && original) {
-                // DROP SCHEMA
-                const schemaName = original.schema_name;
-                const cascade = change.userData?.cascade;
-
-                scripts.push(`-- Drop schema: ${schemaName}`);
-                scripts.push(`DROP SCHEMA IF EXISTS ${schemaName}${cascade ? ' CASCADE' : ''};`);
-                scripts.push("");
-            }
-        }
-
-        return scripts.join('\n');
-    }
-
     return {
         id: cid("schemas-editors-tab"),
         type: "tab",
@@ -365,9 +353,10 @@ where n.nspname not like 'pg_toast%'
   and n.nspname not like 'pg_temp%';
 `;
                             const { rows } = await session.query<SchemaRecord>(sql);
-                            allRows = rows;
+                            allRows = mergeRecordsAcl(rows, ALL_PRIVILEGES.SCHEMA);
+                            changes.setRows(allRows);
                             await restoreSchemasStats();
-                            return rows;
+                            return allRows;
                         },
                         columns: [
                             { key: "schema_name", label: t("schema-name", "Schema Name"), dataType: "string", width: 220, sortDirection: "asc", sortOrder: 2 },
@@ -644,8 +633,8 @@ where n.nspname not like 'pg_toast%'
                             },
                             {
                                 id: "schema-acl",
-                                label: t("schema-acl", "Schema ACL"),
-                                icon: "Permissions",
+                                label: t("schema-acl", "Schema Access Control List"),
+                                icon: <slotContext.theme.icons.AccessControl color="secondary" />,
                                 keySequence: ["Shift+F4"],
                                 contextMenuGroupId: "schema-details",
                                 contextMenuOrder: 1,
@@ -697,7 +686,7 @@ where n.nspname not like 'pg_toast%'
                                     const allChanges = changes.getChanges();
 
                                     if (allChanges.length > 0) {
-                                        return generateChangesScript();
+                                        return changes.generateScript() ?? "";
                                     }
 
                                     if (!selectedRow) return "-- No schema selected";
@@ -724,14 +713,14 @@ where n.nspname not like 'pg_toast%'
                         title: {
                             id: cid("schemas-details-acl-title"),
                             type: "title",
-                            title: t("schema-acl", "ACL"),
+                            title: t("schema-acl", "Schema Access Control List"),
                         },
                         main: {
                             id: cid("schemas-details-acl-grid"),
                             type: "grid",
                             rows: async () => {
                                 if (!selectedRow) return [];
-                                return (selectedRow.acl || []) as SchemaAclEntry[];
+                                return (selectedRow.acl || []) as AclEntry[];
                             },
                             columns: [
                                 { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 100 },
@@ -857,12 +846,12 @@ where n.nspname not like 'pg_toast%'
                 {
                     id: cid("schema-acl-dialog"),
                     type: "dialog",
-                    title: t("edit-schema-acl", "Edit Schema ACL"),
+                    title: t("edit-acl", "Edit Access Control List"),
                     items: [
                         {
                             type: "list",
                             key: "acl",
-                            label: t("schema-acl", "Schema ACL"),
+                            label: t("schema-acl", "Schema Access Control List"),
                             items: [
                                 {
                                     type: "row",
@@ -871,16 +860,27 @@ where n.nspname not like 'pg_toast%'
                                             type: "text",
                                             key: "grantor",
                                             label: t("grantor", "Grantor"),
+                                            disabled: true,
                                         },
                                         {
-                                            type: "text",
+                                            type: "select",
                                             key: "grantee",
                                             label: t("grantee", "Grantee"),
+                                            required: true,
+                                            options: () => {
+                                                return roleNameList!.map(role => ({ label: role, value: role }));
+                                            }
                                         },
                                         {
-                                            type: "text",
+                                            type: "select",
                                             key: "privilege_type",
                                             label: t("privilege-type", "Privilege Type"),
+                                            required: true,
+                                            options: [
+                                                { label: "USAGE", value: "USAGE" },
+                                                { label: "CREATE", value: "CREATE" },
+                                                { label: "ALL", value: "ALL" },
+                                            ]
                                         },
                                         {
                                             type: "boolean",
@@ -889,7 +889,13 @@ where n.nspname not like 'pg_toast%'
                                         },
                                     ]
                                 }
-                            ]
+                            ],
+                            prepareItem: () => {
+                                return {
+                                    grantor: currentUser,
+                                    privilege_type: "USAGE",
+                                };
+                            }
                         }
                     ],
                 }

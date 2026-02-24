@@ -5,6 +5,10 @@ export interface DataGridChangesOptions<T> {
      * Funkcja zwracająca unikalny identyfikator rekordu
      */
     getUniqueId: (record: T) => string | number;
+    /**
+     * Opcjonalna funkcja do generowania skryptu SQL dla danej zmiany
+     */
+    generateScript?: (changes: DataGridChangeRow<Partial<T>>[], originalRows: T[]) => string;
 }
 
 export interface DataGridChangeRowOptions {
@@ -15,6 +19,7 @@ export interface DataGridChangeRowOptions {
 export class DataGridChangesManager<T extends Record<string, any>> {
     private changes: DataGridChangeRow<Partial<T>>[] = [];
     private options: DataGridChangesOptions<T>;
+    private rows: T[] = [];
 
     constructor(options: DataGridChangesOptions<T>) {
         this.options = options;
@@ -191,5 +196,17 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         if (!change) return original;
 
         return { ...original, ...change.data };
+    }
+
+    setRows(rows: T[]) {
+        this.rows = rows;
+    }
+
+    /**
+     * Generuje skrypt SQL dla wszystkich zmian
+     */
+    generateScript(): string | null {
+        if (!this.options.generateScript) return "";
+        return this.options.generateScript(this.changes, this.rows);
     }
 }
