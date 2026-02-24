@@ -220,6 +220,16 @@ const layout = (palette: Palette, root: ThemeOptions): ThemeOptions => {
                     }
                 }
             },
+            MuiTableCell: {
+                styleOverrides: {
+                    sizeSmall: {
+                        padding: "2px 4px",
+                    },
+                    sizeMedium: {
+                        padding: "4px 8px",
+                    },
+                },
+            },
             MuiAppBar: {
                 defaultProps: {
                     color: "default"

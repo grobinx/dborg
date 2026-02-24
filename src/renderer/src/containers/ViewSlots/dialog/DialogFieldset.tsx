@@ -14,25 +14,30 @@ export const DialogFieldset: React.FC<{
         <Box
             component="fieldset"
             sx={{
+                display: "flex",
+                flexDirection: "column",
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
                 px: 8,
-                pt: 8,
+                pt: 0,
                 pb: 6,
                 m: 0,
                 minWidth: 0,
                 width: "100%",
+                gap: 8,
                 ...sx,
             }}
         >
-            <Typography
-                component="legend"
-                variant="label"
-                sx={{ px: 4, ...legendSx }}
-            >
-                {label}
-            </Typography>
+            {label && (
+                <Typography
+                    component="legend"
+                    variant="label"
+                    sx={{ px: 4, ...legendSx }}
+                >
+                    {label}
+                </Typography>
+            )}
             {children}
         </Box>
     );

@@ -1142,6 +1142,7 @@ export type DialogLayoutItemKind =
         | IDialogColumn
         | IDialogTabs
         | IDialogStatic
+        | IDialogList
     ) & IDialogGridItem;
 
 export interface IDialogStatic {
@@ -1240,6 +1241,10 @@ export interface IDialogList {
      * Klucz pola z listą.
      */
     key: string;
+    /**
+     * Etykieta listy (opcjonalnie).
+     */
+    label?: StringFactory<Record<string, any>>;
     /**
      * Elementy elementu listy (pola, wiersze, kolumny).
      * Wszystkie elementy w items będą się odnośić do wartości elementu z listy z klucza `key` 

@@ -1,5 +1,6 @@
 import React from "react";
 import {
+    DialogGridSize,
     IDialogColumn,
     IDialogRow,
     resolveDialogLayoutItemsKindFactory,
@@ -8,6 +9,17 @@ import {
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import { Stack } from "@mui/material";
 import { DialogFieldset } from "./DialogFieldset";
+
+export const getItemWrapperStyle = (size: DialogGridSize | undefined): React.CSSProperties => {
+    if (size === "auto") return { flex: "0 0 auto" };
+    if (typeof size === "string") return { width: size };
+    if (typeof size === "number") {
+        const pct = `${(size / 12) * 100}%`;
+        return { flex: `0 0 ${pct}`, maxWidth: pct };
+    }
+    return { flex: "1" };
+};
+
 
 export const DialogRow: React.FC<{
     row: IDialogRow;
@@ -21,18 +33,6 @@ export const DialogRow: React.FC<{
     const label = resolveStringFactory(row.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
 
-    const getItemWrapperStyle = (item: any): React.CSSProperties => {
-        const size = item?.size;
-
-        if (typeof size === "string") return { width: size };
-        if (size === "auto") return { flex: "0 0 auto" };
-        if (typeof size === "number") {
-            const pct = `${(size / 12) * 100}%`;
-            return { flex: `0 0 ${pct}`, maxWidth: pct };
-        }
-        return { flex: "1" };
-    };
-
     const content = (
         <Stack direction="row" flexWrap="wrap" gap="8px" width="100%" alignItems="stretch">
             {items.map((item, index) => (
@@ -41,7 +41,7 @@ export const DialogRow: React.FC<{
                     style={{
                         boxSizing: "border-box",
                         minWidth: 0,
-                        ...getItemWrapperStyle(item),
+                        ...getItemWrapperStyle(item.size),
                     }}
                 >
                     <DialogLayoutItem

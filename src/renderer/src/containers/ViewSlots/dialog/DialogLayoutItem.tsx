@@ -1,6 +1,5 @@
 import React from "react";
 import {
-    SlotRuntimeContext,
     DialogLayoutItemKind,
     isDialogTextField,
     isDialogNumberField,
@@ -12,11 +11,13 @@ import {
     isDialogEditorField,
     isDialogTextareaField,
     isDialogStatic,
+    isDialogList,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogTextField, DialogNumberField, DialogSelectField, DialogBooleanField, DialogEditorField, DialogTextareaField, DialogStatic } from "./DialogFields";
 import { DialogRow } from "./DialogLayout";
 import { DialogColumn } from "./DialogLayout";
 import { DialogTabs } from "./DialogTabs";
+import { DialogList } from "./DialogList";
 
 export const DialogLayoutItem: React.FC<{
     item: DialogLayoutItemKind;
@@ -104,10 +105,10 @@ export const DialogLayoutItem: React.FC<{
     }
 
     if (isDialogColumn(item)) {
-        return <DialogColumn 
-            column={item} 
-            structure={structure} 
-            onChange={onChange} 
+        return <DialogColumn
+            column={item}
+            structure={structure}
+            onChange={onChange}
             invalidFields={invalidFields}
             onValidityChange={onValidityChange}
         />;
@@ -116,6 +117,16 @@ export const DialogLayoutItem: React.FC<{
     if (isDialogTabs(item)) {
         return <DialogTabs
             dialogTabs={item}
+            structure={structure}
+            onChange={onChange}
+            invalidFields={invalidFields}
+            onValidityChange={onValidityChange}
+        />;
+    }
+
+    if (isDialogList(item)) {
+        return <DialogList
+            list={item}
             structure={structure}
             onChange={onChange}
             invalidFields={invalidFields}

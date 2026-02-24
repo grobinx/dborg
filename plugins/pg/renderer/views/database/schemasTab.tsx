@@ -642,6 +642,27 @@ where n.nspname not like 'pg_toast%'
                                     }
                                 },
                             },
+                            {
+                                id: "schema-acl",
+                                label: t("schema-acl", "Schema ACL"),
+                                icon: "Permissions",
+                                keySequence: ["Shift+F4"],
+                                contextMenuGroupId: "schema-details",
+                                contextMenuOrder: 1,
+                                disabled: () => selectedRow === null,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        const updated = changes.findChange(selectedRow);
+
+                                        const result = await slotContext.openDialog(
+                                            cid("schema-acl-dialog"),
+                                            {
+                                                acl: updated?.data.acl ?? selectedRow.acl,
+                                            }
+                                        );
+                                    }
+                                }
+                            }
                         ],
                         autoSaveId: `schemas-grid-${session.profile.sch_id}`,
                         statuses: ["data-rows"],
@@ -833,6 +854,45 @@ where n.nspname not like 'pg_toast%'
                         },
                     ],
                 },
+                {
+                    id: cid("schema-acl-dialog"),
+                    type: "dialog",
+                    title: t("edit-schema-acl", "Edit Schema ACL"),
+                    items: [
+                        {
+                            type: "list",
+                            key: "acl",
+                            label: t("schema-acl", "Schema ACL"),
+                            items: [
+                                {
+                                    type: "row",
+                                    items: [
+                                        {
+                                            type: "text",
+                                            key: "grantor",
+                                            label: t("grantor", "Grantor"),
+                                        },
+                                        {
+                                            type: "text",
+                                            key: "grantee",
+                                            label: t("grantee", "Grantee"),
+                                        },
+                                        {
+                                            type: "text",
+                                            key: "privilege_type",
+                                            label: t("privilege-type", "Privilege Type"),
+                                        },
+                                        {
+                                            type: "boolean",
+                                            key: "is_grantable",
+                                            label: t("is-admin", "Is Admin"),
+                                        },
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                }
             ],
         }),
         toolBar: [
@@ -840,7 +900,7 @@ where n.nspname not like 'pg_toast%'
                 id: cid("schemas-toolbar"),
                 type: "toolbar",
                 tools: [
-                    ["schema-create", "schema-edit", "schema-comment"],
+                    ["schema-create", "schema-edit", "schema-comment", "schema-acl"],
                     ["schema-drop", "schema-drop-cascade"],
                     ["schema-rollback", "schema-rollback-all"],
                     ["schema-stats-refresh", "schema-stats-refresh-all"]
