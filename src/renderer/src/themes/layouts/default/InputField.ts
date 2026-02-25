@@ -118,8 +118,6 @@ export const InputFieldLayout = (palette: Palette, _root: ThemeOptions): InputFi
                 height: "100%",
                 minWidth: 0,
                 maxWidth: "100%",
-                overflowX: "auto",
-                overflowY: "hidden",
                 '&::-webkit-scrollbar': {
                     display: 'none', // Chrome/Safari/Edge
                 },

@@ -1,9 +1,10 @@
 import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { IQueueTask, QueueTask, QueueTaskInfo, TaskOptions } from "@renderer/utils/QueueTask";
+import { IQueueTask, QueueTask, TaskOptions } from "@renderer/utils/QueueTask";
 import { queueMessage } from "./MessageContext";
 import { PROFILE_UPDATE_MESSAGE } from "./ProfilesContext";
+import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
@@ -45,6 +46,48 @@ export interface IDatabaseSession extends api.BaseConnection {
     storeProfileSettings(name: string, value: Record<string, any>): void; 
 
     getProfileSettings(name: string): Promise<Record<string, any> | null>;
+
+    /**
+     * Create a DataGridChangesManager for managing changes in data grids. Each manager is associated with a context object (e.g. component instance) and can be retrieved later using that context.
+     * @param options 
+     */
+    createChangeManager<T extends Record<string, any>>(options: DataGridChangesOptions<T> & { context: object }): DataGridChangesManager<T>;
+
+    /**
+     * Get a DataGridChangesManager associated with the given context. Returns undefined if no manager is found for that context.
+     * @param context 
+     */
+    changeManager<T extends Record<string, any>>(context: object): DataGridChangesManager<T> | undefined;
+
+    /**
+     * Get all active change managers.
+     */
+    changeManagerList(): DataGridChangesManager<any>[];
+
+    /**
+     * Change the order of change managers. The order can be used to determine the sequence of applying changes or generating scripts.
+     * @param newOrder Array of keys representing the new order. Keys are generated based on the context object provided when creating the manager.
+     * @returns true if the order was successfully updated, false if there was an error (e.g. invalid keys).
+     */
+    setChangeManagersOrder(newOrder: string[]): boolean;
+
+    /**
+     * Move a change manager to a new position in the order.
+     * @param key Key of the manager to move (generated based on context).
+     * @param newIndex New position index (0-based).
+     * @returns true if the manager was successfully moved, false if there was an error (e.g. invalid key or index).
+     */
+    moveChangeManager(key: string, newIndex: number): boolean;
+
+    /**
+     * Get the current order of change manager keys.
+     */
+    getChangeManagersOrder(): string[];
+
+    /**
+     * Get change managers with their keys.
+     */
+    changeManagerEntries(): Array<[string, DataGridChangesManager<any>]>;
 }
 
 export interface IDatabaseSessionCursor extends api.BaseCursor {
@@ -53,7 +96,7 @@ export interface IDatabaseSessionCursor extends api.BaseCursor {
 
 export class DatabaseSessionCursor implements IDatabaseSessionCursor {
     info: api.CursorInfo; // Cursor information
-    ended: boolean = false;;;
+    ended: boolean = false;
 
     constructor(info: api.CursorInfo) {
         this.info = info;
@@ -88,13 +131,14 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
 }
 
 class DatabaseSession implements IDatabaseSession {
+    private readonly changeManagers: Map<string, DataGridChangesManager<any>> = new Map();
+    private changeManagersOrder: string[] = []; // ← Przechowuje porządek kluczy
+
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map(); 
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
-
-    // Per-session queue (default: sequential; keep last 200 finished)
     private readonly queue: QueueTask<IDatabaseSession>;
 
     constructor(info: api.ConnectionInfo) {
@@ -224,6 +268,103 @@ class DatabaseSession implements IDatabaseSession {
         }
         return window.dborg.settings.get(name, "profiles", this.profile.sch_id) ?? null;
     }
+
+    /**
+     * Tworzy unikatowy klucz dla kontekstu poprzez serializację posortowanych właściwości
+     */
+    private createChangeManagerKey(context: object): string {
+        const sorted = Object.keys(context)
+            .sort()
+            .reduce((acc, key) => {
+                acc[key] = (context as Record<string, any>)[key];
+                return acc;
+            }, {} as Record<string, any>);
+        
+        return JSON.stringify(sorted);
+    }
+
+    createChangeManager<T extends Record<string, any>>(
+        options: DataGridChangesOptions<T> & { context: object }
+    ): DataGridChangesManager<T> {
+        const key = this.createChangeManagerKey(options.context);
+        
+        if (!this.changeManagers.has(key)) {
+            this.changeManagers.set(key, new DataGridChangesManager(options));
+            // Dodaj na koniec porządku
+            this.changeManagersOrder.push(key);
+        }
+        
+        return this.changeManagers.get(key)!;
+    }
+
+    changeManager<T extends Record<string, any>>(context: object): DataGridChangesManager<T> | undefined {
+        const key = this.createChangeManagerKey(context);
+        return this.changeManagers.get(key) as DataGridChangesManager<T> | undefined;
+    }
+
+    /**
+     * Zwraca wszystkie managery w obecnym porządku
+     */
+    changeManagerList(): DataGridChangesManager<any>[] {
+        return this.changeManagersOrder
+            .map(key => this.changeManagers.get(key))
+            .filter((manager): manager is DataGridChangesManager<any> => manager !== undefined);
+    }
+
+    /**
+     * Zmienia porządek managerów
+     * @param newOrder - Tablica kluczy w nowej kolejności
+     */
+    setChangeManagersOrder(newOrder: string[]): boolean {
+        // Sprawdzenie czy wszystkie klucze istnieją
+        const validKeys = new Set(this.changeManagersOrder);
+        const allKeysValid = newOrder.every(key => validKeys.has(key));
+        
+        if (!allKeysValid || newOrder.length !== this.changeManagersOrder.length) {
+            console.warn('Invalid order:Keys mismatch or incorrect count');
+            return false;
+        }
+        
+        this.changeManagersOrder = [...newOrder];
+        return true;
+    }
+
+    /**
+     * Przesuwa manager na określoną pozycję
+     * @param key - Klucz managera
+     * @param newIndex - Nowa pozycja (0-based)
+     */
+    moveChangeManager(key: string, newIndex: number): boolean {
+        const currentIndex = this.changeManagersOrder.indexOf(key);
+        
+        if (currentIndex === -1 || newIndex < 0 || newIndex >= this.changeManagersOrder.length) {
+            return false;
+        }
+        
+        this.changeManagersOrder.splice(currentIndex, 1);
+        this.changeManagersOrder.splice(newIndex, 0, key);
+        return true;
+    }
+
+    /**
+     * Zwraca porządek kluczy managerów
+     */
+    getChangeManagersOrder(): string[] {
+        return [...this.changeManagersOrder];
+    }
+
+    /**
+     * Zwraca managery z ich kluczami
+     */
+    changeManagerEntries(): Array<[string, DataGridChangesManager<any>]> {
+        return this.changeManagersOrder
+            .map(key => {
+                const manager = this.changeManagers.get(key);
+                return manager ? [key, manager] as const : null;
+            })
+            .filter((entry): entry is [string, DataGridChangesManager<any>] => entry !== null);
+    }
+
 }
 
 export interface MetadataGridResult {

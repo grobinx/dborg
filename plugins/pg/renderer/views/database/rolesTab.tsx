@@ -125,6 +125,49 @@ group by oc.tables_count, oc.views_count, fc.functions_count, oc.sequences_count
         );
     }
 
+    const storeRolesStats = () => {
+        if (allRows.length === 0) return;
+
+        const stats = allRows
+            .filter(row => row.total_objects !== null)
+            .map(row => ({
+                role_name: row.role_name,
+                tables_count: row.tables_count,
+                views_count: row.views_count,
+                functions_count: row.functions_count,
+                sequences_count: row.sequences_count,
+                types_count: row.types_count,
+                total_objects: row.total_objects,
+                role_size: row.role_size,
+                role_size_bytes: row.role_size_bytes,
+            }));
+
+        session.storeProfileSettings("roles-stats", {
+            stats: stats,
+        })
+    }
+
+    const restoreRolesStats = async () => {
+        if (allRows.length === 0) return;
+
+        const settings = await session.getProfileSettings("roles-stats");
+        if (settings && settings.stats) {
+            for (const stat of settings.stats) {
+                const row = allRows.find((r) => r.role_name === stat.role_name);
+                if (row) {
+                    row.tables_count = stat.tables_count;
+                    row.views_count = stat.views_count;
+                    row.functions_count = stat.functions_count;
+                    row.sequences_count = stat.sequences_count;
+                    row.types_count = stat.types_count;
+                    row.total_objects = stat.total_objects;
+                    row.role_size = stat.role_size;
+                    row.role_size_bytes = stat.role_size_bytes;
+                }
+            }
+        }
+    }
+
     return {
         id: cid("roles-editors-tab"),
         type: "tab",
@@ -147,10 +190,11 @@ group by oc.tables_count, oc.views_count, fc.functions_count, oc.sequences_count
                 first: (slotContext) => ({
                     id: cid("roles-grid"),
                     type: "grid",
-                    uniqueField: "role_name",
+                    uniqueField: "id",
                     rows: async () => {
                         const sql = `
 select
+  r.oid as id,
   r.rolname as role_name,
   r.rolsuper,
   r.rolcreaterole,
@@ -173,6 +217,7 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
 `;
                         const { rows } = await session.query<RoleRecord>(sql);
                         allRows = rows;
+                        await restoreRolesStats();
                         return rows;
                     },
                     columns: [
@@ -216,15 +261,18 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                     loadingStatsRow.push(row);
                                     slotContext.refresh(cid("roles-grid"), "only");
                                     slotContext.refresh(cid("roles-stats-progress"));
+                                    slotContext.refresh(cid("roles-toolbar"));
                                     try {
                                         const stats = await getRoleStats(row.role_name);
                                         Object.assign(row, stats);
+                                        storeRolesStats();
                                     } finally {
                                         const index = loadingStatsRow.indexOf(row);
                                         if (index !== -1) loadingStatsRow.splice(index, 1);
                                         loadingStats = false;
                                         slotContext.refresh(cid("roles-grid"), "compute");
                                         slotContext.refresh(cid("roles-stats-progress"));
+                                        slotContext.refresh(cid("roles-toolbar"));
                                     }
                                 }
                             },
@@ -236,13 +284,13 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                             keySequence: ["Alt+Shift+Enter"],
                             contextMenuGroupId: "role-stats",
                             contextMenuOrder: 2,
-                            //disabled: () => loadingStats,
                             run: async () => {
                                 if (loadingStats) {
                                     loadingStats = false;
                                     return;
                                 }
                                 loadingStats = true;
+                                slotContext.refresh(cid("roles-toolbar"));
                                 try {
                                     for (const [index, row] of allRows.entries()) {
                                         loadingProgress = Math.round(((index + 1) / allRows.length) * 100);
@@ -254,19 +302,23 @@ left join pg_shdescription sd on sd.objoid = r.oid and sd.classoid = 'pg_authid'
                                             Object.assign(row, stats);
                                         } finally {
                                             const index = loadingStatsRow.indexOf(row);
-                                            if (index !== -1) loadingStatsRow.splice(index, 1);
+                                            if (index !== -1) {
+                                                loadingStatsRow.splice(index, 1);
+                                            }
                                             slotContext.refresh(cid("roles-grid"), "only");
-                                            slotContext.refresh(cid("roles-stats-progress"));
                                         }
                                         if (!loadingStats) {
                                             break;
                                         }
                                     }
-                                } finally {
+                                    storeRolesStats();
+                                }
+                                finally {
                                     loadingStats = false;
                                     loadingProgress = null;
                                     slotContext.refresh(cid("roles-grid"), "compute");
                                     slotContext.refresh(cid("roles-stats-progress"));
+                                    slotContext.refresh(cid("roles-toolbar"));
                                 }
                             }
                         }

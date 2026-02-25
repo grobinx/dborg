@@ -8,7 +8,7 @@ export interface DataGridChangesOptions<T> {
     /**
      * Opcjonalna funkcja do generowania skryptu SQL dla danej zmiany
      */
-    generateScript?: (changes: DataGridChangeRow<Partial<T>>[], originalRows: T[]) => string;
+    generateScript?: (change: DataGridChangeRow<Partial<T>>, row: T | undefined) => string;
 }
 
 export interface DataGridChangeRowOptions {
@@ -16,13 +16,85 @@ export interface DataGridChangeRowOptions {
     icon?: React.ReactNode;
 }
 
+export type DataGridChangesEventType = 
+    | 'change'      // Dowolna zmiana (add, update, remove)
+    | 'add'         // Nowy rekord
+    | 'update'      // Aktualizacja
+    | 'remove'      // Usunięcie
+    | 'clear'       // Wyczyszczenie wszystkich zmian
+    | 'cancel';     // Anulowanie zmian dla rekordu
+
+export interface DataGridChangesEvent<T> {
+    type: DataGridChangesEventType;
+    change?: DataGridChangeRow<Partial<T>>;
+    uniqueId?: string | number;
+    timestamp: number;
+}
+
+export type DataGridChangesEventListener<T> = (event: DataGridChangesEvent<T>) => void;
+
 export class DataGridChangesManager<T extends Record<string, any>> {
     private changes: DataGridChangeRow<Partial<T>>[] = [];
     private options: DataGridChangesOptions<T>;
     private rows: T[] = [];
+    private listeners: Map<DataGridChangesEventType | 'all', Set<DataGridChangesEventListener<T>>> = new Map();
 
     constructor(options: DataGridChangesOptions<T>) {
         this.options = options;
+    }
+
+    /**
+     * Subskrybuj event
+     * @param eventType Typ eventu ('change', 'add', 'update', 'remove', 'clear', 'cancel', 'all')
+     * @param listener Funkcja callback
+     * @returns Funkcja do unsubskrypcji
+     */
+    on(eventType: DataGridChangesEventType | 'all', listener: DataGridChangesEventListener<T>): () => void {
+        if (!this.listeners.has(eventType)) {
+            this.listeners.set(eventType, new Set());
+        }
+        this.listeners.get(eventType)!.add(listener);
+
+        // Zwróć funkcję unsubskrypcji
+        return () => this.off(eventType, listener);
+    }
+
+    /**
+     * Unsubskrybuj event
+     */
+    off(eventType: DataGridChangesEventType | 'all', listener: DataGridChangesEventListener<T>): void {
+        this.listeners.get(eventType)?.delete(listener);
+    }
+
+    /**
+     * Unsubskrybuj wszystkie listenery dla danego eventu
+     */
+    offAll(eventType?: DataGridChangesEventType | 'all'): void {
+        if (eventType) {
+            this.listeners.delete(eventType);
+        } else {
+            this.listeners.clear();
+        }
+    }
+
+    /**
+     * Emituj event
+     */
+    private emit<E extends DataGridChangesEventType>(
+        eventType: E,
+        event: Omit<DataGridChangesEvent<T>, 'type' | 'timestamp'>
+    ): void {
+        const fullEvent: DataGridChangesEvent<T> = {
+            ...event,
+            type: eventType,
+            timestamp: Date.now(),
+        };
+
+        // Emituj do specyficznych listenerów
+        this.listeners.get(eventType)?.forEach(listener => listener(fullEvent));
+
+        // Emituj do 'all' listenerów
+        this.listeners.get('all')?.forEach(listener => listener(fullEvent));
     }
 
     /**
@@ -75,9 +147,10 @@ export class DataGridChangesManager<T extends Record<string, any>> {
             if (existing && existing.type === "update") {
                 const index = this.changes.indexOf(existing);
                 this.changes.splice(index, 1);
-                return true; // Zmiana (usunięcie)
+                this.emit('cancel', { uniqueId });
+                return true;
             }
-            return false; // Brak zmian
+            return false;
         }
 
         // Jeśli istnieje wpis, aktualizuj
@@ -85,17 +158,20 @@ export class DataGridChangesManager<T extends Record<string, any>> {
             existing.data = { ...existing.data, ...changedFields };
             existing.userData = options?.userData;
             existing.icon = options?.icon;
+            this.emit('update', { change: existing, uniqueId });
             return true;
         }
 
         // Dodaj nowy wpis
-        this.changes.push({
+        const newChange: DataGridChangeRow<Partial<T>> = {
             uniqueId,
             type: "update",
             data: changedFields,
             userData: options?.userData,
             icon: options?.icon,
-        });
+        };
+        this.changes.push(newChange);
+        this.emit('update', { change: newChange, uniqueId });
 
         return true;
     }
@@ -106,14 +182,15 @@ export class DataGridChangesManager<T extends Record<string, any>> {
     addRecord(record: Partial<T>, options?: DataGridChangeRowOptions): boolean {
         const uniqueId = this.options.getUniqueId(record as T);
 
-        // Dodaj nowy wpis
-        this.changes.push({
+        const newChange: DataGridChangeRow<Partial<T>> = {
             uniqueId,
             type: "add",
             data: this.filledFields(record),
             userData: options?.userData,
             icon: options?.icon,
-        });
+        };
+        this.changes.push(newChange);
+        this.emit('add', { change: newChange, uniqueId });
 
         return true;
     }
@@ -128,13 +205,14 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         if (existing?.type === "remove") {
             existing.userData = options?.userData;
             existing.icon = options?.icon;
-            return false; // Rekord już jest oznaczony do usunięcia
+            return false;
         }
 
         // Jeśli to był wpis typu "add", po prostu usuń go z listy
         if (existing?.type === "add") {
             const index = this.changes.indexOf(existing);
             this.changes.splice(index, 1);
+            this.emit('change', { change: existing, uniqueId });
             return true;
         }
 
@@ -144,17 +222,20 @@ export class DataGridChangesManager<T extends Record<string, any>> {
             existing.data = {};
             existing.userData = options?.userData;
             existing.icon = options?.icon;
+            this.emit('remove', { change: existing, uniqueId });
             return true;
         }
 
         // Dodaj nowy wpis typu "remove"
-        this.changes.push({
+        const newChange: DataGridChangeRow<Partial<T>> = {
             uniqueId,
             type: "remove",
             data: {},
             userData: options?.userData,
             icon: options?.icon,
-        });
+        };
+        this.changes.push(newChange);
+        this.emit('remove', { change: newChange, uniqueId });
 
         return true;
     }
@@ -169,6 +250,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         if (existing) {
             const index = this.changes.indexOf(existing);
             this.changes.splice(index, 1);
+            this.emit('cancel', { uniqueId });
             return true;
         }
 
@@ -180,6 +262,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
      */
     clearChanges(): void {
         this.changes = [];
+        this.emit('clear', {});
     }
 
     /**
@@ -189,16 +272,6 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         return this.changes;
     }
 
-    /**
-     * Pobiera zmienione dane dla konkretnego rekordu (merge original + changes)
-     */
-    getMergedRecord(original: T): T {
-        const change = this.findChange(original);
-        if (!change) return original;
-
-        return { ...original, ...change.data };
-    }
-
     setRows(rows: T[]) {
         this.rows = rows;
     }
@@ -206,8 +279,23 @@ export class DataGridChangesManager<T extends Record<string, any>> {
     /**
      * Generuje skrypt SQL dla wszystkich zmian
      */
-    generateScript(): string | null {
+    generateScript(header?: string): string | null {
         if (!this.options.generateScript) return "";
-        return this.options.generateScript(this.changes, this.rows);
+        if (!this.rows || this.rows.length === 0 || !this.changes || this.changes.length === 0) return "";
+        
+        const scripts: string[] = [];
+        if (header) {
+            scripts.push(header);
+        }
+        
+        for (const change of this.changes) {
+            const row = this.rows.find(r => this.options.getUniqueId(r) === change.uniqueId);
+            const script = this.options.generateScript(change, row);
+            if (script) {
+                scripts.push(script);
+            }
+        }
+
+        return scripts.join("\n");
     }
 }

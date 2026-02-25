@@ -90,13 +90,10 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     };
     loadCurrentUser();
 
-    const changes = new DataGridChangesManager<SchemaRecord>({
+    const changes = session.createChangeManager<SchemaRecord>({
+        context: { list: "schemas" },
         getUniqueId: (record) => record.id,
-        generateScript: (changes, rows) => {
-            if (changes.length === 0) {
-                return "-- No changes";
-            }
-
+        generateScript: (change, row) => {
             function generateACLScript(changedAcl: AclEntry[], oryginalRow: Partial<SchemaRecord>): string {
                 const script: string[] = [];
                 const changedACL = diffDataGridRecords(oryginalRow?.acl ?? [], changedAcl, "id");
@@ -117,72 +114,66 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
             }
 
             const scripts: string[] = [];
-            scripts.push("-- Schema Changes Script");
-            scripts.push("-- Generated automatically from pending changes");
-            scripts.push("");
 
-            for (const change of changes) {
-                const original = rows.find(r => r.id === change.uniqueId);
-                if (change.type === 'add') {
-                    // CREATE SCHEMA
-                    const schemaName = change.data.schema_name;
-                    const owner = change.data.schema_owner;
-                    const comment = change.data.comment;
+            if (change.type === 'add') {
+                // CREATE SCHEMA
+                const schemaName = change.data.schema_name;
+                const owner = change.data.schema_owner;
+                const comment = change.data.comment;
 
-                    scripts.push(`-- Create new schema: ${schemaName}`);
-                    scripts.push(`CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION ${owner};`);
+                scripts.push(`-- Create new schema: ${schemaName}`);
+                scripts.push(`CREATE SCHEMA IF NOT EXISTS ${schemaName} AUTHORIZATION ${owner};`);
 
-                    if (comment) {
-                        const escapedComment = comment.replace(/'/g, "''");
-                        scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
-                    }
-                    scripts.push("");
-
-                    for (const acl of change.data.acl || []) {
-                        scripts.push(`GRANT ${acl.privilege_type} ON SCHEMA ${schemaName} TO ${acl.grantee}${acl.is_grantable ? " WITH GRANT OPTION" : ""};`);
-                    }
-                } else if (change.type === 'update' && original) {
-                    // ALTER SCHEMA
-                    const oldName = original.schema_name;
-                    const newName = change.data.schema_name;
-                    const newOwner = change.data.schema_owner;
-                    const newComment = change.data.comment;
-
-                    scripts.push(`-- Update schema: ${oldName}`);
-
-                    if (newName && newName !== oldName) {
-                        scripts.push(`ALTER SCHEMA ${oldName} RENAME TO ${newName};`);
-                    }
-
-                    if (newOwner && newOwner !== original.schema_owner) {
-                        const targetName = newName || oldName;
-                        scripts.push(`ALTER SCHEMA ${targetName} OWNER TO ${newOwner};`);
-                    }
-
-                    if (newComment !== undefined) {
-                        const targetName = newName || oldName;
-                        if (newComment) {
-                            const escapedComment = newComment.replace(/'/g, "''");
-                            scripts.push(`COMMENT ON SCHEMA ${targetName} IS '${escapedComment}';`);
-                        } else {
-                            scripts.push(`COMMENT ON SCHEMA ${targetName} IS NULL;`);
-                        }
-                    }
-                    scripts.push("");
-                    
-                    const aclScript = generateACLScript(change.data.acl || [], original);
-                    if (aclScript) {
-                        scripts.push(aclScript);
-                    }
-                } else if (change.type === 'remove' && original) {
-                    // DROP SCHEMA
-                    const schemaName = original.schema_name;
-                    const cascade = change.userData?.cascade;
-
-                    scripts.push(`-- Drop schema: ${schemaName}`);
-                    scripts.push(`DROP SCHEMA IF EXISTS ${schemaName}${cascade ? ' CASCADE' : ''};`);
-                    scripts.push("");
+                if (comment) {
+                    const escapedComment = comment.replace(/'/g, "''");
+                    scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
                 }
+                scripts.push("");
+
+                for (const acl of change.data.acl || []) {
+                    scripts.push(`GRANT ${acl.privilege_type} ON SCHEMA ${schemaName} TO ${acl.grantee}${acl.is_grantable ? " WITH GRANT OPTION" : ""};`);
+                }
+            } else if (change.type === 'update' && row) {
+                // ALTER SCHEMA
+                const oldName = row.schema_name;
+                const newName = change.data.schema_name;
+                const newOwner = change.data.schema_owner;
+                const newComment = change.data.comment;
+
+                scripts.push(`-- Update schema: ${oldName}`);
+
+                if (newName && newName !== oldName) {
+                    scripts.push(`ALTER SCHEMA ${oldName} RENAME TO ${newName};`);
+                }
+
+                if (newOwner && newOwner !== row.schema_owner) {
+                    const targetName = newName || oldName;
+                    scripts.push(`ALTER SCHEMA ${targetName} OWNER TO ${newOwner};`);
+                }
+
+                if (newComment !== undefined) {
+                    const targetName = newName || oldName;
+                    if (newComment) {
+                        const escapedComment = newComment.replace(/'/g, "''");
+                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS '${escapedComment}';`);
+                    } else {
+                        scripts.push(`COMMENT ON SCHEMA ${targetName} IS NULL;`);
+                    }
+                }
+                scripts.push("");
+
+                const aclScript = generateACLScript(change.data.acl || [], row);
+                if (aclScript) {
+                    scripts.push(aclScript);
+                }
+            } else if (change.type === 'remove' && row) {
+                // DROP SCHEMA
+                const schemaName = row.schema_name;
+                const cascade = change.userData?.cascade;
+
+                scripts.push(`-- Drop schema: ${schemaName}`);
+                scripts.push(`DROP SCHEMA IF EXISTS ${schemaName}${cascade ? ' CASCADE' : ''};`);
+                scripts.push("");
             }
 
             return scripts.join('\n');
@@ -206,7 +197,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
                 schema_size_bytes: row.schema_size_bytes,
             }));
 
-        session.storeProfileSettings("schemas", {
+        session.storeProfileSettings("schemas-stats", {
             stats: stats,
         })
     }
@@ -214,7 +205,7 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
     const restoreSchemasStats = async () => {
         if (allRows.length === 0) return;
 
-        const settings = await session.getProfileSettings("schemas");
+        const settings = await session.getProfileSettings("schemas-stats");
         if (settings && settings.stats) {
             for (const stat of settings.stats) {
                 const row = allRows.find((r) => r.schema_name === stat.schema_name);
@@ -726,7 +717,9 @@ where n.nspname not like 'pg_toast%'
                                     const allChanges = changes.getChanges();
 
                                     if (allChanges.length > 0) {
-                                        return changes.generateScript() ?? "";
+                                        return changes.generateScript(
+                                            t("schema-changes-script-header", "-- SQL Script for Schema Changes") +"\n"
+                                        ) ?? "";
                                     }
 
                                     if (!selectedRow) return "-- No schema selected";

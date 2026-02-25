@@ -77,6 +77,7 @@ const StyledBaseInputFieldCustomInput = styled('div', {
     flexGrow: 1,
     minWidth: 0, // Pozwala na zmniejszenie się inputa
     width: width || "100%",
+    overflow: "hidden",
 }));
 
 const StyledBaseInputFieldInput = styled('input', {

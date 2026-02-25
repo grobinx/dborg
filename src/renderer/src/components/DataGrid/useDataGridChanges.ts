@@ -52,13 +52,6 @@ export function useDataGridChanges<T extends Record<string, any>>(
     }, [manager]);
 
     /**
-     * Pobiera zmienione dane dla konkretnego rekordu (merge original + changes)
-     */
-    const getMergedRecord = useCallback((original: T): T => {
-        return manager.getMergedRecord(original);
-    }, [manager]);
-
-    /**
      * Znajduje istniejący wpis w changes dla danego rekordu
      */
     const findChange = useCallback((record: T): DataGridChangeRow<Partial<T>> | undefined => {
@@ -73,7 +66,6 @@ export function useDataGridChanges<T extends Record<string, any>>(
         cancelChanges,
         clearChanges,
         getChanges,
-        getMergedRecord,
         findChange,
     };
 }
