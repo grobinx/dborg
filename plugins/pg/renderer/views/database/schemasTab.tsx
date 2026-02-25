@@ -97,6 +97,25 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
                 return "-- No changes";
             }
 
+            function generateACLScript(changedAcl: AclEntry[], oryginalRow: Partial<SchemaRecord>): string {
+                const script: string[] = [];
+                const changedACL = diffDataGridRecords(oryginalRow?.acl ?? [], changedAcl, "id");
+
+                for (const change of changedACL) {
+                    const originalEntry = oryginalRow?.acl?.find(acl => acl.id === change.uniqueId);
+                    if (change.type === "add") {
+                        script.push(`GRANT ${change.data.privilege_type} ON SCHEMA ${oryginalRow.schema_name} TO ${change.data.grantee}${change.data.is_grantable ? " WITH GRANT OPTION" : ""};`);
+                    } else if (change.type === "update") {
+                        script.push(`REVOKE ${originalEntry?.privilege_type} ON SCHEMA ${oryginalRow.schema_name} FROM ${originalEntry?.grantee}${originalEntry?.is_grantable ? " CASCADE" : ""};`);
+                        script.push(`GRANT ${change.data.privilege_type ?? originalEntry?.privilege_type} ON SCHEMA ${oryginalRow.schema_name} TO ${change.data.grantee ?? originalEntry?.grantee}${(change.data.is_grantable ?? originalEntry?.is_grantable) ? " WITH GRANT OPTION" : ""};`);
+                    } else if (change.type === "remove") {
+                        script.push(`REVOKE ${originalEntry?.privilege_type} ON SCHEMA ${oryginalRow.schema_name} FROM ${originalEntry?.grantee}${originalEntry?.is_grantable ? " CASCADE" : ""};`);
+                    }
+                }
+
+                return script.join('\n');
+            }
+
             const scripts: string[] = [];
             scripts.push("-- Schema Changes Script");
             scripts.push("-- Generated automatically from pending changes");
@@ -118,6 +137,10 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
                         scripts.push(`COMMENT ON SCHEMA ${schemaName} IS '${escapedComment}';`);
                     }
                     scripts.push("");
+
+                    for (const acl of change.data.acl || []) {
+                        scripts.push(`GRANT ${acl.privilege_type} ON SCHEMA ${schemaName} TO ${acl.grantee}${acl.is_grantable ? " WITH GRANT OPTION" : ""};`);
+                    }
                 } else if (change.type === 'update' && original) {
                     // ALTER SCHEMA
                     const oldName = original.schema_name;
@@ -146,6 +169,11 @@ export function schemasTab(session: IDatabaseSession): ITabSlot {
                         }
                     }
                     scripts.push("");
+                    
+                    const aclScript = generateACLScript(change.data.acl || [], original);
+                    if (aclScript) {
+                        scripts.push(aclScript);
+                    }
                 } else if (change.type === 'remove' && original) {
                     // DROP SCHEMA
                     const schemaName = original.schema_name;
