@@ -1261,6 +1261,10 @@ export interface IDialogList {
      * @returns Wartości nowego elementu.
      */
     prepareItem?: () => Record<string, any>;
+    /**
+     * Wysokość listy (np. "300px", 400).
+     */
+    height?: string | number;
 }
 
 export type DialogSize = "small" | "medium" | "large" | "full";

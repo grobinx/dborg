@@ -241,7 +241,7 @@ export interface IActionManager<T> {
     executeActionByKeybinding(event: KeyboardEvent | string, context: T, ...args: any[]): boolean;
     getAction(actionId: string): Action<T> | undefined;
     getRegisteredActions(prefix?: string | null, context?: T, query?: string): Promise<Action<T>[]>;
-    unregisterAction(actionId: string): void;
+    unregisterAction(...actionId: string[]): void;
 }
 
 export class ActionManager<T> implements IActionManager<T> {
@@ -486,9 +486,11 @@ export class ActionManager<T> implements IActionManager<T> {
      * Usuwa akcję na podstawie jej identyfikatora.
      * @param actionId Identyfikator akcji do usunięcia.
      */
-    unregisterAction(actionId: string): void {
-        if (!this.actions.delete(actionId)) {
-            throw new Error(`Action with id "${actionId}" is not registered.`);
+    unregisterAction(...actionId: string[]): void {
+        for (const id of actionId) {
+            if (!this.actions.delete(id)) {
+                console.error(`Action with id "${id}" is not registered.`);
+            }
         }
     }
 }

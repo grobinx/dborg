@@ -1,4 +1,7 @@
+import { DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
+
 export interface AclEntry {
+    id: string;
     grantor: string;
     grantee: string;
     privilege_type: string;

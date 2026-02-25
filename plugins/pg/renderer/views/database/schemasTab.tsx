@@ -8,6 +8,7 @@ import { schemaDdl } from "../../../common/ddls/schema";
 import { DataGridChangesManager } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { executeScriptAction } from "../actions/ExecuteScript";
 import { AclEntry, ALL_PRIVILEGES, mergeRecordsAcl } from "../../../common/acl";
+import { diffDataGridRecords } from "@renderer/components/DataGrid/DataGridUtils";
 
 export interface SchemaRecord {
     id: number;
@@ -323,6 +324,7 @@ select
             select json_agg(row_to_json(a))
             from (
                 select
+                    pg_get_userbyid(grantor)||'|'||pg_get_userbyid(grantee)||'|'||privilege_type||'|'||is_grantable as id,
                     pg_get_userbyid(grantor) as grantor,
                     case when grantee = 0 then 'PUBLIC' else pg_get_userbyid(grantee) end as grantee,
                     privilege_type,
@@ -649,6 +651,16 @@ where n.nspname not like 'pg_toast%'
                                                 acl: updated?.data.acl ?? selectedRow.acl,
                                             }
                                         );
+
+                                        if (result) {
+                                            if (changes.updateRecord(selectedRow, {
+                                                acl: result.acl,
+                                            })) {
+                                                slotContext.refresh(cid("schemas-grid"), "only");
+                                                slotContext.refresh(cid("schemas-editor"));
+                                                slotContext.refresh(cid("schemas-toolbar"));
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -728,6 +740,8 @@ where n.nspname not like 'pg_toast%'
                                 { key: "privilege_type", label: t("privilege-type", "Privilege Type"), dataType: "string", width: 100 },
                                 { key: "is_grantable", label: t("is-grantable", "Is Grantable"), dataType: "boolean", width: 50 },
                             ] as ColumnDefinition[],
+                            uniqueField: "id",
+                            changes: () => diffDataGridRecords(selectedRow?.acl || [], changes.findChange(selectedRow)?.data.acl, "id"),
                             autoSaveId: `schemas-details-acl-grid-${session.profile.sch_id}`,
                         },
                         dialogs: [
@@ -852,6 +866,7 @@ where n.nspname not like 'pg_toast%'
                             type: "list",
                             key: "acl",
                             label: t("schema-acl", "Schema Access Control List"),
+                            height: 200,
                             items: [
                                 {
                                     type: "row",
@@ -869,7 +884,8 @@ where n.nspname not like 'pg_toast%'
                                             required: true,
                                             options: () => {
                                                 return roleNameList!.map(role => ({ label: role, value: role }));
-                                            }
+                                            },
+                                            size: 4,
                                         },
                                         {
                                             type: "select",
@@ -892,6 +908,7 @@ where n.nspname not like 'pg_toast%'
                             ],
                             prepareItem: () => {
                                 return {
+                                    id: `new-${Date.now() * -1}`,
                                     grantor: currentUser,
                                     privilege_type: "USAGE",
                                 };

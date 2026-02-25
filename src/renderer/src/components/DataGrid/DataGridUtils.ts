@@ -3,6 +3,7 @@ import { ColumnDefinition, ColumnFormatter, SummaryOperation } from "./DataGridT
 import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 import { DateTime } from "luxon";
+import { DataGridChangeRow } from "./DataGrid";
 
 export const footerCaptionHeightFactor = 0.7;
 export const displayMaxLengh = 300;
@@ -591,3 +592,93 @@ export const generateColumnHash = (columns: ColumnDefinition[]) => {
     }
     return (hash >>> 0).toString(16); // Zwróć hash jako 32-bitowy hex
 };
+
+const diffRecord = <T extends Record<string, any>>(
+    prev: T,
+    next: T,
+    uniqueField: keyof T
+): Partial<T> => {
+    const keys = new Set<string>([
+        ...Object.keys(prev ?? {}),
+        ...Object.keys(next ?? {}),
+    ]);
+
+    const changed: Partial<T> = {};
+    keys.forEach((k) => {
+        if (k === String(uniqueField)) return;
+        const a = (prev as any)[k];
+        const b = (next as any)[k];
+        if (!Object.is(a, b)) {
+            (changed as any)[k] = b;
+        }
+    });
+
+    return changed;
+};
+
+/**
+ * Zwraca listę zmian: add/update/remove, na podstawie uniqueField.
+ */
+export function diffDataGridRecords<T extends Record<string, any>>(
+    original: T[],
+    current: T[] | undefined,
+    uniqueField: keyof T
+): DataGridChangeRow<T>[] {
+    if (!current) {
+        return [];
+    }
+
+    const originalMap = new Map<any, T>();
+    const currentMap = new Map<any, T>();
+
+    for (const o of original ?? []) {
+        const id = o?.[uniqueField];
+        if (id !== undefined && id !== null) {
+            originalMap.set(id, o);
+        }
+    }
+
+    for (const c of current ?? []) {
+        const id = c?.[uniqueField];
+        if (id !== undefined && id !== null) {
+            currentMap.set(id, c);
+        }
+    }
+
+    const changes: DataGridChangeRow<T>[] = [];
+
+    // added / changed
+    for (const [id, cur] of currentMap) {
+        const orig = originalMap.get(id);
+        if (!orig) {
+            changes.push({
+                uniqueId: id,
+                type: "add",
+                data: cur,
+            });
+            continue;
+        }
+
+        const diff = diffRecord(orig, cur, uniqueField);
+        if (Object.keys(diff).length > 0) {
+            changes.push({
+                uniqueId: id,
+                type: "update",
+                data: diff as T,
+            });
+        }
+    }
+
+    // removed
+    for (const [id, orig] of originalMap) {
+        if (!currentMap.has(id)) {
+            changes.push({
+                uniqueId: id,
+                type: "remove",
+                data: orig,
+            });
+        }
+    }
+
+    return changes;
+}

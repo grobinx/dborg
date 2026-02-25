@@ -262,13 +262,15 @@ export class MonacoActionManager implements IActionManager<monaco.editor.ICodeEd
         }
     }
 
-    unregisterAction(actionId: string): void {
-        this.actions.delete(actionId);
+    unregisterAction(...actionId: string[]): void {
+        for (const id of actionId) {
+            this.actions.delete(id);
 
-        const d = this.editorDisposables.get(actionId);
-        if (d) {
-            d.dispose();
-            this.editorDisposables.delete(actionId);
+            const d = this.editorDisposables.get(id);
+            if (d) {
+                d.dispose();
+                this.editorDisposables.delete(id);
+            }
         }
     }
 

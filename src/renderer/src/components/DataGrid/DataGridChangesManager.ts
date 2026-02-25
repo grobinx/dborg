@@ -53,7 +53,8 @@ export class DataGridChangesManager<T extends Record<string, any>> {
     /**
      * Znajduje istniejący wpis w changes dla danego rekordu
      */
-    findChange(record: T): DataGridChangeRow<Partial<T>> | undefined {
+    findChange(record: T | undefined | null): DataGridChangeRow<Partial<T>> | undefined {
+        if (!record) return undefined;
         const uniqueId = this.options.getUniqueId(record);
         return this.changes.find(change => change.uniqueId === uniqueId);
     }

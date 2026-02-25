@@ -28,14 +28,15 @@ export const DialogRow: React.FC<{
     invalidFields: Set<string>;
     onValidityChange: () => void;
     disabled?: boolean;
+    ref?: React.Ref<HTMLDivElement>;
 }> = (props) => {
-    const { row, structure, onChange, invalidFields, onValidityChange, disabled } = props;
+    const { row, structure, onChange, invalidFields, onValidityChange, disabled, ref } = props;
 
     const label = resolveStringFactory(row.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
 
     const content = (
-        <Stack direction="row" flexWrap="wrap" gap="8px" width="100%" alignItems="stretch">
+        <Stack direction="row" flexWrap="wrap" gap="8px" width="100%" alignItems="stretch" ref={ref} data-focus-container={true}>
             {items.map((item, index) => (
                 <div
                     key={index}
@@ -70,14 +71,15 @@ export const DialogColumn: React.FC<{
     invalidFields: Set<string>;
     onValidityChange: () => void;
     disabled?: boolean;
+    ref?: React.Ref<HTMLDivElement>;
 }> = (props) => {
-    const { column, structure, onChange, invalidFields, onValidityChange, disabled } = props;
+    const { column, structure, onChange, invalidFields, onValidityChange, disabled, ref } = props;
 
     const label = resolveStringFactory(column.label, structure);
     const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
 
     const content = (
-        <Stack direction="column" gap="8px" width="100%">
+        <Stack direction="column" gap="8px" width="100%" ref={ref} data-focus-container={true}>
             {items.map((item, index) => (
                 <DialogLayoutItem
                     key={index}

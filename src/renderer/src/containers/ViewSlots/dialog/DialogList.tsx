@@ -30,7 +30,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { DialogLayoutItem } from "./DialogLayoutItem";
-import { getItemWrapperStyle } from "./DialogLayout";
+import { DialogRow, getItemWrapperStyle } from "./DialogLayout";
 import { DialogFieldset } from "./DialogFieldset";
 import { IconButton } from "@renderer/components/buttons/IconButton";
 import { useTranslation } from "react-i18next";
@@ -92,16 +92,50 @@ export const DialogList: React.FC<{
 
     const rows: Record<string, any>[] = Array.isArray(structure?.[list.key]) ? structure[list.key] : [];
 
+    const actions: Actions<{}> = {
+        cmAdd: {
+            id: "cmAdd",
+            label: t("add-item", "Add item"),
+            keySequence: ["F2"],
+            icon: <theme.icons.Add color="success" />,
+            run: () => {
+                const newItem = list.prepareItem ? list.prepareItem() : {};
+                const nextRows = [...rows, newItem];
+                onChange({
+                    ...structure,
+                    [list.key]: nextRows,
+                });
+                setSelectedIndex(nextRows.length - 1);
+            }
+        },
+        cmDelete: {
+            id: "cmDelete",
+            label: t("delete-item", "Delete item"),
+            keySequence: ["Delete"],
+            icon: <theme.icons.Delete color="error" />,
+            run: (_, index: number) => {
+                const nextRows = rows.filter((_, i) => i !== index);
+                onChange({
+                    ...structure,
+                    [list.key]: nextRows,
+                });
+                if (selectedIndex === null || selectedIndex >= nextRows.length) {
+                    setSelectedIndex(nextRows.length - 1);
+                }
+            }
+        }
+    }
+
     const listRef = React.useRef<HTMLTableElement>(null);
-    const actionManagerRef = React.useRef<IActionManager<{}>>(new ActionManager());
+    const itemsRef = React.useRef<HTMLDivElement>(null);
+
     const [selectedIndex, setSelectedIndex, handleKeyDown] = useKeyboardNavigation({
         items: React.useMemo(() => rows.map((_, index) => index), [rows]),
         getId: (index: number) => index,
-        actionManager: actionManagerRef.current,
-        actionContext: () => ({}),
+        actions: actions,
         onEnter: () => {
-            if (listRef.current) {
-                focusElement(listRef.current);
+            if (itemsRef.current) {
+                focusElement(itemsRef.current);
             }
         }
     });
@@ -142,45 +176,11 @@ export const DialogList: React.FC<{
         });
     };
 
-    const actions: Actions<{}> = {
-        cmAdd: {
-            id: "cmAdd",
-            label: t("add-item", "Add item"),
-            keySequence: ["F2"],
-            icon: <theme.icons.Add color="success" />,
-            run: () => {
-                const newItem = list.prepareItem ? list.prepareItem() : {};
-                const nextRows = [...rows, newItem];
-                onChange({
-                    ...structure,
-                    [list.key]: nextRows,
-                });
-                setSelectedIndex(nextRows.length - 1);
-            }
-        },
-        cmDelete: {
-            id: "cmDelete",
-            label: t("delete-item", "Delete item"),
-            keySequence: ["Delete"],
-            icon: <theme.icons.Delete color="error" />,
-            run: (_, index: number) => {
-                const nextRows = rows.filter((_, i) => i !== index);
-                onChange({
-                    ...structure,
-                    [list.key]: nextRows,
-                });
-                if (selectedIndex === null || selectedIndex >= nextRows.length) {
-                    setSelectedIndex(nextRows.length - 1);
-                }
-            }
-        }
-    }
-
     useScrollIntoView({ containerRef: listRef, targetId: `item-${selectedIndex}`, stickyHeader: ".sticky", });
 
     return (
         <DialogFieldset label={label}>
-            <TableContainer style={{ height: `${5 * 2.3}rem` }} ref={listRef}>
+            <TableContainer style={{ height: list.height ?? `${5 * 2.3}rem` }} ref={listRef}>
                 <Table size="small" stickyHeader onKeyDown={handleKeyDown} tabIndex={0}>
                     <TableHead className="sticky">
                         <TableRow>
@@ -254,18 +254,15 @@ export const DialogList: React.FC<{
                 </Table>
             </TableContainer>
             <Divider />
-            {resolvedItems.map((item, index) => (
-                <DialogLayoutItem
-                    key={index}
-                    item={item}
-                    structure={selectedRow ?? {}}
-                    onChange={onSelectedRowChange}
-                    invalidFields={invalidFields}
-                    onValidityChange={onValidityChange}
-                    disabled={!selectedRow ? true : disabled}
-                />
-            ))
-            }
+            <DialogRow
+                row={{ type: "row", items: list.items, }}
+                structure={selectedRow ?? {}}
+                onChange={onSelectedRowChange}
+                invalidFields={invalidFields}
+                onValidityChange={onValidityChange}
+                disabled={!selectedRow ? true : disabled}
+                ref={itemsRef}
+            />
         </DialogFieldset>
     );
 };
