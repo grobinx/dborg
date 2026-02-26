@@ -624,7 +624,7 @@ export function diffDataGridRecords<T extends Record<string, any>>(
     current: T[] | undefined,
     uniqueField: keyof T
 ): DataGridChangeRow<T>[] {
-    if (!current) {
+    if (!current || current.length === 0) {
         return [];
     }
 

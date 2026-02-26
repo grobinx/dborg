@@ -5,6 +5,7 @@ import { IQueueTask, QueueTask, TaskOptions } from "@renderer/utils/QueueTask";
 import { queueMessage } from "./MessageContext";
 import { PROFILE_UPDATE_MESSAGE } from "./ProfilesContext";
 import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
+import { versionToNumber } from "../../../../src/api/version";
 
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
@@ -43,7 +44,7 @@ export interface IDatabaseSession extends api.BaseConnection {
      * @param name name for a file in user data folder (without extension)
      * @param value value or structured object to store
      */
-    storeProfileSettings(name: string, value: Record<string, any>): void; 
+    storeProfileSettings(name: string, value: Record<string, any>): void;
 
     getProfileSettings(name: string): Promise<Record<string, any> | null>;
 
@@ -136,7 +137,7 @@ class DatabaseSession implements IDatabaseSession {
 
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
-    settings: Map<string, Record<string, any>> = new Map(); 
+    settings: Map<string, Record<string, any>> = new Map();
     metadata: api.DatabasesMetadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
     private readonly queue: QueueTask<IDatabaseSession>;
@@ -212,8 +213,12 @@ class DatabaseSession implements IDatabaseSession {
             if (this.metadataInitialized && !force) {
                 return this.metadata!;
             }
-            this.metadata = await window.dborg.database.connection.getMetadata(this.info.uniqueId, progress, force);
-            this.metadataInitialized = true;
+            const version = versionToNumber(this.getVersion() ?? "0.0.0");
+            const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
+            if (version >= supportVersion) {
+                this.metadata = await window.dborg.database.connection.getMetadata(this.info.uniqueId, progress, force);
+                this.metadataInitialized = true;
+            }
         }
         return this.metadata ?? {};
     }
@@ -279,7 +284,7 @@ class DatabaseSession implements IDatabaseSession {
                 acc[key] = (context as Record<string, any>)[key];
                 return acc;
             }, {} as Record<string, any>);
-        
+
         return JSON.stringify(sorted);
     }
 
@@ -287,13 +292,13 @@ class DatabaseSession implements IDatabaseSession {
         options: DataGridChangesOptions<T> & { context: object }
     ): DataGridChangesManager<T> {
         const key = this.createChangeManagerKey(options.context);
-        
+
         if (!this.changeManagers.has(key)) {
             this.changeManagers.set(key, new DataGridChangesManager(options));
             // Dodaj na koniec porządku
             this.changeManagersOrder.push(key);
         }
-        
+
         return this.changeManagers.get(key)!;
     }
 
@@ -319,12 +324,12 @@ class DatabaseSession implements IDatabaseSession {
         // Sprawdzenie czy wszystkie klucze istnieją
         const validKeys = new Set(this.changeManagersOrder);
         const allKeysValid = newOrder.every(key => validKeys.has(key));
-        
+
         if (!allKeysValid || newOrder.length !== this.changeManagersOrder.length) {
             console.warn('Invalid order:Keys mismatch or incorrect count');
             return false;
         }
-        
+
         this.changeManagersOrder = [...newOrder];
         return true;
     }
@@ -336,11 +341,11 @@ class DatabaseSession implements IDatabaseSession {
      */
     moveChangeManager(key: string, newIndex: number): boolean {
         const currentIndex = this.changeManagersOrder.indexOf(key);
-        
+
         if (currentIndex === -1 || newIndex < 0 || newIndex >= this.changeManagersOrder.length) {
             return false;
         }
-        
+
         this.changeManagersOrder.splice(currentIndex, 1);
         this.changeManagersOrder.splice(newIndex, 0, key);
         return true;

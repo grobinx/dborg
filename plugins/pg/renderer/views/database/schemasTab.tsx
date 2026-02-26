@@ -484,7 +484,7 @@ where n.nspname not like 'pg_toast%'
                             },
                             {
                                 id: "schema-create",
-                                label: t("create-schema", "Create Schema"),
+                                label: t("queue-create-schema", "Add change: Create Schema"),
                                 icon: "AddRow",
                                 keySequence: ["F2"],
                                 contextMenuGroupId: "schema-operations",
@@ -506,13 +506,14 @@ where n.nspname not like 'pg_toast%'
                                             slotContext.refresh(cid("schemas-grid"), "only");
                                             slotContext.refresh(cid("schemas-editor"));
                                             slotContext.refresh(cid("schemas-toolbar"));
+                                            slotContext.refresh(cid("schemas-editor-title"));
                                         }
                                     }
                                 },
                             },
                             {
                                 id: "schema-edit",
-                                label: t("edit-schema", "Edit Schema"),
+                                label: t("queue-edit-schema", "Add change: Edit Schema"),
                                 icon: "EditRow",
                                 keySequence: ["F4"],
                                 contextMenuGroupId: "schema-operations",
@@ -537,60 +538,15 @@ where n.nspname not like 'pg_toast%'
                                                 slotContext.refresh(cid("schemas-grid"), "only");
                                                 slotContext.refresh(cid("schemas-editor"));
                                                 slotContext.refresh(cid("schemas-toolbar"));
+                                                slotContext.refresh(cid("schemas-editor-title") );
                                             }
                                         }
                                     }
                                 },
                             },
                             {
-                                id: "schema-drop",
-                                label: t("drop-schema", "Drop Schema"),
-                                icon: "RemoveRow",
-                                keySequence: ["Ctrl+Delete"],
-                                contextMenuGroupId: "schema-operations",
-                                contextMenuOrder: 4,
-                                disabled: () => selectedRow === null || selectedRow.is_system,
-                                run: async () => {
-                                    if (selectedRow) {
-                                        if (await slotContext.showConfirmDialog({
-                                            title: t("confirm-drop-schema", "Confirm Drop Schema"),
-                                            message: t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: selectedRow.schema_name }),
-                                            severity: "warning",
-                                        })) {
-                                            changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
-                                            slotContext.refresh(cid("schemas-grid"), "only");
-                                            slotContext.refresh(cid("schemas-editor"));
-                                            slotContext.refresh(cid("schemas-toolbar"));
-                                        }
-                                    }
-                                },
-                            },
-                            {
-                                id: "schema-drop-cascade",
-                                label: t("drop-schema-cascade", "Drop Schema Cascade"),
-                                icon: "DropCascade",
-                                keySequence: ["Ctrl+Shift+Delete"],
-                                contextMenuGroupId: "schema-operations",
-                                contextMenuOrder: 5,
-                                disabled: () => selectedRow === null || selectedRow.is_system,
-                                run: async () => {
-                                    if (selectedRow) {
-                                        if (await slotContext.showConfirmDialog({
-                                            title: t("confirm-drop-schema-cascade", "Confirm Drop Schema Cascade"),
-                                            message: t("drop-schema-cascade-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\" and all its dependent objects?", { schema_name: selectedRow.schema_name }),
-                                            severity: "warning",
-                                        })) {
-                                            changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
-                                            slotContext.refresh(cid("schemas-grid"), "only");
-                                            slotContext.refresh(cid("schemas-editor"));
-                                            slotContext.refresh(cid("schemas-toolbar"));
-                                        }
-                                    }
-                                },
-                            },
-                            {
                                 id: "schema-comment",
-                                label: t("change-schema-comment", "Change Schema Comment"),
+                                label: t("queue-comment-schema", "Add change: Change Comment"),
                                 icon: "Comment",
                                 keySequence: ["F3"],
                                 contextMenuGroupId: "schema-operations",
@@ -613,7 +569,56 @@ where n.nspname not like 'pg_toast%'
                                                 slotContext.refresh(cid("schemas-grid"), "only");
                                                 slotContext.refresh(cid("schemas-editor"));
                                                 slotContext.refresh(cid("schemas-toolbar"));
+                                                slotContext.refresh(cid("schemas-editor-title") );
                                             }
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-drop",
+                                label: t("queue-drop-schema", "Add change: Drop Schema"),
+                                icon: "RemoveRow",
+                                keySequence: ["Ctrl+Delete"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 4,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        if (await slotContext.showConfirmDialog({
+                                            title: t("confirm-drop-schema", "Confirm Drop Schema"),
+                                            message: t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: selectedRow.schema_name }),
+                                            severity: "warning",
+                                        })) {
+                                            changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-editor"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
+                                            slotContext.refresh(cid("schemas-editor-title"));
+                                        }
+                                    }
+                                },
+                            },
+                            {
+                                id: "schema-drop-cascade",
+                                label: t("queue-drop-schema-cascade", "Add change: Drop Schema (Cascade)"),
+                                icon: "DropCascade",
+                                keySequence: ["Ctrl+Shift+Delete"],
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 5,
+                                disabled: () => selectedRow === null || selectedRow.is_system,
+                                run: async () => {
+                                    if (selectedRow) {
+                                        if (await slotContext.showConfirmDialog({
+                                            title: t("confirm-drop-schema-cascade", "Confirm Drop Schema Cascade"),
+                                            message: t("drop-schema-cascade-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\" and all its dependent objects?", { schema_name: selectedRow.schema_name }),
+                                            severity: "warning",
+                                        })) {
+                                            changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
+                                            slotContext.refresh(cid("schemas-grid"), "only");
+                                            slotContext.refresh(cid("schemas-editor"));
+                                            slotContext.refresh(cid("schemas-toolbar"));
+                                            slotContext.refresh(cid("schemas-editor-title") );
                                         }
                                     }
                                 },
@@ -624,7 +629,7 @@ where n.nspname not like 'pg_toast%'
                                 icon: "Rollback",
                                 keySequence: ["Ctrl+Z"],
                                 contextMenuGroupId: "schema-operations",
-                                contextMenuOrder: 5,
+                                contextMenuOrder: 6,
                                 disabled: () => !selectedRow || changes.findChange(selectedRow) === undefined,
                                 run: async () => {
                                     if (selectedRow) {
@@ -632,6 +637,7 @@ where n.nspname not like 'pg_toast%'
                                         slotContext.refresh(cid("schemas-grid"), "only");
                                         slotContext.refresh(cid("schemas-editor"));
                                         slotContext.refresh(cid("schemas-toolbar"));
+                                        slotContext.refresh(cid("schemas-editor-title") );
                                     }
                                 },
                             },
@@ -641,7 +647,7 @@ where n.nspname not like 'pg_toast%'
                                 icon: "Reset",
                                 keySequence: ["Ctrl+Shift+Z"],
                                 contextMenuGroupId: "schema-operations",
-                                contextMenuOrder: 6,
+                                contextMenuOrder: 7,
                                 disabled: () => !selectedRow || changes.getChanges().length === 0,
                                 run: async () => {
                                     if (selectedRow) {
@@ -649,16 +655,17 @@ where n.nspname not like 'pg_toast%'
                                         slotContext.refresh(cid("schemas-grid"), "only");
                                         slotContext.refresh(cid("schemas-editor"));
                                         slotContext.refresh(cid("schemas-toolbar"));
+                                        slotContext.refresh(cid("schemas-editor-title") );
                                     }
                                 },
                             },
                             {
                                 id: "schema-acl",
-                                label: t("schema-acl", "Schema Access Control List"),
+                                label: t("queue-schema-acl", "Add change: Schema Access Control List"),
                                 icon: <slotContext.theme.icons.AccessControl color="secondary" />,
                                 keySequence: ["Shift+F4"],
-                                contextMenuGroupId: "schema-details",
-                                contextMenuOrder: 1,
+                                contextMenuGroupId: "schema-operations",
+                                contextMenuOrder: 5,
                                 disabled: () => selectedRow === null,
                                 run: async () => {
                                     if (selectedRow) {
@@ -678,6 +685,7 @@ where n.nspname not like 'pg_toast%'
                                                 slotContext.refresh(cid("schemas-grid"), "only");
                                                 slotContext.refresh(cid("schemas-editor"));
                                                 slotContext.refresh(cid("schemas-toolbar"));
+                                                slotContext.refresh(cid("schemas-editor-title") );
                                             }
                                         }
                                     }
@@ -697,8 +705,14 @@ where n.nspname not like 'pg_toast%'
                         type: "column",
                         items: [
                             {
+                                id: cid("schemas-editor-title"),
                                 type: "title",
-                                title: () => t("actions-not-be-executed-info", "Actions will not be executed immediately. They will be compiled into a SQL script below for your review and manual execution."),
+                                title: () => {
+                                    const count = changes.getChanges().length;
+                                    return count > 0
+                                        ? t("queued-changes-info", "Draft mode: {{count}} queued change(s). Nothing is executed until you run the SQL script.", { count })
+                                        : t("no-queued-changes-info", "Select mode: You can edit and execute the script below.");
+                                },
                                 toolBar: {
                                     type: "toolbar",
                                     tools: [
@@ -718,7 +732,7 @@ where n.nspname not like 'pg_toast%'
 
                                     if (allChanges.length > 0) {
                                         return changes.generateScript(
-                                            t("schema-changes-script-header", "-- SQL Script for Schema Changes") +"\n"
+                                            t("schema-changes-script-header", "-- SQL Script for Schema Changes") + "\n"
                                         ) ?? "";
                                     }
 

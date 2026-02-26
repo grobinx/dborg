@@ -605,7 +605,7 @@ export const DataGrid = <T extends object>({
     const [pivot, setPivot] = useState(initialPivot);
     const prevUniqueValueRef = useRef<any>(null);
 
-    const hasChanges = (changes && changes.length> 0) ? JSON.stringify(changes) : null;
+    const hasChanges = (changes && changes.length > 0) ? JSON.stringify(changes) : null;
 
     const onSaveColumnsState = () => {
         return {
@@ -728,7 +728,7 @@ export const DataGrid = <T extends object>({
     const [showRowNumberColumn, setShowRowNumberColumn] = useState(columnRowNumber ?? settingRowNumberColumn); // Dodano stan
     const [userData, setUserData] = useState<Record<string, any>>({});
     const columnsRef = useRef<ColumnDefinition[]>(columns);
-    const [isScrolling, setIsScrolling] = useState(false);
+    const isScrollingRef = useRef(false);
     const scrollStopTimer = useRef<number | null>(null);
     const [fontSize, setFontSize] = useState(settingFontSize);
     const [dialogContent, setDialogContent] = useState<React.ReactNode | null>(null);
@@ -1584,10 +1584,12 @@ export const DataGrid = <T extends object>({
     }
 
     const onScroll = React.useCallback(() => {
-        if (!isScrolling) setIsScrolling(true);
+        if (!isScrollingRef.current) isScrollingRef.current = true;
         if (scrollStopTimer.current) window.clearTimeout(scrollStopTimer.current);
-        scrollStopTimer.current = window.setTimeout(() => setIsScrolling(false), 80);
-    }, [isScrolling]);
+        scrollStopTimer.current = window.setTimeout(() => {
+            isScrollingRef.current = false;
+        }, 80);
+    }, []);
 
     // Delegacja klików z kontenera wierszy
     const onRowsContainerMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
