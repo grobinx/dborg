@@ -3,6 +3,9 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
 import { IContentSlot } from "./CustomSlots";
 import { ConnectionViewSlotKind } from "./ConnectionSlots";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
+import * as monaco from "monaco-editor";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -131,6 +134,19 @@ export interface CustomView extends IView {
  */
 export type ConnectionViewsFactory = (session: IDatabaseSession) => ConnectionView[] | null;
 
+export type ConnectionActionType = 
+    /** Editor on universal SQL Editor tab */
+    | "sql-editor" 
+    /** Result grid on universal SQL Result tab */
+    | "sql-result"
+    ;
+
+/**
+ * Interface representing a callback function for registering actions
+ * @param session The database session for which the actions are being registered
+ */
+export type ConnectionActionsFactory<T> = (session: IDatabaseSession) => Action<T>[] | null;
+
 /**
  * Interface representing the context in which a plugin operates
  * @property internal The internal database context for executing queries and commands
@@ -147,4 +163,14 @@ export interface IPluginContext {
      * @returns 
      */
     registerConnectionViewsFactory: (factory: ConnectionViewsFactory) => void;
+
+    /**
+     * Register a factory function for creating connection actions
+     * @overload
+     * @param type - Type of action ("editor" or "datagrid")
+     * @param factory - Factory function for creating actions
+     */
+    registerConnectionActionsFactory(type: "sql-editor", factory: ConnectionActionsFactory<monaco.editor.ICodeEditor>): void;
+    registerConnectionActionsFactory(type: "sql-result", factory: ConnectionActionsFactory<DataGridActionContext<any>>): void;
+    registerConnectionActionsFactory(type: string, factory: ConnectionActionsFactory<any>): void;
 }

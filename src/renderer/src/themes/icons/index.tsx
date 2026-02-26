@@ -229,6 +229,7 @@ export interface ThemeIcons {
     Rollback: IconWrapperFC;
     AccessControl: IconWrapperFC;
     SecurityLabel: IconWrapperFC;
+    Explain: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -403,4 +404,5 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     Rollback: ["rollback", "undo", "transaction", "revert", "cancel"],
     AccessControl: ["access", "control", "permissions", "privileges", "security"],
     SecurityLabel: ["access", "control", "permissions", "privileges", "security", "label", "classification", "sensitivity"],
+    Explain: ["explain", "plan", "query", "execution", "analysis"],    
 };

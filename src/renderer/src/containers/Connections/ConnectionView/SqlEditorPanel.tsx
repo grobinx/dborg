@@ -38,6 +38,7 @@ import { IActionManager } from "@renderer/components/CommandPalette/ActionManage
 import { useTabValue } from "@renderer/components/TabsPanel/TabPanel";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
+import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -63,6 +64,7 @@ interface SqlEditorContentProps {
 
 export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const { session, tabsItemID, itemID, editorContentManager } = props;
+    const plugins = usePluginManager();
     const addToast = useToast();
     const { t } = useTranslation();
     const firstLineRef = useRef<string>("");
@@ -335,6 +337,11 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         actionManager.registerAction(CloseSqlEditorTab(() => { queueMessage(SQL_EDITOR_CLOSE, itemID); }));
         actionManager.registerAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
+
+        const pluginActions = plugins.getConnectionActions("sql-editor", session);
+        if (pluginActions) {
+            actionManager.registerAction(...pluginActions);
+        }
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
             queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.uniqueId });

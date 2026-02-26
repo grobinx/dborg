@@ -6,15 +6,7 @@ import {
     Box,
     Stack,
     Typography,
-    Paper,
-    Table,
-    TableBody,
-    TableRow,
-    TableCell,
-    Divider,
-    Chip,
     useTheme,
-    TableContainer,
 } from "@mui/material";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
@@ -47,7 +39,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { detectValuePreviewInfo, PreviewMode, resolveEffectivePreviewMode, ValuePreview, ValuePreviewToolbar } from "@renderer/components/useful/ValuePreview";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
-import debounce from "@renderer/utils/debounce";
+import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -128,6 +120,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const { session, itemID, tabsItemID, hidden } = props;
     const theme = useTheme();
     const { t } = useTranslation();
+    const plugins = usePluginManager();
     const { subscribe, queueMessage } = useMessages();
     const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
     const [rows, setRows] = React.useState<object[] | null>(null);
@@ -234,6 +227,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setShowValuePreview((prev) => !prev);
             },
         });
+        const pluginActions = plugins.getConnectionActions("sql-result", session);
+        if (pluginActions) {
+            context.addAction(...pluginActions);
+        }
     };
 
     React.useEffect(() => {

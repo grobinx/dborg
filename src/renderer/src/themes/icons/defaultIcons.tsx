@@ -44,6 +44,7 @@ import { Reindex } from "./svg/Reindex";
 import { Cluster } from "./svg/Cluster";
 import { Aggregates } from "./svg/Aggregates";
 import { SecurityLabel } from "./svg/SecurityLabel";
+import { Explain } from "./svg/Explain";
 
 const icons = (palette: Palette): ThemeOptions => {
     return {
@@ -203,6 +204,7 @@ const icons = (palette: Palette): ThemeOptions => {
             Rollback: (props) => <IconWrapper {...props} className="rollback"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
             AccessControl: (props) => <IconWrapper {...props} className="access-control"><BsIcons.PersonLock fontSize="inherit" /></IconWrapper>,
             SecurityLabel: (props) => <IconWrapper {...props} className="security-label"><SecurityLabel fontSize="inherit" /></IconWrapper>,
+            Explain: (props) => <IconWrapper {...props} className="explain"><Explain fontSize="inherit" /></IconWrapper>,
         }
     }
 }

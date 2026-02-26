@@ -46,6 +46,24 @@ const PostgresPlugin: Plugin = {
                 aggregatesView(session),
             ];
         });
+        context.registerConnectionActionsFactory("sql-editor", (session) => {
+            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
+                return null;
+            }
+
+            return [
+                {
+                    id: "actions.explain-plan",
+                    label: i18next.t("explain-plan", "Explain Plan"),
+                    icon: "Explain",
+                    keySequence: ["Ctrl+E"],
+                    contextMenuGroupId: "sql-editor",
+                    contextMenuOrder: 5,
+                    run: async (_editor) => {
+                    }
+                }
+            ]
+        });
     }
 };
 
