@@ -39,6 +39,9 @@ import { useTabValue } from "@renderer/components/TabsPanel/TabPanel";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
+import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
+import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
+import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -87,6 +90,9 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const [openSelectQueryHistoryDialog, setOpenSelectQueryHistoryDialog] = React.useState(false);
     const [, setTabActionManager] = useTabValue<IActionManager<monaco.editor.ICodeEditor> | undefined>(itemID!, "actionManager");
     const [, setTabEditor] = useTabValue<monaco.editor.IStandaloneCodeEditor | undefined>(itemID!, "editor");
+    const runtimeContext = useSlotRuntimeContext({});
+    const pluginActionsRef = useRef(plugins.getConnectionActions("sql-editor", session));
+    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => pluginActionsRef.current?.flatMap(pa => resolveDialogsSlotFactory(pa.dialogs, runtimeContext)).filter(dialogs => dialogs !== undefined) ?? null, [pluginActionsRef.current, runtimeContext]) });
 
     useEffect(() => {
         editorInstanceRef.current = editorInstance;
@@ -338,9 +344,9 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         actionManager.registerAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
 
-        const pluginActions = plugins.getConnectionActions("sql-editor", session);
+        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveActionFactory(pa.actions, runtimeContext)?.filter(a => a !== undefined));
         if (pluginActions) {
-            actionManager.registerAction(...pluginActions.map(actions => actions.actions).flat());
+            actionManager.registerAction(...pluginActions);
         }
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
@@ -427,6 +433,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                     profileName={(session.getUserData("profile") as ProfileRecord).sch_name}
                 />
             )}
+            {dialogs}
         </>
     );
 };
