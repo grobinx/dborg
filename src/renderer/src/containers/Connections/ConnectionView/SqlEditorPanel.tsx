@@ -34,7 +34,7 @@ import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { SaveEditorTabAsFile } from "./editor/actions/SaveEditorTabAsFile";
 import { extractSqlParameters } from "../../../../../api/db/SqlParameters";
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
-import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { Action, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { useTabValue } from "@renderer/components/TabsPanel/TabPanel";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
@@ -344,8 +344,8 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         actionManager.registerAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
 
-        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveActionFactory(pa.actions, runtimeContext)?.filter(a => a !== undefined));
-        if (pluginActions) {
+        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveActionFactory(pa.actions, runtimeContext)?.filter(a => a !== undefined) ?? []);
+        if (pluginActions && pluginActions.length > 0) {
             actionManager.registerAction(...pluginActions);
         }
 

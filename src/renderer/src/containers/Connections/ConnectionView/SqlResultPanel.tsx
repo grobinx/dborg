@@ -40,6 +40,9 @@ import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { detectValuePreviewInfo, PreviewMode, resolveEffectivePreviewMode, ValuePreview, ValuePreviewToolbar } from "@renderer/components/useful/ValuePreview";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
+import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
+import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
+import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -153,6 +156,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     });
     const [sqlParametersDialogOpen, setSqlParametersDialogOpen] = useState(false);
     const [sqlParameters, setSqlParameters] = useState<SqlParameterInfo[]>([]);
+    const runtimeContext = useSlotRuntimeContext({});
+    const pluginActionsRef = useRef(plugins.getConnectionActions("sql-result", session));
+    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => pluginActionsRef.current?.flatMap(pa => resolveDialogsSlotFactory(pa.dialogs, runtimeContext)).filter(dialogs => dialogs !== undefined) ?? null, [pluginActionsRef.current, runtimeContext]) });
 
     // Resolver promisy dialogu parametrów
     const sqlParamsPromiseRef = useRef<{
@@ -227,8 +233,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setShowValuePreview((prev) => !prev);
             },
         });
-        const pluginActions = plugins.getConnectionActions("sql-result", session);
-        if (pluginActions) {
+        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveActionFactory(pa.actions, runtimeContext)?.filter(a => a !== undefined) ?? []);
+        if (pluginActions && pluginActions.length > 0) {
             context.addAction(...pluginActions);
         }
     };
@@ -550,6 +556,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                             sqlParamsPromiseRef.current = null;
                         }}
                     />
+                    {dialogs}
                 </Stack>
             </SplitPanel>
             <Splitter hidden={!showValuePreview} />
