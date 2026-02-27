@@ -70,7 +70,7 @@ export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeC
 export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
 export type RecordsChangeFactory<T = SlotRuntimeContext> = DataGridChangeRow<Record<string, any>>[] | undefined | ((runtimeContext: T) => DataGridChangeRow<Record<string, any>>[] | undefined);
 export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
-export type ActionFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
+export type ActionsFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((runtimeContext: SlotRuntimeContext) => ToolKind<T>[]);
 export type SplitSlotPartKindFactory = SplitSlotPartKind | ((runtimeContext: SlotRuntimeContext) => SplitSlotPartKind);
@@ -504,7 +504,7 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
     /**
      * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
      */
-    actions?: ActionFactory<TabContentSlotContext>;
+    actions?: ActionsFactory<TabContentSlotContext>;
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
@@ -626,7 +626,7 @@ export interface IContentSlot extends ICustomSlot {
     /**
      * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
      */
-    actions?: ActionFactory<ContentSlotContext>;
+    actions?: ActionsFactory<ContentSlotContext>;
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
@@ -704,7 +704,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
-    actions?: ActionFactory<DataGridActionContext<any>>;
+    actions?: ActionsFactory<DataGridActionContext<any>>;
     /**
      * Grupy akcji dostępne w gridzie (opcjonalnie).
      */
@@ -764,7 +764,7 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: ActionFactory<monaco.editor.ICodeEditor>;
+    actions?: ActionsFactory<monaco.editor.ICodeEditor>;
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
@@ -1371,7 +1371,7 @@ export function resolveRecordsChangeFactory<T = SlotRuntimeContext>(factory: Rec
 export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveActionFactory<T = any>(factory: ActionFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
+export function resolveActionFactory<T = any>(factory: ActionsFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotRuntimeContext): ActionGroup<T>[] | undefined {

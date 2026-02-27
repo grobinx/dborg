@@ -1,16 +1,14 @@
 import React from "react";
-import { ITabSlot, ITabsSlot, resolveBooleanFactory, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabSlot, ITabsSlot, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createTabPanel } from "./helpers";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
-import { useTheme } from "@mui/material";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
 import { ToolBarSlots } from "./ToolBarSlot";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface TabsSlotProps {
 }
@@ -21,25 +19,15 @@ interface TabsSlotOwnProps extends TabsSlotProps {
 }
 
 const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
-    const theme = useTheme();
     const { slot, ref } = props;
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
     const [toolBar, setToolBar] = React.useState<React.ReactNode>(null);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [, reRender] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const { queueMessage } = useMessages();
-    const addToast = useToast();
-    const { confirm } = useDialogs();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {

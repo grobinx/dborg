@@ -340,7 +340,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
 
         const pluginActions = plugins.getConnectionActions("sql-editor", session);
         if (pluginActions) {
-            actionManager.registerAction(...pluginActions);
+            actionManager.registerAction(...pluginActions.map(actions => actions.actions).flat());
         }
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {

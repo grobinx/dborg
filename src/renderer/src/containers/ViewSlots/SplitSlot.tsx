@@ -1,14 +1,10 @@
 import React from "react";
-import { ISplitSlot, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ISplitSlot } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import { createSplitPartContent } from "./helpers";
-import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { ImperativePanelGroupHandle } from "react-resizable-panels";
-import { useTheme } from "@mui/material";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface SplitSlotProps {
 }
@@ -19,10 +15,7 @@ interface SplitSlotOwnProps extends SplitSlotProps {
 }
 
 const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
-    const theme = useTheme();
     const { slot, ref } = props;
-    const addToast = useToast();
-    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [first, setFirst] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
@@ -33,16 +26,9 @@ const SplitSlot: React.FC<SplitSlotOwnProps> = (props) => {
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const [, reRender] = React.useState<bigint>(0n);
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {

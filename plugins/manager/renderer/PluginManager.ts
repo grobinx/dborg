@@ -1,5 +1,5 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin, ConnectionViewsFactory, ConnectionView, ConnectionActionsFactory, ConnectionActionType } from "./Plugin";
+import { Plugin, ConnectionViewsFactory, ConnectionView, ConnectionActionsFactory, ConnectionActionType, ConnectionActions } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
@@ -18,9 +18,9 @@ export interface IPluginManager {
      * @param session database session
      * @returns array of actions for the specified connection action type and database session
      */
-    getConnectionActions(type: "sql-editor", session: IDatabaseSession): Action<monaco.editor.ICodeEditor>[] | null;
-    getConnectionActions(type: "sql-result", session: IDatabaseSession): Action<DataGridActionContext<any>>[] | null;
-    getConnectionActions<T extends object>(type: ConnectionActionType, session: IDatabaseSession): Action<T>[] | null;
+    getConnectionActions(type: "sql-editor", session: IDatabaseSession): ConnectionActions<monaco.editor.ICodeEditor>[] | null;
+    getConnectionActions(type: "sql-result", session: IDatabaseSession): ConnectionActions<DataGridActionContext<any>>[] | null;
+    getConnectionActions<T extends object>(type: ConnectionActionType, session: IDatabaseSession): ConnectionActions<T>[] | null;
 
     /**
      * Get all registered plugins
@@ -63,7 +63,7 @@ class PluginManager implements IPluginManager {
         return views;
     }
 
-    getConnectionActions(type: ConnectionActionType, session: IDatabaseSession): Action<any>[] | null {
+    getConnectionActions(type: ConnectionActionType, session: IDatabaseSession): ConnectionActions<any>[] | null {
         const factories = this.pluginConnectionActionsFactories.get(type) || [];
         const actions = factories.map((factory) => factory(session)).flat().filter((action) => action !== null);
         return actions;

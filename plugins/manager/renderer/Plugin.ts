@@ -1,7 +1,7 @@
 import { IContainer, IView } from "@renderer/contexts/ApplicationContext";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { IContentSlot } from "./CustomSlots";
+import { ActionsFactory, DialogsSlotFactory, IContentSlot } from "./CustomSlots";
 import { ConnectionViewSlotKind } from "./ConnectionSlots";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
@@ -134,18 +134,32 @@ export interface CustomView extends IView {
  */
 export type ConnectionViewsFactory = (session: IDatabaseSession) => ConnectionView[] | null;
 
-export type ConnectionActionType = 
+/**
+ * Type representing the different types of connection actions that can be registered by plugins
+ */
+export type ConnectionActionType =
     /** Editor on universal SQL Editor tab */
-    | "sql-editor" 
+    | "sql-editor"
     /** Result grid on universal SQL Result tab */
     | "sql-result"
     ;
+
+export interface ConnectionActions<T> {
+    /**
+     * List of actions to be registered for the specified type. Each action includes an ID, label, optional icon, optional key sequence, and a run function that defines the behavior when the action is executed.
+     */
+    actions: ActionsFactory<T>;
+    /**
+     * Optional dialogs slot factory for actions that require user input through dialogs. This allows plugins to provide custom dialog components for their actions, enhancing the user experience when interacting with the plugin's features.
+     */
+    dialogs?: DialogsSlotFactory;
+}
 
 /**
  * Interface representing a callback function for registering actions
  * @param session The database session for which the actions are being registered
  */
-export type ConnectionActionsFactory<T> = (session: IDatabaseSession) => Action<T>[] | null;
+export type ConnectionActionsFactory<T> = (session: IDatabaseSession) => ConnectionActions<T> | null;
 
 /**
  * Interface representing the context in which a plugin operates

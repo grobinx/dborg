@@ -1,5 +1,4 @@
 import React from "react";
-import { useTheme } from "@mui/material";
 import { Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import MonacoEditor, { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
@@ -8,16 +7,14 @@ import {
     resolveActionFactory,
     resolveBooleanFactory,
     resolveStringAsyncFactory,
-    SlotRuntimeContext
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
 import { useRefSlot } from "./RefSlotContext";
 import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -27,11 +24,8 @@ interface EditorSlotProps {
 const EditorSlot: React.FC<EditorSlotProps> = ({
     slot
 }) => {
-    const theme = useTheme();
-    const addToast = useToast();
-    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [content, setContent] = React.useState<string>("");
@@ -49,15 +43,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
     const unregisterRefSlotRef = React.useRef<(() => void) | null>(null);
 
     React.useEffect(() => {

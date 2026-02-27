@@ -2,13 +2,12 @@ import React from "react";
 import { Paper, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
 import { ToolBarSlots } from "./ToolBarSlot";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface TitleSlotProps extends Omit<React.ComponentProps<typeof Paper>, "slot"> {
 }
@@ -35,22 +34,12 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     const [style, setStyle] = React.useState<React.CSSProperties | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [icon, setIcon] = React.useState<React.ReactNode>(null);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const [actionBar, setActionBar] = React.useState<React.ReactNode>(null);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const addToast = useToast();
-    const { confirm } = useDialogs();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
@@ -115,6 +104,7 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
                                 overflow: "hidden",
                                 whiteSpace: "nowrap",
                             }}
+                            style={style}
                         >
                             {title}
                         </Typography>

@@ -1,4 +1,4 @@
-import { Plugin } from "plugins/manager/renderer/Plugin";
+import { ConnectionActions, Plugin } from "plugins/manager/renderer/Plugin";
 import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL logo
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
@@ -17,6 +17,7 @@ import { viewsView } from "./views/views/viewsView";
 import { sequencesView } from "./views/sequences/sequencesView";
 import { toolsView } from "./views/tools/toolsView";
 import { aggregatesView } from "./views/aggregates/aggregatesView";
+import * as monaco from "monaco-editor";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -51,18 +52,20 @@ const PostgresPlugin: Plugin = {
                 return null;
             }
 
-            return [
-                {
-                    id: "actions.explain-plan",
-                    label: i18next.t("explain-plan", "Explain Plan"),
-                    icon: "Explain",
-                    keySequence: ["Ctrl+E"],
-                    contextMenuGroupId: "sql-editor",
-                    contextMenuOrder: 5,
-                    run: async (_editor) => {
+            return {
+                actions: [
+                    {
+                        id: "actions.explain-plan",
+                        label: i18next.t("explain-plan", "Explain Plan"),
+                        icon: "Explain",
+                        keySequence: ["Ctrl+E"],
+                        contextMenuGroupId: "sql-editor",
+                        contextMenuOrder: 5,
+                        run: async (_editor) => {
+                        }
                     }
-                }
-            ]
+                ]
+            };
         });
     }
 };

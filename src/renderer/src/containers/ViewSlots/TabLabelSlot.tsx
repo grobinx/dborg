@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { useTheme, useThemeProps } from "@mui/material";
+import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -9,8 +9,7 @@ import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Message
 import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface TabLabelSlotProps {
 }
@@ -32,21 +31,12 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const [label, setLabel] = React.useState<React.ReactNode | null>(null);
     const [icon, setIcon] = React.useState<React.ReactNode | null>(null);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const { subscribe, unsubscribe } = useMessages();
     const [active, setActive] = React.useState(false);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [, reRender] = React.useState<bigint>(0n);
-    const addToast = useToast();
-    const { confirm } = useDialogs();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog, showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     const closable = resolveBooleanFactory(tabSlot.closable, runtimeContext);
     const pinnable = resolveBooleanFactory(tabSlot.pinnable, runtimeContext);

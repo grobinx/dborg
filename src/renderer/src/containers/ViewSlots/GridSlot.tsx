@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
-import { DataGrid, DataGridChangeRow, DataGridRow } from "@renderer/components/DataGrid/DataGrid";
+import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
@@ -14,7 +14,6 @@ import {
     resolveRecordsAsyncFactory,
     resolveRecordsChangeFactory,
     resolveStringFactory,
-    SlotRuntimeContext,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -27,7 +26,7 @@ import { StatusBarButton } from "@renderer/app/StatusBar";
 import { resolveIcon } from "@renderer/themes/icons";
 import { createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
-import { useDialogs } from "@toolpad/core";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface GridSlotProps {
     slot: IGridSlot;
@@ -40,19 +39,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const theme = useTheme();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const addToast = useToast();
-    const { confirm } = useDialogs();
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
     const { t } = useTranslation();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
     const dataGridRef = React.useRef<DataGridActionContext<any> | null>(null);
     const [rows, setRows] = React.useState<Record<string, any>[]>([]);
     const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);

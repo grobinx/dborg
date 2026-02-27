@@ -1,11 +1,10 @@
 import React from "react";
-import { Box, styled, useTheme } from "@mui/material";
-import { IRenderedSlot, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { Box, styled } from "@mui/material";
+import { IRenderedSlot } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface RenderedSlotProps extends Omit<React.ComponentProps<typeof Box>, "slot"> {
 }
@@ -22,25 +21,15 @@ const StyledRenderedSlotBox = styled(Box)({
 });
 
 const RenderedSlot: React.FC<RenderedSlotOwnProps> = (props) => {
-    const theme = useTheme();
     const { slot, ref, className, tabsItemID, ...other } = props;
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
-    const [refresh, setRefresh] = React.useState<bigint>(0n);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const [, setRefresh] = React.useState<bigint>(0n);
+    const { registerRefresh } = useViewSlot();
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
-    const addToast = useToast();
-    const { confirm } = useDialogs();
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
+
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
             if (redraw === "only") {

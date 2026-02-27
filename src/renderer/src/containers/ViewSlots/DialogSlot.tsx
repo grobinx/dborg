@@ -1,15 +1,12 @@
 import React from "react";
-import { useTheme } from "@mui/material/styles";
 import {
     IDialogSlot,
-    SlotRuntimeContext,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { uuidv7 } from "uuidv7";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
 import { DialogBase } from "./dialog/DialogBase";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
+import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
 interface DialogSlotProps {
     slot: IDialogSlot;
@@ -30,28 +27,15 @@ const DialogSlot: React.FC<DialogSlotProps> = (props) => {
         onClose,
     } = props;
 
-    const theme = useTheme();
-    const addToast = useToast();
-    const { confirm } = useDialogs();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
-    const { registerRefresh, refreshSlot, openDialog } = useViewSlot();
+    const { registerRefresh } = useViewSlot();
     const [dialogRef, dialogVisible] = useVisibleState<HTMLDivElement>();
     const [refresh, setRefresh] = React.useState<bigint>(0n);
 
     const [forceRender, setForceRender] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
 
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme,
-        refresh: refreshSlot,
-        openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
