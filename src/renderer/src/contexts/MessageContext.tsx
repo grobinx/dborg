@@ -6,7 +6,7 @@ export * as Messages from "../app/Messages"; // Export all messages for easy acc
 type MessageHandler<Args extends any[] = any[], R = any> = (...args: Args) => Promise<R> | R;
 
 // MessageContextProps with generic support
-interface MessageContextProps {
+export interface MessageContextProps {
     subscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => () => void;
     unsubscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => void;
     sendMessage: <Args extends any[], R = any>(message: string, ...args: Args) => Promise<R | undefined>;

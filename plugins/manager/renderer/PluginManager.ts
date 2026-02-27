@@ -1,9 +1,10 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin, ConnectionViewsFactory, ConnectionView, ConnectionActionsFactory, ConnectionActionType, ConnectionActions } from "./Plugin";
+import { Plugin, ConnectionViewsFactory, ConnectionView } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { ConnectionActions, ConnectionActionsFactory, ConnectionActionType, ConnectionSqlResultTab, ConnectionSqlResultTabFactory } from "./ConnectionSlots";
 
 export interface IPluginManager {
     /**
@@ -22,6 +23,8 @@ export interface IPluginManager {
     getConnectionActions(type: "sql-result", session: IDatabaseSession): ConnectionActions<DataGridActionContext<any>>[] | null;
     getConnectionActions<T extends object>(type: ConnectionActionType, session: IDatabaseSession): ConnectionActions<T>[] | null;
 
+    getConnectionSqlResultTabs(session: IDatabaseSession): ConnectionSqlResultTab[] | null;
+
     /**
      * Get all registered plugins
      * @returns array of registered plugins
@@ -33,6 +36,7 @@ class PluginManager implements IPluginManager {
     private plugins: Map<string, Plugin> = new Map();
     pluginConnectionViewsFactories: ConnectionViewsFactory[] = []; // Array to hold connection view factories
     pluginConnectionActionsFactories: Map<ConnectionActionType, ConnectionActionsFactory<any>[]> = new Map(); // Map to hold connection action factories
+    pluginConnectionSqlResultTabFactories: ConnectionSqlResultTabFactory[] = []; // Array to hold connection sql result tab factories
 
     constructor() {
     }
@@ -53,6 +57,9 @@ class PluginManager implements IPluginManager {
                 }
                 this.pluginConnectionActionsFactories.get(type)!.push(factory);
             },
+            registerConnectionSqlResultTabFactory: (factory: ConnectionSqlResultTabFactory) => {
+                this.pluginConnectionSqlResultTabFactories.push(factory);
+            },
         });
 
         this.plugins.set(plugin.id, plugin);
@@ -67,6 +74,12 @@ class PluginManager implements IPluginManager {
         const factories = this.pluginConnectionActionsFactories.get(type) || [];
         const actions = factories.map((factory) => factory(session)).flat().filter((action) => action !== null);
         return actions;
+    }
+
+    getConnectionSqlResultTabs(session: IDatabaseSession): ConnectionSqlResultTab[] | null {
+        const factories = this.pluginConnectionSqlResultTabFactories || [];
+        const tabs = factories.map((factory) => factory(session)).flat().filter((tab) => tab !== null);
+        return tabs;
     }
 
     getPlugins(): Plugin[] {

@@ -9,6 +9,10 @@ import { uuidv7 } from "uuidv7";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
+import { ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { createTabPanel } from "@renderer/containers/ViewSlots/helpers";
+import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
 
 export const SQL_RESULT_CLOSE = "sql-result:close";
 
@@ -23,8 +27,12 @@ export function resultsTabsId(session: IDatabaseSession): string {
 
 const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {
     const theme = useTheme();
+    const plugins = usePluginManager();
     const [resultsTabs, setResultsTabs] = useState<React.ReactElement<TabPanelOwnProps>[]>([]);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
+    const pluginTabSlots = React.useMemo(() => plugins.getConnectionSqlResultTabs(session)?.flat() ?? [], [plugins, session]);
+    const [pluginTabs, setPluginTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     const tabsItemID = resultsTabsId(session);
 
@@ -74,6 +82,33 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
         };
     }, []);
 
+    useEffect(() => {
+        if (pluginTabSlots.length > 0) {
+            const tabs: ITabSlot[] = [];
+
+            setPluginTabs(pluginTabSlots.map((tab: ITabSlot) => {
+                const contentRef = React.createRef<HTMLDivElement>();
+                const labelRef = React.createRef<HTMLDivElement>();
+                const toolBarRef = React.createRef<HTMLDivElement>();
+                const { panel } = createTabPanel(tab, () => { }, () => { }, runtimeContext, contentRef, labelRef, toolBarRef);
+                if (panel) {
+                    tab.onMount?.(runtimeContext);
+                    tabs.push(tab);
+                    return panel;
+                }
+                return null;
+            }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[]);
+
+            return () => {
+                tabs.forEach(tab => {
+                    tab.onUnmount?.(runtimeContext);
+                });
+            };
+        } else {
+            setPluginTabs([]);
+        }
+    }, [pluginTabSlots]);
+
     const renderAddResultButton = () => (
         <TabPanelButtons>
             <Tooltip title="Add SQL Result Tab">
@@ -96,6 +131,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
         >
             {resultsTabs}
             {additionalTabs}
+            {pluginTabs}
         </TabsPanel>
     );
 };

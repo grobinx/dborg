@@ -21,7 +21,7 @@ import {
     isCopyData,
     resolveToolBarSlotsKindFactory,
     ToolBarSlotsKindFactory,
-    ITabSlot,
+    IPinnableTabSlot,
     isSearchField,
     ProgressBarSlotFactory,
     resolveProgressBarFactory,
@@ -89,7 +89,7 @@ export function createContentComponent(
 }
 
 export function createTabLabel(
-    tabSlot: ITabSlot,
+    tabSlot: IPinnableTabSlot,
     slot: TabLabelSlotKindFactory,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
@@ -126,7 +126,7 @@ export function createTabContent(
 }
 
 export function createTabPanel(
-    slot: ITabSlot,
+    slot: IPinnableTabSlot,
     onClose: (() => void) | undefined,
     onPin: (() => void) | undefined,
     runtimeContext: SlotRuntimeContext,

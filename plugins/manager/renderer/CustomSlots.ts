@@ -15,6 +15,7 @@ import { ThemeColor } from "@renderer/types/colors";
 import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
 import { LoadingOverlayMode } from "@renderer/components/useful/spinners/Spinners";
+import { MessageContextProps } from "@renderer/contexts/MessageContext";
 
 export type CustomSlotType =
     "split"
@@ -57,6 +58,8 @@ export interface SlotRuntimeContext {
         cancelLabel?: string,
         severity: "info" | "success" | "warning" | "error",
     }) : Promise<boolean>;
+
+    messages: MessageContextProps;
 }
 
 export type BooleanFactory<T = SlotRuntimeContext> = boolean | ((runtimeContext: T) => boolean);
@@ -523,10 +526,6 @@ export type TabContentSlotKind =
     ITabContentSlot
     | IRenderedSlot;
 
-/**
- * Slot typu tab.
- * Reprezentuje pojedynczą zakładkę w TabsSlot.
- */
 export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     id: string;
 
@@ -547,6 +546,13 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
     content: TabContentSlotKindFactory;
+}
+
+/**
+ * Slot typu tab.
+ * Reprezentuje pojedynczą zakładkę w TabsSlot.
+ */
+export interface IPinnableTabSlot extends ITabSlot {
     /**
      * Czy zakładka jest przypinana (opcjonalnie).
      */
@@ -555,7 +561,7 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
      * Funkcja zwracająca slot, który pozwala na przypięcie zakładki.
      * @returns 
      */
-    pin?: () => ITabSlot;
+    pin?: () => IPinnableTabSlot;
     /**
      * Funkcja wywoływana po zamknięciu zakładki.
      * @param slotContext
@@ -1380,7 +1386,7 @@ export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T
 export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotRuntimeContext): SplitSlotPartKind | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
-export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotRuntimeContext): ITabSlot[] | undefined {
+export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotRuntimeContext): IPinnableTabSlot[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, context: SlotRuntimeContext): TabLabelSlotKind | undefined {

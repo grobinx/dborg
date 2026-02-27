@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { IEditorSlot, IGridSlot, ITabSlot, ITextSlot, SlotRuntimeContext } from "../../../../../manager/renderer/CustomSlots";
+import { IEditorSlot, IGridSlot, IPinnableTabSlot, ITextSlot, SlotRuntimeContext } from "../../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { listOwnedObjects, listPrivileges, buildCleanupSql, OwnedObjectRecord, PrivilegeRecord, CleanupChoice, PrivilegeChoice, isValidCleanupAction } from "./roleAudit";
 import { versionToNumber } from "../../../../../../src/api/version";
@@ -17,7 +17,7 @@ import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 import ObjectSafetyAnalyzer, { AnalysisResult, RiskLevel } from "./objectAnalyze";
 import { executeScriptAction } from "../../actions/ExecuteScript";
 
-const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
+const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = cidFactory("tools-role-cleanup", session.info.uniqueId);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
@@ -616,7 +616,7 @@ const roleCleanupTab = (session: IDatabaseSession): ITabSlot => {
                                                     },
                                                 },
                                             }
-                                        ] as ITabSlot[],
+                                        ] as IPinnableTabSlot[],
                                     }
                                 },
                             },

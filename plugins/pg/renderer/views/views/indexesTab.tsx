@@ -1,14 +1,14 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ViewRecord } from "./viewsView";
 
 const indexesTab = (
     session: IDatabaseSession,
     selectedRow: () => ViewRecord | null,
     cid: (id: string) => string,
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
 
     return {

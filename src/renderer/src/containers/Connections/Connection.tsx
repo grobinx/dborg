@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
 import { ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { ITabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IPinnableTabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
@@ -365,7 +365,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
 };
 
 function createTabPanels(
-    tabs: ITabSlot[] | undefined,
+    tabs: IPinnableTabSlot[] | undefined,
     runtimeContext: SlotRuntimeContext,
     selectedViewId: string,
     queueMessage: (...args: any[]) => void,

@@ -1,5 +1,5 @@
 import React from "react";
-import { ITabSlot, ITabsSlot, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IPinnableTabSlot, ITabsSlot, resolveStringFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
@@ -45,11 +45,11 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
     }, [slotId]);
 
     React.useEffect(() => {
-        const tabs: ITabSlot[] = [];
+        const tabs: IPinnableTabSlot[] = [];
         const resolvedTabSlots = resolveTabSlotsFactory(slot.tabs, runtimeContext);
         if (resolvedTabSlots) {
             const defaultTabId = resolveStringFactory(slot.defaultTabId, runtimeContext) || resolvedTabSlots[0]?.id || null;
-            setTabs(resolvedTabSlots.map((tab: ITabSlot) => {
+            setTabs(resolvedTabSlots.map((tab: IPinnableTabSlot) => {
                 const contentRef = React.createRef<HTMLDivElement>();
                 const labelRef = React.createRef<HTMLDivElement>();
                 const toolBarRef = React.createRef<HTMLDivElement>();

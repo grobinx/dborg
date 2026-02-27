@@ -1,6 +1,6 @@
 import React from "react";
 import { useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, ITabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabLabelSlot, IPinnableTabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -15,7 +15,7 @@ interface TabLabelSlotProps {
 }
 
 interface TabLabelSlotOwnProps extends TabLabelSlotProps {
-    tabSlot: ITabSlot;
+    tabSlot: IPinnableTabSlot;
     slot: ITabLabelSlot;
     ref?: React.Ref<HTMLDivElement>;
     tabsItemID?: string;

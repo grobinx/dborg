@@ -1,6 +1,6 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "../../../../manager/renderer/CustomSlots";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
@@ -48,7 +48,7 @@ export interface SchemaStatsRecord {
     [key: string]: any;
 }
 
-export function schemasTab(session: IDatabaseSession): ITabSlot {
+export function schemasTab(session: IDatabaseSession): IPinnableTabSlot {
     const t = i18next.t.bind(i18next);
 
     let selectedRow: SchemaRecord | null = null;

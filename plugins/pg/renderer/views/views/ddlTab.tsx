@@ -1,6 +1,6 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IEditorSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IEditorSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { getSetting } from "@renderer/contexts/SettingsContext";
 import { ViewRecord } from "./viewsView";
 import { PLUGIN_ID } from "../../PostgresPlugin";
@@ -11,7 +11,7 @@ const ddlTab = (
     session: IDatabaseSession,
     selectedRow: () => ViewRecord | null,
     cid: (id: string) => string,
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
 

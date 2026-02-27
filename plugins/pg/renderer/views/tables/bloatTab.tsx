@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "../../../../manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { defaultVacuumStructure, vacuumDialog } from "../dialogs/vacuum-dialog";
 import { versionToNumber } from "../../../../../src/api/version";
@@ -10,7 +10,7 @@ const bloatTab = (
     session: IDatabaseSession,
     selectedRow: () => TableRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
     let vacuumStructure = { ...defaultVacuumStructure };

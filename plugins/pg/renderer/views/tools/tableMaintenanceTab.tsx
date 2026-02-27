@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IGridSlot, ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IAutoRefresh, IGridSlot, IPinnableTabSlot } from "../../../../manager/renderer/CustomSlots";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { SelectSchemaAction, SelectSchemaAction_ID } from "../../actions/SelectSchemaAction";
 import { SearchData_ID } from "@renderer/components/DataGrid/actions";
@@ -45,7 +45,7 @@ interface RelationMaintenanceRecord {
     [key: string]: any;
 }
 
-const tableMaintenanceTab = (session: IDatabaseSession): ITabSlot => {
+const tableMaintenanceTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = cidFactory("tools-table-maintenance", session.info.uniqueId);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");

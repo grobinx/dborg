@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, ITabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
+import { IAutoRefresh, IContentSlot, IGridSlot, IRenderedSlot, IPinnableTabSlot, ITabsSlot } from "plugins/manager/renderer/CustomSlots";
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@mui/material";
 import { TableRecord } from "./tablesView";
@@ -37,7 +37,7 @@ const statisticsTab = (
     session: IDatabaseSession,
     selectedRow: () => TableRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
 
     let statRows: StatRecord[] = [];

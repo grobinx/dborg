@@ -1,6 +1,6 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IAutoRefresh, ICopyData, IRenderedSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IAutoRefresh, ICopyData, IRenderedSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { Box, Grid2 as Grid, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { ChartNumBackends } from "./activityCharts/ChartNumBackends";
 import { ChartSessions } from "./activityCharts/ChartSessions";
@@ -69,7 +69,7 @@ export interface ActivityRecord {
 const activityTab = (
     session: IDatabaseSession,
     databaseName: string | null
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 

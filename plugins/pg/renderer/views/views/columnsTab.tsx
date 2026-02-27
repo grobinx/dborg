@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { ViewRecord } from "./viewsView";
 
 interface ViewColumnRecord {
@@ -42,7 +42,7 @@ const columnsTab = (
     session: IDatabaseSession,
     selectedView: () => ViewRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
 
     let selected: ViewColumnRecord | null = null;

@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 
 interface ExtensionRecord {
     extname: string;
@@ -11,7 +11,7 @@ interface ExtensionRecord {
     [key: string]: any;
 }
 
-const databaseExtensionsTab = (session: IDatabaseSession, _database: string | null): ITabSlot => {
+const databaseExtensionsTab = (session: IDatabaseSession, _database: string | null): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 

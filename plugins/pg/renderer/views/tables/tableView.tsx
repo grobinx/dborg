@@ -1,5 +1,5 @@
 import { uuidv7 } from "uuidv7";
-import { ITabSlot } from "../../../../manager/renderer/CustomSlots";
+import { IPinnableTabSlot } from "../../../../manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
@@ -24,7 +24,7 @@ import publicationsTab from "./publicationsTab";
 import fdwTab from "./fdwTab";
 import queryPlansTab from "./queryPlansTab";
 
-export function tableView(session: IDatabaseSession, table: (() => TableRecord | null) | TableRecord, pinned: boolean = false): ITabSlot {
+export function tableView(session: IDatabaseSession, table: (() => TableRecord | null) | TableRecord, pinned: boolean = false): IPinnableTabSlot {
     const t = i18next.t.bind(i18next);
     const uniqueId = uuidv7();
 

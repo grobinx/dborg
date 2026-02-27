@@ -2,7 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import i18next from "i18next";
-import { IAutoRefresh, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IAutoRefresh, IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { alpha, Theme } from "@mui/material";
 import { resolveColor } from "@renderer/utils/colors";
 import { collapseWhitespaceExceptQuotes } from "@renderer/components/editor/editorUtils";
@@ -55,7 +55,7 @@ interface TransactionRecord {
     [key: string]: any;
 }
 
-const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSlot => {
+const sessionsTab = (session: IDatabaseSession, database: string | null): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
@@ -650,7 +650,7 @@ const sessionsTab = (session: IDatabaseSession, database: string | null): ITabSl
                                     } as IAutoRefresh,
                                 ],
                             }),
-                        } as ITabSlot] : []),
+                        } as IPinnableTabSlot] : []),
 
                         // Progress CREATE INDEX (PG 12+)
                         ...(versionNumber >= 120000 ? [{

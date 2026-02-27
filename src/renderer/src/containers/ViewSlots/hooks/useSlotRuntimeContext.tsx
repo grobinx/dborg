@@ -4,6 +4,7 @@ import { useToast } from "@renderer/contexts/ToastContext";
 import { useDialogs } from "@toolpad/core";
 import { useViewSlot } from "../ViewSlotContext";
 import { useTheme } from "@mui/material";
+import { useMessages } from "@renderer/contexts/MessageContext";
 
 interface UseSlotRuntimeContextParams {
 }
@@ -13,6 +14,7 @@ export function useSlotRuntimeContext({}: UseSlotRuntimeContextParams): SlotRunt
     const addToast = useToast();
     const { confirm } = useDialogs();
     const { refreshSlot, openDialog } = useViewSlot();
+    const messages = useMessages();
 
     return React.useMemo(
         () => ({
@@ -30,7 +32,8 @@ export function useSlotRuntimeContext({}: UseSlotRuntimeContextParams): SlotRunt
                     cancelText: cancelLabel,
                 });
             },
+            messages,
         }),
-        [theme, refreshSlot, openDialog, addToast, confirm]
+        [theme, refreshSlot, openDialog, addToast, confirm, messages]
     );
 }

@@ -6,7 +6,7 @@ import {
     IContentSlot,
     IGridSlot,
     IRenderedSlot,
-    ITabSlot,
+    IPinnableTabSlot,
     ITabsSlot
 } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
@@ -51,7 +51,7 @@ const columnStatsTab = (
     session: IDatabaseSession,
     selectedRow: () => TableRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
 
     // Bufor snapshotów

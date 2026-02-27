@@ -2,7 +2,7 @@ import { Typography } from "@mui/material";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 import { Action, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { versionToNumber } from "../../../../../src/api/version";
@@ -70,7 +70,7 @@ const columnsTab = (
     session: IDatabaseSession,
     selectedTable: () => TableRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 

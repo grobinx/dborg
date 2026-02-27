@@ -2,7 +2,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { ViewRecord } from "./viewsView";
 import i18next from "i18next";
 import { uuidv7 } from "uuidv7";
-import { ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import columnsTab from "./columnsTab";
 import indexesTab from "./indexesTab";
 import constraintsTab from "./constraintsTab";
@@ -17,7 +17,7 @@ import rulesTab from "./rulesTab";
 import locksTab from "./locksTab";
 import queryPlansTab from "./queryPlansTab";
 
-export function viewView(session: IDatabaseSession, view: (() => ViewRecord | null) | ViewRecord, pinned: boolean = false): ITabSlot {
+export function viewView(session: IDatabaseSession, view: (() => ViewRecord | null) | ViewRecord, pinned: boolean = false): IPinnableTabSlot {
     const t = i18next.t.bind(i18next);
     const uniqueId = uuidv7();
 

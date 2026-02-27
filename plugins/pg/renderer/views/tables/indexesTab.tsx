@@ -2,14 +2,14 @@ import { Typography } from "@mui/material";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { IContentSlot, IGridSlot, ITabSlot } from "plugins/manager/renderer/CustomSlots";
+import { IContentSlot, IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
 
 const indexesTab = (
     session: IDatabaseSession,
     selectedRow: () => TableRecord | null,
     cid: (id: string) => string
-): ITabSlot => {
+): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
 
     return {
