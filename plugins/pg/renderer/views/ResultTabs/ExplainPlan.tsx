@@ -44,7 +44,10 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                         }
                     } catch (error) {
                         explainPlan = {
-                            error: error instanceof Error ? error.message : String(error)
+                            error: {
+                                message: (error as any)["message"],
+                                stack: (error as any)["stack"],
+                            }
                         };
                     }
 
