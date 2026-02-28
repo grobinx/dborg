@@ -8,6 +8,7 @@ import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
+import { ExplainPlanViewer } from "./ExplainPlanViewer";
 
 export const EXPLAIN_PLAN_TEXT = "pg-explain-plan-text";
 
@@ -19,19 +20,39 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
 
     let unsubsribeExplainPlanText: () => void = () => { };
     let explainPlanText: string = "";
+    let explainPlan: any = null;
 
     return {
         id: cid("explain-plan-result"),
         type: "tab",
         onMount: (slotContext) => {
-            unsubsribeExplainPlanText = slotContext.messages.subscribe(EXPLAIN_PLAN_TEXT, (sessionId: string, text: string) => {
-                if (sessionId !== session.info.uniqueId) {
-                    return;
+            unsubsribeExplainPlanText = slotContext.messages.subscribe(
+                EXPLAIN_PLAN_TEXT,
+                async (sessionId: string, text: string) => {
+                    if (sessionId !== session.info.uniqueId) {
+                        return;
+                    }
+
+                    try {
+                        const sql = `EXPLAIN (ANALYZE, VERBOSE, COSTS, SETTINGS, BUFFERS, FORMAT JSON) ${text}`;
+                        const result = await session.query(sql);
+
+                        if (result.rows && result.rows.length > 0) {
+                            explainPlan = result.rows[0]['QUERY PLAN'];
+                        } else {
+                            explainPlan = { error: 'No plan returned' };
+                        }
+                    } catch (error) {
+                        explainPlan = {
+                            error: error instanceof Error ? error.message : String(error)
+                        };
+                    }
+
+                    explainPlanText = text;
+                    slotContext.refresh(cid("explain-plan-result-content"));
+                    slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
                 }
-                explainPlanText = text;
-                slotContext.refresh(cid("explain-plan-result-content"));
-                slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
-            });
+            );
         },
         onUnmount: () => {
             unsubsribeExplainPlanText();
@@ -44,7 +65,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
         content: {
             id: cid("explain-plan-result-content"),
             type: "rendered",
-            render: () => explainPlanText,
+            render: () => <ExplainPlanViewer jsonText={JSON.stringify(explainPlan)} />,
         }
 
     }

@@ -796,7 +796,7 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToS
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
-const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
+export const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     if (dataType === 'duration') {
         const dur = normalizeDuration(value);
         if (!dur.isValid) return String(value);
