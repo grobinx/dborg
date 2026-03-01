@@ -1,14 +1,16 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionSqlResultTab } from "plugins/manager/renderer/ConnectionSlots";
-import { versionToNumber } from "../../../../../src/api/version";
+import { versionToNumber } from "../../../../../../src/api/version";
 import { SlotRuntimeContext } from "plugins/manager/renderer/CustomSlots";
 import { resultsTabsId } from "@renderer/containers/Connections/ConnectionView/ResultsTabs";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
-import { ExplainPlanViewer } from "./ExplainPlanViewer";
+import { ErrorResult, ExplainPlanViewer, ExplainResult } from "./ExplainPlanViewer";
+import { QueryAnalyzer } from "./QueryAnalyzer";
+import { QueryStats } from "./QueryStats";
 
 export const EXPLAIN_PLAN_TEXT = "pg-explain-plan-text";
 
@@ -19,8 +21,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let unsubsribeExplainPlanText: () => void = () => { };
-    let explainPlanText: string = "";
-    let explainPlan: any = null;
+    let explainPlan: ExplainResult | ErrorResult | null = null;
 
     return {
         id: cid("explain-plan-result"),
@@ -38,9 +39,9 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                         const result = await session.query(sql);
 
                         if (result.rows && result.rows.length > 0) {
-                            explainPlan = result.rows[0]['QUERY PLAN'];
+                            explainPlan = (result.rows[0]['QUERY PLAN'] as ExplainResult[])[0];
                         } else {
-                            explainPlan = { error: 'No plan returned' };
+                            explainPlan = { error: { message: 'No plan returned' } } as ErrorResult;
                         }
                     } catch (error) {
                         explainPlan = {
@@ -48,11 +49,12 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                 message: (error as any)["message"],
                                 stack: (error as any)["stack"],
                             }
-                        };
+                        } as ErrorResult;
                     }
 
-                    explainPlanText = text;
                     slotContext.refresh(cid("explain-plan-result-content"));
+                    slotContext.refresh(cid("explain-plan-suggestions-content"));
+                    slotContext.refresh(cid("explain-plan-statistics-content"));
                     slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
                 }
             );
@@ -66,11 +68,52 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
             label: t("explain-plan", "Explain Plan"),
         },
         content: {
-            id: cid("explain-plan-result-content"),
-            type: "rendered",
-            render: () => <ExplainPlanViewer jsonText={JSON.stringify(explainPlan)} />,
+            type: "tabcontent",
+            content: {
+                type: "tabs",
+                tabs: [
+                    {
+                        id: cid("explain-plan-result"),
+                        type: "tab",
+                        label: {
+                            type: "tablabel",
+                            label: t("analysis", "Analysis"),
+                        },
+                        content: {
+                            id: cid("explain-plan-result-content"),
+                            type: "rendered",
+                            render: () => <ExplainPlanViewer plan={explainPlan} />,
+                        },
+                    },
+                    {
+                        id: cid("explain-plan-suggestions"),
+                        type: "tab",
+                        label: {
+                            type: "tablabel",
+                            label: t("suggestions", "Suggestions"),
+                        },
+                        content: {
+                            id: cid("explain-plan-suggestions-content"),
+                            type: "rendered",
+                            render: () => <QueryAnalyzer plan={explainPlan} />,
+                        },
+                    },
+                    {
+                        id: cid("explain-plan-statistics"),
+                        type: "tab",
+                        label: {
+                            type: "tablabel",
+                            label: t("statistics", "Statistics"),
+                        },
+                        content: {
+                            id: cid("explain-plan-statistics-content"),
+                            type: "rendered",
+                            render: () => <QueryStats plan={explainPlan} />,
+                        },
+                    },
+                ]
+            },
         }
-
     }
 
 }

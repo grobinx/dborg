@@ -17,7 +17,7 @@ import { viewsView } from "./views/views/viewsView";
 import { sequencesView } from "./views/sequences/sequencesView";
 import { toolsView } from "./views/tools/toolsView";
 import { aggregatesView } from "./views/aggregates/aggregatesView";
-import { ExplainPlanAction, explainPlanResultTab } from "./views/ResultTabs/ExplainPlan";
+import { ExplainPlanAction, explainPlanResultTab } from "./views/ResultTabs/ExplainPlan/ExplainPlan";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 

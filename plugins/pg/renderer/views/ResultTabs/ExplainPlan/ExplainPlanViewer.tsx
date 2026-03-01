@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
-import { formatDateTime } from '../../../../../src/api/db';
+import { formatDateTime } from '../../../../../../src/api/db';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
 
-interface PlanNode {
+export interface PlanNode {
     'Node Type': string;
     'Startup Cost'?: number;
     'Total Cost'?: number;
@@ -27,11 +27,26 @@ interface PlanNode {
     [key: string]: any;
 }
 
-interface ExplainResult {
+export interface ErrorResult {
+    error: {
+        message: string;
+        stack?: string;
+    }
+}
+
+export function isErrorResult(result: any): result is ErrorResult {
+    return result && "error" in result && typeof result.error === 'object';
+}
+
+export interface ExplainResult {
     Plan: PlanNode;
     'Planning Time'?: number;
     'Execution Time'?: number;
     [key: string]: any;
+}
+
+export function isExplainResult(result: any): result is ExplainResult {
+    return result && typeof result === 'object' && "Plan" in result;
 }
 
 const formatNumber = (num: number | undefined, decimals = 3): string => {
@@ -46,6 +61,7 @@ const formatCost = (startup: number | undefined, total: number | undefined): str
 
 const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, level }) => {
     const [expanded, setExpanded] = useState(true); // mniej szumu: domyślnie tylko 2 pierwsze poziomy
+    const theme = useTheme();
 
     const hasChildren = Array.isArray(node.Plans) && node.Plans.length > 0;
     const hasDetails =
@@ -79,7 +95,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
         <Box
             sx={{
                 position: 'relative',
-                mb: 2,
+                mb: 0,
                 pl: level > 0 ? 24 : 0,
                 '&::before': level > 0 ? {
                     content: '""',
@@ -102,10 +118,13 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             }}
         >
             <Paper
-                elevation={expanded ? 2 : 0}
+                elevation={expanded ? 3 : 0}
                 sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
                     px: 4,
                     py: 2,
+                    mb: 4,
                     border: '1px solid',
                     borderColor: expanded ? 'action.selected' : 'divider',
                     borderLeft: `4px solid ${nodeColor}`,
@@ -116,7 +135,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     {hasChildren ? (
                         <IconButton size="small" dense onClick={() => setExpanded(!expanded)} style={{ height: "100%" }}>
-                            {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                            {expanded ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                         </IconButton>
                     ) : (
                         <Box sx={{ width: 24 }} />
@@ -173,7 +192,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                 {hasDetails && (
                     <Collapse in={expanded}>
-                        <Box sx={{ mt: 2, pl: hasChildren ? 8 : 0 }}>
+                        <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                             <Table size="small">
                                 <TableBody>
                                     {node['Hash Cond'] && (
@@ -230,7 +249,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             </Paper>
 
             {expanded && hasChildren && (
-                <Box sx={{ mt: 2 }}>
+                <Box>
                     {node.Plans!.map((childNode, index) => (
                         <PlanNodeComponent key={index} node={childNode} level={level + 1} />
                     ))}
@@ -240,73 +259,56 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     );
 };
 
-export const ExplainPlanViewer: React.FC<{ jsonText: string }> = ({ jsonText }) => {
-    const [error, setError] = useState<string | null>(null);
-    const [explainData, setExplainData] = useState<ExplainResult | null>(null);
+export const ExplainPlanError: React.FC<{ error: ErrorResult }> = ({ error }) => {
+    const { t } = useTranslation();
+    return (
+        <Paper sx={{ px: 8, py: 4, borderLeft: '4px solid #f44336' }}>
+            <Typography variant="h6" color="error" gutterBottom>
+                {t("error-executing-explain", "Error executing EXPLAIN")}
+            </Typography>
+            <Typography color="error" sx={{ fontFamily: 'monospace', }}>
+                {t("error-message", "Error Message")}: {error.error.message}
+            </Typography>
+            <Typography color="error" sx={{ fontFamily: 'monospace', }}>
+                {t("error-stack", "Error Stack")}: {error.error.stack}
+            </Typography>
+        </Paper>
+    );
+}
+
+export const ExplainPlanViewer: React.FC<{ plan: ExplainResult | ErrorResult | null }> = ({ plan }) => {
     const { t } = useTranslation();
 
-    React.useEffect(() => {
-        try {
-            const parsed = JSON.parse(jsonText);
-            const data = Array.isArray(parsed) ? parsed[0] : parsed;
-
-            // Sprawdź czy response zawiera błąd
-            if (data?.error) {
-                setError(data.error);
-                setExplainData(null);
-                return;
-            }
-
-            setExplainData(data);
-            setError(null);
-        } catch (e) {
-            setError(`Failed to parse EXPLAIN output: ${e instanceof Error ? e.message : String(e)}`);
-            setExplainData(null);
-        }
-    }, [jsonText]);
-
-    if (error) {
-        return (
-            <Paper sx={{ p: 3, m: 2, borderLeft: '4px solid #f44336' }}>
-                <Typography variant="h6" color="error" gutterBottom>
-                    Error executing EXPLAIN
-                </Typography>
-                <Typography color="error" sx={{ fontFamily: 'monospace', }}>
-                    {t("error-message", "Error Message")}: {error["message"]}
-                </Typography>
-                <Typography color="error" sx={{ fontFamily: 'monospace', }}>
-                    {t("error-stack", "Error Stack")}: {error["stack"]}
-                </Typography>
-            </Paper>
-        );
+    if (isErrorResult(plan)) {
+        return <ExplainPlanError error={plan} />;
     }
 
-    if (!explainData) {
+    if (!plan) {
         return (
-            <Box sx={{ p: 2 }}>
-                <Typography color="text.secondary">No explain plan data</Typography>
+            <Box sx={{ p: 8 }}>
+                <Typography color="text.secondary">{t("no-explain-plan-data", "No explain plan data")}</Typography>
             </Box>
         );
     }
 
     return (
-        <Box sx={{ p: 2, height: '100%', overflow: 'auto' }}>
+        <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
             {/* Header z metrykami całkowitymi */}
-            <Paper sx={{ p: 2, mb: 2, backgroundColor: 'primary.dark', color: 'primary.contrastText' }}>
+            <Paper sx={{ px: 8, py: 4, backgroundColor: 'primary.dark', color: 'primary.contrastText' }}>
                 <Box sx={{ display: 'flex', gap: 8 }}>
-                    {explainData['Planning Time'] !== undefined && (
+                    {plan['Planning Time'] !== undefined && (
                         <Box>
-                            <Typography variant="caption">Planning Time</Typography>
+                            <Typography variant="body1">{t("planning-time", "Planning Time")}</Typography>
                             <Typography variant="h6">
-                                {formatDateTime(explainData['Planning Time'], "duration", {})}
+                                {formatDateTime(plan['Planning Time'], "duration", {})}
                             </Typography>
                         </Box>
                     )}
-                    {explainData['Execution Time'] !== undefined && (
+                    {plan['Execution Time'] !== undefined && (
                         <Box>
-                            <Typography variant="caption">Execution Time</Typography>
+                            <Typography variant="body1">{t("execution-time", "Execution Time")}</Typography>
                             <Typography variant="h6">
-                                {formatDateTime(explainData['Execution Time'], "duration", {})}
+                                {formatDateTime(plan['Execution Time'], "duration", {})}
                             </Typography>
                         </Box>
                     )}
@@ -314,7 +316,7 @@ export const ExplainPlanViewer: React.FC<{ jsonText: string }> = ({ jsonText }) 
             </Paper>
 
             {/* Drzewo planu */}
-            <PlanNodeComponent node={explainData.Plan} level={0} />
+            <PlanNodeComponent node={plan.Plan} level={0} />
         </Box>
     );
 };
