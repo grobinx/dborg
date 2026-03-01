@@ -18,6 +18,36 @@ interface Suggestion {
     }[];
 }
 
+// NEW: helpers for table/schema extraction from plan
+type RelationRef = { schema: string; table: string };
+
+const quoteIdent = (value: string): string => `"${value.replace(/"/g, '""')}"`;
+
+const findRelationInPlan = (node: PlanNode): RelationRef | null => {
+    const table = node['Relation Name'];
+    if (typeof table === 'string' && table.length > 0) {
+        return {
+            schema: (node.Schema as string) ?? 'public',
+            table,
+        };
+    }
+
+    if (Array.isArray(node.Plans)) {
+        for (const child of node.Plans) {
+            const found = findRelationInPlan(child);
+            if (found) return found;
+        }
+    }
+
+    return null;
+};
+
+const fqTableFromPlan = (node: PlanNode, fallback = 'table_name'): string => {
+    const rel = findRelationInPlan(node);
+    if (!rel) return fallback;
+    return `${quoteIdent(rel.schema)}.${quoteIdent(rel.table)}`;
+};
+
 const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
     const suggestions: Suggestion[] = [];
 
@@ -77,6 +107,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
             : String(plan['Sort Key']);
 
         if (rows > 1000) {
+            const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
                 title: t("query-analyzer:large-sort-title", "Large in-memory sort ({{rows}} rows, {{time}}ms, {{space}}KB)", { rows, time: sortTime.toFixed(2), space: sortSpace }),
@@ -91,7 +122,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
                 node: t("query-analyzer:sort-operation", "Sort operation"),
                 recommendation: [{
                     caption: t("query-analyzer:create-index", "Create index"),
-                    sql: `CREATE INDEX idx_sort ON table_name (${sortKeys.replace(/COLLATE[^,]*/g, '').trim()});`
+                    sql: `CREATE INDEX idx_sort ON ${targetTable} (${sortKeys.replace(/COLLATE[^,]*/g, '').trim()});`
                 }]
             });
         }
@@ -106,6 +137,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
             const direction = ratio > 10 ? t("query-analyzer:overestimated", "overestimated") : t("query-analyzer:underestimated", "underestimated");
             const diff = Math.abs(ratio - 1) * 100;
 
+            const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'info',
                 title: t("query-analyzer:row-estimate-title", "Row estimate {{direction}} by {{diff}}% (planned: {{planned}}, actual: {{actual}})", { direction, diff: diff.toFixed(0), planned: planRows, actual: actualRows }),
@@ -117,10 +149,10 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
                 node: `${plan['Node Type']}`,
                 recommendation: [{
                     caption: t("query-analyzer:analyze-table", "Analyze table"),
-                    sql: `ANALYZE ${plan['Relation Name'] ?? 'table_name'};`
+                    sql: `ANALYZE ${targetTable};`
                 }, {
                     caption: t("query-analyzer:adjust-statistics", "Adjust statistics"),
-                    sql: `ALTER TABLE ${plan['Relation Name'] ?? 'table_name'} SET (autovacuum_analyze_scale_factor=0.01);`
+                    sql: `ALTER TABLE ${targetTable} SET (autovacuum_analyze_scale_factor=0.01);`
                 }]
             });
         }
@@ -131,6 +163,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const nestTime = plan['Actual Total Time'] ?? 0;
 
         if (outerRows > 100) {
+            const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
                 title: t("query-analyzer:nested-loop-title", "Nested Loop executes {{rows}} iterations ({{time}}ms)", { rows: outerRows, time: nestTime.toFixed(2) }),
@@ -142,7 +175,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
                 node: t("query-analyzer:nested-loop", "Nested Loop"),
                 recommendation: [{
                     caption: t("query-analyzer:create-index", "Create index"),
-                    sql: `CREATE INDEX idx_join_col ON table_name (join_column);`
+                    sql: `CREATE INDEX idx_join_col ON ${targetTable} (join_column);`
                 }, {
                     caption: t("query-analyzer:set-join-collapse-limit", "Set join collapse limit"),
                     sql: `SET join_collapse_limit=1;`
@@ -157,6 +190,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const aggTime = plan['Actual Total Time'] ?? 0;
 
         if (rows > 10000) {
+            const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
                 title: t("query-analyzer:expensive-aggregate-title", "Expensive aggregate operation ({{rows}} groups, {{time}}ms)", { rows, time: aggTime.toFixed(2) }),
@@ -167,7 +201,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
                 node: t("query-analyzer:aggregate", "Aggregate"),
                 recommendation: [{
                     caption: t("query-analyzer:add-where-clause", "Add WHERE clause to pre-filter rows"),
-                    sql: `SELECT ... FROM table_name WHERE condition GROUP BY columns;`
+                    sql: `SELECT ... FROM ${targetTable} WHERE condition GROUP BY columns;`
                 }]
             });
         }
@@ -204,6 +238,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const scanTime = plan['Actual Total Time'] ?? 0;
 
         if (scanTime > 100 && rows > 5000) {
+            const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'info',
                 title: t("query-analyzer:slow-index-scan-title", "Slow index scan ({{rows}} rows, {{time}}ms)", { rows, time: scanTime.toFixed(2) }),
@@ -225,6 +260,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
     if (plan['Shared Read Blocks'] && plan['Shared Read Blocks'] > 100) {
         const readTime = plan['Actual Total Time'] ?? 0;
 
+        const targetTable = fqTableFromPlan(plan);
         suggestions.push({
             type: 'warning',
             title: t("query-analyzer:high-disk-io-title", "High disk I/O ({{reads}} blocks read)", { reads: plan['Shared Read Blocks'] }),
@@ -236,7 +272,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
             node: t("query-analyzer:disk-io", "Disk I/O"),
             recommendation: [{
                 caption: t("query-analyzer:vacuum-analyze", "Run VACUUM and ANALYZE"),
-                sql: `VACUUM ANALYZE ${plan['Relation Name'] ?? 'table_name'};`
+                sql: `VACUUM ANALYZE ${targetTable};`
             }, {
                 caption: t("query-analyzer:increase-work-mem", "Increase work_mem"),
                 sql: `SET work_mem = '256MB';`
@@ -251,6 +287,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const outerChild = plan['Plans'] ? plan['Plans'][0] : null;
 
         if (outerChild && outerChild['Actual Rows'] && outerChild['Actual Rows'] > planRows * 10) {
+            const targetTable = fqTableFromPlan(plan);
             const discarded = outerChild['Actual Rows'] - actualRows;
 
             suggestions.push({
@@ -265,7 +302,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
                 node: t("query-analyzer:limit", "LIMIT"),
                 recommendation: [{
                     caption: t("query-analyzer:add-index-to-order-by", "Create index on ORDER BY column"),
-                    sql: `CREATE INDEX idx_order ON table_name (order_column DESC) WHERE filter_condition;`
+                    sql: `CREATE INDEX idx_order ON ${targetTable} (order_column DESC) WHERE filter_condition;`
                 }]
             });
         }
