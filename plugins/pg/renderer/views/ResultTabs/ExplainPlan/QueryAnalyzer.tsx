@@ -406,7 +406,7 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null }> = ({ pl
                                     <Chip
                                         size="small"
                                         label={sugg.node}
-                                        sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                                        sx={{ fontFamily: monospaceFontFamily, fontSize: '0.75em' }}
                                         variant="outlined"
                                     />
                                 </Box>

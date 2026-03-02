@@ -93,13 +93,13 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                     stack: (error as any)?.stack,
                                 },
                             } as ErrorResult;
+                        } else {
+                            explainPlan = { error: { message: t("explain-plan-cancelled", "Explain plan cancelled") } } as ErrorResult;
+                            slotContext.refresh(cid("explain-plan-result-content"));
+                            slotContext.refresh(cid("explain-plan-suggestions-content"));
+                            slotContext.refresh(cid("explain-plan-statistics-content"));
+                            slotContext.refresh(cid("explain-plan-tab-label"));
                         }
-                        explainPlan = { error: { message: t("explain-plan-cancelled", "Explain plan cancelled") } } as ErrorResult;
-                        slotContext.refresh(cid("explain-plan-result-content"));
-                        slotContext.refresh(cid("explain-plan-suggestions-content"));
-                        slotContext.refresh(cid("explain-plan-statistics-content"));
-                        slotContext.refresh(cid("explain-plan-tab-label"));
-                        cancelCurrentRequest = null;
                     } finally {
                         try {
                             await cursor?.close();

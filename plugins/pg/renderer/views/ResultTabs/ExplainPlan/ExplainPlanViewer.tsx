@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link } from '@mui/material';
+import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link, PaletteColor } from '@mui/material';
 import { formatDateTime } from '../../../../../../src/api/db';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
 import { ErrorResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
+import { useSetting } from '@renderer/contexts/SettingsContext';
 
 const formatNumber = (num: number | undefined, decimals = 3): string => {
     if (num === undefined) return '-';
@@ -50,17 +51,20 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
+    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
 
     const hasChildren = Array.isArray(node.Plans) && node.Plans.length > 0;
 
     const hasKeyDetails =
         Boolean(node['Sort Key']?.length) ||
         Boolean(node.Filter) ||
+        (node['Rows Removed by Join Filter'] !== undefined && node['Rows Removed by Join Filter'] > 0) ||
         (node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0);
 
     const additionalDetails = Object.entries(node).filter(([key, value]) =>
         !KNOWN_NODE_KEYS.has(key) &&
         key !== 'Rows Removed by Filter' &&
+        key !== 'Rows Removed by Join Filter' &&
         value !== undefined &&
         value !== null &&
         !(Array.isArray(value) && value.length === 0)
@@ -73,7 +77,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
         node['Actual Startup Time'] !== undefined ||
         additionalDetails.length > 0;
 
-    const getNodeColor = (nodeType: string): string => {
+    const getNodeColor = (nodeType: string): PaletteColor => {
         const critical = new Set<string>([
             'Seq Scan',
             'Nested Loop',
@@ -96,6 +100,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             'BitmapOr',
             'Hash',
             'Subquery Scan',
+            'WindowAgg',
         ]);
 
         const low = new Set<string>([
@@ -108,15 +113,46 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             'Append',
         ]);
 
-        if (critical.has(nodeType)) return theme.palette.error.main;      // wysokie zagrożenie
-        if (high.has(nodeType)) return theme.palette.warning.main;        // podwyższone
-        if (medium.has(nodeType)) return theme.palette.info.main;         // umiarkowane
-        if (low.has(nodeType)) return theme.palette.success.main;         // niskie
+        if (critical.has(nodeType)) return theme.palette.error;      // wysokie zagrożenie
+        if (high.has(nodeType)) return theme.palette.warning;        // podwyższone
+        if (medium.has(nodeType)) return theme.palette.info;         // umiarkowane
+        if (low.has(nodeType)) return theme.palette.success;         // niskie
 
-        return theme.palette.main.main; // nieznane / neutralne
+        return theme.palette.main; // nieznane / neutralne
     };
 
     const nodeColor = getNodeColor(node['Node Type']);
+
+    const getRemovedRowsColor = (removed: number | undefined, actualRows: number | undefined): string => {
+        if (removed === undefined || removed <= 0) return theme.palette.success.main;
+
+        // fallback gdy brak Actual Rows
+        if (actualRows === undefined || actualRows < 0) {
+            if (removed > 100000) return theme.palette.error.main;
+            if (removed > 10000) return theme.palette.warning.main;
+            if (removed > 1000) return theme.palette.info.main;
+            return theme.palette.success.main;
+        }
+
+        const ratio = removed / Math.max(removed + actualRows, 1);
+
+        if (ratio >= 0.9) return theme.palette.error.main;
+        if (ratio >= 0.6) return theme.palette.warning.main;
+        if (ratio >= 0.3) return theme.palette.info.main;
+        return theme.palette.success.main;
+    };
+
+    const formatRemovedRows = (removed: number | undefined, actualRows: number | undefined): string => {
+        if (removed === undefined) return '-';
+        const ratio = actualRows !== undefined && actualRows >= 0
+            ? (removed / Math.max(removed + actualRows, 1)) * 100
+            : null;
+
+        return ratio === null ? `${removed}` : `${removed} (${ratio.toFixed(1)}%)`;
+    };
+
+    const removedByFilterColor = getRemovedRowsColor(node['Rows Removed by Filter'], node['Actual Rows']);
+    const removedByJoinFilterColor = getRemovedRowsColor(node['Rows Removed by Join Filter'], node['Actual Rows']);
 
     return (
         <Box
@@ -154,14 +190,14 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     mb: 4,
                     border: '1px solid',
                     borderColor: expanded ? 'action.selected' : 'divider',
-                    borderLeft: `4px solid ${nodeColor}`,
+                    borderLeft: `4px solid ${nodeColor.main}`,
                     backgroundColor: expanded ? 'action.hover' : 'background.paper',
                     transition: 'all .15s ease',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     {hasChildren ? (
-                        <IconButton size="small" dense onClick={() => setExpanded(!expanded)} style={{ height: "100%" }}>
+                        <IconButton size="small" dense onClick={() => setExpanded(!expanded)} style={{ height: "100%" }} tooltip={expanded ? t("collapse-node", "Collapse Node") : t("expand-node", "Expand Node")}>
                             {expanded ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
                         </IconButton>
                     ) : (
@@ -172,21 +208,21 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                         label={node['Node Type']}
                         size="small"
                         sx={{
-                            backgroundColor: nodeColor,
-                            color: '#fff',
+                            backgroundColor: nodeColor.main,
+                            color: nodeColor.contrastText,
                             fontWeight: 700,
                         }}
                     />
 
                     {node['Relation Name'] && (
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ fontFamily: monospaceFontFamily, color: 'text.secondary' }}>
                             {node.Schema ? `${node.Schema}.` : ''}{node['Relation Name']}
                             {node.Alias ? ` (${node.Alias})` : ''}
                         </Typography>
                     )}
 
                     {node['Group Key'] && (
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ fontFamily: monospaceFontFamily, color: 'text.secondary' }}>
                             {Array.isArray(node['Group Key'])
                                 ? node['Group Key'].join(', ')
                                 : String(node['Group Key'])
@@ -195,7 +231,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     )}
 
                     {node['Sort Key'] && (
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ fontFamily: monospaceFontFamily, color: 'text.secondary' }}>
                             {Array.isArray(node['Sort Key'])
                                 ? node['Sort Key'].join(', ')
                                 : String(node['Sort Key'])
@@ -204,13 +240,13 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     )}
 
                     {node['Function Name'] && (
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ fontFamily: monospaceFontFamily, color: 'text.secondary' }}>
                             {node['Function Name']}
                         </Typography>
                     )}
 
                     {node['Join Type'] && (
-                        <Chip label={node['Join Type']} size="small" variant="outlined" />
+                        <Chip label={node['Join Type']} size="small" variant="outlined" color="warning" />
                     )}
 
                     <Box sx={{ flexGrow: 1 }} />
@@ -229,7 +265,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             size="small"
                             variant="outlined"
                             label={`Cost ${formatCost(node['Startup Cost'], node['Total Cost'])}`}
-                            sx={{ fontFamily: 'monospace' }}
+                            sx={{ fontFamily: monospaceFontFamily }}
                         />
 
                         {node['Actual Total Time'] !== undefined && (
@@ -237,7 +273,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                 size="small"
                                 variant="outlined"
                                 label={`Time ${formatDateTime(node['Actual Total Time'], "duration", {})}`}
-                                sx={{ fontFamily: 'monospace' }}
+                                sx={{ fontFamily: monospaceFontFamily }}
                             />
                         )}
 
@@ -245,7 +281,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             size="small"
                             variant="outlined"
                             label={`Rows ${node['Actual Rows'] ?? node['Plan Rows'] ?? '-'}`}
-                            sx={{ fontFamily: 'monospace' }}
+                            sx={{ fontFamily: monospaceFontFamily }}
                         />
 
                         {node['Actual Loops'] !== undefined && (
@@ -253,7 +289,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                 size="small"
                                 variant="outlined"
                                 label={`Loops ${node['Actual Loops']}`}
-                                sx={{ fontFamily: 'monospace' }}
+                                sx={{ fontFamily: monospaceFontFamily }}
                             />
                         )}
 
@@ -262,7 +298,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                 size="small"
                                 variant="outlined"
                                 label={`Width ${node['Plan Width']}`}
-                                sx={{ fontFamily: 'monospace' }}
+                                sx={{ fontFamily: monospaceFontFamily }}
                             />
                         )}
                     </Box>
@@ -274,8 +310,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             <TableBody>
                                 {node.Filter && (
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("filter", "Filter")}</TableCell>
-                                        <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                        <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("filter", "Filter")}</TableCell>
+                                        <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em', wordBreak: 'break-word' }}>
                                             {node.Filter}
                                         </TableCell>
                                     </TableRow>
@@ -283,9 +319,36 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                 {node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0 && (
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("rows-removed", "Rows Removed")}</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: 'error.main' }}>
-                                            {node['Rows Removed by Filter']}
+                                        <TableCell sx={{ fontWeight: 600, width: "15%" }}>
+                                            {t("rows-removed-filter", "Rows Removed by Filter")}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: removedByFilterColor,
+                                                fontFamily: monospaceFontFamily,
+                                                fontSize: '0.875em',
+                                            }}
+                                        >
+                                            {formatRemovedRows(node['Rows Removed by Filter'], node['Actual Rows'])}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+
+                                {node['Rows Removed by Join Filter'] !== undefined && node['Rows Removed by Join Filter'] > 0 && (
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 600, width: "15%" }}>
+                                            {t("rows-removed-join", "Rows Removed by Join Filter")}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: removedByJoinFilterColor,
+                                                fontFamily: monospaceFontFamily,
+                                                fontSize: '0.875em',
+                                            }}
+                                        >
+                                            {formatRemovedRows(node['Rows Removed by Join Filter'], node['Actual Rows'])}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -302,8 +365,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                     <TableBody>
                                         {node['Hash Cond'] && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("hash-condition", "Hash Condition")}</TableCell>
-                                                <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("hash-condition", "Hash Condition")}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em' }}>
                                                     {node['Hash Cond']}
                                                 </TableCell>
                                             </TableRow>
@@ -311,8 +374,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                         {node['Shared Hit Blocks'] !== undefined && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("shared-blocks", "Shared Blocks")}</TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("shared-blocks", "Shared Blocks")}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em' }}>
                                                     {t("hit", "Hit")}: {node['Shared Hit Blocks']}, {t("read", "Read")}: {node['Shared Read Blocks'] ?? 0}
                                                 </TableCell>
                                             </TableRow>
@@ -320,8 +383,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                         {node.Output && node.Output.length > 0 && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("output", "Output")}</TableCell>
-                                                <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("output", "Output")}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em', wordBreak: 'break-word' }}>
                                                     {node.Output.join(', ')}
                                                 </TableCell>
                                             </TableRow>
@@ -329,17 +392,26 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                         {node['Actual Startup Time'] !== undefined && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("actual-startup", "Actual Startup")}</TableCell>
-                                                <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("actual-startup", "Actual Startup")}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em' }}>
                                                     {formatDateTime(node['Actual Startup Time'], "duration", {})}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+
+                                        {node['Actual Rows'] !== undefined && (
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("actual-rows", "Actual Rows")}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em' }}>
+                                                    {node['Actual Rows']}
                                                 </TableCell>
                                             </TableRow>
                                         )}
 
                                         {additionalDetails.map(([key, value]) => (
                                             <TableRow key={key}>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{key}</TableCell>
-                                                <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                                <TableCell sx={{ fontWeight: 600, width: "15%" }}>{key}</TableCell>
+                                                <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em', wordBreak: 'break-word' }}>
                                                     {formatAnyValue(value)}
                                                 </TableCell>
                                             </TableRow>
