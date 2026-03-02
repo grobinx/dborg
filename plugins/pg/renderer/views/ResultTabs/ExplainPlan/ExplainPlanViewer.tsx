@@ -1,53 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link } from '@mui/material';
 import { formatDateTime } from '../../../../../../src/api/db';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
-
-export interface PlanNode {
-    'Node Type': string;
-    'Startup Cost'?: number;
-    'Total Cost'?: number;
-    'Plan Rows'?: number;
-    'Plan Width'?: number;
-    'Actual Startup Time'?: number;
-    'Actual Total Time'?: number;
-    'Actual Rows'?: number;
-    'Actual Loops'?: number;
-    'Relation Name'?: string;
-    'Schema'?: string;
-    'Alias'?: string;
-    'Join Type'?: string;
-    'Hash Cond'?: string;
-    'Sort Key'?: string[];
-    'Filter'?: string;
-    'Output'?: string[];
-    'Plans'?: PlanNode[];
-    [key: string]: any;
-}
-
-export interface ErrorResult {
-    error: {
-        message: string;
-        stack?: string;
-    }
-}
-
-export function isErrorResult(result: any): result is ErrorResult {
-    return result && "error" in result && typeof result.error === 'object';
-}
-
-export interface ExplainResult {
-    Plan: PlanNode;
-    'Planning Time'?: number;
-    'Execution Time'?: number;
-    [key: string]: any;
-}
-
-export function isExplainResult(result: any): result is ExplainResult {
-    return result && typeof result === 'object' && "Plan" in result;
-}
+import { ErrorResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
+import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
+import { ExplainPlanError } from './ExplainPlanError';
 
 const formatNumber = (num: number | undefined, decimals = 3): string => {
     if (num === undefined) return '-';
@@ -59,34 +17,103 @@ const formatCost = (startup: number | undefined, total: number | undefined): str
     return `${formatNumber(startup, 2)}..${formatNumber(total, 2)}`;
 };
 
+const KNOWN_NODE_KEYS = new Set<string>([
+    'Node Type',
+    'Startup Cost',
+    'Total Cost',
+    'Plan Rows',
+    'Plan Width',
+    'Actual Startup Time',
+    'Actual Total Time',
+    'Actual Rows',
+    'Actual Loops',
+    'Relation Name',
+    'Schema',
+    'Alias',
+    'Join Type',
+    'Hash Cond',
+    'Sort Key',
+    'Filter',
+    'Output',
+    'Plans',
+]);
+
+const formatAnyValue = (value: unknown): string => {
+    if (value === undefined || value === null) return '-';
+    if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+};
+
 const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, level }) => {
-    const [expanded, setExpanded] = useState(true); // mniej szumu: domyślnie tylko 2 pierwsze poziomy
+    const [expanded, setExpanded] = useState(true);
+    const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
     const theme = useTheme();
+    const { t } = useTranslation();
 
     const hasChildren = Array.isArray(node.Plans) && node.Plans.length > 0;
-    const hasDetails =
-        Boolean(node['Hash Cond']) ||
-        Boolean(node['Sort Key']) ||
+
+    const hasKeyDetails =
+        Boolean(node['Sort Key']?.length) ||
         Boolean(node.Filter) ||
-        (node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0) ||
-        node['Shared Hit Blocks'] !== undefined;
+        (node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0);
+
+    const additionalDetails = Object.entries(node).filter(([key, value]) =>
+        !KNOWN_NODE_KEYS.has(key) &&
+        key !== 'Rows Removed by Filter' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+    );
+
+    const hasAdditionalDetails =
+        Boolean(node['Hash Cond']) ||
+        node['Shared Hit Blocks'] !== undefined ||
+        Boolean(node.Output?.length) ||
+        node['Actual Startup Time'] !== undefined ||
+        additionalDetails.length > 0;
 
     const getNodeColor = (nodeType: string): string => {
-        const colors: Record<string, string> = {
-            'Seq Scan': '#fb8c00',
-            'Index Scan': '#43a047',
-            'Index Only Scan': '#7cb342',
-            'Bitmap Index Scan': '#c0ca33',
-            'Bitmap Heap Scan': '#fdd835',
-            'Hash Join': '#1e88e5',
-            'Nested Loop': '#039be5',
-            'Merge Join': '#00acc1',
-            'Hash': '#00897b',
-            'Sort': '#8e24aa',
-            'Aggregate': '#5e35b1',
-            'Limit': '#3949ab',
-        };
-        return colors[nodeType] || '#757575';
+        const critical = new Set<string>([
+            'Seq Scan',
+            'Nested Loop',
+        ]);
+
+        const high = new Set<string>([
+            'Sort',
+            'HashAggregate',
+            'Aggregate',
+            'Materialize',
+            'Function Scan',
+            'ProjectSet',
+        ]);
+
+        const medium = new Set<string>([
+            'Hash Join',
+            'Merge Join',
+            'Bitmap Heap Scan',
+            'BitmapAnd',
+            'BitmapOr',
+            'Hash',
+            'Subquery Scan',
+        ]);
+
+        const low = new Set<string>([
+            'Index Scan',
+            'Index Only Scan',
+            'Bitmap Index Scan',
+            'Memoize',
+            'Result',
+            'Limit',
+            'Append',
+        ]);
+
+        if (critical.has(nodeType)) return theme.palette.error.main;      // wysokie zagrożenie
+        if (high.has(nodeType)) return theme.palette.warning.main;        // podwyższone
+        if (medium.has(nodeType)) return theme.palette.info.main;         // umiarkowane
+        if (low.has(nodeType)) return theme.palette.success.main;         // niskie
+
+        return theme.palette.main.main; // nieznane / neutralne
     };
 
     const nodeColor = getNodeColor(node['Node Type']);
@@ -118,7 +145,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             }}
         >
             <Paper
-                elevation={expanded ? 3 : 0}
+                elevation={expanded ? 2 : 0}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -158,13 +185,40 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                         </Typography>
                     )}
 
+                    {node['Group Key'] && (
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                            {Array.isArray(node['Group Key'])
+                                ? node['Group Key'].join(', ')
+                                : String(node['Group Key'])
+                            }
+                        </Typography>
+                    )}
+
+                    {node['Sort Key'] && (
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                            {Array.isArray(node['Sort Key'])
+                                ? node['Sort Key'].join(', ')
+                                : String(node['Sort Key'])
+                            }
+                        </Typography>
+                    )}
+
                     {node['Join Type'] && (
                         <Chip label={node['Join Type']} size="small" variant="outlined" />
                     )}
 
                     <Box sx={{ flexGrow: 1 }} />
 
-                    <Box sx={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <Box sx={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {hasAdditionalDetails && (
+                            <IconButton size="small" dense
+                                onClick={() => setShowAdditionalDetails((prev) => !prev)} style={{ height: '100%' }}
+                                tooltip={showAdditionalDetails ? t("hide-additional-details", "Hide Additional Details") : t("show-additional-details", "Show Additional Details")}
+                            >
+                                {showAdditionalDetails ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
+                            </IconButton>
+                        )}
+
                         <Chip
                             size="small"
                             variant="outlined"
@@ -187,64 +241,108 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             label={`Rows ${node['Actual Rows'] ?? node['Plan Rows'] ?? '-'}`}
                             sx={{ fontFamily: 'monospace' }}
                         />
+
+                        {node['Actual Loops'] !== undefined && (
+                            <Chip
+                                size="small"
+                                variant="outlined"
+                                label={`Loops ${node['Actual Loops']}`}
+                                sx={{ fontFamily: 'monospace' }}
+                            />
+                        )}
+
+                        {node['Plan Width'] !== undefined && (
+                            <Chip
+                                size="small"
+                                variant="outlined"
+                                label={`Width ${node['Plan Width']}`}
+                                sx={{ fontFamily: 'monospace' }}
+                            />
+                        )}
                     </Box>
                 </Box>
 
-                {hasDetails && (
-                    <Collapse in={expanded}>
-                        <Box sx={{ pl: hasChildren ? 8 : 0 }}>
-                            <Table size="small">
-                                <TableBody>
-                                    {node['Hash Cond'] && (
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600, width: 160 }}>Hash Condition</TableCell>
-                                            <TableCell sx={{ fontFamily: 'monospace' }}>
-                                                {node['Hash Cond']}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                {hasKeyDetails && (
+                    <Box sx={{ mt: 2, pl: hasChildren ? 8 : 0 }}>
+                        <Table size="small">
+                            <TableBody>
+                                {node.Filter && (
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>Filter</TableCell>
+                                        <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                            {node.Filter}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
 
-                                    {node['Sort Key'] && (
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600, width: 160 }}>Sort Key</TableCell>
-                                            <TableCell sx={{ fontFamily: 'monospace' }}>
-                                                {Array.isArray(node['Sort Key'])
-                                                    ? node['Sort Key'].join(', ')
-                                                    : String(node['Sort Key'])}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                                {node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0 && (
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>Rows Removed</TableCell>
+                                        <TableCell sx={{ color: 'error.main' }}>
+                                            {node['Rows Removed by Filter']}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </Box>
+                )}
 
-                                    {node.Filter && (
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600, width: 160 }}>Filter</TableCell>
-                                            <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
-                                                {node.Filter}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                {hasAdditionalDetails && (
+                    <Box sx={{ pl: hasChildren ? 8 : 0, pt: hasKeyDetails ? 1 : 2 }}>
+                        <Collapse in={showAdditionalDetails}>
+                            <Box sx={{ mt: 1 }}>
+                                <Table size="small">
+                                    <TableBody>
+                                        {node['Hash Cond'] && (
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Hash Condition</TableCell>
+                                                <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                    {node['Hash Cond']}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
 
-                                    {node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0 && (
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600, width: 160 }}>Rows Removed</TableCell>
-                                            <TableCell sx={{ color: 'error.main' }}>
-                                                {node['Rows Removed by Filter']}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                                        {node['Shared Hit Blocks'] !== undefined && (
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Shared Blocks</TableCell>
+                                                <TableCell>
+                                                    Hit: {node['Shared Hit Blocks']}, Read: {node['Shared Read Blocks'] ?? 0}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
 
-                                    {node['Shared Hit Blocks'] !== undefined && (
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600, width: 160 }}>Shared Blocks</TableCell>
-                                            <TableCell>
-                                                Hit: {node['Shared Hit Blocks']}, Read: {node['Shared Read Blocks'] ?? 0}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </Box>
-                    </Collapse>
+                                        {node.Output && node.Output.length > 0 && (
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Output</TableCell>
+                                                <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                                    {node.Output.join(', ')}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+
+                                        {node['Actual Startup Time'] !== undefined && (
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Actual Startup</TableCell>
+                                                <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                    {formatDateTime(node['Actual Startup Time'], "duration", {})}
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+
+                                        {additionalDetails.map(([key, value]) => (
+                                            <TableRow key={key}>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{key}</TableCell>
+                                                <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                                                    {formatAnyValue(value)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </Box>
+                        </Collapse>
+                    </Box>
                 )}
             </Paper>
 
@@ -259,28 +357,17 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     );
 };
 
-export const ExplainPlanError: React.FC<{ error: ErrorResult }> = ({ error }) => {
-    const { t } = useTranslation();
-    return (
-        <Paper sx={{ px: 8, py: 4, borderLeft: '4px solid #f44336' }}>
-            <Typography variant="h6" color="error" gutterBottom>
-                {t("error-executing-explain", "Error executing EXPLAIN")}
-            </Typography>
-            <Typography color="error" sx={{ fontFamily: 'monospace', }}>
-                {t("error-message", "Error Message")}: {error.error.message}
-            </Typography>
-            <Typography color="error" sx={{ fontFamily: 'monospace', }}>
-                {t("error-stack", "Error Stack")}: {error.error.stack}
-            </Typography>
-        </Paper>
-    );
-}
-
-export const ExplainPlanViewer: React.FC<{ plan: ExplainResult | ErrorResult | null }> = ({ plan }) => {
+export const ExplainPlanViewer: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
     const { t } = useTranslation();
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
+    }
+
+    if (isLoadingResult(plan)) {
+        return (
+            <LoadingOverlay label={plan.loading.message} onCancelLoading={plan.loading.cancel} />
+        );
     }
 
     if (!plan) {
@@ -294,7 +381,7 @@ export const ExplainPlanViewer: React.FC<{ plan: ExplainResult | ErrorResult | n
     return (
         <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
             {/* Header z metrykami całkowitymi */}
-            <Paper sx={{ px: 8, py: 4, backgroundColor: 'primary.dark', color: 'primary.contrastText' }}>
+            <Paper sx={{ px: 8, py: 4, mb: 4, backgroundColor: 'primary.dark', color: 'primary.contrastText' }}>
                 <Box sx={{ display: 'flex', gap: 8 }}>
                     {plan['Planning Time'] !== undefined && (
                         <Box>

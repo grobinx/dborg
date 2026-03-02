@@ -1,7 +1,10 @@
 import React from 'react';
 import { Box, Paper, Grid2 as Grid, Typography, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { PlanNode, ExplainResult, ErrorResult, isErrorResult, ExplainPlanError } from './ExplainPlanViewer';
+import { formatDateTime } from '../../../../../../src/api/db';
+import { ExplainResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
+import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
+import { ExplainPlanError } from './ExplainPlanError';
 
 interface QueryStats {
     totalNodes: number;
@@ -162,12 +165,12 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit = '', variant = 
     };
 
     return (
-        <Paper sx={{ p: 3, backgroundColor: 'background.paper' }}>
+        <Paper sx={{ px: 8, py: 4, backgroundColor: 'background.paper' }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 {label}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <Typography variant="h5" sx={{ color: getColor(), fontWeight: 700 }}>
+                <Typography variant="h6" sx={{ color: getColor(), fontWeight: 700 }}>
                     {value}
                 </Typography>
                 {unit && (
@@ -180,12 +183,18 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit = '', variant = 
     );
 };
 
-export const QueryStats: React.FC<{ plan: ExplainResult | ErrorResult | null }> = ({ plan }) => {
+export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
     const { t } = useTranslation();
     const theme = useTheme();
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
+    }
+
+    if (isLoadingResult(plan)) {
+        return (
+            <LoadingOverlay label={plan.loading.message} onCancelLoading={plan.loading.cancel} />
+        );
     }
 
     if (!plan) {
@@ -211,34 +220,25 @@ export const QueryStats: React.FC<{ plan: ExplainResult | ErrorResult | null }> 
 
     return (
         <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
-            <Paper sx={{ px: 4, py: 3, mb: 3, backgroundColor: 'action.hover', borderLeft: `4px solid ${theme.palette.primary.main}` }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {t("query-stats:title", "Query Statistics")}
-                </Typography>
-            </Paper>
-
             <Grid container spacing={3}>
                 {/* Timing */}
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:planning-time", "Planning Time")}
-                        value={stats.planningTime.toFixed(2)}
-                        unit="ms"
+                        value={formatDateTime(stats.planningTime, "duration", {})}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:execution-time", "Execution Time")}
-                        value={stats.executionTime.toFixed(2)}
-                        unit="ms"
+                        value={formatDateTime(stats.executionTime, "duration", {})}
                         variant={stats.executionTime > 100 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-node-time", "Total Node Time")}
-                        value={stats.totalTime.toFixed(2)}
-                        unit="ms"
+                        value={formatDateTime(stats.totalTime, "duration", {})}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>

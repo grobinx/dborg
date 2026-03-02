@@ -13,20 +13,19 @@ import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel"
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
-import { ViewSlotProvider, useViewSlot } from "../ViewSlots/ViewSlotContext";
+import { ViewSlotProvider } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { IPinnableTabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, resolveToolBarSlotsKindFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IPinnableTabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
 import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
-import { PROFILE_UPDATE_MESSAGE, ProfileUpdateMessage, useProfiles } from "@renderer/contexts/ProfilesContext";
+import { useProfiles } from "@renderer/contexts/ProfilesContext";
 import { useSetting } from "@renderer/contexts/SettingsContext";
-import { useToast } from "@renderer/contexts/ToastContext";
-import { useDialogs } from "@toolpad/core";
 import { QUEUE_TASK_MESSAGE, QueueTaskMessage } from "@renderer/utils/QueueTask";
 import QueueTasksPopover from "@renderer/utils/QueueTasksPopover";
+import { useSlotRuntimeContext } from "../ViewSlots/hooks/useSlotRuntimeContext";
 
 const StyledConnection = styled(Stack, {
     name: "Connection",
@@ -45,23 +44,11 @@ interface ConnectionsOwnProps extends ConnectionProps {
 }
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
-    const theme = useTheme();
     const { session, children, tabsItemID, ...other } = props;
-    const addToast = useToast();
-    const { confirm } = useDialogs();
     const { selectedView } = useSessionState(session.info.uniqueId);
-    const { refreshSlot, openDialog } = useViewSlot();
     const { queueMessage } = useMessages();
     const [orientation] = useSetting("dborg", "general.layout.orientation");
-    const runtimeContext: SlotRuntimeContext = React.useMemo(() => ({
-        theme, refresh: refreshSlot, openDialog,
-        showNotification: ({ message, severity = "info" }) => {
-            addToast(severity, message);
-        },
-        showConfirmDialog: async ({ message, title, severity, cancelLabel, confirmLabel }) => {
-            return confirm(message, { title, severity, okText: confirmLabel, cancelText: cancelLabel });
-        },
-    }), [theme, refreshSlot, openDialog, addToast, confirm]);
+    const runtimeContext = useSlotRuntimeContext({});
 
     // Utwórz instancję EditorContentManager
     const editorContentManager = React.useMemo(() => new EditorContentManager(session.profile.sch_id), [session.profile.sch_id]);

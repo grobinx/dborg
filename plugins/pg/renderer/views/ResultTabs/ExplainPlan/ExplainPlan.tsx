@@ -1,4 +1,4 @@
-import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionSqlResultTab } from "plugins/manager/renderer/ConnectionSlots";
 import { versionToNumber } from "../../../../../../src/api/version";
@@ -8,9 +8,10 @@ import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
 import { getFragmentAroundCursor } from "@renderer/components/editor/editorUtils";
-import { ErrorResult, ExplainPlanViewer, ExplainResult } from "./ExplainPlanViewer";
 import { QueryAnalyzer } from "./QueryAnalyzer";
 import { QueryStats } from "./QueryStats";
+import { ErrorResult, ExplainResult, ExplainResultKind, LoadingResult } from "./ExplainTypes";
+import { ExplainPlanViewer } from "./ExplainPlanViewer";
 
 export const EXPLAIN_PLAN_TEXT = "pg-explain-plan-text";
 
@@ -21,7 +22,8 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     let unsubsribeExplainPlanText: () => void = () => { };
-    let explainPlan: ExplainResult | ErrorResult | null = null;
+    let explainPlan: ExplainResultKind | null = null;
+    let cancelCurrentRequest: (() => void) | null = null;
 
     return {
         id: cid("explain-plan-result"),
@@ -30,43 +32,103 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
             unsubsribeExplainPlanText = slotContext.messages.subscribe(
                 EXPLAIN_PLAN_TEXT,
                 async (sessionId: string, text: string) => {
-                    if (sessionId !== session.info.uniqueId) {
+                    if (sessionId !== session.info.uniqueId || cancelCurrentRequest) {
                         return;
                     }
 
-                    try {
-                        const sql = `EXPLAIN (ANALYZE, VERBOSE, COSTS, SETTINGS, BUFFERS, FORMAT JSON) ${text}`;
-                        const result = await session.query(sql);
+                    let cursor: IDatabaseSessionCursor | null = null;
+                    let cancelled = false;
 
-                        if (result.rows && result.rows.length > 0) {
-                            explainPlan = (result.rows[0]['QUERY PLAN'] as ExplainResult[])[0];
+                    try {
+                        const sql = `EXPLAIN (ANALYZE, VERBOSE, FORMAT JSON) ${text}`;
+                        cursor = await session.open(sql, [], 1);
+
+                        cancelCurrentRequest = () => {
+                            cancelled = true;
+                            try {
+                                cursor?.cancel();
+                                explainPlan = {
+                                    loading: {
+                                        message: t("cancelling-explain-plan", "Cancelling explain plan..."),
+                                    },
+                                } as LoadingResult;
+                                slotContext.refresh(cid("explain-plan-result-content"));
+                                slotContext.refresh(cid("explain-plan-suggestions-content"));
+                                slotContext.refresh(cid("explain-plan-statistics-content"));
+                                slotContext.refresh(cid("explain-plan-tab-label"));
+                            } catch {
+                                // ignore
+                            }
+                        };
+
+                        explainPlan = {
+                            loading: {
+                                message: t("loading-explain-plan", "Loading explain plan..."),
+                                cancel: cancelCurrentRequest,
+                            },
+                        } as LoadingResult;
+
+                        slotContext.refresh(cid("explain-plan-result-content"));
+                        slotContext.refresh(cid("explain-plan-suggestions-content"));
+                        slotContext.refresh(cid("explain-plan-statistics-content"));
+                        slotContext.refresh(cid("explain-plan-tab-label"));
+                        slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
+
+                        const rows = await cursor.fetch();
+                        if (cancelled) {
+                            explainPlan = { error: { message: t("explain-plan-cancelled", "Explain plan cancelled") } } as ErrorResult;
+                            return;
+                        }
+
+                        if (rows && rows.length > 0) {
+                            explainPlan = (rows[0]["QUERY PLAN"] as ExplainResult[])[0];
                         } else {
-                            explainPlan = { error: { message: 'No plan returned' } } as ErrorResult;
+                            explainPlan = { error: { message: "No plan returned" } } as ErrorResult;
                         }
                     } catch (error) {
-                        explainPlan = {
-                            error: {
-                                message: (error as any)["message"],
-                                stack: (error as any)["stack"],
-                            }
-                        } as ErrorResult;
-                    }
+                        if (!cancelled) {
+                            explainPlan = {
+                                error: {
+                                    message: (error as any)?.message ?? String(error),
+                                    stack: (error as any)?.stack,
+                                },
+                            } as ErrorResult;
+                        }
+                        explainPlan = { error: { message: t("explain-plan-cancelled", "Explain plan cancelled") } } as ErrorResult;
+                        slotContext.refresh(cid("explain-plan-result-content"));
+                        slotContext.refresh(cid("explain-plan-suggestions-content"));
+                        slotContext.refresh(cid("explain-plan-statistics-content"));
+                        slotContext.refresh(cid("explain-plan-tab-label"));
+                        cancelCurrentRequest = null;
+                    } finally {
+                        try {
+                            await cursor?.close();
+                        } catch {
+                            // ignore
+                        }
 
-                    slotContext.refresh(cid("explain-plan-result-content"));
-                    slotContext.refresh(cid("explain-plan-suggestions-content"));
-                    slotContext.refresh(cid("explain-plan-statistics-content"));
-                    slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
+                        cancelCurrentRequest = null;
+
+                        if (!cancelled) {
+                            slotContext.refresh(cid("explain-plan-result-content"));
+                            slotContext.refresh(cid("explain-plan-suggestions-content"));
+                            slotContext.refresh(cid("explain-plan-statistics-content"));
+                            slotContext.refresh(cid("explain-plan-tab-label"));
+                        }
+                    }
                 }
             );
         },
         onUnmount: () => {
+            cancelCurrentRequest?.();
             unsubsribeExplainPlanText();
         },
-        label: {
+        label: (slotContext) => ({
+            id: cid("explain-plan-tab-label"),
             type: "tablabel",
-            icon: "Explain",
+            icon: () => cancelCurrentRequest ? <slotContext.theme.icons.Loading /> : <slotContext.theme.icons.Explain />,
             label: t("explain-plan", "Explain Plan"),
-        },
+        }),
         content: {
             type: "tabcontent",
             content: {

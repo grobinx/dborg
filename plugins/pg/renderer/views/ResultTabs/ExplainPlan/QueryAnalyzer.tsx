@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { ErrorResult, ExplainPlanError, ExplainResult, isErrorResult, PlanNode } from "./ExplainPlanViewer";
 import { Box, Chip, Paper, Typography, useTheme } from "@mui/material";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { t } from "i18next";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from "./ExplainTypes";
+import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
+import { ExplainPlanError } from "./ExplainPlanError";
 
 interface Suggestion {
     type: 'warning' | 'info' | 'error';
@@ -317,7 +319,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
     return suggestions;
 };
 
-export const QueryAnalyzer: React.FC<{ plan: ExplainResult | ErrorResult | null }> = ({ plan }) => {
+export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const [fontSize] = useSetting<number>("ui", "fontSize");
@@ -325,6 +327,12 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResult | ErrorResult | null 
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
+    }
+
+    if (isLoadingResult(plan)) {
+        return (
+            <LoadingOverlay label={plan.loading.message} onCancelLoading={plan.loading.cancel} />
+        );
     }
 
     if (!plan) {
@@ -358,12 +366,6 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResult | ErrorResult | null 
 
     return (
         <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
-            <Paper sx={{ px: 8, py: 4, mb: 4, backgroundColor: 'success.dark', color: 'success.contrastText' }}>
-                <Typography variant="h6">
-                    {t("optimization-suggestions", "Optimization Suggestions")} ({suggestions.length})
-                </Typography>
-            </Paper>
-
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {suggestions.map((sugg, idx) => {
                     let borderColor: string;
