@@ -128,8 +128,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     content: '""',
                     position: 'absolute',
                     left: 8,
-                    top: -8,
-                    bottom: 8,
+                    top: -4,
+                    bottom: 0,
                     width: '1px',
                     bgcolor: 'divider',
                 } : undefined,
@@ -137,7 +137,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     content: '""',
                     position: 'absolute',
                     left: 8,
-                    top: 24,
+                    top: 16,
                     width: 12,
                     height: '1px',
                     bgcolor: 'divider',
@@ -200,6 +200,12 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                 ? node['Sort Key'].join(', ')
                                 : String(node['Sort Key'])
                             }
+                        </Typography>
+                    )}
+
+                    {node['Function Name'] && (
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                            {node['Function Name']}
                         </Typography>
                     )}
 
