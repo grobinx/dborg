@@ -54,7 +54,8 @@ const PostgresPlugin: Plugin = {
 
             return {
                 actions: (slotContext) => [
-                    ExplainPlanAction(session, slotContext),
+                    ExplainPlanAction(session, slotContext, false),
+                    ExplainPlanAction(session, slotContext, true),
                 ]
             };
         });

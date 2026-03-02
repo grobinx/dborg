@@ -48,7 +48,11 @@ export const DialogTextField: React.FC<{
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <TextField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -100,7 +104,11 @@ export const DialogTextareaField: React.FC<{
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <TextareaField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -155,7 +163,11 @@ export const DialogNumberField: React.FC<{
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <NumberField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -209,7 +221,11 @@ export const DialogSelectField: React.FC<{
         <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
             <SelectField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -261,7 +277,11 @@ export const DialogBooleanField: React.FC<{
         <InputDecorator indicator={false} disableBlink description={helperText} showValidity={false}>
             <BooleanField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}
@@ -320,7 +340,11 @@ export const DialogEditorField: React.FC<{
         >
             <EditorField
                 value={structure[field.key]}
-                onChange={(value) => onChange({ ...structure, [field.key]: value })}
+                onChange={(value) => {
+                    const newStructure = { ...structure, [field.key]: value };
+                    onChange(newStructure);
+                    field?.onChange?.(newStructure, value);
+                }}
                 disabled={disabled}
                 required={required}
                 width={field.width}

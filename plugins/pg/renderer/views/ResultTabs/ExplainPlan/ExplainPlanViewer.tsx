@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link, PaletteColor } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
-import { ErrorResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
+import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
 import { useSetting } from '@renderer/contexts/SettingsContext';
-import { valueToString } from '../../../../../../src/api/db';
+import { resolveDataTypeFromValue, valueToString } from '../../../../../../src/api/db';
 
 const formatCost = (startup: number | undefined, total: number | undefined): string => {
     if (startup === undefined || total === undefined) return '-';
@@ -34,11 +34,26 @@ const KNOWN_NODE_KEYS = new Set<string>([
     'Plans',
 ]);
 
-const formatAnyValue = (value: unknown): string => {
-    if (value === undefined || value === null) return '-';
-    if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
+const FormattedChip: React.FC<{ label: string; value: any }> = ({ label, value }) => {
+    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
+
+    const formattedLabel = (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {label}
+            <Typography component="span" variant="body2" sx={{ fontFamily: monospaceFontFamily, fontWeight: 600 }}>
+                {valueToString(value, resolveDataTypeFromValue(value))}
+            </Typography>
+        </Box>
+    );
+
+    return (
+        <Chip
+            size="small"
+            variant="outlined"
+            label={formattedLabel}
+            sx={{ fontFamily: monospaceFontFamily }}
+        />
+    );
 };
 
 const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, level }) => {
@@ -256,44 +271,34 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             </IconButton>
                         )}
 
-                        <Chip
-                            size="small"
-                            variant="outlined"
-                            label={`Cost ${formatCost(node['Startup Cost'], node['Total Cost'])}`}
-                            sx={{ fontFamily: monospaceFontFamily }}
+                        <FormattedChip
+                            label={t("cost", "Cost")}
+                            value={formatCost(node['Startup Cost'], node['Total Cost'])}
                         />
 
                         {node['Actual Total Time'] !== undefined && (
-                            <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`Time ${valueToString(node['Actual Total Time'], "duration")}`}
-                                sx={{ fontFamily: monospaceFontFamily }}
+                            <FormattedChip
+                                label={t("time", "Time")}
+                                value={valueToString(node['Actual Total Time'], "duration")}
                             />
                         )}
 
-                        <Chip
-                            size="small"
-                            variant="outlined"
-                            label={`Rows ${node['Actual Rows'] ?? node['Plan Rows'] ?? '-'}`}
-                            sx={{ fontFamily: monospaceFontFamily }}
+                        <FormattedChip
+                            label={t("rows", "Rows")}
+                            value={node['Actual Rows'] ?? node['Plan Rows'] ?? '-'}
                         />
 
                         {node['Actual Loops'] !== undefined && (
-                            <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`Loops ${node['Actual Loops']}`}
-                                sx={{ fontFamily: monospaceFontFamily }}
+                            <FormattedChip
+                                label={t("loops", "Loops")}
+                                value={node['Actual Loops']}
                             />
                         )}
 
                         {node['Plan Width'] !== undefined && (
-                            <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`Width ${node['Plan Width']}`}
-                                sx={{ fontFamily: monospaceFontFamily }}
+                            <FormattedChip
+                                label={t("width", "Width")}
+                                value={node['Plan Width']}
                             />
                         )}
                     </Box>
@@ -407,7 +412,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                             <TableRow key={key}>
                                                 <TableCell sx={{ fontWeight: 600, width: "15%" }}>{key}</TableCell>
                                                 <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em', wordBreak: 'break-word' }}>
-                                                    {formatAnyValue(value)}
+                                                    {valueToString(value, resolveDataTypeFromValue(value))}
                                                 </TableCell>
                                             </TableRow>
                                         ))}

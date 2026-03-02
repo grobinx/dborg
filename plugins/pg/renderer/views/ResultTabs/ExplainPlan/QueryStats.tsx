@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Grid2 as Grid, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Grid2 as Grid, Typography, useTheme, Divider } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { ExplainResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
@@ -7,100 +7,227 @@ import { ExplainPlanError } from './ExplainPlanError';
 import { valueToString } from '../../../../../../src/api/db';
 
 interface QueryStats {
+    // Timing
     totalNodes: number;
-    seqScans: number;
-    indexScans: number;
-    joins: number;
-    sorts: number;
-    aggregates: number;
-    totalRows: number;
-    totalCost: number;
-    totalTime: number;
     planningTime: number;
     executionTime: number;
+    totalTime: number;
+    
+    // Node types
+    seqScans: number;
+    indexScans: number;
+    indexOnlyScans: number;
+    bitmapScans: number;
+    joins: number;
+    nestedLoops: number;
+    hashJoins: number;
+    mergeJoins: number;
+    sorts: number;
+    aggregates: number;
+    materializes: number;
+    
+    // Rows
+    totalRows: number;
+    totalRowsFiltered: number;
+    maxRowsPerNode: number;
+    
+    // Cost
+    totalCost: number;
+    totalStartupCost: number;
     mostExpensiveNode: {
         type: string;
         cost: number;
         time: number;
+        rows: number;
     } | null;
-    rowEstimateError: number | null; // max multiplicative error, e.g. 12.4x
+    
+    // Estimates
+    rowEstimateError: number | null;
+    costEstimateError: number | null;
+    
+    // Parallel
     parallelStats: {
         workersPlanned: number;
         workersLaunched: number;
         gatherNodes: number;
-        efficiency: number | null; // %
+        efficiency: number | null;
     };
+    
+    // Buffer I/O
     bufferStats: {
         sharedHitBlocks: number;
         sharedReadBlocks: number;
+        sharedDirtiedBlocks: number;
+        sharedWrittenBlocks: number;
+        localHitBlocks: number;
+        localReadBlocks: number;
+        localDirtiedBlocks: number;
+        localWrittenBlocks: number;
+        tempReadBlocks: number;
+        tempWrittenBlocks: number;
         totalBlocks: number;
+        cacheHitRatio: number | null;
+    };
+    
+    // WAL (PostgreSQL 13+)
+    walStats: {
+        records: number;
+        fpi: number; // Full Page Images
+        bytes: number;
+    } | null;
+    
+    // Memory (PostgreSQL 13+)
+    memoryStats: {
+        sortSpaceUsed: number;
+        hashBatchesUsed: number;
+        peakMemoryUsage: number;
+    };
+    
+    // JIT (Just-In-Time compilation)
+    jitStats: {
+        used: boolean;
+        functions: number;
+        generationTime: number;
+        inliningTime: number;
+        optimizationTime: number;
+        emissionTime: number;
+    } | null;
+    
+    // Triggers
+    triggerStats: {
+        count: number;
+        totalTime: number;
     };
 }
 
 const calculateStats = (plan: ExplainResult): QueryStats => {
     const stats: QueryStats = {
         totalNodes: 0,
-        seqScans: 0,
-        indexScans: 0,
-        joins: 0,
-        sorts: 0,
-        aggregates: 0,
-        totalRows: 0,
-        totalCost: 0,
-        totalTime: 0,
         planningTime: plan['Planning Time'] ?? 0,
         executionTime: plan['Execution Time'] ?? 0,
+        totalTime: 0,
+        
+        seqScans: 0,
+        indexScans: 0,
+        indexOnlyScans: 0,
+        bitmapScans: 0,
+        joins: 0,
+        nestedLoops: 0,
+        hashJoins: 0,
+        mergeJoins: 0,
+        sorts: 0,
+        aggregates: 0,
+        materializes: 0,
+        
+        totalRows: 0,
+        totalRowsFiltered: 0,
+        maxRowsPerNode: 0,
+        
+        totalCost: 0,
+        totalStartupCost: 0,
         mostExpensiveNode: null,
+        
         rowEstimateError: null,
+        costEstimateError: null,
+        
         parallelStats: {
             workersPlanned: 0,
             workersLaunched: 0,
             gatherNodes: 0,
             efficiency: null
         },
+        
         bufferStats: {
-            sharedHitBlocks: plan.Settings?.['Shared Hit Blocks'] ?? 0,
-            sharedReadBlocks: plan.Settings?.['Shared Read Blocks'] ?? 0,
+            sharedHitBlocks: 0,
+            sharedReadBlocks: 0,
+            sharedDirtiedBlocks: 0,
+            sharedWrittenBlocks: 0,
+            localHitBlocks: 0,
+            localReadBlocks: 0,
+            localDirtiedBlocks: 0,
+            localWrittenBlocks: 0,
+            tempReadBlocks: 0,
+            tempWrittenBlocks: 0,
             totalBlocks: 0,
+            cacheHitRatio: null,
+        },
+        
+        walStats: null,
+        
+        memoryStats: {
+            sortSpaceUsed: 0,
+            hashBatchesUsed: 0,
+            peakMemoryUsage: 0,
+        },
+        
+        jitStats: null,
+        
+        triggerStats: {
+            count: 0,
+            totalTime: 0,
         }
     };
 
-    let mostExpensive: { cost: number; type: string; time: number } = { cost: 0, type: '', time: 0 };
+    let mostExpensive: { cost: number; type: string; time: number; rows: number } = { 
+        cost: 0, 
+        type: '', 
+        time: 0, 
+        rows: 0 
+    };
 
     const traverse = (node: PlanNode) => {
         stats.totalNodes++;
 
         // Node type counting
-        if (node['Node Type'] === 'Seq Scan') stats.seqScans++;
-        if (node['Node Type']?.includes('Index Scan')) stats.indexScans++;
-        if (node['Node Type']?.includes('Join')) stats.joins++;
-        if (node['Node Type'] === 'Sort') stats.sorts++;
-        if (node['Node Type'] === 'Aggregate') stats.aggregates++;
-        if (node['Node Type'] === 'Gather' || node['Node Type'] === 'Gather Merge') {
+        const nodeType = node['Node Type'];
+        if (nodeType === 'Seq Scan') stats.seqScans++;
+        if (nodeType === 'Index Scan') stats.indexScans++;
+        if (nodeType === 'Index Only Scan') stats.indexOnlyScans++;
+        if (nodeType === 'Bitmap Heap Scan' || nodeType === 'Bitmap Index Scan') stats.bitmapScans++;
+        if (nodeType?.includes('Join')) {
+            stats.joins++;
+            if (nodeType === 'Nested Loop') stats.nestedLoops++;
+            if (nodeType === 'Hash Join') stats.hashJoins++;
+            if (nodeType === 'Merge Join') stats.mergeJoins++;
+        }
+        if (nodeType === 'Sort') stats.sorts++;
+        if (nodeType === 'Aggregate' || nodeType === 'HashAggregate' || nodeType === 'GroupAggregate') {
+            stats.aggregates++;
+        }
+        if (nodeType === 'Materialize') stats.materializes++;
+        if (nodeType === 'Gather' || nodeType === 'Gather Merge') {
             stats.parallelStats.gatherNodes++;
         }
 
         // Cost and time
         const nodeCost = node['Total Cost'] ?? 0;
+        const nodeStartupCost = node['Startup Cost'] ?? 0;
         const nodeTime = node['Actual Total Time'] ?? 0;
+        const actualRows = node['Actual Rows'] ?? 0;
+        
         stats.totalCost = Math.max(stats.totalCost, nodeCost);
+        stats.totalStartupCost += nodeStartupCost;
         stats.totalTime += nodeTime;
 
         // Track most expensive
         if (nodeCost > mostExpensive.cost) {
             mostExpensive = {
                 cost: nodeCost,
-                type: node['Node Type'],
-                time: nodeTime
+                type: nodeType,
+                time: nodeTime,
+                rows: actualRows
             };
         }
 
         // Row counting
-        stats.totalRows += node['Actual Rows'] ?? node['Plan Rows'] ?? 0;
+        stats.totalRows += actualRows;
+        stats.maxRowsPerNode = Math.max(stats.maxRowsPerNode, actualRows);
+        
+        const rowsFiltered = node['Rows Removed by Filter'] ?? 0;
+        stats.totalRowsFiltered += rowsFiltered;
 
-        // Row estimate error (max factor across nodes)
+        // Row estimate error
         const plannedRows = node['Plan Rows'];
-        const actualRows = node['Actual Rows'];
         if (typeof plannedRows === 'number' && typeof actualRows === 'number') {
             const planned = Math.max(plannedRows, 1);
             const actual = Math.max(actualRows, 1);
@@ -108,6 +235,18 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
             stats.rowEstimateError = stats.rowEstimateError === null
                 ? factor
                 : Math.max(stats.rowEstimateError, factor);
+        }
+
+        // Cost estimate error
+        if (nodeTime > 0 && nodeCost > 0) {
+            const costPerMs = nodeCost / Math.max(nodeTime, 0.001);
+            const avgCostPerMs = stats.totalCost / Math.max(stats.totalTime, 0.001);
+            if (avgCostPerMs > 0) {
+                const costError = Math.max(costPerMs / avgCostPerMs, avgCostPerMs / costPerMs);
+                stats.costEstimateError = stats.costEstimateError === null
+                    ? costError
+                    : Math.max(stats.costEstimateError, costError);
+            }
         }
 
         // Parallel stats
@@ -121,11 +260,45 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
         }
 
         // Buffer stats
-        if (node['Shared Hit Blocks']) {
-            stats.bufferStats.sharedHitBlocks += node['Shared Hit Blocks'];
+        stats.bufferStats.sharedHitBlocks += node['Shared Hit Blocks'] ?? 0;
+        stats.bufferStats.sharedReadBlocks += node['Shared Read Blocks'] ?? 0;
+        stats.bufferStats.sharedDirtiedBlocks += node['Shared Dirtied Blocks'] ?? 0;
+        stats.bufferStats.sharedWrittenBlocks += node['Shared Written Blocks'] ?? 0;
+        stats.bufferStats.localHitBlocks += node['Local Hit Blocks'] ?? 0;
+        stats.bufferStats.localReadBlocks += node['Local Read Blocks'] ?? 0;
+        stats.bufferStats.localDirtiedBlocks += node['Local Dirtied Blocks'] ?? 0;
+        stats.bufferStats.localWrittenBlocks += node['Local Written Blocks'] ?? 0;
+        stats.bufferStats.tempReadBlocks += node['Temp Read Blocks'] ?? 0;
+        stats.bufferStats.tempWrittenBlocks += node['Temp Written Blocks'] ?? 0;
+
+        // WAL stats
+        if (node['WAL Records'] || node['WAL FPI'] || node['WAL Bytes']) {
+            if (!stats.walStats) {
+                stats.walStats = { records: 0, fpi: 0, bytes: 0 };
+            }
+            stats.walStats.records += node['WAL Records'] ?? 0;
+            stats.walStats.fpi += node['WAL FPI'] ?? 0;
+            stats.walStats.bytes += node['WAL Bytes'] ?? 0;
         }
-        if (node['Shared Read Blocks']) {
-            stats.bufferStats.sharedReadBlocks += node['Shared Read Blocks'];
+
+        // Memory stats
+        if (node['Sort Space Used']) {
+            stats.memoryStats.sortSpaceUsed = Math.max(
+                stats.memoryStats.sortSpaceUsed,
+                node['Sort Space Used']
+            );
+        }
+        if (node['Hash Batches']) {
+            stats.memoryStats.hashBatchesUsed = Math.max(
+                stats.memoryStats.hashBatchesUsed,
+                node['Hash Batches']
+            );
+        }
+        if (node['Peak Memory Usage']) {
+            stats.memoryStats.peakMemoryUsage = Math.max(
+                stats.memoryStats.peakMemoryUsage,
+                node['Peak Memory Usage']
+            );
         }
 
         if (node.Plans) {
@@ -136,10 +309,40 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
     traverse(plan.Plan);
 
     stats.mostExpensiveNode = mostExpensive.type ? mostExpensive : null;
-    stats.bufferStats.totalBlocks = stats.bufferStats.sharedHitBlocks + stats.bufferStats.sharedReadBlocks;
+    
+    // Calculate total blocks and cache hit ratio
+    const totalHit = stats.bufferStats.sharedHitBlocks + stats.bufferStats.localHitBlocks;
+    const totalRead = stats.bufferStats.sharedReadBlocks + stats.bufferStats.localReadBlocks;
+    stats.bufferStats.totalBlocks = totalHit + totalRead;
+    
+    if (stats.bufferStats.totalBlocks > 0) {
+        stats.bufferStats.cacheHitRatio = (totalHit / stats.bufferStats.totalBlocks) * 100;
+    }
 
+    // Calculate parallel efficiency
     if (stats.parallelStats.workersPlanned > 0) {
         stats.parallelStats.efficiency = (stats.parallelStats.workersLaunched / stats.parallelStats.workersPlanned) * 100;
+    }
+
+    // JIT stats (top-level only)
+    if (plan.JIT) {
+        stats.jitStats = {
+            used: true,
+            functions: plan.JIT['Functions'] ?? 0,
+            generationTime: plan.JIT['Generation Time'] ?? 0,
+            inliningTime: plan.JIT['Inlining Time'] ?? 0,
+            optimizationTime: plan.JIT['Optimization Time'] ?? 0,
+            emissionTime: plan.JIT['Emission Time'] ?? 0,
+        };
+    }
+
+    // Trigger stats
+    if (plan.Triggers) {
+        stats.triggerStats.count = plan.Triggers.length;
+        stats.triggerStats.totalTime = plan.Triggers.reduce(
+            (sum, trigger) => sum + (trigger.Time ?? 0), 
+            0
+        );
     }
 
     return stats;
@@ -165,7 +368,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit = '', variant = 
     };
 
     return (
-        <Paper sx={{ px: 8, py: 4, backgroundColor: 'background.paper' }}>
+        <Paper sx={{ px: 4, py: 3, backgroundColor: 'background.paper', height: '100%' }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 {label}
             </Typography>
@@ -183,9 +386,26 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit = '', variant = 
     );
 };
 
+interface StatSectionProps {
+    title: string;
+    children: React.ReactNode;
+}
+
+const StatSection: React.FC<StatSectionProps> = ({ title, children }) => {
+    return (
+        <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                {title}
+            </Typography>
+            <Grid container spacing={2}>
+                {children}
+            </Grid>
+        </Box>
+    );
+};
+
 export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
     const { t } = useTranslation();
-    const theme = useTheme();
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -206,22 +426,11 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
     }
 
     const stats = calculateStats(plan);
-    const cacheHitRatio = stats.bufferStats.totalBlocks > 0
-        ? ((stats.bufferStats.sharedHitBlocks / stats.bufferStats.totalBlocks) * 100).toFixed(1)
-        : 'N/A';
-
-    const parallelEfficiency = stats.parallelStats.efficiency !== null
-        ? stats.parallelStats.efficiency.toFixed(1)
-        : 'N/A';
-
-    const rowEstimateErrorLabel = stats.rowEstimateError !== null
-        ? `${stats.rowEstimateError.toFixed(1)}x`
-        : 'N/A';
 
     return (
         <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
-            <Grid container spacing={3}>
-                {/* Timing */}
+            {/* Timing Section */}
+            <StatSection title={t("query-stats:timing", "Timing")}>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:planning-time", "Planning Time")}
@@ -243,19 +452,55 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
+                        label={t("query-stats:total-nodes", "Total Nodes")}
+                        value={stats.totalNodes}
+                    />
+                </Grid>
+            </StatSection>
+
+            {/* Cost Section */}
+            <StatSection title={t("query-stats:cost", "Cost & Estimation")}>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
                         label={t("query-stats:total-cost", "Total Cost")}
                         value={stats.totalCost.toFixed(2)}
                         unit="units"
                     />
                 </Grid>
-
-                {/* Plan composition */}
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
-                        label={t("query-stats:total-nodes", "Total Nodes")}
-                        value={stats.totalNodes}
+                        label={t("query-stats:startup-cost", "Startup Cost")}
+                        value={stats.totalStartupCost.toFixed(2)}
+                        unit="units"
                     />
                 </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:row-estimate-error", "Row Estimate Error")}
+                        value={stats.rowEstimateError !== null ? `${stats.rowEstimateError.toFixed(1)}x` : 'N/A'}
+                        variant={
+                            stats.rowEstimateError === null ? 'default'
+                                : stats.rowEstimateError > 10 ? 'error'
+                                : stats.rowEstimateError > 3 ? 'warning'
+                                : 'success'
+                        }
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:cost-estimate-error", "Cost Estimate Error")}
+                        value={stats.costEstimateError !== null ? `${stats.costEstimateError.toFixed(1)}x` : 'N/A'}
+                        variant={
+                            stats.costEstimateError === null ? 'default'
+                                : stats.costEstimateError > 5 ? 'warning'
+                                : 'success'
+                        }
+                    />
+                </Grid>
+            </StatSection>
+
+            {/* Scan Operations */}
+            <StatSection title={t("query-stats:scans", "Scan Operations")}>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:seq-scans", "Sequential Scans")}
@@ -271,12 +516,50 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
-                        label={t("query-stats:joins", "Joins")}
+                        label={t("query-stats:index-only-scans", "Index Only Scans")}
+                        value={stats.indexOnlyScans}
+                        variant={stats.indexOnlyScans > 0 ? 'success' : 'default'}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:bitmap-scans", "Bitmap Scans")}
+                        value={stats.bitmapScans}
+                    />
+                </Grid>
+            </StatSection>
+
+            {/* Join Operations */}
+            <StatSection title={t("query-stats:joins-ops", "Join Operations")}>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:total-joins", "Total Joins")}
                         value={stats.joins}
                     />
                 </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:nested-loops", "Nested Loops")}
+                        value={stats.nestedLoops}
+                        variant={stats.nestedLoops > 2 ? 'warning' : 'default'}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:hash-joins", "Hash Joins")}
+                        value={stats.hashJoins}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:merge-joins", "Merge Joins")}
+                        value={stats.mergeJoins}
+                    />
+                </Grid>
+            </StatSection>
 
-                {/* Operations */}
+            {/* Other Operations */}
+            <StatSection title={t("query-stats:other-ops", "Other Operations")}>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:sorts", "Sorts")}
@@ -292,8 +575,31 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
+                        label={t("query-stats:materializes", "Materializes")}
+                        value={stats.materializes}
+                    />
+                </Grid>
+            </StatSection>
+
+            {/* Row Processing */}
+            <StatSection title={t("query-stats:rows", "Row Processing")}>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
                         label={t("query-stats:total-rows", "Total Rows Processed")}
-                        value={stats.totalRows}
+                        value={valueToString(stats.totalRows, "quantity")}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:max-rows-per-node", "Max Rows per Node")}
+                        value={valueToString(stats.maxRowsPerNode, "quantity")}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:rows-filtered", "Rows Filtered")}
+                        value={valueToString(stats.totalRowsFiltered, "quantity")}
+                        variant={stats.totalRowsFiltered > stats.totalRows * 0.5 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -302,68 +608,256 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         value={stats.mostExpensiveNode?.type ?? 'N/A'}
                     />
                 </Grid>
+            </StatSection>
 
-                {/* New stats */}
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:row-estimate-error", "Row Estimate Error (max)")}
-                        value={rowEstimateErrorLabel}
-                        variant={
-                            stats.rowEstimateError === null
-                                ? 'default'
-                                : stats.rowEstimateError > 10
-                                    ? 'error'
-                                    : stats.rowEstimateError > 3
-                                        ? 'warning'
-                                        : 'success'
-                        }
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
-                        value={parallelEfficiency}
-                        unit="%"
-                        variant={
-                            stats.parallelStats.efficiency === null
-                                ? 'default'
-                                : stats.parallelStats.efficiency >= 80
-                                    ? 'success'
-                                    : 'warning'
-                        }
-                    />
-                </Grid>
+            {/* Parallel Execution */}
+            {stats.parallelStats.gatherNodes > 0 && (
+                <>
+                    <StatSection title={t("query-stats:parallel", "Parallel Execution")}>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:gather-nodes", "Gather Nodes")}
+                                value={stats.parallelStats.gatherNodes}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:workers-planned", "Workers Planned")}
+                                value={stats.parallelStats.workersPlanned}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:workers-launched", "Workers Launched")}
+                                value={stats.parallelStats.workersLaunched}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
+                                value={stats.parallelStats.efficiency !== null ? 
+                                    `${stats.parallelStats.efficiency.toFixed(1)}%` : 'N/A'}
+                                variant={
+                                    stats.parallelStats.efficiency === null ? 'default'
+                                        : stats.parallelStats.efficiency >= 80 ? 'success'
+                                        : 'warning'
+                                }
+                            />
+                        </Grid>
+                    </StatSection>
+                </>
+            )}
 
-                {/* Buffer stats */}
+            {/* Buffer I/O */}
+            <StatSection title={t("query-stats:buffer-io", "Buffer I/O")}>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:cache-hit-ratio", "Cache Hit Ratio")}
-                        value={cacheHitRatio}
-                        unit="%"
-                        variant={Number(cacheHitRatio) > 90 ? 'success' : 'warning'}
+                        value={stats.bufferStats.cacheHitRatio !== null ? 
+                            `${stats.bufferStats.cacheHitRatio.toFixed(1)}%` : 'N/A'}
+                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > 90 ? 'success' : 'warning'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
-                        label={t("query-stats:shared-hit-blocks", "Shared Hit Blocks")}
-                        value={stats.bufferStats.sharedHitBlocks}
+                        label={t("query-stats:shared-hit", "Shared Hit")}
+                        value={valueToString(stats.bufferStats.sharedHitBlocks, "quantity")}
                         variant="success"
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
-                        label={t("query-stats:shared-read-blocks", "Disk Read Blocks")}
-                        value={stats.bufferStats.sharedReadBlocks}
+                        label={t("query-stats:shared-read", "Shared Read")}
+                        value={valueToString(stats.bufferStats.sharedReadBlocks, "quantity")}
                         variant={stats.bufferStats.sharedReadBlocks > 100 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
-                        label={t("query-stats:total-blocks", "Total Blocks")}
-                        value={stats.bufferStats.totalBlocks}
+                        label={t("query-stats:shared-dirtied", "Shared Dirtied")}
+                        value={valueToString(stats.bufferStats.sharedDirtiedBlocks, "quantity")}
                     />
                 </Grid>
-            </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:shared-written", "Shared Written")}
+                        value={valueToString(stats.bufferStats.sharedWrittenBlocks, "quantity")}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                    <StatCard
+                        label={t("query-stats:total-blocks", "Total Blocks")}
+                        value={valueToString(stats.bufferStats.totalBlocks, "quantity")}
+                    />
+                </Grid>
+            </StatSection>
+
+            {(stats.bufferStats.localHitBlocks > 0 || stats.bufferStats.localReadBlocks > 0) && (
+                <StatSection title={t("query-stats:local-buffers", "Local Buffers")}>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:local-hit", "Local Hit")}
+                            value={valueToString(stats.bufferStats.localHitBlocks, "quantity")}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:local-read", "Local Read")}
+                            value={valueToString(stats.bufferStats.localReadBlocks, "quantity")}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:local-dirtied", "Local Dirtied")}
+                            value={valueToString(stats.bufferStats.localDirtiedBlocks, "quantity")}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:local-written", "Local Written")}
+                            value={valueToString(stats.bufferStats.localWrittenBlocks, "quantity")}
+                        />
+                    </Grid>
+                </StatSection>
+            )}
+
+            {(stats.bufferStats.tempReadBlocks > 0 || stats.bufferStats.tempWrittenBlocks > 0) && (
+                <>
+                    <StatSection title={t("query-stats:temp-buffers", "Temp Buffers")}>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:temp-read", "Temp Read")}
+                                value={valueToString(stats.bufferStats.tempReadBlocks, "quantity")}
+                                variant={stats.bufferStats.tempReadBlocks > 100 ? 'warning' : 'default'}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:temp-written", "Temp Written")}
+                                value={valueToString(stats.bufferStats.tempWrittenBlocks, "quantity")}
+                                variant={stats.bufferStats.tempWrittenBlocks > 100 ? 'warning' : 'default'}
+                            />
+                        </Grid>
+                    </StatSection>
+                </>
+            )}
+
+            {/* WAL Stats */}
+            {stats.walStats && (
+                <>
+                    <StatSection title={t("query-stats:wal", "Write-Ahead Log (WAL)")}>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:wal-records", "WAL Records")}
+                                value={valueToString(stats.walStats.records, "quantity")}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:wal-fpi", "Full Page Images")}
+                                value={valueToString(stats.walStats.fpi, "quantity")}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:wal-bytes", "WAL Bytes")}
+                                value={valueToString(stats.walStats.bytes, "size")}
+                            />
+                        </Grid>
+                    </StatSection>
+                </>
+            )}
+
+            {/* Memory Stats */}
+            {(stats.memoryStats.sortSpaceUsed > 0 || stats.memoryStats.hashBatchesUsed > 0 || stats.memoryStats.peakMemoryUsage > 0) && (
+                <>
+                    <StatSection title={t("query-stats:memory", "Memory Usage")}>
+                        {stats.memoryStats.sortSpaceUsed > 0 && (
+                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                                <StatCard
+                                    label={t("query-stats:sort-space", "Sort Space Used")}
+                                    value={valueToString(stats.memoryStats.sortSpaceUsed, "size")}
+                                />
+                            </Grid>
+                        )}
+                        {stats.memoryStats.hashBatchesUsed > 0 && (
+                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                                <StatCard
+                                    label={t("query-stats:hash-batches", "Hash Batches")}
+                                    value={stats.memoryStats.hashBatchesUsed}
+                                    variant={stats.memoryStats.hashBatchesUsed > 1 ? 'warning' : 'default'}
+                                />
+                            </Grid>
+                        )}
+                        {stats.memoryStats.peakMemoryUsage > 0 && (
+                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                                <StatCard
+                                    label={t("query-stats:peak-memory", "Peak Memory")}
+                                    value={valueToString(stats.memoryStats.peakMemoryUsage, "size")}
+                                />
+                            </Grid>
+                        )}
+                    </StatSection>
+                </>
+            )}
+
+            {/* JIT Stats */}
+            {stats.jitStats && (
+                <>
+                    <StatSection title={t("query-stats:jit", "JIT Compilation")}>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:jit-functions", "Functions")}
+                                value={stats.jitStats.functions}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:jit-generation", "Generation Time")}
+                                value={valueToString(stats.jitStats.generationTime, "duration")}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:jit-inlining", "Inlining Time")}
+                                value={valueToString(stats.jitStats.inliningTime, "duration")}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:jit-optimization", "Optimization Time")}
+                                value={valueToString(stats.jitStats.optimizationTime, "duration")}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:jit-emission", "Emission Time")}
+                                value={valueToString(stats.jitStats.emissionTime, "duration")}
+                            />
+                        </Grid>
+                    </StatSection>
+                </>
+            )}
+
+            {/* Trigger Stats */}
+            {stats.triggerStats.count > 0 && (
+                <>
+                    <StatSection title={t("query-stats:triggers", "Triggers")}>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:trigger-count", "Trigger Count")}
+                                value={stats.triggerStats.count}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                            <StatCard
+                                label={t("query-stats:trigger-time", "Total Trigger Time")}
+                                value={valueToString(stats.triggerStats.totalTime, "duration")}
+                            />
+                        </Grid>
+                    </StatSection>
+                </>
+            )}
         </Box>
     );
 };

@@ -416,8 +416,8 @@ function makeCacheKey(value: any, dataType: UnionDataType, baseType: ColumnBaseT
     return (canInline ? String(value) : generateHash(value)) + '-' + dataType + sep;
 }
 
-export const valueToString = (value: any, dataType: ColumnDataType, opts?: ValueToStringOptions): string => {
-    if (value === null || value === undefined) return '';
+export const valueToString = (value: any, dataType: ColumnDataType | null, opts?: ValueToStringOptions): string => {
+    if (value === null || value === undefined || dataType === null) return '';
 
     const options: ValueToStringOptions = { ...DEFAULT_V2S_OPTIONS, ...opts };
     const { maxLength = Infinity, display, thousandsSeparator = true } = options;
@@ -950,5 +950,65 @@ export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDa
         }
         default:
             return String(value1).localeCompare(String(value2));
+    }
+};
+
+/**
+ * Resolves ColumnDataType from a runtime value.
+ * - First tries to infer type from value content (like resolveDataTypeFromString)
+ * - Falls back to primitive type mapping if value is not a string
+ * @param value Any value
+ * @returns ColumnDataType or null if unable to determine
+ */
+export const resolveDataTypeFromValue = (value: any): ColumnDataType | null => {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    // If it's a string, use the existing string-based detection
+    if (typeof value === 'string') {
+        return resolveDataTypeFromString(value);
+    }
+
+    // If it's an array, resolve element type and wrap it
+    if (Array.isArray(value)) {
+        if (value.length === 0) return null; // can't infer from empty array
+        const elementType = resolveDataTypeFromValue(value[0]);
+        return elementType ? [elementType as UnionDataType] : null;
+    }
+
+    // For primitives and objects, map JavaScript types to ColumnDataType
+    switch (typeof value) {
+        case 'number':
+            return Number.isInteger(value) ? 'int' : 'decimal';
+        case 'bigint':
+            return 'bigint';
+        case 'boolean':
+            return 'boolean';
+        case 'object': {
+            // Check for special Date objects
+            if (value instanceof Date) {
+                return 'datetime';
+            }
+            if (value instanceof Decimal) {
+                return 'decimal';
+            }
+            if (value instanceof Duration) {
+                return 'duration';
+            }
+            // Try to parse object as JSON
+            try {
+                const json = JSON.stringify(value);
+                // Very basic heuristic: if it looks like it could be geo data
+                if (json.includes('"type"') && json.includes('"coordinates"')) {
+                    return 'geometry';
+                }
+                return 'json';
+            } catch {
+                return 'object';
+            }
+        }
+        default:
+            return 'string';
     }
 };

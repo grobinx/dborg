@@ -1012,6 +1012,11 @@ export interface IDialogField {
      * @default false
      */
     autoFocus?: boolean;
+    /**
+     * Funkcja wywoływana po zmianie wartości pola.
+     * Wywołanie jest z opóźnieniem.
+     */
+    onChange?: (values: Record<string, any>, value: any) => void;
 }
 
 export interface IDialogTextField extends IDialogField {
