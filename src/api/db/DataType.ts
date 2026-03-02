@@ -553,7 +553,6 @@ const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStri
         if (options.display && options.thousandsSeparator && Number.isInteger(value)) {
             return formatIntWithThousandsSeparator(value);
         }
-        return String(value);
     }
     if (typeof value === 'bigint') {
         const s = value.toString();
@@ -796,7 +795,7 @@ const formatBoolean = (value: any, _dataType: ColumnDataType, _options: ValueToS
 };
 
 // Funkcja pomocnicza do formatowania daty/czasu
-export const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
+const formatDateTime = (value: any, dataType: ColumnDataType, _options: ValueToStringOptions): string => {
     if (dataType === 'duration') {
         const dur = normalizeDuration(value);
         if (!dur.isValid) return String(value);

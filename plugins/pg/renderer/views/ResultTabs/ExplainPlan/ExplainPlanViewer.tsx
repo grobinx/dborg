@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
 import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link, PaletteColor } from '@mui/material';
-import { formatDateTime } from '../../../../../../src/api/db';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
 import { ErrorResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
 import { useSetting } from '@renderer/contexts/SettingsContext';
-
-const formatNumber = (num: number | undefined, decimals = 3): string => {
-    if (num === undefined) return '-';
-    return num.toFixed(decimals);
-};
+import { valueToString } from '../../../../../../src/api/db';
 
 const formatCost = (startup: number | undefined, total: number | undefined): string => {
     if (startup === undefined || total === undefined) return '-';
-    return `${formatNumber(startup, 2)}..${formatNumber(total, 2)}`;
+    return `${valueToString(startup, "decimal")}..${valueToString(total, "decimal")}`;
 };
 
 const KNOWN_NODE_KEYS = new Set<string>([
@@ -148,7 +143,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             ? (removed / Math.max(removed + actualRows, 1)) * 100
             : null;
 
-        return ratio === null ? `${removed}` : `${removed} (${ratio.toFixed(1)}%)`;
+        return ratio === null ? `${valueToString(removed, "bigint")}` : `${valueToString(removed, "bigint")} (${ratio.toFixed(1)}%)`;
     };
 
     const removedByFilterColor = getRemovedRowsColor(node['Rows Removed by Filter'], node['Actual Rows']);
@@ -272,7 +267,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             <Chip
                                 size="small"
                                 variant="outlined"
-                                label={`Time ${formatDateTime(node['Actual Total Time'], "duration", {})}`}
+                                label={`Time ${valueToString(node['Actual Total Time'], "duration")}`}
                                 sx={{ fontFamily: monospaceFontFamily }}
                             />
                         )}
@@ -394,7 +389,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                             <TableRow>
                                                 <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("actual-startup", "Actual Startup")}</TableCell>
                                                 <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em' }}>
-                                                    {formatDateTime(node['Actual Startup Time'], "duration", {})}
+                                                    {valueToString(node['Actual Startup Time'], "duration")}
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -465,7 +460,7 @@ export const ExplainPlanViewer: React.FC<{ plan: ExplainResultKind | null }> = (
                         <Box>
                             <Typography variant="body1">{t("planning-time", "Planning Time")}</Typography>
                             <Typography variant="h6">
-                                {formatDateTime(plan['Planning Time'], "duration", {})}
+                                {valueToString(plan['Planning Time'], "duration")}
                             </Typography>
                         </Box>
                     )}
@@ -473,7 +468,7 @@ export const ExplainPlanViewer: React.FC<{ plan: ExplainResultKind | null }> = (
                         <Box>
                             <Typography variant="body1">{t("execution-time", "Execution Time")}</Typography>
                             <Typography variant="h6">
-                                {formatDateTime(plan['Execution Time'], "duration", {})}
+                                {valueToString(plan['Execution Time'], "duration")}
                             </Typography>
                         </Box>
                     )}

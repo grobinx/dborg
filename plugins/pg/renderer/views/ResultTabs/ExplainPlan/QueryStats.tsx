@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, Paper, Grid2 as Grid, Typography, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { formatDateTime } from '../../../../../../src/api/db';
 import { ExplainResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
+import { valueToString } from '../../../../../../src/api/db';
 
 interface QueryStats {
     totalNodes: number;
@@ -225,20 +225,20 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:planning-time", "Planning Time")}
-                        value={formatDateTime(stats.planningTime, "duration", {})}
+                        value={valueToString(stats.planningTime, "duration")}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:execution-time", "Execution Time")}
-                        value={formatDateTime(stats.executionTime, "duration", {})}
+                        value={valueToString(stats.executionTime, "duration")}
                         variant={stats.executionTime > 100 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-node-time", "Total Node Time")}
-                        value={formatDateTime(stats.totalTime, "duration", {})}
+                        value={valueToString(stats.totalTime, "duration")}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
