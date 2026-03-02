@@ -268,7 +268,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             <TableBody>
                                 {node.Filter && (
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>Filter</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("filter", "Filter")}</TableCell>
                                         <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
                                             {node.Filter}
                                         </TableCell>
@@ -277,8 +277,8 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                 {node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0 && (
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>Rows Removed</TableCell>
-                                        <TableCell sx={{ color: 'error.main' }}>
+                                        <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("rows-removed", "Rows Removed")}</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: 'error.main' }}>
                                             {node['Rows Removed by Filter']}
                                         </TableCell>
                                     </TableRow>
@@ -296,7 +296,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                     <TableBody>
                                         {node['Hash Cond'] && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Hash Condition</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("hash-condition", "Hash Condition")}</TableCell>
                                                 <TableCell sx={{ fontFamily: 'monospace' }}>
                                                     {node['Hash Cond']}
                                                 </TableCell>
@@ -305,16 +305,16 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                         {node['Shared Hit Blocks'] !== undefined && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Shared Blocks</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("shared-blocks", "Shared Blocks")}</TableCell>
                                                 <TableCell>
-                                                    Hit: {node['Shared Hit Blocks']}, Read: {node['Shared Read Blocks'] ?? 0}
+                                                    {t("hit", "Hit")}: {node['Shared Hit Blocks']}, {t("read", "Read")}: {node['Shared Read Blocks'] ?? 0}
                                                 </TableCell>
                                             </TableRow>
                                         )}
 
                                         {node.Output && node.Output.length > 0 && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Output</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("output", "Output")}</TableCell>
                                                 <TableCell sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
                                                     {node.Output.join(', ')}
                                                 </TableCell>
@@ -323,7 +323,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
 
                                         {node['Actual Startup Time'] !== undefined && (
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>Actual Startup</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, width: 160 }}>{t("actual-startup", "Actual Startup")}</TableCell>
                                                 <TableCell sx={{ fontFamily: 'monospace' }}>
                                                     {formatDateTime(node['Actual Startup Time'], "duration", {})}
                                                 </TableCell>
