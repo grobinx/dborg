@@ -403,13 +403,13 @@ export interface ValueToStringOptions {
     thousandsSeparator?: boolean; // Czy używać separatorów tysięcy, domyślnie true
 }
 
-export interface ValueToStringPercentageOptions {
-    precision?: number; 
+export interface ValueToStringPercysionOptions {
+    precision?: number;
 }
 
-export type ValueToStringAllOptions = 
-    ValueToStringOptions 
-    & Partial<ValueToStringPercentageOptions>
+export type ValueToStringAllOptions =
+    ValueToStringOptions
+    & Partial<ValueToStringPercysionOptions>
     ;
 
 const cache = new LRUCache<string, string>({ max: 10000 }); // Cache dla sformatowanych wartości
@@ -432,7 +432,7 @@ function makeCacheKey(value: any, dataType: UnionDataType, baseType: ColumnBaseT
     return (canInline ? String(value) : generateHash(value)) + '-' + dataType + sep;
 }
 
-export function valueToString(value: any, dataType: 'percentage', opts?: ValueToStringOptions & ValueToStringPercentageOptions): string;
+export function valueToString(value: any, dataType: 'percentage' | 'size' | 'quantity', opts?: ValueToStringOptions & ValueToStringPercysionOptions): string;
 export function valueToString(value: any, dataType: ColumnDataType | null, opts?: ValueToStringOptions): string;
 export function valueToString(value: any, dataType: ColumnDataType | null, opts?: ValueToStringAllOptions): string {
     if (value === null || value === undefined || dataType === null) return '';
@@ -579,36 +579,67 @@ function formatWithUnit(value: number | bigint, units: Record<string, number>, o
     const scaledAbs = scaled.abs();
 
     const raw =
-        scaledAbs.greaterThanOrEqualTo(100) ? scaled.toFixed(0) :
-            scaledAbs.greaterThanOrEqualTo(10) ? scaled.toFixed(1) :
-                scaled.toFixed(2);
+        scaledAbs.greaterThanOrEqualTo(100) ? formatDecimalWithThousandsSeparator(round(scaled, 0)) :
+            scaledAbs.greaterThanOrEqualTo(10) ? formatDecimalWithThousandsSeparator(round(scaled, 1)) :
+                formatDecimalWithThousandsSeparator(round(scaled, 2));
 
     const normalized = raw.replace(/\.?0+$/, "");
     return `${normalized} ${selectedUnit}`;
 }
 
-const round = (value: number, precision: number): number => {
-    return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
+function round(value: number, precision: number): number;
+function round(value: Decimal, precision: number): Decimal;
+function round(value: number | Decimal, precision: number): number | Decimal {
+    if (typeof value === 'number') {
+        const factor = Math.pow(10, precision);
+        return Math.round(value * factor) / factor;
+    }
+    const dec = value instanceof Decimal ? value : new Decimal(value);
+    return dec.toDecimalPlaces(precision);
+}
+
+const formatSize = (value: string | number | bigint, options: ValueToStringOptions): string => {
+    if (typeof value === 'string') {
+        const parsed = parseSize(value);
+        if (parsed) {
+            const { number, unit } = parsed;
+            const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
+                ? formatIntWithThousandsSeparator(number)
+                : formatDecimalWithThousandsSeparator(new Decimal(number));
+            return `${formattedNum} ${unit}`;
+        }
+    } else if (typeof value === 'number' || typeof value === 'bigint') {
+        return formatWithUnit(value, defaultSizeUnits, options);
+    }
+
+    return String(value);
+};
+
+const formatQuantity = (value: string | number | bigint, options: ValueToStringOptions): string => {
+    if (typeof value === 'string') {
+        const parsed = parseQuantity(value);
+        if (parsed) {
+            const { number, unit } = parsed;
+            const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
+                ? formatIntWithThousandsSeparator(number)
+                : formatDecimalWithThousandsSeparator(new Decimal(number));
+            return `${formattedNum} ${unit}`;
+        }
+    } else if (typeof value === 'number' || typeof value === 'bigint') {
+        return formatWithUnit(value, defaultQuantityUnits, options);
+    }
+    return String(value);
 }
 
 // Funkcja pomocnicza do formatowania liczb
 const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringAllOptions): string => {
     // size/quantity: wyciągnij liczbę i jednostkę
-    if (dataType === 'size' || dataType === 'quantity') {
-        if (typeof value === 'string') {
-            const parsed = dataType === 'size' ? parseSize(value) : parseQuantity(value);
-            if (parsed) {
-                const { number, unit } = parsed;
-                const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
-                    ? formatIntWithThousandsSeparator(number)
-                    : String(number);
-                return `${formattedNum} ${unit}`;
-            }
-            // fallback: zwróć surową wartość
-            return String(value);
-        } else if (typeof value === 'number' || typeof value === 'bigint') {
-            return formatWithUnit(value, dataType === 'size' ? defaultSizeUnits : defaultQuantityUnits, options);
-        }
+    if (dataType === 'size') {
+        return formatSize(value, options);
+    }
+
+    if (dataType === 'quantity') {
+        return formatQuantity(value, options);
     }
 
     if (dataType === 'percentage') {

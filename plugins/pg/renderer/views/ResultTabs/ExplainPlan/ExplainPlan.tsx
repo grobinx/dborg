@@ -12,6 +12,7 @@ import { QueryAnalyzer } from "./QueryAnalyzer";
 import { QueryStats } from "./QueryStats";
 import { ErrorResult, ExplainResult, ExplainResultKind, LoadingResult } from "./ExplainTypes";
 import { ExplainPlanViewer } from "./ExplainPlanViewer";
+import { UsedObjects } from "./UsedObjects";
 
 export const EXPLAIN_PLAN_TEXT = "pg-explain-plan-text";
 
@@ -120,6 +121,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                 slotContext.refresh(cid("explain-plan-suggestions-content"));
                                 slotContext.refresh(cid("explain-plan-statistics-content"));
                                 slotContext.refresh(cid("explain-plan-tab-label"));
+                                slotContext.refresh(cid("explain-plan-used-objects-content"));
                             } catch {
                                 // ignore
                             }
@@ -136,6 +138,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                         slotContext.refresh(cid("explain-plan-suggestions-content"));
                         slotContext.refresh(cid("explain-plan-statistics-content"));
                         slotContext.refresh(cid("explain-plan-tab-label"));
+                        slotContext.refresh(cid("explain-plan-used-objects-content"));
                         slotContext.messages.sendMessage(SWITCH_PANEL_TAB, resultsTabsId(session), cid("explain-plan-result"));
 
                         const rows = await cursor.fetch();
@@ -163,6 +166,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                             slotContext.refresh(cid("explain-plan-suggestions-content"));
                             slotContext.refresh(cid("explain-plan-statistics-content"));
                             slotContext.refresh(cid("explain-plan-tab-label"));
+                            slotContext.refresh(cid("explain-plan-used-objects-content"));
                         }
                     } finally {
                         cursor?.close();
@@ -174,6 +178,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                             slotContext.refresh(cid("explain-plan-suggestions-content"));
                             slotContext.refresh(cid("explain-plan-statistics-content"));
                             slotContext.refresh(cid("explain-plan-tab-label"));
+                            slotContext.refresh(cid("explain-plan-used-objects-content"));
                         }
                     }
                 }
@@ -231,6 +236,19 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                             id: cid("explain-plan-statistics-content"),
                             type: "rendered",
                             render: () => <QueryStats plan={explainPlan} />,
+                        },
+                    },
+                    {
+                        id: cid("explain-plan-used-objects"),
+                        type: "tab",
+                        label: {
+                            type: "tablabel",
+                            label: t("used-objects", "Used Objects"),
+                        },
+                        content: {
+                            id: cid("explain-plan-used-objects-content"),
+                            type: "rendered",
+                            render: () => <UsedObjects plan={explainPlan} />,
                         },
                     },
                 ]
