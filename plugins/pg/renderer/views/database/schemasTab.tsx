@@ -586,8 +586,8 @@ where n.nspname not like 'pg_toast%'
                                 run: async () => {
                                     if (selectedRow) {
                                         if (await slotContext.showConfirmDialog({
-                                            title: t("confirm-drop-schema", "Confirm Drop Schema"),
-                                            message: t("drop-schema-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\"?", { schema_name: selectedRow.schema_name }),
+                                            title: t("confirm-drop-schema", "Add change: Drop Schema"),
+                                            message: t("drop-schema-confirmation", "Are you sure you want to add change to drop schema \"{{schema_name}}\"?", { schema_name: selectedRow.schema_name }),
                                             severity: "warning",
                                         })) {
                                             changes.removeRecord(selectedRow!, { userData: { cascade: false }, icon: undefined });
@@ -610,8 +610,8 @@ where n.nspname not like 'pg_toast%'
                                 run: async () => {
                                     if (selectedRow) {
                                         if (await slotContext.showConfirmDialog({
-                                            title: t("confirm-drop-schema-cascade", "Confirm Drop Schema Cascade"),
-                                            message: t("drop-schema-cascade-confirmation", "Are you sure you want to drop schema \"{{schema_name}}\" and all its dependent objects?", { schema_name: selectedRow.schema_name }),
+                                            title: t("confirm-drop-schema-cascade", "Add change: Drop Schema (Cascade)"),
+                                            message: t("drop-schema-cascade-confirmation", "Are you sure you want to add change to drop schema \"{{schema_name}}\" and all its dependent objects?", { schema_name: selectedRow.schema_name }),
                                             severity: "warning",
                                         })) {
                                             changes.removeRecord(selectedRow!, { userData: { cascade: true }, icon: "DropCascade" });
@@ -711,7 +711,7 @@ where n.nspname not like 'pg_toast%'
                                     const count = changes.getChanges().length;
                                     return count > 0
                                         ? t("queued-changes-info", "Draft mode: {{count}} queued change(s). Nothing is executed until you run the SQL script.", { count })
-                                        : t("no-queued-changes-info", "Select mode: You can edit and execute the script below.");
+                                        : t("no-queued-changes-info", "You can edit and execute the script below.");
                                 },
                                 toolBar: {
                                     type: "toolbar",
@@ -814,7 +814,7 @@ where n.nspname not like 'pg_toast%'
                 {
                     id: cid("schema-create-dialog"),
                     type: "dialog",
-                    title: t("create-schema", "Create Schema"),
+                    title: t("create-schema", "Add change: Create Schema"),
                     items: [
                         {
                             type: "text",
@@ -852,7 +852,7 @@ where n.nspname not like 'pg_toast%'
                 {
                     id: cid("schema-edit-dialog"),
                     type: "dialog",
-                    title: t("edit-schema", "Edit Schema"),
+                    title: t("edit-schema", "Add change: Edit Schema"),
                     items: [
                         {
                             type: "text",
@@ -883,7 +883,7 @@ where n.nspname not like 'pg_toast%'
                 {
                     id: cid("schema-comment-dialog"),
                     type: "dialog",
-                    title: t("edit-comment", "Edit Comment"),
+                    title: t("edit-comment", "Add change: Edit Comment"),
                     items: [
                         {
                             type: "textarea",
@@ -895,7 +895,7 @@ where n.nspname not like 'pg_toast%'
                 {
                     id: cid("schema-acl-dialog"),
                     type: "dialog",
-                    title: t("edit-acl", "Edit Access Control List"),
+                    title: t("edit-acl", "Add change: Edit Access Control List"),
                     items: [
                         {
                             type: "list",
