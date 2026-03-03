@@ -56,7 +56,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
         if (explainOptions.buffers) options.push("BUFFERS");
         if (explainOptions.wal && versionNumber >= 130000) options.push("WAL");
         if (explainOptions.timing) options.push("TIMING");
-        if (explainOptions.summary && versionNumber >= 90600) options.push("SUMMARY");
+        if (explainOptions.summary && versionNumber >= 100000) options.push("SUMMARY");
         if (explainOptions.memory && versionNumber >= 170000) options.push("MEMORY");
         if (explainOptions.serialize && versionNumber >= 160000) options.push("SERIALIZE");
         options.push('FORMAT JSON');
@@ -254,8 +254,16 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                     onChange: (values, value) => {
                                         if (value) {
                                             values["generic_plan"] = false;
-                                        } else if (values["timing"] === true) {
-                                            values["timing"] = false;
+                                        } else {
+                                            if (values["timing"] === true) {
+                                                values["timing"] = false;
+                                            }
+                                            if (values["buffers"] === true) {
+                                                values["buffers"] = false;
+                                            }
+                                            if (values["wal"] === true) {
+                                                values["wal"] = false;
+                                            }
                                         }
                                     }
                                 },
@@ -284,6 +292,11 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                     label: t("explain-buffers", "BUFFERS"),
                                     defaultValue: explainOptions.buffers,
                                     helperText: t("explain-buffers-tooltip", "Include buffer usage statistics: shared/local/temp blocks hit/read/dirtied/written (requires ANALYZE, all versions)"),
+                                    onChange: (values: Record<string, any>, value: any) => {
+                                        if (value) {
+                                            values["analyze"] = true;
+                                        }
+                                    }
                                 },
                                 {
                                     type: "boolean",
@@ -291,14 +304,19 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                     label: t("explain-timing", "TIMING"),
                                     defaultValue: explainOptions.timing,
                                     helperText: t("explain-timing-tooltip", "Include actual startup time and total time spent in each node (requires ANALYZE, all versions)"),
+                                    onChange: (values: Record<string, any>, value: any) => {
+                                        if (value) {
+                                            values["analyze"] = true;
+                                        }
+                                    }
                                 },
                                 {
                                     type: "boolean",
                                     key: "summary",
                                     label: t("explain-summary", "SUMMARY"),
                                     defaultValue: explainOptions.summary,
-                                    helperText: t("explain-summary-tooltip", "Include summary information such as total planning and execution time (PostgreSQL 9.6+)"),
-                                    disabled: () => versionNumber < 90600,
+                                    helperText: t("explain-summary-tooltip", "Include summary information such as total planning and execution time (PostgreSQL 10.0+)"),
+                                    disabled: () => versionNumber < 100000,
                                 },
                             ]
                         },
@@ -320,6 +338,11 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                     defaultValue: explainOptions.wal,
                                     helperText: t("explain-wal-tooltip", "Include WAL (Write-Ahead Log) usage statistics: records/bytes/FPI (requires ANALYZE, PostgreSQL 13+)"),
                                     disabled: () => versionNumber < 130000,
+                                    onChange: (values: Record<string, any>, value: any) => {
+                                        if (value) {
+                                            values["analyze"] = true;
+                                        }
+                                    }
                                 },
                                 {
                                     type: "boolean",

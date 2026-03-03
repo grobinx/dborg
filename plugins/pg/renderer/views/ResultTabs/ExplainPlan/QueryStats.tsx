@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ExplainResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
 import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
-import { valueToString } from '../../../../../../src/api/db';
+import { resolveDataTypeFromValue, valueToString } from '../../../../../../src/api/db';
+import Decimal from 'decimal.js';
 
 interface QueryStats {
     // Timing
@@ -397,7 +398,7 @@ const StatSection: React.FC<StatSectionProps> = ({ title, children }) => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
                 {title}
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
                 {children}
             </Grid>
         </Box>
@@ -453,7 +454,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-nodes", "Total Nodes")}
-                        value={stats.totalNodes}
+                        value={valueToString(stats.totalNodes, resolveDataTypeFromValue(stats.totalNodes))}
                     />
                 </Grid>
             </StatSection>
@@ -463,21 +464,21 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-cost", "Total Cost")}
-                        value={stats.totalCost.toFixed(2)}
+                        value={valueToString(new Decimal(stats.totalCost).toFixed(2), resolveDataTypeFromValue(stats.totalCost))}
                         unit="units"
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:startup-cost", "Startup Cost")}
-                        value={stats.totalStartupCost.toFixed(2)}
+                        value={valueToString(new Decimal(stats.totalStartupCost).toFixed(2), resolveDataTypeFromValue(stats.totalStartupCost))}
                         unit="units"
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:row-estimate-error", "Row Estimate Error")}
-                        value={stats.rowEstimateError !== null ? `${stats.rowEstimateError.toFixed(1)}x` : 'N/A'}
+                        value={stats.rowEstimateError !== null ? `${valueToString(new Decimal(stats.rowEstimateError).toFixed(2), resolveDataTypeFromValue(stats.rowEstimateError))}x` : 'N/A'}
                         variant={
                             stats.rowEstimateError === null ? 'default'
                                 : stats.rowEstimateError > 10 ? 'error'
@@ -489,7 +490,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:cost-estimate-error", "Cost Estimate Error")}
-                        value={stats.costEstimateError !== null ? `${stats.costEstimateError.toFixed(1)}x` : 'N/A'}
+                        value={stats.costEstimateError !== null ? `${valueToString(new Decimal(stats.costEstimateError).toFixed(2), resolveDataTypeFromValue(stats.costEstimateError))}x` : 'N/A'}
                         variant={
                             stats.costEstimateError === null ? 'default'
                                 : stats.costEstimateError > 5 ? 'warning'
@@ -504,27 +505,27 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:seq-scans", "Sequential Scans")}
-                        value={stats.seqScans}
+                        value={valueToString(stats.seqScans, resolveDataTypeFromValue(stats.seqScans))}
                         variant={stats.seqScans > 2 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:index-scans", "Index Scans")}
-                        value={stats.indexScans}
+                        value={valueToString(stats.indexScans, resolveDataTypeFromValue(stats.indexScans))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:index-only-scans", "Index Only Scans")}
-                        value={stats.indexOnlyScans}
+                        value={valueToString(stats.indexOnlyScans, resolveDataTypeFromValue(stats.indexOnlyScans))}
                         variant={stats.indexOnlyScans > 0 ? 'success' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:bitmap-scans", "Bitmap Scans")}
-                        value={stats.bitmapScans}
+                        value={valueToString(stats.bitmapScans, resolveDataTypeFromValue(stats.bitmapScans))}
                     />
                 </Grid>
             </StatSection>
@@ -534,26 +535,26 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-joins", "Total Joins")}
-                        value={stats.joins}
+                        value={valueToString(stats.joins, resolveDataTypeFromValue(stats.joins))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:nested-loops", "Nested Loops")}
-                        value={stats.nestedLoops}
+                        value={valueToString(stats.nestedLoops, resolveDataTypeFromValue(stats.nestedLoops))}
                         variant={stats.nestedLoops > 2 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:hash-joins", "Hash Joins")}
-                        value={stats.hashJoins}
+                        value={valueToString(stats.hashJoins, resolveDataTypeFromValue(stats.hashJoins))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:merge-joins", "Merge Joins")}
-                        value={stats.mergeJoins}
+                        value={valueToString(stats.mergeJoins, resolveDataTypeFromValue(stats.mergeJoins))}
                     />
                 </Grid>
             </StatSection>
@@ -563,20 +564,20 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:sorts", "Sorts")}
-                        value={stats.sorts}
+                        value={valueToString(stats.sorts, resolveDataTypeFromValue(stats.sorts))}
                         variant={stats.sorts > 1 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:aggregates", "Aggregates")}
-                        value={stats.aggregates}
+                        value={valueToString(stats.aggregates, resolveDataTypeFromValue(stats.aggregates))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:materializes", "Materializes")}
-                        value={stats.materializes}
+                        value={valueToString(stats.materializes, resolveDataTypeFromValue(stats.materializes))}
                     />
                 </Grid>
             </StatSection>
@@ -586,19 +587,19 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-rows", "Total Rows Processed")}
-                        value={valueToString(stats.totalRows, "quantity")}
+                        value={valueToString(stats.totalRows, resolveDataTypeFromValue(stats.totalRows))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:max-rows-per-node", "Max Rows per Node")}
-                        value={valueToString(stats.maxRowsPerNode, "quantity")}
+                        value={valueToString(stats.maxRowsPerNode, resolveDataTypeFromValue(stats.maxRowsPerNode))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:rows-filtered", "Rows Filtered")}
-                        value={valueToString(stats.totalRowsFiltered, "quantity")}
+                        value={valueToString(stats.totalRowsFiltered, resolveDataTypeFromValue(stats.totalRowsFiltered))}
                         variant={stats.totalRowsFiltered > stats.totalRows * 0.5 ? 'warning' : 'default'}
                     />
                 </Grid>
@@ -617,26 +618,26 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:gather-nodes", "Gather Nodes")}
-                                value={stats.parallelStats.gatherNodes}
+                                value={valueToString(stats.parallelStats.gatherNodes, resolveDataTypeFromValue(stats.parallelStats.gatherNodes))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:workers-planned", "Workers Planned")}
-                                value={stats.parallelStats.workersPlanned}
+                                value={valueToString(stats.parallelStats.workersPlanned, resolveDataTypeFromValue(stats.parallelStats.workersPlanned))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:workers-launched", "Workers Launched")}
-                                value={stats.parallelStats.workersLaunched}
+                                value={valueToString(stats.parallelStats.workersLaunched, resolveDataTypeFromValue(stats.parallelStats.workersLaunched))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
                                 value={stats.parallelStats.efficiency !== null ? 
-                                    `${stats.parallelStats.efficiency.toFixed(1)}%` : 'N/A'}
+                                    `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A'}
                                 variant={
                                     stats.parallelStats.efficiency === null ? 'default'
                                         : stats.parallelStats.efficiency >= 80 ? 'success'
@@ -654,40 +655,40 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:cache-hit-ratio", "Cache Hit Ratio")}
                         value={stats.bufferStats.cacheHitRatio !== null ? 
-                            `${stats.bufferStats.cacheHitRatio.toFixed(1)}%` : 'N/A'}
+                            `${valueToString(stats.bufferStats.cacheHitRatio.toFixed(1), resolveDataTypeFromValue(stats.bufferStats.cacheHitRatio))}%` : 'N/A'}
                         variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > 90 ? 'success' : 'warning'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:shared-hit", "Shared Hit")}
-                        value={valueToString(stats.bufferStats.sharedHitBlocks, "quantity")}
+                        value={valueToString(stats.bufferStats.sharedHitBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedHitBlocks))}
                         variant="success"
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:shared-read", "Shared Read")}
-                        value={valueToString(stats.bufferStats.sharedReadBlocks, "quantity")}
+                        value={valueToString(stats.bufferStats.sharedReadBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedReadBlocks))}
                         variant={stats.bufferStats.sharedReadBlocks > 100 ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:shared-dirtied", "Shared Dirtied")}
-                        value={valueToString(stats.bufferStats.sharedDirtiedBlocks, "quantity")}
+                        value={valueToString(stats.bufferStats.sharedDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedDirtiedBlocks))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:shared-written", "Shared Written")}
-                        value={valueToString(stats.bufferStats.sharedWrittenBlocks, "quantity")}
+                        value={valueToString(stats.bufferStats.sharedWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedWrittenBlocks))}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:total-blocks", "Total Blocks")}
-                        value={valueToString(stats.bufferStats.totalBlocks, "quantity")}
+                        value={valueToString(stats.bufferStats.totalBlocks, resolveDataTypeFromValue(stats.bufferStats.totalBlocks))}
                     />
                 </Grid>
             </StatSection>
@@ -697,25 +698,25 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                         <StatCard
                             label={t("query-stats:local-hit", "Local Hit")}
-                            value={valueToString(stats.bufferStats.localHitBlocks, "quantity")}
+                            value={valueToString(stats.bufferStats.localHitBlocks, resolveDataTypeFromValue(stats.bufferStats.localHitBlocks))}
                         />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                         <StatCard
                             label={t("query-stats:local-read", "Local Read")}
-                            value={valueToString(stats.bufferStats.localReadBlocks, "quantity")}
+                            value={valueToString(stats.bufferStats.localReadBlocks, resolveDataTypeFromValue(stats.bufferStats.localReadBlocks))}
                         />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                         <StatCard
                             label={t("query-stats:local-dirtied", "Local Dirtied")}
-                            value={valueToString(stats.bufferStats.localDirtiedBlocks, "quantity")}
+                            value={valueToString(stats.bufferStats.localDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.localDirtiedBlocks))}
                         />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                         <StatCard
                             label={t("query-stats:local-written", "Local Written")}
-                            value={valueToString(stats.bufferStats.localWrittenBlocks, "quantity")}
+                            value={valueToString(stats.bufferStats.localWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.localWrittenBlocks))}
                         />
                     </Grid>
                 </StatSection>
@@ -727,14 +728,14 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:temp-read", "Temp Read")}
-                                value={valueToString(stats.bufferStats.tempReadBlocks, "quantity")}
+                                value={valueToString(stats.bufferStats.tempReadBlocks, resolveDataTypeFromValue(stats.bufferStats.tempReadBlocks))}
                                 variant={stats.bufferStats.tempReadBlocks > 100 ? 'warning' : 'default'}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:temp-written", "Temp Written")}
-                                value={valueToString(stats.bufferStats.tempWrittenBlocks, "quantity")}
+                                value={valueToString(stats.bufferStats.tempWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.tempWrittenBlocks))}
                                 variant={stats.bufferStats.tempWrittenBlocks > 100 ? 'warning' : 'default'}
                             />
                         </Grid>
@@ -749,19 +750,19 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:wal-records", "WAL Records")}
-                                value={valueToString(stats.walStats.records, "quantity")}
+                                value={valueToString(stats.walStats.records, resolveDataTypeFromValue(stats.walStats.records))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:wal-fpi", "Full Page Images")}
-                                value={valueToString(stats.walStats.fpi, "quantity")}
+                                value={valueToString(stats.walStats.fpi, resolveDataTypeFromValue(stats.walStats.fpi))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:wal-bytes", "WAL Bytes")}
-                                value={valueToString(stats.walStats.bytes, "size")}
+                                value={valueToString(stats.walStats.bytes, resolveDataTypeFromValue(stats.walStats.bytes))}
                             />
                         </Grid>
                     </StatSection>
@@ -776,7 +777,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                             <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                                 <StatCard
                                     label={t("query-stats:sort-space", "Sort Space Used")}
-                                    value={valueToString(stats.memoryStats.sortSpaceUsed, "size")}
+                                    value={valueToString(stats.memoryStats.sortSpaceUsed, resolveDataTypeFromValue(stats.memoryStats.sortSpaceUsed))}
                                 />
                             </Grid>
                         )}
@@ -784,7 +785,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                             <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                                 <StatCard
                                     label={t("query-stats:hash-batches", "Hash Batches")}
-                                    value={stats.memoryStats.hashBatchesUsed}
+                                    value={valueToString(stats.memoryStats.hashBatchesUsed, resolveDataTypeFromValue(stats.memoryStats.hashBatchesUsed))}
                                     variant={stats.memoryStats.hashBatchesUsed > 1 ? 'warning' : 'default'}
                                 />
                             </Grid>
@@ -793,7 +794,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                             <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                                 <StatCard
                                     label={t("query-stats:peak-memory", "Peak Memory")}
-                                    value={valueToString(stats.memoryStats.peakMemoryUsage, "size")}
+                                    value={valueToString(stats.memoryStats.peakMemoryUsage, resolveDataTypeFromValue(stats.memoryStats.peakMemoryUsage))}
                                 />
                             </Grid>
                         )}
@@ -808,7 +809,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:jit-functions", "Functions")}
-                                value={stats.jitStats.functions}
+                                value={valueToString(stats.jitStats.functions, resolveDataTypeFromValue(stats.jitStats.functions))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -846,7 +847,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:trigger-count", "Trigger Count")}
-                                value={stats.triggerStats.count}
+                                value={valueToString(stats.triggerStats.count, resolveDataTypeFromValue(stats.triggerStats.count))}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>

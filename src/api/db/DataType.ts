@@ -532,20 +532,61 @@ function safeStringify(value: any): string {
     }
 }
 
+function formatWithUnit(value: number | bigint, units: Record<string, number>, options: ValueToStringOptions): string {
+    const dec = new Decimal(value.toString());
+    const abs = dec.abs();
+
+    if (abs.isZero()) return "0";
+
+    const sortedUnits = Object.entries(units).sort((a, b) => b[1] - a[1]); // od największej
+    let selectedUnit: string | null = null;
+    let selectedMultiplier = 1;
+
+    for (const [unit, multiplier] of sortedUnits) {
+        if (abs.greaterThanOrEqualTo(multiplier)) {
+            selectedUnit = unit;
+            selectedMultiplier = multiplier;
+            break;
+        }
+    }
+
+    if (!selectedUnit) {
+        const raw = dec.toString();
+        return options.display && options.thousandsSeparator && dec.isInteger()
+            ? formatIntWithThousandsSeparator(raw)
+            : raw;
+    }
+
+    const scaled = dec.div(selectedMultiplier);
+    const scaledAbs = scaled.abs();
+
+    const raw =
+        scaledAbs.greaterThanOrEqualTo(100) ? scaled.toFixed(0) :
+            scaledAbs.greaterThanOrEqualTo(10) ? scaled.toFixed(1) :
+                scaled.toFixed(2);
+
+    const normalized = raw.replace(/\.?0+$/, "");
+    return `${normalized} ${selectedUnit}`;
+}
+
 // Funkcja pomocnicza do formatowania liczb
 const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringOptions): string => {
     // size/quantity: wyciągnij liczbę i jednostkę
     if (dataType === 'size' || dataType === 'quantity') {
-        const parsed = parseQuantity(value);
-        if (parsed) {
-            const { number, unit } = parsed;
-            const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
-                ? formatIntWithThousandsSeparator(number)
-                : String(number);
-            return `${formattedNum} ${unit}`;
+        if (typeof value === 'string') {
+            const parsed = dataType === 'size' ? parseSize(value) : parseQuantity(value);
+            if (parsed) {
+                const { number, unit } = parsed;
+                const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(number)
+                    ? formatIntWithThousandsSeparator(number)
+                    : String(number);
+                return `${formattedNum} ${unit}`;
+            }
+            // fallback: zwróć surową wartość
+            return String(value);
+        } else if (typeof value === 'number' || typeof value === 'bigint') {
+            return formatWithUnit(value, dataType === 'size' ? defaultSizeUnits : defaultQuantityUnits, options);
         }
-        // fallback: zwróć surową wartość
-        return String(value);
     }
 
     // szybkie ścieżki dla number/bigint
@@ -633,6 +674,24 @@ const sizeUnits: Record<string, number> = {
     petabits: 1024 ** 5 / 8,
     exabit: 1024 ** 6 / 8,
     exabits: 1024 ** 6 / 8,
+};
+
+const defaultSizeUnits = {
+    k: 1024,
+    m: 1024 ** 2,
+    g: 1024 ** 3,
+    t: 1024 ** 4,
+    p: 1024 ** 5,
+    e: 1024 ** 6,
+};
+
+const defaultQuantityUnits = {
+    k: 1000,
+    m: 1000 ** 2,
+    g: 1000 ** 3,
+    t: 1000 ** 4,
+    p: 1000 ** 5,
+    e: 1000 ** 6,
 };
 
 const quantityUnits: Record<string, number> = {
