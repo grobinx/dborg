@@ -135,6 +135,32 @@ interface InputDecoratorLabelProps {
     restrictions?: FormattedContentItem[];
 }
 
+export const InputDecoratorRestrictions: React.FC<{ className?: string; restrictions: FormattedContentItem[] }> = (props) => {
+    const { className, restrictions } = props;
+    return (
+        <StyledInputDecoratorRestrictions
+            className={clsx(
+                "InputDecorator-restrictions",
+                className
+            )}
+        >
+            {restrictions.map((restriction, index) => {
+                return (
+                    <Restriction
+                        key={`restriction-${index}`}
+                        className={clsx(
+                            "InputDecorator-restriction",
+                            className
+                        )}
+                    >
+                        <FormattedText text={restriction} />
+                    </Restriction>
+                );
+            })}
+        </StyledInputDecoratorRestrictions>
+    );
+}
+
 export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: InputDecoratorLabelProps) => {
     const { children, className, label, restrictions } = props;
     return (
@@ -154,26 +180,13 @@ export const InputDecoratorLabel: React.FC<InputDecoratorLabelProps> = (props: I
                 {label}
             </StyledInputDecoratorLabelText>
             {restrictions && (
-                <StyledInputDecoratorRestrictions
+                <InputDecoratorRestrictions
                     className={clsx(
                         "InputDecorator-restrictions",
                         className
                     )}
-                >
-                    {restrictions.map((restriction, index) => {
-                        return (
-                            <Restriction
-                                key={`restriction-${index}`}
-                                className={clsx(
-                                    "InputDecorator-restriction",
-                                    className
-                                )}
-                            >
-                                <FormattedText text={restriction} />
-                            </Restriction>
-                        );
-                    })}
-                </StyledInputDecoratorRestrictions>
+                    restrictions={restrictions}
+                />
             )}
         </StyledInputDecoratorLabel>
     );
@@ -186,6 +199,7 @@ const StyledInputDecoratorRestrictions = styled('div', {
     ...theme.typography.label,
     display: "flex",
     flexDirection: "row",
+    flexWrap: "nowrap",
 }));
 
 const StyledInputDecoratorRestriction = styled('span', {
@@ -493,6 +507,16 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                         ref={visibleInputRef}
                     >
                         {clonedChildren}
+                        {!label && (restrictions || inputRestrictions) && (
+                            <InputDecoratorRestrictions
+                                className={clsx(
+                                    "InputDecorator-restrictions",
+                                    classes,
+                                    'no-label',
+                                )}
+                                restrictions={[...(restrictions ?? []), ...(inputRestrictions ?? [])]}
+                            />
+                        )}
                     </StyledInputDecoratorInput>
                     {description && (
                         <StyledInputDecoratorDescription

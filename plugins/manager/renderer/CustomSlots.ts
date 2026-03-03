@@ -2,7 +2,7 @@ import { Theme } from "@mui/material";
 import { AutoRefreshInterval, AutoRefreshIntervals, AutoRefreshState } from "@renderer/components/AutoRefreshBar";
 import { Action, ActionGroup, Actions } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandDescriptor } from "@renderer/components/CommandPalette/CommandManager";
-import { DataGridRow, DataGridMode, DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
+import { DataGridMode, DataGridChangeRow } from "@renderer/components/DataGrid/DataGrid";
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
@@ -68,6 +68,7 @@ export type NumberArrayFactory<T = SlotRuntimeContext> = number[] | ((runtimeCon
 export type ReactNodeFactory<T = SlotRuntimeContext> = React.ReactNode | ((runtimeContext: T) => React.ReactNode);
 export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
 export type StringFactory<T = SlotRuntimeContext> = string | ((runtimeContext: T) => string);
+export type StringsFactory<T = SlotRuntimeContext> = string[] | ((runtimeContext: T) => string[]);
 export type StringAsyncFactory<T = SlotRuntimeContext> = Promise<string> | ((runtimeContext: T) => Promise<string>);
 export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeContext: T) => Option[]);
 export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
@@ -1017,6 +1018,10 @@ export interface IDialogField {
      * Wywołanie jest z opóźnieniem.
      */
     onChange?: (values: Record<string, any>, value: any) => void;
+    /**
+     * Ograniczenia wartości pola, to wyłącznie opis dla użytkownika, nie jest walidacją.
+     */
+    restrictions?: StringsFactory<Record<string, any>>;
 }
 
 export interface IDialogTextField extends IDialogField {
@@ -1359,6 +1364,9 @@ export interface IDialogSlot extends ICustomSlot, IDialogStandalone {
 }
 
 export function resolveStringFactory<T = SlotRuntimeContext>(factory: StringFactory<T> | undefined, context: T): string | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveStringsFactory<T = SlotRuntimeContext>(factory: StringsFactory<T> | undefined, context: T): string[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveStringAsyncFactory<T = SlotRuntimeContext>(factory: StringAsyncFactory<T> | undefined, context: T): Promise<string | undefined> | undefined {

@@ -250,13 +250,62 @@ const collect = (plan: ExplainResult) => {
 const riskColor = (risk: "low" | "medium" | "high"): "success" | "warning" | "error" =>
     risk === "high" ? "error" : risk === "medium" ? "warning" : "success";
 
-export const UsedObjects: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
+export const UsedObjects: React.FC<{ 
+    plan: ExplainResultKind | null;
+    options?: {
+        functionRiskHighTime: number;
+        functionRiskHighCalls: number;
+        functionRiskHighReads: number;
+    };
+}> = ({ plan, options }) => {
     const { t } = useTranslation();
+
+    const defaultOptions = {
+        functionRiskHighTime: 100,
+        functionRiskHighCalls: 10000,
+        functionRiskHighReads: 100,
+    };
+
+    const opts = { ...defaultOptions, ...options };
 
     const data = useMemo(() => {
         if (!plan || isErrorResult(plan) || isLoadingResult(plan)) return null;
-        return collect(plan);
-    }, [plan]);
+        
+        // Modify collect function inline
+        const collectWithOptions = (planData: ExplainResult) => {
+            const result = collect(planData);
+            
+            // Recalculate function risks with custom thresholds
+            result.functionRisks = result.objects
+                .filter((o) => o.type === "function")
+                .map((o) => {
+                    const reasons: string[] = [];
+                    if (o.totalTime > opts.functionRiskHighTime) reasons.push("High total time");
+                    if (o.estimatedCalls > opts.functionRiskHighCalls) reasons.push("Very high estimated call count");
+                    if (o.sharedReadBlocks > opts.functionRiskHighReads) reasons.push("High disk reads");
+                    const risk: FunctionRisk["risk"] =
+                        reasons.length >= 2 ? "high" : reasons.length === 1 ? "medium" : "low";
+
+                    return {
+                        key: o.key,
+                        name: o.name,
+                        totalTime: o.totalTime,
+                        estimatedCalls: o.estimatedCalls,
+                        sharedReadBlocks: o.sharedReadBlocks,
+                        risk,
+                        reasons,
+                    };
+                })
+                .sort((a, b) => {
+                    const rank = { high: 3, medium: 2, low: 1 };
+                    return rank[b.risk] - rank[a.risk] || b.totalTime - a.totalTime;
+                });
+
+            return result;
+        };
+
+        return collectWithOptions(plan);
+    }, [plan, opts]);
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -268,7 +317,7 @@ export const UsedObjects: React.FC<{ plan: ExplainResultKind | null }> = ({ plan
 
     if (!plan || !data) {
         return (
-            <Box sx={{ p: 4 }}>
+            <Box sx={{ p: 8 }}>
                 <Typography color="text.secondary">{t("no-explain-plan-data", "No explain plan data")}</Typography>
             </Box>
         );

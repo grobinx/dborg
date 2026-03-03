@@ -130,6 +130,12 @@ export const InputDecoratorLayout = (palette: Palette, _root: ThemeOptions): Inp
                 alignItems: "end",
                 color: palette.text.secondary,
                 gap: paddingMedium / 2,
+                '&.no-label': {
+                    alignItems: "start",
+                    '& .paragraph': {
+                        whiteSpace: "nowrap",
+                    }
+                },
             },
             restriction: {
                 borderRadius: borderRadius,

@@ -405,8 +405,45 @@ const StatSection: React.FC<StatSectionProps> = ({ title, children }) => {
     );
 };
 
-export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
+export const QueryStats: React.FC<{ 
+    plan: ExplainResultKind | null;
+    options?: {
+        executionTimeWarningMs: number;
+        seqScanWarningCount: number;
+        nestedLoopWarningCount: number;
+        sortWarningCount: number;
+        rowsFilteredWarningRatio: number;
+        cacheHitRatioWarningThreshold: number;
+        parallelEfficiencyWarningThreshold: number;
+        rowEstimateErrorWarningThreshold: number;
+        rowEstimateErrorErrorThreshold: number;
+        costEstimateErrorWarningThreshold: number;
+        sharedReadBlocksWarningThreshold: number;
+        tempReadBlocksWarningThreshold: number;
+        tempWrittenBlocksWarningThreshold: number;
+        hashBatchesWarningThreshold: number;
+    };
+}> = ({ plan, options }) => {
     const { t } = useTranslation();
+
+    const defaultOptions = {
+        executionTimeWarningMs: 100,
+        seqScanWarningCount: 2,
+        nestedLoopWarningCount: 2,
+        sortWarningCount: 1,
+        rowsFilteredWarningRatio: 0.5,
+        cacheHitRatioWarningThreshold: 0.9,
+        parallelEfficiencyWarningThreshold: 80,
+        rowEstimateErrorWarningThreshold: 3,
+        rowEstimateErrorErrorThreshold: 10,
+        costEstimateErrorWarningThreshold: 5,
+        sharedReadBlocksWarningThreshold: 100,
+        tempReadBlocksWarningThreshold: 100,
+        tempWrittenBlocksWarningThreshold: 100,
+        hashBatchesWarningThreshold: 1,
+    };
+
+    const opts = { ...defaultOptions, ...options };
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -420,7 +457,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
 
     if (!plan) {
         return (
-            <Box sx={{ p: 4 }}>
+            <Box sx={{ p: 8 }}>
                 <Typography color="text.secondary">{t("no-explain-plan-data", "No explain plan data")}</Typography>
             </Box>
         );
@@ -442,7 +479,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:execution-time", "Execution Time")}
                         value={valueToString(stats.executionTime, "duration")}
-                        variant={stats.executionTime > 100 ? 'warning' : 'default'}
+                        variant={stats.executionTime > opts.executionTimeWarningMs ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -481,9 +518,9 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         value={stats.rowEstimateError !== null ? `${valueToString(new Decimal(stats.rowEstimateError).toFixed(2), resolveDataTypeFromValue(stats.rowEstimateError))}x` : 'N/A'}
                         variant={
                             stats.rowEstimateError === null ? 'default'
-                                : stats.rowEstimateError > 10 ? 'error'
-                                    : stats.rowEstimateError > 3 ? 'warning'
-                                        : 'success'
+                                : stats.rowEstimateError > opts.rowEstimateErrorErrorThreshold ? 'error'
+                                : stats.rowEstimateError > opts.rowEstimateErrorWarningThreshold ? 'warning'
+                                : 'success'
                         }
                     />
                 </Grid>
@@ -493,8 +530,8 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         value={stats.costEstimateError !== null ? `${valueToString(new Decimal(stats.costEstimateError).toFixed(2), resolveDataTypeFromValue(stats.costEstimateError))}x` : 'N/A'}
                         variant={
                             stats.costEstimateError === null ? 'default'
-                                : stats.costEstimateError > 5 ? 'warning'
-                                    : 'success'
+                                : stats.costEstimateError > opts.costEstimateErrorWarningThreshold ? 'warning'
+                                : 'success'
                         }
                     />
                 </Grid>
@@ -506,7 +543,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:seq-scans", "Sequential Scans")}
                         value={valueToString(stats.seqScans, resolveDataTypeFromValue(stats.seqScans))}
-                        variant={stats.seqScans > 2 ? 'warning' : 'default'}
+                        variant={stats.seqScans > opts.seqScanWarningCount ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -542,7 +579,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:nested-loops", "Nested Loops")}
                         value={valueToString(stats.nestedLoops, resolveDataTypeFromValue(stats.nestedLoops))}
-                        variant={stats.nestedLoops > 2 ? 'warning' : 'default'}
+                        variant={stats.nestedLoops > opts.nestedLoopWarningCount ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -565,7 +602,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:sorts", "Sorts")}
                         value={valueToString(stats.sorts, resolveDataTypeFromValue(stats.sorts))}
-                        variant={stats.sorts > 1 ? 'warning' : 'default'}
+                        variant={stats.sorts > opts.sortWarningCount ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -600,7 +637,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:rows-filtered", "Rows Filtered")}
                         value={valueToString(stats.totalRowsFiltered, resolveDataTypeFromValue(stats.totalRowsFiltered))}
-                        variant={stats.totalRowsFiltered > stats.totalRows * 0.5 ? 'warning' : 'default'}
+                        variant={stats.totalRowsFiltered > stats.totalRows * opts.rowsFilteredWarningRatio ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -613,40 +650,38 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
 
             {/* Parallel Execution */}
             {stats.parallelStats.gatherNodes > 0 && (
-                <>
-                    <StatSection title={t("query-stats:parallel", "Parallel Execution")}>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:gather-nodes", "Gather Nodes")}
-                                value={valueToString(stats.parallelStats.gatherNodes, resolveDataTypeFromValue(stats.parallelStats.gatherNodes))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:workers-planned", "Workers Planned")}
-                                value={valueToString(stats.parallelStats.workersPlanned, resolveDataTypeFromValue(stats.parallelStats.workersPlanned))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:workers-launched", "Workers Launched")}
-                                value={valueToString(stats.parallelStats.workersLaunched, resolveDataTypeFromValue(stats.parallelStats.workersLaunched))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
-                                value={stats.parallelStats.efficiency !== null ?
-                                    `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A'}
-                                variant={
-                                    stats.parallelStats.efficiency === null ? 'default'
-                                        : stats.parallelStats.efficiency >= 80 ? 'success'
-                                            : 'warning'
-                                }
-                            />
-                        </Grid>
-                    </StatSection>
-                </>
+                <StatSection title={t("query-stats:parallel", "Parallel Execution")}>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:gather-nodes", "Gather Nodes")}
+                            value={valueToString(stats.parallelStats.gatherNodes, resolveDataTypeFromValue(stats.parallelStats.gatherNodes))}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:workers-planned", "Workers Planned")}
+                            value={valueToString(stats.parallelStats.workersPlanned, resolveDataTypeFromValue(stats.parallelStats.workersPlanned))}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:workers-launched", "Workers Launched")}
+                            value={valueToString(stats.parallelStats.workersLaunched, resolveDataTypeFromValue(stats.parallelStats.workersLaunched))}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                        <StatCard
+                            label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
+                            value={stats.parallelStats.efficiency !== null ?
+                                `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A'}
+                            variant={
+                                stats.parallelStats.efficiency === null ? 'default'
+                                    : stats.parallelStats.efficiency >= opts.parallelEfficiencyWarningThreshold ? 'success'
+                                    : 'warning'
+                            }
+                        />
+                    </Grid>
+                </StatSection>
             )}
 
             {/* Buffer I/O */}
@@ -656,7 +691,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         label={t("query-stats:cache-hit-ratio", "Cache Hit Ratio")}
                         value={stats.bufferStats.cacheHitRatio !== null ?
                             valueToString(stats.bufferStats.cacheHitRatio, 'percentage') : 'N/A'}
-                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > 0.9 ? 'success' : 'warning'}
+                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > opts.cacheHitRatioWarningThreshold ? 'success' : 'warning'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -670,7 +705,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                     <StatCard
                         label={t("query-stats:shared-read", "Shared Read")}
                         value={valueToString(stats.bufferStats.sharedReadBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedReadBlocks))}
-                        variant={stats.bufferStats.sharedReadBlocks > 100 ? 'warning' : 'default'}
+                        variant={stats.bufferStats.sharedReadBlocks > opts.sharedReadBlocksWarningThreshold ? 'warning' : 'default'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
@@ -729,14 +764,14 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                             <StatCard
                                 label={t("query-stats:temp-read", "Temp Read")}
                                 value={valueToString(stats.bufferStats.tempReadBlocks, resolveDataTypeFromValue(stats.bufferStats.tempReadBlocks))}
-                                variant={stats.bufferStats.tempReadBlocks > 100 ? 'warning' : 'default'}
+                                variant={stats.bufferStats.tempReadBlocks > opts.tempReadBlocksWarningThreshold ? 'warning' : 'default'}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:temp-written", "Temp Written")}
                                 value={valueToString(stats.bufferStats.tempWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.tempWrittenBlocks))}
-                                variant={stats.bufferStats.tempWrittenBlocks > 100 ? 'warning' : 'default'}
+                                variant={stats.bufferStats.tempWrittenBlocks > opts.tempWrittenBlocksWarningThreshold ? 'warning' : 'default'}
                             />
                         </Grid>
                     </StatSection>
@@ -786,7 +821,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                                 <StatCard
                                     label={t("query-stats:hash-batches", "Hash Batches")}
                                     value={valueToString(stats.memoryStats.hashBatchesUsed, resolveDataTypeFromValue(stats.memoryStats.hashBatchesUsed))}
-                                    variant={stats.memoryStats.hashBatchesUsed > 1 ? 'warning' : 'default'}
+                                    variant={stats.memoryStats.hashBatchesUsed > opts.hashBatchesWarningThreshold ? 'warning' : 'default'}
                                 />
                             </Grid>
                         )}

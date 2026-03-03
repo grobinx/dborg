@@ -137,7 +137,6 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     const getRemovedRowsColor = (removed: number | undefined, actualRows: number | undefined): string => {
         if (removed === undefined || removed <= 0) return theme.palette.success.main;
 
-        // fallback gdy brak Actual Rows
         if (actualRows === undefined || actualRows < 0) {
             if (removed > 100000) return theme.palette.error.main;
             if (removed > 10000) return theme.palette.warning.main;
@@ -436,8 +435,21 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     );
 };
 
-export const ExplainPlanViewer: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
+export const ExplainPlanViewer: React.FC<{ 
+    plan: ExplainResultKind | null;
+    options?: {
+        removedRowsWarningThreshold: number;
+        removedRowsErrorThreshold: number;
+    };
+}> = ({ plan, options }) => {
     const { t } = useTranslation();
+
+    const defaultOptions = {
+        removedRowsWarningThreshold: 0.3,
+        removedRowsErrorThreshold: 0.6,
+    };
+
+    const opts = { ...defaultOptions, ...options };
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;

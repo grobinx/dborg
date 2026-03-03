@@ -14,7 +14,8 @@ import {
     IDialogEditorField,
     IDialogTextareaField,
     IDialogStatic,
-    resolveCSSPropertiesFactory
+    resolveCSSPropertiesFactory,
+    resolveStringsFactory
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { EditorField } from "@renderer/components/inputs/EditorField";
@@ -43,9 +44,17 @@ export const DialogTextField: React.FC<{
     const helperText = resolveStringFactory(field.helperText, structure);
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            label={label}
+            description={helperText}
+            showValidity={false}
+            restrictions={restrictions}
+        >
             <TextField
                 value={structure[field.key]}
                 onChange={(value) => {
@@ -99,9 +108,17 @@ export const DialogTextareaField: React.FC<{
     const helperText = resolveStringFactory(field.helperText, structure);
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            label={label}
+            description={helperText}
+            showValidity={false}
+            restrictions={restrictions}
+        >
             <TextareaField
                 value={structure[field.key]}
                 onChange={(value) => {
@@ -158,9 +175,17 @@ export const DialogNumberField: React.FC<{
     const helperText = resolveStringFactory(field.helperText, structure);
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            label={label}
+            description={helperText}
+            showValidity={false}
+            restrictions={restrictions}
+        >
             <NumberField
                 value={structure[field.key]}
                 onChange={(value) => {
@@ -216,9 +241,17 @@ export const DialogSelectField: React.FC<{
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
     const options = resolveSelectOptionsFactory(field.options, structure) || [];
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink label={label} description={helperText} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            label={label}
+            description={helperText}
+            showValidity={false}
+            restrictions={restrictions}
+        >
             <SelectField
                 value={structure[field.key]}
                 onChange={(value) => {
@@ -272,9 +305,16 @@ export const DialogBooleanField: React.FC<{
     const helperText = resolveStringFactory(field.helperText, structure);
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
-        <InputDecorator indicator={false} disableBlink description={helperText} showValidity={false}>
+        <InputDecorator
+            indicator={false}
+            disableBlink
+            description={helperText}
+            showValidity={false}
+            restrictions={restrictions}
+        >
             <BooleanField
                 value={structure[field.key]}
                 onChange={(value) => {
@@ -328,6 +368,7 @@ export const DialogEditorField: React.FC<{
     const helperText = resolveStringFactory(field.helperText, structure);
     const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
     const required = resolveBooleanFactory(field.required, structure);
+    const restrictions = resolveStringsFactory(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -336,6 +377,7 @@ export const DialogEditorField: React.FC<{
             description={helperText}
             label={label}
             showValidity={false}
+            restrictions={restrictions}
             sx={{ height: field.height === "100%" ? field.height : undefined }}
         >
             <EditorField

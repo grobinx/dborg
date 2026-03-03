@@ -20,6 +20,83 @@ interface Suggestion {
     }[];
 }
 
+export interface QueryAnalyzerOptions {
+    seqScanMinRows: number;
+    ineffectiveFilterMinRowsRemoved: number;
+    sortMinRows: number;
+    rowEstimateRatioUpper: number;
+    rowEstimateRatioLower: number;
+    nestedLoopMinOuterRows: number;
+    aggregateMinRows: number;
+    correlatedSubqueryMinLoops: number;
+    slowIndexScanMinTimeMs: number;
+    slowIndexScanMinRows: number;
+    highDiskIOMinSharedReadBlocks: number;
+    limitDiscardMultiplier: number;
+    
+    // QueryStats thresholds
+    executionTimeWarningMs: number;
+    seqScanWarningCount: number;
+    nestedLoopWarningCount: number;
+    sortWarningCount: number;
+    rowsFilteredWarningRatio: number;
+    cacheHitRatioWarningThreshold: number;
+    parallelEfficiencyWarningThreshold: number;
+    rowEstimateErrorWarningThreshold: number;
+    rowEstimateErrorErrorThreshold: number;
+    costEstimateErrorWarningThreshold: number;
+    sharedReadBlocksWarningThreshold: number;
+    tempReadBlocksWarningThreshold: number;
+    tempWrittenBlocksWarningThreshold: number;
+    hashBatchesWarningThreshold: number;
+    
+    // ExplainPlanViewer thresholds
+    removedRowsWarningThreshold: number;
+    removedRowsErrorThreshold: number;
+    
+    // UsedObjects thresholds
+    functionRiskHighTime: number;
+    functionRiskHighCalls: number;
+    functionRiskHighReads: number;
+}
+
+export const DEFAULT_QUERY_ANALYZER_OPTIONS: QueryAnalyzerOptions = {
+    seqScanMinRows: 1000,
+    ineffectiveFilterMinRowsRemoved: 100,
+    sortMinRows: 1000,
+    rowEstimateRatioUpper: 10,
+    rowEstimateRatioLower: 0.1,
+    nestedLoopMinOuterRows: 100,
+    aggregateMinRows: 10000,
+    correlatedSubqueryMinLoops: 10,
+    slowIndexScanMinTimeMs: 100,
+    slowIndexScanMinRows: 5000,
+    highDiskIOMinSharedReadBlocks: 100,
+    limitDiscardMultiplier: 10,
+    
+    executionTimeWarningMs: 100,
+    seqScanWarningCount: 2,
+    nestedLoopWarningCount: 2,
+    sortWarningCount: 1,
+    rowsFilteredWarningRatio: 0.5,
+    cacheHitRatioWarningThreshold: 0.9,
+    parallelEfficiencyWarningThreshold: 80,
+    rowEstimateErrorWarningThreshold: 3,
+    rowEstimateErrorErrorThreshold: 10,
+    costEstimateErrorWarningThreshold: 5,
+    sharedReadBlocksWarningThreshold: 100,
+    tempReadBlocksWarningThreshold: 100,
+    tempWrittenBlocksWarningThreshold: 100,
+    hashBatchesWarningThreshold: 1,
+    
+    removedRowsWarningThreshold: 0.3,
+    removedRowsErrorThreshold: 0.6,
+    
+    functionRiskHighTime: 100,
+    functionRiskHighCalls: 10000,
+    functionRiskHighReads: 100,
+};
+
 // NEW: helpers for table/schema extraction from plan
 type RelationRef = { schema: string; table: string };
 
@@ -50,14 +127,14 @@ const fqTableFromPlan = (node: PlanNode, fallback = 'table_name'): string => {
     return `${quoteIdent(rel.schema)}.${quoteIdent(rel.table)}`;
 };
 
-const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
+const analyzePlan = (plan: PlanNode, options: QueryAnalyzerOptions, topLevel = true): Suggestion[] => {
     const suggestions: Suggestion[] = [];
 
     if (plan['Node Type'] === 'Seq Scan') {
         const rows = plan['Actual Rows'] ?? plan['Plan Rows'] ?? 0;
         const execTime = plan['Actual Total Time'] ?? 0;
 
-        if (rows > 1000) {
+        if (rows > options.seqScanMinRows) {
             const filterInfo = plan.Filter ? t("query-analyzer:with-filter", "with filter") : t("query-analyzer:without-filters", "without filters");
             suggestions.push({
                 type: 'warning',
@@ -78,7 +155,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         }
     }
 
-    if (plan['Rows Removed by Filter'] && plan['Rows Removed by Filter'] > 100) {
+    if (plan['Rows Removed by Filter'] && plan['Rows Removed by Filter'] > options.ineffectiveFilterMinRowsRemoved) {
         const totalRows = (plan['Actual Rows'] ?? 0) + plan['Rows Removed by Filter'];
         const filterRate = ((plan['Rows Removed by Filter'] / totalRows) * 100).toFixed(1);
 
@@ -108,7 +185,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
             ? plan['Sort Key'].map(k => k.split(' COLLATE')[0].trim()).join(', ')
             : String(plan['Sort Key']);
 
-        if (rows > 1000) {
+        if (rows > options.sortMinRows) {
             const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
@@ -135,7 +212,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const actualRows = plan['Actual Rows'] ?? 0;
         const ratio = planRows > 0 ? actualRows / planRows : 1;
 
-        if (ratio > 10 || ratio < 0.1) {
+        if (ratio > options.rowEstimateRatioUpper || ratio < options.rowEstimateRatioLower) {
             const direction = ratio > 10 ? t("query-analyzer:overestimated", "overestimated") : t("query-analyzer:underestimated", "underestimated");
             const diff = Math.abs(ratio - 1) * 100;
 
@@ -164,7 +241,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         const outerRows = plan['Actual Rows'] ?? plan['Plan Rows'] ?? 0;
         const nestTime = plan['Actual Total Time'] ?? 0;
 
-        if (outerRows > 100) {
+        if (outerRows > options.nestedLoopMinOuterRows) {
             const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
@@ -186,12 +263,11 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         }
     }
 
-    // Hash aggregate na dużej liczbie wierszy
     if (plan['Node Type'] === 'Aggregate') {
         const rows = plan['Actual Rows'] ?? plan['Plan Rows'] ?? 0;
         const aggTime = plan['Actual Total Time'] ?? 0;
 
-        if (rows > 10000) {
+        if (rows > options.aggregateMinRows) {
             const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'warning',
@@ -209,14 +285,13 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         }
     }
 
-    // Subquery Plan - sprawdź czy jest wiele powtórzeń
     if (plan['Plans'] && plan['Plans'].length > 0) {
         const firstChild = plan['Plans'][0];
         if (firstChild['Node Type'] === 'Seq Scan' && firstChild['Actual Loops'] && firstChild['Actual Loops'] > 1) {
             const loopsCount = firstChild['Actual Loops'];
             const totalTime = (firstChild['Actual Total Time'] ?? 0) * loopsCount;
 
-            if (loopsCount > 10) {
+            if (loopsCount > options.correlatedSubqueryMinLoops) {
                 suggestions.push({
                     type: 'warning',
                     title: t("query-analyzer:correlated-subquery-title", "Correlated subquery executed {{loops}} times ({{time}}ms total)", { loops: loopsCount, time: totalTime.toFixed(2) }),
@@ -234,12 +309,11 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         }
     }
 
-    // Index Scan z dużą liczbą filtru
     if (plan['Node Type'] === 'Index Scan' || plan['Node Type'] === 'Index Only Scan') {
         const rows = plan['Actual Rows'] ?? plan['Plan Rows'] ?? 0;
         const scanTime = plan['Actual Total Time'] ?? 0;
 
-        if (scanTime > 100 && rows > 5000) {
+        if (scanTime > options.slowIndexScanMinTimeMs && rows > options.slowIndexScanMinRows) {
             const targetTable = fqTableFromPlan(plan);
             suggestions.push({
                 type: 'info',
@@ -258,8 +332,7 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         }
     }
 
-    // BufferIO - dużo czytań z dysku
-    if (plan['Shared Read Blocks'] && plan['Shared Read Blocks'] > 100) {
+    if (plan['Shared Read Blocks'] && plan['Shared Read Blocks'] > options.highDiskIOMinSharedReadBlocks) {
         const readTime = plan['Actual Total Time'] ?? 0;
 
         const targetTable = fqTableFromPlan(plan);
@@ -282,13 +355,12 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
         });
     }
 
-    // Limit z dużą ilością odrzuconych wierszy
     if (plan['Node Type'] === 'Limit') {
         const planRows = plan['Plan Rows'] ?? 0;
         const actualRows = plan['Actual Rows'] ?? 0;
         const outerChild = plan['Plans'] ? plan['Plans'][0] : null;
 
-        if (outerChild && outerChild['Actual Rows'] && outerChild['Actual Rows'] > planRows * 10) {
+        if (outerChild && outerChild['Actual Rows'] && outerChild['Actual Rows'] > planRows * options.limitDiscardMultiplier) {
             const targetTable = fqTableFromPlan(plan);
             const discarded = outerChild['Actual Rows'] - actualRows;
 
@@ -312,18 +384,20 @@ const analyzePlan = (plan: PlanNode, topLevel = true): Suggestion[] => {
 
     if (plan.Plans) {
         plan.Plans.forEach(child => {
-            suggestions.push(...analyzePlan(child, false));
+            suggestions.push(...analyzePlan(child, options, false));
         });
     }
 
     return suggestions;
 };
 
-export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null }> = ({ plan }) => {
+export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null; options?: Partial<QueryAnalyzerOptions> }> = ({ plan, options }) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const [fontSize] = useSetting<number>("ui", "fontSize");
     const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
+
+    const analyzerOptions: QueryAnalyzerOptions = { ...DEFAULT_QUERY_ANALYZER_OPTIONS, ...options };
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -337,13 +411,13 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null }> = ({ pl
 
     if (!plan) {
         return (
-            <Box sx={{ p: 4 }}>
+            <Box sx={{ p: 8 }}>
                 <Typography color="text.secondary">{t("no-explain-plan-data", "No explain plan data")}</Typography>
             </Box>
         );
     }
 
-    const suggestions = analyzePlan(plan.Plan);
+    const suggestions = analyzePlan(plan.Plan, analyzerOptions);
 
     if (suggestions.length === 0) {
         return (
