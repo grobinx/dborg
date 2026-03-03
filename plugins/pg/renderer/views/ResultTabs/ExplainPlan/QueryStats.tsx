@@ -13,7 +13,7 @@ interface QueryStats {
     planningTime: number;
     executionTime: number;
     totalTime: number;
-    
+
     // Node types
     seqScans: number;
     indexScans: number;
@@ -26,12 +26,12 @@ interface QueryStats {
     sorts: number;
     aggregates: number;
     materializes: number;
-    
+
     // Rows
     totalRows: number;
     totalRowsFiltered: number;
     maxRowsPerNode: number;
-    
+
     // Cost
     totalCost: number;
     totalStartupCost: number;
@@ -41,11 +41,11 @@ interface QueryStats {
         time: number;
         rows: number;
     } | null;
-    
+
     // Estimates
     rowEstimateError: number | null;
     costEstimateError: number | null;
-    
+
     // Parallel
     parallelStats: {
         workersPlanned: number;
@@ -53,7 +53,7 @@ interface QueryStats {
         gatherNodes: number;
         efficiency: number | null;
     };
-    
+
     // Buffer I/O
     bufferStats: {
         sharedHitBlocks: number;
@@ -69,21 +69,21 @@ interface QueryStats {
         totalBlocks: number;
         cacheHitRatio: number | null;
     };
-    
+
     // WAL (PostgreSQL 13+)
     walStats: {
         records: number;
         fpi: number; // Full Page Images
         bytes: number;
     } | null;
-    
+
     // Memory (PostgreSQL 13+)
     memoryStats: {
         sortSpaceUsed: number;
         hashBatchesUsed: number;
         peakMemoryUsage: number;
     };
-    
+
     // JIT (Just-In-Time compilation)
     jitStats: {
         used: boolean;
@@ -93,7 +93,7 @@ interface QueryStats {
         optimizationTime: number;
         emissionTime: number;
     } | null;
-    
+
     // Triggers
     triggerStats: {
         count: number;
@@ -107,7 +107,7 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
         planningTime: plan['Planning Time'] ?? 0,
         executionTime: plan['Execution Time'] ?? 0,
         totalTime: 0,
-        
+
         seqScans: 0,
         indexScans: 0,
         indexOnlyScans: 0,
@@ -119,25 +119,25 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
         sorts: 0,
         aggregates: 0,
         materializes: 0,
-        
+
         totalRows: 0,
         totalRowsFiltered: 0,
         maxRowsPerNode: 0,
-        
+
         totalCost: 0,
         totalStartupCost: 0,
         mostExpensiveNode: null,
-        
+
         rowEstimateError: null,
         costEstimateError: null,
-        
+
         parallelStats: {
             workersPlanned: 0,
             workersLaunched: 0,
             gatherNodes: 0,
             efficiency: null
         },
-        
+
         bufferStats: {
             sharedHitBlocks: 0,
             sharedReadBlocks: 0,
@@ -152,28 +152,28 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
             totalBlocks: 0,
             cacheHitRatio: null,
         },
-        
+
         walStats: null,
-        
+
         memoryStats: {
             sortSpaceUsed: 0,
             hashBatchesUsed: 0,
             peakMemoryUsage: 0,
         },
-        
+
         jitStats: null,
-        
+
         triggerStats: {
             count: 0,
             totalTime: 0,
         }
     };
 
-    let mostExpensive: { cost: number; type: string; time: number; rows: number } = { 
-        cost: 0, 
-        type: '', 
-        time: 0, 
-        rows: 0 
+    let mostExpensive: { cost: number; type: string; time: number; rows: number } = {
+        cost: 0,
+        type: '',
+        time: 0,
+        rows: 0
     };
 
     const traverse = (node: PlanNode) => {
@@ -205,7 +205,7 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
         const nodeStartupCost = node['Startup Cost'] ?? 0;
         const nodeTime = node['Actual Total Time'] ?? 0;
         const actualRows = node['Actual Rows'] ?? 0;
-        
+
         stats.totalCost = Math.max(stats.totalCost, nodeCost);
         stats.totalStartupCost += nodeStartupCost;
         stats.totalTime += nodeTime;
@@ -223,7 +223,7 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
         // Row counting
         stats.totalRows += actualRows;
         stats.maxRowsPerNode = Math.max(stats.maxRowsPerNode, actualRows);
-        
+
         const rowsFiltered = node['Rows Removed by Filter'] ?? 0;
         stats.totalRowsFiltered += rowsFiltered;
 
@@ -310,14 +310,14 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
     traverse(plan.Plan);
 
     stats.mostExpensiveNode = mostExpensive.type ? mostExpensive : null;
-    
+
     // Calculate total blocks and cache hit ratio
     const totalHit = stats.bufferStats.sharedHitBlocks + stats.bufferStats.localHitBlocks;
     const totalRead = stats.bufferStats.sharedReadBlocks + stats.bufferStats.localReadBlocks;
     stats.bufferStats.totalBlocks = totalHit + totalRead;
-    
+
     if (stats.bufferStats.totalBlocks > 0) {
-        stats.bufferStats.cacheHitRatio = (totalHit / stats.bufferStats.totalBlocks) * 100;
+        stats.bufferStats.cacheHitRatio = totalHit / stats.bufferStats.totalBlocks;
     }
 
     // Calculate parallel efficiency
@@ -341,7 +341,7 @@ const calculateStats = (plan: ExplainResult): QueryStats => {
     if (plan.Triggers) {
         stats.triggerStats.count = plan.Triggers.length;
         stats.triggerStats.totalTime = plan.Triggers.reduce(
-            (sum, trigger) => sum + (trigger.Time ?? 0), 
+            (sum, trigger) => sum + (trigger.Time ?? 0),
             0
         );
     }
@@ -369,7 +369,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, unit = '', variant = 
     };
 
     return (
-        <Paper sx={{ px: 4, py: 3, backgroundColor: 'background.paper', height: '100%' }}>
+        <Paper sx={{ px: 8, py: 4, backgroundColor: 'background.paper', height: '100%', borderLeft: `4px solid ${getColor()}` }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 {label}
             </Typography>
@@ -395,7 +395,7 @@ interface StatSectionProps {
 const StatSection: React.FC<StatSectionProps> = ({ title, children }) => {
     return (
         <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
                 {title}
             </Typography>
             <Grid container spacing={4}>
@@ -482,8 +482,8 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         variant={
                             stats.rowEstimateError === null ? 'default'
                                 : stats.rowEstimateError > 10 ? 'error'
-                                : stats.rowEstimateError > 3 ? 'warning'
-                                : 'success'
+                                    : stats.rowEstimateError > 3 ? 'warning'
+                                        : 'success'
                         }
                     />
                 </Grid>
@@ -494,7 +494,7 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         variant={
                             stats.costEstimateError === null ? 'default'
                                 : stats.costEstimateError > 5 ? 'warning'
-                                : 'success'
+                                    : 'success'
                         }
                     />
                 </Grid>
@@ -636,12 +636,12 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                         <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                             <StatCard
                                 label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
-                                value={stats.parallelStats.efficiency !== null ? 
+                                value={stats.parallelStats.efficiency !== null ?
                                     `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A'}
                                 variant={
                                     stats.parallelStats.efficiency === null ? 'default'
                                         : stats.parallelStats.efficiency >= 80 ? 'success'
-                                        : 'warning'
+                                            : 'warning'
                                 }
                             />
                         </Grid>
@@ -654,9 +654,9 @@ export const QueryStats: React.FC<{ plan: ExplainResultKind | null }> = ({ plan 
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                     <StatCard
                         label={t("query-stats:cache-hit-ratio", "Cache Hit Ratio")}
-                        value={stats.bufferStats.cacheHitRatio !== null ? 
-                            `${valueToString(stats.bufferStats.cacheHitRatio.toFixed(1), resolveDataTypeFromValue(stats.bufferStats.cacheHitRatio))}%` : 'N/A'}
-                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > 90 ? 'success' : 'warning'}
+                        value={stats.bufferStats.cacheHitRatio !== null ?
+                            valueToString(stats.bufferStats.cacheHitRatio, 'percentage') : 'N/A'}
+                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > 0.9 ? 'success' : 'warning'}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 2 }}>

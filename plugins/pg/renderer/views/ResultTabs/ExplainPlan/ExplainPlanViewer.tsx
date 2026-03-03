@@ -100,6 +100,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             'Materialize',
             'Function Scan',
             'ProjectSet',
+            'Foreign Scan',
         ]);
 
         const medium = new Set<string>([

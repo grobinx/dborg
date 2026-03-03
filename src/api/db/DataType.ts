@@ -58,7 +58,8 @@ export type ColumnNumberType =
     | 'money'
     | 'int'
     | 'size'
-    | 'quantity';
+    | 'quantity'
+    | 'percentage';
 
 const columnNumberTypes: readonly ColumnNumberType[] = [
     "number",
@@ -68,6 +69,7 @@ const columnNumberTypes: readonly ColumnNumberType[] = [
     "int",
     "size",
     "quantity",
+    "percentage"
 ];
 
 export type ColumnBooleanType =
@@ -156,6 +158,7 @@ export const dataTypeToGeneralType: Record<UnionDataType, UnionDataType> = {
     int: 'bigint',
     size: 'decimal',
     quantity: 'decimal',
+    percentage: 'number',
     boolean: 'boolean',
     bit: 'string',
     datetime: 'datetime',
@@ -191,6 +194,7 @@ export const dataTypeToBaseType: Record<UnionDataType, ColumnBaseType> = {
     int: 'number',
     size: 'number',
     quantity: 'number',
+    percentage: 'number',
     boolean: 'boolean',
     bit: 'string',
     datetime: 'datetime',
@@ -262,6 +266,9 @@ export const resolveDataTypeFromString = (value: string | null | undefined): Col
             return 'size';
         }
         return 'quantity';
+    }
+    if (/^\s*[\d.,]+\s*%$/.test(value)) {
+        return 'percentage';
     }
     // liczby całkowite i zmiennoprzecinkowe
     if (/^-?\d+$/.test(value)) {
@@ -396,6 +403,15 @@ export interface ValueToStringOptions {
     thousandsSeparator?: boolean; // Czy używać separatorów tysięcy, domyślnie true
 }
 
+export interface ValueToStringPercentageOptions {
+    precision?: number; 
+}
+
+export type ValueToStringAllOptions = 
+    ValueToStringOptions 
+    & Partial<ValueToStringPercentageOptions>
+    ;
+
 const cache = new LRUCache<string, string>({ max: 10000 }); // Cache dla sformatowanych wartości
 
 // Prostsza normalizacja opcji i generowanie klucza cache
@@ -416,7 +432,9 @@ function makeCacheKey(value: any, dataType: UnionDataType, baseType: ColumnBaseT
     return (canInline ? String(value) : generateHash(value)) + '-' + dataType + sep;
 }
 
-export const valueToString = (value: any, dataType: ColumnDataType | null, opts?: ValueToStringOptions): string => {
+export function valueToString(value: any, dataType: 'percentage', opts?: ValueToStringOptions & ValueToStringPercentageOptions): string;
+export function valueToString(value: any, dataType: ColumnDataType | null, opts?: ValueToStringOptions): string;
+export function valueToString(value: any, dataType: ColumnDataType | null, opts?: ValueToStringAllOptions): string {
     if (value === null || value === undefined || dataType === null) return '';
 
     const options: ValueToStringOptions = { ...DEFAULT_V2S_OPTIONS, ...opts };
@@ -569,8 +587,12 @@ function formatWithUnit(value: number | bigint, units: Record<string, number>, o
     return `${normalized} ${selectedUnit}`;
 }
 
+const round = (value: number, precision: number): number => {
+    return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
+}
+
 // Funkcja pomocnicza do formatowania liczb
-const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringOptions): string => {
+const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStringAllOptions): string => {
     // size/quantity: wyciągnij liczbę i jednostkę
     if (dataType === 'size' || dataType === 'quantity') {
         if (typeof value === 'string') {
@@ -586,6 +608,27 @@ const formatNumber = (value: any, dataType: ColumnDataType, options: ValueToStri
             return String(value);
         } else if (typeof value === 'number' || typeof value === 'bigint') {
             return formatWithUnit(value, dataType === 'size' ? defaultSizeUnits : defaultQuantityUnits, options);
+        }
+    }
+
+    if (dataType === 'percentage') {
+        const precision = options.precision ?? 2;
+        if (typeof value === 'string') {
+            const parsed = parsePercentage(value);
+            if (parsed !== null) {
+                const percentageValue = round(parsed * 100, precision);
+                const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(percentageValue)
+                    ? formatIntWithThousandsSeparator(percentageValue)
+                    : formatDecimalWithThousandsSeparator(new Decimal(percentageValue));
+                return `${formattedNum} %`;
+            }
+            return String(value);
+        } else if (typeof value === 'number' || typeof value === 'bigint') {
+            const percentageValue = round((typeof value === 'bigint' ? Number(value.toString()) * 100 : value * 100), precision);
+            const formattedNum = options.display && options.thousandsSeparator && Number.isInteger(percentageValue)
+                ? formatIntWithThousandsSeparator(percentageValue)
+                : formatDecimalWithThousandsSeparator(new Decimal(percentageValue));
+            return `${formattedNum} %`;
         }
     }
 
@@ -764,10 +807,6 @@ const quantityUnits: Record<string, number> = {
     pint: 0.473176473,
     cup: 0.2365882365,
 
-    // common non-metric / misc
-    percent: 0.01,
-    "%": 0.01,
-
     // currencies (no real conversion — placeholder 1; convert externally if needed)
     usd: 1,
     eur: 1,
@@ -824,6 +863,16 @@ export function parseQuantity(value: any): { number: number; unit: string } | nu
         const rawUnit = startMatch[1].toLowerCase();
         const key = Object.keys(quantityUnits).find(k => k === rawUnit || k === rawUnit.replace(/s$/, '') || rawUnit.startsWith(k) || k.startsWith(rawUnit)) ?? rawUnit;
         return { number: num, unit: key };
+    }
+    return null;
+}
+
+export function parsePercentage(value: any): number | null {
+    if (typeof value !== 'string') return null;
+    const match = value.match(/^([\d.,]+)\s*%$/);
+    if (match) {
+        const num = parseFloat(match[1].replace(/,/g, ''));
+        return Number.isFinite(num) ? num / 100 : null;
     }
     return null;
 }
@@ -957,6 +1006,14 @@ export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDa
             const num2 = expandQuantityValue(parseQuantity(value2));
             if (num1 && num2) {
                 return num1.lessThan(num2) ? -1 : num1.greaterThan(num2) ? 1 : 0;
+            }
+            return String(value1).localeCompare(String(value2));
+        }
+        case 'percentage': {
+            const num1 = parsePercentage(value1);
+            const num2 = parsePercentage(value2);
+            if (num1 !== null && num2 !== null) {
+                return num1 < num2 ? -1 : num1 > num2 ? 1 : 0;
             }
             return String(value1).localeCompare(String(value2));
         }
