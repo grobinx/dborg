@@ -18,6 +18,7 @@ import { sequencesView } from "./views/sequences/sequencesView";
 import { toolsView } from "./views/tools/toolsView";
 import { aggregatesView } from "./views/aggregates/aggregatesView";
 import { ExplainPlanAction, explainPlanResultTab } from "./views/ResultTabs/ExplainPlan/ExplainPlan";
+import { functionsView } from "./views/functions/functionsView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
@@ -45,6 +46,7 @@ const PostgresPlugin: Plugin = {
                 viewsView(session),
                 sequencesView(session),
                 aggregatesView(session),
+                functionsView(session),
             ];
         });
         context.registerConnectionActionsFactory("sql-editor", (session) => {
