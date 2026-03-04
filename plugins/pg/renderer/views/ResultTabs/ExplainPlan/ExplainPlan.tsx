@@ -94,7 +94,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                 {
                     id: "plan-analyzer-dialog-options",
                     label: t("plan-analyzer-options", "Plan Analyzer Options"),
-                    icon: "Tools",
+                    icon: "Options",
                     run: async () => {
                         const ok = await slotContext.openDialog(cid("plan-analyzer-options-dialog"), analyzerOptions);
                         if (ok) {

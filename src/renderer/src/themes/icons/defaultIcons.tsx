@@ -205,6 +205,7 @@ const icons = (palette: Palette): ThemeOptions => {
             AccessControl: (props) => <IconWrapper {...props} className="access-control"><BsIcons.PersonLock fontSize="inherit" /></IconWrapper>,
             SecurityLabel: (props) => <IconWrapper {...props} className="security-label"><SecurityLabel fontSize="inherit" /></IconWrapper>,
             Explain: (props) => <IconWrapper {...props} className="explain"><Explain fontSize="inherit" /></IconWrapper>,
+            Options: (props) => <IconWrapper {...props} className="options"><MuiIcons.Tune fontSize="inherit" /></IconWrapper>,
         }
     }
 }

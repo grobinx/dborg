@@ -1,5 +1,17 @@
-import React, { useMemo } from "react";
-import { Box, Chip, Grid2 as Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import React, { useMemo, useState } from "react";
+import {
+    Box,
+    Chip,
+    Grid2 as Grid,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    TableSortLabel,
+    Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
 import { ExplainPlanError } from "./ExplainPlanError";
@@ -250,32 +262,83 @@ const collect = (plan: ExplainResult) => {
 const riskColor = (risk: "low" | "medium" | "high"): "success" | "warning" | "error" =>
     risk === "high" ? "error" : risk === "medium" ? "warning" : "success";
 
-export const UsedObjects: React.FC<{ 
+interface UsedObjectsOptions {
+    functionRiskHighTime: number;
+    functionRiskHighCalls: number;
+    functionRiskHighReads: number;
+}
+
+type SortDirection = "asc" | "desc";
+type SortState<K extends string> = { key: K; direction: SortDirection };
+
+type UsedObjectsSortKey = "object" | "type" | "nodes" | "time" | "cost" | "rows" | "reads";
+type HotspotsSortKey = "object" | "time" | "reads";
+type TableCoverageSortKey = "table" | "seq" | "idx" | "idxOnly" | "bitmap" | "coverage";
+type FunctionRiskSortKey = "function" | "risk" | "time" | "calls";
+type ImpactMapSortKey = "object" | "nodeTypes" | "occurrences";
+
+const defaultOptions: UsedObjectsOptions = {
+    functionRiskHighTime: 100,
+    functionRiskHighCalls: 10000,
+    functionRiskHighReads: 100,
+};
+
+const functionRiskRank: Record<FunctionRisk["risk"], number> = { low: 1, medium: 2, high: 3 };
+
+const toggleSort = <K extends string>(
+    prev: SortState<K>,
+    key: K,
+    defaultDirection: SortDirection = "asc"
+): SortState<K> =>
+    prev.key === key
+        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: defaultDirection };
+
+const comparePrimitive = (a: string | number, b: string | number): number => {
+    if (typeof a === "number" && typeof b === "number") return a - b;
+    return String(a).localeCompare(String(b), undefined, { sensitivity: "base", numeric: true });
+};
+
+const sortRows = <T, K extends string>(
+    rows: T[],
+    sort: SortState<K>,
+    pickers: Record<K, (row: T) => string | number>
+): T[] => {
+    const pick = pickers[sort.key];
+
+    return rows
+        .map((row, index) => ({ row, index }))
+        .sort((a, b) => {
+            const cmp = comparePrimitive(pick(a.row), pick(b.row));
+            if (cmp !== 0) return sort.direction === "asc" ? cmp : -cmp;
+            return a.index - b.index;
+        })
+        .map((x) => x.row);
+};
+
+export const UsedObjects: React.FC<{
     plan: ExplainResultKind | null;
-    options?: {
-        functionRiskHighTime: number;
-        functionRiskHighCalls: number;
-        functionRiskHighReads: number;
-    };
+    options?: Partial<UsedObjectsOptions>;
 }> = ({ plan, options }) => {
     const { t } = useTranslation();
 
-    const defaultOptions = {
-        functionRiskHighTime: 100,
-        functionRiskHighCalls: 10000,
-        functionRiskHighReads: 100,
-    };
+    const opts = useMemo(
+        () => ({ ...defaultOptions, ...options }),
+        [options?.functionRiskHighTime, options?.functionRiskHighCalls, options?.functionRiskHighReads]
+    );
 
-    const opts = { ...defaultOptions, ...options };
+    const [usedObjectsSort, setUsedObjectsSort] = useState<SortState<UsedObjectsSortKey>>({ key: "time", direction: "desc" });
+    const [hotspotsSort, setHotspotsSort] = useState<SortState<HotspotsSortKey>>({ key: "time", direction: "desc" });
+    const [tableCoverageSort, setTableCoverageSort] = useState<SortState<TableCoverageSortKey>>({ key: "coverage", direction: "asc" });
+    const [functionRiskSort, setFunctionRiskSort] = useState<SortState<FunctionRiskSortKey>>({ key: "risk", direction: "desc" });
+    const [impactSort, setImpactSort] = useState<SortState<ImpactMapSortKey>>({ key: "occurrences", direction: "desc" });
 
     const data = useMemo(() => {
         if (!plan || isErrorResult(plan) || isLoadingResult(plan)) return null;
-        
-        // Modify collect function inline
+
         const collectWithOptions = (planData: ExplainResult) => {
             const result = collect(planData);
-            
-            // Recalculate function risks with custom thresholds
+
             result.functionRisks = result.objects
                 .filter((o) => o.type === "function")
                 .map((o) => {
@@ -296,16 +359,66 @@ export const UsedObjects: React.FC<{
                         reasons,
                     };
                 })
-                .sort((a, b) => {
-                    const rank = { high: 3, medium: 2, low: 1 };
-                    return rank[b.risk] - rank[a.risk] || b.totalTime - a.totalTime;
-                });
+                .sort((a, b) => functionRiskRank[b.risk] - functionRiskRank[a.risk] || b.totalTime - a.totalTime);
 
             return result;
         };
 
         return collectWithOptions(plan);
     }, [plan, opts]);
+
+    const usedObjectsRows = useMemo(() => {
+        if (!data) return [];
+        return sortRows(data.objects, usedObjectsSort, {
+            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
+            type: (o) => o.type,
+            nodes: (o) => o.nodeCount,
+            time: (o) => o.totalTime,
+            cost: (o) => o.totalCost,
+            rows: (o) => o.totalRows,
+            reads: (o) => o.sharedReadBlocks,
+        });
+    }, [data, usedObjectsSort]);
+
+    const hotspotsRows = useMemo(() => {
+        if (!data) return [];
+        return sortRows(data.hotspots, hotspotsSort, {
+            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
+            time: (o) => o.totalTime,
+            reads: (o) => o.sharedReadBlocks,
+        });
+    }, [data, hotspotsSort]);
+
+    const tableCoverageRows = useMemo(() => {
+        if (!data) return [];
+        return sortRows(data.tableCoverage, tableCoverageSort, {
+            table: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
+            seq: (o) => o.seqScans,
+            idx: (o) => o.indexScans,
+            idxOnly: (o) => o.indexOnlyScans,
+            bitmap: (o) => o.bitmapScans,
+            coverage: (o) => o.indexCoverage ?? -1,
+        });
+    }, [data, tableCoverageSort]);
+
+    const functionRiskRows = useMemo(() => {
+        if (!data) return [];
+        return sortRows(data.functionRisks, functionRiskSort, {
+            function: (o) => o.name,
+            risk: (o) => functionRiskRank[o.risk],
+            time: (o) => o.totalTime,
+            calls: (o) => o.estimatedCalls,
+        });
+    }, [data, functionRiskSort]);
+
+    const impactRows = useMemo(() => {
+        if (!data) return [];
+        return sortRows(data.hotspots, impactSort, {
+            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
+            nodeTypes: (o) => Array.from(o.nodeTypes).sort().join(", "),
+            occurrences: (o) => o.nodeCount,
+        });
+    }, [data, impactSort]);
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -332,17 +445,73 @@ export const UsedObjects: React.FC<{
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>{t("object", "Object")}</TableCell>
-                                    <TableCell>{t("type", "Type")}</TableCell>
-                                    <TableCell align="right">{t("nodes", "Nodes")}</TableCell>
-                                    <TableCell align="right">{t("time", "Time")}</TableCell>
-                                    <TableCell align="right">{t("cost", "Cost")}</TableCell>
-                                    <TableCell align="right">{t("rows", "Rows")}</TableCell>
-                                    <TableCell align="right">{t("reads", "Reads")}</TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "object"}
+                                            direction={usedObjectsSort.key === "object" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "object", "asc"))}
+                                        >
+                                            {t("object", "Object")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "type"}
+                                            direction={usedObjectsSort.key === "type" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "type", "asc"))}
+                                        >
+                                            {t("type", "Type")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "nodes"}
+                                            direction={usedObjectsSort.key === "nodes" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "nodes", "desc"))}
+                                        >
+                                            {t("nodes", "Nodes")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "time"}
+                                            direction={usedObjectsSort.key === "time" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "time", "desc"))}
+                                        >
+                                            {t("time", "Time")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "cost"}
+                                            direction={usedObjectsSort.key === "cost" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "cost", "desc"))}
+                                        >
+                                            {t("cost", "Cost")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "rows"}
+                                            direction={usedObjectsSort.key === "rows" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "rows", "desc"))}
+                                        >
+                                            {t("rows", "Rows")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={usedObjectsSort.key === "reads"}
+                                            direction={usedObjectsSort.key === "reads" ? usedObjectsSort.direction : "asc"}
+                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "reads", "desc"))}
+                                        >
+                                            {t("reads", "Reads")}
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.objects.map((o) => (
+                                {usedObjectsRows.map((o) => (
                                     <TableRow key={o.key}>
                                         <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
                                         <TableCell>{o.type}</TableCell>
@@ -365,13 +534,37 @@ export const UsedObjects: React.FC<{
                             <TableHead>
                                 <TableRow>
                                     <TableCell>#</TableCell>
-                                    <TableCell>{t("object", "Object")}</TableCell>
-                                    <TableCell align="right">{t("time", "Time")}</TableCell>
-                                    <TableCell align="right">{t("reads", "Reads")}</TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={hotspotsSort.key === "object"}
+                                            direction={hotspotsSort.key === "object" ? hotspotsSort.direction : "asc"}
+                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "object", "asc"))}
+                                        >
+                                            {t("object", "Object")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={hotspotsSort.key === "time"}
+                                            direction={hotspotsSort.key === "time" ? hotspotsSort.direction : "asc"}
+                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "time", "desc"))}
+                                        >
+                                            {t("time", "Time")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={hotspotsSort.key === "reads"}
+                                            direction={hotspotsSort.key === "reads" ? hotspotsSort.direction : "asc"}
+                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "reads", "desc"))}
+                                        >
+                                            {t("reads", "Reads")}
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.hotspots.slice(0, 15).map((o, i) => (
+                                {hotspotsRows.slice(0, 15).map((o, i) => (
                                     <TableRow key={o.key}>
                                         <TableCell>{i + 1}</TableCell>
                                         <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
@@ -390,16 +583,64 @@ export const UsedObjects: React.FC<{
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>{t("table", "Table")}</TableCell>
-                                    <TableCell align="right">Seq</TableCell>
-                                    <TableCell align="right">Idx</TableCell>
-                                    <TableCell align="right">IdxOnly</TableCell>
-                                    <TableCell align="right">Bitmap</TableCell>
-                                    <TableCell align="right">{t("coverage", "Coverage")}</TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "table"}
+                                            direction={tableCoverageSort.key === "table" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "table", "asc"))}
+                                        >
+                                            {t("table", "Table")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "seq"}
+                                            direction={tableCoverageSort.key === "seq" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "seq", "desc"))}
+                                        >
+                                            Seq
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "idx"}
+                                            direction={tableCoverageSort.key === "idx" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "idx", "desc"))}
+                                        >
+                                            Idx
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "idxOnly"}
+                                            direction={tableCoverageSort.key === "idxOnly" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "idxOnly", "desc"))}
+                                        >
+                                            IdxOnly
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "bitmap"}
+                                            direction={tableCoverageSort.key === "bitmap" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "bitmap", "desc"))}
+                                        >
+                                            Bitmap
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={tableCoverageSort.key === "coverage"}
+                                            direction={tableCoverageSort.key === "coverage" ? tableCoverageSort.direction : "asc"}
+                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "coverage", "asc"))}
+                                        >
+                                            {t("coverage", "Coverage")}
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.tableCoverage.map((tRow) => (
+                                {tableCoverageRows.map((tRow) => (
                                     <TableRow key={tRow.key}>
                                         <TableCell>{tRow.schema ? `${tRow.schema}.${tRow.name}` : tRow.name}</TableCell>
                                         <TableCell align="right">{tRow.seqScans}</TableCell>
@@ -422,14 +663,46 @@ export const UsedObjects: React.FC<{
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>{t("function", "Function")}</TableCell>
-                                    <TableCell>{t("risk", "Risk")}</TableCell>
-                                    <TableCell align="right">{t("time", "Time")}</TableCell>
-                                    <TableCell align="right">{t("est-calls", "Est. calls")}</TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={functionRiskSort.key === "function"}
+                                            direction={functionRiskSort.key === "function" ? functionRiskSort.direction : "asc"}
+                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "function", "asc"))}
+                                        >
+                                            {t("function", "Function")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={functionRiskSort.key === "risk"}
+                                            direction={functionRiskSort.key === "risk" ? functionRiskSort.direction : "asc"}
+                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "risk", "desc"))}
+                                        >
+                                            {t("risk", "Risk")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={functionRiskSort.key === "time"}
+                                            direction={functionRiskSort.key === "time" ? functionRiskSort.direction : "asc"}
+                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "time", "desc"))}
+                                        >
+                                            {t("time", "Time")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={functionRiskSort.key === "calls"}
+                                            direction={functionRiskSort.key === "calls" ? functionRiskSort.direction : "asc"}
+                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "calls", "desc"))}
+                                        >
+                                            {t("est-calls", "Est. calls")}
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.functionRisks.map((f) => (
+                                {functionRiskRows.map((f) => (
                                     <TableRow key={f.key}>
                                         <TableCell>{f.name}</TableCell>
                                         <TableCell><Chip size="small" color={riskColor(f.risk)} label={f.risk.toUpperCase()} /></TableCell>
@@ -448,13 +721,37 @@ export const UsedObjects: React.FC<{
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>{t("object", "Object")}</TableCell>
-                                    <TableCell>{t("node-types", "Node types")}</TableCell>
-                                    <TableCell align="right">{t("occurrences", "Occurrences")}</TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={impactSort.key === "object"}
+                                            direction={impactSort.key === "object" ? impactSort.direction : "asc"}
+                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "object", "asc"))}
+                                        >
+                                            {t("object", "Object")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell>
+                                        <TableSortLabel
+                                            active={impactSort.key === "nodeTypes"}
+                                            direction={impactSort.key === "nodeTypes" ? impactSort.direction : "asc"}
+                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "nodeTypes", "asc"))}
+                                        >
+                                            {t("node-types", "Node types")}
+                                        </TableSortLabel>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <TableSortLabel
+                                            active={impactSort.key === "occurrences"}
+                                            direction={impactSort.key === "occurrences" ? impactSort.direction : "asc"}
+                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "occurrences", "desc"))}
+                                        >
+                                            {t("occurrences", "Occurrences")}
+                                        </TableSortLabel>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.hotspots.slice(0, 20).map((o) => (
+                                {impactRows.slice(0, 20).map((o) => (
                                     <TableRow key={`impact-${o.key}`}>
                                         <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
                                         <TableCell>
