@@ -17,6 +17,7 @@ import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
 import { ExplainPlanError } from "./ExplainPlanError";
 import { ExplainResult, ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from "./ExplainTypes";
 import { valueToString } from "../../../../../../src/api/db";
+import DataPresentationGrid, { DataPresentationGridColumn } from "@renderer/components/DataGrid/DataPresentationGrid";
 
 type ObjectType = "table" | "function" | "cte";
 
@@ -268,15 +269,6 @@ interface UsedObjectsOptions {
     functionRiskHighReads: number;
 }
 
-type SortDirection = "asc" | "desc";
-type SortState<K extends string> = { key: K; direction: SortDirection };
-
-type UsedObjectsSortKey = "object" | "type" | "nodes" | "time" | "cost" | "rows" | "reads";
-type HotspotsSortKey = "object" | "time" | "reads";
-type TableCoverageSortKey = "table" | "seq" | "idx" | "idxOnly" | "bitmap" | "coverage";
-type FunctionRiskSortKey = "function" | "risk" | "time" | "calls";
-type ImpactMapSortKey = "object" | "nodeTypes" | "occurrences";
-
 const defaultOptions: UsedObjectsOptions = {
     functionRiskHighTime: 100,
     functionRiskHighCalls: 10000,
@@ -285,36 +277,51 @@ const defaultOptions: UsedObjectsOptions = {
 
 const functionRiskRank: Record<FunctionRisk["risk"], number> = { low: 1, medium: 2, high: 3 };
 
-const toggleSort = <K extends string>(
-    prev: SortState<K>,
-    key: K,
-    defaultDirection: SortDirection = "asc"
-): SortState<K> =>
-    prev.key === key
-        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
-        : { key, direction: defaultDirection };
+interface UsedObjectRow {
+    key: string;
+    object: string;
+    type: ObjectType;
+    nodes: number;
+    time: number;
+    cost: number;
+    rows: number;
+    reads: number;
+}
 
-const comparePrimitive = (a: string | number, b: string | number): number => {
-    if (typeof a === "number" && typeof b === "number") return a - b;
-    return String(a).localeCompare(String(b), undefined, { sensitivity: "base", numeric: true });
-};
+interface HotspotRow {
+    key: string;
+    rank: number;
+    object: string;
+    time: number;
+    reads: number;
+}
 
-const sortRows = <T, K extends string>(
-    rows: T[],
-    sort: SortState<K>,
-    pickers: Record<K, (row: T) => string | number>
-): T[] => {
-    const pick = pickers[sort.key];
+interface TableCoverageRowView {
+    key: string;
+    table: string;
+    seq: number;
+    idx: number;
+    idxOnly: number;
+    bitmap: number;
+    coverage: number | null;
+}
 
-    return rows
-        .map((row, index) => ({ row, index }))
-        .sort((a, b) => {
-            const cmp = comparePrimitive(pick(a.row), pick(b.row));
-            if (cmp !== 0) return sort.direction === "asc" ? cmp : -cmp;
-            return a.index - b.index;
-        })
-        .map((x) => x.row);
-};
+interface FunctionRiskRowView {
+    key: string;
+    functionName: string;
+    risk: FunctionRisk["risk"];
+    riskRank: number;
+    time: number;
+    calls: number;
+}
+
+interface ImpactRowView {
+    key: string;
+    object: string;
+    nodeTypes: string;
+    nodeTypesList: string[];
+    occurrences: number;
+}
 
 export const UsedObjects: React.FC<{
     plan: ExplainResultKind | null;
@@ -326,12 +333,6 @@ export const UsedObjects: React.FC<{
         () => ({ ...defaultOptions, ...options }),
         [options?.functionRiskHighTime, options?.functionRiskHighCalls, options?.functionRiskHighReads]
     );
-
-    const [usedObjectsSort, setUsedObjectsSort] = useState<SortState<UsedObjectsSortKey>>({ key: "time", direction: "desc" });
-    const [hotspotsSort, setHotspotsSort] = useState<SortState<HotspotsSortKey>>({ key: "time", direction: "desc" });
-    const [tableCoverageSort, setTableCoverageSort] = useState<SortState<TableCoverageSortKey>>({ key: "coverage", direction: "asc" });
-    const [functionRiskSort, setFunctionRiskSort] = useState<SortState<FunctionRiskSortKey>>({ key: "risk", direction: "desc" });
-    const [impactSort, setImpactSort] = useState<SortState<ImpactMapSortKey>>({ key: "occurrences", direction: "desc" });
 
     const data = useMemo(() => {
         if (!plan || isErrorResult(plan) || isLoadingResult(plan)) return null;
@@ -367,58 +368,142 @@ export const UsedObjects: React.FC<{
         return collectWithOptions(plan);
     }, [plan, opts]);
 
-    const usedObjectsRows = useMemo(() => {
-        if (!data) return [];
-        return sortRows(data.objects, usedObjectsSort, {
-            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
-            type: (o) => o.type,
-            nodes: (o) => o.nodeCount,
-            time: (o) => o.totalTime,
-            cost: (o) => o.totalCost,
-            rows: (o) => o.totalRows,
-            reads: (o) => o.sharedReadBlocks,
-        });
-    }, [data, usedObjectsSort]);
+    const usedObjectsRows = useMemo<UsedObjectRow[]>(
+        () =>
+            data
+                ? data.objects.map((o) => ({
+                    key: o.key,
+                    object: o.schema ? `${o.schema}.${o.name}` : o.name,
+                    type: o.type,
+                    nodes: o.nodeCount,
+                    time: o.totalTime,
+                    cost: o.totalCost,
+                    rows: o.totalRows,
+                    reads: o.sharedReadBlocks,
+                }))
+                : [],
+        [data]
+    );
 
-    const hotspotsRows = useMemo(() => {
-        if (!data) return [];
-        return sortRows(data.hotspots, hotspotsSort, {
-            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
-            time: (o) => o.totalTime,
-            reads: (o) => o.sharedReadBlocks,
-        });
-    }, [data, hotspotsSort]);
+    const hotspotsRows = useMemo<HotspotRow[]>(
+        () =>
+            data
+                ? data.hotspots.map((o, i) => ({
+                    key: o.key,
+                    rank: i + 1,
+                    object: o.schema ? `${o.schema}.${o.name}` : o.name,
+                    time: o.totalTime,
+                    reads: o.sharedReadBlocks,
+                }))
+                : [],
+        [data]
+    );
 
-    const tableCoverageRows = useMemo(() => {
-        if (!data) return [];
-        return sortRows(data.tableCoverage, tableCoverageSort, {
-            table: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
-            seq: (o) => o.seqScans,
-            idx: (o) => o.indexScans,
-            idxOnly: (o) => o.indexOnlyScans,
-            bitmap: (o) => o.bitmapScans,
-            coverage: (o) => o.indexCoverage ?? -1,
-        });
-    }, [data, tableCoverageSort]);
+    const tableCoverageRows = useMemo<TableCoverageRowView[]>(
+        () =>
+            data
+                ? data.tableCoverage.map((o) => ({
+                    key: o.key,
+                    table: o.schema ? `${o.schema}.${o.name}` : o.name,
+                    seq: o.seqScans,
+                    idx: o.indexScans,
+                    idxOnly: o.indexOnlyScans,
+                    bitmap: o.bitmapScans,
+                    coverage: o.indexCoverage,
+                }))
+                : [],
+        [data]
+    );
 
-    const functionRiskRows = useMemo(() => {
-        if (!data) return [];
-        return sortRows(data.functionRisks, functionRiskSort, {
-            function: (o) => o.name,
-            risk: (o) => functionRiskRank[o.risk],
-            time: (o) => o.totalTime,
-            calls: (o) => o.estimatedCalls,
-        });
-    }, [data, functionRiskSort]);
+    const functionRiskRows = useMemo<FunctionRiskRowView[]>(
+        () =>
+            data
+                ? data.functionRisks.map((o) => ({
+                    key: o.key,
+                    functionName: o.name,
+                    risk: o.risk,
+                    riskRank: functionRiskRank[o.risk],
+                    time: o.totalTime,
+                    calls: o.estimatedCalls,
+                }))
+                : [],
+        [data]
+    );
 
-    const impactRows = useMemo(() => {
-        if (!data) return [];
-        return sortRows(data.hotspots, impactSort, {
-            object: (o) => `${o.schema ? `${o.schema}.` : ""}${o.name}`,
-            nodeTypes: (o) => Array.from(o.nodeTypes).sort().join(", "),
-            occurrences: (o) => o.nodeCount,
-        });
-    }, [data, impactSort]);
+    const impactRows = useMemo<ImpactRowView[]>(
+        () =>
+            data
+                ? data.hotspots.map((o) => {
+                    const nodeTypesList = Array.from(o.nodeTypes).sort();
+                    return {
+                        key: o.key,
+                        object: o.schema ? `${o.schema}.${o.name}` : o.name,
+                        nodeTypes: nodeTypesList.join(", "),
+                        nodeTypesList,
+                        occurrences: o.nodeCount,
+                    };
+                })
+                : [],
+        [data]
+    );
+
+    const usedObjectsColumns = useMemo<DataPresentationGridColumn<UsedObjectRow>[]>(() => [
+        { key: "object", label: t("object", "Object") },
+        { key: "type", label: t("type", "Type") },
+        { key: "nodes", label: t("nodes", "Nodes"), align: "right", dataType: "quantity" },
+        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
+        { key: "cost", label: t("cost", "Cost"), align: "right", dataType: "decimal" },
+        { key: "rows", label: t("rows", "Rows"), align: "right", dataType: "quantity" },
+        { key: "reads", label: t("reads", "Reads"), align: "right", dataType: "quantity" },
+    ], [t]);
+
+    const hotspotsColumns = useMemo<DataPresentationGridColumn<HotspotRow>[]>(() => [
+        { key: "rank", label: "#", align: "right", sortable: false, dataType: "quantity" },
+        { key: "object", label: t("object", "Object") },
+        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
+        { key: "reads", label: t("reads", "Reads"), align: "right", dataType: "quantity" },
+    ], [t]);
+
+    const tableCoverageColumns = useMemo<DataPresentationGridColumn<TableCoverageRowView>[]>(() => [
+        { key: "table", label: t("table", "Table") },
+        { key: "seq", label: "Seq", align: "right", dataType: "quantity" },
+        { key: "idx", label: "Idx", align: "right", dataType: "quantity" },
+        { key: "idxOnly", label: "IdxOnly", align: "right", dataType: "quantity" },
+        { key: "bitmap", label: "Bitmap", align: "right", dataType: "quantity" },
+        {
+            key: "coverage",
+            label: t("coverage", "Coverage"),
+            align: "right",
+            formatter: (v) => (v === null ? "N/A" : valueToString(v, "percentage")),
+        },
+    ], [t]);
+
+    const functionRiskColumns = useMemo<DataPresentationGridColumn<FunctionRiskRowView>[]>(() => [
+        { key: "functionName", label: t("function", "Function"), formatter: (v) => String(v ?? "") },
+        {
+            key: "riskRank",
+            label: t("risk", "Risk"),
+            formatter: (_v, row) => <Chip size="small" color={riskColor(row.risk)} label={row.risk.toUpperCase()} />,
+        },
+        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
+        { key: "calls", label: t("est-calls", "Est. calls"), align: "right", dataType: "quantity" },
+    ], [t]);
+
+    const impactColumns = useMemo<DataPresentationGridColumn<ImpactRowView>[]>(() => [
+        { key: "object", label: t("object", "Object"), formatter: (v) => String(v ?? "") },
+        {
+            key: "nodeTypes",
+            label: t("node-types", "Node types"),
+            formatter: (_v, row) => (
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    {row.nodeTypesList.slice(0, 4).map((nt) => (
+                        <Chip key={`${row.key}-${nt}`} size="small" label={nt} />
+                    ))}
+                </Box>
+            ),
+        },
+        { key: "occurrences", label: t("occurrences", "Occurrences"), align: "right", dataType: "quantity" },
+    ], [t]);
 
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
@@ -442,330 +527,62 @@ export const UsedObjects: React.FC<{
                 <Grid size={{ xs: 12 }}>
                     <Paper sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>{t("used-objects", "Used Objects")}</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "object"}
-                                            direction={usedObjectsSort.key === "object" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "object", "asc"))}
-                                        >
-                                            {t("object", "Object")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "type"}
-                                            direction={usedObjectsSort.key === "type" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "type", "asc"))}
-                                        >
-                                            {t("type", "Type")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "nodes"}
-                                            direction={usedObjectsSort.key === "nodes" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "nodes", "desc"))}
-                                        >
-                                            {t("nodes", "Nodes")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "time"}
-                                            direction={usedObjectsSort.key === "time" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "time", "desc"))}
-                                        >
-                                            {t("time", "Time")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "cost"}
-                                            direction={usedObjectsSort.key === "cost" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "cost", "desc"))}
-                                        >
-                                            {t("cost", "Cost")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "rows"}
-                                            direction={usedObjectsSort.key === "rows" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "rows", "desc"))}
-                                        >
-                                            {t("rows", "Rows")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={usedObjectsSort.key === "reads"}
-                                            direction={usedObjectsSort.key === "reads" ? usedObjectsSort.direction : "asc"}
-                                            onClick={() => setUsedObjectsSort((prev) => toggleSort(prev, "reads", "desc"))}
-                                        >
-                                            {t("reads", "Reads")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {usedObjectsRows.map((o) => (
-                                    <TableRow key={o.key}>
-                                        <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
-                                        <TableCell>{o.type}</TableCell>
-                                        <TableCell align="right">{o.nodeCount}</TableCell>
-                                        <TableCell align="right">{valueToString(o.totalTime, "duration")}</TableCell>
-                                        <TableCell align="right">{valueToString(o.totalCost, "decimal")}</TableCell>
-                                        <TableCell align="right">{valueToString(o.totalRows, "quantity")}</TableCell>
-                                        <TableCell align="right">{valueToString(o.sharedReadBlocks, "quantity")}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataPresentationGrid
+                            data={usedObjectsRows}
+                            columns={usedObjectsColumns}
+                            initialSort={{ key: "time", direction: "desc" }}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
                     </Paper>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 6 }}>
                     <Paper sx={{ p: 4, height: "100%" }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>{t("hotspot-ranking", "Hotspot ranking per object")}</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>#</TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={hotspotsSort.key === "object"}
-                                            direction={hotspotsSort.key === "object" ? hotspotsSort.direction : "asc"}
-                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "object", "asc"))}
-                                        >
-                                            {t("object", "Object")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={hotspotsSort.key === "time"}
-                                            direction={hotspotsSort.key === "time" ? hotspotsSort.direction : "asc"}
-                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "time", "desc"))}
-                                        >
-                                            {t("time", "Time")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={hotspotsSort.key === "reads"}
-                                            direction={hotspotsSort.key === "reads" ? hotspotsSort.direction : "asc"}
-                                            onClick={() => setHotspotsSort((prev) => toggleSort(prev, "reads", "desc"))}
-                                        >
-                                            {t("reads", "Reads")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {hotspotsRows.slice(0, 15).map((o, i) => (
-                                    <TableRow key={o.key}>
-                                        <TableCell>{i + 1}</TableCell>
-                                        <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
-                                        <TableCell align="right">{valueToString(o.totalTime, "duration")}</TableCell>
-                                        <TableCell align="right">{valueToString(o.sharedReadBlocks, "quantity")}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataPresentationGrid
+                            data={hotspotsRows}
+                            columns={hotspotsColumns}
+                            initialSort={{ key: "time", direction: "desc" }}
+                            limit={15}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
                     </Paper>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 6 }}>
                     <Paper sx={{ p: 4, height: "100%" }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>{t("index-coverage", "Index coverage on tables")}</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "table"}
-                                            direction={tableCoverageSort.key === "table" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "table", "asc"))}
-                                        >
-                                            {t("table", "Table")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "seq"}
-                                            direction={tableCoverageSort.key === "seq" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "seq", "desc"))}
-                                        >
-                                            Seq
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "idx"}
-                                            direction={tableCoverageSort.key === "idx" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "idx", "desc"))}
-                                        >
-                                            Idx
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "idxOnly"}
-                                            direction={tableCoverageSort.key === "idxOnly" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "idxOnly", "desc"))}
-                                        >
-                                            IdxOnly
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "bitmap"}
-                                            direction={tableCoverageSort.key === "bitmap" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "bitmap", "desc"))}
-                                        >
-                                            Bitmap
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={tableCoverageSort.key === "coverage"}
-                                            direction={tableCoverageSort.key === "coverage" ? tableCoverageSort.direction : "asc"}
-                                            onClick={() => setTableCoverageSort((prev) => toggleSort(prev, "coverage", "asc"))}
-                                        >
-                                            {t("coverage", "Coverage")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {tableCoverageRows.map((tRow) => (
-                                    <TableRow key={tRow.key}>
-                                        <TableCell>{tRow.schema ? `${tRow.schema}.${tRow.name}` : tRow.name}</TableCell>
-                                        <TableCell align="right">{tRow.seqScans}</TableCell>
-                                        <TableCell align="right">{tRow.indexScans}</TableCell>
-                                        <TableCell align="right">{tRow.indexOnlyScans}</TableCell>
-                                        <TableCell align="right">{tRow.bitmapScans}</TableCell>
-                                        <TableCell align="right">
-                                            {tRow.indexCoverage === null ? "N/A" : valueToString(tRow.indexCoverage, "percentage")}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataPresentationGrid
+                            data={tableCoverageRows}
+                            columns={tableCoverageColumns}
+                            initialSort={{ key: "coverage", direction: "asc" }}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
                     </Paper>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 6 }}>
                     <Paper sx={{ p: 4, height: "100%" }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>{t("function-risks", "Function risks")}</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={functionRiskSort.key === "function"}
-                                            direction={functionRiskSort.key === "function" ? functionRiskSort.direction : "asc"}
-                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "function", "asc"))}
-                                        >
-                                            {t("function", "Function")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={functionRiskSort.key === "risk"}
-                                            direction={functionRiskSort.key === "risk" ? functionRiskSort.direction : "asc"}
-                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "risk", "desc"))}
-                                        >
-                                            {t("risk", "Risk")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={functionRiskSort.key === "time"}
-                                            direction={functionRiskSort.key === "time" ? functionRiskSort.direction : "asc"}
-                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "time", "desc"))}
-                                        >
-                                            {t("time", "Time")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={functionRiskSort.key === "calls"}
-                                            direction={functionRiskSort.key === "calls" ? functionRiskSort.direction : "asc"}
-                                            onClick={() => setFunctionRiskSort((prev) => toggleSort(prev, "calls", "desc"))}
-                                        >
-                                            {t("est-calls", "Est. calls")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {functionRiskRows.map((f) => (
-                                    <TableRow key={f.key}>
-                                        <TableCell>{f.name}</TableCell>
-                                        <TableCell><Chip size="small" color={riskColor(f.risk)} label={f.risk.toUpperCase()} /></TableCell>
-                                        <TableCell align="right">{valueToString(f.totalTime, "duration")}</TableCell>
-                                        <TableCell align="right">{valueToString(f.estimatedCalls, "quantity")}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataPresentationGrid
+                            data={functionRiskRows}
+                            columns={functionRiskColumns}
+                            initialSort={{ key: "riskRank", direction: "desc" }}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
                     </Paper>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 6 }}>
                     <Paper sx={{ p: 4, height: "100%" }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>{t("impact-map", "Impact map")}</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={impactSort.key === "object"}
-                                            direction={impactSort.key === "object" ? impactSort.direction : "asc"}
-                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "object", "asc"))}
-                                        >
-                                            {t("object", "Object")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={impactSort.key === "nodeTypes"}
-                                            direction={impactSort.key === "nodeTypes" ? impactSort.direction : "asc"}
-                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "nodeTypes", "asc"))}
-                                        >
-                                            {t("node-types", "Node types")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TableSortLabel
-                                            active={impactSort.key === "occurrences"}
-                                            direction={impactSort.key === "occurrences" ? impactSort.direction : "asc"}
-                                            onClick={() => setImpactSort((prev) => toggleSort(prev, "occurrences", "desc"))}
-                                        >
-                                            {t("occurrences", "Occurrences")}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {impactRows.slice(0, 20).map((o) => (
-                                    <TableRow key={`impact-${o.key}`}>
-                                        <TableCell>{o.schema ? `${o.schema}.${o.name}` : o.name}</TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                                {Array.from(o.nodeTypes).slice(0, 4).map((nt) => (
-                                                    <Chip key={`${o.key}-${nt}`} size="small" label={nt} />
-                                                ))}
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell align="right">{o.nodeCount}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <DataPresentationGrid
+                            data={impactRows}
+                            columns={impactColumns}
+                            initialSort={{ key: "occurrences", direction: "desc" }}
+                            limit={20}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
                     </Paper>
                 </Grid>
             </Grid>

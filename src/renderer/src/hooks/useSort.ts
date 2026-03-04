@@ -182,11 +182,15 @@ const isSingleIndex = <T,>(i: Index<T> | Indexes<T> | null | undefined): i is In
  */
 export function useSort<T>(
     data: T[] | null,
-    indexes: Index<T> | Indexes<T>,
+    indexes: Index<T> | Indexes<T> | null,
     indexName?: keyof Indexes<T> | null
 ): T[] | null {
     const [sortedData, setSortedData] = React.useState<T[] | null>(null);
     const [cache, setCache] = React.useState<Record<string, T[] | null>>({});
+
+    if (!indexes || (Array.isArray(indexes) && !indexName)) {
+        return data;
+    }
 
     React.useEffect(() => {
         console.debug("useSort: sorting data");

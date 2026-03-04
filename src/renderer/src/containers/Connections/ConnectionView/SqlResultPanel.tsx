@@ -11,7 +11,7 @@ import {
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { fillInternalColumnInfo, queryToDataGridColumns } from "@renderer/components/DataGrid/DataGridUtils";
-import { DataGrid, PlainGrid } from "@renderer/components/DataGrid/DataGrid";
+import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { useToast } from "@renderer/contexts/ToastContext";
 import DataGridStatusBar from "@renderer/components/DataGrid/DataGridStatusBar";
@@ -43,6 +43,7 @@ import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
 import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
 import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
 import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import DataPresentationGrid from "@renderer/components/DataGrid/DataPresentationGrid";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -609,7 +610,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                         {t("no-column-selected", "Select a cell to see column metadata")}
                                     </Typography>
                                 ) : (
-                                    <PlainGrid
+                                    <DataPresentationGrid
                                         data={[
                                             [t("key", "Key"), columnPreview.key],
                                             [t("catalog", "Catalog"), columnPreview._catalogName],
@@ -624,7 +625,6 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                             [t("dataTypeSize", "Data Type Size"), columnPreview.info?.dataTypeSize],
                                             [t("typeName", "Type Name"), columnPreview.info?.typeName],
                                         ]}
-                                        showHeader={false}
                                     />
                                 )}
                             </Box>
