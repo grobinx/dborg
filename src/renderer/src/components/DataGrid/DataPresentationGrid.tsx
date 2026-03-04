@@ -171,7 +171,7 @@ export function DataPresentationGrid<T>({
                         </TableRow>
                     ) : (
                         visibleRows.map((row, rowIndex) => (
-                            <TableRow key={rowIndex}>
+                            <TableRow key={rowIndex} hover>
                                 {resolvedColumns.map((column) => (
                                     <TableCell key={column.key} align={column.align}>
                                         {column.formatter ?

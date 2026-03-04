@@ -451,7 +451,7 @@ export const UsedObjects: React.FC<{
         { key: "object", label: t("object", "Object") },
         { key: "type", label: t("type", "Type") },
         { key: "nodes", label: t("nodes", "Nodes"), align: "right", dataType: "quantity" },
-        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
+        { key: "time", label: t("time", "Time"), align: "center", dataType: "duration" },
         { key: "cost", label: t("cost", "Cost"), align: "right", dataType: "decimal" },
         { key: "rows", label: t("rows", "Rows"), align: "right", dataType: "quantity" },
         { key: "reads", label: t("reads", "Reads"), align: "right", dataType: "quantity" },
@@ -460,8 +460,8 @@ export const UsedObjects: React.FC<{
     const hotspotsColumns = useMemo<DataPresentationGridColumn<HotspotRow>[]>(() => [
         { key: "rank", label: "#", align: "right", sortable: false, dataType: "quantity" },
         { key: "object", label: t("object", "Object") },
-        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
-        { key: "reads", label: t("reads", "Reads"), align: "right", dataType: "quantity" },
+        { key: "time", label: t("time", "Time"), align: "center", dataType: "duration" },
+        { key: "reads", label: t("reads", "Reads"), align: "center", dataType: "quantity" },
     ], [t]);
 
     const tableCoverageColumns = useMemo<DataPresentationGridColumn<TableCoverageRowView>[]>(() => [
@@ -485,7 +485,7 @@ export const UsedObjects: React.FC<{
             label: t("risk", "Risk"),
             formatter: (_v, row) => <Chip size="small" color={riskColor(row.risk)} label={row.risk.toUpperCase()} />,
         },
-        { key: "time", label: t("time", "Time"), align: "right", dataType: "duration" },
+        { key: "time", label: t("time", "Time"), align: "center", dataType: "duration" },
         { key: "calls", label: t("est-calls", "Est. calls"), align: "right", dataType: "quantity" },
     ], [t]);
 
