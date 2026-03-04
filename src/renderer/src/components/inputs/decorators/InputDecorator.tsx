@@ -507,7 +507,7 @@ export const InputDecorator = (props: InputDecoratorProps): React.ReactElement =
                         ref={visibleInputRef}
                     >
                         {clonedChildren}
-                        {!label && (restrictions || inputRestrictions) && (
+                        {!label && type === "boolean" && (restrictions || inputRestrictions) && (
                             <InputDecoratorRestrictions
                                 className={clsx(
                                     "InputDecorator-restrictions",

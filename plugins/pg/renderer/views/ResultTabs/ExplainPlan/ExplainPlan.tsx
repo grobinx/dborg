@@ -82,6 +82,17 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
             type: "toolbar",
             tools: [
                 {
+                    id: "copy-explain-plan",
+                    label: t("copy-explain-plan", "Copy Explain Plan"),
+                    icon: "Copy",
+                    run: () => {
+                        if (explainPlan) {
+                            const text = JSON.stringify(explainPlan, null, 2);
+                            navigator.clipboard.writeText(text);
+                        }
+                    },
+                },
+                {
                     id: "explain-plan-dialog-options",
                     label: t("explain-plan-options", "Explain Plan Options"),
                     icon: "Settings",

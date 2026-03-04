@@ -4,12 +4,6 @@ import {
     Chip,
     Grid2 as Grid,
     Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TableSortLabel,
     Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
@@ -62,6 +56,20 @@ interface FunctionRisk {
     sharedReadBlocks: number;
     risk: "low" | "medium" | "high";
     reasons: string[];
+}
+
+interface TriggersRowView {
+    key: string;
+    triggerName: string;
+    relation: string;
+    time: number;
+    calls: number;
+}
+
+interface SettingsRowView {
+    key: string;
+    setting: string;
+    value: string;
 }
 
 const n = (v: any): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -323,6 +331,40 @@ interface ImpactRowView {
     occurrences: number;
 }
 
+interface TriggerInfo {
+    key: string;
+    name: string;
+    relation: string;
+    time: number;
+    calls: number;
+}
+
+interface SettingInfo {
+    key: string;
+    name: string;
+    value: string;
+}
+
+const collectTriggers = (plan: ExplainResult): TriggerInfo[] => {
+    const triggers = plan.Triggers ?? [];
+    return triggers.map((t, i) => ({
+        key: `trigger-${i}`,
+        name: t["Trigger Name"] ?? "Unknown",
+        relation: t["Relation Name"] ?? "Unknown",
+        time: n(t["Time"]),
+        calls: n(t["Calls"]),
+    }));
+};
+
+const collectSettings = (plan: ExplainResult): SettingInfo[] => {
+    const settings = plan.Settings ?? {};
+    return Object.entries(settings).map(([key, value], i) => ({
+        key: `setting-${i}`,
+        name: key,
+        value: String(value ?? ""),
+    }));
+};
+
 export const UsedObjects: React.FC<{
     plan: ExplainResultKind | null;
     options?: Partial<UsedObjectsOptions>;
@@ -447,6 +489,32 @@ export const UsedObjects: React.FC<{
         [data]
     );
 
+    const triggersRows = useMemo<TriggersRowView[]>(
+        () =>
+            data && plan && !isErrorResult(plan) && !isLoadingResult(plan)
+                ? collectTriggers(plan).map((t) => ({
+                    key: t.key,
+                    triggerName: t.name,
+                    relation: t.relation,
+                    time: t.time,
+                    calls: t.calls,
+                }))
+                : [],
+        [plan, data]
+    );
+
+    const settingsRows = useMemo<SettingsRowView[]>(
+        () =>
+            data && plan && !isErrorResult(plan) && !isLoadingResult(plan)
+                ? collectSettings(plan).map((s) => ({
+                    key: s.key,
+                    setting: s.name,
+                    value: s.value,
+                }))
+                : [],
+        [plan, data]
+    );
+
     const usedObjectsColumns = useMemo<DataPresentationGridColumn<UsedObjectRow>[]>(() => [
         { key: "object", label: t("object", "Object") },
         { key: "type", label: t("type", "Type") },
@@ -503,6 +571,18 @@ export const UsedObjects: React.FC<{
             ),
         },
         { key: "occurrences", label: t("occurrences", "Occurrences"), align: "right", dataType: "quantity" },
+    ], [t]);
+
+    const triggersColumns = useMemo<DataPresentationGridColumn<TriggersRowView>[]>(() => [
+        { key: "triggerName", label: t("trigger", "Trigger"), formatter: (v) => String(v ?? "") },
+        { key: "relation", label: t("table", "Table"), formatter: (v) => String(v ?? "") },
+        { key: "time", label: t("time", "Time"), align: "center", dataType: "duration" },
+        { key: "calls", label: t("calls", "Calls"), align: "right", dataType: "quantity" },
+    ], [t]);
+
+    const settingsColumns = useMemo<DataPresentationGridColumn<SettingsRowView>[]>(() => [
+        { key: "setting", label: t("setting", "Setting") },
+        { key: "value", label: t("value", "Value"), formatter: (v) => String(v ?? "") },
     ], [t]);
 
     if (isErrorResult(plan)) {
@@ -581,6 +661,29 @@ export const UsedObjects: React.FC<{
                             columns={impactColumns}
                             initialSort={{ key: "occurrences", direction: "desc" }}
                             limit={20}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, lg: 6 }}>
+                    <Paper sx={{ p: 4, height: "100%" }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>{t("triggers-executed", "Triggers executed")}</Typography>
+                        <DataPresentationGrid
+                            data={triggersRows}
+                            columns={triggersColumns}
+                            initialSort={{ key: "time", direction: "desc" }}
+                            slotProps={{ container: { sx: { maxHeight: 400 } } }}
+                        />
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, lg: 6 }}>
+                    <Paper sx={{ p: 4, height: "100%" }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>{t("plan-settings", "Plan settings (non-default)")}</Typography>
+                        <DataPresentationGrid
+                            data={settingsRows}
+                            columns={settingsColumns}
                             slotProps={{ container: { sx: { maxHeight: 400 } } }}
                         />
                     </Paper>
