@@ -54,6 +54,8 @@ import ColumnSlot from "./ColumnSlot";
 import RowSlot from "./RowSlot";
 import { ToolBarSlots } from "./ToolBarSlot";
 import { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
+import { Grid } from "react-bootstrap-icons";
+import GridPresentationSlot from "./GridPresentationSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -63,8 +65,12 @@ export function createContentComponent(
     const resolvedContent = resolveContentSlotKindFactory(slot, runtimeContext);
     if (resolvedContent) {
         switch (resolvedContent.type) {
-            case "grid":
+            case "grid": {
+                if (resolvedContent?.mode === "presentation") {
+                    return <GridPresentationSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+                }
                 return <GridSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            }
             case "content":
                 return <ContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
             case "tabs":
@@ -214,22 +220,27 @@ export function createSplitPartContent(
 ): React.ReactNode | null {
     const resolvedPart = resolveSplitSlotPartKindFactory(part, runtimeContext);
     if (resolvedPart) {
-        if (resolvedPart.type === "content") {
-            return <ContentSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "split") {
-            return <SplitSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "tabs") {
-            return <TabsSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "grid") {
-            return <GridSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "rendered") {
-            return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "editor") {
-            return <EditorSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "column") {
-            return <ColumnSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
-        } else if (resolvedPart.type === "row") {
-            return <RowSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+        switch (resolvedPart.type) {
+            case "content":
+                return <ContentSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "split":
+                return <SplitSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "tabs":
+                return <TabsSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "grid": {
+                if (resolvedPart?.mode === "presentation") {
+                    return <GridPresentationSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+                }
+                return <GridSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            }
+            case "rendered":
+                return <RenderedSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "editor":
+                return <EditorSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "column":
+                return <ColumnSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "row":
+                return <RowSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         }
     }
     return null;

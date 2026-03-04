@@ -11,12 +11,11 @@ import {
     type TableCellProps,
     type TableProps,
 } from "@mui/material";
-import { ColumnDataType, resolveDataTypeFromString, resolveDataTypeFromValue, valueToString } from "../../../../../src/api/db";
+import { ColumnDataType, resolveDataTypeFromValue, valueToString } from "../../../../../src/api/db";
 import { Index, useSort } from "@renderer/hooks/useSort";
 import { SortDirection } from "./DataGridTypes";
 import { useTranslation } from "react-i18next";
-
-export type DataPresentationGridSortValue = string | number | boolean | Date | null | undefined;
+import LoadingOverlay from "../useful/LoadingOverlay";
 
 export interface DataPresentationGridColumn<T> {
     key: string;
@@ -31,8 +30,9 @@ export interface DataPresentationGridColumn<T> {
 export interface DataPresentationGridProps<T> {
     data: readonly T[];
     columns?: readonly DataPresentationGridColumn<T>[];
-    initialSort?: { key: string; direction?: SortDirection };
+    initialSort?: SortStateOptions;
     limit?: number;
+    loading?: boolean;
     slotProps?: {
         table?: Omit<TableProps, "children">;
         container?: Omit<TableContainerProps, "children">;
@@ -40,12 +40,13 @@ export interface DataPresentationGridProps<T> {
 }
 
 type SortState = { key: string; direction: SortDirection };
+export type SortStateOptions = { key: string; direction?: SortDirection };
 
 const isSortable = <T,>(column: DataPresentationGridColumn<T>): boolean => column.sortable ?? true;
 
 const getInitialSort = <T,>(
     columns: readonly DataPresentationGridColumn<T>[],
-    initialSort?: { key: string; direction?: SortDirection }
+    initialSort?: SortStateOptions
 ): SortState | null => {
     if (initialSort) {
         const selected = columns.find((c) => c.key === initialSort.key);
@@ -71,6 +72,7 @@ export function DataPresentationGrid<T>({
     columns,
     initialSort,
     limit,
+    loading,
     slotProps,
 }: DataPresentationGridProps<T>) {
     const { t } = useTranslation();
@@ -137,6 +139,12 @@ export function DataPresentationGrid<T>({
 
     return (
         <TableContainer {...slotProps?.container}>
+            {loading && (
+                <LoadingOverlay
+                    label={t("loading---", "Loading...")}
+                />
+            )}
+
             <Table size="small" stickyHeader {...slotProps?.table}>
                 {columns && (
                     <TableHead>

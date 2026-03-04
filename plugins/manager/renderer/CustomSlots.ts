@@ -16,6 +16,7 @@ import { ExportFormat } from "@renderer/utils/arrayTo";
 import * as monaco from "monaco-editor";
 import { LoadingOverlayMode } from "@renderer/components/useful/spinners/Spinners";
 import { MessageContextProps } from "@renderer/contexts/MessageContext";
+import { DataPresentationGridColumn, SortStateOptions } from "@renderer/components/DataGrid/DataPresentationGrid";
 
 export type CustomSlotType =
     "split"
@@ -74,6 +75,7 @@ export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeC
 export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
 export type RecordsChangeFactory<T = SlotRuntimeContext> = DataGridChangeRow<Record<string, any>>[] | undefined | ((runtimeContext: T) => DataGridChangeRow<Record<string, any>>[] | undefined);
 export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
+export type DataPresentationGridColumnsFactory<T = SlotRuntimeContext> = DataPresentationGridColumn<any>[] | ((runtimeContext: T) => DataPresentationGridColumn<any>[]);
 export type ActionsFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
 export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
 export type ToolFactory<T = any> = ToolKind<T>[] | ((runtimeContext: SlotRuntimeContext) => ToolKind<T>[]);
@@ -94,6 +96,7 @@ export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((run
 export type DialogConformButtonsFactory<T = SlotRuntimeContext> = DialogConformButton[] | ((runtimeContext: T) => DialogConformButton[]);
 export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
 export type DialogListColumnsFactory<T = SlotRuntimeContext> = IDialogListColumn[] | ((runtimeContext: T) => IDialogListColumn[]);
+export type SortStateOptionsFactory<T = SlotRuntimeContext> = SortStateOptions | ((runtimeContext: T) => SortStateOptions);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -408,6 +411,7 @@ export type SplitSlotPartKind =
     | IContentSlot
     | IRenderedSlot
     | IGridSlot
+    | IGridPresentationSlot
     | IEditorSlot
     | IColumnSlot
     | IRowSlot
@@ -592,6 +596,7 @@ export type ContentSlotKind =
     | ITabsSlot
     | IRenderedSlot
     | IGridSlot
+    | IGridPresentationSlot
     | IEditorSlot
     | IContentSlot
     | IColumnSlot
@@ -689,7 +694,7 @@ export interface IGridSlot extends ICustomSlot {
      */
     mode?: DataGridMode;
     /**
-     * Zapytanie SQL do pobrania danych.
+     * Wiersze siatki.
      */
     rows: RecordsAsyncFactory;
     /**
@@ -760,6 +765,31 @@ export interface IGridSlot extends ICustomSlot {
      * CommandPalette, grupy akcji dostępne jako dodatkowe w siatce (opcjonalnie).
      */
     canSelectRows?: BooleanFactory;
+}
+
+export interface IGridPresentationSlot extends ICustomSlot {
+    type: "grid";
+    /**
+     * Tryb działania siatki.
+     * Siatka jest prosta, służy tylko do prezentacji danych, bez możliwości interakcji (np. zaznaczania wierszy, akcji).
+     */
+    mode: "presentation";
+    /**
+     * Wiersze siatki.
+     */
+    rows: RecordsAsyncFactory;
+    /**
+     * Definicje kolumn (opcjonalnie).
+     */
+    columns?: DataPresentationGridColumnsFactory;
+    /**
+     * Zainicjalizowane sortowanie (opcjonalnie).
+     */
+    initialSort?: SortStateOptionsFactory;
+    /**
+     * Wysokość siatki (np. "400px", "50vh") (opcjonalnie).
+     */
+    height?: number | string;
 }
 
 /**
@@ -1390,6 +1420,9 @@ export function resolveRecordsChangeFactory<T = SlotRuntimeContext>(factory: Rec
 export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
+export function resolveDataPresentationGridColumnsFactory<T = SlotRuntimeContext>(factory: DataPresentationGridColumnsFactory<any> | undefined, context: T): DataPresentationGridColumn<any>[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
 export function resolveActionFactory<T = any>(factory: ActionsFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
@@ -1454,6 +1487,9 @@ export function resolveCSSPropertiesFactory<T = SlotRuntimeContext>(factory: CSS
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveDialogListColumnsFactory<T = SlotRuntimeContext>(factory: DialogListColumnsFactory<T> | undefined, context: T): IDialogListColumn[] | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveSortStateOptionsFactory<T = SlotRuntimeContext>(factory: SortStateOptionsFactory<T> | undefined, context: T): SortStateOptions | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

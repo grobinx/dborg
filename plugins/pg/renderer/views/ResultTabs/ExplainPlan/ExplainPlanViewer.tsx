@@ -305,7 +305,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                 </Box>
 
                 {hasKeyDetails && (
-                    <Box sx={{ mt: 2, pl: hasChildren ? 8 : 0 }}>
+                    <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                         <Table size="small">
                             <TableBody>
                                 {node.Filter && (
@@ -358,9 +358,9 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                 )}
 
                 {hasAdditionalDetails && (
-                    <Box sx={{ pl: hasChildren ? 8 : 0, pt: hasKeyDetails ? 1 : 2 }}>
+                    <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                         <Collapse in={showAdditionalDetails}>
-                            <Box sx={{ mt: 1 }}>
+                            <Box>
                                 <Table size="small">
                                     <TableBody>
                                         {node['Hash Cond'] && (
