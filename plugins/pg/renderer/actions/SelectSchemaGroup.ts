@@ -33,12 +33,17 @@ export const SelectSchemaGroup = (
             if (session.metadata) {
                 const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
 
-                // Sortowanie schematów według nazwy
-                schemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
+                // Wyciąganie i sortowanie schematów według nazwy
+                const foundSchemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
                     (a.name as string).localeCompare(b.name as string)
                 ).map((schema) => schema.name as string);
+
+                if (foundSchemas.length > 0) {
+                    schemas = foundSchemas;
+                }
             }
-            else {
+
+            if (schemas.length === 0) {
                 try {
                     const { rows } = await session.query(sql);
                     if (rows.length !== 0) {
