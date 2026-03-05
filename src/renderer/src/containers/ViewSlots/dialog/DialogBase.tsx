@@ -1,27 +1,37 @@
 import React from "react";
-import { Alert, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
+import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import { Button } from "@renderer/components/buttons/Button";
 import {
     IDialogStandalone,
     DialogLayoutItemKind,
     resolveDialogLayoutItemsKindFactory,
     resolveStringFactory,
+    resolveStringsFactory,
     isDialogRow,
     isDialogColumn,
     isDialogTextField,
+    isDialogTextareaField,
     isDialogNumberField,
     isDialogBooleanField,
     isDialogSelectField,
     isDialogEditorField,
     isDialogTabs,
+    isDialogStatic,
+    isDialogList,
     resolveDialogTabsFactory,
     resolveDialogConformButtonsFactory,
+    resolveDialogListColumnsFactory,
     DialogConformButton,
+    IDialogTab,
     resolveBooleanFactory,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import { useTranslation } from "react-i18next";
 import { ThemeColor } from "@renderer/types/colors";
+import { InputDecorator } from "@renderer/components/inputs/decorators/InputDecorator";
+import { SearchField } from "@renderer/components/inputs/SearchField";
+import debounce from "@renderer/utils/debounce";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 interface DialogBaseProps {
     dialog: IDialogStandalone;
@@ -62,6 +72,141 @@ const applyDefaults = (
     return target;
 };
 
+const toSearchTokens = (text: string): string[] =>
+    text.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+
+const includesAllTokens = (parts: (string | undefined)[], tokens: string[]): boolean => {
+    if (tokens.length === 0) return true;
+    const haystack = parts.filter(Boolean).join(" ").toLocaleLowerCase();
+    if (!haystack) return false;
+    return tokens.every((token) => haystack.includes(token));
+};
+
+const collectItemSearchParts = (
+    item: DialogLayoutItemKind,
+    structure: Record<string, any>
+): string[] => {
+    if (
+        isDialogTextField(item) ||
+        isDialogTextareaField(item) ||
+        isDialogNumberField(item) ||
+        isDialogBooleanField(item) ||
+        isDialogSelectField(item) ||
+        isDialogEditorField(item)
+    ) {
+        return [
+            item.key,
+            resolveStringFactory(item.label, structure),
+            resolveStringFactory(item.tooltip, structure),
+            resolveStringFactory(item.helperText, structure),
+            ...(resolveStringsFactory(item.restrictions, structure) ?? []),
+        ].filter((v): v is string => Boolean(v));
+    }
+
+    if (isDialogRow(item) || isDialogColumn(item)) {
+        return [resolveStringFactory(item.label, structure)].filter((v): v is string => Boolean(v));
+    }
+
+    if (isDialogStatic(item)) {
+        return [resolveStringFactory(item.text, structure)].filter((v): v is string => Boolean(v));
+    }
+
+    if (isDialogList(item)) {
+        const columns = resolveDialogListColumnsFactory(item.columns, structure) ?? [];
+        return [
+            item.key,
+            resolveStringFactory(item.label, structure),
+            ...columns.flatMap((c) => [c.key, resolveStringFactory(c.label, structure)]),
+        ].filter((v): v is string => Boolean(v));
+    }
+
+    return [];
+};
+
+const filterDialogItemsByTokens = (
+    items: DialogLayoutItemKind[],
+    structure: Record<string, any>,
+    tokens: string[]
+): DialogLayoutItemKind[] => {
+    if (tokens.length === 0) return items;
+
+    const result: DialogLayoutItemKind[] = [];
+
+    for (const item of items) {
+        const selfMatch = includesAllTokens(collectItemSearchParts(item, structure), tokens);
+
+        if (isDialogRow(item) || isDialogColumn(item)) {
+            const nestedItems = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            const filteredNested = filterDialogItemsByTokens(nestedItems, structure, tokens);
+
+            if (selfMatch || filteredNested.length > 0) {
+                result.push({
+                    ...item,
+                    items: selfMatch ? nestedItems : filteredNested,
+                });
+            }
+            continue;
+        }
+
+        if (isDialogTabs(item)) {
+            const tabs = resolveDialogTabsFactory(item.tabs, structure) ?? [];
+            const filteredTabs = tabs
+                .map<IDialogTab | null>((tab) => {
+                    const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, structure) ?? [];
+                    const filteredTabItems = filterDialogItemsByTokens(tabItems, structure, tokens);
+                    const tabMatch = includesAllTokens(
+                        [tab.id, resolveStringFactory(tab.label, structure)],
+                        tokens
+                    );
+
+                    if (!tabMatch && filteredTabItems.length === 0) return null;
+
+                    return {
+                        ...tab,
+                        items: tabMatch ? tabItems : filteredTabItems,
+                    };
+                })
+                .filter((tab): tab is IDialogTab => tab !== null);
+
+            if (selfMatch || filteredTabs.length > 0) {
+                result.push({
+                    ...item,
+                    tabs: filteredTabs,
+                });
+            }
+            continue;
+        }
+
+        if (isDialogList(item)) {
+            const nestedItems = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            const filteredNested = filterDialogItemsByTokens(nestedItems, structure, tokens);
+
+            if (selfMatch || filteredNested.length > 0) {
+                result.push({
+                    ...item,
+                    items: selfMatch ? nestedItems : filteredNested,
+                });
+            }
+            continue;
+        }
+
+        if (selfMatch) {
+            result.push(item);
+        }
+    }
+
+    return result;
+};
+
+const filterDialogItems = (
+    items: DialogLayoutItemKind[],
+    structure: Record<string, any>,
+    searchText: string
+): DialogLayoutItemKind[] => {
+    const tokens = toSearchTokens(searchText);
+    return filterDialogItemsByTokens(items, structure, tokens);
+};
+
 export const DialogBase: React.FC<DialogBaseProps> = (props) => {
     const {
         dialog,
@@ -80,11 +225,13 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
     const [structure, setStructure] = React.useState<Record<string, any>>({});
     const invalidFields = React.useRef<Set<string>>(new Set());
     const [dialogValid, setDialogValid] = React.useState(false);
-
+    const [searchText, setSearchText] = React.useState("");
+    const [visibleItems, setVisibleItems] = React.useState<DialogLayoutItemKind[]>(items);
     const openSeq = React.useRef(0);
     const onOpenRanForSeq = React.useRef<number | null>(null);
     const [structureInitSeq, setStructureInitSeq] = React.useState(0);
     const [itemsResolvedSeq, setItemsResolvedSeq] = React.useState(0);
+    const [searchDelay] = useSetting<number>("app", "search.delay");
 
     React.useEffect(() => {
         if (open) {
@@ -106,6 +253,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
     React.useEffect(() => {
         const resolvedItems = resolveDialogLayoutItemsKindFactory(dialog.items, structure) ?? [];
         setItems(resolvedItems);
+        setVisibleItems(resolvedItems);
 
         if (open) {
             setItemsResolvedSeq(openSeq.current);
@@ -162,7 +310,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
 
     const title = resolveStringFactory(dialog.title, structure);
     const resolvedButtons: (DialogConformButton & { handle?: () => void })[] = resolveDialogConformButtonsFactory(dialog.buttons, structure) ?? [];
-    let buttons: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[]; 
+    let buttons: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[];
 
     if (!resolvedButtons || resolvedButtons.length === 0) {
         buttons = [{
@@ -190,7 +338,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
                 handle = () => handleConfirm(button.id);
                 disabled = submitting || !dialogValid || resolveBooleanFactory(button.disabled, structure) === true;
             }
-            return { id: button.id, handle: handle, disabled, label: labelText, color: button.color};
+            return { id: button.id, handle: handle, disabled, label: labelText, color: button.color };
         });
     }
 
@@ -201,6 +349,10 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
                 size === "full" ? "xl" :
                     "md";
     const fullScreen = size === "full";
+
+    const debouncedSetSearchText = React.useRef(debounce((items: DialogLayoutItemKind[], structure: any, text: string) => {
+        setVisibleItems(filterDialogItems(items, structure, text));
+    }, searchDelay));
 
     return (
         <Dialog
@@ -218,30 +370,54 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
                 }
             }}
         >
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle sx={{ display: "flex", flexDirection: "row", gap: 8 }}>
+                <Box>
+                    {title}
+                </Box>
+                <Box sx={{ flexGrow: 1 }} />
+                {dialog.canSearch && (
+                    <InputDecorator indicator={false} disableBlink width={200}>
+                        <SearchField
+                            placeholder={t("search---", "Search...")}
+                            value={searchText}
+                            onChange={(value) => {
+                                setSearchText(value);
+                                debouncedSetSearchText.current(items, structure, value);
+                            }}
+                        />
+                    </InputDecorator>
+                )}
+            </DialogTitle>
             <DialogContent dividers>
                 <Stack gap={8} sx={{ height: "100%" }}>
                     {error && (
                         <Alert severity="error">{error}</Alert>
                     )}
-                    {items.map((item, index) => (
-                        <DialogLayoutItem
-                            key={index}
-                            item={item}
-                            structure={structure}
-                            onChange={(structure) => {
-                                console.log('DialogLayoutItem onChange', structure);
-                                dialog.onChange?.(structure);
-                                setStructure(structure);
-                                setError(null);
-                            }}
-                            invalidFields={invalidFields.current}
-                            onValidityChange={() => {
-                                const isValid = invalidFields.current.size === 0;
-                                setDialogValid(isValid);
-                            }}
-                        />
-                    ))}
+
+                    {visibleItems.length === 0 ? (
+                        <Alert severity="info">
+                            {t("no-matching-items", "No matching items.")}
+                        </Alert>
+                    ) : (
+                        visibleItems.map((item, index) => (
+                            <DialogLayoutItem
+                                key={index}
+                                item={item}
+                                structure={structure}
+                                onChange={(structure) => {
+                                    console.log('DialogLayoutItem onChange', structure);
+                                    dialog.onChange?.(structure);
+                                    setStructure(structure);
+                                    setError(null);
+                                }}
+                                invalidFields={invalidFields.current}
+                                onValidityChange={() => {
+                                    const isValid = invalidFields.current.size === 0;
+                                    setDialogValid(isValid);
+                                }}
+                            />
+                        ))
+                    )}
                 </Stack>
             </DialogContent>
             <DialogActions>

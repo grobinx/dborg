@@ -283,6 +283,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                     title: t("explain-plan-options", "Explain Plan Options"),
                     size: "large",
                     height: "80%",
+                    canSearch: true,
                     items: [
                         {
                             type: "row",
@@ -444,6 +445,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                     title: t("plan-analyzer-options", "Plan Analyzer Options"),
                     size: "large",
                     height: "80%",
+                    canSearch: true,
                     items: [
                         {
                             type: "tabs",

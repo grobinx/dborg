@@ -1385,6 +1385,11 @@ export interface IDialogStandalone {
      * Wysokość dialogu (np. "400px", 500).
      */
     height?: string | number;
+    /**
+     * Czy można wyszukiwać opcji w polach dialogu (np. select) (opcjonalnie).
+     * @default false
+     */
+    canSearch?: boolean;
 }
 
 export interface IDialogSlot extends ICustomSlot, IDialogStandalone {
