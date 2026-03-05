@@ -110,7 +110,7 @@ export const default_settings: ApplicationSettings = {
         fontFamily: 'Segoe WPC, Segoe UI, sans-serif',
         monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
         "loading-overlay-spinner-type": 'ring',
-        "max-width-tab-label": 200,
+        "max-width-tab-label": "15vw",
     },
 };
 
