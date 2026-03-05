@@ -31,7 +31,7 @@ export function functionView(
                 const f = getFunction(fn);
                 return f ? `${f.schema_name}.${f.function_name}(${f.identity_args})` : t("not-selected", "Not selected");
             },
-            icon: "Code",
+            icon: "Function",
         },
         content: {
             id: cid("function-tab-content"),

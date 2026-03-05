@@ -42,9 +42,11 @@ import { Analyze } from "./svg/Analyze";
 import { Queue } from "./svg/Queue";
 import { Reindex } from "./svg/Reindex";
 import { Cluster } from "./svg/Cluster";
-import { Aggregates } from "./svg/Aggregates";
 import { SecurityLabel } from "./svg/SecurityLabel";
 import { Explain } from "./svg/Explain";
+import { CodeFunction } from "./svg/CodeFunction";
+import { CodeAggregate } from "./svg/CodeAggregate";
+import { CodeProcedure } from "./svg/CodeProcedure";
 
 const icons = (palette: Palette): ThemeOptions => {
     return {
@@ -200,12 +202,14 @@ const icons = (palette: Palette): ThemeOptions => {
             Image: (props) => <IconWrapper {...props} className="image"><MuiIcons.ImageOutlined fontSize="inherit" /></IconWrapper>,
             Run: (props) => <IconWrapper {...props} className="run"><MuiIcons.PlayArrow fontSize="inherit" color={"success"} /></IconWrapper>,
             Tablespace: (props) => <IconWrapper {...props} className="tablespace"><BsIcons.HddNetwork fontSize="inherit" /></IconWrapper>,
-            Aggregates: (props) => <IconWrapper {...props} className="aggregates"><Aggregates fontSize="inherit" /></IconWrapper>,
+            Aggregates: (props) => <IconWrapper {...props} className="aggregates"><CodeAggregate fontSize="inherit" /></IconWrapper>,
             Rollback: (props) => <IconWrapper {...props} className="rollback"><MuiIcons.UndoOutlined fontSize="inherit" /></IconWrapper>,
             AccessControl: (props) => <IconWrapper {...props} className="access-control"><BsIcons.PersonLock fontSize="inherit" /></IconWrapper>,
             SecurityLabel: (props) => <IconWrapper {...props} className="security-label"><SecurityLabel fontSize="inherit" /></IconWrapper>,
             Explain: (props) => <IconWrapper {...props} className="explain"><Explain fontSize="inherit" /></IconWrapper>,
             Options: (props) => <IconWrapper {...props} className="options"><MuiIcons.Tune fontSize="inherit" /></IconWrapper>,
+            Function: (props) => <IconWrapper {...props} className="function"><CodeFunction fontSize="inherit" /></IconWrapper>,
+            Procedure: (props) => <IconWrapper {...props} className="procedure"><CodeProcedure fontSize="inherit" /></IconWrapper>,
         }
     }
 }

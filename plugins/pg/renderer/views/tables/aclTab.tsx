@@ -3,6 +3,7 @@ import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { IGridSlot, IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { TableRecord } from "./tablesView";
+import { AclEntry, ALL_PRIVILEGES, mergeAclPrivileges } from "../../../common/acl";
 
 const aclTab = (
     session: IDatabaseSession,
@@ -28,7 +29,7 @@ const aclTab = (
                 rows: async () => {
                     if (!selectedRow()) return [];
 
-                    const { rows } = await session.query(
+                    const { rows } = await session.query<AclEntry>(
                         `
 with obj as (
   select c.oid, n.nspname as nsp, c.relname as rel, c.relowner
@@ -36,18 +37,10 @@ with obj as (
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = $1 and c.relname = $2
 ),
-owner_row as (
-  select
-    'owner'::text as scope,
-    (select rolname from pg_roles r where r.oid = o.relowner) as owner
-  from obj o
-),
 grants as (
   select
-    'grant'::text as scope,
-    null::text as owner,
     gr.rolname as grantor,
-    gg.rolname as role,
+    gg.rolname as grantee,
     x.privilege_type,
     x.is_grantable
   from obj o
@@ -57,29 +50,18 @@ grants as (
   where x.privilege_type is not null
 )
 select
-  scope,
-  owner,
-  null::text    as grantor,
-  null::text    as role,
-  null::text    as privilege_type,
-  null::boolean as is_grantable
-from owner_row
-union all
-select
-  scope, owner, grantor, role, privilege_type, is_grantable
+  grantor, grantee, privilege_type, is_grantable
 from grants
-order by scope, role nulls first, privilege_type;
+order by grantee nulls first, privilege_type;
                         `,
                         [selectedRow()!.schema_name, selectedRow()!.table_name]
                     );
 
-                    return rows;
+                    return mergeAclPrivileges(rows, ALL_PRIVILEGES.TABLE);
                 },
                 columns: [
-                    { key: "scope", label: t("scope", "Scope"), dataType: "string", width: 110 },
-                    { key: "owner", label: t("owner", "Owner"), dataType: "string", width: 180 },
                     { key: "grantor", label: t("grantor", "Grantor"), dataType: "string", width: 180 },
-                    { key: "role", label: t("role", "Role"), dataType: "string", width: 180 },
+                    { key: "grantee", label: t("grantee", "Grantee"), dataType: "string", width: 180 },
                     { key: "privilege_type", label: t("privilege", "Privilege"), dataType: "string", width: 140 },
                     { key: "is_grantable", label: t("grantable", "Grantable"), dataType: "boolean", width: 110 },
                 ] as ColumnDefinition[],

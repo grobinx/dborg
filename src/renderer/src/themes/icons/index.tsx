@@ -231,6 +231,8 @@ export interface ThemeIcons {
     SecurityLabel: IconWrapperFC;
     Explain: IconWrapperFC;
     Options: IconWrapperFC;
+    Function: IconWrapperFC;
+    Procedure: IconWrapperFC;
 }
 
 export type ThemeIconName = keyof ThemeIcons;
@@ -407,4 +409,6 @@ export const iconAliases: Record<ThemeIconName, string[]> = {
     SecurityLabel: ["access", "control", "permissions", "privileges", "security", "label", "classification", "sensitivity"],
     Explain: ["explain", "plan", "query", "execution", "analysis"],    
     Options: ["options", "settings", "preferences", "configuration"],
+    Function: ["function", "method", "procedure", "routine"],
+    Procedure: ["procedure", "function", "method", "routine"],
 };

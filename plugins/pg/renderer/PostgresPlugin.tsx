@@ -44,9 +44,9 @@ const PostgresPlugin: Plugin = {
                 toolsView(session),
                 tablesView(session),
                 viewsView(session),
+                functionsView(session),
                 sequencesView(session),
                 aggregatesView(session),
-                functionsView(session),
             ];
         });
         context.registerConnectionActionsFactory("sql-editor", (session) => {

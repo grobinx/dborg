@@ -5,7 +5,6 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { icons } from "@renderer/themes/ThemeWrapper";
 import { versionToNumber } from "../../../../../src/api/version";
 import { schemaDdl } from "../../../common/ddls/schema";
-import { DataGridChangesManager } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { executeScriptAction } from "../actions/ExecuteScript";
 import { AclEntry, ALL_PRIVILEGES, mergeRecordsAcl } from "../../../common/acl";
 import { diffDataGridRecords } from "@renderer/components/DataGrid/DataGridUtils";

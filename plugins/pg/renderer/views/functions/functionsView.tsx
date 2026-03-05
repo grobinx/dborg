@@ -44,7 +44,7 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
     return {
         type: "connection",
         id: cid("functions-view"),
-        icon: "Code",
+        icon: "Function",
         label: t("database-functions", "Functions"),
         slot: {
             id: cid("functions-slot"),
@@ -55,7 +55,7 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                 title: {
                     id: cid("functions-title"),
                     type: "title",
-                    icon: "Code",
+                    icon: "Function",
                     title: () => t("pg-functions-with-schema", "Functions {{schemaName}}", { schemaName: selectedSchemaName }),
                     toolBar: {
                         id: cid("functions-title-toolbar"),

@@ -96,7 +96,7 @@ export const Ellipsis: React.FC<EllipsisProps> = ({
 
     if (blurActive && tooltip) {
         return (
-            <Tooltip title={tooltip}>
+            <Tooltip title={tooltip} slotProps={{ tooltip: { style: { maxWidth: 600 } } }}>
                 {content}
             </Tooltip>
         );
