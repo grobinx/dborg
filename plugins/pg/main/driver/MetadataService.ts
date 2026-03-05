@@ -2,8 +2,15 @@ import * as api from '../../../../src/api/db';
 import Version, { versionToNumber } from '../../../../src/api/version';
 import pg from 'pg';
 import fs from 'fs/promises';
-import zlib from "zlib";
+import { createReadStream, createWriteStream } from 'fs';
+import * as readline from 'readline';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
+import zlib from 'zlib';
 import { version } from '../../../../src/api/consts';
+
+const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
+const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private databases: api.DatabasesMetadata = {};
@@ -20,30 +27,178 @@ export class MetadataCollector implements api.IMetadataCollector {
     }
 
     async restoreMetadata(fileName: string): Promise<api.DatabasesMetadata> {
-        const packed = await fs.readFile(fileName);
-        const json = zlib.gunzipSync(packed).toString("utf-8");
-        const parsed = JSON.parse(json);
-
-        // Sprawdź wersję
-        if (!parsed._version || parsed._version !== version.release) {
-            throw new Error(
-                `Incompatible metadata version: ${parsed._version ?? "unknown"} (expected ${version.release})`
-            );
+        try {
+            this.databases = await this.restoreMetadataArchive(fileName);
+        } catch (error) {
+            if (!(error instanceof Error) || error.message !== NOT_ARCHIVE_ERROR) {
+                throw error;
+            }
+            this.databases = await this.restoreMetadataLegacy(fileName);
         }
 
-        this.databases = parsed.databases ?? parsed;
         this.inited = true;
         return this.databases;
     }
 
     async storeMetadata(fileName: string): Promise<void> {
-        const json = JSON.stringify({
-            _version: version.release,
-            _date: Date.now(),
-            databases: this.databases
+        await this.storeMetadataArchive(fileName);
+    }
+
+    private async restoreMetadataLegacy(fileName: string): Promise<api.DatabasesMetadata> {
+        const packed = await fs.readFile(fileName);
+        const json = zlib.gunzipSync(packed).toString('utf-8');
+        const parsed = JSON.parse(json);
+
+        if (!parsed._version || parsed._version !== version.release) {
+            throw new Error(
+                `Incompatible metadata version: ${parsed._version ?? 'unknown'} (expected ${version.release})`
+            );
+        }
+
+        return parsed.databases ?? parsed;
+    }
+
+    private async storeMetadataArchive(fileName: string): Promise<void> {
+        await pipeline(
+            Readable.from(this.metadataArchiveLines()),
+            zlib.createGzip(),
+            createWriteStream(fileName)
+        );
+    }
+
+    private async *metadataArchiveLines(): AsyncGenerator<string> {
+        yield `${JSON.stringify({
+            kind: 'manifest',
+            format: METADATA_ARCHIVE_FORMAT,
+            version: version.release,
+            date: Date.now()
+        })}\n`;
+
+        for (const [databaseName, database] of Object.entries(this.databases)) {
+            const databaseData: Record<string, unknown> = { ...database };
+            delete databaseData.schemas;
+
+            yield `${JSON.stringify({
+                kind: 'database',
+                path: `databases/${encodeURIComponent(databaseName)}.json`,
+                database: databaseName,
+                data: databaseData
+            })}\n`;
+
+            for (const [schemaName, schema] of Object.entries(database.schemas ?? {})) {
+                yield `${JSON.stringify({
+                    kind: 'schema',
+                    path: `schemas/${encodeURIComponent(databaseName)}/${encodeURIComponent(schemaName)}.json`,
+                    database: databaseName,
+                    schema: schemaName,
+                    data: schema
+                })}\n`;
+            }
+        }
+    }
+
+    private isObject(value: unknown): value is Record<string, unknown> {
+        return typeof value === 'object' && value !== null;
+    }
+
+    private async restoreMetadataArchive(fileName: string): Promise<api.DatabasesMetadata> {
+        const databases: api.DatabasesMetadata = {};
+        const input = createReadStream(fileName).pipe(zlib.createGunzip());
+        const rl = readline.createInterface({
+            input,
+            crlfDelay: Infinity
         });
-        const packed = zlib.gzipSync(json);
-        await fs.writeFile(fileName, packed);
+
+        let manifestLoaded = false;
+        let lineNumber = 0;
+
+        for await (const rawLine of rl) {
+            const line = rawLine.trim();
+            if (!line) {
+                continue;
+            }
+
+            lineNumber += 1;
+
+            let parsedLine: unknown;
+            try {
+                parsedLine = JSON.parse(line);
+            } catch {
+                if (!manifestLoaded && lineNumber === 1) {
+                    throw new Error(NOT_ARCHIVE_ERROR);
+                }
+                throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
+            }
+
+            if (!this.isObject(parsedLine)) {
+                throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
+            }
+
+            const kind = typeof parsedLine.kind === 'string' ? parsedLine.kind : '';
+
+            if (!manifestLoaded) {
+                const format = typeof parsedLine.format === 'string' ? parsedLine.format : '';
+                const archiveVersion = typeof parsedLine.version === 'number' ? parsedLine.version : 'unknown';
+
+                if (kind !== 'manifest' || format !== METADATA_ARCHIVE_FORMAT) {
+                    throw new Error(NOT_ARCHIVE_ERROR);
+                }
+
+                if (archiveVersion !== version.release) {
+                    throw new Error(
+                        `Incompatible metadata version: ${archiveVersion} (expected ${version.release})`
+                    );
+                }
+
+                manifestLoaded = true;
+                continue;
+            }
+
+            if (kind === 'database') {
+                const databaseName = typeof parsedLine.database === 'string' ? parsedLine.database : '';
+                const data = parsedLine.data;
+
+                if (!databaseName || !this.isObject(data)) {
+                    throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
+                }
+
+                const existingSchemas = databases[databaseName]?.schemas ?? {};
+                databases[databaseName] = {
+                    ...(data as Omit<api.DatabaseMetadata, 'schemas'>),
+                    schemas: existingSchemas
+                } as api.DatabaseMetadata;
+
+                continue;
+            }
+
+            if (kind === 'schema') {
+                const databaseName = typeof parsedLine.database === 'string' ? parsedLine.database : '';
+                const schemaName = typeof parsedLine.schema === 'string' ? parsedLine.schema : '';
+                const data = parsedLine.data;
+
+                if (!databaseName || !schemaName || !this.isObject(data)) {
+                    throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
+                }
+
+                const database = databases[databaseName];
+                if (!database) {
+                    throw new Error(
+                        `Corrupted metadata archive. Missing database entry for schema ${databaseName}.${schemaName}`
+                    );
+                }
+
+                database.schemas[schemaName] = data as any as api.SchemaMetadata;
+                continue;
+            }
+
+            throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
+        }
+
+        if (!manifestLoaded) {
+            throw new Error(NOT_ARCHIVE_ERROR);
+        }
+
+        return databases;
     }
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
@@ -270,55 +425,55 @@ export class MetadataCollector implements api.IMetadataCollector {
             and (c.relname = $2 or $2 is null)
             and inh.inhrelid is null
             order by schema_name`,
-        [schemaName, name]
-    );
+            [schemaName, name]
+        );
 
-    const exists = new Set<string>();
-    let schema: api.SchemaMetadata | undefined;
-    let schema_name: string | undefined;
+        const exists = new Set<string>();
+        let schema: api.SchemaMetadata | undefined;
+        let schema_name: string | undefined;
 
-    for (const row of rows as api.RelationMetadata[]) {
-        if (schema_name !== row["schema_name"]) {
-            if (!name && schema) {
-                this.removeUnused(schema.relations, exists);
+        for (const row of rows as api.RelationMetadata[]) {
+            if (schema_name !== row["schema_name"]) {
+                if (!name && schema) {
+                    this.removeUnused(schema.relations, exists);
+                }
+                exists.clear();
+                schema = database.schemas[row["schema_name"]];
+                schema_name = row["schema_name"];
             }
-            exists.clear();
-            schema = database.schemas[row["schema_name"]];
-            schema_name = row["schema_name"];
+
+            delete row["schema_name"];
+            if (schema) {
+                exists.add(row.name);
+                if (schema.relations[row.name]) {
+                    schema.relations[row.name] = {
+                        ...schema.relations[row.name],
+                        ...row,
+                    };
+                }
+                else {
+                    schema.relations[row.name] = {
+                        ...row,
+                        columns: [],
+                    };
+                }
+            }
         }
 
-        delete row["schema_name"];
-        if (schema) {
-            exists.add(row.name);
-            if (schema.relations[row.name]) {
-                schema.relations[row.name] = {
-                    ...schema.relations[row.name],
-                    ...row,
-                };
-            }
-            else {
-                schema.relations[row.name] = {
-                    ...row,
-                    columns: [],
-                };
+        if (rows.length === 0 && schemaName && name) {
+            delete schema?.[schemaName].tables[name];
+        }
+
+        if (rows.length === 0 && !schemaName && name) {
+            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
+                delete schema.relations[name];
             }
         }
-    }
 
-    if (rows.length === 0 && schemaName && name) {
-        delete schema?.[schemaName].tables[name];
-    }
-
-    if (rows.length === 0 && !schemaName && name) {
-        for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-            delete schema.relations[name];
+        if (!name && schema) {
+            this.removeUnused(schema.relations, exists);
         }
     }
-
-    if (!name && schema) {
-        this.removeUnused(schema.relations, exists);
-    }
-}
 
     async updateRoutines(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
         const database = this.connectedDatabase();
