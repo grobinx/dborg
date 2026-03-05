@@ -40,8 +40,8 @@ export function functionView(
                 id: cid("function-tabs"),
                 type: "tabs",
                 tabs: [
-                    functionDetailsTab(session, () => getFunction(fn), cid),
                     functionDdlTab(session, () => getFunction(fn), cid),
+                    functionDetailsTab(session, () => getFunction(fn), cid),
                 ],
             },
         },

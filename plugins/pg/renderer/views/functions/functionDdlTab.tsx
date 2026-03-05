@@ -2,6 +2,7 @@ import i18next from "i18next";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { IPinnableTabSlot } from "plugins/manager/renderer/CustomSlots";
 import { FunctionRecord } from "./functionsView";
+import { functionDdl } from "../../../common/ddls/function";
 
 const functionDdlTab = (
     session: IDatabaseSession,
@@ -16,7 +17,7 @@ const functionDdlTab = (
         label: {
             id: cid("function-ddl-tab-label"),
             type: "tablabel",
-            label: t("ddl", "DDL"),
+            label: t("source", "Source"),
         },
         content: {
             id: cid("function-ddl-tab-content"),
@@ -28,12 +29,12 @@ const functionDdlTab = (
                     const f = selectedFunction();
                     if (!f) return "-- " + t("no-function-selected", "No function selected.");
 
-                    const { rows } = await session.query<{ ddl: string }>(
-                        `select pg_get_functiondef($1::oid) as ddl`,
-                        [f.oid]
+                    return await functionDdl(
+                        session,
+                        f.schema_name,
+                        f.function_name,
+                        f.identity_args
                     );
-
-                    return rows[0]?.ddl ?? "-- " + t("ddl-not-available", "DDL not available.");
                 },
             },
         },

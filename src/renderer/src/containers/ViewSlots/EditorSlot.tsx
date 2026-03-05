@@ -15,6 +15,8 @@ import { uuidv7 } from "uuidv7";
 import { useRefSlot } from "./RefSlotContext";
 import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
+import { useTranslation } from "react-i18next";
+import { useToast } from "@renderer/contexts/ToastContext";
 
 interface EditorSlotProps {
     slot: IEditorSlot;
@@ -24,6 +26,7 @@ interface EditorSlotProps {
 const EditorSlot: React.FC<EditorSlotProps> = ({
     slot
 }) => {
+    const { t } = useTranslation();
     const slotId = React.useMemo(() => slot.id ?? uuidv7(), [slot.id]);
     const { registerRefresh } = useViewSlot();
     const { registerRefSlot } = useRefSlot();
@@ -45,6 +48,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const runtimeContext = useSlotRuntimeContext({});
     const unregisterRefSlotRef = React.useRef<(() => void) | null>(null);
+    const addToast = useToast();
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (readOnly) => {
@@ -86,6 +90,15 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 if (mounted && typeof result === "string") {
                     setContent(result);
                     editorInstanceRef.current?.setValue(result);
+                }
+            } catch (error) {
+                if (mounted) {
+                    const content = "-- " + t("failed-to-load-content", "Failed to load content");
+                    setContent(content);
+                    editorInstanceRef.current?.setValue(content);
+                    addToast("error", t("failed-to-load-content", "Failed to load content"), {
+                        reason: error,
+                    });
                 }
             } finally {
                 setLoading(false);
