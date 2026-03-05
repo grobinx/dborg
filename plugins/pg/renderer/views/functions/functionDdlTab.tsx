@@ -10,6 +10,7 @@ const functionDdlTab = (
     cid: (id: string) => string
 ): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
+    const editorPositions = new Map<string, { lineNumber: number; column: number; top: number }>();
 
     return {
         id: cid("function-ddl-tab"),
@@ -35,6 +36,31 @@ const functionDdlTab = (
                         f.function_name,
                         f.identity_args
                     );
+                },
+                onPositionChanged: (_, editorContext) => {
+                    const f = selectedFunction();
+                    if (!f) return;
+
+                    const position = editorContext.editor()?.getPosition();
+                    const top = editorContext.editor()?.getScrollTop() ?? 0;
+                    if (!position) return;
+
+                    const key = `${f.schema_name}.${f.function_name}(${f.identity_args})`;
+                    editorPositions.set(key, { lineNumber: position.lineNumber, column: position.column, top });
+                },
+                onContentSuccess: (_, editorContext) => {
+                    const f = selectedFunction();
+                    if (!f) return;
+
+                    const key = `${f.schema_name}.${f.function_name}(${f.identity_args})`;
+                    const position = editorPositions.get(key);
+
+                    if (position) {
+                        editorContext.editor()?.setPosition(position);
+                        editorContext.editor()?.setScrollTop(position.top);
+                    } else {
+                        editorContext.editor()?.setScrollTop(0);
+                    }
                 },
             },
         },

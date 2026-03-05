@@ -844,6 +844,10 @@ export interface IEditorSlot extends ICustomSlot {
     onBlur?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
     onContentChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
     /**
+     * Wywoływane po pomyślnym załadowaniu zawartości do edytora - po zakończeniu operacji asynchronicznej content.
+     */
+    onContentSuccess?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
+    /**
      * Funkcja, która służy do przerwania wykonywania operacji pobierania wierszy.
      * Jeśli jest zdefiniowana, użytkownik może przerwać operację.
      * @param runtimeContext: SlotFactoryContext

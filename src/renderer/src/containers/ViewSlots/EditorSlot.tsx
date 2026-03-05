@@ -49,6 +49,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const runtimeContext = useSlotRuntimeContext({});
     const unregisterRefSlotRef = React.useRef<(() => void) | null>(null);
     const addToast = useToast();
+    const gettingContentRef = React.useRef(false);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (readOnly) => {
@@ -82,17 +83,18 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     }, [rootVisible]);
 
     React.useEffect(() => {
-        let mounted = true;
+        gettingContentRef.current = true;
         const fetchContent = async () => {
             setLoading(true);
             try {
                 const result = await resolveStringAsyncFactory(slot.content, runtimeContext);
-                if (mounted && typeof result === "string") {
+                if (gettingContentRef.current && typeof result === "string") {
                     setContent(result);
                     editorInstanceRef.current?.setValue(result);
+                    slot?.onContentSuccess?.(runtimeContext, editorRef.current!);
                 }
             } catch (error) {
-                if (mounted) {
+                if (gettingContentRef.current) {
                     const content = "-- " + t("failed-to-load-content", "Failed to load content");
                     setContent(content);
                     editorInstanceRef.current?.setValue(content);
@@ -102,6 +104,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 }
             } finally {
                 setLoading(false);
+                gettingContentRef.current = false;
             }
         };
         fetchContent();
@@ -115,7 +118,6 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref)
             }));
         }
-        return () => { mounted = false; };
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
@@ -126,7 +128,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
 
         slot?.onMounted?.(runtimeContext);
         editor.onDidChangeCursorPosition(() => {
-            slot?.onPositionChanged?.(runtimeContext, editorRef.current!);
+            if (!gettingContentRef.current) {
+                slot?.onPositionChanged?.(runtimeContext, editorRef.current!);
+            }
         });
         editor.onDidChangeCursorSelection(() => {
             slot?.onSelectionChanged?.(runtimeContext, editorRef.current!);
@@ -138,7 +142,9 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             slot?.onBlur?.(runtimeContext, editorRef.current!);
         });
         editor.onDidChangeModelContent(() => {
-            slot?.onContentChanged?.(runtimeContext, editorRef.current!);
+            if (!gettingContentRef.current) {
+                slot?.onContentChanged?.(runtimeContext, editorRef.current!);
+            }
         });
 
         unregisterRefSlotRef.current = registerRefSlot(slotId, "editor", editorRef);
