@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Typography, Paper, Chip, Collapse, Table, TableBody, TableCell, TableRow, useTheme, Link, PaletteColor } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@renderer/components/buttons/IconButton';
 import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from './ExplainTypes';
@@ -7,6 +8,7 @@ import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
 import { useSetting } from '@renderer/contexts/SettingsContext';
 import { resolveDataTypeFromValue, valueToString } from '../../../../../../src/api/db';
+import { LineClamp } from '@renderer/components/useful/LineClamp';
 
 const formatCost = (startup: number | undefined, total: number | undefined): string => {
     if (startup === undefined || total === undefined) return '-';
@@ -34,9 +36,62 @@ const KNOWN_NODE_KEYS = new Set<string>([
     'Plans',
 ]);
 
-const FormattedChip: React.FC<{ label: string; value: any }> = ({ label, value }) => {
-    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
+const NODE_TYPE_GROUPS = {
+    critical: new Set<string>(['Seq Scan', 'Nested Loop']),
+    high: new Set<string>(['Sort', 'HashAggregate', 'Aggregate', 'Materialize', 'Function Scan', 'ProjectSet', 'Foreign Scan']),
+    medium: new Set<string>(['Hash Join', 'Merge Join', 'Bitmap Heap Scan', 'BitmapAnd', 'BitmapOr', 'Hash', 'Subquery Scan', 'WindowAgg']),
+    low: new Set<string>(['Index Scan', 'Index Only Scan', 'Bitmap Index Scan', 'Memoize', 'Result', 'Limit', 'Append']),
+};
 
+const getNodeColor = (nodeType: string, theme: Theme): PaletteColor => {
+    if (NODE_TYPE_GROUPS.critical.has(nodeType)) return theme.palette.error;
+    if (NODE_TYPE_GROUPS.high.has(nodeType)) return theme.palette.warning;
+    if (NODE_TYPE_GROUPS.medium.has(nodeType)) return theme.palette.info;
+    if (NODE_TYPE_GROUPS.low.has(nodeType)) return theme.palette.success;
+    return theme.palette.primary;
+};
+
+const getRemovedRowsColor = (
+    removed: number | undefined,
+    actualRows: number | undefined,
+    theme: Theme,
+    warnThreshold: number,
+    errThreshold: number
+): string => {
+    if (removed === undefined || removed <= 0) return theme.palette.success.main;
+
+    if (actualRows === undefined || actualRows < 0) {
+        if (removed > 100000) return theme.palette.error.main;
+        if (removed > 10000) return theme.palette.warning.main;
+        if (removed > 1000) return theme.palette.info.main;
+        return theme.palette.success.main;
+    }
+
+    const ratio = removed / Math.max(removed + actualRows, 1);
+    if (ratio >= errThreshold) return theme.palette.error.main;
+    if (ratio >= warnThreshold) return theme.palette.warning.main;
+    if (ratio >= warnThreshold / 2) return theme.palette.info.main;
+    return theme.palette.success.main;
+};
+
+const formatRemovedRows = (removed: number | undefined, actualRows: number | undefined): string => {
+    if (removed === undefined) return '-';
+    const ratio = actualRows !== undefined && actualRows >= 0
+        ? (removed / Math.max(removed + actualRows, 1)) * 100
+        : null;
+
+    return ratio === null ? `${valueToString(removed, "bigint")}` : `${valueToString(removed, "bigint")} (${ratio.toFixed(1)}%)`;
+};
+
+const FormattedChip = React.memo(function FormattedChip({
+    label,
+    value,
+    monospaceFontFamily,
+}: {
+    label: string;
+    value: any;
+    monospaceFontFamily: string;
+}) {
     const formattedLabel = (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {label}
@@ -54,115 +109,89 @@ const FormattedChip: React.FC<{ label: string; value: any }> = ({ label, value }
             sx={{ fontFamily: monospaceFontFamily }}
         />
     );
-};
+});
 
-const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, level }) => {
-    const [expanded, setExpanded] = useState(true);
+interface PlanNodeProps {
+    node: PlanNode;
+    level: number;
+    monospaceFontFamily: string;
+    defaultExpandedDepth: number;
+    removedRowsWarningThreshold: number;
+    removedRowsErrorThreshold: number;
+}
+
+const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
+    node,
+    level,
+    monospaceFontFamily,
+    defaultExpandedDepth,
+    removedRowsWarningThreshold,
+    removedRowsErrorThreshold,
+}) => {
+    const [expanded, setExpanded] = useState(level < defaultExpandedDepth);
     const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
     const theme = useTheme();
     const { t } = useTranslation();
-    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
 
     const hasChildren = Array.isArray(node.Plans) && node.Plans.length > 0;
 
-    const hasKeyDetails =
-        Boolean(node['Sort Key']?.length) ||
-        Boolean(node.Filter) ||
-        (node['Rows Removed by Join Filter'] !== undefined && node['Rows Removed by Join Filter'] > 0) ||
-        (node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0);
-
-    const additionalDetails = Object.entries(node).filter(([key, value]) =>
-        !KNOWN_NODE_KEYS.has(key) &&
-        key !== 'Rows Removed by Filter' &&
-        key !== 'Rows Removed by Join Filter' &&
-        value !== undefined &&
-        value !== null &&
-        !(Array.isArray(value) && value.length === 0)
+    const hasKeyDetails = useMemo(
+        () =>
+            Boolean(node['Sort Key']?.length) ||
+            Boolean(node.Filter) ||
+            (node['Rows Removed by Join Filter'] !== undefined && node['Rows Removed by Join Filter'] > 0) ||
+            (node['Rows Removed by Filter'] !== undefined && node['Rows Removed by Filter'] > 0),
+        [node]
     );
 
-    const hasAdditionalDetails =
-        Boolean(node['Hash Cond']) ||
-        node['Shared Hit Blocks'] !== undefined ||
-        Boolean(node.Output?.length) ||
-        node['Actual Startup Time'] !== undefined ||
-        additionalDetails.length > 0;
+    const additionalDetails = useMemo(
+        () =>
+            Object.entries(node).filter(([key, value]) =>
+                !KNOWN_NODE_KEYS.has(key) &&
+                key !== 'Rows Removed by Filter' &&
+                key !== 'Rows Removed by Join Filter' &&
+                value !== undefined &&
+                value !== null &&
+                !(Array.isArray(value) && value.length === 0)
+            ),
+        [node]
+    );
 
-    const getNodeColor = (nodeType: string): PaletteColor => {
-        const critical = new Set<string>([
-            'Seq Scan',
-            'Nested Loop',
-        ]);
+    const hasAdditionalDetails = useMemo(
+        () =>
+            Boolean(node['Hash Cond']) ||
+            node['Shared Hit Blocks'] !== undefined ||
+            Boolean(node.Output?.length) ||
+            node['Actual Startup Time'] !== undefined ||
+            additionalDetails.length > 0,
+        [node, additionalDetails.length]
+    );
 
-        const high = new Set<string>([
-            'Sort',
-            'HashAggregate',
-            'Aggregate',
-            'Materialize',
-            'Function Scan',
-            'ProjectSet',
-            'Foreign Scan',
-        ]);
+    const nodeColor = useMemo(() => getNodeColor(node['Node Type'], theme), [node, theme]);
 
-        const medium = new Set<string>([
-            'Hash Join',
-            'Merge Join',
-            'Bitmap Heap Scan',
-            'BitmapAnd',
-            'BitmapOr',
-            'Hash',
-            'Subquery Scan',
-            'WindowAgg',
-        ]);
+    const removedByFilterColor = useMemo(
+        () =>
+            getRemovedRowsColor(
+                node['Rows Removed by Filter'],
+                node['Actual Rows'],
+                theme,
+                removedRowsWarningThreshold,
+                removedRowsErrorThreshold
+            ),
+        [node, theme, removedRowsWarningThreshold, removedRowsErrorThreshold]
+    );
 
-        const low = new Set<string>([
-            'Index Scan',
-            'Index Only Scan',
-            'Bitmap Index Scan',
-            'Memoize',
-            'Result',
-            'Limit',
-            'Append',
-        ]);
-
-        if (critical.has(nodeType)) return theme.palette.error;      // wysokie zagrożenie
-        if (high.has(nodeType)) return theme.palette.warning;        // podwyższone
-        if (medium.has(nodeType)) return theme.palette.info;         // umiarkowane
-        if (low.has(nodeType)) return theme.palette.success;         // niskie
-
-        return theme.palette.main; // nieznane / neutralne
-    };
-
-    const nodeColor = getNodeColor(node['Node Type']);
-
-    const getRemovedRowsColor = (removed: number | undefined, actualRows: number | undefined): string => {
-        if (removed === undefined || removed <= 0) return theme.palette.success.main;
-
-        if (actualRows === undefined || actualRows < 0) {
-            if (removed > 100000) return theme.palette.error.main;
-            if (removed > 10000) return theme.palette.warning.main;
-            if (removed > 1000) return theme.palette.info.main;
-            return theme.palette.success.main;
-        }
-
-        const ratio = removed / Math.max(removed + actualRows, 1);
-
-        if (ratio >= 0.9) return theme.palette.error.main;
-        if (ratio >= 0.6) return theme.palette.warning.main;
-        if (ratio >= 0.3) return theme.palette.info.main;
-        return theme.palette.success.main;
-    };
-
-    const formatRemovedRows = (removed: number | undefined, actualRows: number | undefined): string => {
-        if (removed === undefined) return '-';
-        const ratio = actualRows !== undefined && actualRows >= 0
-            ? (removed / Math.max(removed + actualRows, 1)) * 100
-            : null;
-
-        return ratio === null ? `${valueToString(removed, "bigint")}` : `${valueToString(removed, "bigint")} (${ratio.toFixed(1)}%)`;
-    };
-
-    const removedByFilterColor = getRemovedRowsColor(node['Rows Removed by Filter'], node['Actual Rows']);
-    const removedByJoinFilterColor = getRemovedRowsColor(node['Rows Removed by Join Filter'], node['Actual Rows']);
+    const removedByJoinFilterColor = useMemo(
+        () =>
+            getRemovedRowsColor(
+                node['Rows Removed by Join Filter'],
+                node['Actual Rows'],
+                theme,
+                removedRowsWarningThreshold,
+                removedRowsErrorThreshold
+            ),
+        [node, theme, removedRowsWarningThreshold, removedRowsErrorThreshold]
+    );
 
     return (
         <Box
@@ -274,24 +303,28 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                         <FormattedChip
                             label={t("cost", "Cost")}
                             value={formatCost(node['Startup Cost'], node['Total Cost'])}
+                            monospaceFontFamily={monospaceFontFamily}
                         />
 
                         {node['Actual Total Time'] !== undefined && (
                             <FormattedChip
                                 label={t("time", "Time")}
                                 value={valueToString(node['Actual Total Time'], "duration")}
+                                monospaceFontFamily={monospaceFontFamily}
                             />
                         )}
 
                         <FormattedChip
                             label={t("rows", "Rows")}
                             value={node['Actual Rows'] ?? node['Plan Rows'] ?? '-'}
+                            monospaceFontFamily={monospaceFontFamily}
                         />
 
                         {node['Actual Loops'] !== undefined && (
                             <FormattedChip
                                 label={t("loops", "Loops")}
                                 value={node['Actual Loops']}
+                                monospaceFontFamily={monospaceFontFamily}
                             />
                         )}
 
@@ -299,12 +332,13 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                             <FormattedChip
                                 label={t("width", "Width")}
                                 value={node['Plan Width']}
+                                monospaceFontFamily={monospaceFontFamily}
                             />
                         )}
                     </Box>
                 </Box>
 
-                {hasKeyDetails && (
+                {expanded && hasKeyDetails && (
                     <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                         <Table size="small">
                             <TableBody>
@@ -357,9 +391,9 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                     </Box>
                 )}
 
-                {hasAdditionalDetails && (
+                {expanded && hasAdditionalDetails && (
                     <Box sx={{ pl: hasChildren ? 8 : 0 }}>
-                        <Collapse in={showAdditionalDetails}>
+                        <Collapse in={showAdditionalDetails} mountOnEnter unmountOnExit>
                             <Box>
                                 <Table size="small">
                                     <TableBody>
@@ -385,7 +419,7 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
                                             <TableRow>
                                                 <TableCell sx={{ fontWeight: 600, width: "15%" }}>{t("output", "Output")}</TableCell>
                                                 <TableCell sx={{ fontFamily: monospaceFontFamily, fontSize: '0.875em', wordBreak: 'break-word' }}>
-                                                    {node.Output.join(', ')}
+                                                    <LineClamp lines={5}>{node.Output.join(', ')}</LineClamp>
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -427,7 +461,15 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
             {expanded && hasChildren && (
                 <Box>
                     {node.Plans!.map((childNode, index) => (
-                        <PlanNodeComponent key={index} node={childNode} level={level + 1} />
+                        <PlanNodeComponent
+                            key={`${childNode['Node Type']}-${childNode['Relation Name'] ?? 'node'}-${index}`}
+                            node={childNode}
+                            level={level + 1}
+                            monospaceFontFamily={monospaceFontFamily}
+                            defaultExpandedDepth={defaultExpandedDepth}
+                            removedRowsWarningThreshold={removedRowsWarningThreshold}
+                            removedRowsErrorThreshold={removedRowsErrorThreshold}
+                        />
                     ))}
                 </Box>
             )}
@@ -435,18 +477,23 @@ const PlanNodeComponent: React.FC<{ node: PlanNode; level: number }> = ({ node, 
     );
 };
 
+const PlanNodeComponent = React.memo(PlanNodeComponentBase);
+
 export const ExplainPlanViewer: React.FC<{ 
     plan: ExplainResultKind | null;
     options?: {
-        removedRowsWarningThreshold: number;
-        removedRowsErrorThreshold: number;
+        removedRowsWarningThreshold?: number;
+        removedRowsErrorThreshold?: number;
+        initialExpandedDepth?: number;
     };
 }> = ({ plan, options }) => {
     const { t } = useTranslation();
+    const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
 
     const defaultOptions = {
         removedRowsWarningThreshold: 0.3,
         removedRowsErrorThreshold: 0.6,
+        initialExpandedDepth: 7,
     };
 
     const opts = { ...defaultOptions, ...options };
@@ -494,7 +541,14 @@ export const ExplainPlanViewer: React.FC<{
             </Paper>
 
             {/* Drzewo planu */}
-            <PlanNodeComponent node={plan.Plan} level={0} />
+            <PlanNodeComponent
+                node={plan.Plan}
+                level={0}
+                monospaceFontFamily={monospaceFontFamily}
+                defaultExpandedDepth={opts.initialExpandedDepth}
+                removedRowsWarningThreshold={opts.removedRowsWarningThreshold}
+                removedRowsErrorThreshold={opts.removedRowsErrorThreshold}
+            />
         </Box>
     );
 };

@@ -8,6 +8,7 @@ import { useSetting } from "@renderer/contexts/SettingsContext";
 import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from "./ExplainTypes";
 import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
 import { ExplainPlanError } from "./ExplainPlanError";
+import React from "react";
 
 interface Suggestion {
     type: 'warning' | 'info' | 'error';
@@ -33,7 +34,7 @@ export interface QueryAnalyzerOptions {
     slowIndexScanMinRows: number;
     highDiskIOMinSharedReadBlocks: number;
     limitDiscardMultiplier: number;
-    
+
     // QueryStats thresholds
     executionTimeWarningMs: number;
     seqScanWarningCount: number;
@@ -49,11 +50,12 @@ export interface QueryAnalyzerOptions {
     tempReadBlocksWarningThreshold: number;
     tempWrittenBlocksWarningThreshold: number;
     hashBatchesWarningThreshold: number;
-    
+
     // ExplainPlanViewer thresholds
     removedRowsWarningThreshold: number;
     removedRowsErrorThreshold: number;
-    
+    initialExpandedDepth: number;
+
     // UsedObjects thresholds
     functionRiskHighTime: number;
     functionRiskHighCalls: number;
@@ -73,7 +75,7 @@ export const DEFAULT_QUERY_ANALYZER_OPTIONS: QueryAnalyzerOptions = {
     slowIndexScanMinRows: 5000,
     highDiskIOMinSharedReadBlocks: 100,
     limitDiscardMultiplier: 10,
-    
+
     executionTimeWarningMs: 100,
     seqScanWarningCount: 2,
     nestedLoopWarningCount: 2,
@@ -88,10 +90,11 @@ export const DEFAULT_QUERY_ANALYZER_OPTIONS: QueryAnalyzerOptions = {
     tempReadBlocksWarningThreshold: 100,
     tempWrittenBlocksWarningThreshold: 100,
     hashBatchesWarningThreshold: 1,
-    
+
     removedRowsWarningThreshold: 0.3,
     removedRowsErrorThreshold: 0.6,
-    
+    initialExpandedDepth: 7,
+
     functionRiskHighTime: 100,
     functionRiskHighCalls: 10000,
     functionRiskHighReads: 100,
@@ -399,6 +402,13 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null; options?:
 
     const analyzerOptions: QueryAnalyzerOptions = { ...DEFAULT_QUERY_ANALYZER_OPTIONS, ...options };
 
+    const suggestions = React.useMemo(() => {
+        if (plan && !isErrorResult(plan) && !isLoadingResult(plan)) {
+            return analyzePlan(plan.Plan, analyzerOptions);
+        }
+        return [];
+    }, [plan, options]);
+
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
     }
@@ -416,8 +426,6 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null; options?:
             </Box>
         );
     }
-
-    const suggestions = analyzePlan(plan.Plan, analyzerOptions);
 
     if (suggestions.length === 0) {
         return (

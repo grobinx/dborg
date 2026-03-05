@@ -232,7 +232,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                         content: {
                             id: cid("explain-plan-result-content"),
                             type: "rendered",
-                            render: () => <ExplainPlanViewer plan={explainPlan} />,
+                            render: () => <ExplainPlanViewer plan={explainPlan} options={analyzerOptions} />,
                         },
                     },
                     {
@@ -743,6 +743,14 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                                                 },
                                             ]
                                         },
+                                        {
+                                            type: "number",
+                                            key: "initialExpandedDepth",
+                                            label: t("qa-initial-expanded-depth", "Initial expanded depth"),
+                                            min: 0,
+                                            step: 1,
+                                            helperText: t("qa-initial-expanded-depth-tooltip", "Initial depth of plan nodes to expand in the plan viewer.")
+                                        }
                                     ]
                                 },
                                 {
@@ -813,6 +821,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
                             hashBatchesWarningThreshold: values.hashBatchesWarningThreshold ?? analyzerOptions.hashBatchesWarningThreshold,
                             removedRowsWarningThreshold: values.removedRowsWarningThreshold ?? analyzerOptions.removedRowsWarningThreshold,
                             removedRowsErrorThreshold: values.removedRowsErrorThreshold ?? analyzerOptions.removedRowsErrorThreshold,
+                            initialExpandedDepth: values.initialExpandedDepth ?? analyzerOptions.initialExpandedDepth,
                             functionRiskHighTime: values.functionRiskHighTime ?? analyzerOptions.functionRiskHighTime,
                             functionRiskHighCalls: values.functionRiskHighCalls ?? analyzerOptions.functionRiskHighCalls,
                             functionRiskHighReads: values.functionRiskHighReads ?? analyzerOptions.functionRiskHighReads,

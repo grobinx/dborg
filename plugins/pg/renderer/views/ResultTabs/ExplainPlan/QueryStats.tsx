@@ -445,6 +445,13 @@ export const QueryStats: React.FC<{
 
     const opts = { ...defaultOptions, ...options };
 
+    const stats = React.useMemo(() => {
+        if (plan && !isErrorResult(plan) && !isLoadingResult(plan)) {
+            return calculateStats(plan);
+        }
+        return {} as QueryStats;
+    }, [plan]);
+
     if (isErrorResult(plan)) {
         return <ExplainPlanError error={plan} />;
     }
@@ -462,8 +469,6 @@ export const QueryStats: React.FC<{
             </Box>
         );
     }
-
-    const stats = calculateStats(plan);
 
     return (
         <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
