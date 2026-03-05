@@ -54,7 +54,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                     toolBar: {
                         id: cid("views-title-toolbar"),
                         type: "toolbar",
-                        tools: [RefreshGridAction_ID, SearchData_ID, SelectSchemaAction_ID],
+                        tools: [SelectSchemaAction_ID],
                         actionSlotId: cid("views-grid"),
                     },
                 } as ITitleSlot,

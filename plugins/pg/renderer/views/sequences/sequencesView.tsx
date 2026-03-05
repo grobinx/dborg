@@ -83,6 +83,7 @@ export function sequencesView(session: IDatabaseSession): ConnectionView {
                 type: "content",
                 title: {
                     type: "title",
+                    icon: "Sequence",
                     id: cid("sequences-title"),
                     title: () => t("pg-sequences-with-schema", "Sequences {{schemaName}}", { schemaName: selectedSchemaName }),
                     toolBar: {

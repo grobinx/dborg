@@ -42,6 +42,7 @@ import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
 import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
 import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
 import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
 export const SQL_EDITOR_EXECUTE_QUERY = "sql-editor:execute-query";
@@ -522,6 +523,7 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
     const [saved, setSaved] = React.useState<boolean>(true);
     const { tabIsActive, tabsCount } = useTabs(tabsItemID, itemID);
     const { subscribe, unsubscribe, queueMessage } = useMessages();
+    const [maxWidthTabLabel] = useSetting<number | string>("ui", "max-width-tab-label");
 
     React.useEffect(() => {
         if (itemID) {
@@ -569,12 +571,12 @@ export const SqlEditorLabel: React.FC<SqlEditorLabelProps> = (props) => {
         case "markdown": Icon = theme.icons.MarkdownEditor; break;
     }
 
+    const resolvedLabel = label ?? fileLabel ?? "SQL Editor";
+
     return (
         <TabPanelLabel>
             <Icon color={saved !== undefined && !saved ? "warning" : undefined} />
-            <div style={{ display: "flex", maxWidth: 300 }}>
-                <Ellipsis blured={false}>{label ?? fileLabel ?? "SQL Editor"}</Ellipsis>
-            </div>
+            <Ellipsis maxWidth={maxWidthTabLabel} tooltip={resolvedLabel}>{resolvedLabel}</Ellipsis>
             <TabCloseButton
                 onClick={() => queueMessage(SQL_EDITOR_CLOSE, itemID)}
                 active={tabIsActive && tabsCount > 1}

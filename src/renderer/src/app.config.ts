@@ -40,6 +40,8 @@ export interface UiSettings extends TSettings {
     fontFamily?: string;
     monospaceFontFamily?: string;
     "loading-overlay-spinner-type"?: SpinnerType;
+    /** Maksymalna szerokość etykiety zakładek edytora i resultatu */
+    "max-width-tab-label"?: number | string;
 }
 
 export interface ApplicationSettings extends TSettings {
@@ -108,6 +110,7 @@ export const default_settings: ApplicationSettings = {
         fontFamily: 'Segoe WPC, Segoe UI, sans-serif',
         monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
         "loading-overlay-spinner-type": 'ring',
+        "max-width-tab-label": 200,
     },
 };
 

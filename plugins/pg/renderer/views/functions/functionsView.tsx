@@ -8,6 +8,7 @@ import { IGridSlot, ITextSlot, ITitleSlot } from "plugins/manager/renderer/Custo
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { SelectSchemaGroup } from "../../actions/SelectSchemaGroup";
 import { functionView } from "./functionView";
+import { versionToNumber } from "../../../../../src/api/version";
 
 export interface FunctionRecord {
     schema_name: string;
@@ -37,6 +38,7 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
     };
     setSelectedSchemaName();
 
+    const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
     const cid = (id: string) => `${id}-${session.info.uniqueId}`;
 
     return {
@@ -58,7 +60,7 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                     toolBar: {
                         id: cid("functions-title-toolbar"),
                         type: "toolbar",
-                        tools: [RefreshGridAction_ID, SearchData_ID, SelectSchemaAction_ID],
+                        tools: [SelectSchemaAction_ID],
                         actionSlotId: cid("functions-grid"),
                     },
                 } as ITitleSlot,
@@ -74,12 +76,6 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                                 p.proname as function_name,
                                 pg_get_function_identity_arguments(p.oid) as identity_args,
                                 pg_get_function_result(p.oid) as result_type,
-                                case p.prokind
-                                    when 'f' then 'function'
-                                    when 'p' then 'procedure'
-                                    when 'a' then 'aggregate'
-                                    when 'w' then 'window'
-                                end as function_kind,
                                 l.lanname as language_name,
                                 pg_get_userbyid(p.proowner) as owner_name,
                                 case when p.prosecdef then 'definer' else 'invoker' end as security_type,
@@ -96,7 +92,8 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                             join pg_language l on l.oid = p.prolang
                             left join pg_description d on d.objoid = p.oid and d.classoid = 'pg_proc'::regclass and d.objsubid = 0
                             where
-                                (n.nspname = $1
+                                ${versionNumber >= 110000 ? "p.prokind = 'f'" : "not p.proisagg"}
+                                and (n.nspname = $1
                                  or (n.nspname = any(current_schemas(false))
                                      and coalesce($1, current_schema()) = current_schema()
                                      and n.nspname <> 'public'))
@@ -111,7 +108,6 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                         { label: t("schema-name", "Schema Name"), key: "schema_name", dataType: "string", width: 150 },
                         { label: t("arguments", "Arguments"), key: "identity_args", dataType: "string", width: 220 },
                         { label: t("result-type", "Result Type"), key: "result_type", dataType: "string", width: 140 },
-                        { label: t("kind", "Kind"), key: "function_kind", dataType: "string", width: 90 },
                         { label: t("language", "Language"), key: "language_name", dataType: "string", width: 90 },
                         { label: t("owner-name", "Owner Name"), key: "owner_name", dataType: "string", width: 120 },
                     ] as ColumnDefinition[],
@@ -121,6 +117,7 @@ export function functionsView(session: IDatabaseSession): ConnectionView {
                         slotContext.refresh(cid("function-tab-label"));
                         slotContext.refresh(cid("function-details-grid"));
                         slotContext.refresh(cid("function-ddl-editor"));
+                        slotContext.refresh(cid("function-alter-script"));
                     },
                     actions: [SelectSchemaAction()],
                     actionGroups: (slotContext) => [

@@ -81,6 +81,7 @@ export function aggregatesView(session: IDatabaseSession): ConnectionView {
                 type: "content",
                 title: {
                     type: "title",
+                    icon: "Aggregates",
                     id: cid("aggregates-title"),
                     title: () => t("pg-aggregates-with-schema", "Aggregates {{schemaName}}", { schemaName: selectedSchemaName }),
                     toolBar: {

@@ -24,9 +24,6 @@ const functionDdlTab = (
             content: {
                 id: cid("function-ddl-editor"),
                 type: "editor",
-                readOnly: true,
-                wordWrap: true,
-                miniMap: false,
                 content: async () => {
                     const f = selectedFunction();
                     if (!f) return "-- " + t("no-function-selected", "No function selected.");

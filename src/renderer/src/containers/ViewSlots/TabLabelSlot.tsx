@@ -10,6 +10,8 @@ import { TabCloseButton } from "@renderer/components/TabsPanel/TabCloseButton";
 import { TabPinButton } from "@renderer/components/TabsPanel/TabPinButton";
 import { uuidv7 } from "uuidv7";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
+import { Ellipsis } from "@renderer/components/useful/Elipsis";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 interface TabLabelSlotProps {
 }
@@ -37,6 +39,7 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [, reRender] = React.useState<bigint>(0n);
     const runtimeContext = useSlotRuntimeContext({});
+    const [maxWidthTabLabel] = useSetting<number | string>("ui", "max-width-tab-label");
 
     const closable = resolveBooleanFactory(tabSlot.closable, runtimeContext);
     const pinnable = resolveBooleanFactory(tabSlot.pinnable, runtimeContext);
@@ -88,8 +91,8 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     return (
         <TabPanelLabel ref={ref} tabsItemID={tabsItemID} itemID={itemID} {...other}>
             {icon}
-            {pinned && (<theme.icons.Pinned color="primary" />)}
-            {label}
+            {pinned && (<theme.icons.Pinned color="primary" sx={{ fontSize: "small" }} />)}
+            <Ellipsis maxWidth={maxWidthTabLabel} tooltip={label}>{label}</Ellipsis>
             {closable && onClose !== undefined && (
                 <TabCloseButton
                     onClick={onClose}

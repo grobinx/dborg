@@ -19,7 +19,7 @@ export function TabPinButton(props: { onClick: () => void; active: boolean }) {
                 dense
                 style={{ padding: 0 }}
             >
-                <theme.icons.Pin color={active ? "primary" : undefined} />  
+                <theme.icons.Pin color={active ? "primary" : undefined} sx={{ fontSize: "small" }} />  
             </ToolButton>
         </Tooltip>
     );

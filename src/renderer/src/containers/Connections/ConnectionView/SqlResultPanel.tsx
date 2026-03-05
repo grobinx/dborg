@@ -44,6 +44,8 @@ import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useS
 import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
 import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import DataPresentationGrid from "@renderer/components/DataGrid/DataPresentationGrid";
+import { Ellipsis } from "@renderer/components/useful/Elipsis";
+import { useSetting } from "@renderer/contexts/SettingsContext";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -650,6 +652,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
     const [executing, setExecuting] = React.useState(false); // Dodano stan dla wykonywania zapytania
     const [highlight, setHighlight] = React.useState(false); // Stan dla zmiany koloru
     const resultLabel = useSqlResultStore((state) => state.tabs[itemID!]?.resultLabel ?? "Result");
+    const [maxWidthTabLabel] = useSetting<number | string>("ui", "max-width-tab-label");
 
     React.useEffect(() => {
         const handleQueryExecuting = (message: { to: string, status: boolean }) => {
@@ -681,7 +684,7 @@ export const SqlResultLabel: React.FC<SqlResultLabelProps> = (props) => {
             ) : (
                 <theme.icons.DatabaseTables /> // Wyświetl domyślną ikonę, gdy nie ma ładowania
             )}
-            <span style={{ color: highlight ? theme.palette.success.light : undefined }}>{resultLabel}</span>
+            <Ellipsis maxWidth={maxWidthTabLabel} tooltip={resultLabel} style={{ color: highlight ? theme.palette.success.light : undefined }}>{resultLabel}</Ellipsis>
             <TabCloseButton
                 onClick={() => queueMessage(SQL_RESULT_CLOSE, itemID)}
                 active={tabIsActive}
