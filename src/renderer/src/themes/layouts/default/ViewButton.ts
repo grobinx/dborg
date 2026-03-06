@@ -19,23 +19,42 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 backgroundColor: palette.background.sideBar,
                 '& .IconWrapper-root': {
                     fontSize: "2em",
+                    transition: "filter 140ms ease, color 140ms ease",
+                    filter: "none",
                 },
                 '&.placement-right': {
                     justifyContent: "flex-end",
                 },
                 ...themeColors.reduce((acc, color) => {
+                    const hoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.45 : 0.75);
+                    const selectedHoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.55 : 0.9);
+
                     acc[`&.color-${color}`] = {
                         color: palette.mode === "light" ? darken(palette[color].main, 0.2) : lighten(palette[color].main, 0.2),
 
                         "&.hover:not(.disabled):not(.loading), &.focused-keyboard": {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.3),
-                            '&.selected': {
+
+                            "& .IconWrapper-root": {
+                                filter: `drop-shadow(0 0 1px ${hoverGlow}) drop-shadow(0 0 6px ${hoverGlow})`,
+                            },
+                            "& .MuiTypography-root": {
+                                textShadow: `0 0 6px ${hoverGlow}`,
+                            },
+
+                            "&.selected": {
                                 backgroundColor: alpha(palette[color].main, 0.4),
+                                "& .IconWrapper-root": {
+                                    filter: `drop-shadow(0 0 2px ${selectedHoverGlow}) drop-shadow(0 0 10px ${selectedHoverGlow})`,
+                                },
+                                "& .MuiTypography-root": {
+                                    textShadow: `0 0 8px ${selectedHoverGlow}`,
+                                },
                             },
                         },
 
-                        '&.selected': {
+                        "&.selected": {
                             color: palette.mode === "light" ? darken(palette[color].main, 0.6) : lighten(palette[color].main, 0.6),
                             backgroundColor: alpha(palette[color].main, 0.5),
                             boxShadow: (_root.shadows?.[2]) ?? "none",
@@ -45,6 +64,8 @@ export const ViewButtonLayout = (palette: Palette, _root: ThemeOptions): ViewBut
                 }, {}),
                 '& .MuiTypography-root': {
                     padding: "2px 6px",
+                    transition: "text-shadow 140ms ease, color 140ms ease",
+                    textShadow: "none",
                 },
                 '&.orientation-horizontal': {
                     maxWidth: "10rem",

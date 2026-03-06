@@ -906,6 +906,10 @@ export interface IEditorSlot extends ICustomSlot {
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
     progress?: ProgressBarSlotFactory;
+    /**
+     * Baner do wyświetlenia nad edytorem (slot lub funkcja zwracająca slot) (opcjonalnie).
+     */
+    banner?: BannerSlotFactory;
 }
 
 /**

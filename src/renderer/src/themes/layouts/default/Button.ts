@@ -31,6 +31,10 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 outlineWidth: 0,
                 outlineStyle: 'solid',
                 outlineOffset: -2,
+                "& .IconWrapper-root": {
+                    transition: "filter 140ms ease, color 140ms ease",
+                    filter: "none",
+                },
 
                 "&.disabled": {
                     opacity: 0.6,
@@ -59,24 +63,36 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 },
 
                 ...themeColors.reduce((acc, color) => {
+                    const hoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.45 : 0.75);
+                    const selectedHoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.55 : 0.9);
+
                     acc[`&.color-${color}`] = {
-                        '&:not(.flat)': {
+                        "&:not(.flat)": {
                             backgroundColor: alpha(palette[color].main, 0.2),
                         },
                         color: palette.text.primary,
 
-                        "&.hover:not(.disabled):not(.loading)": {
+                        "&.hover:not(.disabled):not(.loading), &.focused-keyboard:not(.disabled):not(.loading)": {
                             boxShadow: `0 2px 8px 0 ${alpha(palette[color].main, 0.18)}`,
                             backgroundColor: alpha(palette[color].main, 0.3),
-                            '&.focused': {
-                                //backgroundColor: alpha(palette[color].main, 0.4),
+
+                            "& .IconWrapper-root": {
+                                filter: `drop-shadow(0 0 1px ${hoverGlow}) drop-shadow(0 0 6px ${hoverGlow})`,
                             },
-                            '&.selected': {
+
+                            "&.selected": {
                                 backgroundColor: alpha(palette[color].main, 0.4),
+                                "& .IconWrapper-root": {
+                                    filter: `drop-shadow(0 0 2px ${selectedHoverGlow}) drop-shadow(0 0 10px ${selectedHoverGlow})`,
+                                },
                             },
-                            '&.has-value': {
+
+                            "&.has-value": {
                                 backgroundColor: alpha(palette[color].main, 0.5),
-                            }
+                                "& .IconWrapper-root": {
+                                    filter: `drop-shadow(0 0 2px ${selectedHoverGlow}) drop-shadow(0 0 10px ${selectedHoverGlow})`,
+                                },
+                            },
                         },
 
                         "&.active:not(.disabled):not(.loading)": {
@@ -88,7 +104,7 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                             outlineColor: palette[color].main,
                         },
 
-                        '&.selected': {
+                        "&.selected": {
                             backgroundColor: alpha(palette[color].main, 0.5),
                         },
 
@@ -112,7 +128,24 @@ export const ButtonLayout = (palette: Palette, _root: ThemeOptions): ButtonCompo
                 alignItems: "center",
                 justifyContent: "center",
                 padding: "0 0.5rem",
-                '&.loading': {
+                transition: "text-shadow 140ms ease, color 140ms ease, transform 120ms ease",
+                textShadow: "none",
+
+                ...themeColors.reduce((acc, color) => {
+                    const hoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.45 : 0.75);
+                    const selectedHoverGlow = alpha(palette[color].main, palette.mode === "light" ? 0.55 : 0.9);
+
+                    acc[`&.color-${color}.hover:not(.disabled):not(.loading), &.color-${color}.focused-keyboard:not(.disabled):not(.loading)`] = {
+                        textShadow: `0 0 6px ${hoverGlow}`,
+                        "&.selected, &.has-value": {
+                            textShadow: `0 0 8px ${selectedHoverGlow}`,
+                        },
+                    };
+
+                    return acc;
+                }, {}),
+
+                "&.loading": {
                     opacity: 0,
                 },
                 "&.active:not(.disabled):not(.loading)": {
