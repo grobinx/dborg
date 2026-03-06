@@ -83,14 +83,14 @@ export const editorEncodings: EditorEncoding[] = ["UTF-8", "UTF-16LE", "UTF-16BE
 export type EditorLanguageId =
     | "plaintext" | "markdown" | "json" | "yaml"
     | "html" | "css" | "scss" | "less"
-    | "javascript" | "typescript"
+    | "javascript" | "typescript" | "perl" | "c" | "pgsql"
     | "csharp" | "java" | "python" | "php" | "ruby" | "go"
     | "sql" | "powershell" | "shell" | "xml";
 export const defaultEditorLanguageId: EditorLanguageId = "sql";
 export const editorLanguageIds: EditorLanguageId[] = [
     "plaintext", "markdown", "json", "yaml",
     "html", "css", "scss", "less",
-    "javascript", "typescript",
+    "javascript", "typescript", "perl", "c", "pgsql",
     "csharp", "java", "python", "php", "ruby", "go",
     "sql", "powershell", "shell", "xml"
 ];
