@@ -17,6 +17,7 @@ import * as monaco from "monaco-editor";
 import { LoadingOverlayMode } from "@renderer/components/useful/spinners/Spinners";
 import { MessageContextProps } from "@renderer/contexts/MessageContext";
 import { DataPresentationGridColumn, SortStateOptions } from "@renderer/components/DataGrid/DataPresentationGrid";
+import { BannerSeverity } from "@renderer/components/Banner";
 
 export type CustomSlotType =
     "split"
@@ -35,6 +36,7 @@ export type CustomSlotType =
     | "dialog"
     | "column"
     | "row"
+    | "banner"
     ;
 
 export interface SlotRuntimeContext {
@@ -97,6 +99,7 @@ export type DialogConformButtonsFactory<T = SlotRuntimeContext> = DialogConformB
 export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
 export type DialogListColumnsFactory<T = SlotRuntimeContext> = IDialogListColumn[] | ((runtimeContext: T) => IDialogListColumn[]);
 export type SortStateOptionsFactory<T = SlotRuntimeContext> = SortStateOptions | ((runtimeContext: T) => SortStateOptions);
+export type BannerSlotFactory<T = SlotRuntimeContext> = IBannerSlot | ((runtimeContext: T) => IBannerSlot);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -673,6 +676,42 @@ export interface ITitleSlot extends ICustomSlot {
     style?: CSSPropertiesFactory;
 }
 
+export interface IBannerSlot extends ICustomSlot {
+    type: "banner";
+    /**
+     * Ikona banera (opcjonalnie).
+     * Domyślnie ikona jest ustawiana na podstawie poziomu ważności banera (severity), ale można ją nadpisać własną ikoną.
+     */
+    icon?: IconFactory;
+    /**
+     * Tytuł banera (tekst lub element) (opcjonalnie).
+     */
+    title?: ReactNodeFactory;
+    /**
+     * Tekst banera (tekst lub element).
+     */
+    text: ReactNodeFactory;
+    /**
+     * Czy baner jest zamykalny (opcjonalnie).
+     */
+    closeable?: BooleanFactory;
+    /**
+     * Poziom ważności banera, wpływający na jego styl (opcjonalnie).
+     * @default "info"
+     */
+    severity?: BannerSeverity;
+    /**
+     * Funkcja wywoływana po zamknięciu banera.
+     * @param slotContext
+     */
+    onClose?: (runtimeContext: SlotRuntimeContext) => void;
+    /**
+     * Czy baner jest otwarty (opcjonalnie).
+     * Nie trzeba zarządząć tym stanem samodzielnie, Wystarczy, że będzie ustawiony text lub title, a baner będzie otwarty. 
+     */
+    opened?: BooleanFactory;
+}
+
 export type StatusBarValueFunction = () => string;
 
 export interface IGridStatusButton {
@@ -762,9 +801,13 @@ export interface IGridSlot extends ICustomSlot {
      */
     progress?: ProgressBarSlotFactory;
     /**
-     * CommandPalette, grupy akcji dostępne jako dodatkowe w siatce (opcjonalnie).
+     * Czy wiersze siatki mogą być zaznaczane (opcjonalnie).
      */
     canSelectRows?: BooleanFactory;
+    /**
+     * Baner do wyświetlenia nad siatką (slot lub funkcja zwracająca slot) (opcjonalnie).
+     */
+    banner?: BannerSlotFactory;
 }
 
 export interface IGridPresentationSlot extends ICustomSlot {
@@ -1499,6 +1542,9 @@ export function resolveDialogListColumnsFactory<T = SlotRuntimeContext>(factory:
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveSortStateOptionsFactory<T = SlotRuntimeContext>(factory: SortStateOptionsFactory<T> | undefined, context: T): SortStateOptions | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveBannerFactory<T = SlotRuntimeContext>(factory: BannerSlotFactory<T> | undefined, context: T): IBannerSlot | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

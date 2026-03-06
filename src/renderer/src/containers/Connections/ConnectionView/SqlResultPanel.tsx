@@ -46,6 +46,7 @@ import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../
 import DataPresentationGrid from "@renderer/components/DataGrid/DataPresentationGrid";
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import Banner from "@renderer/components/Banner";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -162,6 +163,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const runtimeContext = useSlotRuntimeContext({});
     const pluginActionsRef = useRef(plugins.getConnectionActions("sql-result", session));
     const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => pluginActionsRef.current?.flatMap(pa => resolveDialogsSlotFactory(pa.dialogs, runtimeContext)).filter(dialogs => dialogs !== undefined) ?? null, [pluginActionsRef.current, runtimeContext]) });
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Resolver promisy dialogu parametrów
     const sqlParamsPromiseRef = useRef<{
@@ -291,8 +293,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     rows: rows.length,
                     startTime: startTime,
                 });
+                setErrorMessage(null);
             } catch (error) {
-                addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
+                console.error("Error executing query", error);
+                // addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
                 setColumns([]);
                 setRows([]);
                 addQueryToHistory({
@@ -303,15 +307,14 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         : String(error),
                     startTime: Date.now(),
                 });
+                setErrorMessage((typeof error === "object" && error !== null && "message" in error)
+                    ? (error as { message: string }).message
+                    : String(error));
             } finally {
                 setExecuting(itemID!, false);
                 setRowsFetched(null);
                 if (cursor) {
-                    try {
-                        await cursor.close();
-                    } catch (error) {
-                        addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
-                    }
+                    await cursor.close();
                 }
             }
         };
@@ -342,8 +345,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     rows: result.updateCount ?? undefined,
                     startTime: Date.now(),
                 });
+                setErrorMessage(null);
             } catch (error) {
-                addToast("error", "Error executing command", { reason: error, source: session.profile.sch_name });
+                console.error("Error executing command", error);
+                // addToast("error", "Error executing command", { reason: error, source: session.profile.sch_name });
                 addQueryToHistory({
                     query: oryginalQuery!,
                     profileName: session.profile.sch_name,
@@ -352,6 +357,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         : String(error),
                     startTime: Date.now(),
                 });
+                setErrorMessage((typeof error === "object" && error !== null && "message" in error)
+                    ? (error as { message: string }).message
+                    : String(error));
             }
             finally {
                 setExecuting(itemID!, false);
@@ -469,10 +477,16 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         overflow: "hidden",
                     }}
                 >
+                    <Banner severity="error">
+                        {errorMessage && (
+                            <Ellipsis>{errorMessage}</Ellipsis>
+                        )}
+                    </Banner>
                     <Box
                         sx={{
                             flex: 1, // Editor zajmuje pozostałą przestrzeń
                             overflow: "hidden",
+                            borderTop: `1px solid ${theme.palette.divider}`,
                         }}
                     >
                         <DataGrid
