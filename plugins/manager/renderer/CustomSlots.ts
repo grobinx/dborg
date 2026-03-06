@@ -100,6 +100,7 @@ export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties |
 export type DialogListColumnsFactory<T = SlotRuntimeContext> = IDialogListColumn[] | ((runtimeContext: T) => IDialogListColumn[]);
 export type SortStateOptionsFactory<T = SlotRuntimeContext> = SortStateOptions | ((runtimeContext: T) => SortStateOptions);
 export type BannerSlotFactory<T = SlotRuntimeContext> = IBannerSlot | ((runtimeContext: T) => IBannerSlot);
+export type EditorLanguageIdFactory = EditorLanguageId | ((runtimeContext: SlotRuntimeContext) => EditorLanguageId);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -861,7 +862,7 @@ export interface IEditorSlot extends ICustomSlot {
      * Język składni edytora (np. "sql", "json").
      * @default "sql"
      */
-    language?: EditorLanguageId;
+    language?: EditorLanguageIdFactory;
     /**
      * Czy edytor ma być tylko do odczytu (opcjonalnie).
      * @default false
@@ -1557,6 +1558,9 @@ export function resolveSortStateOptionsFactory<T = SlotRuntimeContext>(factory: 
     return typeof factory === "function" ? factory(context) : factory;
 }
 export function resolveBannerFactory<T = SlotRuntimeContext>(factory: BannerSlotFactory<T> | undefined, context: T): IBannerSlot | undefined {
+    return typeof factory === "function" ? factory(context) : factory;
+}
+export function resolveLanguageIdFactory(factory: EditorLanguageIdFactory | undefined, context: SlotRuntimeContext): EditorLanguageId | undefined {
     return typeof factory === "function" ? factory(context) : factory;
 }
 

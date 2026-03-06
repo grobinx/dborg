@@ -23,6 +23,10 @@ const functionDdlTab = (
         content: {
             id: cid("function-ddl-tab-content"),
             type: "tabcontent",
+            banner: {
+                type: "banner",
+                text: "ABCD",
+            },
             content: {
                 id: cid("function-ddl-editor"),
                 type: "editor",
@@ -36,6 +40,18 @@ const functionDdlTab = (
                         f.function_name,
                         f.identity_args
                     );
+                },
+                language: () => {
+                    const f = selectedFunction();
+                    if (!f) return "sql";
+                    if (f.language_name === "c") return "c";
+                    if (f.language_name === "internal") return "sql";
+                    if (f.language_name === "plpgsql") return "pgsql";
+                    if (f.language_name === "plperlu") return "perl";
+                    if (f.language_name === "plperl") return "perl";
+                    if (f.language_name === "plpythonu") return "python";
+                    if (f.language_name === "plpython3u") return "python";
+                    return "sql";
                 },
                 onPositionChanged: (_, editorContext) => {
                     const f = selectedFunction();

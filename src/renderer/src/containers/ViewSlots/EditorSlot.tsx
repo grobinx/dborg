@@ -1,11 +1,12 @@
 import React from "react";
 import { Monaco } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import MonacoEditor, { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
+import MonacoEditor, { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import {
     IEditorSlot,
     resolveActionFactory,
     resolveBooleanFactory,
+    resolveLanguageIdFactory,
     resolveStringAsyncFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
@@ -35,6 +36,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [readOnly, setReadOnly] = React.useState<boolean>(false);
     const [wordWrap, setWordWrap] = React.useState<boolean>(false);
     const [lineNumbers, setLineNumbers] = React.useState<boolean>(true);
+    const [languageId, setLanguageId] = React.useState<EditorLanguageId>("sql");
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const editorRef = React.useRef<IEditorActionContext | null>(null);
@@ -116,6 +118,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         setWordWrap(resolveBooleanFactory(slot.wordWrap, runtimeContext) ?? false);
         setLineNumbers(resolveBooleanFactory(slot.lineNumbers, runtimeContext) ?? true);
         setStatusBar(resolveBooleanFactory(slot.statusBar, runtimeContext) ?? true);
+        setLanguageId(resolveLanguageIdFactory(slot.language, runtimeContext) ?? "sql");
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
@@ -165,7 +168,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             ref={editorRef}
             rootRef={rootRef}
             defaultValue={content}
-            language={slot.language}
+            language={languageId}
             onMount={handleOnMount}
             readOnly={readOnly}
             loading={loading}

@@ -7,7 +7,7 @@ import { uuidv7 } from "uuidv7";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 import Banner, { BannerSeverity } from "@renderer/components/Banner";
 import { resolveIcon } from "@renderer/themes/icons";
-import { useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 
 interface BannerSlotProps {
     slot: IBannerSlot;
@@ -79,7 +79,7 @@ const BannerSlot: React.FC<BannerSlotOwnProps> = (props) => {
     }, [slot, runtimeContext]);
 
     return (
-        <div ref={rootRef}>
+        <Box ref={rootRef} sx={{ width: "100%" }}>
             <Banner
                 title={title}
                 severity={severity}
@@ -91,7 +91,7 @@ const BannerSlot: React.FC<BannerSlotOwnProps> = (props) => {
             >
                 {text}
             </Banner>
-        </div>
+        </Box>
     );
 };
 
