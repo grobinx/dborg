@@ -19,7 +19,7 @@ const LoadingSpinnerParticles: React.FC<{ colors: string[]; size?: number }> = (
         <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block" }}>
             {/* Cząsteczki */}
             {particles.map((p) => (
-                <circle key={p.id} r="4" fill={p.color}>
+                <circle key={p.id} r="10" fill={p.color}>
                     <animateMotion
                         dur={p.duration}
                         repeatCount="indefinite"
@@ -35,7 +35,7 @@ const LoadingSpinnerParticles: React.FC<{ colors: string[]; size?: number }> = (
                     />
                     <animate
                         attributeName="r"
-                        values="2;5;2"
+                        values="5;10;5"
                         dur={p.duration}
                         begin={p.delay}
                         repeatCount="indefinite"

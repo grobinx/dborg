@@ -30,16 +30,15 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 // ========== Typy spinnerów ==========
-export type SpinnerType = "random" | "ring" | "dots" | "bars" | "pulse" | "grid" | "orbit" | "wave" | "hexagon" | "bounce" | "ripple" | "gears" | "flip" | "cube" | "particles" | "clock" | "infinity";
+export type SpinnerType = "random" | "ring" | "dots" | "bars" | "grid" | "orbit" | "wave" | "hexagon" | "bounce" | "ripple" | "gears" | "flip" | "cube" | "particles" | "clock" | "infinity";
 
-export const SPINNER_TYPES: SpinnerType[] = ["random", "ring", "dots", "bars", "pulse", "grid", "orbit", "wave", "hexagon", "bounce", "ripple", "gears", "flip", "cube", "particles", "clock", "infinity"];
+export const SPINNER_TYPES: SpinnerType[] = ["random", "ring", "dots", "bars", "grid", "orbit", "wave", "hexagon", "bounce", "ripple", "gears", "flip", "cube", "particles", "clock", "infinity"];
 
 export const SPINNER_TYPE_LABELS: () => Record<SpinnerType, string> = () => ({
     random: t("spinnerType.random", "Random"),
     ring: t("spinnerType.ring", "Ring"),
     dots: t("spinnerType.dots", "Dots"),
     bars: t("spinnerType.bars", "Bars"),
-    pulse: t("spinnerType.pulse", "Pulse"),
     grid: t("spinnerType.grid", "Grid"),
     orbit: t("spinnerType.orbit", "Orbit"),
     wave: t("spinnerType.wave", "Wave"),

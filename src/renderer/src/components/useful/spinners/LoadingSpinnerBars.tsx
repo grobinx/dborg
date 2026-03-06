@@ -12,7 +12,7 @@ const LoadingSpinnerBarsStyled = styled("div")<{ colors: string[]; size?: number
         gap: `${gap}px`,
         "& div": {
             width: `${barWidth}px`,
-            height: `${size * 0.6}px`,
+            height: `${size * 0.9}px`,
             animation: "lds-bars 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite",
         },
         "& div:nth-of-type(1)": {
@@ -27,9 +27,13 @@ const LoadingSpinnerBarsStyled = styled("div")<{ colors: string[]; size?: number
             background: colors[2],
             animationDelay: "0s",
         },
+        "& div:nth-of-type(4)": {
+            background: colors[3],
+            animationDelay: "0.12s",
+        },
         "@keyframes lds-bars": {
-            "0%, 80%, 100%": { height: `${size * 0.2}px` },
-            "40%": { height: `${size * 0.6}px` },
+            "0%, 80%, 100%": { height: `${size * 0.4}px` },
+            "40%": { height: `${size * 0.9}px` },
         },
     };
 });
@@ -37,6 +41,7 @@ const LoadingSpinnerBarsStyled = styled("div")<{ colors: string[]; size?: number
 function LoadingSpinnerBars({ colors, size }: { colors: string[]; size?: number }) {
     return (
         <LoadingSpinnerBarsStyled colors={colors} size={size}>
+            <div></div>
             <div></div>
             <div></div>
             <div></div>

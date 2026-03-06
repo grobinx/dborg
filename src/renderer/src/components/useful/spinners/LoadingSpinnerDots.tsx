@@ -1,11 +1,12 @@
 import { styled } from "@mui/material";
 
 const LoadingSpinnerDotsStyled = styled("div")<{ colors: string[]; size?: number }>(({ colors, size = 54 }) => {
-    const dotSize = size / 5;
+    const dotSize = size / 4;
     return {
         width: `${size}px`,
         height: `${size}px`,
         display: "inline-block",
+        top: size /2,
         position: "relative",
         "& div": {
             position: "absolute",

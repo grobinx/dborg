@@ -8,7 +8,6 @@ import LoadingSpinnerRing from "./spinners/LoadingSpinnerRing";
 import LoadingSpinnerDots from "./spinners/LoadingSpinnerDots";
 import LoadingSpinnerBars from "./spinners/LoadingSpinnerBars";
 import LoadingSpinnerOrbit from "./spinners/LoadingSpinnerOrbit";
-import LoadingSpinnerPulse from "./spinners/LoadingSpinnerPulse";
 import LoadingSpinnerGrid from "./spinners/LoadingSpinnerGrid";
 import LoadingSpinnerWave from "./spinners/LoadingSpinnerWave";
 import LoadingSpinnerHexagon from "./spinners/LoadingSpinnerHexagon";
@@ -145,7 +144,6 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             case "ring": return <LoadingSpinnerRing key={spinnerKey} colors={spinnerColors} size={size} />;
             case "dots": return <LoadingSpinnerDots key={spinnerKey} colors={spinnerColors} size={size} />;
             case "bars": return <LoadingSpinnerBars key={spinnerKey} colors={spinnerColors} size={size} />;
-            case "pulse": return <LoadingSpinnerPulse key={spinnerKey} colors={spinnerColors} size={size} />;
             case "grid": return <LoadingSpinnerGrid key={spinnerKey} colors={spinnerColors} size={size} />;
             case "orbit": return <LoadingSpinnerOrbit key={spinnerKey} colors={spinnerColors} size={size} />;
             case "wave": return <LoadingSpinnerWave key={spinnerKey} colors={spinnerColors} size={size} />;
