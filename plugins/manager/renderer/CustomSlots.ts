@@ -524,6 +524,10 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
      * Dialogs dostępne w zawartości zakładki (opcjonalnie).
      */
     dialogs?: DialogsSlotFactory;
+    /**
+     * Baner (slot lub funkcja zwracająca slot) do wyświetlenia nad zawartością zakładki (opcjonalnie).
+     */
+    banner?: BannerSlotFactory;
 }
 
 export type TabLabelSlotKind =
@@ -650,6 +654,10 @@ export interface IContentSlot extends ICustomSlot {
      * Dialogs dostępne w zawartości (opcjonalnie).
      */
     dialogs?: DialogsSlotFactory;
+    /**
+     * Baner (slot lub funkcja zwracająca slot) do wyświetlenia nad zawartością (opcjonalnie).
+     */
+    banner?: BannerSlotFactory;
 }
 
 /**

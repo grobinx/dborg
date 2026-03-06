@@ -5,8 +5,6 @@ import {
     AlertProps,
     Collapse,
     CollapseProps,
-    IconButton,
-    IconButtonProps,
     styled,
     useTheme,
     useThemeProps,
@@ -109,6 +107,7 @@ export interface BannerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 
     variant?: AlertProps["variant"];
     alertProps?: Omit<AlertProps, "severity" | "icon" | "variant" | "onClose" | "action">;
     collapseProps?: Omit<CollapseProps, "in" | "children">;
+    ref?: React.Ref<HTMLDivElement>;
 }
 
 const Banner: React.FC<BannerProps> = (props) => {
@@ -127,6 +126,7 @@ const Banner: React.FC<BannerProps> = (props) => {
         variant = "standard",
         alertProps,
         collapseProps,
+        ref,
         ...other
     } = useThemeProps({
         name: "Banner",
@@ -173,8 +173,12 @@ const Banner: React.FC<BannerProps> = (props) => {
         const previous = previousContentRef.current;
         previousContentRef.current = { title, children };
 
-        // Nie wymuszaj otwarcia przy pierwszym renderze (szanuje defaultOpen)
+        // Przy pierwszym renderze z zawartością, otwórz banner
         if (!previous) {
+            if (!uncontrolledOpen) {
+                setUncontrolledOpen(true);
+                onOpenChange?.(true);
+            }
             return;
         }
 
@@ -186,7 +190,7 @@ const Banner: React.FC<BannerProps> = (props) => {
     }, [controlled, title, children, uncontrolledOpen, onOpenChange]);
 
     return (
-        <StyledBannerRoot className={rootClassName} {...other}>
+        <StyledBannerRoot className={rootClassName} ref={ref} {...other}>
             <Collapse in={open} timeout={120} unmountOnExit {...collapseProps}>
                 <StyledBannerAlert
                     {...alertProps}

@@ -4,7 +4,7 @@ import { ITabContentSlot, resolveActionFactory, resolveActionGroupFactory, resol
 import { useViewSlot } from "./ViewSlotContext";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
-import { createContentComponent, createProgressBarContent } from "./helpers";
+import { createBannerContent, createContentComponent, createProgressBarContent } from "./helpers";
 import TabPanelContent from "@renderer/components/TabsPanel/TabPanelContent";
 import { useRefSlot } from "./RefSlotContext";
 import CommandPalette from "@renderer/components/CommandPalette/CommandPalette";
@@ -37,6 +37,10 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
         node: React.ReactNode,
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [banner, setBanner] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -113,16 +117,24 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
                 ...prev,
                 node: createContentComponent(slot.content!, runtimeContext, prev.ref),
             }));
-            setProgressBar(prev => ({
-                ...prev,
-                node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
-            }));
+            if (slot.progress) {
+                setProgressBar(prev => ({
+                    ...prev,
+                    node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref, true),
+                }));
+            }
+            if (slot.banner) {
+                setBanner(prev => ({
+                    ...prev,
+                    node: createBannerContent(slot.banner!, runtimeContext, prev.ref),
+                }));
+            }
             previousRefreshRef.current = refresh;
         }
         if (active) {
             wasActiveRef.current = true;
         }
-    }, [active, slot.content, slot.dialogs, refresh]);
+    }, [active, slot.content, slot.dialogs, slot.banner, refresh]);
 
     React.useEffect(() => {
         if (active && pendingRefresh) {
@@ -192,6 +204,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
                 />
             )}
             {progressBar.node}
+            {banner.node}
             {content.node}
             {dialogs}
         </TabPanelContent>

@@ -24,7 +24,7 @@ import debounce from "@renderer/utils/debounce";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { StatusBarButton } from "@renderer/app/StatusBar";
 import { resolveIcon } from "@renderer/themes/icons";
-import { createProgressBarContent } from "./helpers";
+import { createBannerContent, createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
 
@@ -61,6 +61,10 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [, reRender] = React.useState<bigint>(0n);
     const [rebuildDisplayData, setRebuildDisplayData] = React.useState<bigint>(0n);
     const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [banner, setBanner] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -147,10 +151,18 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 }, 0);
             }
         };
-        setProgressBar(prev => ({
-            ...prev,
-            node: slot.progress ? createProgressBarContent(slot.progress, runtimeContext, prev.ref, true) : null,
-        }));
+        if (slot.progress) {
+            setProgressBar(prev => ({
+                ...prev,
+                node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref, true),
+            }));
+        }
+        if (slot.banner) {
+            setBanner(prev => ({
+                ...prev,
+                node: createBannerContent(slot.banner!, runtimeContext, prev.ref),
+            }));
+        }
         if (!loadingRef.current) {
             fetchRows();
         }
@@ -218,6 +230,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
             ref={rootRef}
         >
             {progressBar.node}
+            {banner.node}
             <Box
                 key={slotId}
                 sx={{

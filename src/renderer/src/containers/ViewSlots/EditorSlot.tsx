@@ -10,7 +10,7 @@ import {
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
-import { createProgressBarContent } from "./helpers";
+import { createBannerContent, createProgressBarContent } from "./helpers";
 import { uuidv7 } from "uuidv7";
 import { useRefSlot } from "./RefSlotContext";
 import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
@@ -43,6 +43,10 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [rootRef, rootVisible] = useVisibleState<HTMLDivElement>();
     const [, reRender] = React.useState<bigint>(0n);
     const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [banner, setBanner] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -118,6 +122,12 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref)
             }));
         }
+        if (slot.banner) {
+            setBanner(prev => ({
+                ...prev,
+                node: createBannerContent(slot.banner!, runtimeContext, prev.ref)
+            }));
+        }
     }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
@@ -165,7 +175,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             miniMap={slot.miniMap}
             overlayMode={slot.overlayMode ?? "small"}
             onCancel={slot.onCancel ? () => slot.onCancel!(runtimeContext) : undefined}
-            topChildren={progressBar.node}
+            topChildren={<>{progressBar.node}{banner.node}</>}
         />
     );
 };

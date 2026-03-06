@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
 import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
-import { createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
+import { createBannerContent, createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { ActionManager, IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { useRefSlot } from "./RefSlotContext";
@@ -49,6 +49,10 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
     const [progressBar, setProgressBar] = React.useState<{
+        ref: React.Ref<HTMLDivElement>,
+        node: React.ReactNode
+    }>({ ref: React.createRef<HTMLDivElement>(), node: null });
+    const [banner, setBanner] = React.useState<{
         ref: React.Ref<HTMLDivElement>,
         node: React.ReactNode
     }>({ ref: React.createRef<HTMLDivElement>(), node: null });
@@ -127,11 +131,17 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 node: createProgressBarContent(slot.progress!, runtimeContext, prev.ref, true)
             }));
         }
+        if (slot.banner) {
+            setBanner(prev => ({
+                ...prev,
+                node: createBannerContent(slot.banner!, runtimeContext, prev.ref)
+            }));
+        }
         setMainSlot(prev => ({
             ...prev,
             node: createContentComponent(slot.main, runtimeContext, prev.ref)
         }));
-    }, [slot.title, slot.main, slot.text, slot.dialogs, refresh]);
+    }, [slot.title, slot.main, slot.text, slot.dialogs, slot.banner, refresh]);
 
     const contentSlotContext: ContentSlotContext = {
         openCommandPalette: (prefix: string, query: string) => {
@@ -178,6 +188,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
                 />
             )}
             {progressBar.node}
+            {banner.node}
             {titleSlot.node}
             <Box
                 key={slotId + "-" + "inner-box"}

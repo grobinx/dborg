@@ -28,6 +28,8 @@ import {
     isTextSlot,
     SlotRuntimeContext,
     isBooleanField,
+    BannerSlotFactory,
+    resolveBannerFactory,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -56,6 +58,7 @@ import { ToolBarSlots } from "./ToolBarSlot";
 import { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import { Grid } from "react-bootstrap-icons";
 import GridPresentationSlot from "./GridPresentationSlot";
+import BannerSlot from "./BannerSlot";
 
 export function createContentComponent(
     slot: ContentSlotKindFactory,
@@ -256,6 +259,20 @@ export function createProgressBarContent(
     if (resolvedContent) {
         if (resolvedContent.type === "progress") {
             return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} absolute={absolute} />;
+        }
+    }
+    return null;
+}
+
+export function createBannerContent(
+    slot: BannerSlotFactory,
+    runtimeContext: SlotRuntimeContext,
+    ref: React.Ref<HTMLDivElement>,
+): React.ReactNode {
+    const resolvedContent = resolveBannerFactory(slot, runtimeContext);
+    if (resolvedContent) {
+        if (resolvedContent.type === "banner") {
+            return <BannerSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
