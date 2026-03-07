@@ -38,7 +38,7 @@ const functionDetailsTab = (
         content: {
             id: cid("function-details-tab-content"),
             type: "tabcontent",
-            content: (slotContext) => ({
+            content: (_slotContext) => ({
                 id: cid("function-details-split"),
                 type: "split",
                 direction: "vertical",

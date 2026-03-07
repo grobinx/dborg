@@ -1,17 +1,47 @@
-
+/**
+ * Bazowy kontrakt opisu wersji aplikacji/biblioteki.
+ *
+ * Pola są opcjonalne, ponieważ różne schematy wersjonowania
+ * (semver, buildy CI, wersjonowanie ABI) używają różnych segmentów.
+ */
 export interface VersionBase {
+    /** Główna wersja (breaking changes). */
     major?: number,
+
+    /** Wersja mniejsza (nowe funkcje kompatybilne wstecz). */
     minor?: number,
-    release?: string |  number,
+
+    /** Numer/oznaczenie wydania (niestandardowy segment projektu). */
+    release?: string | number,
+
+    /** Numer builda (np. numer CI lub artefaktu). */
     build?: string | number,
+
+    /** Oznaczenie wydania utrzymaniowego/serwisowego. */
     maintenance?: string | number,
+
+    /** Rewizja konkretnego wydania. */
     revision?: string | number,
+
+    /** Numer poprawek błędów (patch). */
     patch?: string | number,
+
+    /** Bieżąca wersja ABI/API (np. w stylu libtool). */
     current?: string | number,
+
+    /** Zakres kompatybilności ABI/API wstecz (age). */
     age?: string | number,
+
+    /** Określa wersję przedpremierową (alpha, beta, rc) lub niestandardową etykietę. */
+    preRelease?: "dev" | "snapshot" | "nightly" | "alpha" | "beta" | "rc" | string;
+
+    /** Opcjonalna nazwa kodowa lub etykieta wersji. */
     name?: string
 
+    /** Zwraca wersję w postaci tekstowej. */
     toString(): string;
+
+    /** Parsuje tekst wersji i uzupełnia pola interfejsu. */
     parse(version: string): void;
 }
 

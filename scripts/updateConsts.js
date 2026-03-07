@@ -55,6 +55,8 @@ function updatePackageJsonVersion() {
     const majorMatch = fileContent.match(/major:\s*(\d+)/);
     const minorMatch = fileContent.match(/minor:\s*(\d+)/);
     const releaseMatch = fileContent.match(/release:\s*(\d+)/);
+    // NOWE: dborgPreRelease: string = "beta.1" (lub "")
+    const preReleaseMatch = fileContent.match(/dborgPreRelease:\s*string\s*=\s*"([^"]*)"/);
 
     if (!majorMatch || !minorMatch || !releaseMatch) {
         console.error('Nie znaleziono wersji (major, minor, release) w pliku consts.ts.');
@@ -64,9 +66,11 @@ function updatePackageJsonVersion() {
     const major = majorMatch[1];
     const minor = minorMatch[1];
     const release = releaseMatch[1];
+    const preRelease = (preReleaseMatch?.[1] || '').trim();
 
     // Złóż wersję w ciąg znaków
-    const version = `${major}.${minor}.${release}`;
+    const versionCore = `${major}.${minor}.${release}`;
+    const version = preRelease ? `${versionCore}-${preRelease}` : versionCore;
 
     // Wczytaj package.json
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
