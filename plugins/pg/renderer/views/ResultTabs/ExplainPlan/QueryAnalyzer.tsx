@@ -474,7 +474,7 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null; options?:
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                                <Typography variant="subtitle2" fontWeight={700} sx={{ color: borderColor }}>
+                                <Typography variant="subtitle1" fontWeight={700} sx={{ color: borderColor }}>
                                     {sugg.title}
                                 </Typography>
                             </Box>

@@ -23,10 +23,6 @@ const functionDdlTab = (
         content: {
             id: cid("function-ddl-tab-content"),
             type: "tabcontent",
-            banner: {
-                type: "banner",
-                text: "ABCD",
-            },
             content: {
                 id: cid("function-ddl-editor"),
                 type: "editor",
