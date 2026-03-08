@@ -1,11 +1,7 @@
 import React from "react";
 import {
-    SlotRuntimeContext,
     IDialogTabs,
-    IDialogTab,
-    resolveStringFactory,
-    resolveDialogTabsFactory,
-    resolveDialogLayoutItemsKindFactory,
+    resolveValue,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import TabsPanel from "@renderer/components/TabsPanel/TabsPanel";
@@ -32,7 +28,7 @@ export const DialogTabs: React.FC<{
         disabled,
     } = props;
 
-    const tabs = resolveDialogTabsFactory(dialogTabs.tabs, structure) || [];
+    const tabs = resolveValue(dialogTabs.tabs, structure) || [];
     const [activeTabId, setActiveTabId] = React.useState<string | null>(tabs[0]?.id || null);
     const tabsId = React.useMemo(() => uuidv7(), [dialogTabs]);
     const theme = useTheme();
@@ -53,13 +49,13 @@ export const DialogTabs: React.FC<{
     }, [tabs]);
 
     const tabPanels = tabs.map((tab) => {
-        const items = resolveDialogLayoutItemsKindFactory(tab.items, structure) || [];
+        const items = resolveValue(tab.items, structure) || [];
 
         return (
             <TabPanel
                 key={tab.id}
                 itemID={tab.id}
-                label={<TabPanelLabel>{resolveStringFactory(tab.label, structure) || ""}</TabPanelLabel>}
+                label={<TabPanelLabel>{resolveValue(tab.label, structure) || ""}</TabPanelLabel>}
                 content={
                     <TabPanelContent
                         sx={{

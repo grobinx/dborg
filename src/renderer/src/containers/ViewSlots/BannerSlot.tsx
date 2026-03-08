@@ -1,6 +1,6 @@
 import React from "react";
 import { useThemeProps } from "@mui/material/styles";
-import { IBannerSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IBannerSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -66,12 +66,12 @@ const BannerSlot: React.FC<BannerSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        setTitle(resolveReactNodeFactory(slot.title, runtimeContext));
-        setText(resolveReactNodeFactory(slot.text, runtimeContext));
-        setCloseable(resolveBooleanFactory(slot.closeable, runtimeContext) ?? true);
+        setTitle(resolveValue(slot.title, runtimeContext));
+        setText(resolveValue(slot.text, runtimeContext));
+        setCloseable(resolveValue(slot.closeable, runtimeContext) ?? true);
         setSeverity(slot.severity ?? "info");
-        setOpened(resolveBooleanFactory(slot.opened, runtimeContext));
-        setIcon(resolveIcon(theme, slot.icon));
+        setOpened(resolveValue(slot.opened, runtimeContext));
+        setIcon(resolveIcon(theme, resolveValue(slot.icon, runtimeContext)));
     }, [slot.title, slot.text, slot.closeable, slot.severity, slot.icon, slot.opened, refresh]);
 
     const handleClose = React.useCallback((_event?: React.SyntheticEvent) => {

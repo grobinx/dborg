@@ -6,9 +6,8 @@ import { uuidv7 } from "uuidv7";
 import DataPresentationGrid, { DataPresentationGridColumn } from "@renderer/components/DataGrid/DataPresentationGrid";
 import {
     IGridPresentationSlot,
-    resolveDataPresentationGridColumnsFactory,
-    resolveRecordsAsyncFactory,
-    resolveSortStateOptionsFactory,
+    resolveAsyncValue,
+    resolveValue,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -72,12 +71,12 @@ const GridPresentationSlot: React.FC<GridPresentationSlotProps> = ({ slot, ref }
             loadingRef.current = true;
 
             try {
-                const result = await resolveRecordsAsyncFactory(slot.rows, runtimeContext);
+                const result = await resolveAsyncValue(slot.rows, runtimeContext);
 
                 if (Array.isArray(result)) {
                     setMessage(undefined);
                     setRows(result ?? []);
-                    setColumns(resolveDataPresentationGridColumnsFactory(slot.columns, runtimeContext));
+                    setColumns(resolveValue(slot.columns, runtimeContext));
                 } else if (result && typeof result === "object") {
                     setMessage(undefined);
                     setRows(
@@ -149,7 +148,7 @@ const GridPresentationSlot: React.FC<GridPresentationSlotProps> = ({ slot, ref }
                     <DataPresentationGrid
                         data={rows}
                         columns={columns}
-                        initialSort={resolveSortStateOptionsFactory(slot.initialSort, runtimeContext)}
+                        initialSort={resolveValue(slot.initialSort, runtimeContext)}
                         loading={loading}
                         slotProps={{
                             container: {

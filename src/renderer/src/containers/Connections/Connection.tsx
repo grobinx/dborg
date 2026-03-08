@@ -15,7 +15,7 @@ import EditorContentManager from "@renderer/contexts/EditorContentManager";
 import { useSessionState } from "@renderer/contexts/ApplicationContext";
 import { ViewSlotProvider } from "../ViewSlots/ViewSlotContext";
 import ContentSlot from "../ViewSlots/ContentSlot";
-import { IPinnableTabSlot, resolveContentSlotFactory, resolveContentSlotKindFactory, resolveTabSlotsFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IPinnableTabSlot, resolveValue, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import TabPanel from "@renderer/components/TabsPanel/TabPanel";
 import { createContentComponent, createTabPanel } from "../ViewSlots/helpers";
 import { RefSlotProvider } from "../ViewSlots/RefSlotContext";
@@ -67,12 +67,12 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
             if (selectedView.type === "connection" && selectedView.slot) {
                 const slot = selectedView.slot;
                 if (slot.type === "integrated" && !sideViewsMap[selectedView.id]) {
-                    const side = resolveContentSlotFactory(slot.side, runtimeContext);
+                    const side = resolveValue(slot.side, runtimeContext);
                     if (side) {
                         setSideViewsMap(prev => ({ ...prev, [selectedView.id]: <ContentSlot key={side.id} slot={side} /> }));
                     }
                     if (slot.editors && slot.editors.length > 0) {
-                        const tabs = resolveTabSlotsFactory(slot.editors, runtimeContext);
+                        const tabs = resolveValue(slot.editors, runtimeContext);
                         setEditorTabsMap(prev => ({
                             ...prev,
                             [selectedView.id]: createTabPanels(
@@ -87,7 +87,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         }));
                     }
                     if (slot.results && slot.results.length > 0) {
-                        const tabs = resolveTabSlotsFactory(slot.results, runtimeContext);
+                        const tabs = resolveValue(slot.results, runtimeContext);
                         setResultTabsMap(prev => ({
                             ...prev,
                             [selectedView.id]: createTabPanels(
@@ -102,7 +102,7 @@ const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
                         }));
                     }
                 } else if (slot.type === "root" && !rootViewsMap[selectedView.id]) {
-                    const rootSlot = resolveContentSlotKindFactory(slot.slot, runtimeContext);
+                    const rootSlot = resolveValue(slot.slot, runtimeContext);
                     if (rootSlot) {
                         setRootViewsMap(prev => ({ ...prev, [selectedView.id]: createContentComponent(rootSlot, runtimeContext) }));
                     }

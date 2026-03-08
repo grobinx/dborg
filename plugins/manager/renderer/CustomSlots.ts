@@ -6,7 +6,6 @@ import { DataGridMode, DataGridChangeRow } from "@renderer/components/DataGrid/D
 import { DataGridStatusPart } from "@renderer/components/DataGrid/DataGridStatusBar";
 import { ColumnDefinition, DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
-import { Option } from "@renderer/components/inputs/DescribedList";
 import { ContentSlotContext } from "@renderer/containers/ViewSlots/ContentSlot";
 import { DialogSlotFunction, RefreshSlotFunction } from "@renderer/containers/ViewSlots/ViewSlotContext";
 import { TabContentSlotContext } from "@renderer/containers/ViewSlots/TabContentSlot";
@@ -65,42 +64,8 @@ export interface SlotRuntimeContext {
     messages: MessageContextProps;
 }
 
-export type BooleanFactory<T = SlotRuntimeContext> = boolean | ((runtimeContext: T) => boolean);
-export type NumberFactory<T = SlotRuntimeContext> = number | null | ((runtimeContext: T) => number | null);
-export type NumberArrayFactory<T = SlotRuntimeContext> = number[] | ((runtimeContext: T) => number[]);
-export type ReactNodeFactory<T = SlotRuntimeContext> = React.ReactNode | ((runtimeContext: T) => React.ReactNode);
-export type IconFactory = React.ReactNode | (() => React.ReactNode) | ThemeIconName;
-export type StringFactory<T = SlotRuntimeContext> = string | ((runtimeContext: T) => string);
-export type StringsFactory<T = SlotRuntimeContext> = string[] | ((runtimeContext: T) => string[]);
-export type StringAsyncFactory<T = SlotRuntimeContext> = Promise<string> | ((runtimeContext: T) => Promise<string>);
-export type SelectOptionsFactory<T = SlotRuntimeContext> = Option[] | ((runtimeContext: T) => Option[]);
-export type RecordsAsyncFactory<T = SlotRuntimeContext> = Promise<Record<string, any>[] | Record<string, any> | string | undefined> | ((runtimeContext: T) => Promise<Record<string, any>[] | Record<string, any> | string> | undefined);
-export type RecordsChangeFactory<T = SlotRuntimeContext> = DataGridChangeRow<Record<string, any>>[] | undefined | ((runtimeContext: T) => DataGridChangeRow<Record<string, any>>[] | undefined);
-export type ColumnDefinitionsFactory<T = SlotRuntimeContext> = ColumnDefinition[] | ((runtimeContext: T) => ColumnDefinition[]);
-export type DataPresentationGridColumnsFactory<T = SlotRuntimeContext> = DataPresentationGridColumn<any>[] | ((runtimeContext: T) => DataPresentationGridColumn<any>[]);
-export type ActionsFactory<T = any> = Action<T>[] | ((runtimeContext: SlotRuntimeContext) => Action<T>[]);
-export type ActionGroupFactory<T = any> = ActionGroup<T>[] | ((runtimeContext: SlotRuntimeContext) => ActionGroup<T>[]);
-export type ToolFactory<T = any> = ToolKind<T>[] | ((runtimeContext: SlotRuntimeContext) => ToolKind<T>[]);
-export type SplitSlotPartKindFactory = SplitSlotPartKind | ((runtimeContext: SlotRuntimeContext) => SplitSlotPartKind);
-export type TabSlotsFactory = ITabSlot[] | ((runtimeContext: SlotRuntimeContext) => ITabSlot[]);
-export type TabLabelSlotKindFactory = TabLabelSlotKind | ((runtimeContext: SlotRuntimeContext) => TabLabelSlotKind);
-export type TabContentSlotKindFactory = TabContentSlotKind | ((runtimeContext: SlotRuntimeContext) => TabContentSlotKind);
-export type ContentSlotKindFactory = ContentSlotKind | ((runtimeContext: SlotRuntimeContext) => ContentSlotKind);
-export type ContentSlotKindsFactory = ContentSlotKind[] | ((runtimeContext: SlotRuntimeContext) => ContentSlotKind[]);
-export type TitleSlotKindFactory = TitleSlotKind | ((runtimeContext: SlotRuntimeContext) => TitleSlotKind);
-export type TextSlotKindFactory = TextSlotKind | ((runtimeContext: SlotRuntimeContext) => TextSlotKind);
-export type ContentSlotFactory = IContentSlot | ((runtimeContext: SlotRuntimeContext) => IContentSlot);
-export type ToolBarSlotsKindFactory = ToolBarSlotsKind | ((runtimeContext: SlotRuntimeContext) => ToolBarSlotsKind);
-export type ProgressBarSlotFactory = IProgressBarSlot | ((runtimeContext: SlotRuntimeContext) => IProgressBarSlot);
-export type DialogsSlotFactory<T = SlotRuntimeContext> = IDialogSlot[] | ((runtimeContext: T) => IDialogSlot[]);
-export type DialogLayoutItemsKindFactory<T = SlotRuntimeContext> = DialogLayoutItemKind[] | ((runtimeContext: T) => DialogLayoutItemKind[]);
-export type DialogTabsTabsFactory<T = SlotRuntimeContext> = IDialogTab[] | ((runtimeContext: T) => IDialogTab[]);
-export type DialogConformButtonsFactory<T = SlotRuntimeContext> = DialogConformButton[] | ((runtimeContext: T) => DialogConformButton[]);
-export type CSSPropertiesFactory<T = SlotRuntimeContext> = React.CSSProperties | ((runtimeContext: T) => React.CSSProperties);
-export type DialogListColumnsFactory<T = SlotRuntimeContext> = IDialogListColumn[] | ((runtimeContext: T) => IDialogListColumn[]);
-export type SortStateOptionsFactory<T = SlotRuntimeContext> = SortStateOptions | ((runtimeContext: T) => SortStateOptions);
-export type BannerSlotFactory<T = SlotRuntimeContext> = IBannerSlot | ((runtimeContext: T) => IBannerSlot);
-export type EditorLanguageIdFactory = EditorLanguageId | ((runtimeContext: SlotRuntimeContext) => EditorLanguageId);
+export type ResolvableValue<C = SlotRuntimeContext, V = any> = V | ((context: C) => V);
+export type ResolvableAsyncValue<C = SlotRuntimeContext, V = any> = Promise<V> | ((context: C) => Promise<V>);
 
 export type ToolKind<T = any> =
     | string | string[]
@@ -139,7 +104,7 @@ export interface IField {
     /**
      * Czy pole tekstowe jest zablokowane.
      */
-    disabled?: BooleanFactory;
+    disabled?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Maksymalna szerokość pola tekstowego (np. "100px", "50%").
      */
@@ -202,7 +167,8 @@ export interface INumberField extends IField {
 export interface ISelectField extends IField {
     type: "select";
 
-    options: SelectOptionsFactory;
+    options: ResolvableValue<SlotRuntimeContext, ISelectOption[]>;
+
 }
 
 export interface IBooleanField extends IField {
@@ -354,7 +320,7 @@ export interface IAutoRefresh {
      * To pole służy do zarządzania stanem przycisków w interfejsie użytkownika.
      * @default false
      */
-    executing?: BooleanFactory;
+    executing?: ResolvableValue<SlotRuntimeContext, boolean>;
 }
 
 export interface ICopyData<T = any> {
@@ -435,11 +401,11 @@ export interface ISplitSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     /**
      * Zawartość pierwszej części (slot lub funkcja zwracająca slot).
      */
-    first: SplitSlotPartKindFactory;
+    first: ResolvableValue<SlotRuntimeContext, SplitSlotPartKind>;
     /**
      * Zawartość drugiej części (slot lub funkcja zwracająca slot).
      */
-    second: SplitSlotPartKindFactory;
+    second: ResolvableValue<SlotRuntimeContext, SplitSlotPartKind>;
     /**
      * Procentowy udział drugiej części (domyślnie 30%).
      * Wartość musi być z zakresu 0-100.
@@ -461,7 +427,7 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Tablica zakładek lub funkcja zwracająca tablicę zakładek.
      */
-    tabs: TabSlotsFactory;
+    tabs: ResolvableValue<SlotRuntimeContext, ITabSlot[]>;
     /**
      * Pozyjca zakładek: "top" (góra) lub "bottom" (dół).
      * Domyślnie "top".
@@ -470,12 +436,12 @@ export interface ITabsSlot extends ICustomSlot {
     /**
      * Akcje dostępne dla listy zakładek (opcjonalnie).
      */
-    toolBar?: ToolBarSlotsKindFactory;
+    toolBar?: ResolvableValue<SlotRuntimeContext, ToolBarSlotsKind>;
     /**
      * Domyślny identyfikator zakładki, która ma być aktywna przy pierwszym renderowaniu.
      * Jeśli nie podano, pierwsza zakładka będzie aktywna.
      */
-    defaultTabId?: StringFactory;
+    defaultTabId?: ResolvableValue<SlotRuntimeContext, string>;
 }
 
 /**
@@ -486,11 +452,11 @@ export interface ITabLabelSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     /**
      * Ikona zakładki (opcjonalnie).
      */
-    icon?: IconFactory;
+    icon?: ResolvableValue<SlotRuntimeContext, React.ReactNode | ThemeIconName>;
     /**
      * Tekst lub element etykiety zakładki.
      */
-    label: ReactNodeFactory;
+    label: ResolvableValue<SlotRuntimeContext, React.ReactNode>;
 
     onActivate?: (runtimeContext: SlotRuntimeContext) => void;
     onDeactivate?: () => void;
@@ -501,22 +467,22 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
-    content: ContentSlotKindFactory;
+    content: ResolvableValue<SlotRuntimeContext, ContentSlotKind>;
 
     onActivate?: (runtimeContext: SlotRuntimeContext) => void;
     onDeactivate?: (runtimeContext: SlotRuntimeContext) => void;
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progress?: ProgressBarSlotFactory;
+    progress?: ResolvableValue<SlotRuntimeContext, IProgressBarSlot>;
     /**
      * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
      */
-    actionGroups?: ActionGroupFactory<TabContentSlotContext>;
+    actionGroups?: ResolvableValue<SlotRuntimeContext, ActionGroup<TabContentSlotContext>[]>;
     /**
      * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
      */
-    actions?: ActionsFactory<TabContentSlotContext>;
+    actions?: ResolvableValue<SlotRuntimeContext, Action<TabContentSlotContext>[]>;
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
@@ -524,11 +490,11 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
     /**
      * Dialogs dostępne w zawartości zakładki (opcjonalnie).
      */
-    dialogs?: DialogsSlotFactory;
+    dialogs?: ResolvableValue<SlotRuntimeContext, IDialogSlot[]>;
     /**
      * Baner (slot lub funkcja zwracająca slot) do wyświetlenia nad zawartością zakładki (opcjonalnie).
      */
-    banner?: BannerSlotFactory;
+    banner?: ResolvableValue<SlotRuntimeContext, IBannerSlot>;
 }
 
 export type TabLabelSlotKind =
@@ -546,19 +512,19 @@ export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     /**
      * Czy zakładka jest zamykalna (opcjonalnie).
      */
-    closable?: BooleanFactory;
+    closable?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Etykieta zakładki (ikona, tekst).
      */
-    label: TabLabelSlotKindFactory;
+    label: ResolvableValue<SlotRuntimeContext, TabLabelSlotKind>;
     /**
      * Akcje dostępne w zakładce (opcjonalnie).
      */
-    toolBar?: ToolBarSlotsKindFactory;
+    toolBar?: ResolvableValue<SlotRuntimeContext, ToolBarSlotsKind>;
     /**
      * Zawartość zakładki (slot lub funkcja zwracająca slot).
      */
-    content: TabContentSlotKindFactory;
+    content: ResolvableValue<SlotRuntimeContext, TabContentSlotKind>;
 }
 
 /**
@@ -569,7 +535,7 @@ export interface IPinnableTabSlot extends ITabSlot {
     /**
      * Czy zakładka jest przypinana (opcjonalnie).
      */
-    pinnable?: BooleanFactory;
+    pinnable?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Funkcja zwracająca slot, który pozwala na przypięcie zakładki.
      * @returns 
@@ -626,27 +592,27 @@ export interface IContentSlot extends ICustomSlot {
     /**
      * Tytuł (slot lub funkcja zwracająca slot).
      */
-    title?: TitleSlotKindFactory;
+    title?: ResolvableValue<SlotRuntimeContext, TitleSlotKind>;
     /**
      * Slot lub funkcja zwracająca zawartość główną.
      */
-    main: ContentSlotKindFactory;
+    main: ResolvableValue<SlotRuntimeContext, ContentSlotKind>;
     /**
      * Tekst (slot lub funkcja zwracająca slot).
      */
-    text?: TextSlotKindFactory;
+    text?: ResolvableValue<SlotRuntimeContext, TextSlotKind>;
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progress?: ProgressBarSlotFactory;
+    progress?: ResolvableValue<SlotRuntimeContext, IProgressBarSlot>;
     /**
      * CommandPalette, grupy akcji dostępne jako dodatkowe w zawartości zakładki (opcjonalnie).
      */
-    actionGroups?: ActionGroupFactory<ContentSlotContext>;
+    actionGroups?: ResolvableValue<SlotRuntimeContext, ActionGroup<ContentSlotContext>[]>;
     /**
      * CommandPalette, akcje podstawowe ">" dostępne w zawartości zakładki (opcjonalnie).
      */
-    actions?: ActionsFactory<ContentSlotContext>;
+    actions?: ResolvableValue<SlotRuntimeContext, Action<ContentSlotContext>[]>;
     /**
      * Skrót klawiszowy (sekwencja) dostępu do głównych akcji CommandPalette (opcjonalnie).
      */
@@ -654,11 +620,11 @@ export interface IContentSlot extends ICustomSlot {
     /**
      * Dialogs dostępne w zawartości (opcjonalnie).
      */
-    dialogs?: DialogsSlotFactory;
+    dialogs?: ResolvableValue<SlotRuntimeContext, IDialogSlot[]>;
     /**
      * Baner (slot lub funkcja zwracająca slot) do wyświetlenia nad zawartością (opcjonalnie).
      */
-    banner?: BannerSlotFactory;
+    banner?: ResolvableValue<SlotRuntimeContext, IBannerSlot>;
 }
 
 /**
@@ -670,19 +636,19 @@ export interface ITitleSlot extends ICustomSlot {
     /**
      * Ikona tytułu (opcjonalnie).
      */
-    icon?: IconFactory;
+    icon?: ResolvableValue<SlotRuntimeContext, React.ReactNode | ThemeIconName>;
     /**
      * Tytuł (tekst lub element).
      */
-    title?: ReactNodeFactory;
+    title?: ResolvableValue<SlotRuntimeContext, React.ReactNode>;
     /**
      * Akcje dostępne przy tytule (opcjonalnie).
      */
-    toolBar?: ToolBarSlotsKindFactory;
+    toolBar?: ResolvableValue<SlotRuntimeContext, ToolBarSlotsKind>;
     /**
      * Funkcja zwracająca style dla tytułu (opcjonalnie).
      */
-    style?: CSSPropertiesFactory;
+    style?: ResolvableValue<SlotRuntimeContext, React.CSSProperties>;
 }
 
 export interface IBannerSlot extends ICustomSlot {
@@ -691,19 +657,19 @@ export interface IBannerSlot extends ICustomSlot {
      * Ikona banera (opcjonalnie).
      * Domyślnie ikona jest ustawiana na podstawie poziomu ważności banera (severity), ale można ją nadpisać własną ikoną.
      */
-    icon?: IconFactory;
+    icon?: ResolvableValue<SlotRuntimeContext, React.ReactNode | ThemeIconName>;
     /**
      * Tytuł banera (tekst lub element) (opcjonalnie).
      */
-    title?: ReactNodeFactory;
+    title?: ResolvableValue<SlotRuntimeContext, React.ReactNode>;
     /**
      * Tekst banera (tekst lub element).
      */
-    text: ReactNodeFactory;
+    text: ResolvableValue<SlotRuntimeContext, React.ReactNode>;
     /**
      * Czy baner jest zamykalny (opcjonalnie).
      */
-    closeable?: BooleanFactory;
+    closeable?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Poziom ważności banera, wpływający na jego styl (opcjonalnie).
      * @default "info"
@@ -718,15 +684,15 @@ export interface IBannerSlot extends ICustomSlot {
      * Czy baner jest otwarty (opcjonalnie).
      * Nie trzeba zarządząć tym stanem samodzielnie, Wystarczy, że będzie ustawiony text lub title, a baner będzie otwarty. 
      */
-    opened?: BooleanFactory;
+    opened?: ResolvableValue<SlotRuntimeContext, boolean>;
 }
 
 export type StatusBarValueFunction = () => string;
 
 export interface IGridStatusButton {
-    label: StringFactory;
-    icon?: IconFactory;
-    tooltip?: StringFactory;
+    label: ResolvableValue<SlotRuntimeContext, string>;
+    icon?: ResolvableValue<SlotRuntimeContext, React.ReactNode | ThemeIconName>;
+    tooltip?: ResolvableValue<SlotRuntimeContext, string>;
     onClick?: (runtimeContext: SlotRuntimeContext) => void;
 }
 
@@ -744,31 +710,31 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Wiersze siatki.
      */
-    rows: RecordsAsyncFactory;
+    rows: ResolvableAsyncValue<SlotRuntimeContext, Record<string, any>[]>;
     /**
      * Zmiany w danych (np. edycje w siatce) do zapisania lub przesłania do backendu (opcjonalnie).
      */
-    changes?: RecordsChangeFactory;
+    changes?: ResolvableValue<SlotRuntimeContext, DataGridChangeRow<Record<string, any>>[]>;
     /**
      * Definicje kolumn (opcjonalnie).
      */
-    columns?: ColumnDefinitionsFactory;
+    columns?: ResolvableValue<SlotRuntimeContext, ColumnDefinition[]>;
     /**
      * Czy siatka ma być wyświetlana w trybie przestawnym (pivot) (opcjonalnie).
      */
-    pivot?: BooleanFactory;
+    pivot?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Kolumny dla odwróconej tabeli (opcjonalnie).
      */
-    pivotColumns?: ColumnDefinitionsFactory;
+    pivotColumns?: ResolvableValue<SlotRuntimeContext, ColumnDefinition[]>;
     /**
      * Akcje dostępne w gridzie (opcjonalnie).
      */
-    actions?: ActionsFactory<DataGridActionContext<any>>;
+    actions?: ResolvableValue<SlotRuntimeContext, Action<DataGridActionContext<any>>[]>;
     /**
      * Grupy akcji dostępne w gridzie (opcjonalnie).
      */
-    actionGroups?: ActionGroupFactory<DataGridActionContext<any>>;
+    actionGroups?: ResolvableValue<SlotRuntimeContext, ActionGroup<DataGridActionContext<any>>[]>;
     /**
      * Callback po zaznaczeniu wiersza (opcjonalnie).
      */
@@ -804,19 +770,19 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Tekst wyszukiwania w siatce (opcjonalnie).
      */
-    searchText?: StringFactory;
+    searchText?: ResolvableValue<SlotRuntimeContext, string>;
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progress?: ProgressBarSlotFactory;
+    progress?: ResolvableValue<SlotRuntimeContext, IProgressBarSlot>;
     /**
      * Czy wiersze siatki mogą być zaznaczane (opcjonalnie).
      */
-    canSelectRows?: BooleanFactory;
+    canSelectRows?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Baner do wyświetlenia nad siatką (slot lub funkcja zwracająca slot) (opcjonalnie).
      */
-    banner?: BannerSlotFactory;
+    banner?: ResolvableValue<SlotRuntimeContext, IBannerSlot>;
 }
 
 export interface IGridPresentationSlot extends ICustomSlot {
@@ -829,15 +795,15 @@ export interface IGridPresentationSlot extends ICustomSlot {
     /**
      * Wiersze siatki.
      */
-    rows: RecordsAsyncFactory;
+    rows: ResolvableAsyncValue<SlotRuntimeContext, Record<string, any>[]>;
     /**
      * Definicje kolumn (opcjonalnie).
      */
-    columns?: DataPresentationGridColumnsFactory;
+    columns?: ResolvableValue<SlotRuntimeContext, DataPresentationGridColumn<any>[]>;
     /**
      * Zainicjalizowane sortowanie (opcjonalnie).
      */
-    initialSort?: SortStateOptionsFactory;
+    initialSort?: ResolvableValue<SlotRuntimeContext, SortStateOptions>;
     /**
      * Wysokość siatki (np. "400px", "50vh") (opcjonalnie).
      */
@@ -853,41 +819,41 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Akcje dostępne w edytorze.
      */
-    actions?: ActionsFactory<monaco.editor.ICodeEditor>;
+    actions?: ResolvableValue<SlotRuntimeContext, Action<monaco.editor.ICodeEditor>[]>;
     /**
      * Zawartość edytora (tekst lub funkcja zwracająca tekst), domyślny, wstawiany przy montowaniu.
      */
-    content: StringAsyncFactory;
+    content: ResolvableAsyncValue<SlotRuntimeContext, string>;
     /**
      * Język składni edytora (np. "sql", "json").
      * @default "sql"
      */
-    language?: EditorLanguageIdFactory;
+    language?: ResolvableValue<SlotRuntimeContext, EditorLanguageId>;
     /**
      * Czy edytor ma być tylko do odczytu (opcjonalnie).
      * @default false
      */
-    readOnly?: BooleanFactory;
+    readOnly?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Czy edytor ma zawijać długie linie (opcjonalnie).
      * @default false
      */
-    wordWrap?: BooleanFactory;
+    wordWrap?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Czy edytor ma wyświetlać numery linii (opcjonalnie).
      * @default false
      */
-    lineNumbers?: BooleanFactory;
+    lineNumbers?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Czy pasek stanu ma być wyświetlany (opcjonalnie).
      * @default true
      */
-    statusBar?: boolean;
+    statusBar?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Czy minimapa ma być wyświetlana (opcjonalnie).
      * @default true
      */
-    miniMap?: boolean;
+    miniMap?: ResolvableValue<SlotRuntimeContext, boolean>;
 
     onMounted?: (runtimeContext: SlotRuntimeContext) => void;
     onPositionChanged?: (runtimeContext: SlotRuntimeContext, context: IEditorActionContext) => void;
@@ -914,11 +880,11 @@ export interface IEditorSlot extends ICustomSlot {
     /**
      * Pasek postępu (slot lub funkcja zwracająca slot).
      */
-    progress?: ProgressBarSlotFactory;
+    progress?: ResolvableValue<SlotRuntimeContext, IProgressBarSlot>;
     /**
      * Baner do wyświetlenia nad edytorem (slot lub funkcja zwracająca slot) (opcjonalnie).
      */
-    banner?: BannerSlotFactory;
+    banner?: ResolvableValue<SlotRuntimeContext, IBannerSlot>;
 }
 
 /**
@@ -930,7 +896,7 @@ export interface ITextSlot extends ICustomSlot {
     /**
      * Tekst do wyświetlenia (może być ReactNode lub funkcją zwracającą ReactNode).
      */
-    text: ReactNodeFactory;
+    text: ResolvableValue<SlotRuntimeContext, React.ReactNode>;
     /**
      * Maksymalna liczba wyświetlanych linii tekstu (opcjonalnie, domyślnie 3).
      */
@@ -938,7 +904,7 @@ export interface ITextSlot extends ICustomSlot {
     /**
      * Styl tekstu (opcjonalnie).
      */
-    style?: CSSPropertiesFactory;
+    style?: ResolvableValue<SlotRuntimeContext, React.CSSProperties>;
 }
 
 export interface IColumnSlot extends ICustomSlot {
@@ -949,7 +915,7 @@ export interface IColumnSlot extends ICustomSlot {
     /**
      * Zawartość kolumny (pola, wiersze lub kolumny).
      */
-    items: ContentSlotKindsFactory;
+    items: ResolvableValue<SlotRuntimeContext, ContentSlotKind[]>;
     /**
      * Szerokość kolumny (1-12, jak w Grid System).
      * @default undefined równa dystrybucja
@@ -973,7 +939,7 @@ export interface IRowSlot extends ICustomSlot {
     /**
      * Zawartość wiersza (pola, wiersze lub kolumny).
      */
-    items: ContentSlotKindsFactory;
+    items: ResolvableValue<SlotRuntimeContext, ContentSlotKind[]>;
     /**
      * Wysokość wiersza (1-12, jak w Grid System).
      * @default undefined równa dystrybucja
@@ -990,7 +956,7 @@ export interface IToolBarSlot extends ICustomSlot {
     /**
      * Narzędzia do wyświetlenia na pasku narzędzi.
      */
-    tools: ToolFactory;
+    tools: ResolvableValue<SlotRuntimeContext, ToolKind[]>;
     /**
      * Id slotu docelowego (opcjonalnie), którego dotyczą identyfikatory akcji (edytor, grid).
      * Działa jeśli w tools jest ciąg znaków z identyfikatorem akcji.
@@ -1006,7 +972,7 @@ export type ToolBarSlotsKind =
     ToolBarSlotKind 
     | ToolBarSlotKind[];
 
-export type ProgressBarDisplay = "auto" | BooleanFactory;
+export type ProgressBarDisplay = "auto" | ResolvableValue<SlotRuntimeContext, boolean>;
 
 /** 
  * Slot typu progressbar.
@@ -1024,19 +990,19 @@ export interface IProgressBarSlot extends ICustomSlot {
      * Pokaż procent wartości postępu.
      * @default false.
      */
-    showPercent?: BooleanFactory;
+    showPercent?: ResolvableValue<SlotRuntimeContext, boolean>;
     /**
      * Wartość postępu (0-100).
      */
-    value?: NumberFactory;
+    value?: ResolvableValue<SlotRuntimeContext, number>;
     /**
      * Wartość bufora postępu (0-100) (opcjonalnie).
      */
-    bufferValue?: NumberFactory;
+    bufferValue?: ResolvableValue<SlotRuntimeContext, number>;
     /**
      * Tekst wyświetlany na pasku postępu (opcjonalnie).
      */
-    label?: StringFactory;
+    label?: ResolvableValue<SlotRuntimeContext, string>;
     /**
      * Kolor paska postępu (opcjonalnie).
      * @default primary
@@ -1071,7 +1037,7 @@ export interface IDialogField {
     /**
      * Etykieta pola.
      */
-    label: StringFactory<Record<string, any>>;
+    label: ResolvableValue<Record<string, any>, string>;
     /**
      * Wartość domyślna pola.
      */
@@ -1080,20 +1046,20 @@ export interface IDialogField {
      * Czy pole jest wymagane.
      * @default false
      */
-    required?: BooleanFactory<Record<string, any>>;
+    required?: ResolvableValue<Record<string, any>, boolean>;
     /**
      * Czy pole jest zablokowane.
      * @default false
      */
-    disabled?: BooleanFactory<Record<string, any>>;
+    disabled?: ResolvableValue<Record<string, any>, boolean>;
     /**
      * Podpowiedź wyświetlana po najechaniu na pole.
      */
-    tooltip?: StringFactory<Record<string, any>>;
+    tooltip?: ResolvableValue<Record<string, any>, string>;
     /**
      * Tekst pomocniczy wyświetlany pod polem.
      */
-    helperText?: StringFactory<Record<string, any>>;
+    helperText?: ResolvableValue<Record<string, any>, string>;
     /**
      * Szerokość pola (np. "100%", 200).
      */
@@ -1111,7 +1077,7 @@ export interface IDialogField {
     /**
      * Ograniczenia wartości pola, to wyłącznie opis dla użytkownika, nie jest walidacją.
      */
-    restrictions?: StringsFactory<Record<string, any>>;
+    restrictions?: ResolvableValue<Record<string, any>, string[]>;
 }
 
 export interface IDialogTextField extends IDialogField {
@@ -1222,7 +1188,7 @@ export interface IDialogSelectField extends IDialogField {
     /**
      * Opcje do wyboru.
      */
-    options: SelectOptionsFactory<Record<string, any>>;
+    options: ResolvableValue<Record<string, any>, ISelectOption[]>;
     /**
      * Czy pole ma być wielokrotnego wyboru.
      * @default false
@@ -1256,11 +1222,11 @@ export interface IDialogStatic {
     /**
      * Zawartość tekstu (tekst lub funkcja zwracająca tekst).
      */
-    text: StringFactory<Record<string, any>>;
+    text: ResolvableValue<Record<string, any>, string>;
     /**
      * Styl tekstu (opcjonalnie).
      */
-    style?: CSSPropertiesFactory<Record<string, any>>;
+    style?: ResolvableValue<Record<string, any>, React.CSSProperties>;
 }
 
 export interface IDialogColumn {
@@ -1271,12 +1237,12 @@ export interface IDialogColumn {
     /**
      * Etykieta kolumny (opcjonalnie).
      */
-    label?: StringFactory<Record<string, any>>;
+    label?: ResolvableValue<Record<string, any>, string>;
     /**
      * Zawartość kolumny (pola, wiersze lub kolumny).
      * Kolumna układa elementy pionowo (pod sobą).
      */
-    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    items: ResolvableValue<Record<string, any>, DialogLayoutItemKind[]>;
 }
 
 export interface IDialogRow {
@@ -1287,12 +1253,12 @@ export interface IDialogRow {
     /**
      * Etykieta wiersza (opcjonalnie).
      */
-    label?: StringFactory<Record<string, any>>;
+    label?: ResolvableValue<Record<string, any>, string>;
     /**
      * Zawartość wiersza (pola, wiersze lub kolumny).
      * Wiersz układa elementy poziomo i interpretuje `item.size`.
      */
-    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    items: ResolvableValue<Record<string, any>, DialogLayoutItemKind[]>;
 }
 
 export interface IDialogTab {
@@ -1300,11 +1266,11 @@ export interface IDialogTab {
     /**
      * Etykieta zakładki.
      */
-    label: StringFactory<Record<string, any>>;
+    label: ResolvableValue<Record<string, any>, string>;
     /**
      * Zawartość zakładki (pola, wiersze, kolumny).
      */
-    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    items: ResolvableValue<Record<string, any>, DialogLayoutItemKind[]>;
     /**
      * Funkcja wywoływana po aktywacji zakładki.
      * @returns 
@@ -1320,7 +1286,7 @@ export interface IDialogTabs {
     /**
      * Zakładki dialogu.
      */
-    tabs: DialogTabsTabsFactory<Record<string, any>>;
+    tabs: ResolvableValue<Record<string, any>, IDialogTab[]>;
 }
 
 export interface IDialogListColumn {
@@ -1331,7 +1297,7 @@ export interface IDialogListColumn {
     /**
      * Etykieta kolumny.
      */
-    label: StringFactory<Record<string, any>>;
+    label: ResolvableValue<Record<string, any>, string>;
     /**
      * Rozmiar kolumny.
      */
@@ -1350,17 +1316,17 @@ export interface IDialogList {
     /**
      * Etykieta listy (opcjonalnie).
      */
-    label?: StringFactory<Record<string, any>>;
+    label?: ResolvableValue<Record<string, any>, string>;
     /**
      * Elementy elementu listy (pola, wiersze, kolumny).
      * Wszystkie elementy w items będą się odnośić do wartości elementu z listy z klucza `key` 
      */
-    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    items: ResolvableValue<Record<string, any>, DialogLayoutItemKind[]>;
     /**
      * Definicje kolumn listy (opcjonalnie). 
      * Jeśli nie podano, lista kolumn będzie pobrana z items.
      */
-    columns?: DialogListColumnsFactory<Record<string, any>>;
+    columns?: ResolvableValue<Record<string, any>, IDialogListColumn[]>;
     /**
      * Funkcja wywoływana przy dodawaniu nowego elementu do listy.
      * Można w niej zainicjalizować wartości nowego elementu.
@@ -1377,37 +1343,37 @@ export type DialogSize = "small" | "medium" | "large" | "full";
 
 export interface DialogConformButton {
     id: string;
-    label: StringFactory<Record<string, any>>;
+    label: ResolvableValue<Record<string, any>, string>;
     color?: ThemeColor;
-    disabled?: BooleanFactory<Record<string, any>>;
+    disabled?: ResolvableValue<Record<string, any>, boolean>;
 }
 
 export interface IDialogStandalone {
     /**
      * Tytuł dialogu.
      */
-    title: StringFactory<Record<string, any>>;
+    title: ResolvableValue<Record<string, any>, string>;
     /**
      * Układ pól dialogu.
      */
-    items: DialogLayoutItemsKindFactory<Record<string, any>>;
+    items: ResolvableValue<Record<string, any>, DialogLayoutItemKind[]>;
     /**
      * Tekst przycisku potwierdzającego.
      * id: "ok", label: "OK", color: "primary"
      * @default "OK"
      */
-    confirmLabel?: StringFactory<Record<string, any>>;
+    confirmLabel?: ResolvableValue<Record<string, any>, string>;
     /**
      * Tekst przycisku anulującego.
      * id: "cancel", label: "Cancel", color: "secondary"
      * @default "Cancel"
      */
-    cancelLabel?: StringFactory<Record<string, any>>;
+    cancelLabel?: ResolvableValue<Record<string, any>, string>;
     /**
      * Etykiety przycisków dialogu (opcjonalnie).
      * Jeśli podane, zastępują domyślne etykiety confirmLabel i cancelLabel.
      */
-    buttons?: DialogConformButtonsFactory<Record<string, any>>;
+    buttons?: ResolvableValue<Record<string, any>, DialogConformButton[]>;
     /**
      * Funkcja wywoływana po otwarciu dialogu.
      * @param values Wartości pól dialogu. Może być zmieniona przed wyświetleniem.
@@ -1458,110 +1424,11 @@ export interface IDialogSlot extends ICustomSlot, IDialogStandalone {
     type: "dialog";
 }
 
-export function resolveStringFactory<T = SlotRuntimeContext>(factory: StringFactory<T> | undefined, context: T): string | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
+export function resolveValue<T = SlotRuntimeContext, V = any>(resolvable: ResolvableValue<T, V> | undefined, context: T): V | undefined {
+    return typeof resolvable === "function" ? (resolvable as (context: T) => V)(context) : resolvable;
 }
-export function resolveStringsFactory<T = SlotRuntimeContext>(factory: StringsFactory<T> | undefined, context: T): string[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveStringAsyncFactory<T = SlotRuntimeContext>(factory: StringAsyncFactory<T> | undefined, context: T): Promise<string | undefined> | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveReactNodeFactory<T = SlotRuntimeContext>(factory: ReactNodeFactory<T> | undefined, context: T): React.ReactNode {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveBooleanFactory<T = SlotRuntimeContext>(factory: BooleanFactory<T> | undefined, context: T): boolean | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveActionsFactory(factory: ToolFactory | undefined, context: SlotRuntimeContext): ToolKind[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveRecordsAsyncFactory<T = SlotRuntimeContext>(factory: RecordsAsyncFactory<T> | undefined, context: T): Promise<Record<string, any>[] | Record<string, any> | string | undefined> | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveRecordsChangeFactory<T = SlotRuntimeContext>(factory: RecordsChangeFactory<T> | undefined, context: T): DataGridChangeRow<Record<string, any>>[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveColumnDefinitionsFactory<T = SlotRuntimeContext>(factory: ColumnDefinitionsFactory<T> | undefined, context: T): ColumnDefinition[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDataPresentationGridColumnsFactory<T = SlotRuntimeContext>(factory: DataPresentationGridColumnsFactory<any> | undefined, context: T): DataPresentationGridColumn<any>[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveActionFactory<T = any>(factory: ActionsFactory<T> | undefined, context: SlotRuntimeContext): Action<T>[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveActionGroupFactory<T = any>(factory: ActionGroupFactory<T> | undefined, context: SlotRuntimeContext): ActionGroup<T>[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveSplitSlotPartKindFactory(factory: SplitSlotPartKindFactory | undefined, context: SlotRuntimeContext): SplitSlotPartKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveTabSlotsFactory(factory: TabSlotsFactory | undefined, context: SlotRuntimeContext): IPinnableTabSlot[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveTabLabelKindFactory(factory: TabLabelSlotKindFactory | undefined, context: SlotRuntimeContext): TabLabelSlotKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveTabContentSlotKindFactory(factory: TabContentSlotKindFactory | undefined, context: SlotRuntimeContext): TabContentSlotKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveContentSlotKindFactory(factory: ContentSlotKindFactory | undefined, context: SlotRuntimeContext): ContentSlotKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveContentSlotKindsFactory(factory: ContentSlotKindsFactory | undefined, context: SlotRuntimeContext): ContentSlotKind[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveTitleSlotKindFactory(factory: TitleSlotKindFactory | undefined, context: SlotRuntimeContext): TitleSlotKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveTextSlotKindFactory(factory: TextSlotKindFactory | undefined, context: SlotRuntimeContext): TextSlotKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveContentSlotFactory(factory: ContentSlotFactory | undefined, context: SlotRuntimeContext): IContentSlot | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveSelectOptionsFactory<T = SlotRuntimeContext>(factory: SelectOptionsFactory<T> | undefined, context: T): Option[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveToolBarSlotsKindFactory(factory: ToolBarSlotsKindFactory | undefined, context: SlotRuntimeContext): ToolBarSlotsKind | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveNumberFactory(factory: NumberFactory | undefined, context: SlotRuntimeContext): number | null | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveNumberArrayFactory(factory: NumberArrayFactory | undefined, context: SlotRuntimeContext): number[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveProgressBarFactory(factory: ProgressBarSlotFactory | undefined, context: SlotRuntimeContext): IProgressBarSlot | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDialogsSlotFactory<T = SlotRuntimeContext>(factory: DialogsSlotFactory<T> | undefined, context: T): IDialogSlot[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDialogLayoutItemsKindFactory<T = SlotRuntimeContext>(factory: DialogLayoutItemsKindFactory<T> | undefined, context: T): DialogLayoutItemKind[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDialogTabsFactory<T = SlotRuntimeContext>(factory: DialogTabsTabsFactory<T> | undefined, context: T): IDialogTab[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDialogConformButtonsFactory<T = SlotRuntimeContext>(factory: DialogConformButtonsFactory<T> | undefined, context: T): DialogConformButton[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveCSSPropertiesFactory<T = SlotRuntimeContext>(factory: CSSPropertiesFactory<T> | undefined, context: T): React.CSSProperties | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveDialogListColumnsFactory<T = SlotRuntimeContext>(factory: DialogListColumnsFactory<T> | undefined, context: T): IDialogListColumn[] | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveSortStateOptionsFactory<T = SlotRuntimeContext>(factory: SortStateOptionsFactory<T> | undefined, context: T): SortStateOptions | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveBannerFactory<T = SlotRuntimeContext>(factory: BannerSlotFactory<T> | undefined, context: T): IBannerSlot | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
-}
-export function resolveLanguageIdFactory(factory: EditorLanguageIdFactory | undefined, context: SlotRuntimeContext): EditorLanguageId | undefined {
-    return typeof factory === "function" ? factory(context) : factory;
+export function resolveAsyncValue<T = SlotRuntimeContext, V = any>(resolvable: ResolvableAsyncValue<T, V> | undefined, context: T): Promise<V> | undefined {
+    return typeof resolvable === "function" ? (resolvable as (context: T) => Promise<V>)(context) : resolvable;
 }
 
 export function isIField(obj: any): obj is FieldTypeKind {

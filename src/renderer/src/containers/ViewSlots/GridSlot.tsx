@@ -1,19 +1,14 @@
 import React from "react";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@renderer/components/DataGrid/DataGrid";
-import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
+import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus } from "@renderer/components/DataGrid/DataGridTypes";
 import RefreshGridAction from "./actions/RefreshGridAction";
 import {
     IGridSlot,
     IGridStatusButton,
     isGridStatusButton,
-    resolveActionFactory,
-    resolveActionGroupFactory,
-    resolveBooleanFactory,
-    resolveColumnDefinitionsFactory,
-    resolveRecordsAsyncFactory,
-    resolveRecordsChangeFactory,
-    resolveStringFactory,
+    resolveAsyncValue,
+    resolveValue,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useToast } from "@renderer/contexts/ToastContext";
@@ -52,7 +47,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
     const [message, setMessage] = React.useState<string | undefined>(undefined);
     const [refresh, setRefresh] = React.useState<bigint>(0n);
     const [pendingRefresh, setPendingRefresh] = React.useState(false);
-    const [pivot, setPivot] = React.useState(resolveBooleanFactory(slot.pivot, runtimeContext) ?? false);
+    const [pivot, setPivot] = React.useState(resolveValue(slot.pivot, runtimeContext) ?? false);
     const [dataGridStatus, setDataGridStatus] = React.useState<DataGridStatus | undefined>(undefined);
     const [dataGridStatuses, setDataGridStatuses] = React.useState<DataGridStatusPart[] | undefined>(undefined);
     const [dataGridStatusesFunctions, setDataGridStatusesFunctions] = React.useState<IGridStatusButton[] | undefined>(undefined);
@@ -110,13 +105,13 @@ const GridSlot: React.FC<GridSlotProps> = ({
             setLoading(true);
             loadingRef.current = true;
             try {
-                const result = await resolveRecordsAsyncFactory(slot.rows, runtimeContext);
+                const result = await resolveAsyncValue(slot.rows, runtimeContext);
                 if (Array.isArray(result)) {
                     setMessage(undefined);
                     setRows(result ?? []);
-                    setColumns(resolveColumnDefinitionsFactory(slot.columns, runtimeContext) ?? []);
-                    setPivotColumns(resolveColumnDefinitionsFactory(slot.pivotColumns, runtimeContext));
-                    setPivot(resolveBooleanFactory(slot.pivot, runtimeContext) ?? false);
+                    setColumns(resolveValue(slot.columns, runtimeContext) ?? []);
+                    setPivotColumns(resolveValue(slot.pivotColumns, runtimeContext));
+                    setPivot(resolveValue(slot.pivot, runtimeContext) ?? false);
                 } else if (result && typeof result === "object") {
                     setMessage(undefined);
                     setRows(Object.entries(result).map(([key, value]) => ({
@@ -201,11 +196,11 @@ const GridSlot: React.FC<GridSlotProps> = ({
     }, [slot.statuses, dataGridStatus]);
 
     function dataGridMountHandler(context: DataGridContext<any>): void {
-        const actionGroups = resolveActionGroupFactory(slot.actionGroups, runtimeContext) ?? [];
+        const actionGroups = resolveValue(slot.actionGroups, runtimeContext) ?? [];
         if (actionGroups.length) {
             context.addActionGroup(...actionGroups);
         }
-        const actions = resolveActionFactory(slot.actions, runtimeContext) ?? [];
+        const actions = resolveValue(slot.actions, runtimeContext) ?? [];
         if (actions.length) {
             context.addAction(...actions);
         }
@@ -256,7 +251,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                 ) : (<DataGrid
                     columns={columns}
                     data={rows}
-                    changes={resolveRecordsChangeFactory(slot.changes, runtimeContext)}
+                    changes={resolveValue(slot.changes, runtimeContext)}
                     loading={loading ? t("loading---", "Loading...") : undefined}
                     onRowSelect={handleRowSelect}
                     ref={dataGridRef}
@@ -270,9 +265,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     getRowStyle={slot.getRowStyle !== undefined ? (row, index) => slot.getRowStyle?.(row, index, theme) ?? {} : undefined}
                     onCancelLoading={slot.onCancel ? () => slot.onCancel!(runtimeContext) : undefined}
                     overlayMode={slot.overlayMode ?? "small"}
-                    searchText={resolveStringFactory(slot.searchText, runtimeContext)}
+                    searchText={resolveValue(slot.searchText, runtimeContext)}
                     rebuildDisplayData={rebuildDisplayData}
-                    columnRowNumber={resolveBooleanFactory(slot.canSelectRows, runtimeContext)}
+                    columnRowNumber={resolveValue(slot.canSelectRows, runtimeContext)}
                 />
                 )}
             </Box>
@@ -283,9 +278,9 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     statuses={dataGridStatuses}
                     buttons={dataGridStatusesFunctions && dataGridStatusesFunctions.length > 0 ? {
                         last: dataGridStatusesFunctions.map((button, index) => {
-                            const toolTip = resolveStringFactory(button.tooltip, runtimeContext);
-                            const icon = resolveIcon(theme, button.icon);
-                            const label = resolveStringFactory(button.label, runtimeContext);
+                            const toolTip = resolveValue(button.tooltip, runtimeContext);
+                            const icon = resolveIcon(theme, resolveValue(button.icon, runtimeContext));
+                            const label = resolveValue(button.label, runtimeContext);
                             return (
                                 <StatusBarButton
                                     key={index}

@@ -2,7 +2,7 @@ import React from "react";
 import { Paper, Typography, useTheme } from "@mui/material";
 import { resolveIcon } from "@renderer/themes/icons";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { ITitleSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory, resolveToolBarSlotsKindFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITitleSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -72,15 +72,15 @@ const TitleSlot: React.FC<TitleSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedToolBarSlot = resolveToolBarSlotsKindFactory(slot.toolBar, runtimeContext);
-        setTitle(resolveReactNodeFactory(slot.title, runtimeContext));
-        setIcon(resolveIcon(theme, slot.icon));
+        const resolvedToolBarSlot = resolveValue(slot.toolBar, runtimeContext);
+        setTitle(resolveValue(slot.title, runtimeContext));
+        setIcon(resolveIcon(theme, resolveValue(slot.icon, runtimeContext)));
         if (resolvedToolBarSlot) {
             setActionBar(<ToolBarSlots slot={resolvedToolBarSlot} ref={ref} />);
         } else {
             setActionBar(null);
         }
-        setStyle(resolveCSSPropertiesFactory(slot.style, runtimeContext));
+        setStyle(resolveValue(slot.style, runtimeContext));
     }, [slot.title, slot.icon, slot.toolBar, slot.style, refresh]);
 
     const isSimpleTitle = ["string", "number", "boolean"].includes(typeof title);

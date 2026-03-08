@@ -1,5 +1,6 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { ContentSlotKindFactory, ISlot, TabSlotsFactory, ContentSlotFactory, ActionsFactory, DialogsSlotFactory, IPinnableTabSlot, ITabSlot } from "./CustomSlots";
+import { ISlot, ITabSlot, ResolvableValue, SlotRuntimeContext, IContentSlot, IDialogSlot } from "./CustomSlots";
+import { Action } from "@renderer/components/CommandPalette/ActionManager";
 
 export type ConnectionViewSlotType =
     "integrated"
@@ -19,14 +20,14 @@ export interface IConnectionViewSlot extends ISlot {
 
 export interface IConnectionRootSlot extends IConnectionViewSlot {
     type: "root";
-    slot: ContentSlotKindFactory;
+    slot: ResolvableValue<SlotRuntimeContext, IContentSlot>;
 }
 
 export interface IConnectionIntegratedSlot extends IConnectionViewSlot {
     type: "integrated";
-    side?: ContentSlotFactory;
-    editors?: TabSlotsFactory;
-    results?: TabSlotsFactory;
+    side?: ResolvableValue<SlotRuntimeContext, IContentSlot>;
+    editors?: ResolvableValue<SlotRuntimeContext, ITabSlot[]>;
+    results?: ResolvableValue<SlotRuntimeContext, ITabSlot[]>;
 }
 
 /**
@@ -43,11 +44,11 @@ export interface ConnectionActions<T> {
     /**
      * List of actions to be registered for the specified type. Each action includes an ID, label, optional icon, optional key sequence, and a run function that defines the behavior when the action is executed.
      */
-    actions: ActionsFactory<T>;
+    actions: ResolvableValue<SlotRuntimeContext, Action<T>[]>;
     /**
      * Optional dialogs slot factory for actions that require user input through dialogs. This allows plugins to provide custom dialog components for their actions, enhancing the user experience when interacting with the plugin's features.
      */
-    dialogs?: DialogsSlotFactory;
+    dialogs?: ResolvableValue<SlotRuntimeContext, IDialogSlot[]>;
 }
 
 /**

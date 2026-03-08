@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
     IRowSlot,
-    resolveContentSlotKindsFactory,
+    resolveValue,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent } from "./helpers";
@@ -72,7 +72,7 @@ const RowSlot: React.FC<RowSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const items = resolveContentSlotKindsFactory(slot.items, runtimeContext) ?? [];
+        const items = resolveValue(slot.items, runtimeContext) ?? [];
 
         setItemsNodes(
             items.map((item, index) => {

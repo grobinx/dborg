@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, styled, useThemeProps } from "@mui/material";
-import { ITextSlot, resolveCSSPropertiesFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITextSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -66,8 +66,8 @@ const TextSlot: React.FC<TextSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        setText(resolveReactNodeFactory(slot.text, runtimeContext) ?? "");
-        setStyle(resolveCSSPropertiesFactory(slot.style, runtimeContext));
+        setText(resolveValue(slot.text, runtimeContext) ?? "");
+        setStyle(resolveValue(slot.style, runtimeContext));
     }, [slot.text, slot.style, refresh]);
 
     const isSimpleText = ["string", "number", "boolean"].includes(typeof text);

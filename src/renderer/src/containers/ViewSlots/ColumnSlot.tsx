@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
     IColumnSlot,
-    resolveContentSlotKindsFactory,
+    resolveValue,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { createContentComponent } from "./helpers";
@@ -71,7 +71,7 @@ const ColumnSlot: React.FC<ColumnSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const items = resolveContentSlotKindsFactory(slot.items, runtimeContext) ?? [];
+        const items = resolveValue(slot.items, runtimeContext) ?? [];
 
         setItemsNodes(
             items.map((item, index) => {

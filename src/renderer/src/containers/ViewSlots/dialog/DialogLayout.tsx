@@ -3,8 +3,7 @@ import {
     DialogGridSize,
     IDialogColumn,
     IDialogRow,
-    resolveDialogLayoutItemsKindFactory,
-    resolveStringFactory,
+    resolveValue,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import { Stack } from "@mui/material";
@@ -32,8 +31,8 @@ export const DialogRow: React.FC<{
 }> = (props) => {
     const { row, structure, onChange, invalidFields, onValidityChange, disabled, ref } = props;
 
-    const label = resolveStringFactory(row.label, structure);
-    const items = resolveDialogLayoutItemsKindFactory(row.items, structure) || [];
+    const label = resolveValue(row.label, structure);
+    const items = resolveValue(row.items, structure) || [];
 
     const content = (
         <Stack direction="row" flexWrap="wrap" gap="8px" width="100%" alignItems="stretch" ref={ref} data-focus-container={true}>
@@ -75,8 +74,8 @@ export const DialogColumn: React.FC<{
 }> = (props) => {
     const { column, structure, onChange, invalidFields, onValidityChange, disabled, ref } = props;
 
-    const label = resolveStringFactory(column.label, structure);
-    const items = resolveDialogLayoutItemsKindFactory(column.items, structure) || [];
+    const label = resolveValue(column.label, structure);
+    const items = resolveValue(column.items, structure) || [];
 
     const content = (
         <Stack direction="column" gap="8px" width="100%" ref={ref} data-focus-container={true}>

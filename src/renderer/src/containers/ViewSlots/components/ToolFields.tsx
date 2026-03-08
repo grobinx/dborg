@@ -5,9 +5,8 @@ import { TextField } from "@renderer/components/inputs/TextField";
 import { 
     SlotRuntimeContext,
     INumberField, ISearchField, ISelectField, ITextField, 
-    resolveBooleanFactory, resolveSelectOptionsFactory, 
     IBooleanField,
-    resolveStringFactory
+    resolveValue
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { SearchField } from "@renderer/components/inputs/SearchField";
@@ -28,10 +27,10 @@ export const ToolSelectedField: React.FC<{ action: ISelectField, runtimeContext:
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
+                disabled={resolveValue(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
-                options={resolveSelectOptionsFactory(action.options, runtimeContext) || []}
+                options={resolveValue(action.options, runtimeContext) || []}
                 tooltip={action.tooltip}
             />
         </InputDecorator>
@@ -53,7 +52,7 @@ export const ToolTextField: React.FC<{ action: ITextField, runtimeContext: SlotR
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
+                disabled={resolveValue(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -79,7 +78,7 @@ export const ToolSearchField: React.FC<{ action: ISearchField, runtimeContext: S
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
+                disabled={resolveValue(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 minLength={action.minLength}
@@ -105,7 +104,7 @@ export const ToolNumberField: React.FC<{ action: INumberField, runtimeContext: S
                 value={value}
                 onChange={value => setValue(value ?? null)}
                 onChanged={value => action.onChange(value ?? action.defaultValue ?? action.min ?? null)}
-                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
+                disabled={resolveValue(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 min={action.min}
@@ -130,7 +129,7 @@ export const ToolBooleanField: React.FC<{ action: IBooleanField, runtimeContext:
                 value={value}
                 onChange={setValue}
                 onChanged={action.onChange}
-                disabled={resolveBooleanFactory(action.disabled, runtimeContext)}
+                disabled={resolveValue(action.disabled, runtimeContext)}
                 size="small"
                 width={action.width}
                 label={action.label}

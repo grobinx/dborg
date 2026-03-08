@@ -8,14 +8,10 @@ import {
     IDialogNumberField,
     IDialogSelectField,
     IDialogBooleanField,
-    resolveBooleanFactory,
-    resolveSelectOptionsFactory,
-    resolveStringFactory,
     IDialogEditorField,
     IDialogTextareaField,
     IDialogStatic,
-    resolveCSSPropertiesFactory,
-    resolveStringsFactory
+    resolveValue
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import { EditorField } from "@renderer/components/inputs/EditorField";
@@ -39,12 +35,12 @@ export const DialogTextField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -103,12 +99,12 @@ export const DialogTextareaField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -170,12 +166,12 @@ export const DialogNumberField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -235,13 +231,13 @@ export const DialogSelectField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const options = resolveSelectOptionsFactory(field.options, structure) || [];
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const options = resolveValue(field.options, structure) || [];
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -300,12 +296,12 @@ export const DialogBooleanField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -363,12 +359,12 @@ export const DialogEditorField: React.FC<{
         disabled: propDisabled,
     } = props;
 
-    const label = resolveStringFactory(field.label, structure);
-    const tooltip = resolveStringFactory(field.tooltip, structure);
-    const helperText = resolveStringFactory(field.helperText, structure);
-    const disabled = propDisabled ?? resolveBooleanFactory(field.disabled, structure);
-    const required = resolveBooleanFactory(field.required, structure);
-    const restrictions = resolveStringsFactory(field.restrictions, structure);
+    const label = resolveValue(field.label, structure);
+    const tooltip = resolveValue(field.tooltip, structure);
+    const helperText = resolveValue(field.helperText, structure);
+    const disabled = propDisabled ?? resolveValue(field.disabled, structure);
+    const required = resolveValue(field.required, structure);
+    const restrictions = resolveValue(field.restrictions, structure);
 
     return (
         <InputDecorator
@@ -419,8 +415,8 @@ export const DialogStatic: React.FC<{
     onValidityChange: () => void;
 }> = (props) => {
     const { item, structure, onValidityChange } = props;
-    const text = resolveStringFactory(item.text, structure);
-    const style = resolveCSSPropertiesFactory(item.style, structure);
+    const text = resolveValue(item.text, structure);
+    const style = resolveValue(item.style, structure);
 
     React.useEffect(() => {
         onValidityChange();

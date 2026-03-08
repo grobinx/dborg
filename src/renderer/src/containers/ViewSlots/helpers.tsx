@@ -1,35 +1,27 @@
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import {
-    ToolFactory,
-    ContentSlotKindFactory,
-    resolveActionsFactory,
-    resolveContentSlotKindFactory,
-    resolveSplitSlotPartKindFactory,
-    resolveTabContentSlotKindFactory,
-    resolveTabLabelKindFactory,
-    resolveTextSlotKindFactory,
-    resolveTitleSlotKindFactory,
-    SplitSlotPartKindFactory,
-    TabContentSlotKindFactory,
-    TabLabelSlotKindFactory,
-    TextSlotKindFactory,
-    TitleSlotKindFactory,
     isTextField,
     isNumberField,
     isSelectField,
     isAutoRefresh,
     isCopyData,
-    resolveToolBarSlotsKindFactory,
-    ToolBarSlotsKindFactory,
     IPinnableTabSlot,
     isSearchField,
-    ProgressBarSlotFactory,
-    resolveProgressBarFactory,
     isTextSlot,
     SlotRuntimeContext,
     isBooleanField,
-    BannerSlotFactory,
-    resolveBannerFactory,
+    resolveValue,
+    ToolKind,
+    ResolvableValue,
+    SplitSlotPartKind,
+    TabLabelSlotKind,
+    TabContentSlotKind,
+    ContentSlotKind,
+    TitleSlotKind,
+    TextSlotKind,
+    ToolBarSlotsKind,
+    IProgressBarSlot,
+    IBannerSlot,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import React from "react";
 import GridSlot from "./GridSlot";
@@ -61,11 +53,11 @@ import GridPresentationSlot from "./GridPresentationSlot";
 import BannerSlot from "./BannerSlot";
 
 export function createContentComponent(
-    slot: ContentSlotKindFactory,
+    slot: ResolvableValue<SlotRuntimeContext, ContentSlotKind>,
     runtimeContext: SlotRuntimeContext,
     ref?: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveContentSlotKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         switch (resolvedContent.type) {
             case "grid": {
@@ -99,14 +91,14 @@ export function createContentComponent(
 
 export function createTabLabel(
     tabSlot: IPinnableTabSlot,
-    slot: TabLabelSlotKindFactory,
+    slot: ResolvableValue<SlotRuntimeContext, TabLabelSlotKind>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
     onClose?: () => void,
     onPin?: () => void,
     pinned?: boolean,
 ): React.ReactNode {
-    const resolvedLabel = resolveTabLabelKindFactory(slot, runtimeContext);
+    const resolvedLabel = resolveValue(slot, runtimeContext);
     if (resolvedLabel) {
         if (resolvedLabel.type === "tablabel") {
             return <TabLabelSlot key={resolvedLabel.id} tabSlot={tabSlot} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} pinned={pinned} />;
@@ -118,11 +110,11 @@ export function createTabLabel(
 }
 
 export function createTabContent(
-    slot: TabContentSlotKindFactory,
+    slot: ResolvableValue<SlotRuntimeContext, TabContentSlotKind>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTabContentSlotKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -151,7 +143,7 @@ export function createTabPanel(
 } {
     const content = createTabContent(slot.content, runtimeContext, contentRef);
     const label = createTabLabel(slot, slot.label, runtimeContext, labelRef, onClose, onPin, pinned);
-    const toolBar = createTabToolbar(slot.toolBar, runtimeContext, toolBarRef);
+    const toolBar = slot.toolBar ? createTabToolbar(slot.toolBar, runtimeContext, toolBarRef) : null;
     let panel: React.ReactNode = null;
     if (content && label) {
         panel = (
@@ -173,11 +165,11 @@ export function createTabPanel(
 }
 
 export function createTabToolbar(
-    slot: ToolBarSlotsKindFactory | undefined,
+    slot: ResolvableValue<SlotRuntimeContext, ToolBarSlotsKind>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveToolBarSlotsKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         return <ToolBarSlots slot={resolvedContent} ref={ref} />
     }
@@ -185,11 +177,11 @@ export function createTabToolbar(
 }
 
 export function createTitleContent(
-    slot: TitleSlotKindFactory,
+    slot: ResolvableValue<SlotRuntimeContext, TitleSlotKind>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTitleSlotKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         if (resolvedContent.type === "title") {
             return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -201,11 +193,11 @@ export function createTitleContent(
 }
 
 export function createTextContent(
-    slot: TextSlotKindFactory,
+    slot: ResolvableValue<SlotRuntimeContext, TextSlotKind>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveTextSlotKindFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         if (resolvedContent.type === "text") {
             return <TextSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -217,11 +209,11 @@ export function createTextContent(
 }
 
 export function createSplitPartContent(
-    part: SplitSlotPartKindFactory,
+    part: ResolvableValue<SlotRuntimeContext, SplitSlotPartKind>,
     runtimeContext: SlotRuntimeContext,
     ref?: React.Ref<HTMLDivElement>,
 ): React.ReactNode | null {
-    const resolvedPart = resolveSplitSlotPartKindFactory(part, runtimeContext);
+    const resolvedPart = resolveValue(part, runtimeContext);
     if (resolvedPart) {
         switch (resolvedPart.type) {
             case "content":
@@ -250,12 +242,12 @@ export function createSplitPartContent(
 }
 
 export function createProgressBarContent(
-    slot: ProgressBarSlotFactory,
+    slot: ResolvableValue<SlotRuntimeContext, IProgressBarSlot>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
     absolute?: boolean,
 ): React.ReactNode {
-    const resolvedContent = resolveProgressBarFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         if (resolvedContent.type === "progress") {
             return <ProgressBarSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} absolute={absolute} />;
@@ -265,11 +257,11 @@ export function createProgressBarContent(
 }
 
 export function createBannerContent(
-    slot: BannerSlotFactory,
+    slot: ResolvableValue<SlotRuntimeContext, IBannerSlot>,
     runtimeContext: SlotRuntimeContext,
     ref: React.Ref<HTMLDivElement>,
 ): React.ReactNode {
-    const resolvedContent = resolveBannerFactory(slot, runtimeContext);
+    const resolvedContent = resolveValue(slot, runtimeContext);
     if (resolvedContent) {
         if (resolvedContent.type === "banner") {
             return <BannerSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
@@ -278,8 +270,8 @@ export function createBannerContent(
     return null;
 }
 
-export function createActionComponents(
-    actions: ToolFactory | undefined,
+export function createToolComponents(
+    actions: ResolvableValue<SlotRuntimeContext, ToolKind[]>,
     actionSlotId: string | undefined,
     getRefSlot: ReturnType<typeof useRefSlot>["getRefSlot"],
     runtimeContext: SlotRuntimeContext,
@@ -289,7 +281,7 @@ export function createActionComponents(
     let commandManager: CommandManager<any> | null = null;
     let actionContext: (() => any) | null = null;
 
-    const resolvedActions = resolveActionsFactory(actions, runtimeContext);
+    const resolvedActions = resolveValue(actions, runtimeContext);
     if (resolvedActions) {
         if (actionSlotId) {
             const dataGridRef = getRefSlot<DataGridActionContext<any>>(actionSlotId, "datagrid");

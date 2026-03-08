@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { IContentSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IContentSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { createBannerContent, createContentComponent, createProgressBarContent, createTextContent, createTitleContent } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -68,7 +68,7 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     const slotRef = React.useRef<ContentSlotContext>(null);
     const actionManager = React.useRef<IActionManager<ContentSlotContext>>(null);
     const runtimeContext = useSlotRuntimeContext({});
-    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => resolveDialogsSlotFactory(slot.dialogs, runtimeContext) ?? null, [slot.dialogs, runtimeContext, refresh]) });
+    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => resolveValue(slot.dialogs, runtimeContext) ?? null, [slot.dialogs, runtimeContext, refresh]) });
 
     React.useImperativeHandle(slotRef, () => contentSlotContext);
 
@@ -107,9 +107,9 @@ const ContentSlot: React.FC<ContentSlotOwnProps> = (props) => {
     React.useEffect(() => {
         if ((slot.actionGroups || slot.actions) && !actionManager.current) {
             actionManager.current = new ActionManager<ContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, runtimeContext);
+            const actions = resolveValue(slot.actions, runtimeContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, runtimeContext);
+            const groups = resolveValue(slot.actionGroups, runtimeContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 

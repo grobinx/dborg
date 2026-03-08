@@ -1,5 +1,4 @@
 import React from "react";
-import { useTheme } from "@mui/material/styles";
 import {
     IDialogStandalone,
 } from "../../../../../plugins/manager/renderer/CustomSlots";

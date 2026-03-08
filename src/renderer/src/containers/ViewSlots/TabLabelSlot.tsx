@@ -1,6 +1,6 @@
 import React from "react";
 import { useTheme, useThemeProps } from "@mui/material";
-import { ITabLabelSlot, IPinnableTabSlot, resolveBooleanFactory, resolveReactNodeFactory } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabLabelSlot, IPinnableTabSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import { resolveIcon } from "@renderer/themes/icons";
@@ -41,8 +41,8 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     const runtimeContext = useSlotRuntimeContext({});
     const [maxWidthTabLabel] = useSetting<number | string>("ui", "max-width-tab-label");
 
-    const closable = resolveBooleanFactory(tabSlot.closable, runtimeContext);
-    const pinnable = resolveBooleanFactory(tabSlot.pinnable, runtimeContext);
+    const closable = resolveValue(tabSlot.closable, runtimeContext);
+    const pinnable = resolveValue(tabSlot.pinnable, runtimeContext);
 
     React.useEffect(() => {
         const unregisterRefresh = registerRefresh(slotId, (redraw) => {
@@ -68,8 +68,8 @@ const TabLabelSlot: React.FC<TabLabelSlotOwnProps> = (props) => {
     }, [active]);
 
     React.useEffect(() => {
-        setIcon(resolveIcon(theme, slot.icon));
-        setLabel(resolveReactNodeFactory(slot.label, runtimeContext) ?? "");
+        setIcon(resolveIcon(theme, resolveValue(slot.icon, runtimeContext)));
+        setLabel(resolveValue(slot.label, runtimeContext) ?? "");
     }, [slot.icon, slot.label, refresh]);
 
     React.useEffect(() => {

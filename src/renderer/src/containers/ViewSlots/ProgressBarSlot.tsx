@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, LinearProgress, Typography } from "@mui/material";
 import { styled, useThemeProps } from "@mui/material/styles";
-import { IProgressBarSlot, resolveBooleanFactory, resolveNumberFactory, resolveStringFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { IProgressBarSlot, resolveValue, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
@@ -78,10 +78,10 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
     }, [rootVisible]);
 
     React.useEffect(() => {
-        const resolvedValue = resolveNumberFactory(slot.value, runtimeContext);
-        const resolvedBufferValue = resolveNumberFactory(slot.bufferValue, runtimeContext);
-        const resolvedLabel = resolveStringFactory(slot.label, runtimeContext);
-        const resolvedShowPercent = resolveBooleanFactory(slot.showPercent, runtimeContext) ?? false;
+        const resolvedValue = resolveValue(slot.value, runtimeContext);
+        const resolvedBufferValue = resolveValue(slot.bufferValue, runtimeContext);
+        const resolvedLabel = resolveValue(slot.label, runtimeContext);
+        const resolvedShowPercent = resolveValue(slot.showPercent, runtimeContext) ?? false;
         const resolvedColor = slot.color ? slot.color : "primary";
 
         setColor(resolvedColor);
@@ -95,7 +95,7 @@ const ProgressBarSlot: React.FC<ProgressBarSlotOwnProps> = (props) => {
         if (displayFactory === "auto") {
             setDisplay(resolvedValue !== null && resolvedValue !== undefined);
         } else {
-            const resolvedDisplay = resolveBooleanFactory(displayFactory, runtimeContext) ?? false;
+            const resolvedDisplay = resolveValue(displayFactory, runtimeContext) ?? false;
             setDisplay(resolvedDisplay);
         }
     }, [slotId, refresh]);

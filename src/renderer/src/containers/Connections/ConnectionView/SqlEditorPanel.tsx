@@ -41,7 +41,7 @@ import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { usePluginManager } from "@renderer/contexts/PluginManagerContext";
 import { useSlotRuntimeContext } from "@renderer/containers/ViewSlots/hooks/useSlotRuntimeContext";
 import { useSlotDialogs } from "@renderer/containers/ViewSlots/hooks/useSlotDialogs";
-import { resolveActionFactory, resolveDialogsSlotFactory } from "../../../../../../plugins/manager/renderer/CustomSlots";
+import { resolveValue } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 //import { SqlParser } from "@renderer/components/editor/SqlParser";
 
@@ -93,7 +93,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const [, setTabEditor] = useTabValue<monaco.editor.IStandaloneCodeEditor | undefined>(itemID!, "editor");
     const runtimeContext = useSlotRuntimeContext({});
     const pluginActionsRef = useRef(plugins.getConnectionActions("sql-editor", session));
-    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => pluginActionsRef.current?.flatMap(pa => resolveDialogsSlotFactory(pa.dialogs, runtimeContext)).filter(dialogs => dialogs !== undefined) ?? null, [pluginActionsRef.current, runtimeContext]) });
+    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => pluginActionsRef.current?.flatMap(pa => resolveValue(pa.dialogs, runtimeContext)).filter(dialogs => dialogs !== undefined) ?? null, [pluginActionsRef.current, runtimeContext]) });
 
     useEffect(() => {
         editorInstanceRef.current = editorInstance;
@@ -345,7 +345,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         actionManager.registerAction(MenuReopenSqlEditorTab(() => { queueMessage(SQL_EDITOR_MENU_REOPEN, { tabsItemID }); }));
         actionManager.registerAction(SelectQueryHistoryAction(() => setOpenSelectQueryHistoryDialog(true)));
 
-        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveActionFactory(pa.actions, runtimeContext)?.filter(a => a !== undefined) ?? []);
+        const pluginActions = pluginActionsRef.current?.flatMap(pa => resolveValue(pa.actions, runtimeContext)?.filter(a => a !== undefined) ?? []);
         if (pluginActions && pluginActions.length > 0) {
             actionManager.registerAction(...pluginActions);
         }

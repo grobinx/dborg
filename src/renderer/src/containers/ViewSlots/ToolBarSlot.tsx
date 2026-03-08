@@ -5,7 +5,7 @@ import { useRefSlot } from "./RefSlotContext";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { IActionManager } from "@renderer/components/CommandPalette/ActionManager";
 import { CommandManager } from "@renderer/components/CommandPalette/CommandManager";
-import { createActionComponents } from "./helpers";
+import { createToolComponents } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
@@ -112,7 +112,7 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
             setRenderNode(<slot.render runtimeContext={runtimeContext} />);
             return;
         }
-        setActionComponents(createActionComponents(slot.tools, slot.actionSlotId, getRefSlot, runtimeContext));
+        setActionComponents(createToolComponents(slot.tools, slot.actionSlotId, getRefSlot, runtimeContext));
     }, [slotId, refresh]);
 
     // Handler onKeyDown

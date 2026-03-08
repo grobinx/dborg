@@ -3,9 +3,7 @@ import {
     IDialogList,
     IDialogListColumn,
     DialogLayoutItemKind,
-    resolveDialogLayoutItemsKindFactory,
-    resolveDialogListColumnsFactory,
-    resolveStringFactory,
+    resolveValue,
     isDialogTextField,
     isDialogTextareaField,
     isDialogNumberField,
@@ -62,7 +60,7 @@ const inferColumnsFromItems = (
             });
         } else if (isDialogRow(item) || isDialogColumn(item)) {
             // Rekurencyjnie przeszukaj zagnieżdżone items
-            const nestedItems = resolveDialogLayoutItemsKindFactory(item.items || [], rowContext) || [];
+            const nestedItems = resolveValue(item.items || [], rowContext) || [];
             const nestedColumns = inferColumnsFromItems(nestedItems, rowContext);
             columns.push(...nestedColumns);
         }
@@ -152,11 +150,11 @@ export const DialogList: React.FC<{
 
     const selectedRow = selectedIndex != null && selectedIndex >= 0 ? (rows[selectedIndex] ?? {}) : undefined;
 
-    const label = resolveStringFactory(list.label, structure);
-    const resolvedItems = resolveDialogLayoutItemsKindFactory(list.items, selectedRow ?? {}) || [];
+    const label = resolveValue(list.label, structure);
+    const resolvedItems = resolveValue(list.items, selectedRow ?? {}) || [];
     const columns = React.useMemo(
         () => {
-            const configuredColumns = resolveDialogListColumnsFactory(list.columns, structure);
+            const configuredColumns = resolveValue(list.columns, structure);
             return configuredColumns && configuredColumns.length > 0
                 ? configuredColumns
                 : inferColumnsFromItems(resolvedItems, {});
@@ -186,7 +184,7 @@ export const DialogList: React.FC<{
                         <TableRow>
                             {columns.map((column) => (
                                 <TableCell key={column.key} sx={{ ...getItemWrapperStyle(column.size) }}>
-                                    {resolveStringFactory(column.label, structure) ?? column.key}
+                                    {resolveValue(column.label, structure) ?? column.key}
                                 </TableCell>
                             ))}
                             <TableCell key="__actions" sx={{ width: "1%" }}>

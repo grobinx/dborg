@@ -4,10 +4,8 @@ import * as monaco from "monaco-editor";
 import MonacoEditor, { EditorLanguageId, IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import {
     IEditorSlot,
-    resolveActionFactory,
-    resolveBooleanFactory,
-    resolveLanguageIdFactory,
-    resolveStringAsyncFactory,
+    resolveValue,
+    resolveAsyncValue,
 } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
@@ -38,6 +36,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
     const [lineNumbers, setLineNumbers] = React.useState<boolean>(true);
     const [languageId, setLanguageId] = React.useState<EditorLanguageId>("sql");
     const [statusBar, setStatusBar] = React.useState<boolean>(true);
+    const [miniMap, setMiniMap] = React.useState<boolean>(true);
     const editorInstanceRef = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const editorRef = React.useRef<IEditorActionContext | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
@@ -93,7 +92,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
         const fetchContent = async () => {
             setLoading(true);
             try {
-                const result = await resolveStringAsyncFactory(slot.content, runtimeContext);
+                const result = await resolveAsyncValue(slot.content, runtimeContext);
                 if (gettingContentRef.current && typeof result === "string") {
                     setContent(result);
                     editorInstanceRef.current?.setValue(result);
@@ -114,11 +113,12 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             }
         };
         fetchContent();
-        setReadOnly(resolveBooleanFactory(slot.readOnly, runtimeContext) ?? false);
-        setWordWrap(resolveBooleanFactory(slot.wordWrap, runtimeContext) ?? false);
-        setLineNumbers(resolveBooleanFactory(slot.lineNumbers, runtimeContext) ?? true);
-        setStatusBar(resolveBooleanFactory(slot.statusBar, runtimeContext) ?? true);
-        setLanguageId(resolveLanguageIdFactory(slot.language, runtimeContext) ?? "sql");
+        setReadOnly(resolveValue(slot.readOnly, runtimeContext) ?? false);
+        setWordWrap(resolveValue(slot.wordWrap, runtimeContext) ?? false);
+        setLineNumbers(resolveValue(slot.lineNumbers, runtimeContext) ?? true);
+        setStatusBar(resolveValue(slot.statusBar, runtimeContext) ?? true);
+        setMiniMap(resolveValue(slot.miniMap, runtimeContext) ?? true);
+        setLanguageId(resolveValue(slot.language, runtimeContext) ?? "sql");
         if (slot.progress) {
             setProgressBar(prev => ({
                 ...prev,
@@ -131,12 +131,12 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
                 node: createBannerContent(slot.banner!, runtimeContext, prev.ref)
             }));
         }
-    }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, refresh]);
+    }, [slot.content, slot.actions, slot.readOnly, slot.wordWrap, slot.lineNumbers, slot.statusBar, slot.miniMap, refresh]);
 
     const handleOnMount = (editor: monaco.editor.IStandaloneCodeEditor, _monaco: Monaco, actionManager: IActionManager<monaco.editor.ICodeEditor>) => {
         editorInstanceRef.current = editor;
 
-        const actions = resolveActionFactory(slot.actions, runtimeContext) ?? [];
+        const actions = resolveValue(slot.actions, runtimeContext) ?? [];
         actionManager.registerAction(...actions);
 
         slot?.onMounted?.(runtimeContext);
@@ -175,7 +175,7 @@ const EditorSlot: React.FC<EditorSlotProps> = ({
             wordWrap={wordWrap}
             lineNumbers={lineNumbers}
             statusBar={statusBar}
-            miniMap={slot.miniMap}
+            miniMap={miniMap}
             overlayMode={slot.overlayMode ?? "small"}
             onCancel={slot.onCancel ? () => slot.onCancel!(runtimeContext) : undefined}
             topChildren={<>{progressBar.node}{banner.node}</>}

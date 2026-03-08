@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useThemeProps } from "@mui/material";
-import { ITabContentSlot, resolveActionFactory, resolveActionGroupFactory, resolveDialogsSlotFactory, SlotRuntimeContext } from "../../../../../plugins/manager/renderer/CustomSlots";
+import { ITabContentSlot, resolveValue } from "../../../../../plugins/manager/renderer/CustomSlots";
 import { useViewSlot } from "./ViewSlotContext";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { TAB_PANEL_CHANGED, TabPanelChangedMessage } from "@renderer/app/Messages";
@@ -59,7 +59,7 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
     const tabSlotRef = React.useRef<TabContentSlotContext>(null);
     const actionManager = React.useRef<IActionManager<TabContentSlotContext>>(null);
     const runtimeContext = useSlotRuntimeContext({});
-    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => resolveDialogsSlotFactory(slot.dialogs, runtimeContext) ?? null, [slot.dialogs, runtimeContext, refresh]) });
+    const dialogs = useSlotDialogs({ dialogSlots: React.useMemo(() => resolveValue(slot.dialogs, runtimeContext) ?? null, [slot.dialogs, runtimeContext, refresh]) });
 
     React.useImperativeHandle(tabSlotRef, () => tabSlotContext);
 
@@ -106,9 +106,9 @@ const TabContentSlot: React.FC<TabContentSlotOwnProps> = (props) => {
 
         if ((slot.actionGroups || slot.actions) && (!actionManager.current || refreshChanged)) {
             actionManager.current = new ActionManager<TabContentSlotContext>();
-            const actions = resolveActionFactory(slot.actions, runtimeContext);
+            const actions = resolveValue(slot.actions, runtimeContext);
             actionManager.current.registerAction(...(actions ?? []));
-            const groups = resolveActionGroupFactory(slot.actionGroups, runtimeContext);
+            const groups = resolveValue(slot.actionGroups, runtimeContext);
             actionManager.current.registerActionGroup(...(groups ?? []));
         }
 

@@ -4,9 +4,6 @@ import { Button } from "@renderer/components/buttons/Button";
 import {
     IDialogStandalone,
     DialogLayoutItemKind,
-    resolveDialogLayoutItemsKindFactory,
-    resolveStringFactory,
-    resolveStringsFactory,
     isDialogRow,
     isDialogColumn,
     isDialogTextField,
@@ -18,12 +15,9 @@ import {
     isDialogTabs,
     isDialogStatic,
     isDialogList,
-    resolveDialogTabsFactory,
-    resolveDialogConformButtonsFactory,
-    resolveDialogListColumnsFactory,
     DialogConformButton,
     IDialogTab,
-    resolveBooleanFactory,
+    resolveValue,
 } from "../../../../../../plugins/manager/renderer/CustomSlots";
 import { DialogLayoutItem } from "./DialogLayoutItem";
 import { useTranslation } from "react-i18next";
@@ -59,12 +53,12 @@ const applyDefaults = (
                 target[item.key] = item.defaultValue;
             }
         } else if (isDialogRow(item) || isDialogColumn(item)) {
-            const nested = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            const nested = resolveValue(item.items, structure) ?? [];
             applyDefaults(nested, structure, target);
         } else if (isDialogTabs(item)) {
-            const tabs = resolveDialogTabsFactory(item.tabs, structure) ?? [];
+            const tabs = resolveValue(item.tabs, structure) ?? [];
             tabs.forEach(tab => {
-                const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, structure) ?? [];
+                const tabItems = resolveValue(tab.items, structure) ?? [];
                 applyDefaults(tabItems, structure, target);
             });
         }
@@ -96,27 +90,27 @@ const collectItemSearchParts = (
     ) {
         return [
             item.key,
-            resolveStringFactory(item.label, structure),
-            resolveStringFactory(item.tooltip, structure),
-            resolveStringFactory(item.helperText, structure),
-            ...(resolveStringsFactory(item.restrictions, structure) ?? []),
+            resolveValue(item.label, structure),
+            resolveValue(item.tooltip, structure),
+            resolveValue(item.helperText, structure),
+            ...(resolveValue(item.restrictions, structure) ?? []),
         ].filter((v): v is string => Boolean(v));
     }
 
     if (isDialogRow(item) || isDialogColumn(item)) {
-        return [resolveStringFactory(item.label, structure)].filter((v): v is string => Boolean(v));
+        return [resolveValue(item.label, structure)].filter((v): v is string => Boolean(v));
     }
 
     if (isDialogStatic(item)) {
-        return [resolveStringFactory(item.text, structure)].filter((v): v is string => Boolean(v));
+        return [resolveValue(item.text, structure)].filter((v): v is string => Boolean(v));
     }
 
     if (isDialogList(item)) {
-        const columns = resolveDialogListColumnsFactory(item.columns, structure) ?? [];
+        const columns = resolveValue(item.columns, structure) ?? [];
         return [
             item.key,
-            resolveStringFactory(item.label, structure),
-            ...columns.flatMap((c) => [c.key, resolveStringFactory(c.label, structure)]),
+            resolveValue(item.label, structure),
+            ...columns.flatMap((c) => [c.key, resolveValue(c.label, structure)]),
         ].filter((v): v is string => Boolean(v));
     }
 
@@ -136,7 +130,7 @@ const filterDialogItemsByTokens = (
         const selfMatch = includesAllTokens(collectItemSearchParts(item, structure), tokens);
 
         if (isDialogRow(item) || isDialogColumn(item)) {
-            const nestedItems = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            const nestedItems = resolveValue(item.items, structure) ?? [];
             const filteredNested = filterDialogItemsByTokens(nestedItems, structure, tokens);
 
             if (selfMatch || filteredNested.length > 0) {
@@ -149,13 +143,13 @@ const filterDialogItemsByTokens = (
         }
 
         if (isDialogTabs(item)) {
-            const tabs = resolveDialogTabsFactory(item.tabs, structure) ?? [];
+            const tabs = resolveValue(item.tabs, structure) ?? [];
             const filteredTabs = tabs
                 .map<IDialogTab | null>((tab) => {
-                    const tabItems = resolveDialogLayoutItemsKindFactory(tab.items, structure) ?? [];
+                    const tabItems = resolveValue(tab.items, structure) ?? [];
                     const filteredTabItems = filterDialogItemsByTokens(tabItems, structure, tokens);
                     const tabMatch = includesAllTokens(
-                        [tab.id, resolveStringFactory(tab.label, structure)],
+                        [tab.id, resolveValue(tab.label, structure)],
                         tokens
                     );
 
@@ -178,7 +172,7 @@ const filterDialogItemsByTokens = (
         }
 
         if (isDialogList(item)) {
-            const nestedItems = resolveDialogLayoutItemsKindFactory(item.items, structure) ?? [];
+            const nestedItems = resolveValue(item.items, structure) ?? [];
             const filteredNested = filterDialogItemsByTokens(nestedItems, structure, tokens);
 
             if (selfMatch || filteredNested.length > 0) {
@@ -251,7 +245,7 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
     }, [open, items, params]);
 
     React.useEffect(() => {
-        const resolvedItems = resolveDialogLayoutItemsKindFactory(dialog.items, structure) ?? [];
+        const resolvedItems = resolveValue(dialog.items, structure) ?? [];
         setItems(resolvedItems);
         setVisibleItems(resolvedItems);
 
@@ -308,20 +302,20 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
         onClose?.(null);
     };
 
-    const title = resolveStringFactory(dialog.title, structure);
-    const resolvedButtons: (DialogConformButton & { handle?: () => void })[] = resolveDialogConformButtonsFactory(dialog.buttons, structure) ?? [];
+    const title = resolveValue(dialog.title, structure);
+    const resolvedButtons: (DialogConformButton & { handle?: () => void })[] = resolveValue(dialog.buttons, structure) ?? [];
     let buttons: ({ id: string; label: string; color?: ThemeColor; disabled?: boolean; handle: () => void })[];
 
     if (!resolvedButtons || resolvedButtons.length === 0) {
         buttons = [{
             id: "cancel",
-            label: resolveStringFactory(dialog.cancelLabel, structure) ?? t("cancel", "Cancel"),
+            label: resolveValue(dialog.cancelLabel, structure) ?? t("cancel", "Cancel"),
             color: "secondary",
             disabled: submitting,
             handle: handleCancel,
         }, {
             id: "ok",
-            label: resolveStringFactory(dialog.confirmLabel, structure) ?? t("ok", "OK"),
+            label: resolveValue(dialog.confirmLabel, structure) ?? t("ok", "OK"),
             color: "primary",
             disabled: submitting || !dialogValid,
             handle: () => handleConfirm("ok"),
@@ -330,13 +324,13 @@ export const DialogBase: React.FC<DialogBaseProps> = (props) => {
         buttons = resolvedButtons.map(button => {
             let handle: () => void;
             let disabled: boolean | undefined;
-            const labelText = resolveStringFactory(button.label, structure)!;
+            const labelText = resolveValue(button.label, structure)!;
             if (button.id === "cancel") {
                 handle = handleCancel;
                 disabled = submitting;
             } else {
                 handle = () => handleConfirm(button.id);
-                disabled = submitting || !dialogValid || resolveBooleanFactory(button.disabled, structure) === true;
+                disabled = submitting || !dialogValid || resolveValue(button.disabled, structure) === true;
             }
             return { id: button.id, handle: handle, disabled, label: labelText, color: button.color };
         });
