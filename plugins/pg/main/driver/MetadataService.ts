@@ -111,6 +111,9 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         let manifestLoaded = false;
         let lineNumber = 0;
+        let bytesProcessed = 0;
+        const CHUNK_SIZE = 1024 * 1024; // 1MB
+        let nextPauseAt = CHUNK_SIZE;
 
         for await (const rawLine of rl) {
             const line = rawLine.trim();
@@ -119,6 +122,13 @@ export class MetadataCollector implements api.IMetadataCollector {
             }
 
             lineNumber += 1;
+            bytesProcessed += Buffer.byteLength(rawLine, 'utf8');
+
+            // Co 1MB robić przerwę 100ms aby oddać kontrolę renderowi
+            if (bytesProcessed >= nextPauseAt) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                nextPauseAt = bytesProcessed + CHUNK_SIZE;
+            }
 
             let parsedLine: unknown;
             try {
