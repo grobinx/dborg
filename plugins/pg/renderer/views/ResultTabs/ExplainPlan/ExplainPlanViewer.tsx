@@ -220,7 +220,7 @@ const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
             }}
         >
             <Paper
-                elevation={expanded ? 2 : 0}
+                elevation={expanded || !hasChildren ? 2 : 0}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -228,9 +228,9 @@ const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
                     py: 2,
                     mb: 4,
                     border: '1px solid',
-                    borderColor: expanded ? 'action.selected' : 'divider',
+                    borderColor: expanded || !hasChildren ? 'action.selected' : 'divider',
                     borderLeft: `4px solid ${nodeColor.main}`,
-                    backgroundColor: expanded || !hasChildren ? 'action.hover' : 'background.paper',
+                    backgroundColor: 'action.hover',
                     transition: 'all .15s ease',
                 }}
             >
