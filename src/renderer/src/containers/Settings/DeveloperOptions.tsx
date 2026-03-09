@@ -5,6 +5,7 @@ import { InputFieldsContent } from "./developer/InputFields";
 import { IconListContent } from "./developer/IconList";
 import { ButtonsContent } from "./developer/Buttons";
 import { ComponentsContent } from "./developer/Components";
+import RichContentShowcase from "@renderer/components/RichConent/RichContentShowcase";
 
 export interface DeveloperOptionsProps extends BoxProps {
 }
@@ -77,6 +78,11 @@ const DeveloperOptions = (props: DeveloperOptionsOwnProps) => {
                         itemID="developer-options-components"
                         content={<ComponentsContent />}
                         label="Components"
+                    />
+                    <TabPanel
+                        itemID="developer-options-rich-content"
+                        content={<RichContentShowcase />}
+                        label="Rich Content"
                     />
                 </TabsPanel>
             </Stack>
