@@ -230,7 +230,7 @@ const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
                     border: '1px solid',
                     borderColor: expanded ? 'action.selected' : 'divider',
                     borderLeft: `4px solid ${nodeColor.main}`,
-                    backgroundColor: expanded ? 'action.hover' : 'background.paper',
+                    backgroundColor: expanded || !hasChildren ? 'action.hover' : 'background.paper',
                     transition: 'all .15s ease',
                 }}
             >
@@ -338,7 +338,7 @@ const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
                     </Box>
                 </Box>
 
-                {expanded && hasKeyDetails && (
+                {hasKeyDetails && (
                     <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                         <Table size="small">
                             <TableBody>
@@ -391,7 +391,7 @@ const PlanNodeComponentBase: React.FC<PlanNodeProps> = ({
                     </Box>
                 )}
 
-                {expanded && hasAdditionalDetails && (
+                {hasAdditionalDetails && (
                     <Box sx={{ pl: hasChildren ? 8 : 0 }}>
                         <Collapse in={showAdditionalDetails} mountOnEnter unmountOnExit>
                             <Box>
