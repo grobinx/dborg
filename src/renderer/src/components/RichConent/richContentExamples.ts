@@ -7,7 +7,7 @@ const placeholderSvg = (label: string, bg = "dfe7f5", fg = "2c3e50") =>
 
 export const richContentExamples: RichExampleMap = {
     allTextVariants: [
-        { type: "text", text: "Body / normal", variant: "body", severity: "normal" },
+        { type: "text", text: "Body / normal", variant: "body", severity: "default" },
         { type: "text", text: "Caption / info", variant: "caption", severity: "info" },
         { type: "text", text: "Label / warning", variant: "label", severity: "warning" },
         { type: "text", text: "Title / success", variant: "title", severity: "success" },
@@ -33,7 +33,7 @@ WHERE active = true;
     linksChipsBadges: [
         { type: "link", text: "Strona projektu", href: "https://github.com", severity: "info", variant: "body" },
         { type: "link", href: "https://example.org/only-href", severity: "warning", variant: "caption" },
-        { type: "chip", text: "Draft", severity: "normal" },
+        { type: "chip", text: "Draft", severity: "default" },
         { type: "chip", text: "Info", severity: "info", badge: { value: 2, severity: "info" } },
         { type: "chip", text: "Warn", severity: "warning", badge: { value: 12, max: 9, severity: "warning" } },
         { type: "chip", text: "Error", severity: "error", badge: { value: "!", severity: "error" } },
@@ -219,6 +219,7 @@ WHERE active = true;
                 console.log("sync complete");
             },
             badge: { value: 4, severity: "warning", max: 99 },
+            severity: "warning",
         },
         {
             type: "action",

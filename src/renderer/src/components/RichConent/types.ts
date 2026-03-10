@@ -6,7 +6,7 @@ import { FormattedContent } from "../useful/FormattedText";
 /**
  * Poziom ważności elementu Rich Content, wpływający na jego kolor i ikonę.
  */
-export type RichSeverity = "normal" | "info" | "warning" | "error" | "success";
+export type RichSeverity = "default" | "info" | "warning" | "error" | "success";
 
 /**
  * Wariant typograficzny tekstu w Rich Content.
@@ -345,6 +345,10 @@ export interface IRichAction extends IRichNode, Omit<Action<void>, "groupId" | "
      * Badge wyświetlany na przycisku (opcjonalnie)
      */
     badge?: RichBadgeConfig;
+    /**
+     * Poziom ważności wpływający na kolor przycisku
+     */
+    severity?: RichSeverity;
 }
 
 /**
