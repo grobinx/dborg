@@ -213,7 +213,7 @@ WHERE active = true;
             id: "act-sync",
             label: "Synchronizuj",
             tooltip: "Uruchom synchronizację",
-            icon: "⟳",
+            icon: "Refresh",
             run: async () => {
                 await new Promise((r) => setTimeout(r, 350));
                 console.log("sync complete");
@@ -226,7 +226,7 @@ WHERE active = true;
             id: "act-disabled",
             label: (ctx: unknown) => `Niedostępna`,
             tooltip: () => "Ta akcja jest zablokowana",
-            icon: "🔒",
+            icon: "Error",
             disabled: () => true,
             run: () => {
                 console.log("This should not run while disabled");
@@ -240,7 +240,7 @@ WHERE active = true;
             description: () => "Wybrana akcja",
             selected: () => true,
             loading: () => false,
-            icon: "✅",
+            icon: "CheckBoxChecked",
             run: () => {
                 console.log("selected action");
             },
