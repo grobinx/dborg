@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Box, Tooltip, useTheme, CircularProgress } from "@mui/material";
 import { IRichAction } from "../types";
 import RichBadge from "./RichBadge";
+import { resolveIcon } from "@renderer/themes/icons";
 
 interface RichActionProps {
     node: IRichAction;
@@ -28,7 +29,7 @@ const RichAction: React.FC<RichActionProps> = ({ node }) => {
     const label = typeof node.label === "function" ? node.label(emptyContext) : node.label;
     const description = typeof node.description === "function" ? node.description(emptyContext) : node.description;
     const tooltip = typeof node.tooltip === "function" ? node.tooltip(emptyContext) : node.tooltip;
-    const icon = typeof node.icon === "function" ? node.icon(emptyContext) : node.icon;
+    const icon = typeof node.icon === "function" ? resolveIcon(theme, node.icon(emptyContext)) : resolveIcon(theme, node.icon);
 
     const variant = (node.keySequence?.length ? "outlined" : "contained") as any;
 
