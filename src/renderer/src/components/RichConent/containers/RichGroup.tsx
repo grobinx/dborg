@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Paper, Typography, Collapse, useTheme, IconButton } from "@mui/material";
 import { IRichGroup } from "../types";
-const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
+import RichRenderer from "..";
+import { resolveIcon } from "@renderer/themes/icons";
 
 interface RichGroupProps {
     node: IRichGroup;
@@ -49,7 +50,7 @@ const RichGroup: React.FC<RichGroupProps> = ({ node }) => {
                 >
                     {node.icon && (
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            {React.isValidElement(node.icon) ? node.icon : <span>{String(node.icon)}</span>}
+                            {resolveIcon(theme, node.icon)}
                         </Box>
                     )}
                     {node.title && (
@@ -71,14 +72,8 @@ const RichGroup: React.FC<RichGroupProps> = ({ node }) => {
                 </Box>
             )}
             <Collapse in={!node.collapsible || expanded}>
-                <Box sx={{ padding: "16px", display: "flex", flexDirection: "column", gap: 2 }}>
-                    {node.items.map((item, index) => (
-                        <Box key={index}>
-                            <React.Suspense fallback={<Box>...</Box>}>
-                                <RichRenderer node={item} />
-                            </React.Suspense>
-                        </Box>
-                    ))}
+                <Box sx={{ padding: "16px", display: "flex", flexDirection: "column", gap: node.gap ?? 4 }}>
+                    <RichRenderer node={node.items} />
                 </Box>
             </Collapse>
         </Paper>

@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, List, ListItem as MuiListItem, ListItemText, useTheme } from "@mui/material";
-import { IRichList, RichSeverity } from "../types";
+import { List, useTheme } from "@mui/material";
+import { IRichList } from "../types";
 const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
 
 interface RichListProps {
@@ -29,13 +29,7 @@ const RichList: React.FC<RichListProps> = ({ node }) => {
                 margin: 0,
             }}
         >
-            {node.items.map((item, index) => (
-                <div key={index}>
-                    <React.Suspense fallback={<Box>...</Box>}>
-                        <RichRenderer node={item} />
-                    </React.Suspense>
-                </div>
-            ))}
+            <RichRenderer node={node.items} />
         </List>
     );
 };

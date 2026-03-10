@@ -1,5 +1,7 @@
 import React from "react";
-import { Box, Paper, useTheme, Typography } from "@mui/material";
+import { Paper, useTheme } from "@mui/material";
+import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IRichCode } from "../types";
 
 interface RichCodeProps {
@@ -10,55 +12,21 @@ const RichCode: React.FC<RichCodeProps> = ({ node }) => {
     const theme = useTheme();
 
     return (
-        <Paper
-            sx={{
-                backgroundColor: theme.palette.mode === "dark" ? theme.palette.grey[900] : theme.palette.grey[100],
-                padding: "12px",
-                borderRadius: "4px",
-                overflow: "auto",
-                border: `1px solid ${theme.palette.divider}`,
+        <SyntaxHighlighter
+            language={node.language}
+            style={theme.palette.mode === "dark" ? vs2015 : vs}
+            showLineNumbers={Boolean(node.lineNumbers)}
+            wrapLongLines
+            customStyle={{
+                borderRadius: '4px',
+                marginTop: 0,
+                marginBottom: 0,
+            }}
+            lineNumberStyle={{
             }}
         >
-            <Box
-                sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-            >
-                {node.lineNumbers && (
-                    <Box
-                        sx={{
-                            display: "inline-flex",
-                            flexDirection: "column",
-                            paddingRight: "12px",
-                            color: theme.palette.text.secondary,
-                            fontSize: "12px",
-                            fontFamily: "monospace",
-                            lineHeight: "1.5",
-                            userSelect: "none",
-                        }}
-                    >
-                        {node.code.split("\n").map((_, i) => (
-                            <span key={i}>{i + 1}</span>
-                        ))}
-                    </Box>
-                )}
-                <Typography
-                    component="pre"
-                    sx={{
-                        margin: 0,
-                        fontFamily: "monospace",
-                        fontSize: "12px",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        lineHeight: "1.5",
-                        color: theme.palette.mode === "dark" ? theme.palette.grey[300] : theme.palette.grey[800],
-                    }}
-                >
-                    {node.code}
-                </Typography>
-            </Box>
-        </Paper>
+            {node.code}
+        </SyntaxHighlighter>
     );
 };
 

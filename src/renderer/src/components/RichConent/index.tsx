@@ -93,7 +93,17 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
  * Główny komponent renderujący węzły Rich Content.
  * Robi dispatch do odpowiedniego komponentu na podstawie typu węzła.
  */
-const RichRenderer: React.FC<{ node: RichNode }> = ({ node }) => {
+const RichRenderer: React.FC<{ node: RichNode | RichNode[] }> = ({ node }) => {
+    if (Array.isArray(node)) {
+        return (
+            <>
+                {node.map((n, index) => (
+                    <RichRenderer key={index} node={n} />
+                ))}
+            </>
+        );
+    }
+
     switch (node.type) {
         case "text":
             return <RichText node={node} />;

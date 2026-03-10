@@ -244,6 +244,8 @@ export const resolveIcon = (theme: Theme, icon?: React.ReactNode | (() => React.
     if (typeof icon === 'string') {
         if (theme.icons[icon]) {
             return React.createElement(theme.icons[icon]);
+        } else if (icon.length === 1) {
+            return icon;
         } else {
             return <img src={icon} alt={alt} style={{ width: 24, height: 24 }} />;
         }

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichColumn, RichNode } from "../types";
-const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
+import { IRichColumn } from "../types";
+import RichRenderer from "..";
 
 interface RichColumnProps {
     node: IRichColumn;
@@ -20,18 +20,12 @@ const RichColumn: React.FC<RichColumnProps> = ({ node }) => {
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: node.gap || "8px",
+                gap: node.gap ?? 4,
                 width: getColSize(node.size),
                 minWidth: 0,
             }}
         >
-            {node.items.map((item, index) => (
-                <Box key={index}>
-                    <React.Suspense fallback={<Box>...</Box>}>
-                        <RichRenderer node={item} />
-                    </React.Suspense>
-                </Box>
-            ))}
+            <RichRenderer node={node.items} />
         </Box>
     );
 };

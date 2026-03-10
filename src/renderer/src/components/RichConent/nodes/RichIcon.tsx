@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Tooltip, useTheme } from "@mui/material";
 import { IRichIcon, RichSeverity } from "../types";
 import RichBadge from "./RichBadge";
+import { resolveIcon } from "@renderer/themes/icons";
 
 interface RichIconProps {
     node: IRichIcon;
@@ -36,12 +37,6 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
         }
     };
 
-    const iconNode = React.isValidElement(node.icon) ?
-        node.icon :
-        typeof node.icon === "string" ?
-            <Box sx={{ color: getSeverityColor(node.severity) }}>{node.icon}</Box> :
-            node.icon;
-
     const content = (
         <Box
             sx={{
@@ -52,7 +47,7 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
                 color: getSeverityColor(node.severity),
             }}
         >
-            {iconNode}
+            {resolveIcon(theme, node.icon)}
             {node.badge && (
                 <Box
                     sx={{

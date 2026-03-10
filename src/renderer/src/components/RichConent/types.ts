@@ -216,6 +216,10 @@ export interface IRichGroup extends IRichNode {
      */
     icon?: React.ReactNode | ThemeIconName;
     /**
+     * Odstęp między elementami
+     */
+    gap?: number | string;
+    /**
      * Elementy wewnątrz grupy
      */
     items: RichNode[];
@@ -298,6 +302,10 @@ export interface IRichAlert extends IRichNode {
      * Tytuł alertu (opcjonalnie)
      */
     title?: string;
+    /**
+     * Odstęp między elementami
+     */
+    gap?: number | string;
     /**
      * Elementy wewnątrz alertu
      */

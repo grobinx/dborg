@@ -165,7 +165,7 @@ WHERE active = true;
     layoutRowsColumns: [
         {
             type: "row",
-            gap: "12px",
+            gap: 0,
             align: "start",
             justify: "space-between",
             items: [

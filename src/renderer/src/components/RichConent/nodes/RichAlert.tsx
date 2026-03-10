@@ -1,6 +1,8 @@
 import React from "react";
-import { Alert, Box, useTheme } from "@mui/material";
+import { Alert, AlertTitle, Box, useTheme } from "@mui/material";
 import { IRichAlert, RichSeverity } from "../types";
+import { resolveIcon } from "@renderer/themes/icons";
+import RichRenderer from "..";
 
 interface RichAlertProps {
     node: IRichAlert;
@@ -37,13 +39,11 @@ const RichAlert: React.FC<RichAlertProps> = ({ node }) => {
     return (
         <Alert
             severity={getSeverityForAlert(node.severity)}
-            icon={node.showIcon !== false && (React.isValidElement(node.icon) ? node.icon : false)}
-            sx={{ mb: 2 }}
+            icon={node.showIcon !== false && (resolveIcon(theme, node.icon))}
         >
-            {node.title && <Box sx={{ fontWeight: 600, mb: 1 }}>{node.title}</Box>}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {/* Items will be rendered by parent RichRenderer */}
-                {node.items && node.items.length > 0 && "(Items to be rendered)"}
+            {node.title && <AlertTitle>{node.title}</AlertTitle>}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: node.gap ?? 4 }}>
+                <RichRenderer node={node.items} />
             </Box>
         </Alert>
     );
