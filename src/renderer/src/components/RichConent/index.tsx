@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Theme } from "@mui/material";
-import { RichNode, RichSeverity } from "./types";
+import { IRichContainerDefaults, RichNode, RichSeverity } from "./types";
 
 // Types
 export type {
@@ -29,6 +29,8 @@ export type {
     IRichImage,
     IRichList,
     IRichListItem,
+    IRichContainer,
+    IRichContainerDefaults,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -47,11 +49,11 @@ import RichAlert from "./nodes/RichAlert";
 import RichAction from "./nodes/RichAction";
 
 // Containers (import second)
-import RichRowComponent from "./containers/RichRow";
-import RichColumnComponent from "./containers/RichColumn";
-import RichGroupComponent from "./containers/RichGroup";
-import RichListComponent from "./containers/RichList";
-import RichListItemComponent from "./containers/RichListItem";
+import RichRow from "./containers/RichRow";
+import RichColumn from "./containers/RichColumn";
+import RichGroup from "./containers/RichGroup";
+import RichList from "./containers/RichList";
+import RichListItem from "./containers/RichListItem";
 
 // Export nodes
 export { default as RichText } from "./nodes/RichText";
@@ -73,6 +75,7 @@ export { default as RichColumn } from "./containers/RichColumn";
 export { default as RichGroup } from "./containers/RichGroup";
 export { default as RichList } from "./containers/RichList";
 export { default as RichListItem } from "./containers/RichListItem";
+export { default as RichContainer } from "./containers/RichContainer";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme): string => {
     switch (severity) {
@@ -93,61 +96,54 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
  * Główny komponent renderujący węzły Rich Content.
  * Robi dispatch do odpowiedniego komponentu na podstawie typu węzła.
  */
-const RichRenderer: React.FC<{ node: RichNode | RichNode[] }> = ({ node }) => {
-    if (Array.isArray(node)) {
-        return (
-            <>
-                {node.map((n, index) => (
-                    <RichRenderer key={index} node={n} />
-                ))}
-            </>
-        );
-    }
-
+const RichRenderer: React.FC<{
+    node: RichNode;
+    defaults?: IRichContainerDefaults
+}> = ({ node, defaults }) => {
     switch (node.type) {
         case "text":
-            return <RichText node={node} />;
+            return <RichText node={node} defaults={defaults} />;
         case "divider":
-            return <RichDividerNode node={node} />;
+            return <RichDividerNode node={node} defaults={defaults} />;
         case "spacer":
-            return <RichSpacer node={node} />;
+            return <RichSpacer node={node} defaults={defaults} />;
         case "icon":
-            return <RichIcon node={node} />;
+            return <RichIcon node={node} defaults={defaults} />;
         case "link":
-            return <RichLink node={node} />;
+            return <RichLink node={node} defaults={defaults} />;
         case "chip":
-            return <RichChip node={node} />;
+            return <RichChip node={node} defaults={defaults} />;
         case "kbd":
-            return <RichKbd node={node} />;
+            return <RichKbd node={node} defaults={defaults} />;
         case "progress":
-            return <RichProgress node={node} />;
+            return <RichProgress node={node} defaults={defaults} />;
         case "code":
-            return <RichCode node={node} />;
+            return <RichCode node={node} defaults={defaults} />;
         case "image":
-            return <RichImage node={node} />;
+            return <RichImage node={node} defaults={defaults} />;
         case "alert":
             return (
                 <Box sx={{ mb: 2 }}>
-                    <RichAlert node={node} />
+                    <RichAlert node={node} defaults={defaults} />
                     <Box sx={{ pl: 2, display: "flex", flexDirection: "column", gap: 1 }}>
                         {(node as any).items?.map((item: RichNode, index: number) => (
-                            <RichRenderer key={index} node={item} />
+                            <RichRenderer key={index} node={item} defaults={defaults} />
                         ))}
                     </Box>
                 </Box>
             );
         case "action":
-            return <RichAction node={node} />;
+            return <RichAction node={node} defaults={defaults} />;
         case "row":
-            return <RichRowComponent node={node} />;
+            return <RichRow node={node} defaults={defaults} />;
         case "column":
-            return <RichColumnComponent node={node} />;
+            return <RichColumn node={node} defaults={defaults} />;
         case "group":
-            return <RichGroupComponent node={node} />;
+            return <RichGroup node={node} defaults={defaults} />;
         case "list":
-            return <RichListComponent node={node} />;
+            return <RichList node={node} defaults={defaults} />;
         case "listitem":
-            return <RichListItemComponent node={node} />;
+            return <RichListItem node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

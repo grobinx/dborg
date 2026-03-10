@@ -1,20 +1,21 @@
 import React from "react";
 import { ListItem, useTheme } from "@mui/material";
-import { IRichListItem } from "../types";
+import { IRichContainerDefaults, IRichListItem } from "../types";
 import RichRenderer, { getSeverityColor } from "../index";
 
 interface RichListItemProps {
     node: IRichListItem;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichListItem: React.FC<RichListItemProps> = ({ node }) => {
+const RichListItem: React.FC<RichListItemProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     return (
         <ListItem
             sx={{
                 display: "list-item",
-                padding: "4px 0",
+                padding: defaults?.padding ?? 4,
                 color: getSeverityColor(node.severity, theme),
                 listStyleType: node.severity ? undefined : "inherit",
                 "::marker": {
@@ -22,7 +23,9 @@ const RichListItem: React.FC<RichListItemProps> = ({ node }) => {
                 },
             }}
         >
-            <RichRenderer node={node.content} />
+            {node.items.map((item, index) => (
+                <RichRenderer key={index} node={item} defaults={defaults} />
+            ))}
         </ListItem>
     );
 };

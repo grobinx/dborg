@@ -41,9 +41,9 @@ WHERE active = true;
     ],
 
     iconsKbdSpacerDivider: [
-        { type: "icon", icon: "ℹ", severity: "info", tooltip: "Informacja", size: "small" },
-        { type: "icon", icon: "⚠", severity: "warning", tooltip: "Ostrzeżenie", size: "medium" },
-        { type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd", size: "large", badge: { value: 3, severity: "error" } },
+        { type: "icon", icon: "ℹ", severity: "info", tooltip: "Informacja" },
+        { type: "icon", icon: "⚠", severity: "warning", tooltip: "Ostrzeżenie" },
+        { type: "row", items: [{ type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }]},
         { type: "divider" },
         { type: "row", gap: 8, items: [{ type: "text", text: "Ctrl+S:" }, { type: "kbd", keys: ["Ctrl", "S"] }] },
         { type: "row", gap: 8, items: [{ type: "text", text: "Command palette:" }, { type: "kbd", keys: "Ctrl+Shift+P" }] },
@@ -139,25 +139,25 @@ WHERE active = true;
             type: "list",
             listType: "bullet",
             items: [
-                { type: "listitem", content: [{ type: "text", text: "Bullet item 1" }] },
-                { type: "listitem", severity: "info", content: [{ type: "text", text: "Bullet info item" }, { type: "chip", text: "INFO", severity: "info" }] },
+                { type: "listitem", items: [{ type: "text", text: "Bullet item 1" }] },
+                { type: "listitem", severity: "info", items: [{ type: "text", text: "Bullet info item" }, { type: "chip", text: "INFO", severity: "info" }] },
             ],
         },
         {
             type: "list",
             listType: "numbered",
             items: [
-                { type: "listitem", content: [{ type: "text", text: "Numbered item 1" }] },
-                { type: "listitem", severity: "warning", content: [{ type: "text", text: "Numbered warning item" }] },
-                { type: "listitem", severity: "error", content: [{ type: "text", text: "Numbered error item" }] },
+                { type: "listitem", items: [{ type: "text", text: "Numbered item 1" }] },
+                { type: "listitem", severity: "warning", items: [{ type: "text", text: "Numbered warning item" }] },
+                { type: "listitem", severity: "error", items: [{ type: "text", text: "Numbered error item" }] },
             ],
         },
         {
             type: "list",
             listType: "none",
             items: [
-                { type: "listitem", content: [{ type: "text", text: "List without markers #1" }] },
-                { type: "listitem", content: [{ type: "text", text: "List without markers #2" }] },
+                { type: "listitem", items: [{ type: "text", text: "List without markers #1" }] },
+                { type: "listitem", items: [{ type: "text", text: "List without markers #2" }] },
             ],
         },
     ],
@@ -195,7 +195,7 @@ WHERE active = true;
         {
             type: "row",
             align: "center",
-            justify: "end",
+            justify: "space-between",
             items: [{ type: "text", text: "Lewa strona" }, { type: "spacer", size: "auto" }, { type: "text", text: "Prawa strona", severity: "success" }],
         },
         {
@@ -222,10 +222,10 @@ WHERE active = true;
         {
             type: "action",
             id: "act-disabled",
-            label: (ctx: unknown) => `Niedostępna`,
-            tooltip: () => "Ta akcja jest zablokowana",
+            label: `Niedostępna`,
+            tooltip: `Ta akcja jest zablokowana`,
             icon: "Error",
-            disabled: () => true,
+            disabled: true,
             run: () => {
                 console.log("This should not run while disabled");
             },
@@ -234,8 +234,8 @@ WHERE active = true;
         {
             type: "action",
             id: "act-selected",
-            label: () => "Tryb aktywny",
-            description: () => "Wybrana akcja",
+            label: `Tryb aktywny`,
+            description: `Wybrana akcja`,
             selected: () => true,
             loading: () => false,
             icon: "CheckBoxChecked",
@@ -297,9 +297,9 @@ WHERE active = true;
                             type: "list",
                             listType: "numbered",
                             items: [
-                                { type: "listitem", content: [{ type: "text", text: "Dodaj indeks" }] },
-                                { type: "listitem", content: [{ type: "text", text: "Uruchom ANALYZE" }] },
-                                { type: "listitem", content: [{ type: "text", text: "Porównaj plan" }] },
+                                { type: "listitem", items: [{ type: "text", text: "Dodaj indeks" }] },
+                                { type: "listitem", items: [{ type: "text", text: "Uruchom ANALYZE" }] },
+                                { type: "listitem", items: [{ type: "text", text: "Porównaj plan" }] },
                             ],
                         },
                     ],

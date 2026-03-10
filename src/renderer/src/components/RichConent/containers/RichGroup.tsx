@@ -1,14 +1,15 @@
 import React from "react";
 import { Box, Paper, Typography, Collapse, useTheme, IconButton } from "@mui/material";
-import { IRichGroup } from "../types";
+import { IRichContainerDefaults, IRichGroup } from "../types";
 import RichRenderer from "..";
 import { resolveIcon } from "@renderer/themes/icons";
 
 interface RichGroupProps {
     node: IRichGroup;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichGroup: React.FC<RichGroupProps> = ({ node }) => {
+const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.defaultExpanded !== false);
 
@@ -72,8 +73,10 @@ const RichGroup: React.FC<RichGroupProps> = ({ node }) => {
                 </Box>
             )}
             <Collapse in={!node.collapsible || expanded}>
-                <Box sx={{ padding: "16px", display: "flex", flexDirection: "column", gap: node.gap ?? 4 }}>
-                    <RichRenderer node={node.items} />
+                <Box sx={{ padding: "16px", display: "flex", flexDirection: "column", gap: node.gap ?? defaults?.gap ?? 4 }}>
+                    {node.items.map((item, index) => (
+                        <RichRenderer key={index} node={item} defaults={defaults} />
+                    ))}
                 </Box>
             </Collapse>
         </Paper>

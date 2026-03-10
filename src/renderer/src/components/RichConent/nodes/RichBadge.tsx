@@ -1,11 +1,46 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
-import { RichBadgeConfig } from "../types";
+import { IRichContainerDefaults, RichBadgeConfig } from "../types";
 import { getSeverityColor } from "..";
+import UnboundBadge from "@renderer/components/UnboundBadge";
+import { ThemeColor } from "@renderer/types/colors";
 
 interface RichBadgeProps {
     badge: RichBadgeConfig;
+    defaults?: IRichContainerDefaults;
 }
+
+const getPositionStyle = (
+    position: RichBadgeConfig["position"] = "top-right"
+): React.CSSProperties => {
+    switch (position) {
+        case "top-left":
+            return {
+                top: 0,
+                left: 0,
+                transform: "translate(-50%, -50%)",
+            };
+        case "bottom-right":
+            return {
+                bottom: 0,
+                right: 0,
+                transform: "translate(50%, 50%)",
+            };
+        case "bottom-left":
+            return {
+                bottom: 0,
+                left: 0,
+                transform: "translate(-50%, 50%)",
+            };
+        case "top-right":
+        default:
+            return {
+                top: 0,
+                right: 0,
+                transform: "translate(50%, -50%)",
+            };
+    }
+};
 
 const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
     const theme = useTheme();
@@ -18,29 +53,16 @@ const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
     };
 
     return (
-        <Box
-            sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: "24px",
-                height: "24px",
-                borderRadius: "50%",
-                backgroundColor: (badge.severity ?? "default") === "default" ? theme.palette.primary.main : getSeverityColor(badge.severity, theme),
-                padding: "0 6px",
-            }}
-        >
-            <Typography
-                variant="caption"
+        <div style={{ position: "relative" }}>
+            <UnboundBadge
+                content={getDisplayValue()}
                 sx={{
-                    color: (badge.severity ?? "default") === "default" ? theme.palette.primary.contrastText : theme.palette.getContrastText(getSeverityColor(badge.severity, theme)),
-                    fontWeight: 600,
-                    fontSize: "0.75em",
+                    position: "absolute",
+                    ...getPositionStyle(badge.position),
                 }}
-            >
-                {getDisplayValue()}
-            </Typography>
-        </Box>
+                color={badge.severity as ThemeColor}
+            />
+        </div>
     );
 };
 

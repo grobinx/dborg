@@ -1,28 +1,15 @@
 import React from "react";
 import { Link, useTheme } from "@mui/material";
-import { IRichLink, RichSeverity } from "../types";
+import { IRichContainerDefaults, IRichLink, RichSeverity } from "../types";
+import { getSeverityColor } from "..";
 
 interface RichLinkProps {
     node: IRichLink;
+    defaults?: IRichContainerDefaults;
 }
 
 const RichLink: React.FC<RichLinkProps> = ({ node }) => {
     const theme = useTheme();
-
-    const getSeverityColor = (severity?: RichSeverity): string => {
-        switch (severity) {
-            case "error":
-                return theme.palette.error.main;
-            case "warning":
-                return theme.palette.warning.main;
-            case "success":
-                return theme.palette.success.main;
-            case "info":
-                return theme.palette.info.main;
-            default:
-                return theme.palette.primary.main;
-        }
-    };
 
     const getVariantMapping = (variant?: string) => {
         switch (variant) {
@@ -45,7 +32,7 @@ const RichLink: React.FC<RichLinkProps> = ({ node }) => {
             target="_blank"
             rel="noopener noreferrer"
             variant={getVariantMapping(node.variant) as any}
-            sx={{ color: getSeverityColor(node.severity) }}
+            sx={{ color: getSeverityColor(node.severity, theme) }}
         >
             {node.text || node.href}
         </Link>

@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichImage } from "../types";
+import { IRichContainerDefaults, IRichImage } from "../types";
 
 interface RichImageProps {
     node: IRichImage;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichImage: React.FC<RichImageProps> = ({ node }) => {
+const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     const getObjectFit = (fit?: string) => {
@@ -28,7 +29,7 @@ const RichImage: React.FC<RichImageProps> = ({ node }) => {
         <Box
             sx={{
                 display: "inline-block",
-                borderRadius: "4px",
+                borderRadius: defaults?.radius ?? 4,
                 border: `1px solid ${theme.palette.divider}`,
                 overflow: "hidden",
                 maxWidth: "100%",

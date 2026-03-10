@@ -1,13 +1,14 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichColumn } from "../types";
+import { IRichColumn, IRichContainerDefaults } from "../types";
 import RichRenderer from "..";
 
 interface RichColumnProps {
     node: IRichColumn;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichColumn: React.FC<RichColumnProps> = ({ node }) => {
+const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
     const getColSize = (size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto") => {
         if (size === "auto" || size === undefined) {
             return "auto";
@@ -17,6 +18,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node }) => {
 
     return (
         <Box
+            className="RichContainer-column"
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -25,7 +27,9 @@ const RichColumn: React.FC<RichColumnProps> = ({ node }) => {
                 minWidth: 0,
             }}
         >
-            <RichRenderer node={node.items} />
+            {node.items.map((item, index) => (
+                <RichRenderer key={index} node={item} defaults={defaults} />
+            ))}
         </Box>
     );
 };

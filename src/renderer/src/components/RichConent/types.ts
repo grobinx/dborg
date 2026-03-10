@@ -25,16 +25,16 @@ export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "au
 /**
  * Typ węzła w strukturze Rich Content.
  */
-export type RichNodeType = 
-    | "text" | "link" | "chip" | "code" | "progress" | "group" 
+export type RichNodeType =
+    | "text" | "link" | "chip" | "code" | "progress" | "group"
     | "row" | "column" | "icon" | "divider"
-    | "spacer" | "alert" | "kbd" | "action" | "image" 
+    | "spacer" | "alert" | "kbd" | "action" | "image"
     | "list" | "listitem";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
  */
-export type RichNode = 
+export type RichNode =
     | IRichText
     | IRichLink
     | IRichChip
@@ -52,6 +52,73 @@ export type RichNode =
     | IRichImage
     | IRichList
     | IRichListItem;
+
+/**
+ * Domyślne wartości dla kontenerów Rich Content (grupy, wiersze, kolumny).
+ * Umożliwia ustawienie globalnych stylów i odstępów dla wszystkich elementów wewnątrz kontenera.
+ */
+export interface IRichContainerDefaults {
+    /**
+     * Domyślny font dla zwykłego tekstu.
+     * @default ui/fontFamily
+     */
+    fontFamily?: string;
+    /**
+     * Domyślny font dla kodu/kbd/monospace.
+     * @default ui/fontFamilyMonospace
+     */
+    fontFamilyMonospace?: string;
+    /**
+     * Domyślny rozmiar fontu.
+     * @default ui/fontSize
+     */
+    fontSize?: number | string;
+    /**
+     * Domyślna grubość fontu.
+     * @default "normal"
+     */
+    fontWeight?: number | string;
+    /**
+     * Domyślny padding dla kontenera/grup.
+     * @default 4
+     */
+    padding?: number | string;
+    /**
+     * Domyślny gap między elementami.
+     * @default 8
+     */
+    gap?: RichGap;
+    /**
+     * Domyślna wartość radius dla elementów z obramowaniem (np. alert, chip).
+     * @default 4
+     */
+    radius?: number | string;
+}
+
+/**
+ * Kontener dla elementów Rich Content, który może zawierać inne węzły.
+ */
+export interface IRichContainer extends IRichContainerDefaults {
+    /**
+     * Elementy wewnątrz kontenera
+     */
+    items: RichNode[];
+    /**
+     * Szerokość kontenera (np. "100%", "auto", 300)
+     * @default "100%" 
+     */
+    width?: number | string;
+    /**
+     * Wysokość kontenera (np. "100%", "auto", 300)
+     * @default "auto"
+     */
+    height?: number | string;
+    /**
+     * Zachowanie zawartości przy przekroczeniu rozmiaru kontenera
+     * @default "auto"
+     */
+    overflow?: "visible" | "hidden" | "scroll" | "auto";
+}
 
 /**
  * Bazowy interfejs dla wszystkich węzłów Rich Content.
@@ -194,10 +261,6 @@ export interface IRichIcon extends IRichNode {
      */
     icon: React.ReactNode | ThemeIconName;
     /**
-     * Rozmiar ikony
-     */
-    size?: Size;
-    /**
      * Poziom ważności wpływający na kolor
      */
     severity?: RichSeverity;
@@ -205,10 +268,6 @@ export interface IRichIcon extends IRichNode {
      * Tooltip wyświetlany po najechaniu
      */
     tooltip?: string;
-    /**
-     * Badge wyświetlany na ikonie (opcjonalnie)
-     */
-    badge?: RichBadgeConfig;
 }
 
 /**
@@ -439,7 +498,7 @@ export interface IRichListItem extends IRichNode {
     /**
      * Zawartość elementu listy
      */
-    content: RichNode[];
+    items: RichNode[];
 }
 
 /**

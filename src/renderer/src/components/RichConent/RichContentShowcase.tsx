@@ -6,7 +6,6 @@ import {
     Tab,
     Typography,
     Container,
-    Button,
     useTheme,
     Stack,
     FormControlLabel,
@@ -14,9 +13,10 @@ import {
     Chip,
     Divider,
 } from "@mui/material";
-import { RichRenderer } from "./index";
+import { RichContainer, RichRenderer } from "./index";
 import { richContentExamples } from "./richContentExamples";
 import { RichNode } from "./types";
+import { Button } from "../buttons/Button";
 
 const countNodes = (nodes: RichNode[]): number => {
     const countNode = (node: RichNode): number => {
@@ -29,7 +29,7 @@ const countNodes = (nodes: RichNode[]): number => {
             case "list":
                 return 1 + node.items.reduce((acc, n) => acc + countNode(n), 0);
             case "listitem":
-                return 1 + node.content.reduce((acc, n) => acc + countNode(n), 0);
+                return 1 + node.items.reduce((acc, n) => acc + countNode(n), 0);
             default:
                 return 1;
         }
@@ -48,7 +48,7 @@ const collectNodeTypes = (nodes: RichNode[]): string[] => {
         } else if (node.type === "list") {
             node.items.forEach(walk);
         } else if (node.type === "listitem") {
-            node.content.forEach(walk);
+            node.items.forEach(walk);
         }
     };
 
@@ -80,12 +80,12 @@ const RichContentShowcase: React.FC = () => {
     };
 
     return (
-        <Container maxWidth="xl" sx={{ py: 4, height: "100%", display: "flex", flexDirection: "column" }}>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 2 }}>
+        <Container maxWidth="xl" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                 Playground do walidacji wszystkich typów węzłów, zagnieżdżeń, severity i layoutów.
             </Typography>
 
-            <Paper sx={{ p: 2, mb: 2 }}>
+            <Paper>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "flex-start", md: "center" }}>
                     <FormControlLabel
                         control={<Switch checked={showFrames} onChange={(e) => setShowFrames(e.target.checked)} />}
@@ -99,7 +99,7 @@ const RichContentShowcase: React.FC = () => {
                         control={<Switch checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />}
                         label="Compact mode"
                     />
-                    <Button size="small" variant="outlined" onClick={randomTab}>
+                    <Button size="small" onClick={randomTab}>
                         Losowy scenariusz
                     </Button>
                     <Button
@@ -140,20 +140,7 @@ const RichContentShowcase: React.FC = () => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                <Box sx={{ display: "flex", flexDirection: "column", gap: compactMode ? 1 : 2 }}>
-                    {currentExample.map((node, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                border: showFrames ? `1px dashed ${theme.palette.divider}` : "none",
-                                p: showFrames ? (compactMode ? 1 : 2) : 0,
-                                borderRadius: 1,
-                            }}
-                        >
-                            <RichRenderer node={node} />
-                        </Box>
-                    ))}
-                </Box>
+                <RichContainer node={{ items: currentExample }} />
 
                 {showJson && (
                     <Box

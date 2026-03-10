@@ -1,13 +1,14 @@
 import React from "react";
 import { Chip, Box, useTheme } from "@mui/material";
-import { IRichChip, RichSeverity } from "../types";
+import { IRichChip, IRichContainerDefaults, RichSeverity } from "../types";
 import RichBadge from "./RichBadge";
 
 interface RichChipProps {
     node: IRichChip;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichChip: React.FC<RichChipProps> = ({ node }) => {
+const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     const getColorAndVariant = (severity?: RichSeverity) => {
@@ -28,13 +29,13 @@ const RichChip: React.FC<RichChipProps> = ({ node }) => {
     const colors = getColorAndVariant(node.severity);
 
     return (
-        <Box sx={{ display: "inline-block", position: "relative" }}>
+        <Box sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
             <Chip
                 label={node.text}
                 size="small"
                 sx={{
                     ...colors,
-                    paddingRight: node.badge ? "8px" : undefined,
+                    paddingRight: node.badge ? (defaults?.padding ?? 8) : undefined,
                 }}
             />
             {node.badge && (
@@ -45,7 +46,7 @@ const RichChip: React.FC<RichChipProps> = ({ node }) => {
                         right: "-8px",
                     }}
                 >
-                    <RichBadge badge={node.badge} />
+                    <RichBadge badge={node.badge} defaults={defaults} />
                 </Box>
             )}
         </Box>

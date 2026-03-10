@@ -1,9 +1,10 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichSpacer } from "../types";
+import { IRichContainerDefaults, IRichSpacer } from "../types";
 
 interface RichSpacerProps {
     node: IRichSpacer;
+    defaults?: IRichContainerDefaults;
 }
 
 const RichSpacer: React.FC<RichSpacerProps> = ({ node }) => {

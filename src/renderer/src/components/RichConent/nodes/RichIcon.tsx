@@ -1,41 +1,16 @@
 import React from "react";
 import { Box, Tooltip, useTheme } from "@mui/material";
-import { IRichIcon, RichSeverity } from "../types";
-import RichBadge from "./RichBadge";
+import { IRichContainerDefaults, IRichIcon, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
+import { getSeverityColor } from "..";
 
 interface RichIconProps {
     node: IRichIcon;
+    defaults?: IRichContainerDefaults;
 }
 
 const RichIcon: React.FC<RichIconProps> = ({ node }) => {
     const theme = useTheme();
-
-    const getSeverityColor = (severity?: RichSeverity): string => {
-        switch (severity) {
-            case "error":
-                return theme.palette.error.main;
-            case "warning":
-                return theme.palette.warning.main;
-            case "success":
-                return theme.palette.success.main;
-            case "info":
-                return theme.palette.info.main;
-            default:
-                return "inherit";
-        }
-    };
-
-    const getSizeInPixels = (size?: "small" | "medium" | "large") => {
-        switch (size) {
-            case "small":
-                return "20px";
-            case "large":
-                return "32px";
-            default:
-                return "24px";
-        }
-    };
 
     const content = (
         <Box
@@ -44,21 +19,11 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
                 alignItems: "center",
                 justifyContent: "center",
                 position: "relative",
-                color: getSeverityColor(node.severity),
+                color: getSeverityColor(node.severity, theme),
+                alignSelf: "flex-start"
             }}
         >
             {resolveIcon(theme, node.icon)}
-            {node.badge && (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: "-6px",
-                        right: "-6px",
-                    }}
-                >
-                    <RichBadge badge={node.badge} />
-                </Box>
-            )}
         </Box>
     );
 

@@ -1,26 +1,30 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichRow } from "../types";
+import { IRichContainerDefaults, IRichRow } from "../types";
 import RichRenderer from "..";
 
 interface RichRowProps {
     node: IRichRow;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichRow: React.FC<RichRowProps> = ({ node }) => {
+const RichRow: React.FC<RichRowProps> = ({ node, defaults }) => {
     return (
         <Box
+            className="RichContainer-row"
             sx={{
                 display: "flex",
                 flexDirection: "row",
-                gap: node.layout === "grid" ? undefined : node.gap ?? 4,
+                gap: node.layout === "grid" ? undefined : (node.gap ?? defaults?.gap ?? 4),
                 alignItems: node.align || "start",
                 justifyContent: node.justify || "start",
                 width: "100%",
                 flexWrap: "wrap",
             }}
         >
-            <RichRenderer node={node.items} />
+            {node.items.map((item, index) => (
+                <RichRenderer key={index} node={item} defaults={defaults} />
+            ))}
         </Box>
     );
 };

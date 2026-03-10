@@ -1,12 +1,14 @@
 import React from "react";
 import { LinearProgress, Box, Typography, useTheme } from "@mui/material";
-import { IRichProgress, RichSeverity } from "../types";
+import { IRichContainerDefaults, IRichProgress, RichSeverity } from "../types";
+import { defaults } from "pg";
 
 interface RichProgressProps {
     node: IRichProgress;
+    defaults?: IRichContainerDefaults;
 }
 
-const RichProgress: React.FC<RichProgressProps> = ({ node }) => {
+const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     const getColorFromSeverity = (severity?: RichSeverity) => {
@@ -26,20 +28,22 @@ const RichProgress: React.FC<RichProgressProps> = ({ node }) => {
 
     return (
         <Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                {node.label && <Typography variant="caption">{node.label}</Typography>}
-                {node.showPercent && (
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                        {Math.round(node.value)}%
-                    </Typography>
-                )}
-            </Box>
+            {(node.label || node.showPercent) && (
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    {node.label && <Typography variant="caption">{node.label}</Typography>}
+                    {node.showPercent && (
+                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                            {Math.round(node.value)}%
+                        </Typography>
+                    )}
+                </Box>
+            )}
             <LinearProgress
                 variant={node.bufferValue !== undefined ? "buffer" : "determinate"}
                 value={node.value}
                 valueBuffer={node.bufferValue}
                 color={getColorFromSeverity(node.severity)}
-                sx={{ height: "6px", borderRadius: "3px" }}
+                sx={{ height: "6px", borderRadius: defaults?.radius ?? 4 }}
             />
         </Box>
     );

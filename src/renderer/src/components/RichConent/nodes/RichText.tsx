@@ -1,11 +1,12 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
-import { IRichText, RichSeverity, RichTextVariant } from "../types";
+import { IRichContainerDefaults, IRichText, RichSeverity, RichTextVariant } from "../types";
 import { getSeverityColor } from "..";
 import { FormattedText } from "@renderer/components/useful/FormattedText";
 
 interface RichTextProps {
     node: IRichText;
+    defaults?: IRichContainerDefaults;
 }
 
 const RichText: React.FC<RichTextProps> = ({ node }) => {
