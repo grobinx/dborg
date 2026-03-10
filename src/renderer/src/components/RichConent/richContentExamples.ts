@@ -165,7 +165,7 @@ WHERE active = true;
     layoutRowsColumns: [
         {
             type: "row",
-            gap: 0,
+            layout: "grid",
             align: "start",
             justify: "space-between",
             items: [
@@ -194,15 +194,13 @@ WHERE active = true;
         },
         {
             type: "row",
-            gap: 8,
             align: "center",
             justify: "end",
-            items: [{ type: "text", text: "Prawa strona" }, { type: "spacer", size: "auto" }, { type: "text", text: "END", severity: "success" }],
+            items: [{ type: "text", text: "Lewa strona" }, { type: "spacer", size: "auto" }, { type: "text", text: "Prawa strona", severity: "success" }],
         },
         {
             type: "column",
             size: "auto",
-            gap: 8,
             items: [{ type: "text", text: "Kolumna auto #1" }, { type: "text", text: "Kolumna auto #2", severity: "info" }, { type: "divider" }],
         },
     ],
@@ -258,7 +256,7 @@ WHERE active = true;
             items: [
                 {
                     type: "row",
-                    gap: 16,
+                    layout: "grid",
                     justify: "space-between",
                     items: [
                         {

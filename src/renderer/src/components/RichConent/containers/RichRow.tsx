@@ -13,7 +13,7 @@ const RichRow: React.FC<RichRowProps> = ({ node }) => {
             sx={{
                 display: "flex",
                 flexDirection: "row",
-                gap: node.gap ?? 4,
+                gap: node.layout === "grid" ? undefined : node.gap ?? 4,
                 alignItems: node.align || "start",
                 justifyContent: node.justify || "start",
                 width: "100%",

@@ -85,7 +85,7 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
         case "info":
             return theme.palette.info.main;
         default:
-            return theme.palette.primary.main;
+            return "inherit";
     }
 };
 

@@ -1,7 +1,6 @@
 import { ThemeIconName } from "@renderer/themes/icons";
-import { Size } from "@renderer/types/sizes";
 import { Action } from "../CommandPalette/ActionManager";
-import { FormattedContent } from "../useful/FormattedText";
+import { Size } from "@renderer/types/sizes";
 
 /**
  * Poziom ważności elementu Rich Content, wpływający na jego kolor i ikonę.
@@ -12,6 +11,16 @@ export type RichSeverity = "default" | "info" | "warning" | "error" | "success";
  * Wariant typograficzny tekstu w Rich Content.
  */
 export type RichTextVariant = "body" | "caption" | "label" | "title" | "markdown";
+
+/**
+ * Typ odstępów
+ */
+export type RichGap = number | string;
+
+/**
+ * Typ rozmiaru kolumny w układzie siatki (Grid System)
+ */
+export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
 
 /**
  * Typ węzła w strukturze Rich Content.
@@ -187,7 +196,7 @@ export interface IRichIcon extends IRichNode {
     /**
      * Rozmiar ikony
      */
-    size?: "small" | "medium" | "large";
+    size?: Size;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -218,7 +227,7 @@ export interface IRichGroup extends IRichNode {
     /**
      * Odstęp między elementami
      */
-    gap?: number | string;
+    gap?: RichGap;
     /**
      * Elementy wewnątrz grupy
      */
@@ -239,19 +248,8 @@ export interface IRichGroup extends IRichNode {
     defaultExpanded?: boolean;
 }
 
-/**
- * Kontener układający elementy poziomo (w wierszu).
- */
-export interface IRichRow extends IRichNode {
+export interface IRichRowBase extends IRichNode {
     type: "row";
-    /**
-     * Elementy w wierszu (ułożone poziomo)
-     */
-    items: RichNode[];
-    /**
-     * Odstęp między elementami
-     */
-    gap?: number | string;
     /**
      * Wyrównanie elementów w wierszu
      */
@@ -261,6 +259,40 @@ export interface IRichRow extends IRichNode {
      */
     justify?: "start" | "center" | "end" | "space-between" | "space-around";
 }
+
+/**
+ * Kontener układający elementy poziomo (w wierszu).
+ */
+export interface IRichRowInline extends IRichRowBase {
+    /**
+     * Układ w trybie inline (elementy będą układane w jednej linii, a nie zawijane do nowej linii)
+     */
+    layout?: "inline";
+    /**
+     * Elementy w wierszu (ułożone poziomo)
+     */
+    items: RichNode[];
+    /**
+     * Odstęp między elementami
+     */
+    gap?: RichGap;
+}
+
+/**
+ * Kontener układający elementy poziomo (w wierszu).
+ */
+export interface IRichRowGrid extends IRichRowBase {
+    /**
+     * Układ w trybie grid (elementy będą układane w siatce, a nie zawijane do nowej linii)
+     */
+    layout: "grid";
+    /**
+     * Elementy w wierszu (ułożone poziomo)
+     */
+    items: IRichColumn[];
+}
+
+export type IRichRow = IRichRowInline | IRichRowGrid;
 
 /**
  * Kontener układający elementy pionowo (w kolumnie).
@@ -274,11 +306,11 @@ export interface IRichColumn extends IRichNode {
     /**
      * Odstęp między elementami
      */
-    gap?: number | string;
+    gap?: RichGap;
     /**
      * Szerokość kolumny (jak w Grid System: 1-12 lub "auto")
      */
-    size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
+    size?: RichColSize;
 }
 
 /**
@@ -305,7 +337,7 @@ export interface IRichAlert extends IRichNode {
     /**
      * Odstęp między elementami
      */
-    gap?: number | string;
+    gap?: RichGap;
     /**
      * Elementy wewnątrz alertu
      */

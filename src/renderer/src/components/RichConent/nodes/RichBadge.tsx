@@ -25,17 +25,17 @@ const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
                 justifyContent: "center",
                 minWidth: "24px",
                 height: "24px",
-                borderRadius: "12px",
-                backgroundColor: getSeverityColor(badge.severity, theme),
+                borderRadius: "50%",
+                backgroundColor: (badge.severity ?? "default") === "default" ? theme.palette.primary.main : getSeverityColor(badge.severity, theme),
                 padding: "0 6px",
             }}
         >
             <Typography
                 variant="caption"
                 sx={{
-                    color: theme.palette.getContrastText(getSeverityColor(badge.severity, theme)),
+                    color: (badge.severity ?? "default") === "default" ? theme.palette.primary.contrastText : theme.palette.getContrastText(getSeverityColor(badge.severity, theme)),
                     fontWeight: 600,
-                    fontSize: "12px",
+                    fontSize: "0.75em",
                 }}
             >
                 {getDisplayValue()}
