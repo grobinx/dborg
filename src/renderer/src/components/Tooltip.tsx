@@ -29,6 +29,8 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false,
     };
     const handleClose = () => setOpen(false);
 
+    const isReactNode = React.isValidElement(title);
+
     return (
         <MuiTooltip
             title={title}
@@ -39,6 +41,13 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false,
             open={open}
             onOpen={handleOpen}
             onClose={handleClose}
+            slotProps={{
+                tooltip: {
+                    style: {
+                        padding: isReactNode ? 0 : undefined,
+                    }
+                }
+            }}
             {...props}
         >
             {children}

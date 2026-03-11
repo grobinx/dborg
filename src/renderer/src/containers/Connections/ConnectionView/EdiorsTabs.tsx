@@ -9,8 +9,6 @@ import { useTranslation } from "react-i18next";
 import { uuidv7 } from "uuidv7";
 import EditorContentManager, { EditorState } from "@renderer/contexts/EditorContentManager";
 import { DateTime } from "luxon";
-import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs"; // Możesz wybrać inny styl
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import Tooltip from "@renderer/components/Tooltip";
@@ -318,6 +316,7 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                             style: {
                                                 maxWidth: "600px",
                                                 width: "auto",
+                                                padding: 0,
                                             },
                                         },
                                     }}
