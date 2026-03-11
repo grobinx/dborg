@@ -11,10 +11,11 @@ export const richContentExamples: RichExampleMap = {
         { type: "text", text: "Caption / info", variant: "caption", severity: "info" },
         { type: "text", text: "Label / warning", variant: "label", severity: "warning" },
         { type: "text", text: "Title / success", variant: "title", severity: "success" },
+        { type: "text", text: "Description / default", variant: "description", severity: "default" },
         {
             type: "text",
             variant: "markdown",
-            severity: "info",
+            severity: "default",
             text: `
 ## Markdown demo
 - **bold**
@@ -35,7 +36,7 @@ WHERE active = true;
         { type: "link", href: "https://example.org/only-href", severity: "warning", variant: "caption" },
         { type: "chip", text: "Draft", severity: "default" },
         { type: "chip", text: "Info", severity: "info", badge: { value: 2, severity: "info" } },
-        { type: "chip", text: "Warn", severity: "warning", badge: { value: 12, max: 9, severity: "warning" } },
+        { type: "chip", text: "Warn", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
         { type: "chip", text: "Error", severity: "error", badge: { value: "!", severity: "error" } },
         { type: "chip", text: "Success", severity: "success", badge: { value: "OK", severity: "success" } },
     ],
@@ -156,8 +157,8 @@ WHERE active = true;
             type: "list",
             listType: "none",
             items: [
-                { type: "listitem", items: [{ type: "text", text: "List without markers #1" }] },
-                { type: "listitem", items: [{ type: "text", text: "List without markers #2" }] },
+                { type: "listitem", severity: "warning", indicator: true, items: [{ type: "text", text: "List without markers #1" }] },
+                { type: "listitem", severity: "error", indicator: true, items: [{ type: "text", text: "List without markers #2" }] },
             ],
         },
     ],

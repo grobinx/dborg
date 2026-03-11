@@ -1,5 +1,5 @@
 import React from "react";
-import { List, useTheme } from "@mui/material";
+import { List } from "@mui/material";
 import { IRichContainerDefaults, IRichList } from "../types";
 const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
 
@@ -9,8 +9,6 @@ interface RichListProps {
 }
 
 const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
-    const theme = useTheme();
-
     const getListStyleType = (listType?: "bullet" | "numbered" | "none") => {
         switch (listType) {
             case "numbered":
@@ -28,6 +26,9 @@ const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
                 listStyleType: getListStyleType(node.listType),
                 paddingLeft: node.listType && node.listType !== "none" ? "24px" : "0px",
                 margin: 0,
+                "& > li.indicator + li.indicator": {
+                    marginTop: defaults?.gap ?? 8,
+                },
             }}
         >
             {node.items.map((item, index) => (

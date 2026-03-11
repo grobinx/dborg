@@ -3,6 +3,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichText, RichSeverity, RichTextVariant } from "../types";
 import { getSeverityColor } from "..";
 import { FormattedText } from "@renderer/components/useful/FormattedText";
+import Markdown from "react-markdown";
 
 interface RichTextProps {
     node: IRichText;
@@ -17,11 +18,13 @@ const RichText: React.FC<RichTextProps> = ({ node }) => {
             case "body":
                 return "body1";
             case "caption":
-                return "caption";
-            case "label":
                 return "subtitle2";
+            case "label":
+                return "label";
             case "title":
                 return "h6";
+            case "description":
+                return "description";
             default:
                 return "body2";
         }
@@ -30,7 +33,7 @@ const RichText: React.FC<RichTextProps> = ({ node }) => {
     if (node.variant === "markdown") {
         return (
             <Box sx={{ color: getSeverityColor(node.severity, theme) }}>
-                <FormattedText text={node.text} />
+                <Markdown>{node.text}</Markdown>
             </Box>
         )
     }

@@ -11,32 +11,16 @@ interface RichChipProps {
 const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
-    const getColorAndVariant = (severity?: RichSeverity) => {
-        switch (severity) {
-            case "error":
-                return { backgroundColor: theme.palette.error.light, color: theme.palette.error.contrastText };
-            case "warning":
-                return { backgroundColor: theme.palette.warning.light, color: theme.palette.warning.contrastText };
-            case "success":
-                return { backgroundColor: theme.palette.success.light, color: theme.palette.success.contrastText };
-            case "info":
-                return { backgroundColor: theme.palette.info.light, color: theme.palette.info.contrastText };
-            default:
-                return { backgroundColor: theme.palette.action.hover, color: "inherit" };
-        }
-    };
-
-    const colors = getColorAndVariant(node.severity);
-
     return (
         <Box sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
             <Chip
                 label={node.text}
                 size="small"
                 sx={{
-                    ...colors,
                     paddingRight: node.badge ? (defaults?.padding ?? 8) : undefined,
                 }}
+                variant={node.variant}
+                color={node.severity}
             />
             {node.badge && (
                 <Box

@@ -10,7 +10,12 @@ export type RichSeverity = "default" | "info" | "warning" | "error" | "success";
 /**
  * Wariant typograficzny tekstu w Rich Content.
  */
-export type RichTextVariant = "body" | "caption" | "label" | "title" | "markdown";
+export type RichTextVariant = "body" | "caption" | "label" | "title" | "description" | "markdown";
+
+/**
+ * Wariant chipów w Rich Content (np. dla alertów lub tagów).
+ */
+export type RichChipVariant = "outlined" | "filled";
 
 /**
  * Typ odstępów
@@ -80,7 +85,7 @@ export interface IRichContainerDefaults {
     fontWeight?: number | string;
     /**
      * Domyślny padding dla kontenera/grup.
-     * @default 4
+     * @default 8
      */
     padding?: number | string;
     /**
@@ -155,6 +160,11 @@ export interface IRichChip extends IRichNode {
      * Poziom ważności wpływający na kolor
      */
     severity?: RichSeverity;
+    /**
+     * Wariant chipu (np. dla alertów lub tagów)
+     * @default "filled"
+     */
+    variant?: RichChipVariant;
     /**
      * Badge wyświetlany na chipie (opcjonalnie)
      */
@@ -495,6 +505,11 @@ export interface IRichListItem extends IRichNode {
      * Poziom ważności wpływający na kolor punktora
      */
     severity?: RichSeverity;
+    /**
+     * Czy wyróżnić element listy (np. poprzez szerszy pasek z lewej strony w kolorze severity)
+     * @default false
+     */
+    indicator?: boolean;
     /**
      * Zawartość elementu listy
      */

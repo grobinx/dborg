@@ -19,9 +19,9 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
             fontFamily: node.fontFamily ?? fontFamily,
             fontFamilyMonospace: node.fontFamilyMonospace ?? fontFamilyMonospace,
             padding: node.padding ?? 4,
-            gap: node.gap ?? 8,
+            gap: node.gap ?? 4,
             fontWeight: node.fontWeight ?? "normal",
-            radius: node.radius ?? 4,
+            radius: node.radius ?? 2,
         } as IRichContainerDefaults;
     }, [fontSize, fontFamily, fontFamilyMonospace]);
 
