@@ -62,9 +62,9 @@ WHERE active = true;
             code: [
                 "EXPLAIN ANALYZE",
                 "SELECT u.id, u.email",
-                "FROM users u",
-                "WHERE u.active = true",
-                "ORDER BY u.created_at DESC",
+                "  FROM users u",
+                " WHERE u.active = true",
+                " ORDER BY u.created_at DESC",
                 "LIMIT 25;",
             ].join("\n"),
         },
