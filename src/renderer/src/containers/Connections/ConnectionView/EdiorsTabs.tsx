@@ -17,6 +17,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { editorExtLanguages } from "@renderer/contexts/EditorContentManager";
+import { RichContainer } from "@renderer/components/RichConent";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";
@@ -299,30 +300,22 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                     key={state.editorId}
                                     interactive
                                     title={
-                                        state.sampleLines && state.sampleLines.trim() !== "" ? ( // Sprawdź, czy sampleLines nie jest puste
-                                            <>
-                                                {state.externalPath && (
-                                                    <div>
-                                                        {state.externalPath}/{state.fileName}
-                                                    </div>
-                                                )}
-                                                <SyntaxHighlighter
-                                                    language={state.language || "sql"}
-                                                    style={theme.palette.mode === "dark" ? vs2015 : vs}
-                                                    customStyle={{
-                                                        //maxWidth: "500px",
-                                                        width: "auto",
-                                                    }}
-                                                >
-                                                    {"...\n" + state.sampleLines + "\n..."}
-                                                </SyntaxHighlighter>
-                                            </>
-                                        ) : ""
+                                        <RichContainer node={{
+                                            items: [
+                                                state.externalPath && `${state.externalPath}/${state.fileName}`,
+                                                {
+                                                    type: "code",
+                                                    language: state.language,
+                                                    code: "...\n" + state.sampleLines + "\n...",
+                                                }
+                                            ],
+                                            fontSize: "0.75rem",
+                                        }} />
                                     }
                                     placement="right"
                                     slotProps={{
                                         tooltip: {
-                                            sx: {
+                                            style: {
                                                 maxWidth: "600px",
                                                 width: "auto",
                                             },

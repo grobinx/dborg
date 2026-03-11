@@ -20,6 +20,10 @@ import { Button } from "../buttons/Button";
 
 const countNodes = (nodes: RichNode[]): number => {
     const countNode = (node: RichNode): number => {
+        if (node === null || node === undefined) {
+            return 0;
+        }
+
         if (typeof node === "string" || typeof node === "number") {
             return 1;
         }
@@ -50,6 +54,9 @@ const collectNodeTypes = (nodes: RichNode[]): string[] => {
     const set = new Set<string>();
 
     const walk = (node: RichNode) => {
+        if (node === null || node === undefined) {
+            return;
+        }
         if (typeof node === "string" || typeof node === "number") {
             set.add("text");
             return;

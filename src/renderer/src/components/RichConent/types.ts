@@ -58,7 +58,8 @@ export type RichNode =
     | IRichList
     | IRichListItem
     | RichNode[]
-    | string | number;
+    | string | number
+    | null | undefined;
 
 /**
  * Domyślne wartości dla kontenerów Rich Content (grupy, wiersze, kolumny).
@@ -233,6 +234,10 @@ export interface IRichCode extends IRichNode {
      * @default false
      */
     lineNumbers?: boolean;
+    /**
+     * Numer linii, od której zaczyna się kod (domyślnie 1)
+     */
+    startLineNumber?: number;
 }
 
 /**

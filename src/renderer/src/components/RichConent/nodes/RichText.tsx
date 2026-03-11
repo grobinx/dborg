@@ -2,10 +2,8 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichText, RichSeverity, RichTextVariant } from "../types";
 import { getSeverityColor } from "..";
-import { FormattedText } from "@renderer/components/useful/FormattedText";
 import Markdown from "react-markdown";
 import Code from "@renderer/components/Code";
-import { defaults } from "pg";
 
 interface RichTextProps {
     node: IRichText;
@@ -47,21 +45,21 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                         code: Code,
                     }), [theme, defaults])}
                 >
-                {node.text}
-            </Markdown>
+                    {node.text}
+                </Markdown>
             </Box >
         )
     }
 
-return (
-    <Typography
-        variant={getVariantMapping(node.variant) as any}
-        sx={{ color: getSeverityColor(node.severity, theme) }}
-        className="RichNode-text"
-    >
-        {node.text}
-    </Typography>
-);
+    return (
+        <Typography
+            variant={getVariantMapping(node.variant) as any}
+            sx={{ color: getSeverityColor(node.severity, theme) }}
+            className="RichNode-text"
+        >
+            {node.text}
+        </Typography>
+    );
 };
 
 export default RichText;

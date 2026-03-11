@@ -18,7 +18,7 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
             language={node.language}
             style={theme.palette.mode === "dark" ? vs2015 : vs}
             showLineNumbers={Boolean(node.lineNumbers)}
-            wrapLongLines
+            startingLineNumber={node.startLineNumber}
             customStyle={{
                 borderRadius: defaults?.radius ?? 4,
                 padding: defaults?.padding ?? 4,

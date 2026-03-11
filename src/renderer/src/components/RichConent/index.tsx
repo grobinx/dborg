@@ -100,6 +100,10 @@ const RichRenderer: React.FC<{
     node: RichNode;
     defaults?: IRichContainerDefaults
 }> = ({ node, defaults }) => {
+    if (node === null || node === undefined) {
+        return null;
+    }
+
     if (Array.isArray(node)) {
         return <RichRow node={{ type: "row", items: node }} defaults={defaults} />;
     } else if (typeof node === "string" || typeof node === "number") {
