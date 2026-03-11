@@ -19,6 +19,7 @@ const RichSpacer: React.FC<RichSpacerProps> = ({ node }) => {
 
     return (
         <Box
+            className="RichNode-spacer"
             sx={{
                 flex: typeof sizeValue === "number" ? ((node.size ?? "auto") === "auto" ? 1 : undefined) : undefined,
                 width: typeof sizeValue === "string" ? sizeValue : undefined,

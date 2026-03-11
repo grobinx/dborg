@@ -15,6 +15,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults }) => {
     return (
         <ListItem
             className={clsx(
+                "RichContainer-listItem",
                 (node.indicator && (node.severity ?? "default") !== "default") && "indicator"
             )}
             sx={{

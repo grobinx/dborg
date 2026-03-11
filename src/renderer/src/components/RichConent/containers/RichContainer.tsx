@@ -18,7 +18,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
             fontSize: node.fontSize ?? fontSize,
             fontFamily: node.fontFamily ?? fontFamily,
             fontFamilyMonospace: node.fontFamilyMonospace ?? fontFamilyMonospace,
-            padding: node.padding ?? 4,
+            padding: node.padding ?? "4px 8px",
             gap: node.gap ?? 4,
             fontWeight: node.fontWeight ?? "normal",
             radius: node.radius ?? 3,
@@ -27,6 +27,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
 
     return (
         <Box
+            className="RichContainer-container"
             sx={{
                 width: node.width ?? "100%",
                 height: node.height,

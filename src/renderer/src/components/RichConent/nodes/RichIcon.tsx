@@ -14,6 +14,7 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
 
     const content = (
         <Box
+            className="RichNode-icon"
             sx={{
                 display: "inline-flex",
                 alignItems: "center",

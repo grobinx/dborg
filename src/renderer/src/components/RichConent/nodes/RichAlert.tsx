@@ -39,6 +39,7 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
 
     return (
         <Alert
+            className="RichNode-alert"
             severity={getSeverityForAlert(node.severity)}
             icon={node.showIcon !== false && (resolveIcon(theme, node.icon))}
             slotProps={{

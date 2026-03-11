@@ -22,6 +22,7 @@ const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
 
     return (
         <List
+            className="RichContainer-list"
             sx={{
                 listStyleType: getListStyleType(node.listType),
                 padding: defaults?.padding ?? 8,

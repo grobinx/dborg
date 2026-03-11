@@ -16,6 +16,7 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
 
     return (
         <Paper
+            className="RichContainer-group"
             sx={{
                 overflow: "hidden",
             }}

@@ -12,7 +12,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     return (
-        <Box sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
+        <Box className="RichNode-chip" sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
             <Chip
                 label={node.text}
                 size="small"

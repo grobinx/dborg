@@ -11,7 +11,7 @@ interface RichActionProps {
 
 const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
     const content = (
-        <Box sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
+        <Box className="RichNode-action" sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
             <Button action={node} color={node.severity} size="small" />
             {node.badge && (
                 <Box

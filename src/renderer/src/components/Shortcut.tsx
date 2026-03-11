@@ -95,6 +95,7 @@ function ShortcutChord({ keybinding, active = true, hidden = false, dense = fals
 }
 
 interface ShortcutProps {
+    className?: string;
     keybindings: string[] | string;
     active?: boolean;
     hidden?: boolean;
@@ -112,10 +113,12 @@ export function Shortcut({
     style,
     size = "small",
     dense = false,
+    className,
 }: ShortcutProps) {
     return (
         <ShortcutRootStyled
             className={clsx(
+                className,
                 "Shortcut-root",
                 active && "active",
                 hidden && "hidden",

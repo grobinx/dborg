@@ -35,6 +35,7 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
 
         return (
             <Box
+                className="RichNode-image"
                 role="img"
                 aria-label={node.alt || "Image"}
                 sx={{
@@ -56,6 +57,9 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
 
     return (
         <Box
+            className="RichNode-image"
+            role="img"
+            aria-label={node.alt || "Image"}
             sx={{
                 display: "inline-block",
                 borderRadius: defaults?.radius ?? 4,

@@ -9,7 +9,7 @@ interface RichKbdProps {
 
 const RichKbd: React.FC<RichKbdProps> = ({ node }) => {
     return (
-        <Shortcut keybindings={node.keys} />
+        <Shortcut className="RichNode-kbd" keybindings={node.keys} />
     );
 };
 

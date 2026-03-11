@@ -14,6 +14,7 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
 
     return (
         <SyntaxHighlighter
+            className="RichNode-code"
             language={node.language}
             style={theme.palette.mode === "dark" ? vs2015 : vs}
             showLineNumbers={Boolean(node.lineNumbers)}

@@ -28,6 +28,7 @@ const RichLink: React.FC<RichLinkProps> = ({ node }) => {
 
     return (
         <Link
+            className="RichNode-link"
             href={node.href}
             target="_blank"
             rel="noopener noreferrer"

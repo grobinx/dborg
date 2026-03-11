@@ -27,7 +27,7 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
     };
 
     return (
-        <Box>
+        <Box className="RichNode-progress">
             {(node.label || node.showPercent) && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     {node.label && <Typography variant="caption">{node.label}</Typography>}

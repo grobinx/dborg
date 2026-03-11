@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import ViewButton from "./ViewButton";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import * as Messages from "../Messages";
-import { useContainers, View } from "@renderer/contexts/ApplicationContext";
+import { useContainers } from "@renderer/contexts/ApplicationContext";
 import { resolveIcon } from "@renderer/themes/icons";
 
 const Store_siedBarExpanded = 'siedBarExpanded';
@@ -161,7 +161,18 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
             <Stack direction={horizontal ? "column" : "row"}>
                 {children}
             </Stack>
-            <Stack direction={horizontal ? "column" : "row"} flexGrow={1}>
+            <Stack
+                direction={horizontal ? "column" : "row"}
+                flexGrow={1}
+                sx={{
+                    overflow: "auto",
+                    minHeight: 0,
+                    minWidth: 0,
+                    "&::-webkit-scrollbar": { display: "none" },
+                    "-ms-overflow-style": "none",
+                    "scrollbar-width": "none",
+                }}
+            >
                 {viewButtonsFirst}
             </Stack>
             <Stack direction={horizontal ? "column-reverse" : "row-reverse"} flexGrow={1}>

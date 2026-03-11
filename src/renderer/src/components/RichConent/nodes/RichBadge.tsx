@@ -52,7 +52,7 @@ const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
     };
 
     return (
-        <div style={{ position: "relative" }}>
+        <div className="RichNode-badge" style={{ position: "relative" }}>
             <UnboundBadge
                 content={getDisplayValue()}
                 sx={{
