@@ -18,9 +18,8 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                position: "relative",
                 color: getSeverityColor(node.severity, theme),
-                alignSelf: "flex-start"
+                alignSelf: "center",
             }}
         >
             {resolveIcon(theme, node.icon)}

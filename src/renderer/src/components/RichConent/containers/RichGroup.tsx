@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Paper, Typography, Collapse, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichGroup } from "../types";
-import RichRenderer from "..";
+import RichRenderer, { getSeverityColor } from "..";
 import { resolveIcon } from "@renderer/themes/icons";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
@@ -13,21 +13,6 @@ interface RichGroupProps {
 const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.defaultExpanded !== false);
-
-    const getSeverityColor = (severity?: string) => {
-        switch (severity) {
-            case "error":
-                return theme.palette.error.light;
-            case "warning":
-                return theme.palette.warning.light;
-            case "success":
-                return theme.palette.success.light;
-            case "info":
-                return theme.palette.info.light;
-            default:
-                return theme.palette.action.hover;
-        }
-    };
 
     return (
         <Paper
@@ -42,7 +27,8 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
                         alignItems: "center",
                         gap: defaults?.gap ?? 8,
                         padding: defaults?.padding ?? 8,
-                        backgroundColor: getSeverityColor(node.severity),
+                        backgroundColor: getSeverityColor(node.severity, theme),
+                        color: getSeverityColor(node.severity, theme, true),
                         borderBottom: `1px solid ${theme.palette.divider}`,
                         cursor: node.collapsible ? "pointer" : "default",
                     }}

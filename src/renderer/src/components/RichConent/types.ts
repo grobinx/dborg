@@ -56,7 +56,9 @@ export type RichNode =
     | IRichAction
     | IRichImage
     | IRichList
-    | IRichListItem;
+    | IRichListItem
+    | RichNode[]
+    | string | number;
 
 /**
  * Domyślne wartości dla kontenerów Rich Content (grupy, wiersze, kolumny).

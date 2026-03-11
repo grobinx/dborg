@@ -28,6 +28,7 @@ import { FormattedText } from "../useful/FormattedText";
 import { handleListNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import ButtonGroup from "../buttons/ButtonGroup";
+import { IRichContainer, RichContainer } from "../RichConent";
 
 interface ConsoleLogState {
     showTime: boolean;
@@ -431,6 +432,7 @@ export const ConsoleLogsPanelButtons: React.FC = () => {
 };
 
 export const ConsoleLogsStatusBarButtons: React.FC = () => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const { emit } = useMessages();
     const { logs } = useConsole();
@@ -454,14 +456,20 @@ export const ConsoleLogsStatusBarButtons: React.FC = () => {
         });
     }, [logs]);
 
+    const richTooltip = React.useMemo(() => ({
+        items: [
+            { type: "text", variant: "caption", text: t("console-logs", "Console Logs") },
+            { type: "divider" },
+            [{ type: "icon", icon: "Error", }, t("errors", "Errors"), { type: "spacer" }, notificationCounts.error],
+            [{ type: "icon", icon: "Warning", }, t("warnings", "Warnings"), { type: "spacer" }, notificationCounts.warning],
+        ]
+    } as IRichContainer
+    ), [notificationCounts.error, notificationCounts.warning, t]);
+
     return (
         <Tooltip
             //open={true}
-            title={[
-                "Console Logs", "-",
-                ["![error](Error) Errors", String(notificationCounts.error)],
-                ["![warning](Warning) Warnings", String(notificationCounts.warning)],
-            ]}
+            title={<RichContainer node={richTooltip} />}
         >
             <StatusBarButton
                 key="notifications"

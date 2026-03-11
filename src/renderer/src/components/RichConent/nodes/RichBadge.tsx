@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { IRichContainerDefaults, RichBadgeConfig } from "../types";
-import { getSeverityColor } from "..";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
 

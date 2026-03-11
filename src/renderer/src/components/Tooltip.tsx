@@ -1,9 +1,8 @@
 import React from "react";
 import { Tooltip as MuiTooltip, TooltipProps as MuiTooltipProps } from "@mui/material";
-import { FormattedText, FormattedContent } from "./useful/FormattedText";
 
-export interface TooltipProps extends Omit<MuiTooltipProps, "title" | "open" | "onOpen" | "onClose"> {
-    title: FormattedContent;
+export interface TooltipProps extends Omit<MuiTooltipProps, "title" | "onOpen" | "onClose"> {
+    title: React.ReactNode;
     interactive?: boolean;
 }
 
@@ -14,9 +13,9 @@ const getChildDisabled = (child: React.ReactNode) => {
     return false;
 };
 
-const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false, ...props }) => {
+const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false, open: initialOpen, ...props }) => {
     const childIsDisabled = getChildDisabled(children);
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(initialOpen ?? false);
 
     // Zamykanie tooltipa, gdy dziecko staje się disabled lub tytuł pusty
     React.useEffect(() => {
@@ -32,7 +31,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false,
 
     return (
         <MuiTooltip
-            title={title && <FormattedText text={title} />}
+            title={title}
             disableInteractive={!interactive}
             disableHoverListener={childIsDisabled}
             disableFocusListener={childIsDisabled}

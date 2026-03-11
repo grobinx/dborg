@@ -77,16 +77,16 @@ export { default as RichList } from "./containers/RichList";
 export { default as RichListItem } from "./containers/RichListItem";
 export { default as RichContainer } from "./containers/RichContainer";
 
-export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme): string => {
+export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
     switch (severity) {
         case "error":
-            return theme.palette.error.main;
+            return contrastText ? theme.palette.error.contrastText : theme.palette.error.main;
         case "warning":
-            return theme.palette.warning.main;
+            return contrastText ? theme.palette.warning.contrastText : theme.palette.warning.main;
         case "success":
-            return theme.palette.success.main;
+            return contrastText ? theme.palette.success.contrastText : theme.palette.success.main;
         case "info":
-            return theme.palette.info.main;
+            return contrastText ? theme.palette.info.contrastText : theme.palette.info.main;
         default:
             return "inherit";
     }
@@ -100,6 +100,12 @@ const RichRenderer: React.FC<{
     node: RichNode;
     defaults?: IRichContainerDefaults
 }> = ({ node, defaults }) => {
+    if (Array.isArray(node)) {
+        return <RichRow node={{ type: "row", items: node }} defaults={defaults} />;
+    } else if (typeof node === "string" || typeof node === "number") {
+        return <RichText node={{ type: "text", text: String(node) }} defaults={defaults} />;
+    }
+    
     switch (node.type) {
         case "text":
             return <RichText node={node} defaults={defaults} />;

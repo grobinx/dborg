@@ -20,28 +20,45 @@ import { Button } from "../buttons/Button";
 
 const countNodes = (nodes: RichNode[]): number => {
     const countNode = (node: RichNode): number => {
+        if (typeof node === "string" || typeof node === "number") {
+            return 1;
+        }
+        if (Array.isArray(node)) {
+            return 1 + node.map(n => countNode(n)).reduce((acc, count) => acc + count, 0);
+        }
+
         switch (node.type) {
             case "group":
             case "row":
             case "column":
             case "alert":
-                return 1 + node.items.reduce((acc, n) => acc + countNode(n), 0);
+                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
             case "list":
-                return 1 + node.items.reduce((acc, n) => acc + countNode(n), 0);
+                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
             case "listitem":
-                return 1 + node.items.reduce((acc, n) => acc + countNode(n), 0);
+                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
             default:
                 return 1;
         }
     };
 
-    return nodes.reduce((acc, node) => acc + countNode(node), 0);
+
+    return nodes.reduce((acc: number, node) => acc + countNode(node), 0);
 };
 
 const collectNodeTypes = (nodes: RichNode[]): string[] => {
     const set = new Set<string>();
 
     const walk = (node: RichNode) => {
+        if (typeof node === "string" || typeof node === "number") {
+            set.add("text");
+            return;
+        }
+        if (Array.isArray(node)) {
+            set.add("row");
+            node.forEach(walk);
+            return;
+        }
         set.add(node.type);
         if (node.type === "group" || node.type === "row" || node.type === "column" || node.type === "alert") {
             node.items.forEach(walk);
