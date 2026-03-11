@@ -60,7 +60,13 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
                 }
             }}
         >
-            {node.title && <AlertTitle>{node.title}</AlertTitle>}
+            {node.title && (
+                typeof node.title === "string" ? (
+                    <AlertTitle>{node.title}</AlertTitle>
+                ) : (
+                    <RichRenderer node={node.title} defaults={defaults} />
+                )
+            )}
             {node.items.map((item, index) => (
                 <RichRenderer key={index} node={item} defaults={defaults} />
             ))}

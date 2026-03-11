@@ -34,7 +34,8 @@ export type RichNodeType =
     | "text" | "link" | "chip" | "code" | "progress" | "group"
     | "row" | "column" | "icon" | "divider"
     | "spacer" | "alert" | "kbd" | "action" | "image"
-    | "list" | "listitem";
+    | "list" | "listitem" | "switch" | "table"
+    | "stat" | "timeline";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -57,6 +58,10 @@ export type RichNode =
     | IRichImage
     | IRichList
     | IRichListItem
+    | IRichSwitch
+    | IRichTable
+    | IRichStat
+    | IRichTimeline
     | RichNode[]
     | string | number
     | null | undefined;
@@ -295,7 +300,7 @@ export interface IRichGroup extends IRichNode {
     /**
      * Tytuł grupy (opcjonalnie)
      */
-    title?: string;
+    title?: RichNode;
     /**
      * Ikona grupy (opcjonalnie)
      */
@@ -418,7 +423,7 @@ export interface IRichAlert extends IRichNode {
     /**
      * Tytuł alertu (opcjonalnie)
      */
-    title?: string;
+    title?: RichNode;
     /**
      * Odstęp między elementami
      */
@@ -564,4 +569,169 @@ export interface RichBadgeConfig {
      * @default "top-right"
      */
     position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+}
+
+/**
+ * Switch - przełącznik toggle.
+ */
+export interface IRichSwitch extends IRichNode {
+    type: "switch";
+    /**
+     * Etykieta wyświetlana obok przełącznika
+     */
+    label?: string;
+    /**
+     * Aktualny stan przełącznika
+     */
+    checked?: boolean;
+    /**
+     * Callback wywoływany przy zmianie stanu
+     */
+    onChange?: (checked: boolean) => void;
+    /**
+     * Poziom ważności wpływający na kolor
+     */
+    severity?: RichSeverity;
+    /**
+     * Czy przełącznik jest wyłączony
+     */
+    disabled?: boolean;
+    /**
+     * Rozmiar przełącznika
+     */
+    size?: "small" | "medium";
+}
+
+/**
+ * Definicja kolumny tabeli.
+ */
+export interface IRichTableColumn {
+    /**
+     * Klucz kolumny (identyfikator)
+     */
+    key: string;
+    /**
+     * Nagłówek kolumny
+     */
+    header?: RichNode;
+    /**
+     * Szerokość kolumny (np. "auto", "20%", 120)
+     */
+    width?: number | string;
+    /**
+     * Wyrównanie zawartości kolumny
+     * @default "start"
+     */
+    align?: "start" | "center" | "end";
+}
+
+/**
+ * Wiersz tabeli — mapa klucz→węzeł.
+ */
+export type IRichTableRow = Record<string, RichNode>;
+
+/**
+ * Tabela danych.
+ */
+export interface IRichTable extends IRichNode {
+    type: "table";
+    /**
+     * Tytuł tabeli (opcjonalnie)
+     */
+    title?: RichNode;
+    /**
+     * Definicje kolumn (kolejność i metadane)
+     */
+    columns: IRichTableColumn[];
+    /**
+     * Wiersze danych
+     */
+    rows: IRichTableRow[];
+    /**
+     * Czy pokazać nagłówek tabeli
+     * @default true
+     */
+    showHeader?: boolean;
+    /**
+     * Styl obramowania
+     * @default "bordered"
+     */
+    variant?: "bordered" | "striped" | "plain";
+    /**
+     * Kompaktowy wygląd
+     * @default false
+     */
+    dense?: boolean;
+}
+
+/**
+ * Stat - pojedyncza metryka z etykietą i opcjonalnym trendem.
+ */
+export interface IRichStat extends IRichNode {
+    type: "stat";
+    /**
+     * Wyświetlana wartość (np. "1 234", "42 MB", "99.9%")
+     */
+    value: string | number;
+    /**
+     * Etykieta opisująca metrykę
+     */
+    label: string;
+    /**
+     * Dodatkowy opis pod wartością
+     */
+    caption?: RichNode;
+    /**
+     * Kierunek trendu (opcjonalnie)
+     */
+    trend?: "up" | "down" | "flat";
+    /**
+     * Poziom ważności wpływający na kolor wartości
+     */
+    severity?: RichSeverity;
+    /**
+     * Ikona obok wartości
+     */
+    icon?: React.ReactNode | ThemeIconName;
+    /**
+     * Rozmiar statu (podobnie jak dla kolumn)
+     */
+    size?: RichColSize;
+}
+
+/**
+ * Pojedyncze zdarzenie na osi czasu.
+ */
+export interface IRichTimelineItem {
+    /**
+     * Treść zdarzenia
+     */
+    label: RichNode;
+    /**
+     * Dodatkowy opis
+     */
+    caption?: RichNode;
+    /**
+     * Poziom ważności wpływający na kolor kropki/ikony
+     */
+    severity?: RichSeverity;
+    /**
+     * Sygnatura czasowa (wyświetlana jako tekst)
+     */
+    timestamp?: string;
+    /**
+     * Ikona zastępująca domyślną kropkę
+     */
+    icon?: React.ReactNode | ThemeIconName;
+}
+
+/**
+ * Timeline - oś czasu z listą zdarzeń.
+ */
+export interface IRichTimeline extends IRichNode {
+    type: "timeline";
+    /**
+     * Zdarzenia na osi czasu
+     */
+    items: IRichTimelineItem[];
 }

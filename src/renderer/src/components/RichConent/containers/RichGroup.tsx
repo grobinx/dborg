@@ -41,10 +41,13 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
                         </Box>
                     )}
                     {node.title && (
-                        <Typography variant="subtitle2" sx={{ flex: 1 }}>
-                            {node.title}
-                        </Typography>
-                    )}
+                        typeof node.title === "string" ? (
+                            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+                                {node.title}
+                            </Typography>
+                        ) : (
+                            <RichRenderer node={node.title} defaults={defaults} />
+                        ))}
                     {node.collapsible && (
                         <ToolButton
                             size="small"
