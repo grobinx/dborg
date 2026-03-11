@@ -1,8 +1,9 @@
 import React from "react";
-import { Box, Paper, Typography, Collapse, useTheme, IconButton } from "@mui/material";
+import { Box, Paper, Typography, Collapse, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichGroup } from "../types";
 import RichRenderer from "..";
 import { resolveIcon } from "@renderer/themes/icons";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 interface RichGroupProps {
     node: IRichGroup;
@@ -31,8 +32,6 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
     return (
         <Paper
             sx={{
-                border: `1px solid ${theme.palette.divider}`,
-                mb: 2,
                 overflow: "hidden",
             }}
         >
@@ -41,8 +40,8 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 1,
-                        padding: "12px 16px",
+                        gap: defaults?.gap ?? 8,
+                        padding: defaults?.padding ?? 8,
                         backgroundColor: getSeverityColor(node.severity),
                         borderBottom: `1px solid ${theme.palette.divider}`,
                         cursor: node.collapsible ? "pointer" : "default",
@@ -55,25 +54,25 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
                         </Box>
                     )}
                     {node.title && (
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
+                        <Typography variant="subtitle2" sx={{ flex: 1 }}>
                             {node.title}
                         </Typography>
                     )}
                     {node.collapsible && (
-                        <IconButton
+                        <ToolButton
                             size="small"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setExpanded(!expanded);
                             }}
                         >
-                            <span>{expanded ? "−" : "+"}</span>
-                        </IconButton>
+                            {expanded ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
+                        </ToolButton>
                     )}
                 </Box>
             )}
             <Collapse in={!node.collapsible || expanded}>
-                <Box sx={{ padding: "16px", display: "flex", flexDirection: "column", gap: node.gap ?? defaults?.gap ?? 4 }}>
+                <Box sx={{ padding: defaults?.padding ?? 8, display: "flex", flexDirection: "column", gap: node.gap ?? defaults?.gap ?? 8 }}>
                     {node.items.map((item, index) => (
                         <RichRenderer key={index} node={item} defaults={defaults} />
                     ))}

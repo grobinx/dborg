@@ -24,6 +24,7 @@ const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
         <List
             sx={{
                 listStyleType: getListStyleType(node.listType),
+                padding: defaults?.padding ?? 8,
                 paddingLeft: node.listType && node.listType !== "none" ? "24px" : "0px",
                 margin: 0,
                 "& > li.indicator + li.indicator": {

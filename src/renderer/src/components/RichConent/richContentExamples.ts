@@ -17,7 +17,7 @@ export const richContentExamples: RichExampleMap = {
             variant: "markdown",
             severity: "default",
             text: `
-## Markdown demo
+###### Markdown demo
 - **bold**
 - _italic_
 - \`inline code\`
@@ -250,7 +250,7 @@ WHERE active = true;
         {
             type: "group",
             title: "Query Analyzer: Full Demo",
-            icon: "🧠",
+            icon: "Analyze",
             severity: "info",
             collapsible: true,
             defaultExpanded: true,
