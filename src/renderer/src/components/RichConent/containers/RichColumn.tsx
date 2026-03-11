@@ -1,7 +1,7 @@
 import React from "react";
-import { Box } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { IRichColumn, IRichContainerDefaults } from "../types";
-import RichRenderer from "..";
+import RichRenderer, { getSeverityColor } from "..";
 
 interface RichColumnProps {
     node: IRichColumn;
@@ -9,6 +9,8 @@ interface RichColumnProps {
 }
 
 const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
+    const theme = useTheme();
+
     const getColSize = (size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto") => {
         if (size === "auto" || size === undefined) {
             return "auto";
@@ -22,9 +24,13 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: node.gap ?? 4,
+                gap: node.gap ?? defaults?.gap ?? 4,
+                padding: defaults?.padding ?? 4,
                 width: getColSize(node.size),
                 minWidth: 0,
+                border: node.indicator && (node.severity ?? "default") !== "default" ? `1px solid ${getSeverityColor(node.severity, theme)}` : undefined,
+                borderLeft: node.indicator && (node.severity ?? "default") !== "default" ? `4px solid ${getSeverityColor(node.severity, theme)}` : undefined,
+                borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
             {node.items.map((item, index) => (

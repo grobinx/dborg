@@ -380,6 +380,15 @@ export interface IRichColumn extends IRichNode {
      * Szerokość kolumny (jak w Grid System: 1-12 lub "auto")
      */
     size?: RichColSize;
+    /**
+     * Poziom ważności wpływający na kolor punktora
+     */
+    severity?: RichSeverity;
+    /**
+     * Czy wyróżnić element listy (np. poprzez szerszy pasek z lewej strony w kolorze severity)
+     * @default false
+     */
+    indicator?: boolean;
 }
 
 /**

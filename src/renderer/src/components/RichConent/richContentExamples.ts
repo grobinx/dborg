@@ -44,7 +44,7 @@ WHERE active = true;
     iconsKbdSpacerDivider: [
         { type: "icon", icon: "ℹ", severity: "info", tooltip: "Informacja" },
         { type: "icon", icon: "⚠", severity: "warning", tooltip: "Ostrzeżenie" },
-        { type: "row", items: [{ type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }]},
+        { type: "row", items: [{ type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }] },
         { type: "divider" },
         { type: "row", gap: 8, items: [{ type: "text", text: "Ctrl+S:" }, { type: "kbd", keys: ["Ctrl", "S"] }] },
         { type: "row", gap: 8, items: [{ type: "text", text: "Command palette:" }, { type: "kbd", keys: "Ctrl+Shift+P" }] },
@@ -326,7 +326,6 @@ WHERE active = true;
                 },
                 {
                     type: "row",
-                    gap: 8,
                     items: [
                         {
                             type: "action",
@@ -345,6 +344,44 @@ WHERE active = true;
                             run: () => { window.open("https://www.postgresql.org/docs/", "_blank"); },
                         },
                     ],
+                },
+                {
+                    type: "group",
+                    title: "Execution Plan Snapshot",
+                    collapsible: true,
+                    items: [{
+                        type: "row",
+                        items: [
+                            {
+                                type: "column",
+                                indicator: true,
+                                severity: "info",
+                                items: [{ type: "text", variant: "caption", text: "Node Type" }, { type: "text", text: "Seq Scan", variant: "title", severity: "info" }],
+                                size: 2,
+                            },
+                            {
+                                type: "column",
+                                indicator: true,
+                                severity: "warning",
+                                items: [{ type: "text", variant: "caption", text: "Planing Time" }, { type: "text", text: "120 ms", variant: "title", severity: "warning" }],
+                                size: 2,
+                            },
+                            {
+                                type: "column",
+                                indicator: true,
+                                severity: "warning",
+                                items: [{ type: "text", variant: "caption", text: "Execution Time" }, { type: "text", text: "622 ms", variant: "title", severity: "warning" }],
+                                size: 2,
+                            },
+                            {
+                                type: "column",
+                                indicator: true,
+                                severity: "success",
+                                items: [{ type: "text", variant: "caption", text: "Total Time" }, { type: "text", text: "580 ms", variant: "title", severity: "success" }],
+                                size: 2,
+                            }
+                        ],
+                    }],
                 },
                 { type: "image", src: placeholderSvg("Execution Plan Snapshot", "eaf2ff", "1b263b"), width: "100%", height: 140, fit: "cover" },
             ],

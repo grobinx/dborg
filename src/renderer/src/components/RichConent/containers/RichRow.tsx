@@ -22,7 +22,7 @@ const RichRow: React.FC<RichRowProps> = ({ node, defaults }) => {
                 flexWrap: "wrap",
             }}
         >
-            {node.items.map((item, index) => (
+            {node.items.map((item: typeof node.items[number], index: number) => (
                 <RichRenderer key={index} node={item} defaults={defaults} />
             ))}
         </Box>
