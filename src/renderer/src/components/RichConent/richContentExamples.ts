@@ -2,8 +2,44 @@ import { RichNode } from "./types";
 
 type RichExampleMap = Record<string, RichNode[]>;
 
-const placeholderSvg = (label: string, bg = "dfe7f5", fg = "2c3e50") =>
-    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='120'%3E%3Crect fill='%23${bg}' width='420' height='120'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23${fg}' font-family='monospace' font-size='18'%3E${encodeURIComponent(label)}%3C/text%3E%3C/svg%3E`;
+const placeholderSvg = (
+    label: string,
+    bg = "dfe7f5",
+    fg = "2c3e50",
+    sourceWidth = 220,
+    sourceHeight = 420
+) => {
+    const centerX = Math.round(sourceWidth / 2);
+    const centerY = Math.round(sourceHeight / 2);
+    const innerWidth = Math.max(1, sourceWidth - 16);
+    const innerHeight = Math.max(1, sourceHeight - 16);
+
+    const svg = [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="' + sourceWidth + '" height="' + sourceHeight + '" viewBox="0 0 ' + sourceWidth + " " + sourceHeight + '">',
+        '<defs>',
+        '<pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">',
+        '<path d="M 16 0 L 0 0 0 16" fill="none" stroke="#ffffff66" stroke-width="1" />',
+        "</pattern>",
+        "</defs>",
+        '<rect width="100%" height="100%" fill="#' + bg + '" />',
+        '<rect x="8" y="8" width="' + innerWidth + '" height="' + innerHeight + '" fill="url(#grid)" stroke="#' + fg + '" stroke-width="2" />',
+        '<line x1="8" y1="8" x2="' + (sourceWidth - 8) + '" y2="' + (sourceHeight - 8) + '" stroke="#' + fg + '" stroke-width="2" />',
+        '<line x1="' + (sourceWidth - 8) + '" y1="8" x2="8" y2="' + (sourceHeight - 8) + '" stroke="#' + fg + '" stroke-width="2" />',
+        '<circle cx="' + centerX + '" cy="' + centerY + '" r="20" fill="#' + fg + '" fill-opacity="0.2" stroke="#' + fg + '" stroke-width="2" />',
+        '<text x="' + centerX + '" y="' + (centerY - 10) + '" text-anchor="middle" fill="#' + fg + '" font-family="monospace" font-size="14" font-weight="700">' + label + "</text>",
+        '<text x="' + centerX + '" y="' + (centerY + 10) + '" text-anchor="middle" fill="#' + fg + '" font-family="monospace" font-size="11">' + sourceWidth + "x" + sourceHeight + "</text>",
+        '<text x="12" y="22" fill="#' + fg + '" font-family="monospace" font-size="10">TL</text>',
+        '<text x="' + (sourceWidth - 22) + '" y="22" fill="#' + fg + '" font-family="monospace" font-size="10">TR</text>',
+        '<text x="12" y="' + (sourceHeight - 10) + '" fill="#' + fg + '" font-family="monospace" font-size="10">BL</text>',
+        '<text x="' + (sourceWidth - 22) + '" y="' + (sourceHeight - 10) + '" fill="#' + fg + '" font-family="monospace" font-size="10">BR</text>',
+        "</svg>",
+    ].join("");
+
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+};
+
+const fitDemoTallSrc = placeholderSvg("FIT DEMO", "dbeafe", "0f172a", 220, 420);
+const fitDemoSmallSrc = placeholderSvg("SMALL SRC", "fde68a", "78350f", 140, 60);
 
 export const richContentExamples: RichExampleMap = {
     allTextVariants: [
@@ -89,16 +125,25 @@ WHERE active = true;
     ],
 
     imagesFitModes: [
+        { type: "text", text: "To samo okno: 320x100", variant: "caption", severity: "info" },
+
         { type: "text", text: "fit: contain", variant: "label" },
-        { type: "image", src: placeholderSvg("contain"), width: 320, height: 100, fit: "contain", alt: "contain" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "contain", alt: "contain" },
+
         { type: "text", text: "fit: cover", variant: "label" },
-        { type: "image", src: placeholderSvg("cover", "fbe4d8", "6e2c00"), width: 320, height: 100, fit: "cover", alt: "cover" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "cover", alt: "cover" },
+
         { type: "text", text: "fit: fill", variant: "label" },
-        { type: "image", src: placeholderSvg("fill", "d5f5e3", "145a32"), width: 320, height: 100, fit: "fill", alt: "fill" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "fill", alt: "fill" },
+
         { type: "text", text: "fit: none", variant: "label" },
-        { type: "image", src: placeholderSvg("none", "fdebd0", "7e5109"), width: 320, height: 100, fit: "none", alt: "none" },
-        { type: "text", text: "fit: scale-down", variant: "label" },
-        { type: "image", src: placeholderSvg("scale-down", "ebdef0", "4a235a"), width: 320, height: 100, fit: "scale-down", alt: "scale-down" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", alt: "none" },
+
+        { type: "text", text: "fit: scale-down (small src 140x60)", variant: "label" },
+        { type: "image", src: fitDemoSmallSrc, width: 320, height: 100, fit: "scale-down", alt: "scale-down" },
+
+        { type: "text", text: "fit: none with repeat-x", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", repeat: "repeat-x", tileSize: 64 }
     ],
 
     alerts: [

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichImage } from "../types";
 
@@ -10,7 +10,7 @@ interface RichImageProps {
 const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
-    const getObjectFit = (fit?: string) => {
+    const getObjectFit = (fit?: IRichImage["fit"]): CSSProperties["objectFit"] => {
         switch (fit) {
             case "cover":
                 return "cover";
@@ -24,6 +24,35 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
                 return "contain";
         }
     };
+
+    const shouldRepeat = !!node.repeat && node.repeat !== "no-repeat";
+
+    if (shouldRepeat) {
+        const tileSize =
+            typeof node.tileSize === "number"
+                ? node.tileSize + "px auto"
+                : node.tileSize;
+
+        return (
+            <Box
+                role="img"
+                aria-label={node.alt || "Image"}
+                sx={{
+                    width: node.width ?? "auto",
+                    height: node.height ?? "auto",
+                    borderRadius: defaults?.radius ?? 4,
+                    border: "1px solid " + theme.palette.divider,
+                    overflow: "hidden",
+                    maxWidth: "100%",
+                    backgroundImage: 'url("' + node.src + '")',
+                    backgroundRepeat: node.repeat,
+                    backgroundPosition: "center",
+                    backgroundSize:
+                        tileSize ?? (node.fit === "fill" ? "100% 100%" : "auto"),
+                }}
+            />
+        );
+    }
 
     return (
         <Box
@@ -39,10 +68,11 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
                 src={node.src}
                 alt={node.alt || "Image"}
                 style={{
-                    width: node.width ? `${node.width}` : "auto",
-                    height: node.height ? `${node.height}` : "auto",
+                    width: node.width ?? "auto",
+                    height: node.height ?? "auto",
                     objectFit: getObjectFit(node.fit),
                     display: "block",
+                    objectPosition: "center",
                     maxWidth: "100%",
                 }}
             />

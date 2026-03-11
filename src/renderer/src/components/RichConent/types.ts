@@ -487,6 +487,16 @@ export interface IRichImage extends IRichNode {
      * @default "contain"
      */
     fit?: "contain" | "cover" | "fill" | "none" | "scale-down";
+    /**
+     * Powtórzanie (np. "no-repeat", "repeat", "repeat-x", "repeat-y", "space", "round")
+     * @default "no-repeat"
+     */
+    repeat?: "no-repeat" | "repeat" | "repeat-x" | "repeat-y" | "space" | "round";
+    /**
+     * Rozmiar tile (np. "8px", "1rem", 16)
+     * @default "auto"
+     */
+    tileSize?: number | string;
 }
 
 /**
