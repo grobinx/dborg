@@ -48,6 +48,7 @@ import RichImage from "./nodes/RichImage";
 import RichAlert from "./nodes/RichAlert";
 import RichAction from "./nodes/RichAction";
 import RichStat from "./nodes/RichStat";
+import RichSwitch from "./nodes/RichSwitch";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -70,6 +71,7 @@ export { default as RichImage } from "./nodes/RichImage";
 export { default as RichAlert } from "./nodes/RichAlert";
 export { default as RichAction } from "./nodes/RichAction";
 export { default as RichStat } from "./nodes/RichStat";
+export { default as RichSwitch } from "./nodes/RichSwitch";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -158,6 +160,8 @@ const RichRenderer: React.FC<{
             return <RichList node={node} defaults={defaults} />;
         case "listitem":
             return <RichListItem node={node} defaults={defaults} />;
+        case "switch":
+            return <RichSwitch node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

@@ -289,7 +289,7 @@ export const richContentExamples: RichExampleMap = {
         },
     ],
 
-    "Akcje": [
+    "Akcje i Przełączniki": [
         {
             type: "action",
             id: "act-basic",
@@ -353,7 +353,47 @@ export const richContentExamples: RichExampleMap = {
             run: () => {
                 console.log("icon only action");
             },
-        }
+        },
+        { type: "divider" },
+        {
+            type: "switch",
+            label: "Tryb diagnostyczny",
+            checked: true,
+            onChange: (checked) => {
+                console.log("diagnostic mode:", checked);
+            },
+        },
+        {
+            type: "switch",
+            label: "Wymuś walidację",
+            checked: false,
+            severity: "warning",
+            onChange: (checked) => {
+                console.log("force validation:", checked);
+            },
+        },
+        {
+            type: "switch",
+            label: "Opcja zablokowana",
+            checked: true,
+            severity: "success",
+            disabled: true,
+        },
+        {
+            type: "row",
+            gap: 8,
+            items: [
+                { type: "text", text: "Inline:" },
+                {
+                    type: "switch",
+                    checked: true,
+                    severity: "error",
+                    onChange: (checked) => {
+                        console.log("inline switch:", checked);
+                    },
+                },
+            ],
+        },
     ],
 
     "Scenariusz kompleksowy": [

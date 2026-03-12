@@ -597,10 +597,6 @@ export interface IRichSwitch extends IRichNode {
      * Czy przełącznik jest wyłączony
      */
     disabled?: boolean;
-    /**
-     * Rozmiar przełącznika
-     */
-    size?: "small" | "medium";
 }
 
 /**
