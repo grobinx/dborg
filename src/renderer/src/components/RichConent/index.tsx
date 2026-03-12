@@ -8,7 +8,6 @@ export type {
     RichTextVariant,
     RichNodeType,
     RichNode,
-    IRichBadge as RichBadge,
 } from "./types";
 export type {
     IRichNode,
@@ -31,6 +30,7 @@ export type {
     IRichListItem,
     IRichContainer,
     IRichContainerDefaults,
+    IRichBadge,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -56,6 +56,7 @@ import RichColumn from "./containers/RichColumn";
 import RichGroup from "./containers/RichGroup";
 import RichList from "./containers/RichList";
 import RichListItem from "./containers/RichListItem";
+import RichTimeline from "./containers/RichTimeline";
 
 // Export nodes
 export { default as RichText } from "./nodes/RichText";
@@ -80,6 +81,7 @@ export { default as RichGroup } from "./containers/RichGroup";
 export { default as RichList } from "./containers/RichList";
 export { default as RichListItem } from "./containers/RichListItem";
 export { default as RichContainer } from "./containers/RichContainer";
+export { default as RichTimeline } from "./containers/RichTimeline";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
     switch (severity) {
@@ -138,16 +140,7 @@ const RichRenderer: React.FC<{
         case "stat":
             return <RichStat node={node} defaults={defaults} />;
         case "alert":
-            return (
-                <Box sx={{ mb: 2 }}>
-                    <RichAlert node={node} defaults={defaults} />
-                    <Box sx={{ pl: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                        {(node as any).items?.map((item: RichNode, index: number) => (
-                            <RichRenderer key={index} node={item} defaults={defaults} />
-                        ))}
-                    </Box>
-                </Box>
-            );
+            return <RichAlert node={node} defaults={defaults} />;
         case "action":
             return <RichAction node={node} defaults={defaults} />;
         case "row":
@@ -162,6 +155,8 @@ const RichRenderer: React.FC<{
             return <RichListItem node={node} defaults={defaults} />;
         case "switch":
             return <RichSwitch node={node} defaults={defaults} />;
+        case "timeline":
+            return <RichTimeline node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

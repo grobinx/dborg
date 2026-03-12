@@ -698,7 +698,7 @@ export interface IRichTimelineItem {
     /**
      * Dodatkowy opis
      */
-    caption?: RichNode;
+    description?: RichNode;
     /**
      * Poziom ważności wpływający na kolor kropki/ikony
      */

@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { RichContainer, RichRenderer } from "./index";
 import { richContentExamples } from "./richContentExamples";
-import { RichNode } from "./types";
+import { IRichTimelineItem, RichNode } from "./types";
 import { Button } from "../buttons/Button";
 
 const countNodes = (nodes: RichNode[]): number => {
@@ -41,6 +41,8 @@ const countNodes = (nodes: RichNode[]): number => {
                 return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
             case "listitem":
                 return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
+            case "timeline":
+                return 1;
             default:
                 return 1;
         }

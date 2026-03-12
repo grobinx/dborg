@@ -24,19 +24,6 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
         }
     };
 
-    const getIconFromSeverity = (severity?: RichSeverity) => {
-        switch (severity) {
-            case "error":
-                return "error";
-            case "warning":
-                return "warning";
-            case "success":
-                return "checkCircle";
-            default:
-                return "info";
-        }
-    };
-
     return (
         <Alert
             className="RichNode-alert"

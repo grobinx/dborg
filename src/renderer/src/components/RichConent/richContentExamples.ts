@@ -396,6 +396,71 @@ export const richContentExamples: RichExampleMap = {
         },
     ],
 
+    "Timeline": [
+        {
+            type: "timeline",
+            items: [
+                {
+                    timestamp: "14:23:01",
+                    severity: "info",
+                    icon: "Info",
+                    label: { type: "text", text: "Połączono z bazą danych", variant: "body" },
+                    description: { type: "text", text: "Host: localhost:5432 / DB: dborg", variant: "caption" },
+                },
+                {
+                    timestamp: "14:23:03",
+                    severity: "success",
+                    label: { type: "text", text: "Wykonano zapytanie SELECT", variant: "body" },
+                    description: {
+                        type: "code",
+                        language: "sql",
+                        code: "SELECT id, email FROM users WHERE active = true LIMIT 50;",
+                    },
+                },
+                {
+                    timestamp: "14:23:05",
+                    severity: "warning",
+                    icon: "Warning",
+                    label: { type: "text", text: "Wykryto kosztowny plan wykonania", variant: "body" },
+                    description: {
+                        type: "row",
+                        gap: 8,
+                        items: [
+                            { type: "chip", text: "Seq Scan", severity: "warning", variant: "outlined" },
+                            { type: "text", text: "Brak indeksu na `users(active, created_at)`", variant: "markdown" },
+                        ],
+                    },
+                },
+                {
+                    timestamp: "14:23:08",
+                    severity: "error",
+                    icon: "Error",
+                    label: { type: "text", text: "Przekroczono limit czasu zapytania", variant: "body" },
+                    description: {
+                        type: "alert",
+                        severity: "error",
+                        title: "Timeout",
+                        showIcon: false,
+                        items: [
+                            { type: "text", text: "Zapytanie anulowane po 30s." },
+                            { type: "text", text: "Spróbuj dodać filtr lub indeks.", variant: "caption" },
+                        ],
+                    },
+                },
+                {
+                    timestamp: "14:23:10",
+                    severity: "info",
+                    label: { type: "text", text: "Rozłączono z bazą danych", variant: "body" },
+                },
+                {
+                    timestamp: "14:23:12",
+                    severity: "info",
+                    label: { type: "text", text: "Program został zamknięty", variant: "body" },
+                }
+            ],
+        },
+    ],
+
     "Scenariusz kompleksowy": [
         {
             type: "group",

@@ -182,7 +182,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                             <div>
                                 <h2 style={styles.title}>Application Error</h2>
                                 <p style={styles.subtitle}>
-                                    Fallback view is active.
+                                    An unexpected error occurred. The is a safe fallback screen.
                                 </p>
                             </div>
                             <img src={logo} alt="Logo" style={{ width: 32, height: 32, marginLeft: "auto", opacity: 0.8 }} />
